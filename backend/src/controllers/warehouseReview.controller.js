@@ -1,17 +1,8 @@
 const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/ApiError');
-const Warehouse = require('../models/warehouse.model');
 const warehouseReviewService = require('../services/warehouseReview.service');
 const warehouseReviewViewModel = require('../viewmodels/warehouseReview.viewmodel');
 const { parseCursorQuery, parseObjectIdCursor, paginationMeta } = require('../utils/pagination');
-
-async function loadWarehouseOrThrow(userId) {
-  const warehouse = await Warehouse.findOne({ userId });
-  if (!warehouse) {
-    throw ApiError.notFound('Warehouse profile not found.', 'WAREHOUSE_PROFILE_NOT_FOUND');
-  }
-  return warehouse;
-}
+const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 
 // This route only ever backs the Reviews management page, so it's always
 // paginated - unlike Products/Returns, there's no other frontend caller

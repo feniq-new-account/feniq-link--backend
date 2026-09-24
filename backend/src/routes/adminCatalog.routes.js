@@ -1,11 +1,14 @@
 const { Router } = require('express');
 const { authenticate, authorize } = require('../middlewares/auth.middleware');
+const { stringQueryOnly, objectIdParam } = require('../middlewares/validateRequest');
 const { catalogImportUpload, singleImageUpload } = require('../middlewares/upload.middleware');
 const controller = require('../controllers/adminCatalog.controller');
 
 const router = Router();
 
-router.use(authenticate, authorize('admin'));
+router.use(authenticate, authorize('admin'), stringQueryOnly);
+// Catalog overhaul Phase 11 (L1): malformed ids and query values are 400s.
+router.param('id', objectIdParam);
 
 // Static paths first, then the /:id-shaped ones.
 router.get('/template', controller.downloadTemplate);

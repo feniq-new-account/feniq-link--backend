@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:feniq/core/utils/pricing.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 
@@ -90,6 +91,17 @@ class ProductModel {
 
   // Tolerant of a partial row (L4): a missing name or manufacturer falls back
   // rather than throwing, so one bad product can't blank the whole page.
+  // Catalog overhaul Phase 11 (L4): one malformed row (no id, no price) must
+  // not take the whole catalog page down with it - it is left out and logged.
+  static ProductModel? tryFromJson(Map<String, dynamic> json) {
+    try {
+      return ProductModel.fromJson(json);
+    } catch (error) {
+      debugPrint('Skipping a malformed product (${json['id']}): $error');
+      return null;
+    }
+  }
+
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     final nameAr = json['nameAr'] as String?;
     final nameEn = json['nameEn'] as String?;

@@ -1,20 +1,11 @@
 const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/ApiError');
-const Warehouse = require('../models/warehouse.model');
 const warehouseProductService = require('../services/warehouseProduct.service');
 const warehouseProductViewModel = require('../viewmodels/warehouseProduct.viewmodel');
 const productCatalogService = require('../services/productCatalog.service');
 const warehouseImportService = require('../services/warehouseImport.service');
 const importBatchViewModel = require('../viewmodels/importBatch.viewmodel');
 const { parseCursorQuery, parseObjectIdCursor, paginationMeta } = require('../utils/pagination');
-
-async function loadWarehouseOrThrow(userId) {
-  const warehouse = await Warehouse.findOne({ userId });
-  if (!warehouse) {
-    throw ApiError.notFound('Warehouse profile not found.', 'WAREHOUSE_PROFILE_NOT_FOUND');
-  }
-  return warehouse;
-}
+const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 
 // Always one page (catalog overhaul Phase 10, H4). It used to return every
 // product the warehouse owns when no `limit` was sent - what the banner,

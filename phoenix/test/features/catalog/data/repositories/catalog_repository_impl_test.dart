@@ -5,6 +5,7 @@ import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/core/models/paginated_result.dart';
 import 'package:feniq/core/network/api_client.dart';
 import 'package:feniq/core/network/endpoints.dart';
+import 'package:feniq/core/session/session_scope.dart';
 import 'package:feniq/features/catalog/data/models/category_model.dart';
 import 'package:feniq/features/catalog/data/models/manufacturer_model.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
@@ -366,6 +367,97 @@ void main() {
           () => catalogRepository.getManufacturers(warehouseId: 'warehouse1'),
           throwsA(isA<ServerFailure>()),
         );
+      });
+    });
+
+    // Catalog overhaul Phase 11 (L4).
+    group('categories session cache', () {
+      Response<dynamic> categoriesResponse() => Response(
+            data: {
+              'categories': [
+                {'id': 'cat1', 'nameAr': 'أدوية', 'nameEn': 'Medicines', 'sortOrder': 1},
+              ],
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: ''),
+          );
+
+      test('reads the categories once and reuses them on every open', () async {
+        when(() => mockDio.get(any())).thenAnswer((_) async => categoriesResponse());
+
+        final first = await catalogRepository.getCategories();
+        final second = await catalogRepository.getCategories();
+
+        expect(first.single.id, 'cat1');
+        expect(identical(first, second), isTrue);
+        verify(() => mockDio.get(Endpoints.categories)).called(1);
+      });
+
+      test('two opens racing share one request', () async {
+        when(() => mockDio.get(any())).thenAnswer((_) async => categoriesResponse());
+
+        await Future.wait([catalogRepository.getCategories(), catalogRepository.getCategories()]);
+
+        verify(() => mockDio.get(Endpoints.categories)).called(1);
+      });
+
+      test('a failed read is not cached', () async {
+        var calls = 0;
+        when(() => mockDio.get(any())).thenAnswer((_) async {
+          calls += 1;
+          if (calls == 1) {
+            throw DioException(requestOptions: RequestOptions(path: ''), type: DioExceptionType.connectionError);
+          }
+          return categoriesResponse();
+        });
+
+        await expectLater(catalogRepository.getCategories(), throwsA(isA<ServerFailure>()));
+        final categories = await catalogRepository.getCategories();
+
+        expect(categories.single.id, 'cat1');
+        expect(calls, 2);
+      });
+
+      test('a sign-out drops the cache, so the next account reads fresh', () async {
+        final scope = SessionScope();
+        final repository = CatalogRepositoryImpl(apiClient: mockApiClient, sessionScope: scope);
+        when(() => mockDio.get(any())).thenAnswer((_) async => categoriesResponse());
+
+        await repository.getCategories();
+        scope.resetAll();
+        await repository.getCategories();
+
+        verify(() => mockDio.get(Endpoints.categories)).called(2);
+      });
+    });
+
+    group('a malformed product row', () {
+      test('is skipped instead of failing the whole page', () async {
+        when(
+          () => mockDio.get(any(), queryParameters: any(named: 'queryParameters')),
+        ).thenAnswer(
+          (_) async => Response(
+            data: {
+              'products': [
+                {'id': 'ok1', 'nameAr': 'أسبرين', 'manufacturerAr': 'بايير', 'priceUsd': 5, 'discountPriceUsd': 5, 'isAvailable': true},
+                // No id and no price.
+                {'nameAr': 'مكسور', 'manufacturerAr': 'بايير'},
+                {'id': 'ok2', 'nameAr': 'بنادول', 'priceUsd': 3, 'discountPriceUsd': 3, 'isAvailable': true},
+              ],
+              'pagination': {'hasMore': true, 'nextCursor': 'ok2'},
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: ''),
+          ),
+        );
+
+        final result = await catalogRepository.getProducts(warehouseId: 'w1');
+
+        expect(result.items.map((p) => p.id), ['ok1', 'ok2']);
+        // A missing manufacturer falls back instead of crashing.
+        expect(result.items[1].manufacturerAr, '');
+        expect(result.hasMore, isTrue);
+        expect(result.nextCursor, 'ok2');
       });
     });
   });

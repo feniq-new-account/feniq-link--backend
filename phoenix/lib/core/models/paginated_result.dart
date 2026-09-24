@@ -21,4 +21,26 @@ class PaginatedResult<T> {
       nextCursor: pagination?['nextCursor'] as String?,
     );
   }
+
+  // Like [PaginatedResult.fromJson], but a row [tryParse] rejects (returns
+  // null) is left out instead of failing the whole page. The cursor still
+  // comes from the server, so paging carries on past the skipped row.
+  factory PaginatedResult.fromJsonSkippingInvalid(
+    Map<String, dynamic> json,
+    String itemsKey,
+    T? Function(Map<String, dynamic>) tryParse,
+  ) {
+    final pagination = json['pagination'] as Map<String, dynamic>?;
+    final items = <T>[];
+    for (final raw in (json[itemsKey] as List? ?? const [])) {
+      if (raw is! Map<String, dynamic>) continue;
+      final item = tryParse(raw);
+      if (item != null) items.add(item);
+    }
+    return PaginatedResult(
+      items: items,
+      hasMore: pagination?['hasMore'] as bool? ?? false,
+      nextCursor: pagination?['nextCursor'] as String?,
+    );
+  }
 }
