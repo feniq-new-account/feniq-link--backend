@@ -9,6 +9,7 @@ const { UNIT_CODES, unitNameAr, unitNameEn } = require('../config/units');
 const Product = require('../models/product.model');
 const ProductCatalog = require('../models/productCatalog.model');
 const { identityKeyOf } = require('../models/productCatalog.model');
+const { splitNameByLanguage, namesByLanguage } = require('../utils/nameLanguage');
 const Manufacturer = require('../models/manufacturer.model');
 const WarehouseProductAlias = require('../models/warehouseProductAlias.model');
 const ImportBatch = require('../models/importBatch.model');
@@ -756,13 +757,26 @@ async function resolveImportRow(warehouseId, userId, batchId, rowId, body = {}) 
 async function requestCatalogItemFromRow(warehouseId, userId, batchId, rowId, body = {}) {
   const row = await findReviewRowOrThrow(warehouseId, batchId, rowId);
   const values = await resolutionValues(row, body);
-  const nameAr = typeof body.nameAr === 'string' && body.nameAr.trim() ? body.nameAr.trim() : row.raw.name;
-  const manufacturerAr =
-    typeof body.manufacturerAr === 'string' && body.manufacturerAr.trim() ? body.manufacturerAr.trim() : row.raw.manufacturer;
-  if (!normalizeText(nameAr) || !normalizeText(manufacturerAr)) {
+  // The name, filed under the language it is written in: the warehouse's
+  // corrected text if it sent one (`name`, or `nameAr` as older panels send),
+  // else the row's name column(s). Explicit `nameAr` + `nameEn` are kept as sent.
+  const text = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null);
+  let names;
+  if (text(body.nameEn) !== null) {
+    names = { nameAr: text(body.nameAr), nameEn: text(body.nameEn) };
+  } else if (text(body.name) ?? text(body.nameAr)) {
+    names = splitNameByLanguage(text(body.name) ?? text(body.nameAr));
+  } else {
+    names = namesByLanguage(row.raw.name, row.raw.nameEn);
+  }
+  const manufacturerAr = text(body.manufacturerAr) ?? row.raw.manufacturer;
+  if (!(normalizeText(names.nameAr) || normalizeText(names.nameEn)) || !normalizeText(manufacturerAr)) {
     throw ApiError.badRequest('A name and a manufacturer are required.', undefined, 'INVALID_CATALOG_REQUEST');
   }
-  const manufacturer = await Manufacturer.findOne({ key: normalizeText(manufacturerAr) }).select('_id').lean();
+  const manufacturerKey = normalizeText(manufacturerAr);
+  const manufacturer = manufacturerResolver(
+    await Manufacturer.find({ $or: [{ key: manufacturerKey }, { enKey: manufacturerKey }] }).select('_id key enKey').lean()
+  )(manufacturerKey);
 
   let request = null;
   await runInTransaction(async (session) => {
@@ -771,7 +785,8 @@ async function requestCatalogItemFromRow(warehouseId, userId, batchId, rowId, bo
       [
         {
           warehouseId,
-          nameAr,
+          nameAr: names.nameAr,
+          nameEn: names.nameEn,
           manufacturerAr,
           manufacturerId: manufacturer ? manufacturer._id : null,
           unit: values.unitGiven ? values.unit : null,
@@ -800,6 +815,7 @@ async function requestCatalogItemFromRow(warehouseId, userId, batchId, rowId, bo
 }
 
 module.exports = {
+  manufacturerResolver,
   importWarehouseFile,
   listImportBatches,
   listImportRows,

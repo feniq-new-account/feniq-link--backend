@@ -51,7 +51,7 @@ async function run({ apply = false, log = () => {} } = {}) {
       manufacturerKey: keyOf(item.manufacturerAr),
       manufacturerEnKey: keyOf(item.manufacturerEn),
     };
-    keys.identityKey = identityKeyOf(keys.nameKey, keys.manufacturerKey);
+    keys.identityKey = identityKeyOf(keys.nameKey, keys.manufacturerKey, keys.nameEnKey);
     itemKeys.set(String(item._id), { ...keys, manufacturerId: item.manufacturerId ?? null });
     if (Object.entries(keys).some(([field, value]) => item[field] !== value)) {
       catalogOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: keys } } });

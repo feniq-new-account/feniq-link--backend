@@ -99,15 +99,15 @@ async function fulfil(request, catalogItem, adminId, session) {
   }
   await Product.bulkWrite([write.op], { session });
 
-  await WarehouseProductAlias.updateOne(
-    {
-      warehouseId: request.warehouseId,
-      rawNameKey: normalizeText(request.nameAr),
-      rawManufacturerKey: normalizeText(request.manufacturerAr),
-    },
-    { $set: { masterProductId: catalogItem._id } },
-    { upsert: true, session }
-  );
+  // The warehouse's own text for it, under each name the request carried.
+  const aliasKeys = [...new Set([normalizeText(request.nameAr), normalizeText(request.nameEn)].filter(Boolean))];
+  for (const rawNameKey of aliasKeys) {
+    await WarehouseProductAlias.updateOne(
+      { warehouseId: request.warehouseId, rawNameKey, rawManufacturerKey: normalizeText(request.manufacturerAr) },
+      { $set: { masterProductId: catalogItem._id } },
+      { upsert: true, session }
+    );
+  }
   if (request.importRowId) {
     await ImportBatchRow.updateOne(
       { _id: request.importRowId },
@@ -134,8 +134,13 @@ async function approveRequest(id, adminId, changes = {}) {
   await runInTransaction(async (session) => {
     request = await findPendingRequestOrThrow(id, session);
 
-    const nameAr = typeof changes.nameAr === 'string' && changes.nameAr.trim() ? changes.nameAr.trim() : request.nameAr;
-    const nameEn = typeof changes.nameEn === 'string' && changes.nameEn.trim() ? changes.nameEn.trim() : null;
+    // The request's names; the admin may correct either or fill in the one it
+    // lacks. At least one is needed.
+    const nameAr = typeof changes.nameAr === 'string' && changes.nameAr.trim() ? changes.nameAr.trim() : request.nameAr ?? null;
+    const nameEn = typeof changes.nameEn === 'string' && changes.nameEn.trim() ? changes.nameEn.trim() : request.nameEn ?? null;
+    if (!nameAr && !nameEn) {
+      throw ApiError.badRequest('A medicine needs an Arabic or an English name.', undefined, 'INVALID_CATALOG_REQUEST');
+    }
 
     let manufacturer = null;
     const manufacturerId = changes.manufacturerId ?? request.manufacturerId;
@@ -172,7 +177,11 @@ async function approveRequest(id, adminId, changes = {}) {
       categoryId = changes.categoryId;
     }
 
-    const existing = await ProductCatalog.findOne({ nameKey: normalizeText(nameAr), manufacturerId: manufacturer._id })
+    // The same medicine under this manufacturer, by either of its names.
+    const sameName = [];
+    if (normalizeText(nameAr)) sameName.push({ nameKey: normalizeText(nameAr) });
+    if (normalizeText(nameEn)) sameName.push({ nameEnKey: normalizeText(nameEn) });
+    const existing = await ProductCatalog.findOne({ manufacturerId: manufacturer._id, $or: sameName })
       .select('_id')
       .session(session)
       .lean();

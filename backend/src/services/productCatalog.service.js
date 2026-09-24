@@ -18,6 +18,7 @@ const { UNITS, resolveUnit } = require('../config/units');
 const { fieldForHeader, IMPORT_FIELDS, REQUIRED_FIELDS } = require('../config/importSynonyms');
 const { parsePriceCell, resolveRowCurrency } = require('../utils/importValues');
 const { parseBonus } = require('../utils/bonus');
+const { splitNameByLanguage, namesByLanguage } = require('../utils/nameLanguage');
 const { loadSavedMapping, parseExplicitMapping, saveMapping } = require('./importMapping.service');
 
 function escapeRegex(value) {
@@ -316,15 +317,22 @@ async function validateCategoryId(categoryId) {
 async function updateCatalogItem(id, changes, { userId = null, confirmed = false } = {}) {
   const item = await findCatalogItemOrThrow(id);
 
-  if (changes.nameAr !== undefined) {
-    if (typeof changes.nameAr !== 'string' || !changes.nameAr.trim()) {
-      throw ApiError.badRequest('Invalid name.', undefined, 'INVALID_PRODUCT_NAME');
+  // Either name may change, and either may be emptied - as long as one is left.
+  const nextNameOf = (value, current) => {
+    if (value === undefined) return current ?? null;
+    if (value === null) return null;
+    if (typeof value !== 'string') throw ApiError.badRequest('Invalid name.', undefined, 'INVALID_PRODUCT_NAME');
+    return value.trim() || null;
+  };
+  if (changes.nameAr !== undefined || changes.nameEn !== undefined) {
+    const nextNameAr = nextNameOf(changes.nameAr, item.nameAr);
+    const nextNameEn = nextNameOf(changes.nameEn, item.nameEn);
+    if (!nextNameAr && !nextNameEn) {
+      throw ApiError.badRequest('A medicine needs an Arabic or an English name.', undefined, 'INVALID_PRODUCT_NAME');
     }
-
-    const nextName = changes.nameAr.trim();
     // Only a real change needs confirming - re-saving the form without
     // touching the name (to set a category, say) must not demand it.
-    if (nextName !== item.nameAr) {
+    if (nextNameAr !== (item.nameAr ?? null) || nextNameEn !== (item.nameEn ?? null)) {
       const linkedProductCount = await Product.countDocuments({
         masterProductId: item._id,
         isActive: true,
@@ -333,7 +341,13 @@ async function updateCatalogItem(id, changes, { userId = null, confirmed = false
       if (linkedProductCount > 0 && !confirmed) {
         throw ApiError.badRequest(
           `Renaming this medicine changes it for ${linkedProductCount} product(s) across warehouses.`,
-          { linkedProductCount, currentNameAr: item.nameAr, nextNameAr: nextName },
+          {
+            linkedProductCount,
+            currentNameAr: item.nameAr ?? null,
+            nextNameAr,
+            currentNameEn: item.nameEn ?? null,
+            nextNameEn,
+          },
           'CATALOG_RENAME_NEEDS_CONFIRMATION'
         );
       }
@@ -343,12 +357,15 @@ async function updateCatalogItem(id, changes, { userId = null, confirmed = false
       // live everywhere, so without this there is no record anywhere of what
       // the medicine used to be called.
       item.nameHistory.push({
-        oldNameAr: item.nameAr,
-        newNameAr: nextName,
+        oldNameAr: item.nameAr ?? null,
+        newNameAr: nextNameAr,
+        oldNameEn: item.nameEn ?? null,
+        newNameEn: nextNameEn,
         changedBy: userId,
         changedAt: new Date(),
       });
-      item.nameAr = nextName;
+      item.nameAr = nextNameAr;
+      item.nameEn = nextNameEn;
     }
   }
 
@@ -875,6 +892,8 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
     headerRowNumber,
     columns,
     companyRowMode,
+    // Separate Arabic and English name columns (not just an English one alone).
+    hasEnglishColumn: Boolean(nameEnColumn),
     rows,
   };
 }
@@ -938,7 +957,7 @@ async function priceRowsInUsd(rows) {
 async function importFromExcel(file, { confirmNewManufacturers = [], manufacturerLinks = {}, mapping = null } = {}) {
   const explicitMapping = parseExplicitMapping(mapping);
   const savedMapping = await loadSavedMapping(null);
-  const { rows } = await readImportWorkbook(file, { explicitMapping, savedMapping });
+  const { rows, hasEnglishColumn } = await readImportWorkbook(file, { explicitMapping, savedMapping });
   await saveMapping(null, explicitMapping);
   const errors = [];
   const usable = [];
@@ -989,37 +1008,68 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
     newManufacturers.get(key).rows.push(row.rowNumber);
   }
 
-  const identityOf = (row) => identityKeyOf(normalizeText(row.name), manufacturerByKey.get(normalizeText(row.manufacturer))?.key);
+  // A row's names: with separate Arabic and English columns, the two cells;
+  // with one name column, that cell filed under the language it is written in.
+  for (const row of usable) {
+    const names = hasEnglishColumn ? namesByLanguage(row.raw.name, row.raw.nameEn) : splitNameByLanguage(row.name);
+    row.nameAr = names.nameAr;
+    row.nameEnValue = names.nameEn;
+    row.nameKey = normalizeText(names.nameAr) || null;
+    row.nameEnKey = normalizeText(names.nameEn) || null;
+  }
+  const manufacturerOf = (row) => manufacturerByKey.get(normalizeText(row.manufacturer));
+  const identityOf = (row) => identityKeyOf(row.nameKey, manufacturerOf(row)?.key, row.nameEnKey);
   const ready = usable.filter((row) => manufacturerByKey.has(normalizeText(row.manufacturer)));
-  const existingItems = await ProductCatalog.find({ identityKey: { $in: [...new Set(ready.map(identityOf))] } });
+  // An existing item is found by its identity, or by its English name under the
+  // same manufacturer (an English-only row for a medicine the catalog already
+  // has in Arabic updates that item, never adds an English twin).
+  const existingItems = await ProductCatalog.find({
+    $or: [
+      { identityKey: { $in: [...new Set(ready.map(identityOf))] } },
+      {
+        manufacturerId: { $in: [...new Set(ready.map((row) => manufacturerOf(row)._id))] },
+        nameEnKey: { $in: [...new Set(ready.map((row) => row.nameEnKey).filter(Boolean))] },
+      },
+    ],
+  });
   const itemByIdentity = new Map(existingItems.map((item) => [item.identityKey, item]));
+  const itemByEnglishName = new Map(
+    existingItems.filter((item) => item.nameEnKey).map((item) => [`${item.nameEnKey}|${item.manufacturerId}`, item])
+  );
+  const findItem = (row) =>
+    itemByIdentity.get(identityOf(row)) ??
+    (row.nameEnKey ? itemByEnglishName.get(`${row.nameEnKey}|${manufacturerOf(row)._id}`) : undefined);
 
   let added = 0;
   let updated = 0;
   const withdrawn = [];
   for (const row of ready) {
-    const manufacturer = manufacturerByKey.get(normalizeText(row.manufacturer));
-    const identity = identityOf(row);
+    const manufacturer = manufacturerOf(row);
     try {
-      const item = itemByIdentity.get(identity);
+      const item = findItem(row);
       if (item && item.isActive === false) {
-        withdrawn.push({ row: row.rowNumber, nameAr: item.nameAr });
+        withdrawn.push({ row: row.rowNumber, nameAr: item.nameAr, nameEn: item.nameEn ?? null });
         continue;
       }
       if (item) {
         // A blank price on the file never erases a price the item already has.
         if (row.priceUsd !== null) item.priceUsd = row.priceUsd;
+        // A name the item lacks is filled in; a name it has is never replaced.
+        if (!item.nameAr && row.nameAr) item.nameAr = row.nameAr;
+        if (!item.nameEn && row.nameEnValue) item.nameEn = row.nameEnValue;
         await item.save();
         updated += 1;
         continue;
       }
       const created = await ProductCatalog.create({
-        nameAr: row.name,
+        nameAr: row.nameAr,
+        nameEn: row.nameEnValue,
         manufacturerAr: manufacturer.nameAr,
         manufacturerId: manufacturer._id,
         priceUsd: row.priceUsd,
       });
-      itemByIdentity.set(identity, created);
+      itemByIdentity.set(created.identityKey, created);
+      if (created.nameEnKey) itemByEnglishName.set(`${created.nameEnKey}|${created.manufacturerId}`, created);
       added += 1;
     } catch {
       errors.push({ row: row.rowNumber, reason: 'Failed to save this row.' });

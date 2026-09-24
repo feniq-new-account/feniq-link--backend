@@ -79,7 +79,20 @@ async function syncManufacturerCopies(manufacturer, session) {
           manufacturerEn: nameEn ? { $literal: nameEn } : '$manufacturerEn',
           manufacturerKey: { $literal: key },
           manufacturerEnKey: enKey,
-          identityKey: { $concat: [{ $ifNull: ['$nameKey', ''] }, '|', { $literal: key }] },
+          // identityKeyOf (productCatalog.model.js): the Arabic name, else "en:" + the English one.
+          identityKey: {
+            $cond: [
+              { $gt: [{ $strLenCP: { $ifNull: ['$nameKey', ''] } }, 0] },
+              { $concat: ['$nameKey', '|', { $literal: key }] },
+              {
+                $cond: [
+                  { $gt: [{ $strLenCP: { $ifNull: ['$nameEnKey', ''] } }, 0] },
+                  { $concat: ['en:', '$nameEnKey', '|', { $literal: key }] },
+                  { $concat: ['|', { $literal: key }] },
+                ],
+              },
+            ],
+          },
         },
       },
     ],
