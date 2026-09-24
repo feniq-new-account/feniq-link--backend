@@ -53,7 +53,9 @@ async function listManufacturersForWarehouse(warehouseId) {
 // (manufacturerId / manufacturerKey, product.model.js) - one $group over the
 // warehouse's active products, then one lookup of the few Manufacturer
 // documents involved. It used to $lookup the catalog entry of every single
-// product first.
+// product first. Every field it reads is in the warehouse_manufacturer_page
+// index (product.model.js), so the $group runs on the index alone - no product
+// document is fetched (test/catalog.explain.test.js pins docsExamined 0).
 async function listCatalogManufacturersForWarehouse(warehouseId) {
   const groups = await Product.aggregate([
     { $match: { warehouseId, isActive: true, manufacturerKey: { $nin: [null, ''] } } },

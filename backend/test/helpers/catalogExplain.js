@@ -15,6 +15,8 @@ const { normalizeText } = require('../../src/utils/normalizeText');
 const { buildProductFilter } = require('../../src/services/productCatalog.service');
 
 const SKEWED_MANUFACTURER = 'فارما الأولى';
+// One of the 40 small manufacturers (~0.75% of the catalog each).
+const RARE_MANUFACTURER = 'شركة 7';
 
 // Three warehouses; in each, most products belong to one manufacturer (the
 // "skewed manufacturer" shape that made the old per-manufacturer path slow).
@@ -130,6 +132,10 @@ async function explainCatalogQueries({ warehouseId, catalogItemId }) {
   // Warehouse-wide search (warehouseProduct.service.js): _id desc, 20.
   results.push(describe('warehouse-wide search',
     await page(buildProductFilter({ warehouseId, search: 'بنادول 12' }), -1, 20)));
+  // Admin filter on one warehouse and a rare manufacturer, deactivated rows
+  // included (adminProduct.service.js): _id asc, 30.
+  results.push(describe('admin warehouse + rare manufacturer',
+    await page(buildProductFilter({ warehouseId, activeOnly: false, manufacturer: RARE_MANUFACTURER }), 1, 30)));
   // Admin search across every warehouse (adminProduct.service.js): _id asc, 30.
   results.push(describe('admin search (all warehouses)',
     await page(buildProductFilter({ activeOnly: false, search: 'panadol 12' }), 1, 30)));
@@ -167,6 +173,8 @@ async function explainCatalogQueries({ warehouseId, catalogItemId }) {
         $group: {
           _id: { manufacturerId: '$manufacturerId', manufacturerKey: '$manufacturerKey' },
           productCount: { $sum: 1 },
+          legacyAr: { $first: '$manufacturerAr' },
+          legacyEn: { $first: '$manufacturerEn' },
         },
       },
     ]).explain('executionStats')));
@@ -187,4 +195,4 @@ function formatPlansTable(results, total) {
   return lines.join('\n');
 }
 
-module.exports = { seedCatalog, explainCatalogQueries, formatPlansTable, SKEWED_MANUFACTURER };
+module.exports = { seedCatalog, explainCatalogQueries, formatPlansTable, SKEWED_MANUFACTURER, RARE_MANUFACTURER };

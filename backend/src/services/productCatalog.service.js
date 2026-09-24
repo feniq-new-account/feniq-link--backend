@@ -118,7 +118,10 @@ function productSearchClause(search) {
 //  - warehouseId: required for every warehouse and pharmacist caller; only the
 //    admin's cross-warehouse list omits it.
 //  - activeOnly (default true): isActive products only - the admin list turns
-//    it off to show deactivated rows.
+//    it off to show deactivated rows. "Off" is spelled as isActive in
+//    [true, false, null] (null also matches a missing field) rather than no
+//    condition, so the warehouse_manufacturer_page index (product.model.js)
+//    still serves a warehouse + manufacturer filter in `_id` order.
 //  - manufacturer: an EXACT company, matched on its normalized key (so a
 //    spelling variant of the name still selects the company).
 //  - categoryId: validated, a malformed id is a 400.
@@ -133,7 +136,7 @@ function buildProductFilter({
 } = {}) {
   const filter = {};
   if (warehouseId) filter.warehouseId = warehouseId;
-  if (activeOnly) filter.isActive = true;
+  filter.isActive = activeOnly ? true : { $in: [true, false, null] };
   if (availableOnly) filter.isAvailable = true;
 
   const category = optionalString(categoryId, 'category');

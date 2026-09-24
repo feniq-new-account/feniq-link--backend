@@ -128,6 +128,50 @@ test('renaming a manufacturer syncs catalog items (incl. identityKey), products,
   assert.strictEqual(registry.manufacturerAr, 'الاسم الجديد');
 });
 
+// The pharmacist's manufacturer filter matches on manufacturerKey (owner's
+// decision, not manufacturerId), so a rename must rewrite that key on every
+// catalog item and product - or the company's products would vanish from its
+// own drill-down under the new name and linger under the old one.
+test('after a manufacturer rename the pharmacist filter finds its products under the new name only', async () => {
+  const warehouse = await makeWarehouse();
+  const other = await makeWarehouse();
+  const first = await ProductCatalog.create({ nameAr: 'دواء أول', manufacturerAr: 'الاسم السابق' });
+  const second = await ProductCatalog.create({ nameAr: 'دواء ثان', manufacturerAr: 'الاسم السابق' });
+  await ProductCatalog.create({ nameAr: 'دواء آخر', manufacturerAr: 'شركة لا علاقة لها' });
+  await Product.create([
+    { warehouseId: warehouse._id, masterProductId: first._id, price: 1 },
+    { warehouseId: warehouse._id, masterProductId: second._id, price: 2 },
+    { warehouseId: other._id, masterProductId: first._id, price: 3 },
+  ]);
+  const before = await listWarehouseProducts(warehouse._id, { manufacturer: 'الاسم السابق', limit: 20 });
+  assert.strictEqual(before.items.length, 2);
+
+  await updateManufacturer(first.manufacturerId, { nameAr: 'الإسم اللاحق' });
+
+  // The keys, on every catalog item and product of the manufacturer, in both warehouses.
+  const items = await ProductCatalog.find({ _id: { $in: [first._id, second._id] } }).lean();
+  assert.deepStrictEqual(items.map((i) => i.manufacturerKey), ['الاسم اللاحق', 'الاسم اللاحق']);
+  const products = await Product.find({ masterProductId: { $in: [first._id, second._id] } }).lean();
+  assert.strictEqual(products.length, 3);
+  assert.ok(products.every((p) => p.manufacturerKey === 'الاسم اللاحق'), products.map((p) => p.manufacturerKey).join(','));
+  assert.ok(products.every((p) => String(p.manufacturerId) === String(first.manufacturerId)));
+
+  // The pharmacist drill-down: the new name (and a spelling variant of it) finds both, the old name none.
+  const byNewName = await listWarehouseProducts(warehouse._id, { manufacturer: 'الإسم اللاحق', limit: 20 });
+  assert.deepStrictEqual(
+    byNewName.items.map((row) => String(row.product._id)).sort(),
+    products.filter((p) => String(p.warehouseId) === String(warehouse._id)).map((p) => String(p._id)).sort()
+  );
+  const byVariant = await listWarehouseProducts(warehouse._id, { manufacturer: 'الاسم  اللاحق', limit: 20 });
+  assert.strictEqual(byVariant.items.length, 2);
+  const byOldName = await listWarehouseProducts(warehouse._id, { manufacturer: 'الاسم السابق', limit: 20 });
+  assert.strictEqual(byOldName.items.length, 0);
+
+  // And the company list the drill-down starts from shows the new name.
+  const companies = await listManufacturersWithDiscountsForWarehouse(warehouse._id);
+  assert.deepStrictEqual(companies.map((m) => m.manufacturerAr).sort(), ['الإسم اللاحق']);
+});
+
 test('renaming onto another manufacturer\'s name is refused as a merge candidate', async () => {
   const a = await ProductCatalog.create({ nameAr: 'دواء1', manufacturerAr: 'شركة أ' });
   const b = await ProductCatalog.create({ nameAr: 'دواء2', manufacturerAr: 'شركة ب' });

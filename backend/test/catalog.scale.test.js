@@ -36,6 +36,14 @@ function countProductQueries(collectionName, method) {
   }
 }
 
+// The executionStats of one pharmacist page, built exactly as
+// listWarehouseProducts builds it (same filter, _id order, limit + 1).
+async function pageStats(options, limit) {
+  const filter = buildProductFilter({ warehouseId: ids.warehouse, ...options });
+  const plan = await Product.find(filter).sort({ _id: 1 }).limit(limit + 1).explain('executionStats');
+  return plan.executionStats ?? plan[0].executionStats;
+}
+
 async function queriesFor(fn) {
   productQueries = 0;
   mongoose.set('debug', countProductQueries);
@@ -110,6 +118,18 @@ test('a rare manufacturer among 50,000 products costs ONE product query per page
   assert.strictEqual(next.queries, 1);
 });
 
+// Pinned (owner, before merge): the manufacturer filter is an equality on
+// manufacturerKey served by the warehouse_manufacturer_page index - every key
+// the page reads is a row it returns, however few of the 50,000 match.
+test('a rare manufacturer page examines exactly the keys it returns', async () => {
+  for (const limit of [2, 20]) {
+    const stats = await pageStats({ manufacturer: 'شركة نادرة' }, limit);
+    assert.strictEqual(stats.nReturned, Math.min(limit + 1, RARE_POSITIONS.length));
+    assert.strictEqual(stats.totalKeysExamined, stats.nReturned, `limit ${limit}`);
+    assert.strictEqual(stats.totalDocsExamined, stats.nReturned, `limit ${limit}`);
+  }
+});
+
 test('the manufacturer filter tolerates spelling variants of the name', async () => {
   const { items } = await listWarehouseProducts(ids.warehouse, { manufacturer: 'شركه  نادره', limit: 10 });
   assert.strictEqual(items.length, 3);
@@ -122,11 +142,10 @@ test('?manufacturer=zzz is cheap: one query, no document examined', async () => 
   assert.strictEqual(result.items.length, 0);
   assert.strictEqual(queries, 1);
 
-  const filter = buildProductFilter({ warehouseId: ids.warehouse, manufacturer: 'zzz' });
-  const plan = await Product.find(filter).sort({ _id: 1 }).limit(21).explain('executionStats');
-  const stats = plan.executionStats ?? plan[0].executionStats;
+  const stats = await pageStats({ manufacturer: 'zzz' }, 20);
+  assert.strictEqual(stats.nReturned, 0);
+  assert.strictEqual(stats.totalKeysExamined, stats.nReturned);
   assert.strictEqual(stats.totalDocsExamined, 0);
-  assert.ok(stats.totalKeysExamined <= 1, `keysExamined ${stats.totalKeysExamined}`);
 });
 
 test('a term matching more than 500 catalog items still finds the warehouse\'s product', async () => {

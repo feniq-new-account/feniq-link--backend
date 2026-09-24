@@ -304,7 +304,7 @@ viewmodel → response**. No API response changed shape.
 | Product (+ populated) | `adminBanner.listBanners` / `…Paginated` / `createAdminBanner` | `find/findOne(...).populate(select)` | identity fields | rest incl. `priceHistory` | `GET /admin/banners`, `POST /admin/banners` | `serializeAdminBanner` reads the resolved name; create reads `manufacturerAr` |
 | Banner | `warehouseBanner.listPaginatedBannersForWarehouse` | `find(filter)` | `bannerNumber imageUrl productId manufacturerAr title status rejectionNote startDate endDate createdAt` | `warehouseId`, `approvedBy`, `createdBy`, `updatedAt` | `GET /warehouse/banners` | = `serializeWarehouseBanner` |
 | ProductCatalog (populated) | `warehouseProduct.listProductsForWarehouse` / `…Paginated` | `.populate({select:'nameAr nameEn manufacturerAr manufacturerEn'})` | identity | rest of catalog doc | `GET /warehouse/products` | populated entry only used for identity resolution |
-| Product (+ populated `masterProductId`) | `product.fetchMatchingPage` + `product.listWarehouseProducts` (search) | `find(...).populate(select)` | `categoryId nameAr nameEn manufacturerAr manufacturerEn image unitAr unitEn price isAvailable masterProductId`; catalog: identity | `description`, `barcode`, `manuallyDisabled`, `lastPriceUpdate`, `priceHistory[]`, `warehouseId`, `isActive`, timestamps | `GET /warehouse/catalog` (browsing) | = `serializeProductWithOffer` + `manufacturerAr` (discount map/filter) + `_id` (offer map/cursor) + sort key |
+| Product (+ populated `masterProductId`) | `product.listWarehouseProducts` → `productCatalog.findProductPage` (browse, manufacturer filter and search; see Level 4) | `find(...).populate(select)` | `categoryId nameAr nameEn manufacturerAr manufacturerEn image unitAr unitEn price isAvailable masterProductId`; catalog: identity | `description`, `barcode`, `manuallyDisabled`, `lastPriceUpdate`, `priceHistory[]`, `warehouseId`, `isActive`, timestamps | `GET /warehouse/catalog` (browsing) | = `serializeProductWithOffer` + `manufacturerAr` (discount map/filter) + `_id` (offer map/cursor) + sort key |
 | Offer | `product.listWarehouseProducts` | `find({warehouseId,status,dates,productId:{$in}})` | `productId discountPercentage titleAr titleEn` | `warehouseId`, `status`, dates, `approvedBy`, `approvedAt`, timestamps | same | `serializeProductWithOffer` reads `discountPercentage`/`title*`; join key `productId` |
 | ExchangeRate | `pharmacyBalance.recomputeBalance` | `findById` | `usdToSyp` | `source`, `lastUpdated`, `manualOverride` | internal (balance recompute) | only `rate.usdToSyp` is read here |
 | Pharmacy | `pharmacyBalance.listPaginatedDebtorsForWarehouse` | `find({_id:{$in}})` | `nameAr nameEn phone` | rest | `GET /warehouse/balances` | = `serializeDebtorRow` |
@@ -426,7 +426,7 @@ cache-cold noise and is not used as evidence.
 | `banner.listActiveBanners` | banners | `{status,startDate,endDate}` → `createdAt` | IXSCAN(`status_1_startDate_1_endDate_1`) | leave — small collection, existing compound adequate |
 | `product.listWarehouseProducts` (browse, no category) | products | `{warehouseId,isActive}` → `_id` | FETCH ← IXSCAN(`_id_`) — 472 examined / 60 | **fix** — `{warehouseId:1,_id:1}` |
 | `product.listWarehouseProducts` (browse, category) | products | `{warehouseId,isActive,categoryId}` → `_id` | FETCH ← IXSCAN(`_id_`) — 826 / 60 | **fix** — `{warehouseId:1,categoryId:1,_id:1}` |
-| `product.listWarehouseProducts` (search) | productcatalogs / products | RegExp `$or` | COLLSCAN (unanchored `/x/i` can't use a b-tree) | leave — see "text index" finding |
+| `product.listWarehouseProducts` (search) | productcatalogs / products | RegExp `$or` | COLLSCAN (unanchored `/x/i` can't use a b-tree) | leave — see "text index" finding. *Superseded by Level 4: one query on `products` scoped by `warehouseId`.* |
 | `product.listDistinctManufacturers…` | products | `distinct(field, {warehouseId,isActive,…})` | IXSCAN(`warehouseId_1_categoryId_1` prefix) | healthy (uses the new `{warehouseId:1,…}` prefix) |
 | `order.listOrdersForPharmacy` | orders | `{pharmacyId}` → `{orderNumber:-1}` | **SORT ← IXSCAN(`pharmacyId_1`)** — 735 / 16 | **fix** — `{pharmacyId:1,orderNumber:-1}` |
 | `order.listReturnableOrders` | orders | `{pharmacyId,status,updatedAt:{$gte}}` → `_id` | **SORT ← IXSCAN(`pharmacyId_1`)** — 735 / few | **fix** — `{pharmacyId:1,status:1,updatedAt:-1}` |
@@ -453,7 +453,7 @@ cache-cold noise and is not used as evidence.
 | `admin.listPendingAccounts` / `…Paginated` | users | `{status,role}` → `{createdAt:1}` / `{_id:1}` | **COLLSCAN 4000** | **fix** — `{role:1,status:1}` (paginated `_id` sort served by its prefix; dashboard `createdAt` sort still a small SORT) |
 | `admin.countPendingAccountsByRole` / `broadcastNotification` | users | `{status,role}` / `{status,role:{$in}}` | COLLSCAN | **fixed** by `{role:1,status:1}` |
 | `adminOffer.listPendingOffers` / `…Paginated` | offers | `{status:'pending'}` → `{createdAt}` / `{_id}` | COLLSCAN (no `status`-prefix index) | deferred — offers stays small, admin-only, low frequency |
-| `adminProduct.listAllProducts` / `…Paginated` | products | `{}` / `{warehouseId?,$or regex}` | COLLSCAN | leave — admin oversight view is inherently a scan of the whole (or one warehouse's) catalog |
+| `adminProduct.listAllProducts` / `…Paginated` | products | `{}` / `{warehouseId?,$or regex}` | COLLSCAN | leave — admin oversight view is inherently a scan of the whole (or one warehouse's) catalog. *Level 4: `listAllProducts` is removed; the list always paginates.* |
 | Category / Offer / Banner / Manufacturer / Discount lists per warehouse | — | `{warehouseId}` | IXSCAN or small COLLSCAN | healthy — few rows per warehouse |
 
 ### Existing indexes (verified against the live database, not just the schemas)
@@ -610,7 +610,7 @@ index build it is dominated by cold-cache page-ins and background load (some
 | `categories` `{sortOrder:1, nameEn:1}` | Would remove a sort, but the collection is a few dozen rows — below the threshold where an index earns its keep. |
 | `notifications` `{userId:1, isRead:1}` | Currently unused (no notification-list endpoint exists yet) but obviously intended for an unread-count / mark-read feature. Left in place. |
 | `complaints` indexes (`{pharmacyId,createdAt:-1}` etc.) | The collection does not exist yet (feature undeployed). The declared indexes sort by `createdAt` while the service paginates on `_id` — a minor mismatch to flag to the feature author — but complaint volume is inherently tiny (support tickets) and there is no data to measure. Not changed. |
-| `adminProduct.listAllProducts` / `listPaginatedAllProducts` | The admin oversight view is a deliberate scan of the entire (or one warehouse's) catalog with a RegExp search; a cursor index on `_id` exists, and a covering index for an unanchored RegExp is not possible. |
+| `adminProduct.listPaginatedAllProducts` (the unpaginated `listAllProducts` was removed in Level 4) | The admin oversight view is a deliberate scan of the entire (or one warehouse's) catalog with a RegExp search; a cursor index on `_id` exists, and a covering index for an unanchored RegExp is not possible. |
 | `admin.listAccounts` / `countAccounts` (the Accounts management page) | Filter path (`{role:{$in:[pharmacy,warehouse]}, status?}` → `{_id:-1}` cursor) is served by the existing `users` `{role:1,status:1}` index. The optional `search` term does an unanchored case-insensitive RegExp pre-match on `pharmacies` / `warehouses` (`nameAr/nameEn/ownerName/city/phone`) — a COLLSCAN of those small, low-write, admin-only collections, same deliberate tradeoff as `adminProduct` search. No name index added (an unanchored `/x/i` can't use a b-tree). Both list and count queries are `.lean()` (read-only → viewmodel only; block/unblock/approve/reject each load their own document). Revisit with an anchored search or `$text` if account volume grows large. |
 
 ### Deployment notes
@@ -712,7 +712,7 @@ full-document projections alike.
 
 **Indexes added:**
 
-- `products`: `{nameAr:1}`, `{nameEn:1}`, `{manufacturerAr:1}`, `{manufacturerEn:1}` (all four fields were previously unindexed for search).
+- `products`: `{nameAr:1}`, `{nameEn:1}`, `{manufacturerAr:1}`, `{manufacturerEn:1}` (all four fields were previously unindexed for search). *Level 4: no query reads these fields any more (search runs on the normalized keys); migration 06 drops all four.*
 - `productcatalogs`: `{nameEn:1}`, `{manufacturerEn:1}` only - `nameAr` and `manufacturerAr` were measured to already get an IXSCAN (not COLLSCAN) off the existing `{nameAr:1,manufacturerAr:1}` unique index, so a dedicated single-field index for either would be a pure duplicate with no measured benefit.
 - `pharmacies`: `{nameAr:1}`, `{nameEn:1}`, `{ownerName:1}`, `{phone:1}` - `city` already had its own index.
 - `warehouses`: `{nameAr:1}`, `{nameEn:1}`, `{phone:1}` - `city` already had its own index; no `ownerName` field exists.
@@ -720,3 +720,130 @@ full-document projections alike.
 
 No query, sort, pagination, or API response shape changed - single-field
 indexes only, exactly the Level 1/2 ground rule.
+
+## Level 4 — Catalog overhaul: one product search (branch `feature/catalog-overhaul`)
+
+### What replaced what
+
+Every product list and search (the pharmacist catalog, the warehouse's product
+list, its picker search, the admin's cross-warehouse list) now builds its
+filter with `productCatalog.service.js`'s `buildProductFilter` and reads one
+page with `findProductPage`: **one `find` on `products` per page**, sorted by
+`_id`, `limit + 1` rows. Each product carries normalized copies of its
+identity (`nameKey`, `nameEnKey`, `manufacturerKey`, `manufacturerEnKey`,
+written by the model hook and the migrations), so name, manufacturer and
+category are all predicates on one collection.
+
+Removed with it:
+
+- **`product.fetchMatchingPage`**, the pharmacist path's loop that fetched
+  batches of the warehouse's products and filtered them by manufacturer in
+  JavaScript until a page filled. A rare manufacturer made it read the whole
+  warehouse, batch by batch.
+- The five "regex the catalog, then `$in` the matching ids" copies, one of
+  them capped at 500 ids (a product outside the first 500 matches was
+  silently missing).
+- The unpaginated `listProductsForWarehouse` / `listAllProducts`
+  (`/warehouse/products` and `/admin/products` without `limit` now return
+  the default page, max 100).
+
+No product search path has a JavaScript batch loop any more.
+
+### The manufacturer filter (equality, index-backed)
+
+`manufacturer` is matched as an **equality on `manufacturerKey`** (the
+normalized name - owner's decision, kept over `manufacturerId`: the API takes
+the name, and legacy products without a `Manufacturer` have no id). A rename
+rewrites the key on every catalog item and product (`manufacturer.service.js`,
+tested in `manufacturer.test.js`).
+
+It is served by `warehouse_manufacturer_page`:
+`{warehouseId, isActive, manufacturerKey, _id, manufacturerId, manufacturerAr, manufacturerEn}`.
+
+- Pharmacist/warehouse pages: equality on the first three fields, then the
+  `_id` order - **keysExamined == nReturned** whatever the manufacturer's
+  share of the warehouse (pinned in `catalog.scale.test.js`).
+- The admin filter (deactivated rows included) sends
+  `isActive: {$in: [true, false, null]}` instead of no condition, so the three
+  ranges merge in `_id` order (SORT_MERGE) rather than falling back to a scan.
+  `null` also matches a missing field.
+- The warehouse's manufacturers list (`$group` over its active products) reads
+  only fields in the index, so it is a **covered query: docsExamined 0**
+  (pinned in `catalog.explain.test.js`).
+
+Measured on the scale-test seed - **50,000 products in one warehouse, 3 of
+them under a rare manufacturer** (`explain("executionStats")`; nReturned
+includes the one extra row that detects `hasMore`):
+
+| page | queries | keysExamined | docsExamined | nReturned |
+|---|---|---|---|---|
+| rare manufacturer, limit 2 (page 1, page 2) | 1, 1 | 3 | 3 | 3 |
+| rare manufacturer, limit 20 | 1 | 3 | 3 | 3 |
+| common manufacturer (49,997 products), limit 20 | 1 | 21 | 21 | 21 |
+| unknown manufacturer | 1 | 0 | 0 | 0 |
+
+### The text search: its real cost
+
+`search` is a **contains-match** (unchanged behavior): the normalized term,
+regex-escaped and unanchored, against the four normalized keys in one `$or`,
+evaluated **inside the Mongo query**. It is scoped by the `{warehouseId, _id}`
+index prefix, but an unanchored regex cannot seek a B-tree: MongoDB walks the
+warehouse's index range in `_id` order and tests each fetched document until
+the page fills. So the cost depends on how common the term is:
+
+- a **common** term fills the page quickly (tens of documents);
+- a **rare or non-matching** term reads **every product of the warehouse**.
+
+Measured, same 50,000-product warehouse:
+
+| search | queries | keysExamined | docsExamined | nReturned |
+|---|---|---|---|---|
+| "دواء 4999" (6 matches, limit 5) | 1 | 49,995 | 49,995 | 6 |
+| "دواء 49990" (1 match) | 1 | 50,000 | 50,000 | 1 |
+| no match | 1 | 50,000 | 50,000 | 0 |
+| any text + a rare manufacturer | 1 | 3 | 3 | 3 |
+
+(Here the only match of "دواء 4999" sits at the end of the `_id` range, the
+worst case; a term spread through the warehouse stops much earlier.) Adding a
+manufacturer bounds the scan to that manufacturer's index range.
+
+It stays a scan of **one** warehouse, never of the collection, and it is one
+round trip - acceptable at today's warehouse sizes (hundreds to a few thousand
+products).
+
+### Main queries (`node scripts/explain-catalog-queries.js`)
+
+12,000 products, 3 warehouses, ~70% of each warehouse under one manufacturer.
+`test/catalog.explain.test.js` runs the same queries and fails on a COLLSCAN or
+an in-memory SORT.
+
+| query | index | keysExamined | docsExamined | nReturned |
+|---|---|---|---|---|
+| pharmacist products, no manufacturer | warehouseId_1__id_1 | 22 | 22 | 21 |
+| pharmacist products, skewed manufacturer | warehouse_manufacturer_page | 21 | 21 | 21 |
+| warehouse-wide search | warehouseId_1__id_1 | 2,721 | 2,721 | 21 |
+| admin warehouse + rare manufacturer | warehouse_manufacturer_page (SORT_MERGE) | 31 | 31 | 31 |
+| admin search (all warehouses) | _id_ | 1,220 | 1,220 | 31 |
+| rename countDocuments | masterProductId_1 | 3 | 3 | 1 |
+| recall: linked products | masterProductId_1 | 3 | 3 | 3 |
+| recall updateMany | _id_ | 6 | 3 | 0 |
+| warehouse manufacturers list | warehouse_manufacturer_page (covered) | 3,921 | 0 | 13 groups |
+
+### Future option: word-prefix token search (not built)
+
+If a warehouse grows past **~10,000 products**, the rare/no-match search
+starts costing tens of thousands of documents per keystroke-page. The next
+step then is a **word-prefix token search**:
+
+- store, per product, the normalized words of its names and manufacturer plus
+  their prefixes (e.g. `بنادول` → `بن`, `بنا`, `بناد`, …, capped at a few
+  characters or a fixed number of prefixes per word) in one array field;
+- index `{warehouseId, tokens, _id}` (multikey) and match the typed words
+  with equality on that array, so the query **seeks** instead of scanning;
+- keep the current regex as a fallback for terms shorter than the minimum
+  prefix length.
+
+This changes matching from "contains anywhere" to "some word starts with",
+e.g. `ادول` would no longer find `بنادول`. That is a behavior change and needs
+the product owner's sign-off, the same constraint Levels 1–3 recorded for
+`$text`. Until then the contains-match stays as it is.

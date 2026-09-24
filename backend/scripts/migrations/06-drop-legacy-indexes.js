@@ -6,7 +6,8 @@
 //     the normalized keys (nameKey/nameEnKey/manufacturerKey/manufacturerEnKey) instead - checked
 //     by grep before this was written: nothing queries those four fields any
 //     more (they are still READ, as display fallbacks for legacy products,
-//     which needs no index).
+//     which needs no index). Also drops warehouseId_1_manufacturerKey_1__id_1,
+//     superseded by the covering warehouse_manufacturer_page index.
 //  2. Creates every index the catalog models now declare that the database
 //     does not have yet (Model.createIndexes - creates only, never drops). The
 //     unique identityKey index is left to 04-dedupe-catalog.js, which only
@@ -18,7 +19,15 @@
 const mongoose = require('mongoose');
 const { runCli, dropIndexIfExists } = require('./lib');
 
-const LEGACY_PRODUCT_INDEXES = ['nameAr_1', 'nameEn_1', 'manufacturerAr_1', 'manufacturerEn_1'];
+const LEGACY_PRODUCT_INDEXES = [
+  'nameAr_1',
+  'nameEn_1',
+  'manufacturerAr_1',
+  'manufacturerEn_1',
+  // Declared earlier on this branch, superseded by warehouse_manufacturer_page
+  // (product.model.js). Only present where that earlier code auto-built it.
+  'warehouseId_1_manufacturerKey_1__id_1',
+];
 
 const MODELS_TO_INDEX = [
   'product',

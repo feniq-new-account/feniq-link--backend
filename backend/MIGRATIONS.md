@@ -24,7 +24,7 @@ Run them in this order. Each depends on the ones before it.
 | 03 | `03-deactivated-by.js` | For each inactive product with no reason recorded: `catalog_recall` if its catalog item is inactive, otherwise `admin`. |
 | 04 | `04-dedupe-catalog.js` | Groups catalog items that share an `identityKey`. **Safe** groups are merged automatically into the oldest item, one transaction per group, keeping any image. A group is safe when no warehouse is linked to more than one item and all items share the same active state. **Unsafe** groups go to `CatalogDuplicateReview` for the admin's Duplicate review screen. Builds the unique `identityKey` index only once no duplicates remain; otherwise it prints what blocks it. |
 | 05 | `05-remove-barcode.js` | Unsets the removed `Product.barcode` field. |
-| 06 | `06-drop-legacy-indexes.js` | Drops the four legacy single-field product indexes (`nameAr_1`, `nameEn_1`, `manufacturerAr_1`, `manufacturerEn_1`), then creates every index the catalog models now declare. It only creates, never drops. The unique `identityKey` index is left to 04. Run this **after** the new search code is deployed. |
+| 06 | `06-drop-legacy-indexes.js` | Drops the four legacy single-field product indexes (`nameAr_1`, `nameEn_1`, `manufacturerAr_1`, `manufacturerEn_1`), and `warehouseId_1_manufacturerKey_1__id_1` if an earlier build of this branch created it (superseded by the covering `warehouse_manufacturer_page`), then creates every index the catalog models now declare. It only creates, never drops. The unique `identityKey` index is left to 04. Run this **after** the new search code is deployed. |
 
 Existing image URLs are already on Cloudinary. No script moves or rewrites them.
 

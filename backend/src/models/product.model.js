@@ -181,10 +181,30 @@ productSchema.pre('validate', async function syncSearchKeys() {
 productSchema.index({ warehouseId: 1, categoryId: 1, _id: 1 });
 productSchema.index({ warehouseId: 1, _id: 1 });
 
-// The pharmacist's warehouse -> manufacturer -> products drill-down: one
-// warehouse, one manufacturer (by normalized key), paged by `_id`. Replaces
-// the old fetch-and-filter-in-Node loop (H1).
-productSchema.index({ warehouseId: 1, manufacturerKey: 1, _id: 1 });
+// One index for a warehouse's products by manufacturer (normalized key):
+//  - the pharmacist's warehouse -> manufacturer -> products drill-down, paged
+//    by `_id` (equality on warehouseId, isActive, manufacturerKey, then the
+//    `_id` order) - one index seek per page, keysExamined == nReturned
+//    whatever the manufacturer's share of the warehouse (H1);
+//  - the warehouse's manufacturers list (warehouseManufacturer.service.js),
+//    which reads nothing but these fields, so its $group is a COVERED query:
+//    no document is fetched (catalog overhaul Phase 11, M9);
+//  - the admin's warehouse + manufacturer filter, which lists isActive as
+//    {$in: [true, false, null]} (buildProductFilter) so the three ranges merge
+//    in `_id` order.
+// Replaces {warehouseId, manufacturerKey, _id}; migration 06 drops that one.
+productSchema.index(
+  {
+    warehouseId: 1,
+    isActive: 1,
+    manufacturerKey: 1,
+    _id: 1,
+    manufacturerId: 1,
+    manufacturerAr: 1,
+    manufacturerEn: 1,
+  },
+  { name: 'warehouse_manufacturer_page' }
+);
 
 // Manufacturer rename/merge rewrite every product of one manufacturer, and the
 // warehouse's company list groups on it.

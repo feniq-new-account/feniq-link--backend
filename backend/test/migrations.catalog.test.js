@@ -197,7 +197,8 @@ test('05 and 06: barcode removed, legacy index dropped, new indexes ensured', as
   assert.deepStrictEqual(report.droppedLegacyIndexes, ['nameAr_1']);
   const productIndexes = (await db.collection('products').indexes()).map((i) => i.name);
   assert.ok(productIndexes.includes('masterProductId_1'));
-  assert.ok(productIndexes.includes('warehouseId_1_manufacturerKey_1__id_1'));
+  assert.ok(productIndexes.includes('warehouse_manufacturer_page'));
+  assert.ok(!productIndexes.includes('warehouseId_1_manufacturerKey_1__id_1'));
 });
 
 test('every migration is idempotent: a second apply changes nothing', async () => {

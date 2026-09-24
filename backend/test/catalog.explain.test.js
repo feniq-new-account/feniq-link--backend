@@ -37,7 +37,7 @@ test('a pharmacist page reads a page, not the warehouse - even for the skewed ma
     const r = byName(name);
     assert.ok(r.docsExamined <= 25, `${name}: ${r.docsExamined} docs examined`);
   }
-  assert.ok(byName('pharmacist products, skewed manufacturer').indexes.some((i) => i.includes('manufacturerKey')));
+  assert.deepStrictEqual(byName('pharmacist products, skewed manufacturer').indexes, ['warehouse_manufacturer_page']);
 });
 
 test('the rename count and the recall go through the masterProductId index', () => {
@@ -50,7 +50,15 @@ test('the rename count and the recall go through the masterProductId index', () 
   assert.ok(byName('recall updateMany').indexes.includes('_id_'));
 });
 
-test('the manufacturers list is one indexed pass over the warehouse', () => {
+test('the manufacturers list is a covered query: no product document is fetched', () => {
   const r = byName('warehouse manufacturers list');
-  assert.ok(r.indexes.some((i) => i.startsWith('warehouseId')), r.indexes.join(','));
+  assert.deepStrictEqual(r.indexes, ['warehouse_manufacturer_page']);
+  assert.strictEqual(r.docsExamined, 0);
+  assert.ok(r.stages.includes('PROJECTION_COVERED'), r.stages.join(' <- '));
+});
+
+test('the admin warehouse + rare manufacturer filter keeps to the index, in _id order', () => {
+  const r = byName('admin warehouse + rare manufacturer');
+  assert.ok(!r.stages.includes('SORT'), r.stages.join(' <- '));
+  assert.strictEqual(r.keysExamined, r.returned);
 });
