@@ -1,6 +1,5 @@
 const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/ApiError');
-const { normalizeText } = require('../utils/normalizeText');
 const catalogService = require('../services/productCatalog.service');
 const catalogViewModel = require('../viewmodels/productCatalog.viewmodel');
 const catalogRequestService = require('../services/catalogRequest.service');
@@ -71,7 +70,7 @@ const importExcel = asyncHandler(async (req, res) => {
   const report = await catalogService.importFromExcel(req.file, {
     confirmNewManufacturers,
     manufacturerLinks,
-    explicitMapping: mapping ? new Map(Object.entries(mapping).map(([key, field]) => [normalizeText(key), field])) : null,
+    mapping,
   });
   res.json({ success: true, ...report });
 });

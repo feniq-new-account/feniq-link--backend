@@ -8,9 +8,11 @@ const { Schema, model } = require('mongoose');
 //
 // `headerKey` is the header cell's text after normalizeText(); `field` is one
 // of the import fields (name, price, manufacturer, unit, currency, bonus).
+// `warehouseId` null is the admin's catalog import, whose answers are shared
+// by every admin (importMapping.service.js).
 const importColumnMappingSchema = new Schema(
   {
-    warehouseId: { type: Schema.Types.ObjectId, ref: 'Warehouse', required: true },
+    warehouseId: { type: Schema.Types.ObjectId, ref: 'Warehouse', default: null },
     headerKey: { type: String, required: true },
     field: {
       type: String,

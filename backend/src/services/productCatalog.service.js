@@ -18,6 +18,7 @@ const { UNITS, resolveUnit } = require('../config/units');
 const { fieldForHeader, IMPORT_FIELDS, REQUIRED_FIELDS } = require('../config/importSynonyms');
 const { parsePriceCell, resolveRowCurrency } = require('../utils/importValues');
 const { parseBonus } = require('../utils/bonus');
+const { loadSavedMapping, parseExplicitMapping, saveMapping } = require('./importMapping.service');
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -908,8 +909,14 @@ async function priceRowsInUsd(rows) {
 //    { rawName: manufacturerId }).
 //  - A withdrawn (recalled) item is never reactivated - reported under
 //    `withdrawn` (M1).
-async function importFromExcel(file, { confirmNewManufacturers = [], manufacturerLinks = {}, explicitMapping = null } = {}) {
-  const { rows } = await readImportWorkbook(file, { explicitMapping });
+// `mapping` is the web's answer to IMPORT_COLUMNS_UNRECOGNIZED ({ headerKey:
+// field }); it is remembered for the next catalog import once the file reads
+// (the admins share one set - importMapping.service.js).
+async function importFromExcel(file, { confirmNewManufacturers = [], manufacturerLinks = {}, mapping = null } = {}) {
+  const explicitMapping = parseExplicitMapping(mapping);
+  const savedMapping = await loadSavedMapping(null);
+  const { rows } = await readImportWorkbook(file, { explicitMapping, savedMapping });
+  await saveMapping(null, explicitMapping);
   const errors = [];
   const usable = [];
   for (const row of rows) {

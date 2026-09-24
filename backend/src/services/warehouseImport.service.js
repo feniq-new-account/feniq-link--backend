@@ -13,7 +13,7 @@ const Manufacturer = require('../models/manufacturer.model');
 const WarehouseProductAlias = require('../models/warehouseProductAlias.model');
 const ImportBatch = require('../models/importBatch.model');
 const ImportBatchRow = require('../models/importBatchRow.model');
-const ImportColumnMapping = require('../models/importColumnMapping.model');
+const { loadSavedMapping, parseExplicitMapping, saveMapping } = require('./importMapping.service');
 const CatalogRequest = require('../models/catalogRequest.model');
 const { readImportWorkbook, priceRowsInUsd, escapeRegex } = require('./productCatalog.service');
 const { registerManufacturers } = require('./warehouseManufacturer.service');
@@ -231,48 +231,6 @@ const EXISTING_PRODUCT_SELECT = 'masterProductId price isActive deactivatedBy ma
 // ---------------------------------------------------------------------------
 // The import itself
 // ---------------------------------------------------------------------------
-
-async function loadSavedMapping(warehouseId) {
-  const rows = await ImportColumnMapping.find({ warehouseId }).select('headerKey field').lean();
-  return new Map(rows.map((row) => [row.headerKey, row.field]));
-}
-
-// { headerKey: field } from the web's mapping step -> Map, validated.
-function parseExplicitMapping(input) {
-  if (!input) return null;
-  let object = input;
-  if (typeof input === 'string') {
-    try {
-      object = JSON.parse(input);
-    } catch {
-      throw ApiError.badRequest('Invalid column mapping.', undefined, 'INVALID_COLUMN_MAPPING');
-    }
-  }
-  if (!object || typeof object !== 'object' || Array.isArray(object)) {
-    throw ApiError.badRequest('Invalid column mapping.', undefined, 'INVALID_COLUMN_MAPPING');
-  }
-  const allowed = new Set(ImportColumnMapping.schema.path('field').enumValues);
-  const mapping = new Map();
-  for (const [headerKey, field] of Object.entries(object)) {
-    if (!field) continue;
-    if (!allowed.has(field)) throw ApiError.badRequest('Invalid column mapping.', undefined, 'INVALID_COLUMN_MAPPING');
-    mapping.set(normalizeText(headerKey), field);
-  }
-  return mapping;
-}
-
-async function saveMapping(warehouseId, mapping) {
-  if (!mapping || mapping.size === 0) return;
-  await ImportColumnMapping.bulkWrite(
-    [...mapping].map(([headerKey, field]) => ({
-      updateOne: {
-        filter: { warehouseId, headerKey },
-        update: { $set: { field }, $setOnInsert: { warehouseId, headerKey } },
-        upsert: true,
-      },
-    }))
-  );
-}
 
 function rowRecord(batchId, warehouseId, row, extra) {
   return {
