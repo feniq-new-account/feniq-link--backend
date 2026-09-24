@@ -1,9 +1,8 @@
 const Offer = require('../models/offer.model');
 const Product = require('../models/product.model');
-const ProductCatalog = require('../models/productCatalog.model');
 const Warehouse = require('../models/warehouse.model');
 const { ApiError } = require('../utils/ApiError');
-const { applyResolvedIdentity, escapeRegex } = require('./productCatalog.service');
+const { applyResolvedIdentity, escapeRegex, buildProductFilter } = require('./productCatalog.service');
 const { getDiscountMapForWarehouse, discountPercentageFor } = require('./manufacturerDiscount.service');
 
 // The pharmacist-facing side of warehouse product offers - the "what is on
@@ -164,26 +163,30 @@ function buildOfferStatusFilter(status, now = new Date()) {
 // title*, warehouseName* (admin only), pendingUpdate's productName* - never
 // pendingUpdate's own title (the old haystack never included it either), and
 // never discountPercentage (that's the separate min/max range filter).
-async function buildOfferSearchOr(searchTerm, { includeWarehouseName = false } = {}) {
+//
+// The product half runs through the shared product search
+// (productCatalog.service.js's buildProductFilter, normalized keys) and only
+// over the products that actually have an offer in scope - so a warehouse's
+// own list only ever looks at its own products, and even the admin's
+// cross-warehouse list is bounded by the number of offers, never by the size
+// of the whole catalog (it used to regex every product on the platform and
+// carry every match into an $in).
+async function buildOfferSearchOr(searchTerm, { includeWarehouseName = false, scopeFilter = {} } = {}) {
   const pattern = new RegExp(escapeRegex(searchTerm), 'i');
 
-  const matchingCatalogEntries = await ProductCatalog.find(
-    { $or: [{ nameAr: pattern }, { nameEn: pattern }, { manufacturerAr: pattern }, { manufacturerEn: pattern }] },
-    '_id'
-  );
-  const matchingProducts = await Product.find(
-    {
-      $or: [
-        { nameAr: pattern },
-        { nameEn: pattern },
-        { manufacturerAr: pattern },
-        { manufacturerEn: pattern },
-        { masterProductId: { $in: matchingCatalogEntries.map((c) => c._id) } },
-      ],
-    },
-    '_id'
-  );
-  const productIds = matchingProducts.map((p) => p._id);
+  const [offerProductIds, pendingProductIds] = await Promise.all([
+    Offer.distinct('productId', scopeFilter),
+    Offer.distinct('pendingUpdate.productId', { ...scopeFilter, pendingUpdate: { $ne: null } }),
+  ]);
+  const candidateIds = [...offerProductIds, ...pendingProductIds];
+  const productFilter = buildProductFilter({
+    warehouseId: scopeFilter.warehouseId,
+    activeOnly: false,
+    search: searchTerm,
+  });
+  const productIds = candidateIds.length
+    ? await Product.distinct('_id', { ...productFilter, _id: { $in: candidateIds } })
+    : [];
 
   const or = [
     { titleAr: pattern },
@@ -227,7 +230,7 @@ async function buildOfferListFilter({
   }
 
   if (typeof search === 'string' && search.trim()) {
-    const or = await buildOfferSearchOr(search.trim(), { includeWarehouseName });
+    const or = await buildOfferSearchOr(search.trim(), { includeWarehouseName, scopeFilter });
     clauses.push({ $or: or });
   }
 

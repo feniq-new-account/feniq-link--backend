@@ -393,6 +393,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchProductsHint => 'Search by name or manufacturer';
 
   @override
+  String get searchWarehouseProductsHint =>
+      'Search all of this warehouse\'s products';
+
+  @override
   String get addToCartButton => 'Add';
 
   @override

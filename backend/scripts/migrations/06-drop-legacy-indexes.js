@@ -3,7 +3,7 @@
 //  1. Drops the four single-field indexes on products.nameAr / nameEn /
 //     manufacturerAr / manufacturerEn. They only ever served the unanchored
 //     regex search on the legacy name fields; every search now runs against
-//     the normalized keys (nameKey/nameEnKey/manufacturerKey) instead - checked
+//     the normalized keys (nameKey/nameEnKey/manufacturerKey/manufacturerEnKey) instead - checked
 //     by grep before this was written: nothing queries those four fields any
 //     more (they are still READ, as display fallbacks for legacy products,
 //     which needs no index).

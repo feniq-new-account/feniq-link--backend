@@ -170,6 +170,7 @@
   "anonymousReviewerName": "مستخدم",
   "browseWarehouseProductsButton": "تصفح منتجات هذا المستودع",
   "searchProductsHint": "ابحث بالاسم أو الشركة المصنعة",
+  "searchWarehouseProductsHint": "ابحث في كل أصناف المستودع",
   "addToCartButton": "إضافة",
   "unavailableLabel": "غير متوفر",
   "offerBadgeLabel": "عرض",

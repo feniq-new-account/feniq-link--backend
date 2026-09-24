@@ -9,7 +9,7 @@ class CatalogCubit extends Cubit<CatalogState> {
   CatalogCubit({
     required CatalogRepository catalogRepository,
     required String warehouseId,
-    required String manufacturer,
+    String? manufacturer,
   }) : _catalogRepository = catalogRepository,
        _warehouseId = warehouseId,
        _manufacturer = manufacturer,
@@ -17,9 +17,15 @@ class CatalogCubit extends Cubit<CatalogState> {
 
   final CatalogRepository _catalogRepository;
   final String _warehouseId;
-  // Section 16: the catalog is now always scoped to one manufacturer, chosen
-  // on ManufacturersView just before this screen - never cleared from here.
-  final String _manufacturer;
+  // Section 16: CatalogView is scoped to one manufacturer, chosen on
+  // ManufacturersView just before it - never cleared from here.
+  //
+  // Null is the warehouse-wide search on ManufacturersView itself: no
+  // manufacturer filter, and nothing is loaded until the pharmacist types -
+  // an empty query means "show the manufacturers list", not "every product".
+  final String? _manufacturer;
+
+  bool get _isWarehouseSearch => _manufacturer == null;
   final Debouncer _searchDebouncer = Debouncer(duration: const Duration(milliseconds: 400));
 
   // Generation token for in-flight fetches. Every request takes the next id
@@ -61,9 +67,22 @@ class CatalogCubit extends Cubit<CatalogState> {
   }
 
   void search(String query) {
+    // Warehouse-wide search, query cleared: back to the idle state at once -
+    // no request, and any fetch still in flight is made stale so its result
+    // can't land after the screen has gone back to the manufacturers list.
+    if (_isWarehouseSearch && query.trim().isEmpty) {
+      _searchDebouncer.cancel();
+      _requestId++;
+      emit(const CatalogState());
+      return;
+    }
     emit(state.copyWith(searchQuery: query));
     _searchDebouncer.run(_reloadProducts);
   }
+
+  // The error state's retry: a scoped catalog reloads everything (categories
+  // included); the warehouse-wide search just re-runs the current query.
+  Future<void> retry() => _isWarehouseSearch ? _reloadProducts() : initialize();
 
   void selectCategory(String? categoryId) {
     // Cancels any search fetch still waiting out its debounce: it would fire
@@ -82,6 +101,9 @@ class CatalogCubit extends Cubit<CatalogState> {
   // cursor from the previous filter combination means nothing under a new
   // one, so it's never carried over here.
   Future<void> _reloadProducts() async {
+    if (_isWarehouseSearch && state.searchQuery.trim().isEmpty) {
+      return;
+    }
     final requestId = ++_requestId;
     emit(state.copyWith(status: CatalogStatus.loading, hasMore: false, clearNextCursor: true));
     try {

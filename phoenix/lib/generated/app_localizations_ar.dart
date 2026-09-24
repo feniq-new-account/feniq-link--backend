@@ -395,6 +395,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchProductsHint => 'ابحث بالاسم أو الشركة المصنعة';
 
   @override
+  String get searchWarehouseProductsHint => 'ابحث في كل أصناف المستودع';
+
+  @override
   String get addToCartButton => 'إضافة';
 
   @override

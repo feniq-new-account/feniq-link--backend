@@ -65,21 +65,31 @@ async function listManufacturers({ search, limit = DEFAULT_LIMIT, after = null }
 // (a pipeline update, since it differs per item).
 async function syncManufacturerCopies(manufacturer, session) {
   const { _id: manufacturerId, nameAr, nameEn, key } = manufacturer;
+  // Pipeline updates read a string starting with "$" as a field path, so every
+  // admin-typed value goes in as a $literal. The English key follows the
+  // manufacturer's English name when it has one; otherwise each item keeps the
+  // key of its own manufacturerEn.
+  const enKey = nameEn ? { $literal: normalizeText(nameEn) } : '$manufacturerEnKey';
   await ProductCatalog.updateMany(
     { manufacturerId },
     [
       {
         $set: {
-          manufacturerAr: nameAr,
-          manufacturerEn: { $ifNull: [nameEn, '$manufacturerEn'] },
-          manufacturerKey: key,
-          identityKey: { $concat: [{ $ifNull: ['$nameKey', ''] }, '|', key] },
+          manufacturerAr: { $literal: nameAr },
+          manufacturerEn: nameEn ? { $literal: nameEn } : '$manufacturerEn',
+          manufacturerKey: { $literal: key },
+          manufacturerEnKey: enKey,
+          identityKey: { $concat: [{ $ifNull: ['$nameKey', ''] }, '|', { $literal: key }] },
         },
       },
     ],
     { session }
   );
-  await Product.updateMany({ manufacturerId }, { $set: { manufacturerKey: key } }, { session });
+  await Product.updateMany(
+    { manufacturerId },
+    [{ $set: { manufacturerKey: { $literal: key }, manufacturerEnKey: enKey } }],
+    { session }
+  );
   // A legacy product (no catalog link) displays its own manufacturer text -
   // it follows the rename too.
   await Product.updateMany(

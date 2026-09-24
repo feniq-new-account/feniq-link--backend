@@ -6,6 +6,7 @@ import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/theme/app_text_theme.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/features/catalog/data/models/manufacturer_model.dart';
+import 'package:feniq/features/catalog/presentation/widgets/manufacturer_avatar.dart';
 
 // The pharmacist's entry into a warehouse's catalog is now this card, not a
 // medicine directly - tapping one filters the catalog down to this
@@ -34,10 +35,11 @@ class ManufacturerCard extends StatelessWidget {
                 color: AppColors.surfaceOf(context),
                 borderRadius: AppRadius.medium,
               ),
-              child: Icon(
-                Icons.factory_outlined,
-                color: AppColors.textOf(context),
-                size: AppSizes.iconSizeLarge,
+              // The admin-set logo, or the first letter in a coloured circle.
+              child: ManufacturerAvatar(
+                name: manufacturer.name,
+                id: manufacturer.id,
+                logoUrl: manufacturer.logoUrl,
               ),
             ),
           ),

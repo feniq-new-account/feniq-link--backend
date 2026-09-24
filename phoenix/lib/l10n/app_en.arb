@@ -171,6 +171,7 @@
   "anonymousReviewerName": "User",
   "browseWarehouseProductsButton": "Browse this warehouse's products",
   "searchProductsHint": "Search by name or manufacturer",
+  "searchWarehouseProductsHint": "Search all of this warehouse's products",
   "addToCartButton": "Add",
   "unavailableLabel": "Unavailable",
   "offerBadgeLabel": "Offer",

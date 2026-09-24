@@ -71,6 +71,7 @@ const productSchema = new Schema(
     nameKey: { type: String, default: null },
     nameEnKey: { type: String, default: null },
     manufacturerKey: { type: String, default: null },
+    manufacturerEnKey: { type: String, default: null },
     // Copied from the catalog item (manufacturer.model.js). What manufacturer
     // discounts are matched against (manufacturerDiscount.service.js).
     manufacturerId: { type: Schema.Types.ObjectId, ref: 'Manufacturer', default: null },
@@ -136,13 +137,14 @@ productSchema.pre('validate', async function syncSearchKeys() {
     const catalogId = this.populated('masterProductId') || this.masterProductId;
     const ProductCatalog = this.model('ProductCatalog');
     const catalogItem = await ProductCatalog.findById(catalogId)
-      .select('nameKey nameEnKey manufacturerKey manufacturerId')
+      .select('nameKey nameEnKey manufacturerKey manufacturerEnKey manufacturerId')
       .session(session)
       .lean();
     if (!catalogItem) return;
     this.nameKey = catalogItem.nameKey;
     this.nameEnKey = catalogItem.nameEnKey;
     this.manufacturerKey = catalogItem.manufacturerKey;
+    this.manufacturerEnKey = catalogItem.manufacturerEnKey ?? null;
     this.manufacturerId = catalogItem.manufacturerId;
     return;
   }
@@ -150,11 +152,12 @@ productSchema.pre('validate', async function syncSearchKeys() {
   const legacyChanged =
     this.isNew ||
     this.nameKey == null ||
-    ['nameAr', 'nameEn', 'manufacturerAr'].some((field) => this.isModified(field));
+    ['nameAr', 'nameEn', 'manufacturerAr', 'manufacturerEn'].some((field) => this.isModified(field));
   if (!legacyChanged) return;
   this.nameKey = normalizeText(this.nameAr) || null;
   this.nameEnKey = normalizeText(this.nameEn) || null;
   this.manufacturerKey = normalizeText(this.manufacturerAr) || null;
+  this.manufacturerEnKey = normalizeText(this.manufacturerEn) || null;
   // A legacy row's manufacturer is only linked if the Manufacturer already
   // exists - never created from a legacy product's free text.
   if (this.manufacturerKey) {

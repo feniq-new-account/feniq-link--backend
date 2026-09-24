@@ -55,6 +55,7 @@ const productCatalogSchema = new Schema(
     nameKey: { type: String, default: null },
     manufacturerKey: { type: String, default: null },
     nameEnKey: { type: String, default: null },
+    manufacturerEnKey: { type: String, default: null },
     // `${nameKey}|${manufacturerKey}` - what makes a catalog item unique. Two
     // entries that only differ by spelling (hamza, ta marbuta, spacing, case)
     // are the same medicine; the unique index below enforces it once
@@ -118,6 +119,7 @@ productCatalogSchema.pre('validate', async function setSearchKeys() {
   this.nameKey = searchKey(this.nameAr);
   this.nameEnKey = searchKey(this.nameEn);
   this.manufacturerKey = searchKey(this.manufacturerAr);
+  this.manufacturerEnKey = searchKey(this.manufacturerEn);
   this.identityKey = identityKeyOf(this.nameKey, this.manufacturerKey);
 });
 

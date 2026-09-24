@@ -1,6 +1,6 @@
 // Migration 02 - normalized search keys (catalog overhaul §1.6.1).
 //
-//  - ProductCatalog: nameKey, nameEnKey, manufacturerKey and identityKey
+//  - ProductCatalog: nameKey, nameEnKey, manufacturerKey, manufacturerEnKey and identityKey
 //    recomputed with the shared normalizer (utils/normalizeText.js). The old
 //    nameKey/manufacturerKey only folded case and spaces; the new ones also
 //    unify hamza/ta-marbuta/alef-maksura, strip tashkeel and read Arabic digits.
@@ -31,13 +31,14 @@ async function run({ apply = false, log = () => {} } = {}) {
   const itemKeys = new Map(); // id -> keys, for the products below
   const items = catalog.find(
     {},
-    { projection: { nameAr: 1, nameEn: 1, manufacturerAr: 1, manufacturerId: 1, nameKey: 1, nameEnKey: 1, manufacturerKey: 1, identityKey: 1 } }
+    { projection: { nameAr: 1, nameEn: 1, manufacturerAr: 1, manufacturerEn: 1, manufacturerId: 1, nameKey: 1, nameEnKey: 1, manufacturerKey: 1, manufacturerEnKey: 1, identityKey: 1 } }
   );
   for await (const item of items) {
     const keys = {
       nameKey: keyOf(item.nameAr),
       nameEnKey: keyOf(item.nameEn),
       manufacturerKey: keyOf(item.manufacturerAr),
+      manufacturerEnKey: keyOf(item.manufacturerEn),
     };
     keys.identityKey = identityKeyOf(keys.nameKey, keys.manufacturerKey);
     itemKeys.set(String(item._id), { ...keys, manufacturerId: item.manufacturerId ?? null });
@@ -56,10 +57,12 @@ async function run({ apply = false, log = () => {} } = {}) {
         nameAr: 1,
         nameEn: 1,
         manufacturerAr: 1,
+        manufacturerEn: 1,
         manufacturerId: 1,
         nameKey: 1,
         nameEnKey: 1,
         manufacturerKey: 1,
+        manufacturerEnKey: 1,
       },
     }
   );
@@ -72,6 +75,7 @@ async function run({ apply = false, log = () => {} } = {}) {
         nameKey: fromItem.nameKey,
         nameEnKey: fromItem.nameEnKey,
         manufacturerKey: fromItem.manufacturerKey,
+        manufacturerEnKey: fromItem.manufacturerEnKey,
       };
       if (fromItem.manufacturerId && String(product.manufacturerId) !== String(fromItem.manufacturerId)) {
         keys.manufacturerId = fromItem.manufacturerId;
@@ -81,6 +85,7 @@ async function run({ apply = false, log = () => {} } = {}) {
         nameKey: keyOf(product.nameAr),
         nameEnKey: keyOf(product.nameEn),
         manufacturerKey: keyOf(product.manufacturerAr),
+        manufacturerEnKey: keyOf(product.manufacturerEn),
       };
     }
     const changed = Object.entries(keys).some(([field, value]) => String(product[field] ?? null) !== String(value ?? null));

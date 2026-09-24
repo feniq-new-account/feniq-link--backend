@@ -7,7 +7,8 @@ const { searchKey } = require('../models/productCatalog.model');
 const {
   applyResolvedIdentity,
   loadAndParseUpload,
-  escapeRegex,
+  buildProductFilter,
+  findProductPage,
 } = require('./productCatalog.service');
 const { registerManufacturers } = require('./warehouseManufacturer.service');
 const { assertRateUsedIsCurrent } = require('./exchangeRate.service');
@@ -110,20 +111,6 @@ async function listProductsForWarehouse(warehouseId, { availableOnly = false } =
   return products;
 }
 
-// An EXACT manufacturer match, as the catalog page's company drill-down needs
-// it - not the fuzzy name-or-manufacturer regex searchPaginatedProductsForWarehouse
-// does. A product's manufacturer lives on its linked catalog entry
-// (masterProductId) for everything created since Section 14 Part 2 and on the
-// row itself for legacy products, so the clause has to cover both places -
-// the same two-step as the search below, minus the regex.
-async function manufacturerMatchClauses(manufacturerAr) {
-  const catalogIds = await ProductCatalog.distinct('_id', { manufacturerAr });
-  return [
-    { masterProductId: null, manufacturerAr },
-    { masterProductId: { $in: catalogIds } },
-  ];
-}
-
 // The Products management page (unlike the callers of the unpaginated
 // listProductsForWarehouse above - banner/offer "linked product" pickers,
 // which need every product, alphabetically) wants newest-first with "Load
@@ -131,46 +118,22 @@ async function manufacturerMatchClauses(manufacturerAr) {
 // to `createdAt` descending, so no compound cursor is needed.
 //
 // `manufacturerAr` narrows the page to one company (the catalog page opens on
-// a company list and drills into it). Applied here rather than in React so
-// "Load more" keeps paging through that company's products only - a
-// client-side filter would page through the whole catalog and show a near-
-// empty page whenever the next 20 rows happened to be other companies'.
+// a company list and drills into it) - an EXACT company match on its
+// normalized key, through the shared product search
+// (productCatalog.service.js's buildProductFilter), so "Load more" keeps
+// paging through that company's products only.
 async function listPaginatedProductsForWarehouse(
   warehouseId,
   { limit = WAREHOUSE_PRODUCTS_DEFAULT_LIMIT, after = null, manufacturerAr = null } = {}
 ) {
-  const filter = { warehouseId, isActive: true };
-  const manufacturer = typeof manufacturerAr === 'string' ? manufacturerAr.trim() : '';
-  if (manufacturer) {
-    filter.$or = await manufacturerMatchClauses(manufacturer);
-  }
-  if (after !== null) {
-    filter._id = { $lt: after };
-  }
-
-  const rows = await Product.find(filter)
-    .select(LIST_PRODUCT_SELECT)
-    .sort({ _id: -1 })
-    .limit(limit + 1)
-    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' });
-  const hasMore = rows.length > limit;
-  const page = hasMore ? rows.slice(0, limit) : rows;
-  page.forEach(applyResolvedIdentity);
-  const nextCursor = page.length > 0 ? String(page[page.length - 1]._id) : null;
-
-  return { rows: page, hasMore, nextCursor };
+  const filter = buildProductFilter({ warehouseId, manufacturer: manufacturerAr ?? undefined });
+  return findProductPage(filter, { limit, after, direction: -1, select: LIST_PRODUCT_SELECT });
 }
 
 // Backs the advertisement product picker: search this warehouse's own
 // products by name (or manufacturer), paginated - so the panel never has to
-// pull the whole catalog down and filter it client-side.
-//
-// A product's name lives on the linked catalog entry (masterProductId), not on
-// the product itself, so a plain field regex would miss every catalog-linked
-// row. Same two-step as adminProduct.service.listPaginatedAllProducts:
-// regex-match ProductCatalog first, then $in those ids - plus the product's own
-// legacy identity fields, for rows created before Section 14 Part 2. One
-// catalog query + one product query, whatever the page size.
+// pull the whole catalog down and filter it client-side. Same shared search as
+// every other product search (normalized keys, one query per page).
 //
 // A blank `q` is not an error - it just yields the same newest-first page
 // listPaginatedProductsForWarehouse gives, so the picker can show something
@@ -179,41 +142,8 @@ async function searchPaginatedProductsForWarehouse(
   warehouseId,
   { q = '', limit = WAREHOUSE_PRODUCTS_DEFAULT_LIMIT, after = null } = {}
 ) {
-  const filter = { warehouseId, isActive: true };
-
-  const search = typeof q === 'string' ? q.trim() : '';
-  if (search) {
-    // 'i' covers English case-insensitivity; Arabic is caseless, so the same
-    // pattern matches either script without a second code path.
-    const pattern = new RegExp(escapeRegex(search), 'i');
-    const matchingCatalogEntries = await ProductCatalog.find(
-      { $or: [{ nameAr: pattern }, { nameEn: pattern }, { manufacturerAr: pattern }, { manufacturerEn: pattern }] },
-      '_id'
-    );
-    filter.$or = [
-      { nameAr: pattern },
-      { nameEn: pattern },
-      { manufacturerAr: pattern },
-      { manufacturerEn: pattern },
-      { masterProductId: { $in: matchingCatalogEntries.map((c) => c._id) } },
-    ];
-  }
-
-  if (after !== null) {
-    filter._id = { $lt: after };
-  }
-
-  const rows = await Product.find(filter)
-    .select(LIST_PRODUCT_SELECT)
-    .sort({ _id: -1 })
-    .limit(limit + 1)
-    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' });
-  const hasMore = rows.length > limit;
-  const page = hasMore ? rows.slice(0, limit) : rows;
-  page.forEach(applyResolvedIdentity);
-  const nextCursor = page.length > 0 ? String(page[page.length - 1]._id) : null;
-
-  return { rows: page, hasMore, nextCursor };
+  const filter = buildProductFilter({ warehouseId, search: q ?? undefined });
+  return findProductPage(filter, { limit, after, direction: -1, select: LIST_PRODUCT_SELECT });
 }
 
 // Section 8/14 Part 2: every field a warehouse can set at creation.
@@ -418,7 +348,7 @@ async function importProductsFromExcel(warehouseId, userId, file) {
     manufacturerKey: { $in: [...new Set(keyedCandidates.map((c) => c.manufacturerKey))] },
     isActive: true,
   })
-    .select('_id nameKey nameEnKey manufacturerKey manufacturerId')
+    .select('_id nameKey nameEnKey manufacturerKey manufacturerEnKey manufacturerId')
     .lean();
 
   // The two $in clauses above match the cross-product of names and
@@ -510,6 +440,7 @@ async function importProductsFromExcel(warehouseId, userId, file) {
             nameKey: catalogItem.nameKey,
             nameEnKey: catalogItem.nameEnKey ?? null,
             manufacturerKey: catalogItem.manufacturerKey,
+            manufacturerEnKey: catalogItem.manufacturerEnKey ?? null,
             manufacturerId: catalogItem.manufacturerId ?? null,
             price: candidate.priceUsd,
             manuallyDisabled: false,
@@ -562,7 +493,4 @@ module.exports = {
   findOwnedProductOrThrow,
   applyProductUpdate,
   importProductsFromExcel,
-  // Exported for adminProduct.service.js's own manufacturer filter, which
-  // needs the exact same two-step (legacy field OR linked-catalog ids) match.
-  manufacturerMatchClauses,
 };

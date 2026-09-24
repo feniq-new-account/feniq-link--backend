@@ -764,6 +764,12 @@ abstract class AppLocalizations {
   /// **'Search by name or manufacturer'**
   String get searchProductsHint;
 
+  /// No description provided for @searchWarehouseProductsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search all of this warehouse\'s products'**
+  String get searchWarehouseProductsHint;
+
   /// No description provided for @addToCartButton.
   ///
   /// In en, this message translates to:

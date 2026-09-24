@@ -117,6 +117,7 @@ async function mergeCatalogItems({ survivorId, loserIds, keepProductByWarehouse 
         nameKey: survivor.nameKey,
         nameEnKey: survivor.nameEnKey,
         manufacturerKey: survivor.manufacturerKey,
+        manufacturerEnKey: survivor.manufacturerEnKey,
         manufacturerId: survivor.manufacturerId,
       },
     },

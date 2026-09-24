@@ -8,8 +8,10 @@ const { searchKey, identityKeyOf } = require('../models/productCatalog.model');
 // be a cycle. Models never require services, so this direction is safe.
 const Product = require('../models/product.model');
 const Category = require('../models/category.model');
+const Manufacturer = require('../models/manufacturer.model');
 const { getRate } = require('./exchangeRate.service');
 const { runInTransaction } = require('../utils/transaction');
+const { normalizeText } = require('../utils/normalizeText');
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -57,6 +59,125 @@ function applyResolvedIdentity(product) {
 }
 
 // ---------------------------------------------------------------------------
+// The one product search (catalog overhaul Phase 2: H1, H2, H5, L6)
+// ---------------------------------------------------------------------------
+//
+// Every product search and filter in the app - the pharmacist catalog, the
+// warehouse's product list, company drill-down and picker search, the admin's
+// cross-warehouse list, and the offers pages' product match - builds its filter
+// here and pages through findProductPage below. It replaced five copies of a
+// two-step "regex the ProductCatalog, then $in the matching ids on Product",
+// each with its own cap (one at 500, the others unbounded), plus the
+// pharmacist path's fetch-and-filter-in-Node loop for the manufacturer.
+//
+// It queries Product directly: every product carries normalized copies of its
+// identity (nameKey / nameEnKey / manufacturerKey / manufacturerEnKey,
+// product.model.js), so name,
+// manufacturer and category are all plain predicates on one collection - one
+// query per page, whatever the distribution of the data, no id list of any
+// size, nothing filtered in JavaScript.
+
+const INVALID_QUERY_CODE = 'INVALID_QUERY_PARAM';
+
+// A query-string value that is not a plain string (?search=a&search=b gives
+// an array, ?search[x]=1 an object) is a malformed request, not a server error.
+function optionalString(value, name) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== 'string') {
+    throw ApiError.badRequest(`Invalid ${name}.`, undefined, INVALID_QUERY_CODE);
+  }
+  return value;
+}
+
+// The free-text match: the normalized term as an escaped, unanchored pattern
+// against the three normalized identity keys. Keys are already lowercase, so
+// no 'i' flag; Arabic spelling variants meet because both sides went through
+// normalizeText.
+function productSearchClause(search) {
+  const term = normalizeText(optionalString(search, 'search'));
+  if (!term) return null;
+  const pattern = new RegExp(escapeRegex(term));
+  return {
+    $or: [
+      { nameKey: pattern },
+      { nameEnKey: pattern },
+      { manufacturerKey: pattern },
+      { manufacturerEnKey: pattern },
+    ],
+  };
+}
+
+// Builds the Mongo filter.
+//  - warehouseId: required for every warehouse and pharmacist caller; only the
+//    admin's cross-warehouse list omits it.
+//  - activeOnly (default true): isActive products only - the admin list turns
+//    it off to show deactivated rows.
+//  - manufacturer: an EXACT company, matched on its normalized key (so a
+//    spelling variant of the name still selects the company).
+//  - categoryId: validated, a malformed id is a 400.
+//  - availableOnly: the warehouse's "available now" picker.
+function buildProductFilter({
+  warehouseId,
+  activeOnly = true,
+  search,
+  manufacturer,
+  categoryId,
+  availableOnly = false,
+} = {}) {
+  const filter = {};
+  if (warehouseId) filter.warehouseId = warehouseId;
+  if (activeOnly) filter.isActive = true;
+  if (availableOnly) filter.isAvailable = true;
+
+  const category = optionalString(categoryId, 'category');
+  if (category) {
+    if (!mongoose.Types.ObjectId.isValid(category)) {
+      throw ApiError.badRequest('Invalid category id.', undefined, 'INVALID_CATEGORY');
+    }
+    filter.categoryId = category;
+  }
+
+  const manufacturerKey = normalizeText(optionalString(manufacturer, 'manufacturer'));
+  if (manufacturerKey) filter.manufacturerKey = manufacturerKey;
+
+  const searchClause = productSearchClause(search);
+  if (searchClause) filter.$or = searchClause.$or;
+
+  return filter;
+}
+
+const PRODUCT_IDENTITY_POPULATE = {
+  path: 'masterProductId',
+  select: 'nameAr nameEn manufacturerAr manufacturerEn imageUrl',
+};
+
+// One page of products for a filter from buildProductFilter, cursored on `_id`
+// (ascending for the pharmacist/admin lists, descending - newest first - for
+// the warehouse's own). Identity is resolved after the page is read, so the
+// response shape is what every viewmodel already expects.
+async function findProductPage(
+  filter,
+  { limit, after = null, direction = 1, select = null, lean = true } = {}
+) {
+  const pageFilter = { ...filter };
+  if (after) pageFilter._id = direction > 0 ? { $gt: after } : { $lt: after };
+
+  let query = Product.find(pageFilter)
+    .sort({ _id: direction })
+    .limit(limit + 1)
+    .populate(PRODUCT_IDENTITY_POPULATE);
+  if (select) query = query.select(select);
+  if (lean) query = query.lean();
+
+  const rows = await query;
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  page.forEach(applyResolvedIdentity);
+  const nextCursor = page.length > 0 ? String(page[page.length - 1]._id) : null;
+  return { rows: page, hasMore, nextCursor };
+}
+
+// ---------------------------------------------------------------------------
 // List / search
 // ---------------------------------------------------------------------------
 
@@ -77,27 +198,33 @@ async function listCatalog({
   limit = DEFAULT_CATALOG_LIMIT,
   after = null,
 } = {}) {
+  // Same normalized matching as the product search above, on the catalog's
+  // own keys (productCatalog.model.js).
   const filter = {};
-  if (categoryId) {
-    filter.categoryId = categoryId;
+  const category = optionalString(categoryId, 'category');
+  if (category) {
+    if (!mongoose.Types.ObjectId.isValid(category)) {
+      throw ApiError.badRequest('Invalid category id.', undefined, 'INVALID_CATEGORY');
+    }
+    filter.categoryId = category;
   }
-  if (manufacturer && manufacturer.trim()) {
-    filter.manufacturerAr = manufacturer.trim();
+  const manufacturerKey = normalizeText(optionalString(manufacturer, 'manufacturer'));
+  if (manufacturerKey) {
+    filter.manufacturerKey = manufacturerKey;
   }
-  if (search && search.trim()) {
-    const pattern = new RegExp(escapeRegex(search.trim()), 'i');
-    filter.$or = [
-      { nameAr: pattern },
-      { nameEn: pattern },
-      { manufacturerAr: pattern },
-      { manufacturerEn: pattern },
-    ];
+  const searchClause = productSearchClause(search);
+  if (searchClause) {
+    filter.$or = searchClause.$or;
   }
   if (after) {
     filter._id = { $gt: after };
   }
 
-  const results = await ProductCatalog.find(filter).sort({ _id: 1 }).limit(limit + 1);
+  const results = await ProductCatalog.find(filter)
+    .select('-nameHistory')
+    .sort({ _id: 1 })
+    .limit(limit + 1)
+    .lean();
   const hasMore = results.length > limit;
   const page = hasMore ? results.slice(0, limit) : results;
   const nextCursor = page.length > 0 ? page[page.length - 1]._id.toString() : null;
@@ -105,32 +232,38 @@ async function listCatalog({
   return { items: page, hasMore, nextCursor };
 }
 
-// Section 14 Part 1 item 5: for the warehouse's own (not-yet-built) "search
-// the master list" flow - active entries only, name-only search, capped so
-// it's usable as a type-ahead.
+// The warehouse's "pick a medicine from the central list" type-ahead (the Add
+// product form) - active entries only, matched on the normalized Arabic or
+// English name, capped so it stays a type-ahead.
 async function searchActiveForWarehouse(search) {
   const filter = { isActive: true };
-  if (search && search.trim()) {
-    filter.nameAr = new RegExp(escapeRegex(search.trim()), 'i');
+  const term = normalizeText(optionalString(search, 'search'));
+  if (term) {
+    const pattern = new RegExp(escapeRegex(term));
+    filter.$or = [{ nameKey: pattern }, { nameEnKey: pattern }];
   }
-  return ProductCatalog.find(filter).sort({ nameAr: 1 }).limit(50);
+  return ProductCatalog.find(filter).select('-nameHistory').sort({ nameAr: 1 }).limit(50).lean();
 }
 
 const MANUFACTURER_SEARCH_LIMIT = 50;
 
 // Backs the admin Products/Catalog pages' manufacturer filter - a Searchable
-// Dropdown rather than a plain one, since the central catalog's manufacturer
-// count isn't bounded the way a fixed enum's would be. Same type-ahead shape
-// as searchActiveForWarehouse above (capped, no cursor - a real search narrows
-// this fast). `distinct` on manufacturerAr returns the canonical value even
-// when the match came from manufacturerEn.
+// Dropdown rather than a plain one, since the manufacturer count isn't bounded
+// the way a fixed enum's would be. Reads the central Manufacturer collection
+// (one row per company, so no `distinct` over the catalog) on its normalized
+// key or its English name, and returns the canonical Arabic names as before.
 async function searchManufacturers(search) {
   const filter = {};
-  if (search && search.trim()) {
-    const pattern = new RegExp(escapeRegex(search.trim()), 'i');
-    filter.$or = [{ manufacturerAr: pattern }, { manufacturerEn: pattern }];
+  const raw = optionalString(search, 'search');
+  const term = normalizeText(raw);
+  if (term) {
+    filter.$or = [
+      { key: new RegExp(escapeRegex(term)) },
+      { nameEn: new RegExp(escapeRegex(raw.trim()), 'i') },
+    ];
   }
-  const names = await ProductCatalog.distinct('manufacturerAr', filter);
+  const rows = await Manufacturer.find(filter).select('nameAr').lean();
+  const names = [...new Set(rows.map((row) => row.nameAr))];
   names.sort((a, b) => a.localeCompare(b));
   return names.slice(0, MANUFACTURER_SEARCH_LIMIT);
 }
@@ -754,4 +887,8 @@ module.exports = {
   resolveProductIdentity,
   applyResolvedIdentity,
   escapeRegex,
+  // The one product search (see its section above).
+  buildProductFilter,
+  findProductPage,
+  optionalString,
 };
