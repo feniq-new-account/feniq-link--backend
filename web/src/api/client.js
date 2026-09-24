@@ -311,7 +311,12 @@ async function requestFormData(path, formData, method = 'POST', { _retried = fal
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new ApiError(data?.message ?? 'Upload failed. Please try again.', response.status);
+    throw new ApiError(
+      data?.message ?? 'Upload failed. Please try again.',
+      response.status,
+      data?.code ?? null,
+      data?.details ?? null
+    );
   }
   return data;
 }
@@ -747,6 +752,58 @@ export const api = {
     return request(`/warehouse/catalog/suggestions?${params.toString()}`);
   },
   units: () => request('/units'),
+  // The warehouse's own catalog requests (status, and the reason if rejected).
+  warehouseCatalogRequests: ({ limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (after) params.set('after', after);
+    return request(`/warehouse/catalog/requests?${params.toString()}`);
+  },
+  // Admin: catalog requests (catalog overhaul Phase 5.1).
+  adminCatalogRequests: ({ status, limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (after) params.set('after', after);
+    return request(`/admin/catalog/requests?${params.toString()}`);
+  },
+  approveCatalogRequest: (id, body) => request(`/admin/catalog/requests/${id}/approve`, { method: 'POST', body }),
+  mergeCatalogRequest: (id, masterProductId) =>
+    request(`/admin/catalog/requests/${id}/merge`, { method: 'POST', body: { masterProductId } }),
+  rejectCatalogRequest: (id, reason) =>
+    request(`/admin/catalog/requests/${id}/reject`, { method: 'POST', body: { reason } }),
+  // Admin: duplicate review (5.2).
+  adminCatalogDuplicates: ({ limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (after) params.set('after', after);
+    return request(`/admin/catalog/duplicates?${params.toString()}`);
+  },
+  resolveCatalogDuplicate: (id, body) => request(`/admin/catalog/duplicates/${id}/resolve`, { method: 'POST', body }),
+  // Admin: the central image of a catalog item (5.3).
+  uploadCatalogImage: (id, file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return requestFormData(`/admin/catalog/${id}/image`, formData);
+  },
+  clearCatalogImage: (id) => request(`/admin/catalog/${id}/image`, { method: 'DELETE' }),
+  // Admin: manufacturers (5.4).
+  adminManufacturers: ({ search, limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (after) params.set('after', after);
+    return request(`/admin/manufacturers?${params.toString()}`);
+  },
+  updateManufacturer: (id, changes) => request(`/admin/manufacturers/${id}`, { method: 'PATCH', body: changes }),
+  mergeManufacturer: (targetId, sourceId) =>
+    request(`/admin/manufacturers/${targetId}/merge`, { method: 'POST', body: { sourceId } }),
+  uploadManufacturerLogo: (id, file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return requestFormData(`/admin/manufacturers/${id}/logo`, formData);
+  },
+  clearManufacturerLogo: (id) => request(`/admin/manufacturers/${id}/logo`, { method: 'DELETE' }),
   warehouseDiscounts: () => request('/warehouse/discounts'),
   createWarehouseDiscount: (data) => request('/warehouse/discounts', { method: 'POST', body: data }),
   updateWarehouseDiscount: (id, changes) =>

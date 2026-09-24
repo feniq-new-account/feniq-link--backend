@@ -150,6 +150,18 @@ const deliverySealPhotoUpload = wrapMulter(
   'Seal photo must be smaller than 5MB.'
 );
 
+// A single catalog image (a catalog item's central image, a manufacturer's
+// logo, a warehouse's override image) - one file under the 'image' field,
+// image-only, 5MB, memory-stored and streamed to Cloudinary (imageAsset.service.js).
+const singleImageUpload = wrapMulter(
+  multer({
+    storage,
+    fileFilter: imageFileFilter,
+    limits: { fileSize: MAX_FILE_SIZE_BYTES },
+  }).single('image'),
+  'The image must be smaller than 5MB.'
+);
+
 // Checks the first bytes of an in-memory upload against known image
 // signatures - a spoofed extension/MIME type won't pass this. Returns false
 // (the caller rejects the request) when the content isn't actually one of
@@ -195,6 +207,7 @@ module.exports = {
   bannerImageUpload,
   adminBannerMediaUpload,
   deliverySealPhotoUpload,
+  singleImageUpload,
   verifyImageMagicBytes,
   verifyBannerMediaMagicBytes,
   resolveAdminBannerMediaType,

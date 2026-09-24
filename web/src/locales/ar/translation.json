@@ -76,7 +76,10 @@
     "unreadBadge_few": "{{count}} تحديثات جديدة",
     "unreadBadge_many": "{{count}} تحديثاً جديداً",
     "unreadBadge_other": "{{count}} تحديث جديد",
-    "openMenuWithUpdates": "فتح القائمة (يوجد جديد)"
+    "openMenuWithUpdates": "فتح القائمة (يوجد جديد)",
+    "catalogRequests": "طلبات الأصناف",
+    "catalogDuplicates": "مراجعة المكرر",
+    "manufacturers": "الشركات المصنعة"
   },
   "auth": {
     "phoneLabel": "رقم الهاتف",
@@ -707,7 +710,11 @@
       "newManufacturersHint": "هذه الشركات غير موجودة بالنظام بعد، لذلك تم تخطي صفوفها. حدّد ما تريد إنشاءه وأعد استيراد الملف.",
       "rowsCount": "{{count}} صف",
       "createAndReimport": "إنشاء وإعادة الاستيراد",
-      "withdrawnTitle": "مسحوب — لم يُعد تفعيله"
+      "withdrawnTitle": "مسحوب — لم يُعد تفعيله",
+      "uploadImage": "رفع صورة",
+      "replaceImage": "تبديل الصورة",
+      "clearImage": "حذف الصورة",
+      "linkExisting": "أو ربطها بشركة موجودة"
     },
     "exchangeRate": {
       "title": "سعر الصرف",
@@ -909,5 +916,59 @@
       "CATALOG_ITEM_WITHDRAWN": "الصنف مسحوب من القائمة المركزية",
       "PRODUCT_DISABLED_BY_ADMIN": "معطّل من الإدارة"
     }
+  },
+  "catalogRequests": {
+    "title": "طلبات إضافة أصناف",
+    "myTitle": "طلباتي لإضافة أصناف جديدة",
+    "empty": "لا توجد طلبات.",
+    "decide": "اتخاذ قرار",
+    "status": {
+      "pending": "بانتظار القرار",
+      "approved": "مقبول",
+      "merged": "مدموج",
+      "rejected": "مرفوض",
+      "all": "الكل"
+    },
+    "action": {
+      "approve": "قبول كصنف جديد",
+      "merge": "دمج مع صنف موجود",
+      "reject": "رفض"
+    },
+    "nameAr": "الاسم العربي",
+    "nameEn": "الاسم الإنجليزي (اختياري)",
+    "createManufacturer": "إنشاء الشركة \"{{name}}\"",
+    "manufacturerRequired": "اختر شركة موجودة، أو فعّل \"إنشاء الشركة\".",
+    "alreadyExists": "هذا الدواء موجود مسبقاً - ادمج الطلب معه.",
+    "mergeInto": "دمج مع",
+    "reason": "السبب"
+  },
+  "duplicates": {
+    "title": "مراجعة الأصناف المكررة",
+    "hint": "كل مجموعة هي دواء واحد أُدخل أكثر من مرة بكتابات مختلفة. اختر الصنف الذي يبقى، والباقي يُدمج فيه.",
+    "empty": "لا توجد أصناف مكررة بانتظار المراجعة.",
+    "reason": {
+      "warehouse_linked_to_several": "مستودع لديه أكثر من صنف منها",
+      "mixed_active_state": "بعضها مسحوب وبعضها لا"
+    },
+    "withdrawn": "مسحوب",
+    "productCount": "{{count}} منتج لدى المستودعات",
+    "chooseProduct": "لدى {{warehouse}} أكثر من منتج - أيها يبقى؟",
+    "merge": "دمج"
+  },
+  "manufacturers": {
+    "title": "الشركات المصنعة",
+    "searchPlaceholder": "ابحث عن شركة...",
+    "logo": "الشعار",
+    "nameAr": "الاسم العربي",
+    "nameEn": "الاسم الإنجليزي",
+    "items": "أصناف الكتالوج",
+    "uploadLogo": "رفع شعار",
+    "replaceLogo": "تبديل الشعار",
+    "clearLogo": "حذف الشعار",
+    "merge": "دمج شركة أخرى بهذه",
+    "mergeHint": "اختر الشركة التي ستُدمج في \"{{name}}\". تنتقل أدويتها وخصوماتها ومستودعاتها إلى هنا.",
+    "confirmMerge": "دمج \"{{source}}\" في \"{{target}}\"؟ لا يمكن التراجع.",
+    "nameTaken": "يوجد شركة أخرى بهذا الاسم - ادمج الاثنتين.",
+    "mergeConflict": "بعض الأدوية موجودة تحت الشركتين ويجب حلها في مراجعة المكرر أولاً."
   }
 }

@@ -378,6 +378,67 @@ export function WarehouseImportsPage() {
         </div>
       )}
       <LoadMoreControl hasMore={hasMore} isLoadingMore={isLoadingMore} onLoadMore={loadMore} pageSize={20} />
+      <MyCatalogRequests />
+    </div>
+  );
+}
+
+// The warehouse's own requests for new catalog items (raised from import
+// rows) - where it sees the admin's decision, and the reason if rejected.
+function MyCatalogRequests() {
+  const { t } = useTranslation();
+  const fetchPage = useCallback(
+    (cursor) =>
+      api.warehouseCatalogRequests({ limit: 20, after: cursor }).then((data) => ({
+        rows: data.requests,
+        hasMore: data.pagination.hasMore,
+        nextCursor: data.pagination.nextCursor,
+      })),
+    []
+  );
+  const { data: requests, isLoading, isLoadingMore, hasMore, error, loadMore, reset } = usePaginatedData(fetchPage);
+
+  useEffect(() => {
+    reset();
+  }, [reset]);
+
+  return (
+    <div>
+      <div className="wh-page-head">
+        <h2>{t('catalogRequests.myTitle')}</h2>
+      </div>
+      {error && <p className="error-text">{error}</p>}
+      {isLoading ? (
+        <p>{t('common.loading')}</p>
+      ) : requests.length === 0 ? (
+        <p className="hint">{t('catalogRequests.empty')}</p>
+      ) : (
+        <div className="table-scroll">
+          <table className="product-table">
+            <thead>
+              <tr>
+                <th>{t('importResults.date')}</th>
+                <th>{t('importResults.name')}</th>
+                <th>{t('importResults.manufacturer')}</th>
+                <th>{t('common.status')}</th>
+                <th>{t('catalogRequests.reason')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((request) => (
+                <tr key={request.id}>
+                  <td>{new Date(request.createdAt).toLocaleString()}</td>
+                  <td>{request.nameAr}</td>
+                  <td>{request.manufacturerAr}</td>
+                  <td>{t(`catalogRequests.status.${request.status}`)}</td>
+                  <td>{request.rejectReason ?? '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <LoadMoreControl hasMore={hasMore} isLoadingMore={isLoadingMore} onLoadMore={loadMore} pageSize={20} />
     </div>
   );
 }

@@ -72,7 +72,10 @@
     "feedback": "Feedback",
     "unreadBadge_one": "{{count}} new update",
     "unreadBadge_other": "{{count}} new updates",
-    "openMenuWithUpdates": "Open menu (new updates)"
+    "openMenuWithUpdates": "Open menu (new updates)",
+    "catalogRequests": "Catalog requests",
+    "catalogDuplicates": "Duplicate review",
+    "manufacturers": "Manufacturers"
   },
   "auth": {
     "phoneLabel": "Phone number",
@@ -691,7 +694,11 @@
       "newManufacturersHint": "These companies are not in the system yet, so their rows were skipped. Tick the ones to create and import the file again.",
       "rowsCount": "{{count}} row(s)",
       "createAndReimport": "Create and import again",
-      "withdrawnTitle": "Withdrawn — not reactivated"
+      "withdrawnTitle": "Withdrawn — not reactivated",
+      "uploadImage": "Upload image",
+      "replaceImage": "Replace image",
+      "clearImage": "Remove image",
+      "linkExisting": "or link to an existing company"
     },
     "exchangeRate": {
       "title": "Exchange rate",
@@ -893,5 +900,59 @@
       "CATALOG_ITEM_WITHDRAWN": "Withdrawn from the central catalog",
       "PRODUCT_DISABLED_BY_ADMIN": "Disabled by the administration"
     }
+  },
+  "catalogRequests": {
+    "title": "Catalog requests",
+    "myTitle": "My requests for new items",
+    "empty": "No requests.",
+    "decide": "Decide",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "merged": "Merged",
+      "rejected": "Rejected",
+      "all": "All"
+    },
+    "action": {
+      "approve": "Approve as a new item",
+      "merge": "Merge into an existing item",
+      "reject": "Reject"
+    },
+    "nameAr": "Arabic name",
+    "nameEn": "English name (optional)",
+    "createManufacturer": "Create the company \"{{name}}\"",
+    "manufacturerRequired": "Pick an existing company, or tick \"create the company\".",
+    "alreadyExists": "This medicine already exists - merge the request into it instead.",
+    "mergeInto": "Merge into",
+    "reason": "Reason"
+  },
+  "duplicates": {
+    "title": "Duplicate review",
+    "hint": "Each group is one medicine entered more than once under different spellings. Pick the item to keep; the others are merged into it.",
+    "empty": "No duplicates waiting for review.",
+    "reason": {
+      "warehouse_linked_to_several": "A warehouse stocks more than one of them",
+      "mixed_active_state": "Some are withdrawn and some are not"
+    },
+    "withdrawn": "withdrawn",
+    "productCount": "{{count}} warehouse product(s)",
+    "chooseProduct": "{{warehouse}} has several - which product does it keep?",
+    "merge": "Merge"
+  },
+  "manufacturers": {
+    "title": "Manufacturers",
+    "searchPlaceholder": "Search companies...",
+    "logo": "Logo",
+    "nameAr": "Arabic name",
+    "nameEn": "English name",
+    "items": "Catalog items",
+    "uploadLogo": "Upload logo",
+    "replaceLogo": "Replace logo",
+    "clearLogo": "Remove logo",
+    "merge": "Merge another company into this one",
+    "mergeHint": "Pick the company to fold into \"{{name}}\". Its medicines, discounts and warehouses move here.",
+    "confirmMerge": "Merge \"{{source}}\" into \"{{target}}\"? This cannot be undone.",
+    "nameTaken": "Another company already has this name - merge the two instead.",
+    "mergeConflict": "Some medicines exist under both companies and must be resolved in Duplicate review first."
   }
 }

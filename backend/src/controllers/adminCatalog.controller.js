@@ -3,6 +3,10 @@ const { ApiError } = require('../utils/ApiError');
 const { normalizeText } = require('../utils/normalizeText');
 const catalogService = require('../services/productCatalog.service');
 const catalogViewModel = require('../viewmodels/productCatalog.viewmodel');
+const catalogRequestService = require('../services/catalogRequest.service');
+const catalogRequestViewModel = require('../viewmodels/catalogRequest.viewmodel');
+const catalogMergeService = require('../services/catalogMerge.service');
+const { storeUploadedImage, releaseImage } = require('../services/imageAsset.service');
 const { parseCursorQuery, parseObjectIdCursor, paginationMeta } = require('../utils/pagination');
 
 const CATALOG_DEFAULT_LIMIT = 30;
@@ -108,4 +112,90 @@ const deactivate = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { list, searchManufacturers, downloadTemplate, importExcel, update, deactivate };
+// ---------------------------------------------------------------------------
+// Catalog requests (catalog overhaul Phase 5.1)
+// ---------------------------------------------------------------------------
+
+const listRequests = asyncHandler(async (req, res) => {
+  const { limit, after } = parseCursorQuery(req.query, 30);
+  const status = catalogService.optionalString(req.query.status, 'status') ?? 'pending';
+  const { rows, hasMore, nextCursor } = await catalogRequestService.listRequests({
+    status: status === 'all' ? undefined : status,
+    limit,
+    after: parseObjectIdCursor(after),
+  });
+  res.json({
+    success: true,
+    requests: rows.map(catalogRequestViewModel.serializeCatalogRequest),
+    pagination: paginationMeta(hasMore, nextCursor),
+  });
+});
+
+const approveRequest = asyncHandler(async (req, res) => {
+  const request = await catalogRequestService.approveRequest(req.params.id, req.user._id, req.body || {});
+  res.json({ success: true, request: catalogRequestViewModel.serializeCatalogRequest({ request, warehouse: null }) });
+});
+
+const mergeRequest = asyncHandler(async (req, res) => {
+  const request = await catalogRequestService.mergeRequest(req.params.id, req.user._id, req.body || {});
+  res.json({ success: true, request: catalogRequestViewModel.serializeCatalogRequest({ request, warehouse: null }) });
+});
+
+const rejectRequest = asyncHandler(async (req, res) => {
+  const request = await catalogRequestService.rejectRequest(req.params.id, req.user._id, req.body || {});
+  res.json({ success: true, request: catalogRequestViewModel.serializeCatalogRequest({ request, warehouse: null }) });
+});
+
+// ---------------------------------------------------------------------------
+// Duplicate review (Phase 5.2)
+// ---------------------------------------------------------------------------
+
+const listDuplicates = asyncHandler(async (req, res) => {
+  const { limit, after } = parseCursorQuery(req.query, 20);
+  const { rows, hasMore, nextCursor } = await catalogMergeService.listDuplicateReviews({
+    limit,
+    after: parseObjectIdCursor(after),
+  });
+  res.json({ success: true, groups: rows, pagination: paginationMeta(hasMore, nextCursor) });
+});
+
+// Body: { survivorId, keepProductByWarehouse: { [warehouseId]: productId } }.
+const resolveDuplicate = asyncHandler(async (req, res) => {
+  const result = await catalogMergeService.resolveDuplicateReview(req.params.id, req.user._id, req.body || {});
+  res.json({ success: true, ...result });
+});
+
+// ---------------------------------------------------------------------------
+// The central image (Phase 5.3)
+// ---------------------------------------------------------------------------
+
+const uploadImage = asyncHandler(async (req, res) => {
+  await catalogService.findCatalogItemOrThrow(req.params.id);
+  const url = await storeUploadedImage(req.file, 'catalog');
+  const { item, previousImageUrl } = await catalogService.setCatalogImage(req.params.id, url);
+  await releaseImage(previousImageUrl);
+  res.json({ success: true, ...catalogViewModel.toCatalogItemResponse(item) });
+});
+
+const clearImage = asyncHandler(async (req, res) => {
+  const { item, previousImageUrl } = await catalogService.setCatalogImage(req.params.id, null);
+  await releaseImage(previousImageUrl);
+  res.json({ success: true, ...catalogViewModel.toCatalogItemResponse(item) });
+});
+
+module.exports = {
+  list,
+  searchManufacturers,
+  downloadTemplate,
+  importExcel,
+  update,
+  deactivate,
+  listRequests,
+  approveRequest,
+  mergeRequest,
+  rejectRequest,
+  listDuplicates,
+  resolveDuplicate,
+  uploadImage,
+  clearImage,
+};

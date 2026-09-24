@@ -205,4 +205,101 @@ async function retireDuplicateProduct(productId, keptProductId, session) {
   await Product.deleteOne({ _id: productId }, { session });
 }
 
-module.exports = { analyzeGroup, mergeCatalogItems };
+// ---------------------------------------------------------------------------
+// The admin's Duplicate review screen (catalog overhaul Phase 5.2)
+// ---------------------------------------------------------------------------
+
+async function listDuplicateReviews({ status = 'open', limit = 20, after = null } = {}) {
+  const filter = { status };
+  if (after) filter._id = { $gt: after };
+  const reviews = await CatalogDuplicateReview.find(filter).sort({ _id: 1 }).limit(limit + 1).lean();
+  const hasMore = reviews.length > limit;
+  const page = hasMore ? reviews.slice(0, limit) : reviews;
+
+  // Each group with its items and, per item, the warehouses stocking it -
+  // what the admin needs to pick a survivor and, where a warehouse has both,
+  // which of its products to keep.
+  const itemIds = page.flatMap((review) => review.catalogItemIds);
+  const [items, products] = await Promise.all([
+    ProductCatalog.find({ _id: { $in: itemIds } })
+      .select('nameAr nameEn manufacturerAr imageUrl isActive priceUsd createdAt')
+      .lean(),
+    Product.find({ masterProductId: { $in: itemIds } })
+      .select('warehouseId masterProductId price isActive manuallyDisabled')
+      .populate({ path: 'warehouseId', select: 'nameAr nameEn' })
+      .lean(),
+  ]);
+  const productsByItem = new Map();
+  for (const product of products) {
+    const key = String(product.masterProductId);
+    if (!productsByItem.has(key)) productsByItem.set(key, []);
+    productsByItem.get(key).push({
+      productId: product._id,
+      warehouseId: product.warehouseId?._id ?? product.warehouseId,
+      warehouseNameAr: product.warehouseId?.nameAr ?? null,
+      warehouseNameEn: product.warehouseId?.nameEn ?? null,
+      priceUsd: product.price,
+      isActive: product.isActive,
+    });
+  }
+  const itemById = new Map(items.map((item) => [String(item._id), item]));
+
+  return {
+    rows: page.map((review) => ({
+      id: review._id,
+      identityKey: review.identityKey,
+      reasons: review.reasons,
+      status: review.status,
+      items: review.catalogItemIds
+        .map((itemId) => itemById.get(String(itemId)))
+        .filter(Boolean)
+        .map((item) => ({
+          id: item._id,
+          nameAr: item.nameAr,
+          nameEn: item.nameEn,
+          manufacturerAr: item.manufacturerAr,
+          imageUrl: item.imageUrl ?? null,
+          isActive: item.isActive !== false,
+          priceUsd: item.priceUsd ?? null,
+          createdAt: item.createdAt,
+          products: productsByItem.get(String(item._id)) ?? [],
+        })),
+    })),
+    hasMore,
+    nextCursor: page.length ? String(page[page.length - 1]._id) : null,
+  };
+}
+
+// Resolves one open group: every other item is merged into `survivorId`, with
+// the admin's choice of product for each warehouse that had more than one.
+// One transaction, the same routine the migration uses. If the survivor is a
+// withdrawn item, the products moved onto it are recalled with it - nothing
+// stays live under a withdrawn medicine.
+async function resolveDuplicateReview(reviewId, adminId, { survivorId, keepProductByWarehouse = {} } = {}) {
+  const { runInTransaction } = require('../utils/transaction');
+  const { recallLinkedProducts } = require('./productCatalog.service');
+  const review = await CatalogDuplicateReview.findOne({ _id: reviewId, status: 'open' }).lean();
+  if (!review) throw ApiError.notFound('Duplicate group not found.', 'DUPLICATE_REVIEW_NOT_FOUND');
+  const ids = review.catalogItemIds.map(String);
+  if (!survivorId || !ids.includes(String(survivorId))) {
+    throw ApiError.badRequest('Choose which item to keep.', undefined, 'INVALID_SURVIVOR');
+  }
+
+  let result;
+  await runInTransaction(async (session) => {
+    result = await mergeCatalogItems(
+      { survivorId, loserIds: ids.filter((id) => id !== String(survivorId)), keepProductByWarehouse },
+      session
+    );
+    const survivor = await ProductCatalog.findById(survivorId).session(session);
+    if (survivor && survivor.isActive === false) await recallLinkedProducts(survivor, session);
+    await CatalogDuplicateReview.updateOne(
+      { _id: review._id },
+      { $set: { status: 'resolved', survivorId, resolvedBy: adminId, resolvedAt: new Date() } },
+      { session }
+    );
+  });
+  return result;
+}
+
+module.exports = { analyzeGroup, mergeCatalogItems, listDuplicateReviews, resolveDuplicateReview };

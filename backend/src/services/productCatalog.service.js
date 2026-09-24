@@ -411,6 +411,17 @@ async function updateCatalogItem(id, changes, { userId = null, confirmed = false
   return item;
 }
 
+// Sets or clears a catalog item's central image (a Cloudinary URL the caller
+// already stored - imageAsset.service.js). Returns the previous URL so the
+// caller can release it once nothing references it.
+async function setCatalogImage(id, imageUrl) {
+  const item = await findCatalogItemOrThrow(id);
+  const previousImageUrl = item.imageUrl ?? null;
+  item.imageUrl = imageUrl ?? null;
+  await item.save();
+  return { item, previousImageUrl };
+}
+
 // A catalog recall (catalog overhaul Phase 3.1) - what withdrawing a medicine
 // from the central list does to everything built on it, inside the caller's
 // transaction:
@@ -1003,6 +1014,9 @@ module.exports = {
   searchManufacturers,
   updateCatalogItem,
   deactivateCatalogItem,
+  recallLinkedProducts,
+  setCatalogImage,
+  findCatalogItemOrThrow,
   generateTemplateBuffer,
   generateWarehouseTemplateBuffer,
   importFromExcel,

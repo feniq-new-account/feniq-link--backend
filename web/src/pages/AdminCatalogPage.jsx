@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ImportColumnMappingModal } from '../components/ImportColumnMappingModal';
+import { ManufacturerPicker } from '../components/CatalogPickers';
 import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { SearchableSelect } from '../components/SearchableSelect';
@@ -129,6 +130,9 @@ function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturer
   const skippedForManufacturers = newManufacturers.reduce((sum, m) => sum + m.rows.length, 0);
   const totalRows = report.added + report.updated + report.errors.length + withdrawn.length + skippedForManufacturers;
   const [toCreate, setToCreate] = useState(() => new Set(newManufacturers.map((m) => m.name)));
+  // { rawName: { id, nameAr } } - an unknown name filed under an existing company instead.
+  const [links, setLinks] = useState({});
+  const [linkingName, setLinkingName] = useState(null);
   const toggleCreate = (name) =>
     setToCreate((prev) => {
       const next = new Set(prev);
@@ -191,14 +195,49 @@ function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturer
                   onChange={() => toggleCreate(manufacturer.name)}
                 />{' '}
                 {manufacturer.name}{' '}
-                <span className="hint">({t('admin.catalog.rowsCount', { count: manufacturer.rows.length })})</span>
+                <span className="hint">({t('admin.catalog.rowsCount', { count: manufacturer.rows.length })})</span>{' '}
+                {links[manufacturer.name] ? (
+                  <span>
+                    → {links[manufacturer.name].nameAr}{' '}
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => setLinks(({ [manufacturer.name]: _removed, ...rest }) => rest)}
+                    >
+                      {t('productForm.change')}
+                    </button>
+                  </span>
+                ) : (
+                  <button type="button" className="btn-secondary" onClick={() => setLinkingName(manufacturer.name)}>
+                    {t('admin.catalog.linkExisting')}
+                  </button>
+                )}
               </label>
             ))}
+            {linkingName && (
+              <ManufacturerPicker
+                initialQuery={linkingName}
+                onSelect={(m) => {
+                  setLinks((prev) => ({ ...prev, [linkingName]: m }));
+                  setToCreate((prev) => {
+                    const next = new Set(prev);
+                    next.delete(linkingName);
+                    return next;
+                  });
+                  setLinkingName(null);
+                }}
+              />
+            )}
             <button
               type="button"
               className="btn-primary"
-              disabled={isImporting || toCreate.size === 0}
-              onClick={() => onConfirmNewManufacturers([...toCreate])}
+              disabled={isImporting || (toCreate.size === 0 && Object.keys(links).length === 0)}
+              onClick={() =>
+                onConfirmNewManufacturers(
+                  [...toCreate],
+                  Object.fromEntries(Object.entries(links).map(([name, m]) => [name, m.id]))
+                )
+              }
             >
               {isImporting ? t('products.importing') : t('admin.catalog.createAndReimport')}
             </button>
@@ -356,6 +395,35 @@ export function AdminCatalogPage() {
     }
   };
 
+  const handleImagePicked = async (item, event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setBusyId(item.id);
+    setActionError(null);
+    try {
+      await api.uploadCatalogImage(item.id, file);
+      reset();
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleClearImage = async (item) => {
+    setBusyId(item.id);
+    setActionError(null);
+    try {
+      await api.clearCatalogImage(item.id);
+      reset();
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const handleToggleActive = async (item) => {
     setBusyId(item.id);
     setActionError(null);
@@ -486,7 +554,12 @@ export function AdminCatalogPage() {
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id} className={item.isActive ? '' : 'row-inactive'}>
-                    <td>{item.nameAr}</td>
+                    <td>
+                      {item.imageUrl && (
+                        <img src={item.imageUrl} alt="" width="32" height="32" style={{ objectFit: 'contain', marginInlineEnd: 8 }} />
+                      )}
+                      {item.nameAr}
+                    </td>
                     <td>{item.manufacturerAr}</td>
                     <td>
                       <span
@@ -507,6 +580,21 @@ export function AdminCatalogPage() {
                         >
                           {item.isActive ? t('admin.catalog.disable') : t('admin.catalog.enable')}
                         </button>
+                        {/* The central image every warehouse product of this medicine shows (Phase 5.3). */}
+                        <label className="adm-row-action">
+                          {item.imageUrl ? t('admin.catalog.replaceImage') : t('admin.catalog.uploadImage')}
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            hidden
+                            onChange={(event) => handleImagePicked(item, event)}
+                          />
+                        </label>
+                        {item.imageUrl && (
+                          <button className="adm-row-action" disabled={busyId === item.id} onClick={() => handleClearImage(item)}>
+                            {t('admin.catalog.clearImage')}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -539,7 +627,9 @@ export function AdminCatalogPage() {
           fileName={importFileName}
           isImporting={isImporting}
           onClose={() => setImportReport(null)}
-          onConfirmNewManufacturers={(names) => runImport(lastImportFile, { confirmNewManufacturers: names })}
+          onConfirmNewManufacturers={(names, manufacturerLinks) =>
+            runImport(lastImportFile, { confirmNewManufacturers: names, manufacturerLinks })
+          }
         />
       )}
       {pendingMapping && (

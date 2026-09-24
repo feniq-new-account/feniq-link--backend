@@ -5,6 +5,9 @@ function serializeCatalogItem(item) {
     nameEn: item.nameEn,
     manufacturerAr: item.manufacturerAr,
     manufacturerEn: item.manufacturerEn,
+    // Additive (catalog overhaul): the central manufacturer and image.
+    manufacturerId: item.manufacturerId ?? null,
+    imageUrl: item.imageUrl ?? null,
     categoryId: item.categoryId,
     unitAr: item.unitAr,
     unitEn: item.unitEn,
