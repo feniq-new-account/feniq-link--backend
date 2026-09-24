@@ -351,7 +351,8 @@
     "submitForApproval": "إرسال للمراجعة",
     "statusApproved": "مقبول",
     "statusRejected": "مرفوض",
-    "statusPending": "قيد المراجعة"
+    "statusPending": "قيد المراجعة",
+    "linkedProduct": "المنتج المرتبط"
   },
   "debts": {
     "searchPlaceholder": "ابحث باسم الصيدلية...",
@@ -979,5 +980,10 @@
     "confirmMerge": "دمج \"{{source}}\" في \"{{target}}\"؟ لا يمكن التراجع.",
     "nameTaken": "يوجد شركة أخرى بهذا الاسم - ادمج الاثنتين.",
     "mergeConflict": "بعض الأدوية موجودة تحت الشركتين ويجب حلها في مراجعة المكرر أولاً."
+  },
+  "productPicker": {
+    "searchPlaceholder": "ابحث عن منتج بالاسم أو الشركة",
+    "change": "تغيير",
+    "clear": "إزالة"
   }
 }

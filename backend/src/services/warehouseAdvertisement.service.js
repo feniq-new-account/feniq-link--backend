@@ -89,9 +89,9 @@ async function validateItems(rawItems, warehouseId) {
     );
   }
 
-  // isActive: true for the same reason listProductsForWarehouse filters on it
-  // - a product an admin has deactivated is gone from the warehouse's own
-  // catalog, so it can't be advertised either.
+  // isActive: true for the same reason the warehouse's product list filters
+  // on it - a product an admin has deactivated is gone from the warehouse's
+  // own catalog, so it can't be advertised either.
   const owned = await Product.find({ _id: { $in: productIds }, warehouseId, isActive: true }).select('_id');
   if (owned.length !== productIds.length) {
     // Same 404 (not 403) a direct product lookup gives - an id belonging to

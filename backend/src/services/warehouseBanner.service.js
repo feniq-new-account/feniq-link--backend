@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const Banner = require('../models/banner.model');
+const Product = require('../models/product.model');
 const Counter = require('../models/counter.model');
 const { findOwnedProductOrThrow } = require('./warehouseProduct.service');
 const { applyResolvedIdentity } = require('./productCatalog.service');
@@ -121,8 +122,27 @@ async function listPaginatedBannersForWarehouse(
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;
   const nextCursor = page.length > 0 ? String(page[page.length - 1]._id) : null;
+  await attachLinkedProductNames(page, warehouseId);
 
   return { rows: page, hasMore, nextCursor };
+}
+
+// The linked product's name on each banner of a page (catalog overhaul Phase
+// 10): the edit form's product picker labels the current link with it instead
+// of loading every product the warehouse owns. One query per page; carried in
+// $locals so `productId` itself stays a plain id.
+async function attachLinkedProductNames(banners, warehouseId) {
+  const productIds = [...new Set(banners.filter((b) => b.productId).map((b) => String(b.productId)))];
+  if (productIds.length === 0) return;
+  const products = await Product.find({ _id: { $in: productIds }, warehouseId })
+    .select('nameAr nameEn manufacturerAr manufacturerEn masterProductId')
+    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' })
+    .lean();
+  const byId = new Map(products.map((product) => [String(product._id), applyResolvedIdentity(product)]));
+  for (const banner of banners) {
+    const product = banner.productId ? byId.get(String(banner.productId)) : null;
+    if (product) banner.$locals.linkedProduct = { nameAr: product.nameAr, nameEn: product.nameEn };
+  }
 }
 
 async function findOwnBannerOrThrow(bannerId, warehouseId) {

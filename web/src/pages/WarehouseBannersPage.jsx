@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { ProductPicker } from '../components/CatalogPickers';
 import { useAuth } from '../auth/AuthContext';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
@@ -13,13 +14,21 @@ import { contactAdminOnWhatsApp } from '../utils/whatsapp';
 const PAGE_SIZE = 15;
 const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected'];
 
-const EMPTY_BANNER_FORM = { imageFile: null, title: '', productId: '', startDate: '', endDate: '' };
+// `product` is the linked product ({ id, nameAr, nameEn }) or null - searched
+// for with ProductPicker rather than chosen from every product the warehouse
+// owns (catalog overhaul Phase 10).
+const EMPTY_BANNER_FORM = { imageFile: null, title: '', product: null, startDate: '', endDate: '' };
+
+const searchOwnProducts = (q) =>
+  api.searchWarehouseProducts({ q, limit: 20 }).then((data) => data.products);
 
 function bannerFormFromBanner(banner) {
   return {
     imageFile: null,
     title: banner.title,
-    productId: banner.productId ?? '',
+    product: banner.productId
+      ? { id: banner.productId, nameAr: banner.productNameAr ?? null, nameEn: banner.productNameEn ?? null }
+      : null,
     startDate: banner.startDate.slice(0, 10),
     endDate: banner.endDate.slice(0, 10),
   };
@@ -44,8 +53,10 @@ function useBannerStatusLabel() {
 // filled with current data") - `editingBanner` null means create. The image
 // is never editable either way: create requires a fresh upload, edit shows
 // the existing one read-only with no file input at all.
-function CreateBannerModal({ products, editingBanner, onClose, onCreated, onSaved }) {
+function CreateBannerModal({ editingBanner, onClose, onCreated, onSaved }) {
   const { t } = useTranslation();
+  // A banner listed before its product's name was known still names it.
+  const productLabel = (product) => withArFallback(product.nameEn, product.nameAr) || t('banners.linkedProduct');
   const isEditing = Boolean(editingBanner);
   const [form, setForm] = useState(isEditing ? bannerFormFromBanner(editingBanner) : EMPTY_BANNER_FORM);
   const [isSaving, setIsSaving] = useState(false);
@@ -73,7 +84,7 @@ function CreateBannerModal({ products, editingBanner, onClose, onCreated, onSave
           title: form.title.trim(),
           startDate: form.startDate,
           endDate: form.endDate,
-          productId: form.productId || null,
+          productId: form.product?.id ?? null,
         });
         onSaved();
       } else {
@@ -82,7 +93,7 @@ function CreateBannerModal({ products, editingBanner, onClose, onCreated, onSave
         formData.append('title', form.title.trim());
         formData.append('startDate', form.startDate);
         formData.append('endDate', form.endDate);
-        if (form.productId) formData.append('productId', form.productId);
+        if (form.product) formData.append('productId', form.product.id);
         const data = await api.createWarehouseBanner(formData);
         onCreated(data.banner.bannerNumber);
       }
@@ -123,14 +134,13 @@ function CreateBannerModal({ products, editingBanner, onClose, onCreated, onSave
           </label>
           <label>
             {t('banners.linkedProductOptional')}
-            <select value={form.productId} onChange={(e) => setField('productId', e.target.value)}>
-              <option value="">{t('banners.noProduct')}</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {withArFallback(product.nameEn, product.nameAr)}
-                </option>
-              ))}
-            </select>
+            <ProductPicker
+              search={searchOwnProducts}
+              selected={form.product}
+              onChange={(product) => setField('product', product)}
+              renderLabel={productLabel}
+              allowClear
+            />
           </label>
           <div className="form-row">
             <label>
@@ -210,17 +220,12 @@ export function WarehouseBannersPage() {
   const { t } = useTranslation();
   const bannerStatusLabel = useBannerStatusLabel();
   const { warehouse } = useAuth();
-  const [products, setProducts] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateBanner, setShowCreateBanner] = useState(false);
   const [editingBanner, setEditingBanner] = useState(null);
   const [busyBannerId, setBusyBannerId] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [successBannerNumber, setSuccessBannerNumber] = useState(null);
-
-  useEffect(() => {
-    api.warehouseProducts().then((data) => setProducts(data.products));
-  }, []);
 
   const fetchPage = useCallback(
     (cursor) =>
@@ -406,7 +411,6 @@ export function WarehouseBannersPage() {
 
       {showCreateBanner && (
         <CreateBannerModal
-          products={products}
           onClose={() => setShowCreateBanner(false)}
           onCreated={handleBannerCreated}
         />
@@ -414,7 +418,6 @@ export function WarehouseBannersPage() {
 
       {editingBanner && (
         <CreateBannerModal
-          products={products}
           editingBanner={editingBanner}
           onClose={() => setEditingBanner(null)}
           onSaved={handleBannerSaved}

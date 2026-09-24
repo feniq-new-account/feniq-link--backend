@@ -530,10 +530,12 @@ test('warehouse banners list keeps its fields', async () => {
   assert.strictEqual(banners.length, 1);
   assert.deepStrictEqual(
     Object.keys(banners[0]).sort(),
-    ['id', 'bannerNumber', 'imageUrl', 'productId', 'manufacturerAr', 'title', 'status',
+    // productNameAr/En: additive, catalog overhaul Phase 10 (the edit picker's label).
+    ['id', 'bannerNumber', 'imageUrl', 'productId', 'productNameAr', 'productNameEn', 'manufacturerAr', 'title', 'status',
       'rejectionNote', 'startDate', 'endDate', 'createdAt'].sort()
   );
   assert.strictEqual(banners[0].title, 'Promo');
+  assert.strictEqual(banners[0].productNameEn, 'Med');
 });
 
 // --- accounts --------------------------------------------------------

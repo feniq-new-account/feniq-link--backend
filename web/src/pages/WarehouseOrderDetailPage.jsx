@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { ProductPicker } from '../components/CatalogPickers';
 import { withArFallback } from '../utils/displayName';
 import { useExchangeRate } from '../context/ExchangeRateContext';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
@@ -178,6 +179,10 @@ function RecordPaymentModal({ pharmacyId, onClose, onRecorded }) {
 // point regardless. Local draft state (quantities, staged removals, staged
 // new lines) lives here and is only ever sent to the server as one batched
 // PATCH from "Save changes" - nothing here calls the API per keystroke.
+// Only products a pharmacy could receive right now, as the old list was.
+const searchAvailableProducts = (q) =>
+  api.searchWarehouseProducts({ q, limit: 20, available: true }).then((data) => data.products);
+
 function EditItemsSection({ order, onSaved }) {
   const { t } = useTranslation();
   const usdToSyp = useExchangeRate();
@@ -185,8 +190,10 @@ function EditItemsSection({ order, onSaved }) {
   const [items, setItems] = useState([]);
   const [removedIds, setRemovedIds] = useState(() => new Set());
   const [newItems, setNewItems] = useState([]);
-  const [availableProducts, setAvailableProducts] = useState([]);
-  const [selectedProductId, setSelectedProductId] = useState('');
+  // The product to add, found by searching this warehouse's available
+  // products a page at a time (catalog overhaul Phase 10) - it used to load
+  // every available product when the section opened.
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [newQuantity, setNewQuantity] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -220,16 +227,6 @@ function EditItemsSection({ order, onSaved }) {
     setRemovedGroupIds(new Set());
     setError(null);
   }, [order.items, order.packageGroups]);
-
-  useEffect(() => {
-    api
-      .warehouseProducts({ available: true })
-      .then((data) => setAvailableProducts(data.products))
-      .catch(() => {
-        // Silent - the "add item" picker just stays empty; everything else
-        // on this section (quantity edits, removals) still works.
-      });
-  }, []);
 
   const packageGroups = order.packageGroups ?? [];
   const liveGroups = packageGroups.filter((group) => !removedGroupIds.has(group.id));
@@ -274,7 +271,7 @@ function EditItemsSection({ order, onSaved }) {
   };
 
   const handleAddItem = () => {
-    const product = availableProducts.find((p) => p.id === selectedProductId);
+    const product = selectedProduct;
     if (!product) return;
     setNewItems((prev) => [
       ...prev,
@@ -286,7 +283,7 @@ function EditItemsSection({ order, onSaved }) {
         quantity: Math.max(1, Math.trunc(Number(newQuantity)) || 1),
       },
     ]);
-    setSelectedProductId('');
+    setSelectedProduct(null);
     setNewQuantity(1);
   };
 
@@ -479,34 +476,29 @@ function EditItemsSection({ order, onSaved }) {
       <h3 className="wh-detail-card-title" style={{ fontSize: '0.95rem', marginTop: 16 }}>
         {t('orderDetail.addItemTitle')}
       </h3>
-      {availableProducts.length === 0 ? (
-        <p className="hint">{t('orderDetail.noAvailableProducts')}</p>
-      ) : (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <select
-            value={selectedProductId}
-            onChange={(e) => setSelectedProductId(e.target.value)}
-            style={{ flex: '1 1 240px' }}
-          >
-            <option value="">{t('orderDetail.selectProductPlaceholder')}</option>
-            {availableProducts.map((product) => (
-              <option key={product.id} value={product.id}>
-                {withArFallback(product.nameEn, product.nameAr)} ({formatUsdAsSyp(product.priceUsd, usdToSyp)})
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            min="1"
-            value={newQuantity}
-            onChange={(e) => setNewQuantity(e.target.value)}
-            style={{ width: 70 }}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 240px' }}>
+          <ProductPicker
+            search={searchAvailableProducts}
+            selected={selectedProduct}
+            onChange={setSelectedProduct}
+            renderLabel={(product) =>
+              `${withArFallback(product.nameEn, product.nameAr)} (${formatUsdAsSyp(product.priceUsd, usdToSyp)})`
+            }
+            placeholder={t('orderDetail.selectProductPlaceholder')}
           />
-          <button type="button" className="btn-secondary" disabled={!selectedProductId} onClick={handleAddItem}>
-            {t('orderDetail.addItemButton')}
-          </button>
         </div>
-      )}
+        <input
+          type="number"
+          min="1"
+          value={newQuantity}
+          onChange={(e) => setNewQuantity(e.target.value)}
+          style={{ width: 70 }}
+        />
+        <button type="button" className="btn-secondary" disabled={!selectedProduct} onClick={handleAddItem}>
+          {t('orderDetail.addItemButton')}
+        </button>
+      </div>
 
       {error && <p className="error-text">{error}</p>}
       {message && <p className="hint">{message}</p>}

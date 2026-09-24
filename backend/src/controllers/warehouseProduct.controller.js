@@ -16,27 +16,22 @@ async function loadWarehouseOrThrow(userId) {
   return warehouse;
 }
 
-// Two shapes on one endpoint: the banner/offer "linked product" pickers call
-// this with no `limit` at all and need the full, alphabetical list (see
-// listProductsForWarehouse) - only the Products management page opts into
-// pagination by actually sending `limit`/`after`, which is when the
-// `pagination` key appears on the response.
+// Always one page (catalog overhaul Phase 10, H4). It used to return every
+// product the warehouse owns when no `limit` was sent - what the banner,
+// offer and order-edit pickers relied on; they search page by page now
+// (`search` below). No `limit` means the default page, capped at 100.
 const list = asyncHandler(async (req, res) => {
   const warehouse = await loadWarehouseOrThrow(req.user._id);
-
-  if (req.query.limit === undefined) {
-    const products = await warehouseProductService.listProductsForWarehouse(warehouse._id, {
-      availableOnly: req.query.available === 'true',
-    });
-    res.json({ success: true, ...warehouseProductViewModel.toProductListResponse(products) });
-    return;
-  }
-
   const { limit, after } = parseCursorQuery(req.query, 20);
   const cursor = parseObjectIdCursor(after);
   const { rows, hasMore, nextCursor } = await warehouseProductService.listPaginatedProductsForWarehouse(
     warehouse._id,
-    { limit, after: cursor, manufacturerAr: req.query.manufacturer }
+    {
+      limit,
+      after: cursor,
+      manufacturerAr: req.query.manufacturer,
+      availableOnly: req.query.available === 'true',
+    }
   );
   res.json({
     success: true,
@@ -57,7 +52,9 @@ const search = asyncHandler(async (req, res) => {
     // `search` (was `q`) at the HTTP boundary - unified with every other
     // text-search endpoint. The service's own param is still named `q`
     // internally; only the wire-level query key changed.
-    { q: req.query.search, limit, after: cursor }
+    // `available=true`: only products a pharmacy could receive right now (the
+    // order-edit "add item" picker).
+    { q: req.query.search, limit, after: cursor, availableOnly: req.query.available === 'true' }
   );
   res.json({
     success: true,

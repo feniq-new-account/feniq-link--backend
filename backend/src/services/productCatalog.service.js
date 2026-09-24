@@ -190,9 +190,8 @@ async function findProductPage(
 const DEFAULT_CATALOG_LIMIT = 30;
 
 // Section 14: the admin's full list, every item regardless of isActive (a
-// disabled entry still needs to show up so it can be re-enabled) - matches
-// adminProduct.service.js's listAllProducts, which does the same for the
-// per-warehouse catalog.
+// disabled entry still needs to show up so it can be re-enabled) - as the
+// admin's product list does for the warehouses' products.
 //
 // Cursor pagination: sorted by `_id` ascending (replacing the previous
 // manufacturerAr/nameAr sort - a stable, unique cursor field is required for

@@ -502,7 +502,8 @@ export const api = {
   // Always paginated, unlike `warehouseProducts` above: this backs the
   // advertisement product picker, which searches server-side a page at a time
   // rather than pulling the whole catalog down to filter it here.
-  searchWarehouseProducts: ({ q, limit, after } = {}) => {
+  // `available`: only products a pharmacy could receive right now.
+  searchWarehouseProducts: ({ q, limit, after, available } = {}) => {
     const params = new URLSearchParams();
     // `search` (was `q`) at the HTTP boundary - unified with every other
     // text-search endpoint. Kept as `q` in this function's own arguments so
@@ -511,6 +512,7 @@ export const api = {
     if (q) params.set('search', q);
     if (limit) params.set('limit', limit);
     if (after) params.set('after', after);
+    if (available) params.set('available', 'true');
     const qs = params.toString();
     return request(`/warehouse/products/search${qs ? `?${qs}` : ''}`);
   },
@@ -623,10 +625,9 @@ export const api = {
   },
   ratePharmacy: (orderId, rating, comment) =>
     request('/warehouse/reviews', { method: 'POST', body: { orderId, rating, comment } }),
-  // No args: every product - used by the Dashboard's count and the Banners
-  // composer's product picker. Pass { search, warehouseId, categoryId,
-  // manufacturer, limit, after } for the Products management page's own
-  // paginated, filtered view.
+  // Always one page (catalog overhaul Phase 10): { search, warehouseId,
+  // categoryId, manufacturer, limit, after } - the Products management page
+  // and the Banners composer's product picker.
   adminProducts: ({ search, warehouseId, categoryId, manufacturer, limit, after } = {}) => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);

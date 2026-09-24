@@ -168,24 +168,10 @@ function bonusesFrom(data) {
 // is gone from the warehouse's own catalog too, not just the pharmacist-facing
 // one; there's no reactivate flow yet, so from the warehouse's side it's simply
 // no longer there.
-async function listProductsForWarehouse(warehouseId, { availableOnly = false } = {}) {
-  const filter = { warehouseId, isActive: true };
-  if (availableOnly) {
-    filter.isAvailable = true;
-  }
-  const products = await Product.find(filter)
-    .select(LIST_PRODUCT_SELECT)
-    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn imageUrl' });
-  products.forEach(applyResolvedIdentity);
-  products.sort((a, b) => (a.nameEn || a.nameAr || '').localeCompare(b.nameEn || b.nameAr || ''));
-  return products;
-}
-
-// The Products management page (unlike the callers of the unpaginated
-// listProductsForWarehouse above - banner/offer "linked product" pickers,
-// which need every product, alphabetically) wants newest-first with "Load
-// more". An ObjectId's embedded timestamp makes `_id` descending equivalent
-// to `createdAt` descending, so no compound cursor is needed.
+// The warehouse's own product list, newest first with "Load more" - the only
+// shape there is (catalog overhaul Phase 10 removed the unpaginated one the
+// pickers used). An ObjectId's embedded timestamp makes `_id` descending
+// equivalent to `createdAt` descending, so no compound cursor is needed.
 //
 // `manufacturerAr` narrows the page to one company (the catalog page opens on
 // a company list and drills into it) - an EXACT company match on its
@@ -194,9 +180,9 @@ async function listProductsForWarehouse(warehouseId, { availableOnly = false } =
 // paging through that company's products only.
 async function listPaginatedProductsForWarehouse(
   warehouseId,
-  { limit = WAREHOUSE_PRODUCTS_DEFAULT_LIMIT, after = null, manufacturerAr = null } = {}
+  { limit = WAREHOUSE_PRODUCTS_DEFAULT_LIMIT, after = null, manufacturerAr = null, availableOnly = false } = {}
 ) {
-  const filter = buildProductFilter({ warehouseId, manufacturer: manufacturerAr ?? undefined });
+  const filter = buildProductFilter({ warehouseId, manufacturer: manufacturerAr ?? undefined, availableOnly });
   return findProductPage(filter, { limit, after, direction: -1, select: LIST_PRODUCT_SELECT });
 }
 
@@ -210,9 +196,9 @@ async function listPaginatedProductsForWarehouse(
 // before anything is typed.
 async function searchPaginatedProductsForWarehouse(
   warehouseId,
-  { q = '', limit = WAREHOUSE_PRODUCTS_DEFAULT_LIMIT, after = null } = {}
+  { q = '', limit = WAREHOUSE_PRODUCTS_DEFAULT_LIMIT, after = null, availableOnly = false } = {}
 ) {
-  const filter = buildProductFilter({ warehouseId, search: q ?? undefined });
+  const filter = buildProductFilter({ warehouseId, search: q ?? undefined, availableOnly });
   return findProductPage(filter, { limit, after, direction: -1, select: LIST_PRODUCT_SELECT });
 }
 
@@ -500,7 +486,6 @@ async function importProductsFromExcel(warehouseId, userId, file, { mapping = nu
 }
 
 module.exports = {
-  listProductsForWarehouse,
   listPaginatedProductsForWarehouse,
   searchPaginatedProductsForWarehouse,
   createProduct,

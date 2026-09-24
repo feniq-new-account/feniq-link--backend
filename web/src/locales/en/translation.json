@@ -335,7 +335,8 @@
     "submitForApproval": "Submit for approval",
     "statusApproved": "Approved",
     "statusRejected": "Rejected",
-    "statusPending": "Pending review"
+    "statusPending": "Pending review",
+    "linkedProduct": "Linked product"
   },
   "debts": {
     "searchPlaceholder": "Search by pharmacy name...",
@@ -963,5 +964,10 @@
     "confirmMerge": "Merge \"{{source}}\" into \"{{target}}\"? This cannot be undone.",
     "nameTaken": "Another company already has this name - merge the two instead.",
     "mergeConflict": "Some medicines exist under both companies and must be resolved in Duplicate review first."
+  },
+  "productPicker": {
+    "searchPlaceholder": "Search products by name or company",
+    "change": "Change",
+    "clear": "Remove"
   }
 }

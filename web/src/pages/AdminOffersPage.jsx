@@ -315,7 +315,7 @@ export function AdminOffersPage() {
         <OfferModal
           mode="edit"
           offer={editing}
-          products={null}
+          searchProducts={null}
           usdToSyp={null}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
