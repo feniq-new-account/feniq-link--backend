@@ -716,7 +716,8 @@ function locateTable(workbook, options) {
       const score = mapped.fieldColumns.size;
       if (!best || score > best.score) best = { sheet, headerRowNumber: number, score, ...mapped };
     }
-    if (best && best.sheet === sheet && best.fieldColumns.has('name') && best.fieldColumns.has('price')) {
+    const hasName = best && (best.fieldColumns.has('name') || best.fieldColumns.has('nameEn'));
+    if (best && best.sheet === sheet && hasName && best.fieldColumns.has('price')) {
       return best;
     }
   }
@@ -744,7 +745,7 @@ function columnsNeedMapping(located, missing) {
 // Reads the uploaded workbook into plain rows. Throws IMPORT_COLUMNS_UNRECOGNIZED
 // (with the detected headers) when a required column can't be identified.
 //
-// Every returned row: { rowNumber, raw, name, manufacturer, price, priceEmpty,
+// Every returned row: { rowNumber, raw, name, nameEn, manufacturer, price, priceEmpty,
 // currency, unit, unitGiven, bonuses, bonusGiven, problems[] }. `problems`
 // holds what the row itself got wrong - 'missing_name', 'invalid_price',
 // 'missing_currency', 'unknown_currency', 'unknown_unit', 'bad_bonus'.
@@ -763,28 +764,42 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
   }
 
   const located = locateTable(workbook, { explicitMapping, savedMapping });
-  const missing = REQUIRED_FIELDS.filter((field) => !located || !located.fieldColumns.has(field));
+  // An English name column alone stands in for the name column.
+  const hasField = (field) =>
+    located && (located.fieldColumns.has(field) || (field === 'name' && located.fieldColumns.has('nameEn')));
+  const missing = REQUIRED_FIELDS.filter((field) => !hasField(field));
   let companyRowMode = false;
   if (missing.length === 1 && missing[0] === 'manufacturer') {
-    companyRowMode = hasCompanyRows(located.sheet, located.headerRowNumber, located.fieldColumns.get('name'));
+    companyRowMode = hasCompanyRows(
+      located.sheet,
+      located.headerRowNumber,
+      located.fieldColumns.get('name') ?? located.fieldColumns.get('nameEn')
+    );
   }
   if (missing.length > 0 && !companyRowMode) throw columnsNeedMapping(located, missing);
 
   const { sheet, headerRowNumber, fieldColumns, columns } = located;
   const col = (field) => fieldColumns.get(field);
   const headerKeys = new Set(columns.map((c) => c.headerKey));
+  // The name column is `name`, or the English column when it is the only one.
+  // With both, the English column is a second name the row is also matched on.
+  const nameColumn = col('name') ?? col('nameEn');
+  const nameEnColumn = col('name') && col('nameEn') ? col('nameEn') : null;
 
   const rows = [];
   let currentCompany = null;
   for (let number = headerRowNumber + 1; number <= sheet.rowCount; number += 1) {
     const row = sheet.getRow(number);
-    const nameCell = row.getCell(col('name'));
-    const name = cellText(nameCell);
+    const nameCell = row.getCell(nameColumn);
+    const nameCellText = cellText(nameCell);
+    const nameEnText = nameEnColumn ? cellText(row.getCell(nameEnColumn)) : '';
+    // The row's name: the name column, else the English one.
+    const name = nameCellText || nameEnText;
     const values = [...fieldColumns.values()].map((index) => cellText(row.getCell(index)));
     if (values.every((value) => !value)) continue; // blank / separator row
 
-    if (companyRowMode && name) {
-      const company = companyRowName(name, nameCell);
+    if (companyRowMode && nameCellText) {
+      const company = companyRowName(nameCellText, nameCell);
       if (company) {
         currentCompany = company;
         continue;
@@ -792,13 +807,16 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
     }
     // A repeated header row further down the sheet (a printed report with
     // headers on every page).
-    if (name && headerKeys.has(normalizeText(name)) && fieldForHeader(name) === 'name') continue;
+    if (nameCellText && headerKeys.has(normalizeText(nameCellText)) && ['name', 'nameEn'].includes(fieldForHeader(nameCellText))) {
+      continue;
+    }
 
     const priceCell = row.getCell(col('price'));
     const rawPrice = typeof priceCell.value === 'number' ? priceCell.value : cellText(priceCell);
     const manufacturer = companyRowMode ? currentCompany ?? '' : cellText(row.getCell(col('manufacturer')));
     const raw = {
-      name,
+      name: nameCellText,
+      nameEn: nameEnColumn ? nameEnText : '',
       manufacturer,
       price: rawPrice === '' ? '' : String(rawPrice),
       currency: col('currency') ? cellText(row.getCell(col('currency'))) : '',
@@ -810,6 +828,8 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
       rowNumber: number,
       raw,
       name,
+      // A second name to match on - only when both name columns are filled.
+      nameEn: nameCellText && nameEnText ? nameEnText : null,
       manufacturer,
       price: null,
       priceEmpty: false,

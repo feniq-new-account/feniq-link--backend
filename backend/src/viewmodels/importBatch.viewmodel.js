@@ -27,6 +27,8 @@ function serializeRow(row) {
     bucket: row.bucket,
     raw: {
       name: row.raw?.name ?? null,
+      // Additive: the separate English name column, when the file had one.
+      nameEn: row.raw?.nameEn ?? null,
       manufacturer: row.raw?.manufacturer ?? null,
       price: row.raw?.price ?? null,
       currency: row.raw?.currency ?? null,
@@ -44,7 +46,9 @@ function serializeRow(row) {
     suggestions: (row.suggestions ?? []).map((s) => ({
       masterProductId: s.masterProductId,
       nameAr: s.nameAr,
+      nameEn: s.nameEn ?? null,
       manufacturerAr: s.manufacturerAr,
+      manufacturerEn: s.manufacturerEn ?? null,
       score: s.score,
     })),
     duplicateOf: row.duplicateOf ?? null,

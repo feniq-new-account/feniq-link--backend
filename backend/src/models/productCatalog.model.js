@@ -113,7 +113,14 @@ productCatalogSchema.pre('validate', async function setSearchKeys() {
     const key = normalizeText(this.manufacturerAr);
     const manufacturer = await Manufacturer.findOneAndUpdate(
       { key },
-      { $setOnInsert: { nameAr: this.manufacturerAr.trim(), nameEn: this.manufacturerEn ?? null, key } },
+      {
+        $setOnInsert: {
+          nameAr: this.manufacturerAr.trim(),
+          nameEn: this.manufacturerEn ?? null,
+          key,
+          enKey: searchKey(this.manufacturerEn),
+        },
+      },
       { upsert: true, new: true, session: this.$session() }
     );
     this.manufacturerId = manufacturer._id;

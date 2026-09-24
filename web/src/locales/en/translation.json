@@ -855,6 +855,7 @@
     "duplicated": "Each field can be chosen for one column only.",
     "field": {
       "name": "Medicine name",
+      "nameEn": "English name",
       "price": "Price",
       "manufacturer": "Company",
       "unit": "Unit",

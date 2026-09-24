@@ -1,5 +1,6 @@
 // Migration 02 - normalized search keys (catalog overhaul §1.6.1).
 //
+//  - Manufacturer: enKey (the normalized English name the import matches on)
 //  - ProductCatalog: nameKey, nameEnKey, manufacturerKey, manufacturerEnKey and identityKey
 //    recomputed with the shared normalizer (utils/normalizeText.js). The old
 //    nameKey/manufacturerKey only folded case and spaces; the new ones also
@@ -25,6 +26,16 @@ async function run({ apply = false, log = () => {} } = {}) {
   const db = mongoose.connection.db;
   const catalog = db.collection('productcatalogs');
   const products = db.collection('products');
+  const manufacturersCollection = db.collection('manufacturers');
+
+  // Manufacturers: the English key the warehouse import resolves "GSK" by.
+  const manufacturerOps = [];
+  for await (const manufacturer of manufacturersCollection.find({}, { projection: { nameEn: 1, enKey: 1 } })) {
+    const enKey = keyOf(manufacturer.nameEn);
+    if ((manufacturer.enKey ?? null) !== enKey) {
+      manufacturerOps.push({ updateOne: { filter: { _id: manufacturer._id }, update: { $set: { enKey } } } });
+    }
+  }
 
   // Catalog items.
   const catalogOps = [];
@@ -103,6 +114,7 @@ async function run({ apply = false, log = () => {} } = {}) {
   const collidingIdentities = [...identityCounts].filter(([, count]) => count > 1).length;
 
   const report = {
+    manufacturersToUpdate: manufacturerOps.length,
     catalogItemsToUpdate: catalogOps.length,
     productsToUpdate: productOps.length,
     collidingIdentities,
@@ -112,6 +124,7 @@ async function run({ apply = false, log = () => {} } = {}) {
     report.droppedIdentityIndex = await dropIndexIfExists(catalog, 'identityKey_1', { apply, log });
   }
   if (apply) {
+    report.manufacturersUpdated = await bulkWriteInBatches(manufacturersCollection, manufacturerOps, { apply });
     report.catalogItemsUpdated = await bulkWriteInBatches(catalog, catalogOps, { apply });
     report.productsUpdated = await bulkWriteInBatches(products, productOps, { apply });
   }
