@@ -2,12 +2,14 @@ const mongoose = require('mongoose');
 const ExcelJS = require('exceljs');
 const { ApiError } = require('../utils/ApiError');
 const ProductCatalog = require('../models/productCatalog.model');
+const { searchKey, identityKeyOf } = require('../models/productCatalog.model');
 // The model, not warehouseProduct.service - this file is required BY the
 // product services (for applyResolvedIdentity), so requiring one back would
 // be a cycle. Models never require services, so this direction is safe.
 const Product = require('../models/product.model');
 const Category = require('../models/category.model');
 const { getRate } = require('./exchangeRate.service');
+const { runInTransaction } = require('../utils/transaction');
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -226,8 +228,21 @@ async function updateCatalogItem(id, changes, { userId = null, confirmed = false
     item.isActive = changes.isActive === true;
   }
 
+  // The rename also rewrites the search keys every linked product carries a
+  // copy of (product.model.js) - in the same transaction, so a search can
+  // never find a product under its old name after the catalog says the new one.
+  const renamed = item.isModified('nameAr');
   try {
-    await item.save();
+    await runInTransaction(async (session) => {
+      await item.save({ session });
+      if (renamed) {
+        await Product.updateMany(
+          { masterProductId: item._id },
+          { $set: { nameKey: item.nameKey, nameEnKey: item.nameEnKey } },
+          { session }
+        );
+      }
+    });
   } catch (err) {
     // The (nameAr, manufacturerAr) unique index - renaming an item onto an
     // existing name/manufacturer pair. Without this the raw E11000 became a
@@ -693,9 +708,10 @@ async function importFromExcel(file) {
       // can't tell added from updated here - Mongoose returns the bare
       // document (not the {value, lastErrorObject} wrapper) once `new` is
       // combined with `rawResult`, so the two steps are kept explicit.
+      // By normalized identity, not the raw display pair: a re-import that
+      // spells the name or company slightly differently is the same medicine.
       const existing = await ProductCatalog.findOne({
-        nameAr: candidate.nameAr,
-        manufacturerAr: candidate.manufacturerAr,
+        identityKey: identityKeyOf(searchKey(candidate.nameAr), searchKey(candidate.manufacturerAr)),
       });
       if (existing) {
         // A blank price on the file never erases a price the item already

@@ -3,9 +3,11 @@ const { ApiError } = require('../utils/ApiError');
 const Product = require('../models/product.model');
 const ProductCatalog = require('../models/productCatalog.model');
 const Offer = require('../models/offer.model');
+const Manufacturer = require('../models/manufacturer.model');
+const { normalizeText } = require('../utils/normalizeText');
 const { isWarehouseAvailable } = require('./warehouse.service');
 const { applyResolvedIdentity, escapeRegex } = require('./productCatalog.service');
-const { getDiscountMapForWarehouse } = require('./manufacturerDiscount.service');
+const { getDiscountMapForWarehouse, discountPercentageFor } = require('./manufacturerDiscount.service');
 const { activeOfferFilter } = require('./offer.service');
 
 // The four fields a product's identity is made of (Section 14 Part 2). Both
@@ -25,10 +27,10 @@ function identityMatches(pattern) {
 // manufacturerEn from the linked catalog entry or the product's own legacy
 // fields - both must be selectable). masterProductId is the populate key;
 // manufacturerAr is also the manufacturer filter and the discount-map key.
-// Dropped: description, barcode, manuallyDisabled, lastPriceUpdate, the
+// Dropped: description, manuallyDisabled, lastPriceUpdate, the
 // unbounded priceHistory array, warehouseId/isActive (the filter), timestamps.
 const CATALOG_PRODUCT_SELECT =
-  'categoryId nameAr nameEn manufacturerAr manufacturerEn image unitAr unitEn price isAvailable masterProductId';
+  'categoryId nameAr nameEn manufacturerAr manufacturerEn manufacturerId image unitAr unitEn price isAvailable masterProductId';
 const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
 
 const DEFAULT_PRODUCTS_LIMIT = 20;
@@ -196,7 +198,7 @@ async function listWarehouseProducts(
   const items = products.map((product) => ({
     product,
     offer: offerByProductId.get(product._id.toString()) ?? null,
-    manufacturerDiscountPercentage: manufacturerDiscountByName.get(product.manufacturerAr) ?? null,
+    manufacturerDiscountPercentage: discountPercentageFor(manufacturerDiscountByName, product),
   }));
   return { items, hasMore, nextCursor };
 }
@@ -212,34 +214,55 @@ async function listWarehouseProducts(
 // filter as listWarehouseProducts above) - a manufacturer stays listed even
 // if every one of its medicines is temporarily unavailable, since that
 // filtering happens at the medicine level once inside the catalog.
+// The warehouse's manufacturers as entries - { manufacturerId, manufacturerAr,
+// manufacturerEn, logoUrl } - resolved through the central Manufacturer
+// (manufacturer.model.js) that every catalog-linked product carries a copy of
+// (Product.manufacturerId). Two `distinct` queries and one lookup, so the work
+// is proportional to the number of manufacturers, not to catalog size.
+//
+// A legacy product (no catalog link) whose free-text manufacturer matches no
+// Manufacturer still lists under that text, with no id and no logo - exactly
+// as it always did.
+async function listManufacturerEntriesForWarehouse(warehouseId) {
+  const [linkedIds, legacyNames] = await Promise.all([
+    Product.distinct('manufacturerId', { warehouseId, isActive: true, manufacturerId: { $ne: null } }),
+    Product.distinct('manufacturerAr', {
+      warehouseId,
+      isActive: true,
+      masterProductId: null,
+      manufacturerId: null,
+    }),
+  ]);
+
+  const manufacturers = linkedIds.length
+    ? await Manufacturer.find({ _id: { $in: linkedIds } }).select('nameAr nameEn logoUrl').lean()
+    : [];
+
+  const entries = manufacturers.map((m) => ({
+    manufacturerId: m._id,
+    manufacturerAr: m.nameAr,
+    manufacturerEn: m.nameEn ?? null,
+    logoUrl: m.logoUrl ?? null,
+  }));
+  const seenKeys = new Set(entries.map((entry) => normalizeText(entry.manufacturerAr)));
+  for (const name of legacyNames) {
+    const key = normalizeText(name);
+    if (!key || seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    entries.push({ manufacturerId: null, manufacturerAr: name, manufacturerEn: null, logoUrl: null });
+  }
+
+  entries.sort((a, b) => a.manufacturerAr.localeCompare(b.manufacturerAr));
+  return entries;
+}
+
 async function listDistinctManufacturersForWarehouse(warehouseId) {
   const available = await isWarehouseAvailable(warehouseId);
   if (!available) {
     throw ApiError.notFound('Warehouse not found.');
   }
-
-  // Resolved the same way as everywhere else (linked -> catalog entry, legacy
-  // -> own field), but as two `distinct` queries instead of loading and
-  // hydrating the warehouse's entire product collection to reduce it to about
-  // ten strings. MongoDB returns only the distinct values, so the work here is
-  // proportional to the number of manufacturers rather than to catalog size.
-  //
-  // Same reasoning as the search above: no isActive filter on the catalog
-  // read, because populate resolves a deactivated entry today too.
-  const [legacyManufacturers, linkedCatalogIds] = await Promise.all([
-    Product.distinct('manufacturerAr', { warehouseId, isActive: true, masterProductId: null }),
-    Product.distinct('masterProductId', { warehouseId, isActive: true, masterProductId: { $ne: null } }),
-  ]);
-
-  const linkedManufacturers = linkedCatalogIds.length
-    ? await ProductCatalog.distinct('manufacturerAr', { _id: { $in: linkedCatalogIds } })
-    : [];
-
-  const manufacturers = [
-    ...new Set([...legacyManufacturers, ...linkedManufacturers].filter(Boolean)),
-  ];
-  manufacturers.sort((a, b) => a.localeCompare(b));
-  return manufacturers;
+  const entries = await listManufacturerEntriesForWarehouse(warehouseId);
+  return entries.map((entry) => entry.manufacturerAr);
 }
 
 // Section 15 (pharmacist-facing): the same distinct list as above, each entry
@@ -249,14 +272,25 @@ async function listDistinctManufacturersForWarehouse(warehouseId) {
 // catalog listing and order already builds (manufacturerDiscount.service.js),
 // no price is computed here. A manufacturer with no discount rule reports 0,
 // which the card shows as "0%" rather than hiding.
+//
+// `manufacturerId`, `manufacturerEn` and `logoUrl` are additions - installed
+// app builds read only manufacturerAr/discountPercentage and ignore the rest.
+// A null logoUrl means "draw the first letter in a coloured circle".
 async function listManufacturersWithDiscountsForWarehouse(warehouseId) {
-  const [names, discountByName] = await Promise.all([
-    listDistinctManufacturersForWarehouse(warehouseId),
+  const available = await isWarehouseAvailable(warehouseId);
+  if (!available) {
+    throw ApiError.notFound('Warehouse not found.');
+  }
+  const [entries, discountMap] = await Promise.all([
+    listManufacturerEntriesForWarehouse(warehouseId),
     getDiscountMapForWarehouse(warehouseId),
   ]);
-  return names.map((manufacturerAr) => ({
-    manufacturerAr,
-    discountPercentage: discountByName.get(manufacturerAr) ?? 0,
+  return entries.map((entry) => ({
+    manufacturerAr: entry.manufacturerAr,
+    discountPercentage: discountPercentageFor(discountMap, entry) ?? 0,
+    manufacturerId: entry.manufacturerId,
+    manufacturerEn: entry.manufacturerEn,
+    logoUrl: entry.logoUrl,
   }));
 }
 

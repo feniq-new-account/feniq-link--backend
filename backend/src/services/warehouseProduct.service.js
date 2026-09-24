@@ -418,24 +418,24 @@ async function importProductsFromExcel(warehouseId, userId, file) {
     manufacturerKey: { $in: [...new Set(keyedCandidates.map((c) => c.manufacturerKey))] },
     isActive: true,
   })
-    .select('_id nameKey manufacturerKey')
+    .select('_id nameKey nameEnKey manufacturerKey manufacturerId')
     .lean();
 
   // The two $in clauses above match the cross-product of names and
   // manufacturers, so a row is only really matched once the exact pair is
   // found here.
   const catalogByPair = new Map(
-    catalogItems.map((item) => [`${item.nameKey} ${item.manufacturerKey}`, item._id])
+    catalogItems.map((item) => [`${item.nameKey}\u0000${item.manufacturerKey}`, item])
   );
 
   const matched = [];
   for (const candidate of keyedCandidates) {
-    const catalogId = catalogByPair.get(`${candidate.nameKey} ${candidate.manufacturerKey}`);
-    if (!catalogId) {
+    const catalogItem = catalogByPair.get(`${candidate.nameKey}\u0000${candidate.manufacturerKey}`);
+    if (!catalogItem) {
       errors.push({ row: candidate.rowNumber, reason: 'Medicine not found in the central catalog.' });
       continue;
     }
-    matched.push({ candidate, catalogId });
+    matched.push({ candidate, catalogId: catalogItem._id, catalogItem });
   }
 
   if (matched.length === 0) {
@@ -459,7 +459,7 @@ async function importProductsFromExcel(warehouseId, userId, file) {
   const operations = [];
   const rowsByOperationIndex = [];
 
-  for (const { candidate, catalogId } of matched) {
+  for (const { candidate, catalogId, catalogItem } of matched) {
     const existing = existingByCatalogId.get(String(catalogId));
 
     if (existing) {
@@ -505,6 +505,12 @@ async function importProductsFromExcel(warehouseId, userId, file) {
           document: {
             warehouseId,
             masterProductId: catalogId,
+            // A bulk insert skips product.model.js's pre-validate hook, so the
+            // denormalized search keys are copied from the catalog item here.
+            nameKey: catalogItem.nameKey,
+            nameEnKey: catalogItem.nameEnKey ?? null,
+            manufacturerKey: catalogItem.manufacturerKey,
+            manufacturerId: catalogItem.manufacturerId ?? null,
             price: candidate.priceUsd,
             manuallyDisabled: false,
             isAvailable: true,

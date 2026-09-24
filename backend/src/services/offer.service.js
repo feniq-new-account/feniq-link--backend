@@ -4,7 +4,7 @@ const ProductCatalog = require('../models/productCatalog.model');
 const Warehouse = require('../models/warehouse.model');
 const { ApiError } = require('../utils/ApiError');
 const { applyResolvedIdentity, escapeRegex } = require('./productCatalog.service');
-const { getDiscountMapForWarehouse } = require('./manufacturerDiscount.service');
+const { getDiscountMapForWarehouse, discountPercentageFor } = require('./manufacturerDiscount.service');
 
 // The pharmacist-facing side of warehouse product offers - the "what is on
 // promotion right now, everywhere" read behind the app's Offers & Ads tab.
@@ -30,7 +30,7 @@ function activeOfferFilter(now = new Date()) {
 // ownership check below) and masterProductId (the populate key for the
 // resolved identity - Section 14 Part 2).
 const OFFER_PRODUCT_SELECT =
-  'warehouseId nameAr nameEn manufacturerAr manufacturerEn image unitAr unitEn price isAvailable masterProductId';
+  'warehouseId nameAr nameEn manufacturerAr manufacturerEn manufacturerId image unitAr unitEn price isAvailable masterProductId';
 const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
 
 // Every offer a pharmacy may currently see, across every warehouse. Pending,
@@ -82,7 +82,7 @@ async function listActiveOffers() {
         product,
         warehouse: warehouseById.get(warehouseId) ?? null,
         manufacturerDiscountPercentage: product
-          ? discountMapByWarehouseId.get(warehouseId)?.get(product.manufacturerAr) ?? null
+          ? discountPercentageFor(discountMapByWarehouseId.get(warehouseId), product)
           : null,
       };
     })

@@ -24,7 +24,11 @@ const { runInTransaction } = require('../utils/transaction');
 const { requestFingerprint } = require('../utils/idempotency');
 const { deleteImageByUrl } = require('./upload.service');
 const { applyResolvedIdentity } = require('./productCatalog.service');
-const { getDiscountMapForWarehouse, computeDiscountedPriceUsd } = require('./manufacturerDiscount.service');
+const {
+  getDiscountMapForWarehouse,
+  discountPercentageFor,
+  computeDiscountedPriceUsd,
+} = require('./manufacturerDiscount.service');
 // advertisement.service depends on warehouse/productCatalog only - it never
 // requires this file back, so there is no cycle here.
 const { loadActiveAdvertisementOrThrow, isAdvertisementAvailable } = require('./advertisement.service');
@@ -579,7 +583,7 @@ async function createOrder({
     const product = productById.get(item.productId);
     const offer = offerByProductId.get(item.productId);
     const manufacturerDiscountPercentage =
-      manufacturerDiscountByName.get(product.manufacturerAr) ?? null;
+      discountPercentageFor(manufacturerDiscountByName, product);
     const currentPriceUsd = computeDiscountedPriceUsd(
       product.price,
       offer?.discountPercentage,
@@ -622,7 +626,7 @@ async function createOrder({
     // manufacturerAr here is already resolved (Section 14 Part 2's
     // applyResolvedIdentity, above) whether this product is catalog-linked
     // or legacy, so this lookup works either way.
-    const manufacturerDiscountPercentage = manufacturerDiscountByName.get(product.manufacturerAr) ?? null;
+    const manufacturerDiscountPercentage = discountPercentageFor(manufacturerDiscountByName, product);
 
     // product.price is USD - converted to SYP here, at order time, using
     // today's rate (see comment above).
@@ -1241,7 +1245,7 @@ async function prepareReorder(orderId, pharmacyId) {
         isActive: true,
       })
         .select(
-          'categoryId nameAr nameEn manufacturerAr manufacturerEn image unitAr unitEn price isAvailable masterProductId'
+          'categoryId nameAr nameEn manufacturerAr manufacturerEn manufacturerId image unitAr unitEn price isAvailable masterProductId'
         )
         .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' })
         .lean()
@@ -1269,7 +1273,7 @@ async function prepareReorder(orderId, pharmacyId) {
   const items = products.map((product) => ({
     product,
     offer: offerByProductId.get(product._id.toString()) ?? null,
-    manufacturerDiscountPercentage: manufacturerDiscountByName.get(product.manufacturerAr) ?? null,
+    manufacturerDiscountPercentage: discountPercentageFor(manufacturerDiscountByName, product),
     quantity: quantityByProductId.get(product._id.toString()),
   }));
 

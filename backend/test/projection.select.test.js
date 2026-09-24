@@ -485,7 +485,8 @@ test('manufacturer-discounts list keeps its fields', async () => {
   assert.strictEqual(rows.length, 1);
   assert.deepStrictEqual(
     Object.keys(rows[0]).sort(),
-    ['id', 'manufacturerAr', 'discountPercentage', 'createdAt'].sort()
+    // manufacturerId: additive (catalog overhaul M3) - nothing was dropped.
+    ['id', 'manufacturerId', 'manufacturerAr', 'discountPercentage', 'createdAt'].sort()
   );
   assert.strictEqual(rows[0].manufacturerAr, 'شركة');
   assert.strictEqual(rows[0].discountPercentage, 5);

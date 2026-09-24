@@ -19,7 +19,11 @@ const {
 } = require('./order.service');
 const { getRate } = require('./exchangeRate.service');
 const { applyResolvedIdentity } = require('./productCatalog.service');
-const { getDiscountMapForWarehouse, computeDiscountedPriceUsd } = require('./manufacturerDiscount.service');
+const {
+  getDiscountMapForWarehouse,
+  discountPercentageFor,
+  computeDiscountedPriceUsd,
+} = require('./manufacturerDiscount.service');
 const { emitToWarehouse, EVENTS } = require('../realtime');
 
 // Section 7/13b: the warehouse only ever moves an order forward through this
@@ -558,7 +562,7 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
     const newItemsData = addItems.map((item) => {
       const product = productById.get(item.productId);
       const offer = offerByProductId.get(item.productId);
-      const manufacturerDiscountPercentage = manufacturerDiscountByName.get(product.manufacturerAr) ?? null;
+      const manufacturerDiscountPercentage = discountPercentageFor(manufacturerDiscountByName, product);
 
       const unitPrice = Math.round(product.price * usdToSyp);
       const discountPrice = stackedDiscountSyp(unitPrice, offer?.discountPercentage, manufacturerDiscountPercentage);
