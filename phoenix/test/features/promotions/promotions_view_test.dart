@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:feniq/core/models/paginated_result.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -101,9 +102,9 @@ void main() {
     List<OfferModel> offers = const [],
     List<AdvertisementModel> advertisements = const [],
   }) {
-    when(() => offersRepository.getActiveOffers()).thenAnswer((_) async => offers);
-    when(() => advertisementsRepository.getActiveAdvertisements())
-        .thenAnswer((_) async => advertisements);
+    when(() => offersRepository.getActiveOffers(cursor: any(named: 'cursor'), limit: any(named: 'limit'))).thenAnswer((_) async => PaginatedResult(items: offers, hasMore: false));
+    when(() => advertisementsRepository.getActiveAdvertisements(cursor: any(named: 'cursor'), limit: any(named: 'limit')))
+        .thenAnswer((_) async => PaginatedResult(items: advertisements, hasMore: false));
   }
 
   Future<void> pumpView(

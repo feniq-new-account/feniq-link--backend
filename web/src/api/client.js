@@ -253,10 +253,17 @@ async function requestBlob(path, { _retried = false } = {}) {
   return response.blob();
 }
 
-async function requestUpload(path, file, { _retried = false } = {}) {
+// `fields`: extra text fields sent alongside the file (the import's column
+// mapping, the admin's new-manufacturer confirmations). A refusal carries the
+// backend's code/details, so the caller can react to one - the import's
+// IMPORT_COLUMNS_UNRECOGNIZED opens the column-mapping step.
+async function requestUpload(path, file, { _retried = false, fields } = {}) {
   const headers = buildHeaders();
   const formData = new FormData();
   formData.append('file', file);
+  for (const [key, value] of Object.entries(fields ?? {})) {
+    if (value !== undefined && value !== null) formData.append(key, value);
+  }
   const response = await fetchWithTimeout(
     `${API_BASE_URL}${path}`,
     { method: 'POST', headers, body: formData },
@@ -266,13 +273,18 @@ async function requestUpload(path, file, { _retried = false } = {}) {
   if (response.status === 401 && !_retried) {
     const refreshed = await refreshSession();
     if (refreshed) {
-      return requestUpload(path, file, { _retried: true });
+      return requestUpload(path, file, { _retried: true, fields });
     }
   }
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new ApiError(data?.message ?? 'Import failed. Please try again.', response.status);
+    throw new ApiError(
+      data?.message ?? 'Import failed. Please try again.',
+      response.status,
+      data?.code ?? null,
+      data?.details ?? null
+    );
   }
   return data;
 }
@@ -299,7 +311,12 @@ async function requestFormData(path, formData, method = 'POST', { _retried = fal
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new ApiError(data?.message ?? 'Upload failed. Please try again.', response.status);
+    throw new ApiError(
+      data?.message ?? 'Upload failed. Please try again.',
+      response.status,
+      data?.code ?? null,
+      data?.details ?? null
+    );
   }
   return data;
 }
@@ -424,6 +441,14 @@ export const api = {
     return request(`/warehouse/products${qs ? `?${qs}` : ''}`);
   },
   createWarehouseProduct: (data) => request('/warehouse/products', { method: 'POST', body: data }),
+  // The warehouse's override image for its own product (catalog overhaul
+  // Phase 9) - uploaded, never a typed link. Clearing it is an update with
+  // image: null.
+  uploadWarehouseProductImage: (productId, file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return requestFormData(`/warehouse/products/${productId}/image`, formData);
+  },
   updateWarehouseProduct: (productId, changes) =>
     request(`/warehouse/products/${productId}`, { method: 'PATCH', body: changes }),
   // Filtered (status pill / search / discount range) and cursor-paginated -
@@ -466,14 +491,19 @@ export const api = {
     const qs = params.toString();
     return request(`/admin/offers/all${qs ? `?${qs}` : ''}`);
   },
-  approveOffer: (offerId) => request(`/admin/offers/${offerId}/approve`, { method: 'POST' }),
-  rejectOffer: (offerId) => request(`/admin/offers/${offerId}/reject`, { method: 'POST' }),
+  // `version`: the offer version on screen - the server refuses with
+  // OFFER_CHANGED if the warehouse changed the offer since it was loaded.
+  approveOffer: (offerId, version) =>
+    request(`/admin/offers/${offerId}/approve`, { method: 'POST', body: { version } }),
+  rejectOffer: (offerId, version) =>
+    request(`/admin/offers/${offerId}/reject`, { method: 'POST', body: { version } }),
   updateAdminOffer: (offerId, data) => request(`/admin/offers/${offerId}`, { method: 'PATCH', body: data }),
   deleteAdminOffer: (offerId) => request(`/admin/offers/${offerId}`, { method: 'DELETE' }),
   // Always paginated, unlike `warehouseProducts` above: this backs the
   // advertisement product picker, which searches server-side a page at a time
   // rather than pulling the whole catalog down to filter it here.
-  searchWarehouseProducts: ({ q, limit, after } = {}) => {
+  // `available`: only products a pharmacy could receive right now.
+  searchWarehouseProducts: ({ q, limit, after, available } = {}) => {
     const params = new URLSearchParams();
     // `search` (was `q`) at the HTTP boundary - unified with every other
     // text-search endpoint. Kept as `q` in this function's own arguments so
@@ -482,6 +512,7 @@ export const api = {
     if (q) params.set('search', q);
     if (limit) params.set('limit', limit);
     if (after) params.set('after', after);
+    if (available) params.set('available', 'true');
     const qs = params.toString();
     return request(`/warehouse/products/search${qs ? `?${qs}` : ''}`);
   },
@@ -594,10 +625,9 @@ export const api = {
   },
   ratePharmacy: (orderId, rating, comment) =>
     request('/warehouse/reviews', { method: 'POST', body: { orderId, rating, comment } }),
-  // No args: every product - used by the Dashboard's count and the Banners
-  // composer's product picker. Pass { search, warehouseId, categoryId,
-  // manufacturer, limit, after } for the Products management page's own
-  // paginated, filtered view.
+  // Always one page (catalog overhaul Phase 10): { search, warehouseId,
+  // categoryId, manufacturer, limit, after } - the Products management page
+  // and the Banners composer's product picker.
   adminProducts: ({ search, warehouseId, categoryId, manufacturer, limit, after } = {}) => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
@@ -675,7 +705,16 @@ export const api = {
   searchAdminManufacturers: (search) =>
     request(`/admin/catalog/manufacturers${search ? `?search=${encodeURIComponent(search)}` : ''}`),
   downloadCatalogTemplate: () => requestBlob('/admin/catalog/template'),
-  importCatalogExcel: (file) => requestUpload('/admin/catalog/import', file),
+  // `confirmNewManufacturers` (names to create) and `manufacturerLinks`
+  // ({ rawName: manufacturerId }) answer a previous report's newManufacturers.
+  importCatalogExcel: (file, { confirmNewManufacturers, manufacturerLinks, mapping } = {}) =>
+    requestUpload('/admin/catalog/import', file, {
+      fields: {
+        confirmNewManufacturers: confirmNewManufacturers ? JSON.stringify(confirmNewManufacturers) : undefined,
+        manufacturerLinks: manufacturerLinks ? JSON.stringify(manufacturerLinks) : undefined,
+        mapping: mapping ? JSON.stringify(mapping) : undefined,
+      },
+    }),
   // `confirmed` re-sends the identical body with ?confirm=true, to go through
   // with a rename the server first refused because it would restate the
   // medicine's name across every warehouse stocking it.
@@ -690,7 +729,90 @@ export const api = {
   warehouseCatalogSearch: (q) =>
     request(`/warehouse/catalog/search${q ? `?search=${encodeURIComponent(q)}` : ''}`),
   downloadWarehouseProductTemplate: () => requestBlob('/warehouse/products/template'),
-  importWarehouseProducts: (file) => requestUpload('/warehouse/products/import', file),
+  // `mapping` ({ headerKey: field }) is the column-mapping step's answer.
+  importWarehouseProducts: (file, { mapping } = {}) =>
+    requestUpload('/warehouse/products/import', file, {
+      fields: { mapping: mapping ? JSON.stringify(mapping) : undefined },
+    }),
+  // The import results page.
+  warehouseImports: ({ limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (after) params.set('after', after);
+    const qs = params.toString();
+    return request(`/warehouse/products/imports${qs ? `?${qs}` : ''}`);
+  },
+  warehouseImport: (batchId) => request(`/warehouse/products/imports/${batchId}`),
+  warehouseImportRows: (batchId, { bucket, limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (bucket) params.set('bucket', bucket);
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (after) params.set('after', after);
+    return request(`/warehouse/products/imports/${batchId}/rows?${params.toString()}`);
+  },
+  resolveWarehouseImportRow: (batchId, rowId, body) =>
+    request(`/warehouse/products/imports/${batchId}/rows/${rowId}/resolve`, { method: 'POST', body }),
+  requestCatalogItemFromImportRow: (batchId, rowId, body) =>
+    request(`/warehouse/products/imports/${batchId}/rows/${rowId}/request`, { method: 'POST', body }),
+  warehouseCatalogSuggestions: ({ name, manufacturer }) => {
+    const params = new URLSearchParams();
+    if (name) params.set('name', name);
+    if (manufacturer) params.set('manufacturer', manufacturer);
+    return request(`/warehouse/catalog/suggestions?${params.toString()}`);
+  },
+  units: () => request('/units'),
+  // The warehouse's own catalog requests (status, and the reason if rejected).
+  warehouseCatalogRequests: ({ limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (after) params.set('after', after);
+    return request(`/warehouse/catalog/requests?${params.toString()}`);
+  },
+  // Admin: catalog requests (catalog overhaul Phase 5.1).
+  adminCatalogRequests: ({ status, limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (after) params.set('after', after);
+    return request(`/admin/catalog/requests?${params.toString()}`);
+  },
+  approveCatalogRequest: (id, body) => request(`/admin/catalog/requests/${id}/approve`, { method: 'POST', body }),
+  mergeCatalogRequest: (id, masterProductId) =>
+    request(`/admin/catalog/requests/${id}/merge`, { method: 'POST', body: { masterProductId } }),
+  rejectCatalogRequest: (id, reason) =>
+    request(`/admin/catalog/requests/${id}/reject`, { method: 'POST', body: { reason } }),
+  // Admin: duplicate review (5.2).
+  adminCatalogDuplicates: ({ limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (after) params.set('after', after);
+    return request(`/admin/catalog/duplicates?${params.toString()}`);
+  },
+  resolveCatalogDuplicate: (id, body) => request(`/admin/catalog/duplicates/${id}/resolve`, { method: 'POST', body }),
+  // Admin: the central image of a catalog item (5.3).
+  uploadCatalogImage: (id, file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return requestFormData(`/admin/catalog/${id}/image`, formData);
+  },
+  clearCatalogImage: (id) => request(`/admin/catalog/${id}/image`, { method: 'DELETE' }),
+  // Admin: manufacturers (5.4).
+  adminManufacturers: ({ search, limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (after) params.set('after', after);
+    return request(`/admin/manufacturers?${params.toString()}`);
+  },
+  updateManufacturer: (id, changes) => request(`/admin/manufacturers/${id}`, { method: 'PATCH', body: changes }),
+  mergeManufacturer: (targetId, sourceId) =>
+    request(`/admin/manufacturers/${targetId}/merge`, { method: 'POST', body: { sourceId } }),
+  uploadManufacturerLogo: (id, file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return requestFormData(`/admin/manufacturers/${id}/logo`, formData);
+  },
+  clearManufacturerLogo: (id) => request(`/admin/manufacturers/${id}/logo`, { method: 'DELETE' }),
   warehouseDiscounts: () => request('/warehouse/discounts'),
   createWarehouseDiscount: (data) => request('/warehouse/discounts', { method: 'POST', body: data }),
   updateWarehouseDiscount: (id, changes) =>

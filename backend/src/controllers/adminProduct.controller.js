@@ -7,13 +7,10 @@ const { parseCursorQuery, parseObjectIdCursor, paginationMeta } = require('../ut
 // composer's product picker both call this with no `limit` and need every
 // product - only the Products management page opts into pagination, with
 // optional warehouseId/search filters sent to the server.
+// Always one page (catalog overhaul Phase 10, H4): no `limit` used to mean
+// every product on the platform - the banner composer's picker searches page
+// by page now. No `limit` means the default page, capped at 100.
 const list = asyncHandler(async (req, res) => {
-  if (req.query.limit === undefined) {
-    const rows = await adminProductService.listAllProducts();
-    res.json({ success: true, ...adminProductViewModel.toAdminProductListResponse(rows) });
-    return;
-  }
-
   const { limit, after } = parseCursorQuery(req.query, 30);
   const cursor = parseObjectIdCursor(after);
   const warehouseId = typeof req.query.warehouseId === 'string' ? req.query.warehouseId : undefined;

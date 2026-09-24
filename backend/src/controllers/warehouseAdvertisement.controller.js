@@ -1,18 +1,10 @@
 const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/ApiError');
-const Warehouse = require('../models/warehouse.model');
 const service = require('../services/warehouseAdvertisement.service');
 const viewModel = require('../viewmodels/warehouseAdvertisement.viewmodel');
 const { verifyImageMagicBytes } = require('../middlewares/upload.middleware');
 const { uploadImage, deleteImageByUrl } = require('../services/upload.service');
-
-async function loadWarehouseOrThrow(userId) {
-  const warehouse = await Warehouse.findOne({ userId });
-  if (!warehouse) {
-    throw ApiError.notFound('Warehouse profile not found.', 'WAREHOUSE_PROFILE_NOT_FOUND');
-  }
-  return warehouse;
-}
+const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 
 // `items` (an array) and `totalPriceUsd` (a number) travel as plain JSON on
 // every existing caller. An optional image turns the request into

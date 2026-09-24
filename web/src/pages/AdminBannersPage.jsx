@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { ProductPicker } from '../components/CatalogPickers';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
@@ -47,11 +48,17 @@ function BannerFilePreview({ file }) {
 // submit-to-createAdminBanner logic as the old CreateBannerModal, just
 // without the modal wrapper/cancel button, matching the warehouse Discounts
 // page's earlier modal->inline conversion.
-function BannerComposer({ products, onCreated }) {
+// The linked product is searched for (ProductPicker), never picked from a
+// list of every product on the platform (catalog overhaul Phase 10).
+const searchAdminProducts = (q) => api.adminProducts({ search: q, limit: 20 }).then((data) => data.products);
+const adminProductLabel = (product) =>
+  `${withArFallback(product.nameEn, product.nameAr)} · ${product.warehouseNameEn ?? ''}`;
+
+function BannerComposer({ onCreated }) {
   const { t } = useTranslation();
   const [imageFile, setImageFile] = useState(null);
   const [title, setTitle] = useState('');
-  const [productId, setProductId] = useState('');
+  const [product, setProduct] = useState(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -77,11 +84,11 @@ function BannerComposer({ products, onCreated }) {
       formData.append('title', title.trim());
       formData.append('startDate', startDate);
       formData.append('endDate', endDate);
-      if (productId) formData.append('productId', productId);
+      if (product) formData.append('productId', product.id);
       await api.createAdminBanner(formData);
       setImageFile(null);
       setTitle('');
-      setProductId('');
+      setProduct(null);
       setStartDate('');
       setEndDate('');
       event.target.reset();
@@ -114,14 +121,13 @@ function BannerComposer({ products, onCreated }) {
         </label>
         <label>
           {t('banners.linkedProductOptional')}
-          <select value={productId} onChange={(e) => setProductId(e.target.value)}>
-            <option value="">{t('banners.noProduct')}</option>
-            {products.map((product) => (
-              <option key={product.id} value={product.id}>
-                {withArFallback(product.nameEn, product.nameAr)} &middot; {product.warehouseNameEn}
-              </option>
-            ))}
-          </select>
+          <ProductPicker
+            search={searchAdminProducts}
+            selected={product}
+            onChange={setProduct}
+            renderLabel={adminProductLabel}
+            allowClear
+          />
         </label>
         <div className="form-row">
           <label>
@@ -277,14 +283,9 @@ export function AdminBannersPage() {
   const bannerStatusLabel = useBannerStatusLabel();
   const statusFilterLabel = useStatusFilterLabel();
   const [statusFilter, setStatusFilter] = useState('all');
-  const [products, setProducts] = useState([]);
   const [busyId, setBusyId] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [editingBanner, setEditingBanner] = useState(null);
-
-  useEffect(() => {
-    api.adminProducts().then((data) => setProducts(data.products));
-  }, []);
 
   const fetchPage = useCallback(
     (cursor) =>
@@ -513,7 +514,7 @@ export function AdminBannersPage() {
             )}
           </div>
 
-          <BannerComposer products={products} onCreated={reset} />
+          <BannerComposer onCreated={reset} />
         </div>
       )}
 

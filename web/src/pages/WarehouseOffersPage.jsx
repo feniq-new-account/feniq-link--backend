@@ -8,11 +8,13 @@ import { OFFER_FILTERS, filterOffers, offerEditSource, reviewCount } from './off
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 
+const searchOfferProducts = (q) =>
+  api.searchWarehouseProducts({ q, limit: 20 }).then((data) => data.products);
+
 export function WarehouseOffersPage() {
   const { t } = useTranslation();
   const usdToSyp = useExchangeRate();
   const [offers, setOffers] = useState([]);
-  const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   // null = closed, 'new' = create, otherwise the offer being edited.
@@ -24,16 +26,21 @@ export function WarehouseOffersPage() {
   const [discountMin, setDiscountMin] = useState('');
   const [discountMax, setDiscountMax] = useState('');
 
-  const statusLabel = (offer) =>
-    offer.status === 'approved' ? t('offers.warehouse.statusApproved') : t('offers.warehouse.statusPending');
+  // 'stopped': the platform took it off air (its product was withdrawn from
+  // the central catalog) - kept as a record, no longer editable.
+  const statusLabel = (offer) => {
+    if (offer.status === 'stopped') return t('offers.warehouse.statusStopped');
+    return offer.status === 'approved' ? t('offers.warehouse.statusApproved') : t('offers.warehouse.statusPending');
+  };
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [offersData, productsData] = await Promise.all([api.warehouseOffers(), api.warehouseProducts()]);
+      // The offer modal searches products itself (ProductPicker) - no longer
+      // every product the warehouse owns, loaded on each open (Phase 10).
+      const offersData = await api.warehouseOffers();
       setOffers(offersData.offers);
-      setProducts(productsData.products);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -47,8 +54,8 @@ export function WarehouseOffersPage() {
 
   // An admin approving, rejecting, editing or deleting one of these offers is
   // the one change to this list that happens somewhere else. Only the offers
-  // are re-read: the product list the modal uses did not change, and the table
-  // stays on screen instead of flashing to "loading".
+  // are re-read, and the table stays on screen instead of flashing to
+  // "loading".
   useRealtimeSync([REALTIME_EVENTS.OFFER_STATUS_UPDATED], () => {
     api
       .warehouseOffers()
@@ -182,7 +189,13 @@ export function WarehouseOffersPage() {
                   <td className="wh-num wh-table-date">{periodCell(offer)}</td>
                   <td>
                     <span
-                      className={`status-badge ${offer.status === 'approved' ? 'status-delivered' : 'status-pending'}`}
+                      className={`status-badge ${
+                        offer.status === 'approved'
+                          ? 'status-delivered'
+                          : offer.status === 'stopped'
+                            ? 'status-cancelled'
+                            : 'status-pending'
+                      }`}
                     >
                       {statusLabel(offer)}
                     </span>
@@ -192,9 +205,11 @@ export function WarehouseOffersPage() {
                   </td>
                   <td>
                     <div className="table-row-actions">
-                      <button className="btn-secondary" onClick={() => setEditing(offer)}>
-                        {t('common.edit')}
-                      </button>
+                      {offer.status !== 'stopped' && (
+                        <button className="btn-secondary" onClick={() => setEditing(offer)}>
+                          {t('common.edit')}
+                        </button>
+                      )}
                       <button
                         className="btn-reject"
                         disabled={busyId === offer.id}
@@ -215,7 +230,7 @@ export function WarehouseOffersPage() {
         <OfferModal
           mode={editing === 'new' ? 'create' : 'edit'}
           offer={editing === 'new' ? null : offerEditSource(editing)}
-          products={products}
+          searchProducts={searchOfferProducts}
           usdToSyp={usdToSyp}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}

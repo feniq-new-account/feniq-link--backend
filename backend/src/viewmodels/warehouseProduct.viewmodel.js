@@ -1,3 +1,5 @@
+const { effectiveImage, catalogImage } = require('../utils/productImage');
+
 // Everything a product row shows. Deliberately WITHOUT priceHistory: that
 // array grows one entry per price edit and one per re-import, forever, and
 // including it here meant every list response - including the unpaginated
@@ -13,9 +15,16 @@ function serializeProduct(product) {
     manufacturerAr: product.manufacturerAr,
     manufacturerEn: product.manufacturerEn,
     description: product.description,
-    image: product.image,
+    // The effective image (override, else the catalog's central one - Phase 9),
+    // plus both halves so the edit form knows what clearing the override shows.
+    image: effectiveImage(product),
+    imageOverride: product.image ?? null,
+    catalogImageUrl: catalogImage(product),
     unitAr: product.unitAr,
     unitEn: product.unitEn,
+    // Additive (catalog overhaul): the fixed unit code and the bonus tiers.
+    unit: product.unit ?? null,
+    bonuses: (product.bonuses || []).map((tier) => ({ buy: tier.buy, free: tier.free })),
     priceUsd: product.price,
     isAvailable: product.isAvailable,
     manuallyDisabled: product.manuallyDisabled,

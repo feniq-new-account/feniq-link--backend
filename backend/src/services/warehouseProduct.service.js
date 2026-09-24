@@ -3,14 +3,13 @@ const { ApiError } = require('../utils/ApiError');
 const Product = require('../models/product.model');
 const Category = require('../models/category.model');
 const ProductCatalog = require('../models/productCatalog.model');
-const { searchKey } = require('../models/productCatalog.model');
-const {
-  applyResolvedIdentity,
-  loadAndParseUpload,
-  escapeRegex,
-} = require('./productCatalog.service');
-const { registerManufacturers } = require('./warehouseManufacturer.service');
+const { applyResolvedIdentity, buildProductFilter, findProductPage } = require('./productCatalog.service');
+const { importWarehouseFile } = require('./warehouseImport.service');
 const { assertRateUsedIsCurrent } = require('./exchangeRate.service');
+const { runInTransaction } = require('../utils/transaction');
+const { UNIT_CODES, unitNameAr, unitNameEn } = require('../config/units');
+const { normalizeBonusTiers } = require('../utils/bonus');
+const { imageUrlInput, storeUploadedImage, releaseImage } = require('./imageAsset.service');
 
 const WAREHOUSE_PRODUCTS_DEFAULT_LIMIT = 20;
 
@@ -58,19 +57,61 @@ async function validateCategoryId(categoryId) {
 }
 
 // Section 14 Part 2: every new product must link to an active central-
-// catalog entry - returns it (not just validates) since createProduct needs
-// nothing else from it, but importProductsFromExcel below does its own
-// lookup by name instead of by id.
+// catalog entry. A malformed or unknown id is a 400; an item that exists but
+// has been withdrawn (recalled) gets its own code, so the warehouse is told
+// why rather than "invalid".
 async function validateMasterProductId(masterProductId) {
   if (typeof masterProductId !== 'string' || !mongoose.Types.ObjectId.isValid(masterProductId)) {
     throw ApiError.badRequest('Invalid catalog item.', undefined, 'INVALID_MASTER_PRODUCT');
   }
-  const catalogItem = await ProductCatalog.findOne({ _id: masterProductId, isActive: true });
+  const catalogItem = await ProductCatalog.findById(masterProductId).select('isActive').lean();
   if (!catalogItem) {
     throw ApiError.badRequest('Invalid catalog item.', undefined, 'INVALID_MASTER_PRODUCT');
   }
+  if (catalogItem.isActive === false) throw withdrawnError();
   return catalogItem;
 }
+
+function withdrawnError() {
+  return ApiError.conflict(
+    'This medicine has been withdrawn from the central catalog.',
+    'CATALOG_ITEM_WITHDRAWN'
+  );
+}
+
+function disabledByAdminError() {
+  return ApiError.conflict('This product has been disabled by the administration.', 'PRODUCT_DISABLED_BY_ADMIN');
+}
+
+// Why an existing product of this warehouse cannot be touched by an add or an
+// import (catalog overhaul Phase 3.4): the platform switched it off. Its
+// catalog item was withdrawn (recall), or an admin disabled it individually.
+// Null when the warehouse may update it. Rows written before deactivatedBy
+// existed (null) count as admin-disabled - 03-deactivated-by.js fills them in.
+function blockedCodeFor(product) {
+  if (!product || product.isActive !== false) return null;
+  return product.deactivatedBy === 'catalog_recall' ? 'CATALOG_ITEM_WITHDRAWN' : 'PRODUCT_DISABLED_BY_ADMIN';
+}
+
+function throwIfBlocked(product) {
+  const code = blockedCodeFor(product);
+  if (code === 'CATALOG_ITEM_WITHDRAWN') throw withdrawnError();
+  if (code === 'PRODUCT_DISABLED_BY_ADMIN') throw disabledByAdminError();
+}
+
+// Inside a create/link transaction: confirms the catalog item is still active
+// AND writes to it (lastLinkedAt), so a recall of the same item running at
+// the same moment conflicts with this transaction - one of the two retries
+// and sees the other's result (M5). A plain read would not conflict.
+async function claimActiveCatalogItem(masterProductId, session) {
+  const result = await ProductCatalog.updateOne(
+    { _id: masterProductId, isActive: true },
+    { $set: { lastLinkedAt: new Date() } },
+    { session }
+  );
+  if (result.matchedCount === 0) throw withdrawnError();
+}
+
 
 // `price` on the Product doc is USD (Section: USD-first catalog pricing) -
 // kept as the Mongoose field name to avoid a schema migration, but every
@@ -86,6 +127,10 @@ function validatePrice(priceUsd) {
 }
 
 function validateRequiredStrings(data) {
+  // A unit code (the form's dropdown, config/units.js) stands in for the two
+  // free-text unit fields; a client that still sends only unitAr/unitEn keeps
+  // working.
+  if (data.unit !== undefined && data.unit !== null) return;
   for (const [field, code] of REQUIRED_STRING_FIELDS) {
     if (typeof data[field] !== 'string' || !data[field].trim()) {
       throw ApiError.badRequest(`Invalid ${field}.`, undefined, code);
@@ -93,185 +138,171 @@ function validateRequiredStrings(data) {
   }
 }
 
+// The unit fields to write for a unit input: a code from the fixed list
+// (catalog overhaul §4.5) also fills the legacy unitAr/unitEn with its labels,
+// so installed app builds that only read those keep showing a unit. Returns
+// undefined when no unit was sent at all.
+function unitFieldsFrom(data) {
+  if (data.unit !== undefined && data.unit !== null) {
+    if (!UNIT_CODES.includes(data.unit)) {
+      throw ApiError.badRequest('Invalid unit.', undefined, 'INVALID_UNIT');
+    }
+    return { unit: data.unit, unitAr: unitNameAr(data.unit), unitEn: unitNameEn(data.unit) };
+  }
+  if (typeof data.unitAr === 'string' && typeof data.unitEn === 'string') {
+    return { unitAr: data.unitAr.trim(), unitEn: data.unitEn.trim() };
+  }
+  return undefined;
+}
+
+// Bonus tiers from the form - an array of { buy, free } or the text form
+// ("10+1، 20+3"); undefined when not sent, [] to clear (utils/bonus.js).
+function bonusesFrom(data) {
+  const input = data.bonuses !== undefined ? data.bonuses : data.bonus;
+  const parsed = normalizeBonusTiers(input);
+  if (!parsed.ok) throw ApiError.badRequest('Invalid bonus.', undefined, 'INVALID_BONUS');
+  return parsed.tiers;
+}
+
 // isActive: true - a product an admin has deactivated (adminProduct.service.js)
 // is gone from the warehouse's own catalog too, not just the pharmacist-facing
 // one; there's no reactivate flow yet, so from the warehouse's side it's simply
 // no longer there.
-async function listProductsForWarehouse(warehouseId, { availableOnly = false } = {}) {
-  const filter = { warehouseId, isActive: true };
-  if (availableOnly) {
-    filter.isAvailable = true;
-  }
-  const products = await Product.find(filter)
-    .select(LIST_PRODUCT_SELECT)
-    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' });
-  products.forEach(applyResolvedIdentity);
-  products.sort((a, b) => (a.nameEn || a.nameAr || '').localeCompare(b.nameEn || b.nameAr || ''));
-  return products;
-}
-
-// An EXACT manufacturer match, as the catalog page's company drill-down needs
-// it - not the fuzzy name-or-manufacturer regex searchPaginatedProductsForWarehouse
-// does. A product's manufacturer lives on its linked catalog entry
-// (masterProductId) for everything created since Section 14 Part 2 and on the
-// row itself for legacy products, so the clause has to cover both places -
-// the same two-step as the search below, minus the regex.
-async function manufacturerMatchClauses(manufacturerAr) {
-  const catalogIds = await ProductCatalog.distinct('_id', { manufacturerAr });
-  return [
-    { masterProductId: null, manufacturerAr },
-    { masterProductId: { $in: catalogIds } },
-  ];
-}
-
-// The Products management page (unlike the callers of the unpaginated
-// listProductsForWarehouse above - banner/offer "linked product" pickers,
-// which need every product, alphabetically) wants newest-first with "Load
-// more". An ObjectId's embedded timestamp makes `_id` descending equivalent
-// to `createdAt` descending, so no compound cursor is needed.
+// The warehouse's own product list, newest first with "Load more" - the only
+// shape there is (catalog overhaul Phase 10 removed the unpaginated one the
+// pickers used). An ObjectId's embedded timestamp makes `_id` descending
+// equivalent to `createdAt` descending, so no compound cursor is needed.
 //
 // `manufacturerAr` narrows the page to one company (the catalog page opens on
-// a company list and drills into it). Applied here rather than in React so
-// "Load more" keeps paging through that company's products only - a
-// client-side filter would page through the whole catalog and show a near-
-// empty page whenever the next 20 rows happened to be other companies'.
+// a company list and drills into it) - an EXACT company match on its
+// normalized key, through the shared product search
+// (productCatalog.service.js's buildProductFilter), so "Load more" keeps
+// paging through that company's products only.
 async function listPaginatedProductsForWarehouse(
   warehouseId,
-  { limit = WAREHOUSE_PRODUCTS_DEFAULT_LIMIT, after = null, manufacturerAr = null } = {}
+  { limit = WAREHOUSE_PRODUCTS_DEFAULT_LIMIT, after = null, manufacturerAr = null, availableOnly = false } = {}
 ) {
-  const filter = { warehouseId, isActive: true };
-  const manufacturer = typeof manufacturerAr === 'string' ? manufacturerAr.trim() : '';
-  if (manufacturer) {
-    filter.$or = await manufacturerMatchClauses(manufacturer);
-  }
-  if (after !== null) {
-    filter._id = { $lt: after };
-  }
-
-  const rows = await Product.find(filter)
-    .select(LIST_PRODUCT_SELECT)
-    .sort({ _id: -1 })
-    .limit(limit + 1)
-    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' });
-  const hasMore = rows.length > limit;
-  const page = hasMore ? rows.slice(0, limit) : rows;
-  page.forEach(applyResolvedIdentity);
-  const nextCursor = page.length > 0 ? String(page[page.length - 1]._id) : null;
-
-  return { rows: page, hasMore, nextCursor };
+  const filter = buildProductFilter({ warehouseId, manufacturer: manufacturerAr ?? undefined, availableOnly });
+  return findProductPage(filter, { limit, after, direction: -1, select: LIST_PRODUCT_SELECT });
 }
 
 // Backs the advertisement product picker: search this warehouse's own
 // products by name (or manufacturer), paginated - so the panel never has to
-// pull the whole catalog down and filter it client-side.
-//
-// A product's name lives on the linked catalog entry (masterProductId), not on
-// the product itself, so a plain field regex would miss every catalog-linked
-// row. Same two-step as adminProduct.service.listPaginatedAllProducts:
-// regex-match ProductCatalog first, then $in those ids - plus the product's own
-// legacy identity fields, for rows created before Section 14 Part 2. One
-// catalog query + one product query, whatever the page size.
+// pull the whole catalog down and filter it client-side. Same shared search as
+// every other product search (normalized keys, one query per page).
 //
 // A blank `q` is not an error - it just yields the same newest-first page
 // listPaginatedProductsForWarehouse gives, so the picker can show something
 // before anything is typed.
 async function searchPaginatedProductsForWarehouse(
   warehouseId,
-  { q = '', limit = WAREHOUSE_PRODUCTS_DEFAULT_LIMIT, after = null } = {}
+  { q = '', limit = WAREHOUSE_PRODUCTS_DEFAULT_LIMIT, after = null, availableOnly = false } = {}
 ) {
-  const filter = { warehouseId, isActive: true };
-
-  const search = typeof q === 'string' ? q.trim() : '';
-  if (search) {
-    // 'i' covers English case-insensitivity; Arabic is caseless, so the same
-    // pattern matches either script without a second code path.
-    const pattern = new RegExp(escapeRegex(search), 'i');
-    const matchingCatalogEntries = await ProductCatalog.find(
-      { $or: [{ nameAr: pattern }, { nameEn: pattern }, { manufacturerAr: pattern }, { manufacturerEn: pattern }] },
-      '_id'
-    );
-    filter.$or = [
-      { nameAr: pattern },
-      { nameEn: pattern },
-      { manufacturerAr: pattern },
-      { manufacturerEn: pattern },
-      { masterProductId: { $in: matchingCatalogEntries.map((c) => c._id) } },
-    ];
-  }
-
-  if (after !== null) {
-    filter._id = { $lt: after };
-  }
-
-  const rows = await Product.find(filter)
-    .select(LIST_PRODUCT_SELECT)
-    .sort({ _id: -1 })
-    .limit(limit + 1)
-    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' });
-  const hasMore = rows.length > limit;
-  const page = hasMore ? rows.slice(0, limit) : rows;
-  page.forEach(applyResolvedIdentity);
-  const nextCursor = page.length > 0 ? String(page[page.length - 1]._id) : null;
-
-  return { rows: page, hasMore, nextCursor };
+  const filter = buildProductFilter({ warehouseId, search: q ?? undefined, availableOnly });
+  return findProductPage(filter, { limit, after, direction: -1, select: LIST_PRODUCT_SELECT });
 }
 
 // Section 8/14 Part 2: every field a warehouse can set at creation.
 // name/manufacturer are no longer among them - masterProductId (chosen via
 // catalog search, see warehouseCatalog.routes.js) is what identifies the
-// product now. image stays optional/null for now - no upload provider is
-// wired up yet (same as the pharmacist-facing catalog), though a plain URL
-// can be pasted in if the warehouse already has one hosted somewhere.
+// product now.
 //
 // `priceUsd` is converted from the SYP the warehouse typed, so the request
 // must say at which rate (`rateUsed`) and that rate must still be the current
 // one - see exchangeRate.service.js's assertRateUsedIsCurrent.
 // `requireRateUsed` is set by the HTTP controller; a direct caller that sends
 // no rate is not checked.
-async function createProduct(warehouseId, data, { requireRateUsed = false } = {}) {
+//
+// Adding a medicine this warehouse already has (catalog overhaul Phase 3.4):
+//  - it disabled that product itself (manuallyDisabled) -> the product is
+//    re-enabled with the new price and fields, and returned as such;
+//  - the platform disabled it (recall / admin) -> refused with
+//    CATALOG_ITEM_WITHDRAWN / PRODUCT_DISABLED_BY_ADMIN, nothing changes;
+//  - it is live -> PRODUCT_ALREADY_LINKED, as before.
+// All in one transaction that also re-checks the catalog item is still active.
+async function createProduct(warehouseId, data, { requireRateUsed = false, userId = null } = {}) {
   validateRequiredStrings(data);
   await validateMasterProductId(data.masterProductId);
   await validateCategoryId(data.categoryId);
   validatePrice(data.priceUsd);
+  unitFieldsFrom(data);
+  bonusesFrom(data);
+  imageUrlInput(data.image);
   await assertRateUsedIsCurrent(data.rateUsed, { required: requireRateUsed });
 
   const manuallyDisabled = data.manuallyDisabled === true;
 
   let product;
+  let reEnabled = false;
   try {
-    product = await Product.create({
-      warehouseId,
-      masterProductId: data.masterProductId,
-      categoryId: data.categoryId,
-      unitAr: data.unitAr.trim(),
-      unitEn: data.unitEn.trim(),
-      description:
-        typeof data.description === 'string' && data.description.trim() ? data.description.trim() : null,
-      image: typeof data.image === 'string' && data.image.trim() ? data.image.trim() : null,
-      price: data.priceUsd,
-      manuallyDisabled,
-      isAvailable: computeIsAvailable(manuallyDisabled),
-      lastPriceUpdate: new Date(),
+    await runInTransaction(async (session) => {
+      reEnabled = false;
+      await claimActiveCatalogItem(data.masterProductId, session);
+
+      const existing = await Product.findOne({ warehouseId, masterProductId: data.masterProductId }).session(session);
+      if (existing) {
+        throwIfBlocked(existing);
+        if (!existing.manuallyDisabled) {
+          throw ApiError.conflict('You already have a product linked to this medicine.', 'PRODUCT_ALREADY_LINKED');
+        }
+        product = await applyProductUpdate(
+          existing,
+          userId,
+          {
+            categoryId: data.categoryId,
+            unit: data.unit,
+            unitAr: data.unitAr,
+            unitEn: data.unitEn,
+            bonuses: data.bonuses !== undefined ? data.bonuses : data.bonus,
+            description: data.description,
+            image: data.image,
+            priceUsd: data.priceUsd,
+            manuallyDisabled,
+          },
+          { session, resolve: false }
+        );
+        reEnabled = true;
+        return;
+      }
+
+      [product] = await Product.create(
+        [
+          {
+            warehouseId,
+            masterProductId: data.masterProductId,
+            categoryId: data.categoryId,
+            ...unitFieldsFrom(data),
+            bonuses: bonusesFrom(data) ?? [],
+            description:
+              typeof data.description === 'string' && data.description.trim() ? data.description.trim() : null,
+            image: imageUrlInput(data.image) ?? null,
+            price: data.priceUsd,
+            manuallyDisabled,
+            isAvailable: computeIsAvailable(manuallyDisabled),
+            lastPriceUpdate: new Date(),
+          },
+        ],
+        { session }
+      );
     });
   } catch (err) {
-    // The (warehouseId, masterProductId) unique index (product.model.js) -
-    // a raw Mongo E11000 error would otherwise leak internal index/field
-    // names straight to the client.
+    // The (warehouseId, masterProductId) unique index (product.model.js) - two
+    // adds of the same medicine racing each other. A raw Mongo E11000 error
+    // would otherwise leak internal index/field names straight to the client.
     if (err.code === 11000) {
-      throw ApiError.conflict(
-        'You already have a product linked to this medicine.',
-        'PRODUCT_ALREADY_LINKED'
-      );
+      throw ApiError.conflict('You already have a product linked to this medicine.', 'PRODUCT_ALREADY_LINKED');
     }
     throw err;
   }
 
-  // Resolved strictly *after* create, purely so the response reflects the
+  // Resolved strictly *after* the write, purely so the response reflects the
   // linked catalog's name - this in-memory-only doc is never saved again
-  // within this request, so it can't leak back into storage (see the
-  // Section 14 Part 2 note on listAllProducts in adminProduct.service.js).
+  // within this request, so it can't leak back into storage.
+  await releaseReplacedImage(product);
   await product.populate('masterProductId');
-  return applyResolvedIdentity(product);
+  applyResolvedIdentity(product);
+  product.$locals.reEnabled = reEnabled;
+  return product;
 }
 
 // IDOR guard: scoped to warehouseId, same pattern as every other
@@ -298,14 +329,38 @@ async function findOwnedProductOrThrow(productId, warehouseId) {
 // `rateUsed` and is refused if that rate is no longer current (same rule as
 // createProduct). Re-sending the stored price unchanged depends on no rate and
 // needs none - the panel does exactly that for an untouched price field.
-async function applyProductUpdate(product, userId, changes, { requireRateUsed = false } = {}) {
-  for (const [field, code] of REQUIRED_STRING_FIELDS) {
-    if (changes[field] !== undefined) {
-      if (typeof changes[field] !== 'string' || !changes[field].trim()) {
-        throw ApiError.badRequest(`Invalid ${field}.`, undefined, code);
+//
+// Concurrency (M5): the product schema has optimisticConcurrency, so this
+// save only lands if nobody else saved the product since it was loaded. An
+// admin edit and a warehouse edit racing each other therefore can't silently
+// overwrite one another (or record a priceHistory `oldPrice` that was already
+// stale) - the loser gets 409 PRODUCT_CHANGED and re-reads.
+//
+// `session` runs the save inside the caller's transaction (createProduct's
+// re-enable path); `resolve: false` skips the response-only identity
+// resolution when the caller does its own.
+async function applyProductUpdate(
+  product,
+  userId,
+  changes,
+  { requireRateUsed = false, session = null, resolve = true } = {}
+) {
+  if (changes.unit !== undefined && changes.unit !== null) {
+    Object.assign(product, unitFieldsFrom(changes));
+  } else {
+    for (const [field, code] of REQUIRED_STRING_FIELDS) {
+      if (changes[field] !== undefined) {
+        if (typeof changes[field] !== 'string' || !changes[field].trim()) {
+          throw ApiError.badRequest(`Invalid ${field}.`, undefined, code);
+        }
+        product[field] = changes[field].trim();
       }
-      product[field] = changes[field].trim();
     }
+  }
+
+  const bonuses = bonusesFrom(changes);
+  if (bonuses !== undefined) {
+    product.bonuses = bonuses;
   }
 
   if (changes.categoryId !== undefined) {
@@ -319,10 +374,13 @@ async function applyProductUpdate(product, userId, changes, { requireRateUsed = 
       : null;
   }
 
-  if (changes.image !== undefined) {
-    product.image = typeof changes.image === 'string' && changes.image.trim()
-      ? changes.image.trim()
-      : null;
+  // Phase 9 (M7): only an image we uploaded (imageUrlInput, 400
+  // INVALID_IMAGE_URL otherwise); null or '' clears the override (L3). The
+  // replaced one is released once the write is durable (releaseReplacedImage).
+  const image = imageUrlInput(changes.image);
+  if (image !== undefined && image !== product.image) {
+    product.$locals.replacedImage = product.image ?? null;
+    product.image = image;
   }
 
   if (changes.priceUsd !== undefined) {
@@ -354,7 +412,21 @@ async function applyProductUpdate(product, userId, changes, { requireRateUsed = 
 
   product.isAvailable = computeIsAvailable(product.manuallyDisabled);
 
-  await product.save();
+  try {
+    await product.save({ session });
+  } catch (err) {
+    if (err.name === 'VersionError') {
+      throw ApiError.conflict(
+        'This product was changed by someone else in the meantime. Reload it and try again.',
+        'PRODUCT_CHANGED'
+      );
+    }
+    throw err;
+  }
+  // Outside a transaction the save above is final; inside one the caller
+  // releases after the commit (createProduct).
+  if (!session) await releaseReplacedImage(product);
+  if (!resolve) return product;
 
   // Same "resolve only after the write is durable" reasoning as
   // createProduct above - this response-only mutation never gets saved.
@@ -362,201 +434,64 @@ async function applyProductUpdate(product, userId, changes, { requireRateUsed = 
   return applyResolvedIdentity(product);
 }
 
+// Deletes the image an update replaced or cleared - only if it is ours and
+// nothing else points at it (imageAsset.service.js). Best effort.
+async function releaseReplacedImage(product) {
+  const replaced = product.$locals.replacedImage;
+  if (!replaced) return;
+  product.$locals.replacedImage = null;
+  await releaseImage(replaced);
+}
+
+// Uploads the warehouse's override image for its own product (Phase 9) and
+// releases the one it replaces.
+async function setProductImage(productId, warehouseId, userId, file) {
+  const product = await findOwnedProductOrThrow(productId, warehouseId);
+  const url = await storeUploadedImage(file, 'products');
+  try {
+    return await applyProductUpdate(product, userId, { image: url });
+  } catch (err) {
+    await releaseImage(url);
+    throw err;
+  }
+}
+
 async function updateProduct(productId, warehouseId, userId, changes, options) {
   const product = await findOwnedProductOrThrow(productId, warehouseId);
   return applyProductUpdate(product, userId, changes, options);
 }
 
-// Section 14 Part 2: bulk-adds/updates this warehouse's own products from an
-// Excel file shaped like generateWarehouseTemplateBuffer's output. Reuses
-// the exact same row-parsing as the admin's catalog import
-// (productCatalog.service.js) - the three-column (name / price / currency)
-// company-row shape is identical, only what happens with each parsed row
-// differs. `candidates` come back already priced in USD (SYP rows converted
-// at the current rate; a missing rate has already aborted the whole import
-// by this point).
-async function importProductsFromExcel(warehouseId, userId, file) {
-  const { candidates, errors, manufacturers, exchangeRateUsed, convertedFromSyp } = await loadAndParseUpload(file);
-
-  // Registers every manufacturer row recognized in the file - regardless of
-  // whether any of its medicines matched the central catalog, so a
-  // warehouse's manufacturer registry (the Discounts tab's dropdown, see
-  // warehouseManufacturer.service.js) grows the moment a company appears in
-  // an import, not only once one of its products is actually linked.
-  if (manufacturers.length > 0) {
-    await registerManufacturers(warehouseId, manufacturers);
-  }
-
-  let added = 0;
-  let updated = 0;
-
-  if (candidates.length === 0) {
-    return { added, updated, errors, exchangeRateUsed, convertedFromSyp };
-  }
-
-  // Two bounded queries for the whole file instead of two per row. Each row
-  // used to run a case-insensitive RegExp findOne against ProductCatalog -
-  // which cannot use its index, so every row scanned the entire master list -
-  // plus its own Product findOne and save. On a 2,000-row file against a
-  // large catalog that is the single most expensive request in the app, and
-  // it blocks the event loop for the whole import.
-  //
-  // Matched on both name and manufacturer (not name alone) - the central
-  // catalog allows the same drug name under different manufacturers (Section
-  // 14 Part 1's own upsert key), so name-only would risk linking to the
-  // wrong one. The normalized keys (productCatalog.model.js) make that pair
-  // an indexed equality match rather than a scan, and carry the same
-  // case/whitespace tolerance the RegExp had.
-  const keyedCandidates = candidates.map((candidate) => ({
-    ...candidate,
-    nameKey: searchKey(candidate.nameAr),
-    manufacturerKey: searchKey(candidate.manufacturerAr),
-  }));
-
-  const catalogItems = await ProductCatalog.find({
-    nameKey: { $in: [...new Set(keyedCandidates.map((c) => c.nameKey))] },
-    manufacturerKey: { $in: [...new Set(keyedCandidates.map((c) => c.manufacturerKey))] },
-    isActive: true,
-  })
-    .select('_id nameKey manufacturerKey')
-    .lean();
-
-  // The two $in clauses above match the cross-product of names and
-  // manufacturers, so a row is only really matched once the exact pair is
-  // found here.
-  const catalogByPair = new Map(
-    catalogItems.map((item) => [`${item.nameKey} ${item.manufacturerKey}`, item._id])
-  );
-
-  const matched = [];
-  for (const candidate of keyedCandidates) {
-    const catalogId = catalogByPair.get(`${candidate.nameKey} ${candidate.manufacturerKey}`);
-    if (!catalogId) {
-      errors.push({ row: candidate.rowNumber, reason: 'Medicine not found in the central catalog.' });
-      continue;
-    }
-    matched.push({ candidate, catalogId });
-  }
-
-  if (matched.length === 0) {
-    return { added, updated, errors, exchangeRateUsed, convertedFromSyp };
-  }
-
-  // Only price + priceHistory are read off an existing product, so the rest
-  // of the document never needs to leave the database or become a Mongoose
-  // document - the writes below are built by hand rather than via .save().
-  const existingProducts = await Product.find({
-    warehouseId,
-    masterProductId: { $in: matched.map((m) => m.catalogId) },
-  })
-    .select('masterProductId price')
-    .lean();
-  const existingByCatalogId = new Map(
-    existingProducts.map((product) => [String(product.masterProductId), product])
-  );
-
-  const now = new Date();
-  const operations = [];
-  const rowsByOperationIndex = [];
-
-  for (const { candidate, catalogId } of matched) {
-    const existing = existingByCatalogId.get(String(catalogId));
-
-    if (existing) {
-      // A price that didn't move writes no history entry and no
-      // lastPriceUpdate, exactly as the per-row save did - re-importing an
-      // unchanged file must not fill priceHistory with no-op entries.
-      const set = {};
-      const push = {};
-      if (candidate.priceUsd !== existing.price) {
-        set.price = candidate.priceUsd;
-        set.lastPriceUpdate = now;
-        push.priceHistory = {
-          // H5: the array is capped as it grows rather than left unbounded -
-          // it is read back in full by the single-product response.
-          $each: [
-            {
-              oldPrice: existing.price,
-              newPrice: candidate.priceUsd,
-              changedBy: userId,
-              changedAt: now,
-            },
-          ],
-          $slice: -PRICE_HISTORY_LIMIT,
-        };
-      }
-
-      operations.push({
-        updateOne: {
-          filter: { _id: existing._id },
-          update: {
-            ...(Object.keys(set).length > 0 ? { $set: set } : {}),
-            ...(Object.keys(push).length > 0 ? { $push: push } : {}),
-          },
-        },
-      });
-      rowsByOperationIndex.push({ row: candidate.rowNumber, kind: 'updated' });
-    } else {
-      // categoryId/unitAr/unitEn are left null (Section 14 Part 2's schema
-      // note on product.model.js) - the import format carries no columns
-      // for them, same reasoning as the catalog's own import.
-      operations.push({
-        insertOne: {
-          document: {
-            warehouseId,
-            masterProductId: catalogId,
-            price: candidate.priceUsd,
-            manuallyDisabled: false,
-            isAvailable: true,
-            isActive: true,
-            lastPriceUpdate: now,
-            priceHistory: [],
-            createdAt: now,
-            updatedAt: now,
-          },
-        },
-      });
-      rowsByOperationIndex.push({ row: candidate.rowNumber, kind: 'added' });
-    }
-  }
-
-  // ordered:false so one bad row (a duplicate racing another import of the
-  // same file, say) doesn't abandon every row after it - the per-row loop
-  // this replaces had that property too, via its own try/catch.
-  let writeErrorIndexes = new Set();
-  try {
-    await Product.bulkWrite(operations, { ordered: false });
-  } catch (err) {
-    if (!err.writeErrors) throw err;
-    writeErrorIndexes = new Set(err.writeErrors.map((writeError) => writeError.index));
-    for (const writeError of err.writeErrors) {
-      const source = rowsByOperationIndex[writeError.index];
-      errors.push({
-        row: source ? source.row : null,
-        reason: 'Failed to save this row.',
-      });
-    }
-  }
-
-  rowsByOperationIndex.forEach((source, index) => {
-    if (writeErrorIndexes.has(index)) return;
-    if (source.kind === 'added') added += 1;
-    else updated += 1;
+// Section 14 Part 2 / catalog overhaul Phase 4: the warehouse's Excel import.
+// The whole flow - reading any reasonable price list, matching rows to the
+// central catalog (remembered aliases first), the added / updated / price-0 /
+// blocked / review / error outcomes, and the ImportBatch the results page
+// opens - lives in warehouseImport.service.js; this stays the entry point the
+// controller has always called. `mapping` is the web's column-mapping answer
+// ({ headerKey: field }), sent when the first upload came back
+// IMPORT_COLUMNS_UNRECOGNIZED.
+async function importProductsFromExcel(warehouseId, userId, file, { mapping = null } = {}) {
+  const { batch, counts, exchangeRateUsed, convertedFromSyp } = await importWarehouseFile(warehouseId, userId, file, {
+    mapping,
   });
-
-  return { added, updated, errors, exchangeRateUsed, convertedFromSyp };
+  return {
+    batchId: batch._id,
+    counts,
+    exchangeRateUsed,
+    convertedFromSyp,
+    // The old report fields, for a panel that predates the results page.
+    added: counts.added + counts.addedDisabled,
+    updated: counts.updated,
+    errors: [],
+  };
 }
 
 module.exports = {
-  listProductsForWarehouse,
   listPaginatedProductsForWarehouse,
   searchPaginatedProductsForWarehouse,
   createProduct,
   updateProduct,
+  setProductImage,
   findOwnedProductOrThrow,
   applyProductUpdate,
   importProductsFromExcel,
-  // Exported for adminProduct.service.js's own manufacturer filter, which
-  // needs the exact same two-step (legacy field OR linked-catalog ids) match.
-  manufacturerMatchClauses,
 };

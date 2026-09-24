@@ -1,10 +1,9 @@
 const Offer = require('../models/offer.model');
 const Product = require('../models/product.model');
-const ProductCatalog = require('../models/productCatalog.model');
 const Warehouse = require('../models/warehouse.model');
 const { ApiError } = require('../utils/ApiError');
-const { applyResolvedIdentity, escapeRegex } = require('./productCatalog.service');
-const { getDiscountMapForWarehouse } = require('./manufacturerDiscount.service');
+const { applyResolvedIdentity, escapeRegex, buildProductFilter } = require('./productCatalog.service');
+const { getDiscountMapForWarehouse, discountPercentageFor } = require('./manufacturerDiscount.service');
 
 // The pharmacist-facing side of warehouse product offers - the "what is on
 // promotion right now, everywhere" read behind the app's Offers & Ads tab.
@@ -26,12 +25,81 @@ function activeOfferFilter(now = new Date()) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// "The offer for product X" (catalog overhaul Phase 6.2, M2)
+// ---------------------------------------------------------------------------
+//
+// A product has at most one running or waiting offer from now on (see
+// assertNoRunningOffer), but data written before that rule can still hold two
+// overlapping live offers for one product. The catalog, the offers tab and the
+// order all used to build `new Map(offers.map(...))` from an unsorted query -
+// last one wins, in whatever order each query happened to return - so the three
+// could apply different offers to the same product. This is now the one
+// deterministic choice they all make: the highest discount, then the most
+// recently approved, then the newest.
+function compareOffers(a, b) {
+  if (b.discountPercentage !== a.discountPercentage) return b.discountPercentage - a.discountPercentage;
+  const approvedA = a.approvedAt ? new Date(a.approvedAt).getTime() : 0;
+  const approvedB = b.approvedAt ? new Date(b.approvedAt).getTime() : 0;
+  if (approvedB !== approvedA) return approvedB - approvedA;
+  return String(b._id).localeCompare(String(a._id));
+}
+
+function pickOfferForProduct(offers) {
+  if (!offers || offers.length === 0) return null;
+  return [...offers].sort(compareOffers)[0];
+}
+
+// Map<productId, the offer that applies> for a list of live offers.
+function offerMapFor(offers) {
+  const byProduct = new Map();
+  for (const offer of offers) {
+    const key = String(offer.productId);
+    if (!byProduct.has(key)) byProduct.set(key, []);
+    byProduct.get(key).push(offer);
+  }
+  return new Map([...byProduct].map(([key, list]) => [key, pickOfferForProduct(list)]));
+}
+
+// One offer per product (Phase 6.1): a product that already has an offer
+// waiting for approval, or approved and not yet expired, cannot get another -
+// the warehouse edits or cancels the existing one. Expired and stopped offers
+// don't count. Enforced at create/edit AND at admin approval; the check runs
+// inside a transaction that also writes to the product (lastOfferCheckAt), so
+// two concurrent creates for one product conflict instead of both passing.
+async function assertNoRunningOffer(productId, { excludeOfferId = null, session = null, now = new Date() } = {}) {
+  const Product = require('../models/product.model');
+  if (session) {
+    await Product.updateOne({ _id: productId }, { $set: { lastOfferCheckAt: now } }, { session });
+  }
+  const filter = {
+    $or: [{ productId }, { 'pendingUpdate.productId': productId }],
+    $and: [
+      {
+        $or: [
+          { status: 'pending' },
+          { status: 'approved', $or: [{ isPermanent: true }, { endDate: null }, { endDate: { $gte: now } }] },
+        ],
+      },
+    ],
+  };
+  if (excludeOfferId) filter._id = { $ne: excludeOfferId };
+  const existing = await Offer.findOne(filter).select('_id').session(session).lean();
+  if (existing) {
+    throw ApiError.conflict(
+      'This product already has an offer running or waiting for approval - edit or cancel that one instead.',
+      'OFFER_ALREADY_EXISTS',
+      { offerId: existing._id }
+    );
+  }
+}
+
 // Only what an offer card actually needs off a product, plus warehouseId (the
 // ownership check below) and masterProductId (the populate key for the
 // resolved identity - Section 14 Part 2).
 const OFFER_PRODUCT_SELECT =
-  'warehouseId nameAr nameEn manufacturerAr manufacturerEn image unitAr unitEn price isAvailable masterProductId';
-const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
+  'warehouseId nameAr nameEn manufacturerAr manufacturerEn manufacturerId image unitAr unitEn price isAvailable masterProductId';
+const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl';
 
 // Every offer a pharmacy may currently see, across every warehouse. Pending,
 // expired and not-yet-started ones are all excluded by the one filter above,
@@ -40,13 +108,37 @@ const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
 // `pendingUpdate` is deliberately never read: a warehouse's proposed edit to
 // an already-approved offer is not what pharmacies see until an admin
 // approves it (see offer.model.js).
-async function listActiveOffers() {
+//
+// Cursor-paginated (catalog overhaul Phase 6.3), newest first: `limit`
+// (default ACTIVE_OFFERS_DEFAULT_LIMIT, at most 100) and `after` (the previous
+// page's nextCursor). A caller that sends neither - an installed app build -
+// gets the first page. Where legacy data still holds two live offers for one
+// product, only the one pickOfferForProduct chooses is listed, so the tab
+// shows the same offer the catalog and the order apply.
+const ACTIVE_OFFERS_DEFAULT_LIMIT = 50;
+
+async function listActiveOffers({ limit = ACTIVE_OFFERS_DEFAULT_LIMIT, after = null } = {}) {
+  const now = new Date();
+  const filter = activeOfferFilter(now);
+  if (after) filter._id = { $lt: after };
   // .lean(): read-only, straight into offer.viewmodel.js.
-  const offers = await Offer.find(activeOfferFilter())
-    .select('titleAr titleEn discountPercentage startDate endDate isPermanent warehouseId productId')
-    .sort({ createdAt: -1 })
+  const fetched = await Offer.find(filter)
+    .select('titleAr titleEn discountPercentage startDate endDate isPermanent warehouseId productId approvedAt')
+    .sort({ _id: -1 })
+    .limit(limit + 1)
     .lean();
-  if (offers.length === 0) return [];
+  const hasMore = fetched.length > limit;
+  const pageOffers = hasMore ? fetched.slice(0, limit) : fetched;
+  const nextCursor = pageOffers.length ? String(pageOffers[pageOffers.length - 1]._id) : null;
+  if (pageOffers.length === 0) return { rows: [], hasMore: false, nextCursor: null };
+
+  // The chosen offer per product, across every live offer of these products.
+  const siblings = await Offer.find({ ...activeOfferFilter(now), productId: { $in: pageOffers.map((o) => o.productId) } })
+    .select('productId discountPercentage approvedAt')
+    .lean();
+  const chosen = offerMapFor(siblings);
+  const offers = pageOffers.filter((offer) => String(chosen.get(String(offer.productId))?._id) === String(offer._id));
+  if (offers.length === 0) return { rows: [], hasMore, nextCursor };
 
   const productIds = [...new Set(offers.map((offer) => offer.productId.toString()))];
   const warehouseIds = [...new Set(offers.map((offer) => offer.warehouseId.toString()))];
@@ -73,7 +165,7 @@ async function listActiveOffers() {
   );
   const discountMapByWarehouseId = new Map(discountMapEntries);
 
-  return offers
+  const rows = offers
     .map((offer) => {
       const warehouseId = offer.warehouseId.toString();
       const product = productById.get(offer.productId.toString()) ?? null;
@@ -82,7 +174,7 @@ async function listActiveOffers() {
         product,
         warehouse: warehouseById.get(warehouseId) ?? null,
         manufacturerDiscountPercentage: product
-          ? discountMapByWarehouseId.get(warehouseId)?.get(product.manufacturerAr) ?? null
+          ? discountPercentageFor(discountMapByWarehouseId.get(warehouseId), product)
           : null,
       };
     })
@@ -96,6 +188,7 @@ async function listActiveOffers() {
         row.product !== null &&
         row.product.warehouseId.toString() === row.offer.warehouseId.toString()
     );
+  return { rows, hasMore, nextCursor };
 }
 
 // ---------------------------------------------------------------------------
@@ -164,26 +257,30 @@ function buildOfferStatusFilter(status, now = new Date()) {
 // title*, warehouseName* (admin only), pendingUpdate's productName* - never
 // pendingUpdate's own title (the old haystack never included it either), and
 // never discountPercentage (that's the separate min/max range filter).
-async function buildOfferSearchOr(searchTerm, { includeWarehouseName = false } = {}) {
+//
+// The product half runs through the shared product search
+// (productCatalog.service.js's buildProductFilter, normalized keys) and only
+// over the products that actually have an offer in scope - so a warehouse's
+// own list only ever looks at its own products, and even the admin's
+// cross-warehouse list is bounded by the number of offers, never by the size
+// of the whole catalog (it used to regex every product on the platform and
+// carry every match into an $in).
+async function buildOfferSearchOr(searchTerm, { includeWarehouseName = false, scopeFilter = {} } = {}) {
   const pattern = new RegExp(escapeRegex(searchTerm), 'i');
 
-  const matchingCatalogEntries = await ProductCatalog.find(
-    { $or: [{ nameAr: pattern }, { nameEn: pattern }, { manufacturerAr: pattern }, { manufacturerEn: pattern }] },
-    '_id'
-  );
-  const matchingProducts = await Product.find(
-    {
-      $or: [
-        { nameAr: pattern },
-        { nameEn: pattern },
-        { manufacturerAr: pattern },
-        { manufacturerEn: pattern },
-        { masterProductId: { $in: matchingCatalogEntries.map((c) => c._id) } },
-      ],
-    },
-    '_id'
-  );
-  const productIds = matchingProducts.map((p) => p._id);
+  const [offerProductIds, pendingProductIds] = await Promise.all([
+    Offer.distinct('productId', scopeFilter),
+    Offer.distinct('pendingUpdate.productId', { ...scopeFilter, pendingUpdate: { $ne: null } }),
+  ]);
+  const candidateIds = [...offerProductIds, ...pendingProductIds];
+  const productFilter = buildProductFilter({
+    warehouseId: scopeFilter.warehouseId,
+    activeOnly: false,
+    search: searchTerm,
+  });
+  const productIds = candidateIds.length
+    ? await Product.distinct('_id', { ...productFilter, _id: { $in: candidateIds } })
+    : [];
 
   const or = [
     { titleAr: pattern },
@@ -227,7 +324,7 @@ async function buildOfferListFilter({
   }
 
   if (typeof search === 'string' && search.trim()) {
-    const or = await buildOfferSearchOr(search.trim(), { includeWarehouseName });
+    const or = await buildOfferSearchOr(search.trim(), { includeWarehouseName, scopeFilter });
     clauses.push({ $or: or });
   }
 
@@ -268,6 +365,9 @@ async function listPaginatedOffers(filter, { limit, after = null } = {}) {
 
 module.exports = {
   activeOfferFilter,
+  pickOfferForProduct,
+  offerMapFor,
+  assertNoRunningOffer,
   listActiveOffers,
   OFFER_STATUS_VALUES,
   OFFER_REVIEW_FILTER,

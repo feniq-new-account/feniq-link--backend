@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/error/failure.dart';
+import 'package:feniq/core/models/paginated_result.dart';
 import 'package:feniq/features/advertisements/data/models/advertisement_model.dart';
 import 'package:feniq/features/advertisements/data/repositories/advertisements_repository.dart';
 import 'package:feniq/features/offers/data/models/offer_model.dart';
@@ -34,8 +35,10 @@ class PromotionsCubit extends Cubit<PromotionsState> {
     // Both started before either is awaited, so they run concurrently.
     final offersFuture = _loadOffers();
     final advertisementsFuture = _loadAdvertisements();
-    final (offers, offersFailure) = await offersFuture;
-    final (advertisements, advertisementsFailure) = await advertisementsFuture;
+    final (offersPage, offersFailure) = await offersFuture;
+    final (advertisementsPage, advertisementsFailure) = await advertisementsFuture;
+    final offers = offersPage?.items ?? const <OfferModel>[];
+    final advertisements = advertisementsPage?.items ?? const <AdvertisementModel>[];
 
     // Only a total failure is an error: if one of the two lists came back,
     // there is still something worth browsing, and collapsing the whole tab
@@ -60,11 +63,45 @@ class PromotionsCubit extends Cubit<PromotionsState> {
       state.copyWith(
         status: PromotionsStatus.loaded,
         promotions: promotions,
+        offersCursor: offersPage?.hasMore == true ? offersPage!.nextCursor : null,
+        clearOffersCursor: offersPage?.hasMore != true,
+        advertisementsCursor: advertisementsPage?.hasMore == true ? advertisementsPage!.nextCursor : null,
+        clearAdvertisementsCursor: advertisementsPage?.hasMore != true,
+        isLoadingMore: false,
         // A filter naming a warehouse that no longer has anything running
         // would silently empty the screen, so it is dropped on reload.
         clearWarehouseFilter:
             state.warehouseFilter != null &&
             !promotions.any((p) => p.warehouseId == state.warehouseFilter),
+      ),
+    );
+  }
+
+  /// The next page of whichever listing still has one, appended (sorted
+  /// among itself, so cards already on screen never move). A failed page
+  /// keeps its cursor, so the next scroll simply tries again.
+  Future<void> loadMore() async {
+    if (state.isLoadingMore || !state.hasMore || state.status != PromotionsStatus.loaded) return;
+    emit(state.copyWith(isLoadingMore: true));
+    final offersCursor = state.offersCursor;
+    final advertisementsCursor = state.advertisementsCursor;
+    final (offersPage, _) = offersCursor != null ? await _loadOffers(cursor: offersCursor) : (null, null);
+    final (advertisementsPage, _) = advertisementsCursor != null
+        ? await _loadAdvertisements(cursor: advertisementsCursor)
+        : (null, null);
+    if (isClosed) return;
+    final page = <Promotion>[
+      ...?offersPage?.items.map(OfferPromotion.new),
+      ...?advertisementsPage?.items.map(PackagePromotion.new),
+    ]..sort(_byDeepestSaving);
+    emit(
+      state.copyWith(
+        promotions: [...state.promotions, ...page],
+        offersCursor: offersPage != null && offersPage.hasMore ? offersPage.nextCursor : null,
+        clearOffersCursor: offersPage != null && !offersPage.hasMore,
+        advertisementsCursor: advertisementsPage != null && advertisementsPage.hasMore ? advertisementsPage.nextCursor : null,
+        clearAdvertisementsCursor: advertisementsPage != null && !advertisementsPage.hasMore,
+        isLoadingMore: false,
       ),
     );
   }
@@ -99,19 +136,19 @@ class PromotionsCubit extends Cubit<PromotionsState> {
     emit(state.copyWith(clearKindFilter: true, clearWarehouseFilter: true));
   }
 
-  Future<(List<OfferModel>, Failure?)> _loadOffers() async {
+  Future<(PaginatedResult<OfferModel>?, Failure?)> _loadOffers({String? cursor}) async {
     try {
-      return (await _offersRepository.getActiveOffers(), null);
+      return (await _offersRepository.getActiveOffers(cursor: cursor), null);
     } on Failure catch (f) {
-      return (const <OfferModel>[], f);
+      return (null, f);
     }
   }
 
-  Future<(List<AdvertisementModel>, Failure?)> _loadAdvertisements() async {
+  Future<(PaginatedResult<AdvertisementModel>?, Failure?)> _loadAdvertisements({String? cursor}) async {
     try {
-      return (await _advertisementsRepository.getActiveAdvertisements(), null);
+      return (await _advertisementsRepository.getActiveAdvertisements(cursor: cursor), null);
     } on Failure catch (f) {
-      return (const <AdvertisementModel>[], f);
+      return (null, f);
     }
   }
 }

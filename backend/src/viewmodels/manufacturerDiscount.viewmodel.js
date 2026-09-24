@@ -1,6 +1,7 @@
 function serializeDiscount(discount) {
   return {
     id: discount._id,
+    manufacturerId: discount.manufacturerId ?? null,
     manufacturerAr: discount.manufacturerAr,
     discountPercentage: discount.discountPercentage,
     createdAt: discount.createdAt,

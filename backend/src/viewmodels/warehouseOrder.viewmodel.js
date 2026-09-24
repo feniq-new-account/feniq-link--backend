@@ -15,6 +15,10 @@ function serializeOrderItem(item) {
     // panel groups the lines by it and hides the per-line edit controls on
     // the ones that have it.
     packageGroupId: item.packageGroupId ?? null,
+    // Free bonus units to deliver on top of `quantity` (never charged), and the
+    // tier that earned them - additive (catalog overhaul Phase 8).
+    freeQuantity: item.freeQuantity ?? 0,
+    bonusApplied: item.bonusApplied ? { buy: item.bonusApplied.buy, free: item.bonusApplied.free } : null,
   };
 }
 

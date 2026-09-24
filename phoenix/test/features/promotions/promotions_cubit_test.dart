@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:feniq/core/models/paginated_result.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/features/advertisements/data/models/advertisement_model.dart';
@@ -37,11 +38,11 @@ void main() {
     Failure? offersFailure,
     Failure? advertisementsFailure,
   }) {
-    when(() => offersRepository.getActiveOffers()).thenAnswer(
-      (_) async => offersFailure != null ? throw offersFailure : offers,
+    when(() => offersRepository.getActiveOffers(cursor: any(named: 'cursor'), limit: any(named: 'limit'))).thenAnswer(
+      (_) async => offersFailure != null ? throw offersFailure : PaginatedResult(items: offers, hasMore: false),
     );
-    when(() => advertisementsRepository.getActiveAdvertisements()).thenAnswer(
-      (_) async => advertisementsFailure != null ? throw advertisementsFailure : advertisements,
+    when(() => advertisementsRepository.getActiveAdvertisements(cursor: any(named: 'cursor'), limit: any(named: 'limit'))).thenAnswer(
+      (_) async => advertisementsFailure != null ? throw advertisementsFailure : PaginatedResult(items: advertisements, hasMore: false),
     );
   }
 

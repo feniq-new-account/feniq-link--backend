@@ -1,17 +1,8 @@
 const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/ApiError');
-const Warehouse = require('../models/warehouse.model');
 const warehouseReturnService = require('../services/warehouseReturn.service');
 const warehouseReturnViewModel = require('../viewmodels/warehouseReturn.viewmodel');
 const { parseCursorQuery, parseObjectIdCursor, paginationMeta } = require('../utils/pagination');
-
-async function loadWarehouseOrThrow(userId) {
-  const warehouse = await Warehouse.findOne({ userId });
-  if (!warehouse) {
-    throw ApiError.notFound('Warehouse profile not found.', 'WAREHOUSE_PROFILE_NOT_FOUND');
-  }
-  return warehouse;
-}
+const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 
 // Two shapes on one endpoint: WarehouseOrderDetailPage's "does this order
 // already have a pending return" lookup calls this with no `limit` and

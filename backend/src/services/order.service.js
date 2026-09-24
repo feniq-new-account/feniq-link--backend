@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const Product = require('../models/product.model');
 const Offer = require('../models/offer.model');
+const { offerMapFor } = require('./offer.service');
+const { freeQuantityFor, sameBonus } = require('../utils/bonus');
 const Order = require('../models/order.model');
 const OrderItem = require('../models/orderItem.model');
 const Warehouse = require('../models/warehouse.model');
@@ -24,26 +26,21 @@ const { runInTransaction } = require('../utils/transaction');
 const { requestFingerprint } = require('../utils/idempotency');
 const { deleteImageByUrl } = require('./upload.service');
 const { applyResolvedIdentity } = require('./productCatalog.service');
-const { getDiscountMapForWarehouse, computeDiscountedPriceUsd } = require('./manufacturerDiscount.service');
+const {
+  getDiscountMapForWarehouse,
+  discountPercentageFor,
+  computeDiscountedPriceUsd,
+  stackedDiscountSyp,
+  computeFinalPrice,
+} = require('./manufacturerDiscount.service');
 // advertisement.service depends on warehouse/productCatalog only - it never
 // requires this file back, so there is no cycle here.
 const { loadActiveAdvertisementOrThrow, isAdvertisementAvailable } = require('./advertisement.service');
 const { emitToWarehouse, EVENTS } = require('../realtime');
 
-// Section 15: applies an Offer percentage then a manufacturer-discount
-// percentage, in SYP, rounding to the nearest lira after each stage (same
-// per-stage-rounding convention the rest of this file already uses) -
-// either argument being falsy just skips that stage.
-function stackedDiscountSyp(baseSyp, offerPercentage, manufacturerDiscountPercentage) {
-  let price = baseSyp;
-  if (offerPercentage) {
-    price = Math.round(price * (1 - offerPercentage / 100));
-  }
-  if (manufacturerDiscountPercentage) {
-    price = Math.round(price * (1 - manufacturerDiscountPercentage / 100));
-  }
-  return price;
-}
+// Section 15: the SYP stacking lives with its USD twin now
+// (manufacturerDiscount.service.js stackedDiscountSyp / computeFinalPrice), so the
+// catalog's shown lira price and the order's charged one come from one function.
 
 // Section 6.7/7: the five tracked stages, in order - 'cancelled' is
 // deliberately excluded, since it's a special status shown outside the
@@ -66,10 +63,22 @@ function mergeDuplicateItems(items) {
         // price at all (an older app build, or approveReturn's internal
         // items) - that line just skips the price check below.
         displayedUnitPriceUsd: item.displayedUnitPriceUsd ?? null,
+        // Same reasoning: both lines showed the same bonus.
+        displayedBonuses: item.displayedBonuses ?? null,
       });
     }
   }
   return Array.from(merged.values());
+}
+
+// The bonus fields of an order line (OrderItem.freeQuantity / bonusApplied /
+// bonusTiers) for `quantity` units under `tiers` - also used when a warehouse
+// edit changes a line's quantity (warehouseOrder.service.js), with the tiers
+// frozen on the line.
+function bonusSnapshotFor(tiers, quantity) {
+  const bonusTiers = (tiers ?? []).map((tier) => ({ buy: tier.buy, free: tier.free }));
+  const { freeQuantity, tier } = freeQuantityFor(bonusTiers, quantity);
+  return { freeQuantity, bonusApplied: tier, bonusTiers };
 }
 
 async function nextOrderNumber(session = null) {
@@ -538,7 +547,9 @@ async function createOrder({
     }),
     getDiscountMapForWarehouse(warehouseId),
   ]);
-  const offerByProductId = new Map(offers.map((o) => [o.productId.toString(), o]));
+  // The one deterministic "offer for this product" (offer.service.js) - never
+  // last-one-wins over an unsorted query.
+  const offerByProductId = offerMapFor(offers);
 
   // Section 7/8 (price half of the same guarantee the availability check
   // above gives): the cart snapshots a unit price when an item is added and
@@ -579,7 +590,7 @@ async function createOrder({
     const product = productById.get(item.productId);
     const offer = offerByProductId.get(item.productId);
     const manufacturerDiscountPercentage =
-      manufacturerDiscountByName.get(product.manufacturerAr) ?? null;
+      discountPercentageFor(manufacturerDiscountByName, product);
     const currentPriceUsd = computeDiscountedPriceUsd(
       product.price,
       offer?.discountPercentage,
@@ -595,6 +606,20 @@ async function createOrder({
         productId: item.productId,
         displayedPriceUsd: item.displayedUnitPriceUsd,
         currentPriceUsd,
+        // Additive (catalog overhaul Phase 7): the lira price this order would
+        // charge, from the same function, at the rate it is priced at - so the
+        // app shows the repriced line exactly.
+        currentPriceSyp: computeFinalPrice({
+          priceUsd: product.price,
+          offerDiscountPercentage: offer?.discountPercentage,
+          manufacturerDiscountPercentage,
+          usdToSyp,
+        }).finalSyp,
+        priceRate: usdToSyp,
+        // The undiscounted unit price, for the struck-through figure.
+        priceUsd: product.price,
+        offerDiscountPercentage: offer?.discountPercentage ?? null,
+        manufacturerDiscountPercentage: manufacturerDiscountPercentage ?? null,
       });
       priceFallbackText.push(
         `${product.nameEn} is now $${currentPriceUsd} (was $${item.displayedUnitPriceUsd}).`
@@ -610,6 +635,28 @@ async function createOrder({
     );
   }
 
+  // Catalog overhaul Phase 8: the bonus half of the same guarantee. A line
+  // that says which bonus tiers the cart was showing is refused if the
+  // product's bonus has changed since (BONUS_CHANGED, the current tiers
+  // returned) - the pharmacist confirms the new terms, exactly as for a price.
+  // A line that sent none (an older app build, approveReturn) skips it.
+  const bonusProblems = [];
+  for (const item of merged) {
+    if (item.displayedBonuses === null || item.displayedBonuses === undefined) continue;
+    const product = productById.get(item.productId);
+    const currentBonuses = (product.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free }));
+    if (!sameBonus(item.displayedBonuses, currentBonuses)) {
+      bonusProblems.push({ code: 'BONUS_CHANGED', productId: item.productId, currentBonuses });
+    }
+  }
+  if (bonusProblems.length > 0) {
+    throw ApiError.badRequest(
+      'The bonus on some products has changed.',
+      { problems: bonusProblems },
+      'BONUS_CHANGED'
+    );
+  }
+
   let totalPrice = 0;
   // Accumulated natively in USD rather than back-converted from the SYP
   // figures below (same reasoning as savingsUsd) - this is the number the
@@ -622,11 +669,20 @@ async function createOrder({
     // manufacturerAr here is already resolved (Section 14 Part 2's
     // applyResolvedIdentity, above) whether this product is catalog-linked
     // or legacy, so this lookup works either way.
-    const manufacturerDiscountPercentage = manufacturerDiscountByName.get(product.manufacturerAr) ?? null;
+    const manufacturerDiscountPercentage = discountPercentageFor(manufacturerDiscountByName, product);
 
     // product.price is USD - converted to SYP here, at order time, using
-    // today's rate (see comment above).
-    const unitPrice = Math.round(product.price * usdToSyp);
+    // today's rate (see comment above). One shared function for the unit and
+    // final prices in both currencies (manufacturerDiscount.service.js's
+    // computeFinalPrice) - the very one the catalog's shown lira price comes
+    // from, so what the pharmacist saw is what this charges.
+    const linePrice = computeFinalPrice({
+      priceUsd: product.price,
+      offerDiscountPercentage: offer?.discountPercentage,
+      manufacturerDiscountPercentage,
+      usdToSyp,
+    });
+    const unitPrice = linePrice.unitSyp;
 
     // Section 4/15: the product-level offer and the warehouse's
     // manufacturer discount (if any) both apply here, stacked - the
@@ -637,11 +693,7 @@ async function createOrder({
     // gets its own separate line below and does not affect this one, so
     // buying a package no longer costs the pharmacy the product's own offer
     // on the units it bought outside that package.
-    const discountPrice = stackedDiscountSyp(
-      unitPrice,
-      offer?.discountPercentage,
-      manufacturerDiscountPercentage
-    );
+    const discountPrice = linePrice.finalSyp;
     totalPrice += discountPrice * item.quantity;
 
     // Section 15: computed independently in USD, straight from the
@@ -649,11 +701,7 @@ async function createOrder({
     // figures above - avoids compounding two separate roundings. Only the
     // amount is stored, deliberately not the percentage or which
     // manufacturer it came from (project owner's decision).
-    const discountedPriceUsd = computeDiscountedPriceUsd(
-      product.price,
-      offer?.discountPercentage,
-      manufacturerDiscountPercentage
-    );
+    const discountedPriceUsd = linePrice.finalUsd;
     const savingsUsd = Math.max(
       0,
       Math.round((product.price - discountedPriceUsd) * item.quantity * 100) / 100
@@ -678,6 +726,10 @@ async function createOrder({
       savingsSyp: Math.max(0, (unitPrice - discountPrice) * item.quantity),
       // A loose line belongs to no package and is freely editable.
       packageGroupId: null,
+      // Phase 8: the free units this quantity earns under the product's bonus
+      // (on top of - never taken off - the discounts above), and the terms,
+      // frozen. `quantity` stays the charged quantity.
+      ...bonusSnapshotFor(product.bonuses, item.quantity),
     };
   });
 
@@ -964,7 +1016,7 @@ async function getOrderForPharmacy(orderId, pharmacyId) {
   const [warehouse, items, returnRequest, myReview, complaints] = await Promise.all([
     Warehouse.findById(order.warehouseId).select('nameAr nameEn').lean(),
     OrderItem.find({ orderId: order._id })
-      .select('productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice savingsUsd')
+      .select('productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice savingsUsd freeQuantity bonusApplied')
       .lean(),
     Return.findOne({ orderId: order._id }).select('status rejectionNote creditSyp creditUsd').lean(),
     Review.findOne({ orderId: order._id, reviewerType: 'pharmacy' })
@@ -1241,9 +1293,9 @@ async function prepareReorder(orderId, pharmacyId) {
         isActive: true,
       })
         .select(
-          'categoryId nameAr nameEn manufacturerAr manufacturerEn image unitAr unitEn price isAvailable masterProductId'
+          'categoryId nameAr nameEn manufacturerAr manufacturerEn manufacturerId image unitAr unitEn price isAvailable masterProductId'
         )
-        .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' })
+        .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn imageUrl' })
         .lean()
     : [];
   products.forEach(applyResolvedIdentity);
@@ -1259,17 +1311,19 @@ async function prepareReorder(orderId, pharmacyId) {
           // and stays live from its start date on.
           $or: [{ isPermanent: true }, { endDate: { $gte: now } }],
           productId: { $in: products.map((p) => p._id) },
-        }).select('productId discountPercentage titleAr titleEn')
+        }).select('productId discountPercentage titleAr titleEn approvedAt')
       : [],
     getDiscountMapForWarehouse(order.warehouseId),
     Warehouse.findById(order.warehouseId).select('nameAr nameEn').lean(),
   ]);
-  const offerByProductId = new Map(offers.map((o) => [o.productId.toString(), o]));
+  // The one deterministic "offer for this product" (offer.service.js) - never
+  // last-one-wins over an unsorted query.
+  const offerByProductId = offerMapFor(offers);
 
   const items = products.map((product) => ({
     product,
     offer: offerByProductId.get(product._id.toString()) ?? null,
-    manufacturerDiscountPercentage: manufacturerDiscountByName.get(product.manufacturerAr) ?? null,
+    manufacturerDiscountPercentage: discountPercentageFor(manufacturerDiscountByName, product),
     quantity: quantityByProductId.get(product._id.toString()),
   }));
 
@@ -1306,4 +1360,5 @@ module.exports = {
   rollUpOrderMoney,
   normalizePackageRequests,
   computeOrderFingerprint,
+  bonusSnapshotFor,
 };

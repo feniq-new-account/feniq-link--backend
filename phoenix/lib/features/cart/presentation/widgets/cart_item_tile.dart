@@ -10,6 +10,7 @@ import 'package:feniq/core/widgets/app_network_image.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
+import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 
 class CartItemTile extends StatelessWidget {
@@ -114,7 +115,7 @@ class CartItemTile extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            formatMoneyFromUsd(item.discountPriceUsd, usdToSyp, l10n.currencySuffix),
+                            formatMoneySyp(item.unitSypAt(usdToSyp), l10n.currencySuffix),
                             style: TextStyle(
                               color: AppColors.secondaryOf(context),
                               fontWeight: FontWeight.bold,
@@ -125,11 +126,26 @@ class CartItemTile extends StatelessWidget {
                       )
                     else
                       Text(
-                        formatMoneyFromUsd(item.discountPriceUsd, usdToSyp, l10n.currencySuffix),
+                        formatMoneySyp(item.unitSypAt(usdToSyp), l10n.currencySuffix),
                         style: TextStyle(
                           color: AppColors.primaryOf(context),
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
+                        ),
+                      ),
+                    // The product's bonus, and the free units this quantity earns
+                    // (catalog overhaul Phase 8) - never charged.
+                    if (!item.isPackage && item.bonuses.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSizes.spacingXSmall),
+                        child: Text(
+                          item.freeQuantity > 0
+                              ? '${l10n.bonusValue(BonusTier.format(item.bonuses))} · ${l10n.freeUnits(item.freeQuantity)}'
+                              : l10n.bonusValue(BonusTier.format(item.bonuses)),
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: AppColors.secondaryOf(context),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     // What the package actually delivers, at the current copy
@@ -201,7 +217,7 @@ class CartItemTile extends StatelessWidget {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      formatMoneyFromUsd(item.lineTotalUsd, usdToSyp, l10n.currencySuffix),
+                      formatMoneySyp(item.lineTotalSypAt(usdToSyp), l10n.currencySuffix),
                       style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                       maxLines: 1,
                     ),
@@ -223,9 +239,7 @@ class _ItemImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO(seed-images): same note as ProductCard - `item.image` is still
-    // always null. AppNetworkImage covers Cloudinary right-sizing + caching
-    // for when real URLs land.
+    // The product's effective image, as the catalog showed it (see ProductCard).
     return AppNetworkImage(
       url: url,
       width: 72,

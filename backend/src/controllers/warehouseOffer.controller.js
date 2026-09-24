@@ -1,17 +1,8 @@
 const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/ApiError');
-const Warehouse = require('../models/warehouse.model');
 const warehouseOfferService = require('../services/warehouseOffer.service');
 const warehouseOfferViewModel = require('../viewmodels/warehouseOffer.viewmodel');
 const { parseCursorQuery, parseObjectIdCursor, paginationMeta } = require('../utils/pagination');
-
-async function loadWarehouseOrThrow(userId) {
-  const warehouse = await Warehouse.findOne({ userId });
-  if (!warehouse) {
-    throw ApiError.notFound('Warehouse profile not found.', 'WAREHOUSE_PROFILE_NOT_FOUND');
-  }
-  return warehouse;
-}
+const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 
 // Filtered (status pill / search / discount range) and always cursor-
 // paginated - `limit` always gets a default (parseCursorQuery), never

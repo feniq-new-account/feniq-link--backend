@@ -16,6 +16,9 @@ class PromotionsState {
     this.warehouseFilter,
     this.errorMessage,
     this.errorCode,
+    this.offersCursor,
+    this.advertisementsCursor,
+    this.isLoadingMore = false,
   });
 
   final PromotionsStatus status;
@@ -32,6 +35,14 @@ class PromotionsState {
   // core/error/error_translator.dart).
   final String? errorMessage;
   final String? errorCode;
+
+  // Both listings are cursor-paginated; a null cursor means that list is fully
+  // loaded. "Load more" fetches the next page of whichever still has one.
+  final String? offersCursor;
+  final String? advertisementsCursor;
+  final bool isLoadingMore;
+
+  bool get hasMore => offersCursor != null || advertisementsCursor != null;
 
   bool get hasFilters => kindFilter != null || warehouseFilter != null;
 
@@ -87,8 +98,16 @@ class PromotionsState {
     bool clearWarehouseFilter = false,
     String? errorMessage,
     String? errorCode,
+    String? offersCursor,
+    bool clearOffersCursor = false,
+    String? advertisementsCursor,
+    bool clearAdvertisementsCursor = false,
+    bool? isLoadingMore,
   }) {
     return PromotionsState(
+      offersCursor: clearOffersCursor ? null : (offersCursor ?? this.offersCursor),
+      advertisementsCursor: clearAdvertisementsCursor ? null : (advertisementsCursor ?? this.advertisementsCursor),
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       status: status ?? this.status,
       promotions: promotions ?? this.promotions,
       kindFilter: clearKindFilter ? null : (kindFilter ?? this.kindFilter),

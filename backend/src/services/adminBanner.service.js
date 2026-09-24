@@ -48,7 +48,7 @@ const ADMIN_BANNER_FIELDS =
   'bannerNumber imageUrl mediaType productId manufacturerAr title status rejectionNote startDate endDate warehouseId createdAt';
 const BANNER_REF_NAME_SELECT = 'nameAr nameEn';
 const BANNER_PRODUCT_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn masterProductId';
-const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
+const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl';
 
 // The moderation queue by default (`status` omitted), oldest first - same
 // FIFO reasoning as the admin's other review queues (offers, pending

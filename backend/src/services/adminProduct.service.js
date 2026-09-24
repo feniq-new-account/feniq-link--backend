@@ -2,9 +2,12 @@ const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const Product = require('../models/product.model');
 const Warehouse = require('../models/warehouse.model');
-const ProductCatalog = require('../models/productCatalog.model');
-const { applyProductUpdate, manufacturerMatchClauses } = require('./warehouseProduct.service');
-const { applyResolvedIdentity, escapeRegex } = require('./productCatalog.service');
+const { applyProductUpdate } = require('./warehouseProduct.service');
+const {
+  buildProductFilter,
+  findProductPage,
+  optionalString,
+} = require('./productCatalog.service');
 
 // Section 13c: the admin's oversight view spans every warehouse - unlike the
 // warehouse's own list, this deliberately does NOT filter isActive, so a
@@ -17,50 +20,22 @@ const { applyResolvedIdentity, escapeRegex } = require('./productCatalog.service
 // catalog's name back onto the product's own (legacy) fields on every edit,
 // exactly the duplication Section 14 says not to do.
 // adminProduct.viewmodel.js reads only the two warehouse names off the joined
-// warehouse; the populated catalog entry is only used for identity resolution
-// (its four name/manufacturer fields).
+// warehouse; the catalog identity comes from findProductPage's own populate.
 const ADMIN_PRODUCT_WAREHOUSE_SELECT = 'nameAr nameEn';
-const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
-
-async function listAllProducts() {
-  const products = await Product.find({})
-    .populate({ path: 'masterProductId', select: CATALOG_IDENTITY_SELECT });
-  products.forEach(applyResolvedIdentity);
-  products.sort((a, b) => (a.nameEn || a.nameAr || '').localeCompare(b.nameEn || b.nameAr || ''));
-  if (products.length === 0) return [];
-
-  const warehouseIds = [...new Set(products.map((p) => p.warehouseId.toString()))];
-  const warehouses = await Warehouse.find({ _id: { $in: warehouseIds } }).select(ADMIN_PRODUCT_WAREHOUSE_SELECT);
-  const warehouseById = new Map(warehouses.map((w) => [w._id.toString(), w]));
-
-  return products.map((product) => ({
-    product,
-    warehouse: warehouseById.get(product.warehouseId.toString()) ?? null,
-  }));
-}
 
 const ADMIN_PRODUCTS_DEFAULT_LIMIT = 30;
 
-// The Products management page (unlike listAllProducts above - still used
-// as-is by the Dashboard's count and the Banners composer's product picker,
-// both needing every product) wants "Load more" plus warehouse/category/search
-// filters sent to the server. `categoryId` alone (no warehouseId) falls back to
-// a collection scan - the only compound index that covers it is
-// {warehouseId,categoryId,_id}, which needs warehouseId as its prefix to be
-// used. Fine at today's product volume; worth an index if that combination
-// becomes a common, slow query. Cursor pagination: sorted by `_id` ascending,
-// same tradeoff productCatalog.service.js's listCatalog already made for
-// its own admin list (a stable, unique cursor field wins over the alphabetical
-// sort listAllProducts uses, see that function's comment).
+// The admin's product list - the management page and the banner composer's
+// product picker - with "Load more" plus warehouse/category/manufacturer/
+// search filters sent to the server. Cursor pagination on `_id` ascending.
+// (The unpaginated listAllProducts it replaced is gone - Phase 10, H4.)
 //
-// A linked product's real name/manufacturer lives on its catalog entry, not
-// on the Product doc itself (Section 14 Part 2) - so `search` can't just
-// regex Product's own fields, it also has to catch products linked to a
-// catalog entry whose name/manufacturer matches. `manufacturer` is a second,
-// independent condition (the Searchable Dropdown filter, picked from an exact
-// name via GET /admin/catalog/manufacturers) - when both `search` and
-// `manufacturer` are given, each needs its own $or, so they're ANDed via
-// $and rather than one overwriting the other's top-level $or.
+// The shared product search (productCatalog.service.js's buildProductFilter)
+// with warehouseId optional - the one caller that searches across every
+// warehouse. It stays bounded: one page per request, capped at 100 by
+// parseCursorQuery, never the unbounded id list it used to build. Deactivated
+// products are included (activeOnly: false) - this is the admin's record of
+// what was removed, shown with a visible status.
 async function listPaginatedAllProducts({
   search,
   warehouseId,
@@ -69,57 +44,30 @@ async function listPaginatedAllProducts({
   limit = ADMIN_PRODUCTS_DEFAULT_LIMIT,
   after = null,
 } = {}) {
-  const filter = {};
-  if (warehouseId) {
-    filter.warehouseId = warehouseId;
+  const warehouse = optionalString(warehouseId, 'warehouse');
+  if (warehouse && !mongoose.Types.ObjectId.isValid(warehouse)) {
+    throw ApiError.badRequest('Invalid warehouse id.', undefined, 'INVALID_WAREHOUSE');
   }
-  if (categoryId) {
-    filter.categoryId = categoryId;
-  }
-
-  const andConditions = [];
-  if (search && search.trim()) {
-    const pattern = new RegExp(escapeRegex(search.trim()), 'i');
-    const matchingCatalogEntries = await ProductCatalog.find(
-      { $or: [{ nameAr: pattern }, { nameEn: pattern }, { manufacturerAr: pattern }, { manufacturerEn: pattern }] },
-      '_id'
-    );
-    andConditions.push({
-      $or: [
-        { nameAr: pattern },
-        { nameEn: pattern },
-        { manufacturerAr: pattern },
-        { manufacturerEn: pattern },
-        { masterProductId: { $in: matchingCatalogEntries.map((c) => c._id) } },
-      ],
-    });
-  }
-  if (manufacturer && manufacturer.trim()) {
-    andConditions.push({ $or: await manufacturerMatchClauses(manufacturer.trim()) });
-  }
-  if (andConditions.length === 1) {
-    filter.$or = andConditions[0].$or;
-  } else if (andConditions.length > 1) {
-    filter.$and = andConditions;
-  }
-
-  if (after !== null) {
-    filter._id = { $gt: after };
-  }
-
-  const products = await Product.find(filter)
-    .sort({ _id: 1 })
-    .limit(limit + 1)
-    .populate({ path: 'masterProductId', select: CATALOG_IDENTITY_SELECT });
-  const hasMore = products.length > limit;
-  const page = hasMore ? products.slice(0, limit) : products;
-  page.forEach(applyResolvedIdentity);
-  const nextCursor = page.length > 0 ? String(page[page.length - 1]._id) : null;
+  const filter = buildProductFilter({
+    warehouseId: warehouse,
+    activeOnly: false,
+    search,
+    manufacturer,
+    categoryId,
+  });
+  const { rows: page, hasMore, nextCursor } = await findProductPage(filter, {
+    limit,
+    after,
+    direction: 1,
+    select: '-priceHistory',
+  });
 
   if (page.length === 0) return { rows: [], hasMore: false, nextCursor: null };
 
   const warehouseIds = [...new Set(page.map((p) => p.warehouseId.toString()))];
-  const warehouses = await Warehouse.find({ _id: { $in: warehouseIds } }).select(ADMIN_PRODUCT_WAREHOUSE_SELECT);
+  const warehouses = await Warehouse.find({ _id: { $in: warehouseIds } })
+    .select(ADMIN_PRODUCT_WAREHOUSE_SELECT)
+    .lean();
   const warehouseById = new Map(warehouses.map((w) => [w._id.toString(), w]));
 
   const rows = page.map((product) => ({
@@ -130,15 +78,15 @@ async function listPaginatedAllProducts({
   return { rows, hasMore, nextCursor };
 }
 
-// The Dashboard's "products" stat card, and nothing else. It used to call
-// listAllProducts() and read `.length` off it - every product on the
+// The Dashboard's "products" stat card, and nothing else. It used to load
+// the whole unpaginated product list and read `.length` off it - every product on the
 // platform loaded, hydrated, identity-resolved, locale-sorted and serialised
 // to JSON so one integer could be rendered. countDocuments does it in the
 // database, and the Dashboard re-runs this on every realtime event
 // (useRealtimeSync), so the difference is per-event, not per-page-load.
 //
-// Counts every product, active or not - same set listAllProducts returned,
-// so the number on the card doesn't change meaning with this switch.
+// Counts every product, active or not - the same set the old full list
+// returned, so the number on the card doesn't change meaning.
 async function countAllProducts() {
   return Product.countDocuments({});
 }
@@ -146,7 +94,7 @@ async function countAllProducts() {
 // Distinct warehouses that currently have at least one product - backs the
 // management page's warehouse filter dropdown. Fetched independently of the
 // paginated rows above (a product's own page won't necessarily include
-// every warehouse), and independently of listAllProducts's full fetch too.
+// every warehouse).
 async function listWarehousesWithProducts() {
   const warehouseIds = await Product.distinct('warehouseId');
   const warehouses = await Warehouse.find({ _id: { $in: warehouseIds } }).select('nameEn').sort({ nameEn: 1 });
@@ -178,15 +126,19 @@ async function updateProduct(productId, userId, changes, options) {
 // isActive, so this is immediately invisible on both sides. Idempotent: no
 // error if it's already inactive, since there's no meaningful "undo" state
 // to protect here (no reactivate flow exists yet).
+//
+// Recorded as deactivatedBy 'admin' - also over an earlier 'catalog_recall',
+// since the admin's explicit decision must survive the catalog item being
+// reactivated later (which only brings back 'catalog_recall' products).
 async function deactivateProduct(productId) {
   const product = await findAnyProductOrThrow(productId);
   product.isActive = false;
+  product.deactivatedBy = 'admin';
   await product.save();
   return product;
 }
 
 module.exports = {
-  listAllProducts,
   listPaginatedAllProducts,
   countAllProducts,
   listWarehousesWithProducts,

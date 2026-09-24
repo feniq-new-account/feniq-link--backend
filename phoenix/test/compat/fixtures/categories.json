@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "categories": [
+    {
+      "id": "6a0c00000000000000000005",
+      "nameAr": "مسكنات",
+      "nameEn": "Painkillers",
+      "icon": null,
+      "sortOrder": 1
+    }
+  ]
+}

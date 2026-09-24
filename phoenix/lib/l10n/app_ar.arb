@@ -170,6 +170,7 @@
   "anonymousReviewerName": "مستخدم",
   "browseWarehouseProductsButton": "تصفح منتجات هذا المستودع",
   "searchProductsHint": "ابحث بالاسم أو الشركة المصنعة",
+  "searchWarehouseProductsHint": "ابحث في كل أصناف المستودع",
   "addToCartButton": "إضافة",
   "unavailableLabel": "غير متوفر",
   "offerBadgeLabel": "عرض",
@@ -348,6 +349,14 @@
     }
   },
   "errorPriceChangedGeneric": "تغيّرت بعض الأسعار في سلتك.",
+  "errorBonusChangedGeneric": "تغيّر البونص على بعض الأصناف في سلتك.",
+  "bonusValue": "بونص {tiers}",
+  "@bonusValue": { "placeholders": { "tiers": { "type": "String" } } },
+  "freeUnits": "+{count} مجاناً",
+  "@freeUnits": { "placeholders": { "count": { "type": "int" } } },
+  "noBonus": "بدون بونص",
+  "bonusChangedLine": "{name}: {bonus}",
+  "@bonusChangedLine": { "placeholders": { "name": { "type": "String" }, "bonus": { "type": "String" } } },
   "errorPriceChanged": "{name} أصبح بـ {newPrice} (كان {oldPrice}).",
   "@errorPriceChanged": {
     "placeholders": {

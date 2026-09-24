@@ -43,6 +43,20 @@ const orderItemSchema = new Schema(
     // a pharmacy's "money saved" moved every time the lira did. Frozen here,
     // it does not.
     savingsSyp: { type: Number, default: 0 },
+    // Bonus (catalog overhaul Phase 8), frozen at order time: the free units
+    // this line earned on top of `quantity` (which stays the CHARGED quantity
+    // - free units are never billed), and the tier that earned them. The
+    // product's full tier list is kept too, so a warehouse editing this line's
+    // quantity later recomputes the free units from the terms the pharmacy
+    // ordered under (utils/bonus.js freeQuantityFor), never from today's.
+    // 0 / null / [] on a line with no bonus, and on every order placed before
+    // bonuses existed.
+    freeQuantity: { type: Number, default: 0, min: 0 },
+    bonusApplied: {
+      type: new Schema({ buy: Number, free: Number }, { _id: false }),
+      default: null,
+    },
+    bonusTiers: { type: [{ _id: false, buy: Number, free: Number }], default: [] },
   },
   { timestamps: true }
 );

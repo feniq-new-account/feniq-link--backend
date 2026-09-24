@@ -32,15 +32,28 @@ const offerSchema = new Schema(
     // has to infer the other. A non-permanent offer always has an endDate.
     endDate: { type: Date, default: null },
     isPermanent: { type: Boolean, default: false },
-    // No "rejected" state - an offer is either waiting or approved by the admin.
-    status: { type: String, enum: ['pending', 'approved'], default: 'pending' },
+    // No "rejected" state - a rejection deletes the offer. `stopped` is an
+    // offer the platform took off air because its product went away (a
+    // catalog recall, or a duplicate product removed by a catalog merge): kept
+    // as a record, never live again, and never restored automatically - the
+    // warehouse creates a new one if it wants the promotion back. Every live
+    // or queue filter selects 'approved'/'pending' explicitly, so a stopped
+    // offer is invisible to pharmacies by construction.
+    status: { type: String, enum: ['pending', 'approved', 'stopped'], default: 'pending' },
+    stoppedAt: { type: Date, default: null },
+    stoppedReason: { type: String, enum: ['catalog_recall', 'duplicate_merge', null], default: null },
     approvedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     approvedAt: { type: Date, default: null },
     // Set only on an approved offer whose warehouse has proposed an edit that
     // is itself waiting for the admin. null the rest of the time.
     pendingUpdate: { type: offerUpdateSchema, default: null },
   },
-  { timestamps: true }
+  // optimisticConcurrency: `__v` goes up on every save and each save is
+  // conditional on it, so an admin approving a parked edit can never apply it
+  // over a newer one the warehouse saved in between (adminOffer.service.js
+  // turns that into 409 OFFER_CHANGED). The admin serializer exposes `__v` as
+  // the offer's `version`.
+  { timestamps: true, optimisticConcurrency: true }
 );
 
 offerSchema.index({ productId: 1 });

@@ -15,6 +15,7 @@ import 'package:feniq/core/widgets/app_dialog.dart';
 import 'package:feniq/core/widgets/app_text_field.dart';
 import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
+import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_state.dart';
 import 'package:feniq/features/cart/presentation/utils/cart_error_translator.dart';
 import 'package:feniq/features/cart/presentation/widgets/cart_item_tile.dart';
@@ -151,6 +152,11 @@ class _CartViewState extends State<CartView> {
       await _confirmPriceChanges();
       return;
     }
+    // Same for a bonus the server changed (catalog overhaul Phase 8).
+    if (cubit.state.hasUnconfirmedBonusChanges) {
+      await _confirmBonusChanges();
+      return;
+    }
 
     final warehouseName = cubit.state.warehouseName ?? '';
 
@@ -184,6 +190,30 @@ class _CartViewState extends State<CartView> {
         cubit.state.items,
         (amount) => formatMoneyFromUsd(amount, usdToSyp, l10n.currencySuffix),
       ),
+      actionLabel: l10n.submitOrderButton,
+      onAction: () => _submit(cubit, acceptPriceChanges: true),
+    );
+  }
+
+  // After a BONUS_CHANGED refusal: the lines already carry the product's
+  // current bonus; this lists them so the pharmacist sees the new terms before
+  // anything is resent (the action accepts them and submits).
+  Future<void> _confirmBonusChanges() async {
+    final l10n = context.l10n;
+    final cubit = context.read<CartCubit>();
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final lines = [
+      for (final item in cubit.state.items)
+        if (item.hasUnconfirmedBonusChange)
+          l10n.bonusChangedLine(
+            isArabic ? item.nameAr : (item.nameEn ?? item.nameAr),
+            item.bonuses.isEmpty ? l10n.noBonus : l10n.bonusValue(BonusTier.format(item.bonuses)),
+          ),
+    ];
+    await AppDialog.show(
+      context: context,
+      title: l10n.errorBonusChangedGeneric,
+      content: lines.join('\n'),
       actionLabel: l10n.submitOrderButton,
       onAction: () => _submit(cubit, acceptPriceChanges: true),
     );
@@ -291,6 +321,12 @@ class _CartViewState extends State<CartView> {
               state.errorCode == 'PRICE_CHANGE_UNCONFIRMED';
           if (isPriceChange && state.hasUnconfirmedPriceChanges) {
             _confirmPriceChanges();
+            return;
+          }
+          final isBonusChange = state.errorCode == 'BONUS_CHANGED' ||
+              state.errorCode == 'BONUS_CHANGE_UNCONFIRMED';
+          if (isBonusChange && state.hasUnconfirmedBonusChanges) {
+            _confirmBonusChanges();
             return;
           }
 
@@ -449,11 +485,7 @@ class _CartViewState extends State<CartView> {
                                     .state
                                     .usdToSyp;
                                 return Text(
-                                  formatMoneyFromUsd(
-                                    state.subtotalUsd,
-                                    usdToSyp,
-                                    l10n.currencySuffix,
-                                  ),
+                                  formatMoneySyp(state.subtotalSypAt(usdToSyp), l10n.currencySuffix),
                                   textAlign: TextAlign.end,
                                   style: context.textTheme.titleLarge?.copyWith(
                                     color: AppColors.primaryOf(context),

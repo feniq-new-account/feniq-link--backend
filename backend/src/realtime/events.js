@@ -57,6 +57,12 @@ const EVENTS = {
   // the authoritative record over HTTP.
   COMPLAINT_CREATED: 'complaint.created',
   COMPLAINT_UPDATED: 'complaint.updated',
+
+  // Catalog requests (a warehouse asking for a new central-catalog item from
+  // an import row): PENDING reaches the admin queue; UPDATED (approved /
+  // merged / rejected) reaches the admins and the one warehouse that asked.
+  CATALOG_REQUEST_PENDING: 'catalogRequest.pending',
+  CATALOG_REQUEST_UPDATED: 'catalogRequest.updated',
 };
 
 // One room per warehouse. The business rule is that an order/delivery belongs

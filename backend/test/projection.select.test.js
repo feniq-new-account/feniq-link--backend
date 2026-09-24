@@ -275,7 +275,9 @@ test('pharmacy order detail keeps warehouse/items/return/review fields', async (
   assert.deepStrictEqual(
     Object.keys(d.items[0]).sort(),
     ['id', 'productId', 'productNameAr', 'productNameEn', 'manufacturerAr', 'manufacturerEn',
-      'quantity', 'unitPrice', 'discountPrice', 'lineTotal', 'savingsUsd'].sort()
+      'quantity', 'unitPrice', 'discountPrice', 'lineTotal', 'savingsUsd',
+      // Additive (catalog overhaul Phase 8) - nothing was dropped.
+      'freeQuantity', 'bonusApplied'].sort()
   );
   assert.strictEqual(d.items[0].savingsUsd, 2.4);
   assert.strictEqual(d.items[0].lineTotal, 320 * 3);
@@ -485,7 +487,8 @@ test('manufacturer-discounts list keeps its fields', async () => {
   assert.strictEqual(rows.length, 1);
   assert.deepStrictEqual(
     Object.keys(rows[0]).sort(),
-    ['id', 'manufacturerAr', 'discountPercentage', 'createdAt'].sort()
+    // manufacturerId: additive (catalog overhaul M3) - nothing was dropped.
+    ['id', 'manufacturerId', 'manufacturerAr', 'discountPercentage', 'createdAt'].sort()
   );
   assert.strictEqual(rows[0].manufacturerAr, 'شركة');
   assert.strictEqual(rows[0].discountPercentage, 5);
@@ -527,10 +530,12 @@ test('warehouse banners list keeps its fields', async () => {
   assert.strictEqual(banners.length, 1);
   assert.deepStrictEqual(
     Object.keys(banners[0]).sort(),
-    ['id', 'bannerNumber', 'imageUrl', 'productId', 'manufacturerAr', 'title', 'status',
+    // productNameAr/En: additive, catalog overhaul Phase 10 (the edit picker's label).
+    ['id', 'bannerNumber', 'imageUrl', 'productId', 'productNameAr', 'productNameEn', 'manufacturerAr', 'title', 'status',
       'rejectionNote', 'startDate', 'endDate', 'createdAt'].sort()
   );
   assert.strictEqual(banners[0].title, 'Promo');
+  assert.strictEqual(banners[0].productNameEn, 'Med');
 });
 
 // --- accounts --------------------------------------------------------

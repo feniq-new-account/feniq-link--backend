@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:feniq/core/error/failure.dart';
+import 'package:feniq/core/models/paginated_result.dart';
 import 'package:feniq/core/network/api_client.dart';
 import 'package:feniq/core/network/endpoints.dart';
 import 'package:feniq/features/advertisements/data/models/advertisement_cart_preparation.dart';
@@ -13,13 +14,14 @@ class AdvertisementsRepositoryImpl implements AdvertisementsRepository {
   final ApiClient _apiClient;
 
   @override
-  Future<List<AdvertisementModel>> getActiveAdvertisements() async {
+  Future<PaginatedResult<AdvertisementModel>> getActiveAdvertisements({String? cursor, int? limit}) async {
     try {
-      final response = await _apiClient.dio.get(Endpoints.activeAdvertisements);
+      final response = await _apiClient.dio.get(
+        Endpoints.activeAdvertisements,
+        queryParameters: {if (cursor != null) 'cursor': cursor, if (limit != null) 'limit': limit},
+      );
       final data = response.data as Map<String, dynamic>;
-      return (data['advertisements'] as List)
-          .map((e) => AdvertisementModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return PaginatedResult.fromJson(data, 'advertisements', AdvertisementModel.fromJson);
     } on DioException catch (e) {
       throw ServerFailure.fromDioError(e);
     }

@@ -171,6 +171,7 @@
   "anonymousReviewerName": "User",
   "browseWarehouseProductsButton": "Browse this warehouse's products",
   "searchProductsHint": "Search by name or manufacturer",
+  "searchWarehouseProductsHint": "Search all of this warehouse's products",
   "addToCartButton": "Add",
   "unavailableLabel": "Unavailable",
   "offerBadgeLabel": "Offer",
@@ -349,6 +350,14 @@
     }
   },
   "errorPriceChangedGeneric": "Some prices in your cart have changed.",
+  "errorBonusChangedGeneric": "The bonus changed on some items in your cart.",
+  "bonusValue": "Bonus {tiers}",
+  "@bonusValue": { "placeholders": { "tiers": { "type": "String" } } },
+  "freeUnits": "+{count} free",
+  "@freeUnits": { "placeholders": { "count": { "type": "int" } } },
+  "noBonus": "No bonus",
+  "bonusChangedLine": "{name}: {bonus}",
+  "@bonusChangedLine": { "placeholders": { "name": { "type": "String" }, "bonus": { "type": "String" } } },
   "errorPriceChanged": "{name} is now {newPrice} (was {oldPrice}).",
   "@errorPriceChanged": {
     "placeholders": {

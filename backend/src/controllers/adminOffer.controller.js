@@ -42,12 +42,14 @@ const listAll = asyncHandler(async (req, res) => {
 });
 
 const approve = asyncHandler(async (req, res) => {
-  await adminOfferService.approveOffer(req.params.id, req.user._id);
+  // `version`: the offer version the admin reviewed (409 OFFER_CHANGED if the
+  // warehouse changed it since). Optional, for older panels.
+  await adminOfferService.approveOffer(req.params.id, req.user._id, { expectedVersion: req.body?.version });
   res.json({ success: true, message: 'Offer approved.' });
 });
 
 const reject = asyncHandler(async (req, res) => {
-  await adminOfferService.rejectOffer(req.params.id);
+  await adminOfferService.rejectOffer(req.params.id, { expectedVersion: req.body?.version });
   res.json({ success: true, message: 'Offer rejected.' });
 });
 

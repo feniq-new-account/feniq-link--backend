@@ -1,0 +1,24 @@
+{
+  "warehouseId": "6a0c00000000000000000004",
+  "items": [
+    {
+      "productId": "6a0c00000000000000000009",
+      "quantity": 25,
+      "displayedUnitPriceUsd": 1.2
+    },
+    {
+      "productId": "6a0c00000000000000000011",
+      "quantity": 3,
+      "displayedUnitPriceUsd": 0.8
+    }
+  ],
+  "packages": [
+    {
+      "advertisementId": "6a0c00000000000000000013",
+      "copies": 1
+    }
+  ],
+  "notes": "old app order",
+  "idempotencyKey": "old-app-compat-0001",
+  "rateUsed": 13000
+}

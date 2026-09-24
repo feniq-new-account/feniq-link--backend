@@ -10,6 +10,7 @@ import 'package:feniq/core/widgets/app_network_image.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/core/widgets/status_badge.dart';
+import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/catalog/presentation/widgets/quantity_picker_sheet.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
@@ -243,8 +244,32 @@ class _PriceDisplay extends StatelessWidget {
 
   final ProductModel product;
 
+  // The price, and under it the warehouse's bonus when the product has one
+  // ("بونص 10+1", catalog overhaul Phase 8).
   @override
   Widget build(BuildContext context) {
+    final price = _buildPrice(context);
+    if (product.bonuses.isEmpty) return price;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        price,
+        const SizedBox(height: 2),
+        Text(
+          context.l10n.bonusValue(BonusTier.format(product.bonuses)),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.textTheme.bodySmall?.copyWith(
+            color: AppColors.secondaryOf(context),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrice(BuildContext context) {
     final l10n = context.l10n;
     // Purely visual: whenever the server-computed discounted price comes in
     // below the list price (discountPriceUsd already has any active Offer AND
@@ -253,14 +278,15 @@ class _PriceDisplay extends StatelessWidget {
     // discounted one. Equal prices -> a single plain number. The card only
     // shows the figures, never why a price is lower.
     //
-    // SYP is the only figure shown - formatMoneyFromUsd converts the stored
-    // USD price at the current rate.
+    // SYP is the only figure shown - the lira price the order will charge,
+    // as the server computed it (ProductModel.finalSypAt, catalog overhaul
+    // Phase 7), never a local conversion of the USD figure.
     final usdToSyp = context.watch<ExchangeRateCubit>().state.usdToSyp;
     final hasDiscount = product.discountPriceUsd < product.priceUsd;
 
     if (!hasDiscount) {
       return Text(
-        formatMoneyFromUsd(product.discountPriceUsd, usdToSyp, l10n.currencySuffix),
+        formatMoneySyp(product.finalSypAt(usdToSyp), l10n.currencySuffix),
         style: context.textTheme.titleSmall?.copyWith(
           color: AppColors.primaryOf(context),
           fontSize: 15,
@@ -273,7 +299,7 @@ class _PriceDisplay extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          formatMoneyFromUsd(product.priceUsd, usdToSyp, l10n.currencySuffix),
+          formatMoneySyp(product.unitSypAt(usdToSyp), l10n.currencySuffix),
           style: TextStyle(
             decoration: TextDecoration.lineThrough,
             color: AppColors.textSecondaryOf(context),
@@ -282,7 +308,7 @@ class _PriceDisplay extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          formatMoneyFromUsd(product.discountPriceUsd, usdToSyp, l10n.currencySuffix),
+          formatMoneySyp(product.finalSypAt(usdToSyp), l10n.currencySuffix),
           style: TextStyle(
             color: AppColors.secondaryOf(context),
             fontWeight: FontWeight.bold,
@@ -303,10 +329,10 @@ class _ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO(seed-images): `product.image` is still always null (no image API
-    // chosen yet, Section 14) - so this renders the icon today. When real
-    // URLs land, AppNetworkImage already handles Cloudinary right-sizing +
-    // caching + graceful failure with no further change here.
+    // `product.image` is the effective image the server resolves (the
+    // warehouse's override, else the catalog's central one - catalog overhaul
+    // Phase 9), always on Cloudinary; AppNetworkImage right-sizes and caches it
+    // and falls back to the icon when there is none.
     final image = AppNetworkImage(
       url: url,
       fit: BoxFit.cover,

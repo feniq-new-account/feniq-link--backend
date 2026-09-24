@@ -5,6 +5,7 @@ const OrderItem = require('../models/orderItem.model');
 const Pharmacy = require('../models/pharmacy.model');
 const Product = require('../models/product.model');
 const Offer = require('../models/offer.model');
+const { offerMapFor } = require('./offer.service');
 const Warehouse = require('../models/warehouse.model');
 const Review = require('../models/review.model');
 const Return = require('../models/return.model');
@@ -14,12 +15,17 @@ const { runInTransaction } = require('../utils/transaction');
 const notificationService = require('./notification.service');
 const {
   stackedDiscountSyp,
+  bonusSnapshotFor,
   advertisementDiscountSyp,
   rollUpOrderMoney,
 } = require('./order.service');
 const { getRate } = require('./exchangeRate.service');
 const { applyResolvedIdentity } = require('./productCatalog.service');
-const { getDiscountMapForWarehouse, computeDiscountedPriceUsd } = require('./manufacturerDiscount.service');
+const {
+  getDiscountMapForWarehouse,
+  discountPercentageFor,
+  computeDiscountedPriceUsd,
+} = require('./manufacturerDiscount.service');
 const { emitToWarehouse, EVENTS } = require('../realtime');
 
 // Section 7/13b: the warehouse only ever moves an order forward through this
@@ -78,7 +84,7 @@ async function listOrdersForWarehouse(
   const [items, pharmacies, reviews] = await Promise.all([
     // serializeOrderItem (list variant) reads everything but savingsUsd.
     OrderItem.find({ orderId: { $in: orderIds } })
-      .select('orderId productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice packageGroupId'),
+      .select('orderId productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice packageGroupId freeQuantity bonusApplied'),
     // serializePharmacy (auth.viewmodel) field set.
     Pharmacy.find({ _id: { $in: pharmacyIds } })
       .select('nameAr nameEn ownerName address city phone verificationPhoto'),
@@ -266,7 +272,7 @@ async function getOrderDetailForWarehouse(orderId, warehouseId) {
   const [items, pharmacy, returnRequest] = await Promise.all([
     // Detail item shape adds lineTotal (discountPrice*quantity) and savingsUsd.
     OrderItem.find({ orderId: order._id })
-      .select('productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice savingsUsd packageGroupId'),
+      .select('productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice savingsUsd packageGroupId freeQuantity bonusApplied'),
     Pharmacy.findById(order.pharmacyId)
       .select('nameAr nameEn ownerName address city phone verificationPhoto'),
     Return.findOne({ orderId: order._id }).select('_id'),
@@ -444,7 +450,12 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
 
   for (const { orderItemId, quantity } of updateItems) {
     if (removeIdSet.has(orderItemId)) continue; // being deleted below anyway
-    currentById.get(orderItemId).quantity = quantity;
+    const line = currentById.get(orderItemId);
+    line.quantity = quantity;
+    // Catalog overhaul Phase 8 (owner decision): the free units follow the
+    // new quantity, under the bonus terms frozen on this line at order time -
+    // never the product's current ones.
+    Object.assign(line, bonusSnapshotFor(line.bonusTiers, quantity));
   }
   const changedExisting = updateItems
     .filter(({ orderItemId }) => !removeIdSet.has(orderItemId))
@@ -553,12 +564,13 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
       }),
       getDiscountMapForWarehouse(warehouseId),
     ]);
-    const offerByProductId = new Map(offers.map((o) => [o.productId.toString(), o]));
+    // The one deterministic "offer for this product" (offer.service.js).
+    const offerByProductId = offerMapFor(offers);
 
     const newItemsData = addItems.map((item) => {
       const product = productById.get(item.productId);
       const offer = offerByProductId.get(item.productId);
-      const manufacturerDiscountPercentage = manufacturerDiscountByName.get(product.manufacturerAr) ?? null;
+      const manufacturerDiscountPercentage = discountPercentageFor(manufacturerDiscountByName, product);
 
       const unitPrice = Math.round(product.price * usdToSyp);
       const discountPrice = stackedDiscountSyp(unitPrice, offer?.discountPercentage, manufacturerDiscountPercentage);
@@ -580,6 +592,8 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
         unitPrice,
         discountPrice,
         savingsUsd,
+        // A line added now takes the product's bonus as it is now.
+        ...bonusSnapshotFor(product.bonuses, item.quantity),
       };
     });
     newItems = await OrderItem.insertMany(newItemsData);

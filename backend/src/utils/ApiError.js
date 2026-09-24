@@ -29,8 +29,11 @@ class ApiError extends Error {
     return new ApiError(404, message, undefined, code);
   }
 
-  static conflict(message, code) {
-    return new ApiError(409, message, undefined, code);
+  // `details` is optional and last, so every existing two-argument call site
+  // is unchanged - it carries structured context for a conflict the client
+  // can act on (e.g. which manufacturer a rename clashed with).
+  static conflict(message, code, details) {
+    return new ApiError(409, message, details, code);
   }
 
   static tooManyRequests(message, code) {

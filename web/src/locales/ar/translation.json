@@ -35,7 +35,8 @@
     "allResultsShown": "تم عرض كل النتائج",
     "noMatches": "لا توجد نتائج",
     "unexpectedError": "حدث خطأ غير متوقع. حاول مرة أخرى.",
-    "retry": "إعادة المحاولة"
+    "retry": "إعادة المحاولة",
+    "view": "عرض"
   },
   "app": {
     "brand": "فينيق - لوحة الإدارة"
@@ -75,7 +76,10 @@
     "unreadBadge_few": "{{count}} تحديثات جديدة",
     "unreadBadge_many": "{{count}} تحديثاً جديداً",
     "unreadBadge_other": "{{count}} تحديث جديد",
-    "openMenuWithUpdates": "فتح القائمة (يوجد جديد)"
+    "openMenuWithUpdates": "فتح القائمة (يوجد جديد)",
+    "catalogRequests": "طلبات الأصناف",
+    "catalogDuplicates": "مراجعة المكرر",
+    "manufacturers": "الشركات المصنعة"
   },
   "auth": {
     "phoneLabel": "رقم الهاتف",
@@ -160,6 +164,7 @@
     "cannotRemoveLastItem": "لا يمكن حذف الصنف الأخير",
     "confirmRemoveItem": "حذف هذا الصنف من الطلب؟",
     "packageBadge": "باقة",
+    "freeUnits": "+{{count}} مجاناً",
     "packageCopies": "عدد النسخ",
     "packagePriceLocked": "سعر متفق عليه",
     "removePackageButton": "حذف الباقة",
@@ -295,7 +300,7 @@
     "noDiscounts": "لا توجد حسومات شركات مصنّعة بعد.",
     "discountColumn": "الحسم",
     "pleaseSelectManufacturer": "الرجاء اختيار شركة مصنّعة.",
-    "percentRange": "يجب أن تكون نسبة الحسم بين 1 و100.",
+    "percentRange": "نسبة الخصم يجب أن تكون أكبر من 0 وحتى 100 (يُسمح بالكسور مثل 2.5).",
     "confirmRemove": "هل تريد حذف الحسم عن \"{{name}}\"؟",
     "emptyTitle": "لا توجد حسومات شركات مصنّعة بعد",
     "emptyBody": "الحسم على شركة مصنّعة يُطبَّق على كل منتجاتها في كتالوجك تلقائياً. أضف أول حسم من النموذج على اليسار.",
@@ -346,7 +351,8 @@
     "submitForApproval": "إرسال للمراجعة",
     "statusApproved": "مقبول",
     "statusRejected": "مرفوض",
-    "statusPending": "قيد المراجعة"
+    "statusPending": "قيد المراجعة",
+    "linkedProduct": "المنتج المرتبط"
   },
   "debts": {
     "searchPlaceholder": "ابحث باسم الصيدلية...",
@@ -502,7 +508,10 @@
       "discountRange": "يجب أن يكون الحسم رقماً بين 1 و100.",
       "approvalNotice": "كل عرض يمرّ بموافقة الأدمن قبل نشره — عند الموافقة يُرسل إشعار لكل الصيدليات. تعديل عرض مقبول يُبقي العرض الحالي كما هو حتى يوافق الأدمن على تعديلك.",
       "fromColumn": "من",
-      "toColumn": "إلى"
+      "toColumn": "إلى",
+      "statusStopped": "موقوف",
+      "alreadyHasOffer": "لهذا المنتج عرض قائم أو بانتظار الموافقة - عدّله أو ألغه بدلاً من إضافة عرض جديد.",
+      "offerStopped": "هذا العرض موقوف (سُحب منتجه) ولا يمكن تعديله."
     },
     "admin": {
       "noOffers": "لا توجد عروض مطابقة لهذا الفلتر.",
@@ -516,7 +525,8 @@
       "confirmApprove": "الموافقة على \"{{title}}\"؟",
       "confirmReject": "رفض \"{{title}}\"؟ هذا يحذف العرض نهائياً.",
       "confirmRejectUpdate": "رفض هذا التعديل على \"{{title}}\"؟ العرض الحالي يبقى كما هو.",
-      "confirmDelete": "حذف \"{{title}}\"؟ هذا يزيله نهائياً من جميع الصيدليات."
+      "confirmDelete": "حذف \"{{title}}\"؟ هذا يزيله نهائياً من جميع الصيدليات.",
+      "offerChanged": "غيّر المستودع هذا العرض أثناء مراجعتك له - أُعيد تحميله، راجعه مرة أخرى."
     },
     "percentOff": "حسم {{percent}}%"
   },
@@ -561,11 +571,24 @@
     "approxUsd": "≈ {{amount}} (يُخزَّن)",
     "rateRequired": "سعر الصرف لم يُحمّل بعد — لا يمكن تحديد السعر قبل أن يضبطه الأدمن.",
     "descriptionOptional": "الوصف (اختياري)",
-    "imageUrlOptional": "رابط الصورة (اختياري)",
+    "imageOptional": "الصورة (اختياري)",
+    "chooseImage": "اختر صورة",
+    "removeImage": "إزالة الصورة",
+    "noImage": "لا توجد صورة",
+    "catalogImageHint": "صورة الدواء من الكتالوج - تظهر إلى أن ترفع صورتك الخاصة.",
+    "imageUploadFailed": "تم حفظ المنتج لكن لم تُرفع الصورة. احفظ مرة أخرى لإعادة المحاولة.",
+    "errorImage": "ارفع صورة بصيغة JPEG أو PNG أو WEBP.",
     "temporarilyPaused": "متوقف مؤقتاً (مخفي عن الصيدليات)",
     "saveChanges": "حفظ التعديلات",
     "selectMedicineRequired": "الرجاء اختيار دواء من الكتالوج المركزي.",
-    "pricePositive": "يجب أن يكون السعر رقماً موجباً."
+    "pricePositive": "يجب أن يكون السعر رقماً موجباً.",
+    "errorWithdrawn": "الصنف مسحوب من القائمة المركزية",
+    "errorDisabledByAdmin": "معطّل من الإدارة",
+    "errorChanged": "عدّل شخص آخر هذا المنتج في الأثناء - أغلق النموذج وافتحه من جديد.",
+    "unit": "الوحدة",
+    "bonus": "البونص (مثل 10+1)",
+    "legacyUnit": "الحالية",
+    "errorBonus": "البونص غير مفهوم - اكتبه مثل 10+1 أو 10+1، 20+3."
   },
   "dashboard": {
     "viewAll": "عرض الكل",
@@ -690,7 +713,18 @@
       "importConvertedRate": "بسعر صرف: 1$ = {{rate}} ل.س",
       "importErrorsTitle": "تفاصيل الأخطاء",
       "importDone": "تم",
-      "downloadErrorReport": "تحميل تقرير الأخطاء"
+      "downloadErrorReport": "تحميل تقرير الأخطاء",
+      "disabledSideEffects": "أُوقف {{offers}} عرض، وعُدّلت {{packages}} باقة.",
+      "reenabledWithProducts": "تمت إعادة التفعيل. عاد {{count}} منتج مسحوب للبيع.",
+      "newManufacturersTitle": "شركات جديدة",
+      "newManufacturersHint": "هذه الشركات غير موجودة بالنظام بعد، لذلك تم تخطي صفوفها. حدّد ما تريد إنشاءه وأعد استيراد الملف.",
+      "rowsCount": "{{count}} صف",
+      "createAndReimport": "إنشاء وإعادة الاستيراد",
+      "withdrawnTitle": "مسحوب — لم يُعد تفعيله",
+      "uploadImage": "رفع صورة",
+      "replaceImage": "تبديل الصورة",
+      "clearImage": "حذف الصورة",
+      "linkExisting": "أو ربطها بشركة موجودة"
     },
     "exchangeRate": {
       "title": "سعر الصرف",
@@ -825,5 +859,131 @@
   "exchangeRateChange": {
     "notice": "تغيّر سعر الصرف أثناء التعديل: كان 1$ = {{from}} وأصبح {{to}}. القيم بالدولار تُحسب الآن بالسعر الجديد — راجعها ثم أكّد الحفظ.",
     "confirmButton": "تأكيد وحفظ بالسعر الجديد"
+  },
+  "importMapping": {
+    "title": "أي عمود هو أي حقل؟",
+    "hint": "لم نتعرّف على بعض أعمدة الملف. اختر ماذا يحتوي كل عمود - سنتذكّر اختيارك في المرة القادمة.",
+    "header": "العمود في الملف",
+    "meaning": "يحتوي",
+    "ignore": "— تجاهل —",
+    "submit": "استيراد بهذه الأعمدة",
+    "missing": "ما زال ناقصاً: {{fields}}",
+    "duplicated": "كل حقل يُختار لعمود واحد فقط.",
+    "field": {
+      "name": "اسم الدواء",
+      "price": "السعر",
+      "manufacturer": "الشركة",
+      "unit": "الوحدة",
+      "currency": "العملة",
+      "bonus": "البونص"
+    }
+  },
+  "importResults": {
+    "title": "نتيجة الاستيراد",
+    "recentTitle": "آخر عمليات الاستيراد",
+    "backToCatalog": "العودة إلى الكتالوج",
+    "empty": "لا شيء في هذا التبويب.",
+    "tab": {
+      "added": "انضاف",
+      "updated": "تحدّث سعره",
+      "added_disabled": "انضاف متوقف — سعر صفر",
+      "blocked": "معطّل من الإدارة / مسحوب",
+      "review": "بحاجة مراجعة",
+      "error": "صفوف غير مقروءة",
+      "resolved": "تمت معالجتها"
+    },
+    "row": "الصف",
+    "name": "الاسم",
+    "manufacturer": "الشركة",
+    "price": "السعر",
+    "currency": "العملة",
+    "unit": "الوحدة",
+    "bonus": "البونص",
+    "note": "ملاحظة",
+    "date": "التاريخ",
+    "file": "الملف",
+    "open": "فتح",
+    "pick": "اختيار",
+    "noSuggestions": "لا يوجد دواء مطابق - عدّل الاسم أو الشركة للبحث من جديد.",
+    "requestNewItem": "طلب إضافة صنف جديد",
+    "keepThisPrice": "اعتماد سعر هذا الصف",
+    "confirmRow": "تأكيد هذا الصف",
+    "reason": {
+      "not_matched": "غير مطابق في القائمة المركزية",
+      "unknown_manufacturer": "شركة غير معروفة",
+      "duplicate_in_file": "مكرر في الملف",
+      "bad_bonus": "البونص غير مفهوم",
+      "unknown_unit": "وحدة غير معروفة",
+      "unknown_currency": "عملة غير معروفة",
+      "missing_currency": "بدون عملة",
+      "missing_name": "بدون اسم",
+      "missing_manufacturer": "بدون شركة",
+      "missing_price": "بدون سعر",
+      "invalid_price": "السعر غير مفهوم",
+      "save_failed": "تعذّر الحفظ"
+    },
+    "blocked": {
+      "CATALOG_ITEM_WITHDRAWN": "الصنف مسحوب من القائمة المركزية",
+      "PRODUCT_DISABLED_BY_ADMIN": "معطّل من الإدارة"
+    }
+  },
+  "catalogRequests": {
+    "title": "طلبات إضافة أصناف",
+    "myTitle": "طلباتي لإضافة أصناف جديدة",
+    "empty": "لا توجد طلبات.",
+    "decide": "اتخاذ قرار",
+    "status": {
+      "pending": "بانتظار القرار",
+      "approved": "مقبول",
+      "merged": "مدموج",
+      "rejected": "مرفوض",
+      "all": "الكل"
+    },
+    "action": {
+      "approve": "قبول كصنف جديد",
+      "merge": "دمج مع صنف موجود",
+      "reject": "رفض"
+    },
+    "nameAr": "الاسم العربي",
+    "nameEn": "الاسم الإنجليزي (اختياري)",
+    "createManufacturer": "إنشاء الشركة \"{{name}}\"",
+    "manufacturerRequired": "اختر شركة موجودة، أو فعّل \"إنشاء الشركة\".",
+    "alreadyExists": "هذا الدواء موجود مسبقاً - ادمج الطلب معه.",
+    "mergeInto": "دمج مع",
+    "reason": "السبب"
+  },
+  "duplicates": {
+    "title": "مراجعة الأصناف المكررة",
+    "hint": "كل مجموعة هي دواء واحد أُدخل أكثر من مرة بكتابات مختلفة. اختر الصنف الذي يبقى، والباقي يُدمج فيه.",
+    "empty": "لا توجد أصناف مكررة بانتظار المراجعة.",
+    "reason": {
+      "warehouse_linked_to_several": "مستودع لديه أكثر من صنف منها",
+      "mixed_active_state": "بعضها مسحوب وبعضها لا"
+    },
+    "withdrawn": "مسحوب",
+    "productCount": "{{count}} منتج لدى المستودعات",
+    "chooseProduct": "لدى {{warehouse}} أكثر من منتج - أيها يبقى؟",
+    "merge": "دمج"
+  },
+  "manufacturers": {
+    "title": "الشركات المصنعة",
+    "searchPlaceholder": "ابحث عن شركة...",
+    "logo": "الشعار",
+    "nameAr": "الاسم العربي",
+    "nameEn": "الاسم الإنجليزي",
+    "items": "أصناف الكتالوج",
+    "uploadLogo": "رفع شعار",
+    "replaceLogo": "تبديل الشعار",
+    "clearLogo": "حذف الشعار",
+    "merge": "دمج شركة أخرى بهذه",
+    "mergeHint": "اختر الشركة التي ستُدمج في \"{{name}}\". تنتقل أدويتها وخصوماتها ومستودعاتها إلى هنا.",
+    "confirmMerge": "دمج \"{{source}}\" في \"{{target}}\"؟ لا يمكن التراجع.",
+    "nameTaken": "يوجد شركة أخرى بهذا الاسم - ادمج الاثنتين.",
+    "mergeConflict": "بعض الأدوية موجودة تحت الشركتين ويجب حلها في مراجعة المكرر أولاً."
+  },
+  "productPicker": {
+    "searchPlaceholder": "ابحث عن منتج بالاسم أو الشركة",
+    "change": "تغيير",
+    "clear": "إزالة"
   }
 }

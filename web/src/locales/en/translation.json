@@ -35,7 +35,8 @@
     "allResultsShown": "All results shown",
     "noMatches": "No matches",
     "unexpectedError": "Something went wrong. Please try again.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "view": "View"
   },
   "app": {
     "brand": "Feniq Admin"
@@ -71,7 +72,10 @@
     "feedback": "Feedback",
     "unreadBadge_one": "{{count}} new update",
     "unreadBadge_other": "{{count}} new updates",
-    "openMenuWithUpdates": "Open menu (new updates)"
+    "openMenuWithUpdates": "Open menu (new updates)",
+    "catalogRequests": "Catalog requests",
+    "catalogDuplicates": "Duplicate review",
+    "manufacturers": "Manufacturers"
   },
   "auth": {
     "phoneLabel": "Phone number",
@@ -148,6 +152,7 @@
     "cannotRemoveLastItem": "Cannot remove the last item",
     "confirmRemoveItem": "Remove this item from the order?",
     "packageBadge": "Package",
+    "freeUnits": "+{{count}} free",
     "packageCopies": "Copies",
     "packagePriceLocked": "agreed price",
     "removePackageButton": "Remove package",
@@ -279,7 +284,7 @@
     "noDiscounts": "No manufacturer discounts yet.",
     "discountColumn": "Discount",
     "pleaseSelectManufacturer": "Please select a manufacturer.",
-    "percentRange": "Discount percentage must be between 1 and 100.",
+    "percentRange": "Discount percentage must be greater than 0 and at most 100 (decimals like 2.5 are fine).",
     "confirmRemove": "Remove the discount for \"{{name}}\"?",
     "emptyTitle": "No manufacturer discounts yet",
     "emptyBody": "A manufacturer's discount applies automatically to every one of its products in your catalog. Add your first discount using the form on the right.",
@@ -330,7 +335,8 @@
     "submitForApproval": "Submit for approval",
     "statusApproved": "Approved",
     "statusRejected": "Rejected",
-    "statusPending": "Pending review"
+    "statusPending": "Pending review",
+    "linkedProduct": "Linked product"
   },
   "debts": {
     "searchPlaceholder": "Search by pharmacy name...",
@@ -486,7 +492,10 @@
       "discountRange": "Discount must be a number between 1 and 100.",
       "approvalNotice": "Every offer goes through admin approval before it publishes - once approved, all pharmacies are notified. Editing an approved offer keeps the live one unchanged until the admin approves your change.",
       "fromColumn": "From",
-      "toColumn": "To"
+      "toColumn": "To",
+      "statusStopped": "Stopped",
+      "alreadyHasOffer": "This product already has an offer running or waiting for approval - edit or cancel that one instead.",
+      "offerStopped": "This offer was stopped (its product was withdrawn) and can no longer be edited."
     },
     "admin": {
       "noOffers": "No offers match this filter.",
@@ -500,7 +509,8 @@
       "confirmApprove": "Approve \"{{title}}\"?",
       "confirmReject": "Reject \"{{title}}\"? This permanently deletes the offer.",
       "confirmRejectUpdate": "Reject this edit to \"{{title}}\"? The live offer stays unchanged.",
-      "confirmDelete": "Delete \"{{title}}\"? This permanently removes it from every pharmacy."
+      "confirmDelete": "Delete \"{{title}}\"? This permanently removes it from every pharmacy.",
+      "offerChanged": "The warehouse changed this offer while you were reviewing it - it has been reloaded, please review it again."
     },
     "percentOff": "{{percent}}% off"
   },
@@ -545,11 +555,24 @@
     "approxUsd": "≈ {{amount}} (stored)",
     "rateRequired": "The exchange rate hasn't loaded yet — the price can't be set until an admin has configured it.",
     "descriptionOptional": "Description (optional)",
-    "imageUrlOptional": "Image URL (optional)",
+    "imageOptional": "Image (optional)",
+    "chooseImage": "Choose an image",
+    "removeImage": "Remove image",
+    "noImage": "No image",
+    "catalogImageHint": "The medicine's catalog image - shown until you upload your own.",
+    "imageUploadFailed": "The product was saved, but the image did not upload. Save again to retry.",
+    "errorImage": "Upload a JPEG, PNG or WEBP image.",
     "temporarilyPaused": "Temporarily paused (hidden from pharmacies)",
     "saveChanges": "Save changes",
     "selectMedicineRequired": "Please select a medicine from the central catalog.",
-    "pricePositive": "Price must be a positive number."
+    "pricePositive": "Price must be a positive number.",
+    "errorWithdrawn": "This medicine has been withdrawn from the central catalog.",
+    "errorDisabledByAdmin": "This product has been disabled by the administration.",
+    "errorChanged": "Someone else changed this product in the meantime - close the form and open it again.",
+    "unit": "Unit",
+    "bonus": "Bonus (e.g. 10+1)",
+    "legacyUnit": "current",
+    "errorBonus": "The bonus could not be read - write it like 10+1 or 10+1، 20+3."
   },
   "dashboard": {
     "viewAll": "View all",
@@ -674,7 +697,18 @@
       "importConvertedRate": "Exchange rate: 1 USD = {{rate}} SYP",
       "importErrorsTitle": "Error details",
       "importDone": "Done",
-      "downloadErrorReport": "Download error report"
+      "downloadErrorReport": "Download error report",
+      "disabledSideEffects": "{{offers}} offer(s) stopped, {{packages}} package(s) updated.",
+      "reenabledWithProducts": "Re-enabled. {{count}} withdrawn product(s) are back on sale.",
+      "newManufacturersTitle": "New companies",
+      "newManufacturersHint": "These companies are not in the system yet, so their rows were skipped. Tick the ones to create and import the file again.",
+      "rowsCount": "{{count}} row(s)",
+      "createAndReimport": "Create and import again",
+      "withdrawnTitle": "Withdrawn — not reactivated",
+      "uploadImage": "Upload image",
+      "replaceImage": "Replace image",
+      "clearImage": "Remove image",
+      "linkExisting": "or link to an existing company"
     },
     "exchangeRate": {
       "title": "Exchange rate",
@@ -809,5 +843,131 @@
   "exchangeRateChange": {
     "notice": "The exchange rate changed while you were editing: $1 was {{from}} and is now {{to}}. Amounts in USD are now worked out at the new rate — review them, then confirm to save.",
     "confirmButton": "Confirm and save at the new rate"
+  },
+  "importMapping": {
+    "title": "Which column is which?",
+    "hint": "Some columns in this file were not recognized. Choose what each column holds - your choice is remembered for next time.",
+    "header": "Column in the file",
+    "meaning": "Holds",
+    "ignore": "— ignore —",
+    "submit": "Import with these columns",
+    "missing": "Still missing: {{fields}}",
+    "duplicated": "Each field can be chosen for one column only.",
+    "field": {
+      "name": "Medicine name",
+      "price": "Price",
+      "manufacturer": "Company",
+      "unit": "Unit",
+      "currency": "Currency",
+      "bonus": "Bonus"
+    }
+  },
+  "importResults": {
+    "title": "Import results",
+    "recentTitle": "Recent imports",
+    "backToCatalog": "Back to the catalog",
+    "empty": "Nothing in this tab.",
+    "tab": {
+      "added": "Added",
+      "updated": "Price updated",
+      "added_disabled": "Added stopped — price 0",
+      "blocked": "Disabled by the admin / withdrawn",
+      "review": "Needs review",
+      "error": "Unreadable rows",
+      "resolved": "Resolved"
+    },
+    "row": "Row",
+    "name": "Name",
+    "manufacturer": "Company",
+    "price": "Price",
+    "currency": "Currency",
+    "unit": "Unit",
+    "bonus": "Bonus",
+    "note": "Note",
+    "date": "Date",
+    "file": "File",
+    "open": "Open",
+    "pick": "Choose",
+    "noSuggestions": "No matching medicine - edit the name or company to search again.",
+    "requestNewItem": "Request a new item",
+    "keepThisPrice": "Keep this row's price",
+    "confirmRow": "Confirm this row",
+    "reason": {
+      "not_matched": "Not matched in the central catalog",
+      "unknown_manufacturer": "Unknown company",
+      "duplicate_in_file": "Appears more than once in the file",
+      "bad_bonus": "Bonus could not be read",
+      "unknown_unit": "Unknown unit",
+      "unknown_currency": "Unknown currency",
+      "missing_currency": "No currency",
+      "missing_name": "No name",
+      "missing_manufacturer": "No company",
+      "missing_price": "No price",
+      "invalid_price": "Price could not be read",
+      "save_failed": "Could not be saved"
+    },
+    "blocked": {
+      "CATALOG_ITEM_WITHDRAWN": "Withdrawn from the central catalog",
+      "PRODUCT_DISABLED_BY_ADMIN": "Disabled by the administration"
+    }
+  },
+  "catalogRequests": {
+    "title": "Catalog requests",
+    "myTitle": "My requests for new items",
+    "empty": "No requests.",
+    "decide": "Decide",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "merged": "Merged",
+      "rejected": "Rejected",
+      "all": "All"
+    },
+    "action": {
+      "approve": "Approve as a new item",
+      "merge": "Merge into an existing item",
+      "reject": "Reject"
+    },
+    "nameAr": "Arabic name",
+    "nameEn": "English name (optional)",
+    "createManufacturer": "Create the company \"{{name}}\"",
+    "manufacturerRequired": "Pick an existing company, or tick \"create the company\".",
+    "alreadyExists": "This medicine already exists - merge the request into it instead.",
+    "mergeInto": "Merge into",
+    "reason": "Reason"
+  },
+  "duplicates": {
+    "title": "Duplicate review",
+    "hint": "Each group is one medicine entered more than once under different spellings. Pick the item to keep; the others are merged into it.",
+    "empty": "No duplicates waiting for review.",
+    "reason": {
+      "warehouse_linked_to_several": "A warehouse stocks more than one of them",
+      "mixed_active_state": "Some are withdrawn and some are not"
+    },
+    "withdrawn": "withdrawn",
+    "productCount": "{{count}} warehouse product(s)",
+    "chooseProduct": "{{warehouse}} has several - which product does it keep?",
+    "merge": "Merge"
+  },
+  "manufacturers": {
+    "title": "Manufacturers",
+    "searchPlaceholder": "Search companies...",
+    "logo": "Logo",
+    "nameAr": "Arabic name",
+    "nameEn": "English name",
+    "items": "Catalog items",
+    "uploadLogo": "Upload logo",
+    "replaceLogo": "Replace logo",
+    "clearLogo": "Remove logo",
+    "merge": "Merge another company into this one",
+    "mergeHint": "Pick the company to fold into \"{{name}}\". Its medicines, discounts and warehouses move here.",
+    "confirmMerge": "Merge \"{{source}}\" into \"{{target}}\"? This cannot be undone.",
+    "nameTaken": "Another company already has this name - merge the two instead.",
+    "mergeConflict": "Some medicines exist under both companies and must be resolved in Duplicate review first."
+  },
+  "productPicker": {
+    "searchPlaceholder": "Search products by name or company",
+    "change": "Change",
+    "clear": "Remove"
   }
 }

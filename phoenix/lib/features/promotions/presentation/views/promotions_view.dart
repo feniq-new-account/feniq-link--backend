@@ -60,9 +60,7 @@ class _PromotionsViewState extends State<PromotionsView> {
         context.pushNamed(
           RouteNames.warehouseOffers,
           pathParameters: {'warehouseId': offer.warehouseId},
-          extra: promotion.warehouseName(
-            Localizations.localeOf(context).languageCode == 'ar',
-          ),
+          extra: promotion.warehouseName(Localizations.localeOf(context).languageCode == 'ar'),
         );
       case PackagePromotion(:final advertisement):
         if (_openingPackage) return;
@@ -94,11 +92,7 @@ class _PromotionsViewState extends State<PromotionsView> {
                   l10n.promotionsCountSubtitle(state.totalCount),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.normal,
-                    color: Colors.white70,
-                  ),
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
                 ),
               ],
             );
@@ -134,18 +128,11 @@ class _PromotionsViewState extends State<PromotionsView> {
               );
             case PromotionsStatus.error:
               return FailureWidget(
-                message: translateErrorCode(
-                  l10n,
-                  state.errorCode,
-                  state.errorMessage ?? l10n.promotionsError,
-                ),
+                message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? l10n.promotionsError),
                 onRetry: () => context.read<PromotionsCubit>().load(),
               );
             case PromotionsStatus.loaded:
-              return _LoadedBody(
-                state: state,
-                onPromotionTap: _handleTap,
-              );
+              return _LoadedBody(state: state, onPromotionTap: _handleTap);
           }
         },
       ),
@@ -154,10 +141,7 @@ class _PromotionsViewState extends State<PromotionsView> {
 }
 
 class _LoadedBody extends StatelessWidget {
-  const _LoadedBody({
-    required this.state,
-    required this.onPromotionTap,
-  });
+  const _LoadedBody({required this.state, required this.onPromotionTap});
 
   final PromotionsState state;
   final ValueChanged<Promotion> onPromotionTap;
@@ -189,108 +173,109 @@ class _LoadedBody extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: cubit.load,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: AppSizes.spacingMedium),
-              child: PromotionFilterBar(
-                kindFilter: state.kindFilter,
-                warehouseFilter: state.warehouseFilter,
-                warehouses: state.warehouses,
-                onKindChanged: cubit.filterByKind,
-                onWarehouseChanged: cubit.filterByWarehouse,
-              ),
-            ),
-          ),
-          if (visible.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  EmptyView(
-                    message: l10n.promotionsNoFilterResults,
-                    icon: Icons.filter_alt_off_outlined,
-                  ),
-                  const SizedBox(height: AppSizes.spacingMedium),
-                  TextButton(
-                    onPressed: cubit.clearFilters,
-                    child: Text(l10n.promotionsClearFilters),
-                  ),
-                ],
-              ),
-            )
-          else ...[
+      // Both listings are paginated server-side: nearing the end of the list
+      // asks the cubit for the next page (a no-op while one is in flight or
+      // when everything is loaded).
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification.metrics.extentAfter < 400) cubit.loadMore();
+          return false;
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSizes.spacingMedium,
-                  AppSizes.spacingMedium,
-                  0,
-                  0,
+                padding: const EdgeInsets.only(top: AppSizes.spacingMedium),
+                child: PromotionFilterBar(
+                  kindFilter: state.kindFilter,
+                  warehouseFilter: state.warehouseFilter,
+                  warehouses: state.warehouses,
+                  onKindChanged: cubit.filterByKind,
+                  onWarehouseChanged: cubit.filterByWarehouse,
                 ),
-                // Full width on a phone, capped on a tablet - the same
-                // treatment BannerSlider and the packages section give theirs.
+              ),
+            ),
+            if (visible.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    EmptyView(message: l10n.promotionsNoFilterResults, icon: Icons.filter_alt_off_outlined),
+                    const SizedBox(height: AppSizes.spacingMedium),
+                    TextButton(onPressed: cubit.clearFilters, child: Text(l10n.promotionsClearFilters)),
+                  ],
+                ),
+              )
+            else ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(AppSizes.spacingMedium, AppSizes.spacingMedium, 0, 0),
+                  // Full width on a phone, capped on a tablet - the same
+                  // treatment BannerSlider and the packages section give theirs.
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 640),
+                      child: PromotionsHeroCarousel(promotions: state.featured, onPromotionTap: onPromotionTap),
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 640),
-                    child: PromotionsHeroCarousel(
-                      promotions: state.featured,
-                      onPromotionTap: onPromotionTap,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 560),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSizes.spacingMedium,
-                      AppSizes.spacingLarge,
-                      AppSizes.spacingMedium,
-                      AppSizes.spacingSmall,
-                    ),
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: Text(l10n.promotionsAllTitle, style: context.textTheme.titleMedium),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSizes.spacingMedium,
-                0,
-                AppSizes.spacingMedium,
-                AppSizes.spacingLarge,
-              ),
-              sliver: SliverList.separated(
-                itemCount: visible.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: AppSizes.spacingMedium),
-                itemBuilder: (context, index) {
-                  final promotion = visible[index];
-                  return Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 560),
-                      child: PromotionListCard(
-                        key: ValueKey(promotion.key),
-                        promotion: promotion,
-                        onTap: () => onPromotionTap(promotion),
+                    constraints: const BoxConstraints(maxWidth: 560),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSizes.spacingMedium,
+                        AppSizes.spacingLarge,
+                        AppSizes.spacingMedium,
+                        AppSizes.spacingSmall,
+                      ),
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(l10n.promotionsAllTitle, style: context.textTheme.titleMedium),
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSizes.spacingMedium,
+                  0,
+                  AppSizes.spacingMedium,
+                  AppSizes.spacingLarge,
+                ),
+                sliver: SliverList.separated(
+                  itemCount: visible.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: AppSizes.spacingMedium),
+                  itemBuilder: (context, index) {
+                    final promotion = visible[index];
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 560),
+                        child: PromotionListCard(
+                          key: ValueKey(promotion.key),
+                          promotion: promotion,
+                          onTap: () => onPromotionTap(promotion),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              if (state.isLoadingMore)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: AppSizes.spacingLarge),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

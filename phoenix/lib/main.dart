@@ -93,7 +93,7 @@ Future<void> main() async {
     sessionScope: sessionScope,
   );
   final warehouseRepository = WarehouseRepositoryImpl(apiClient: apiClient);
-  final catalogRepository = CatalogRepositoryImpl(apiClient: apiClient);
+  final catalogRepository = CatalogRepositoryImpl(apiClient: apiClient, sessionScope: sessionScope);
   final exchangeRateRepository = ExchangeRateRepositoryImpl(
     apiClient: apiClient,
   );

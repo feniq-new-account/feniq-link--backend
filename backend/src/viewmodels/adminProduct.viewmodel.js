@@ -1,3 +1,5 @@
+const { effectiveImage } = require('../utils/productImage');
+
 function serializeAdminProduct({ product, warehouse }) {
   return {
     id: product._id,
@@ -10,9 +12,12 @@ function serializeAdminProduct({ product, warehouse }) {
     manufacturerAr: product.manufacturerAr,
     manufacturerEn: product.manufacturerEn,
     description: product.description,
-    image: product.image,
+    image: effectiveImage(product),
     unitAr: product.unitAr,
     unitEn: product.unitEn,
+    // Additive (catalog overhaul): the fixed unit code and the bonus tiers.
+    unit: product.unit ?? null,
+    bonuses: (product.bonuses || []).map((tier) => ({ buy: tier.buy, free: tier.free })),
     priceUsd: product.price,
     isAvailable: product.isAvailable,
     manuallyDisabled: product.manuallyDisabled,

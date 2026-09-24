@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ProductPicker } from './CatalogPickers';
 import { formatUsdAsSyp } from '../utils/currency';
 import { withArFallback } from '../utils/displayName';
 
@@ -7,10 +8,12 @@ import { withArFallback } from '../utils/displayName';
 // admin Offers pages - the same "reuse the create form for editing" approach
 // AdvertisementModal / ProductFormModal already take.
 //
-// - `products` given  -> the product is a <select> (the warehouse picks from
-//   its own catalog, on create or edit).
-// - `products` null   -> the product is shown read-only (the admin edits an
-//   existing offer's discount / dates / names, not which product it is on).
+// - `searchProducts` given -> the product is searched for and picked
+//   (ProductPicker - the warehouse's own catalog, on create or edit), a page
+//   at a time rather than a <select> of every product (catalog overhaul
+//   Phase 10).
+// - `searchProducts` null  -> the product is shown read-only (the admin edits
+//   an existing offer's discount / dates / names, not which product it is on).
 //
 // `onSubmit(payload)` does the actual API call; the payload is
 // { productId, titleAr, titleEn, discountPercentage, startDate, isPermanent }
@@ -23,9 +26,12 @@ function toDateInputValue(value) {
 
 function initialForm(offer) {
   if (!offer) {
-    return { productId: '', titleAr: '', titleEn: '', discountPercentage: '', startDate: '', endDate: '', isPermanent: false };
+    return { product: null, productId: '', titleAr: '', titleEn: '', discountPercentage: '', startDate: '', endDate: '', isPermanent: false };
   }
   return {
+    product: offer.productId
+      ? { id: offer.productId, nameAr: offer.productNameAr ?? null, nameEn: offer.productNameEn ?? null }
+      : null,
     productId: offer.productId ?? '',
     titleAr: offer.titleAr ?? '',
     titleEn: offer.titleEn ?? '',
@@ -36,7 +42,7 @@ function initialForm(offer) {
   };
 }
 
-export function OfferModal({ mode, offer, products, usdToSyp, onClose, onSubmit, onSaved }) {
+export function OfferModal({ mode, offer, searchProducts, usdToSyp, onClose, onSubmit, onSaved }) {
   const { t } = useTranslation();
   const [form, setForm] = useState(() => initialForm(offer));
   const [isSaving, setIsSaving] = useState(false);
@@ -45,6 +51,12 @@ export function OfferModal({ mode, offer, products, usdToSyp, onClose, onSubmit,
   const setField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
   const isEdit = mode === 'edit';
   const productName = offer ? withArFallback(offer.productNameEn, offer.productNameAr) : '';
+  // The price only where the row carries one (search results do; the offer
+  // being edited only has the product's name).
+  const productLabel = (product) => {
+    const name = withArFallback(product.nameEn, product.nameAr);
+    return product.priceUsd != null ? `${name} (${formatUsdAsSyp(product.priceUsd, usdToSyp)})` : name;
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -85,7 +97,10 @@ export function OfferModal({ mode, offer, products, usdToSyp, onClose, onSubmit,
       await onSubmit(payload);
       onSaved();
     } catch (err) {
-      setError(err.message);
+      // One offer per product: the product already has one running or waiting.
+      if (err.code === 'OFFER_ALREADY_EXISTS') setError(t('offers.warehouse.alreadyHasOffer'));
+      else if (err.code === 'OFFER_STOPPED') setError(t('offers.warehouse.offerStopped'));
+      else setError(err.message);
     } finally {
       setIsSaving(false);
     }
@@ -98,18 +113,16 @@ export function OfferModal({ mode, offer, products, usdToSyp, onClose, onSubmit,
         <form onSubmit={handleSubmit} className="product-form">
           <label>
             {t('orderDetail.product')}
-            {products ? (
-              <select value={form.productId} onChange={(e) => setField('productId', e.target.value)} required>
-                <option value="" disabled>
-                  {t('offers.warehouse.selectProduct')}
-                </option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {withArFallback(product.nameEn, product.nameAr)} (
-                    {formatUsdAsSyp(product.priceUsd, usdToSyp)})
-                  </option>
-                ))}
-              </select>
+            {searchProducts ? (
+              <ProductPicker
+                search={searchProducts}
+                selected={form.product}
+                onChange={(product) =>
+                  setForm((prev) => ({ ...prev, product, productId: product ? product.id : '' }))
+                }
+                renderLabel={productLabel}
+                placeholder={t('offers.warehouse.selectProduct')}
+              />
             ) : (
               <input value={productName} disabled />
             )}

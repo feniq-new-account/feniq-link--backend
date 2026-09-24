@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { normalizeBonusTiers } = require('../utils/bonus');
+const { getRate } = require('../services/exchangeRate.service');
 const { ApiError } = require('../utils/ApiError');
 const Pharmacy = require('../models/pharmacy.model');
 const orderService = require('../services/order.service');
@@ -54,7 +56,18 @@ function validateItems(items) {
       displayedUnitPriceUsd = price;
     }
 
-    return { productId: item.productId, quantity, displayedUnitPriceUsd };
+    // The bonus tiers the cart was showing (catalog overhaul Phase 8) - like
+    // the displayed price, only compared against (BONUS_CHANGED), never what
+    // the free quantity is computed from. Optional: an older app build sends
+    // none and skips the check.
+    let displayedBonuses = null;
+    if (item.displayedBonuses !== undefined && item.displayedBonuses !== null) {
+      const parsed = normalizeBonusTiers(item.displayedBonuses);
+      if (!parsed.ok) throw ApiError.badRequest('Invalid bonus in cart.', undefined, 'INVALID_BONUS');
+      displayedBonuses = parsed.tiers;
+    }
+
+    return { productId: item.productId, quantity, displayedUnitPriceUsd, displayedBonuses };
   });
 }
 
@@ -264,7 +277,9 @@ const listReturnable = asyncHandler(async (req, res) => {
 const reorder = asyncHandler(async (req, res) => {
   const pharmacy = await loadPharmacyOrThrow(req.user._id);
   const preparation = await orderService.prepareReorder(req.params.id, pharmacy._id);
-  res.json({ success: true, ...orderViewModel.toReorderResponse(preparation) });
+  // Priced like the catalog: lira figures at the current rate (Phase 7).
+  const rate = await getRate();
+  res.json({ success: true, ...orderViewModel.toReorderResponse(preparation, rate?.usdToSyp ?? null) });
 });
 
 module.exports = {

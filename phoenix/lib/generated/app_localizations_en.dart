@@ -393,6 +393,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchProductsHint => 'Search by name or manufacturer';
 
   @override
+  String get searchWarehouseProductsHint =>
+      'Search all of this warehouse\'s products';
+
+  @override
   String get addToCartButton => 'Add';
 
   @override
@@ -690,6 +694,28 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorPriceChangedGeneric =>
       'Some prices in your cart have changed.';
+
+  @override
+  String get errorBonusChangedGeneric =>
+      'The bonus changed on some items in your cart.';
+
+  @override
+  String bonusValue(String tiers) {
+    return 'Bonus $tiers';
+  }
+
+  @override
+  String freeUnits(int count) {
+    return '+$count free';
+  }
+
+  @override
+  String get noBonus => 'No bonus';
+
+  @override
+  String bonusChangedLine(String name, String bonus) {
+    return '$name: $bonus';
+  }
 
   @override
   String errorPriceChanged(String name, String newPrice, String oldPrice) {

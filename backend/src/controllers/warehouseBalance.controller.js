@@ -1,7 +1,6 @@
 const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/ApiError');
 const mongoose = require('mongoose');
-const Warehouse = require('../models/warehouse.model');
 const Order = require('../models/order.model');
 const statementService = require('../services/accountStatement.service');
 const statementViewModel = require('../viewmodels/accountStatement.viewmodel');
@@ -10,6 +9,7 @@ const paymentViewModel = require('../viewmodels/payment.viewmodel');
 const orderLedger = require('../services/orderLedger.service');
 const invoiceViewModel = require('../viewmodels/invoice.viewmodel');
 const { parseCursorQuery, paginationMeta } = require('../utils/pagination');
+const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 
 // Money-Flow V2. The warehouse's "Invoices" tab, now read from the ledger.
 //
@@ -18,14 +18,6 @@ const { parseCursorQuery, paginationMeta } = require('../utils/pagination');
 // precisely because something financial happened on it, so the accounts
 // collection IS that list - no aggregation, and no possibility of a pharmacy
 // appearing with a balance that disagrees with its own transactions.
-
-async function loadWarehouseOrThrow(userId) {
-  const warehouse = await Warehouse.findOne({ userId });
-  if (!warehouse) {
-    throw ApiError.notFound('Warehouse profile not found.', 'WAREHOUSE_PROFILE_NOT_FOUND');
-  }
-  return warehouse;
-}
 
 // The cursor is a JSON-encoded { balanceSyp, id } pair: balance alone is a
 // live, tie-prone value, so the id breaks ties without carrying meaning.

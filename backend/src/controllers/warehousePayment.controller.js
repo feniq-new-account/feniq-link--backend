@@ -1,20 +1,12 @@
 const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/ApiError');
-const Warehouse = require('../models/warehouse.model');
 const paymentService = require('../services/payment.service');
 const paymentViewModel = require('../viewmodels/payment.viewmodel');
+const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 
 // Money-Flow V2. Payments are append-only: this controller exposes recording
 // and reversing, and nothing else. The V1 update/delete handlers are gone -
 // see payment.service.js for why.
-
-async function loadWarehouseOrThrow(userId) {
-  const warehouse = await Warehouse.findOne({ userId });
-  if (!warehouse) {
-    throw ApiError.notFound('Warehouse profile not found.', 'WAREHOUSE_PROFILE_NOT_FOUND');
-  }
-  return warehouse;
-}
 
 // A client-generated UUID. A retried request carrying the same key returns the
 // payment the first attempt created rather than crediting the pharmacy twice.

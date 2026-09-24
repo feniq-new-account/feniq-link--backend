@@ -395,6 +395,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchProductsHint => 'ابحث بالاسم أو الشركة المصنعة';
 
   @override
+  String get searchWarehouseProductsHint => 'ابحث في كل أصناف المستودع';
+
+  @override
   String get addToCartButton => 'إضافة';
 
   @override
@@ -691,6 +694,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorPriceChangedGeneric => 'تغيّرت بعض الأسعار في سلتك.';
+
+  @override
+  String get errorBonusChangedGeneric =>
+      'تغيّر البونص على بعض الأصناف في سلتك.';
+
+  @override
+  String bonusValue(String tiers) {
+    return 'بونص $tiers';
+  }
+
+  @override
+  String freeUnits(int count) {
+    return '+$count مجاناً';
+  }
+
+  @override
+  String get noBonus => 'بدون بونص';
+
+  @override
+  String bonusChangedLine(String name, String bonus) {
+    return '$name: $bonus';
+  }
 
   @override
   String errorPriceChanged(String name, String newPrice, String oldPrice) {

@@ -6,7 +6,13 @@ const Pharmacy = require('../models/pharmacy.model');
 const Warehouse = require('../models/warehouse.model');
 const { applyResolvedIdentity } = require('./productCatalog.service');
 const { buildOfferFields } = require('./warehouseOffer.service');
-const { buildOfferListFilter, listPaginatedOffers, OFFER_REVIEW_FILTER } = require('./offer.service');
+const {
+  buildOfferListFilter,
+  listPaginatedOffers,
+  OFFER_REVIEW_FILTER,
+  assertNoRunningOffer,
+} = require('./offer.service');
+const { runInTransaction } = require('../utils/transaction');
 const notificationService = require('./notification.service');
 const { emitToAdmins, emitToWarehouse, EVENTS } = require('../realtime');
 
@@ -16,7 +22,7 @@ const { emitToAdmins, emitToWarehouse, EVENTS } = require('../realtime');
 // price; off the warehouse: nameAr/nameEn. productId/warehouseId are the join
 // keys.
 const OFFER_PRODUCT_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn price masterProductId';
-const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
+const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl';
 const OFFER_WAREHOUSE_SELECT = 'nameAr nameEn';
 
 // The moderation queue: a brand-new offer waiting to go live, OR an approved
@@ -129,6 +135,12 @@ async function findAnyOfferOrThrow(offerId) {
   return offer;
 }
 
+// A stopped offer (its product was recalled or merged away) is a record, not
+// something to edit back to life - a new offer is the way to promote again.
+function offerStoppedError() {
+  return ApiError.conflict('This offer was stopped and can no longer be edited.', 'OFFER_STOPPED');
+}
+
 function applyPendingUpdate(offer) {
   const u = offer.pendingUpdate;
   offer.productId = u.productId;
@@ -182,8 +194,38 @@ async function notifyPharmaciesOfNewOffer(offer) {
   }
 }
 
-async function approveOffer(offerId, userId) {
+// The version check behind approve/reject (catalog overhaul M5). The admin
+// decides on the offer as it was displayed; `expectedVersion` is that
+// display's `version` (the offer's __v). If the warehouse has saved the offer
+// since - a newer parked edit, or an in-place edit of a pending one - the
+// decision is refused with 409 OFFER_CHANGED and the panel reloads. Omitting
+// it keeps the old unchecked behaviour for any caller that predates it; the
+// save itself is still conditional on __v (optimisticConcurrency), which
+// closes the gap between this check and the write.
+function assertExpectedVersion(offer, expectedVersion) {
+  if (expectedVersion === undefined || expectedVersion === null) return;
+  if (Number(expectedVersion) !== (offer.__v ?? 0)) throw offerChangedError();
+}
+
+function offerChangedError() {
+  return ApiError.conflict(
+    'The warehouse changed this offer while you were reviewing it. Reload and review it again.',
+    'OFFER_CHANGED'
+  );
+}
+
+async function saveOfferOrConflict(offer, session = null) {
+  try {
+    await offer.save({ session });
+  } catch (err) {
+    if (err.name === 'VersionError') throw offerChangedError();
+    throw err;
+  }
+}
+
+async function approveOffer(offerId, userId, { expectedVersion } = {}) {
   const offer = await findModerableOfferOrThrow(offerId);
+  assertExpectedVersion(offer, expectedVersion);
   // A parked edit means the offer is already approved and live - approving it
   // applies the edit and keeps the offer live. Otherwise this is a brand-new
   // offer going live for the first time.
@@ -196,7 +238,13 @@ async function approveOffer(offerId, userId) {
   }
   offer.approvedBy = userId;
   offer.approvedAt = new Date();
-  await offer.save();
+  // One offer per product, re-checked at approval (Phase 6.1): the product
+  // this approval puts an offer on must not already have another one running
+  // or waiting. Same transaction as the save.
+  await runInTransaction(async (session) => {
+    await assertNoRunningOffer(offer.productId, { excludeOfferId: offer._id, session });
+    await saveOfferOrConflict(offer, session);
+  });
 
   // Clears this offer from every other admin's open queue. Emitted before the
   // best-effort FCM block below - the queue shouldn't wait on a slow fan-out.
@@ -216,12 +264,13 @@ async function approveOffer(offerId, userId) {
 // rejection has nothing to record, so it just removes the pending row. For a
 // parked edit, rejecting discards the proposed change and the live offer is
 // left exactly as pharmacies already see it.
-async function rejectOffer(offerId) {
+async function rejectOffer(offerId, { expectedVersion } = {}) {
   const offer = await findModerableOfferOrThrow(offerId);
+  assertExpectedVersion(offer, expectedVersion);
 
   if (offer.pendingUpdate != null) {
     offer.pendingUpdate = null;
-    await offer.save();
+    await saveOfferOrConflict(offer);
     emitOfferStatus(offer, 'update_rejected');
     return;
   }
@@ -240,6 +289,7 @@ async function rejectOffer(offerId) {
 // (approve/reject) first, so the admin never silently overwrites it.
 async function adminUpdateOffer(offerId, data) {
   const offer = await findAnyOfferOrThrow(offerId);
+  if (offer.status === 'stopped') throw offerStoppedError();
   if (offer.pendingUpdate != null) {
     throw ApiError.conflict(
       'This offer has a pending edit awaiting review.',
@@ -249,7 +299,7 @@ async function adminUpdateOffer(offerId, data) {
   const { fields } = await buildOfferFields(offer.warehouseId, data);
 
   Object.assign(offer, fields);
-  await offer.save();
+  await saveOfferOrConflict(offer);
 
   emitOfferStatus(offer, offer.status);
 

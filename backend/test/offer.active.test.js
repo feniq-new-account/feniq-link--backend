@@ -55,7 +55,7 @@ function offerDoc(overrides = {}) {
 }
 
 async function listSerialized() {
-  const rows = await offerService.listActiveOffers();
+  const { rows } = await offerService.listActiveOffers();
   return offerViewModel.toActiveOffersResponse(rows).offers;
 }
 

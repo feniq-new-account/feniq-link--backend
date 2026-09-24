@@ -31,7 +31,7 @@ const PENDING_ADVERTISEMENT_FIELDS =
 // be listed and paged exactly like any other status.
 const LISTABLE_STATUSES = ['pending', 'approved', 'rejected'];
 const ADVERTISEMENT_PRODUCT_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn masterProductId';
-const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
+const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl';
 
 // Joins each page's advertisements to the products they advertise and the
 // warehouses that own them - two $in queries for the whole page, never one

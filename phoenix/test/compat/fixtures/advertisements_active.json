@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "advertisements": [
+    {
+      "id": "6a0c00000000000000000013",
+      "titleAr": "باقة الشتاء",
+      "titleEn": "Winter pack",
+      "warehouseId": "6a0c00000000000000000004",
+      "warehouseNameAr": "مستودع التوافق",
+      "warehouseNameEn": "Compat Warehouse",
+      "items": [
+        {
+          "productId": "6a0c00000000000000000010",
+          "nameAr": "أموكسيل 500",
+          "nameEn": "Amoxil 500",
+          "image": null,
+          "unitAr": "شريط",
+          "unitEn": "Strip",
+          "priceUsd": 2.5,
+          "quantity": 2,
+          "isAvailable": true
+        }
+      ],
+      "itemsTotalUsd": 5,
+      "totalPriceUsd": 4.5,
+      "imageUrl": null,
+      "savingPercentage": 10,
+      "endDate": "2026-10-24T18:38:30.390Z"
+    }
+  ],
+  "pagination": {
+    "hasMore": false,
+    "nextCursor": null
+  }
+}

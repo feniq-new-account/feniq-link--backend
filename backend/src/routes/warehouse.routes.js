@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const { authenticate, authorize, requireActiveStatus } = require('../middlewares/auth.middleware');
+const { stringQueryOnly, objectIdParams } = require('../middlewares/validateRequest');
 const controller = require('../controllers/warehouse.controller');
 const productController = require('../controllers/product.controller');
 const productRoutes = require('./product.routes');
@@ -15,6 +16,7 @@ router.get(
   authenticate,
   authorize('pharmacy'),
   requireActiveStatus,
+  objectIdParams('warehouseId'),
   controller.profile
 );
 // Sibling of /:warehouseId/products (not nested under it) - the pharmacist's
@@ -25,6 +27,8 @@ router.get(
   authenticate,
   authorize('pharmacy'),
   requireActiveStatus,
+  stringQueryOnly,
+  objectIdParams('warehouseId'),
   productController.manufacturers
 );
 router.use('/:warehouseId/products', productRoutes);

@@ -1,18 +1,29 @@
-const { computeDiscountedPriceUsd } = require('../services/manufacturerDiscount.service');
+const { effectiveImage } = require('../utils/productImage');
+const { computeFinalPrice } = require('../services/manufacturerDiscount.service');
 
-// TODO(seed-images): `image` is null for all current products - seeded
-// without a real image API per the project owner's instruction (Unsplash key
-// not chosen yet, Section 14). Once a provider is picked, backfill this field
-// via the seed script; no shape change needed here, the client already
-// handles a null image with a placeholder.
-//
 // Section 15: `discountPriceUsd` is the one number the Flutter catalog
-// actually renders - it already has the manufacturer discount (if any)
-// stacked with an active product-level Offer (if any), so the client just
-// compares it against `priceUsd` rather than juggling two separate discount
-// mechanisms. `offer` is kept alongside for whatever still wants the raw
-// Offer details (title, its own percentage).
-function serializeProductWithOffer({ product, offer, manufacturerDiscountPercentage }) {
+// renders - it already has the manufacturer discount (if any) stacked with an
+// active product-level Offer (if any), so the client just compares it against
+// `priceUsd` rather than juggling two separate discount mechanisms. `offer` is
+// kept alongside for whatever still wants the raw Offer details (title, its
+// own percentage).
+//
+// Catalog overhaul Phase 7 - all additive, older app builds ignore them:
+//  - `finalPriceSyp` is the lira price the order will charge for one unit,
+//    computed by the order's own function (computeFinalPrice) at `priceRate`,
+//    the USD/SYP rate this response was priced at. Flutter shows this figure
+//    rather than converting discountPriceUsd itself, and sends `priceRate` back
+//    as the order's rateUsed. Null when no rate is configured.
+//  - `offerDiscountPercentage` / `manufacturerDiscountPercentage`: the two
+//    inputs, so the app can re-price the same way should the rate move.
+//  - `unit` (config/units.js code) and `bonuses` ([{ buy, free }]).
+function serializeProductWithOffer({ product, offer, manufacturerDiscountPercentage }, usdToSyp = null) {
+  const price = computeFinalPrice({
+    priceUsd: product.price,
+    offerDiscountPercentage: offer ? offer.discountPercentage : null,
+    manufacturerDiscountPercentage,
+    usdToSyp,
+  });
   const base = {
     id: product._id,
     categoryId: product.categoryId,
@@ -20,17 +31,19 @@ function serializeProductWithOffer({ product, offer, manufacturerDiscountPercent
     nameEn: product.nameEn,
     manufacturerAr: product.manufacturerAr,
     manufacturerEn: product.manufacturerEn,
-    image: product.image,
+    image: effectiveImage(product),
     unitAr: product.unitAr,
     unitEn: product.unitEn,
     priceUsd: product.price,
-    discountPriceUsd: computeDiscountedPriceUsd(
-      product.price,
-      offer ? offer.discountPercentage : null,
-      manufacturerDiscountPercentage
-    ),
+    discountPriceUsd: price.finalUsd,
     isAvailable: product.isAvailable,
     offer: null,
+    finalPriceSyp: price.finalSyp,
+    priceRate: usdToSyp > 0 ? usdToSyp : null,
+    offerDiscountPercentage: offer ? offer.discountPercentage : null,
+    manufacturerDiscountPercentage: manufacturerDiscountPercentage ?? null,
+    unit: product.unit ?? null,
+    bonuses: (product.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free })),
   };
 
   if (offer) {
@@ -45,8 +58,8 @@ function serializeProductWithOffer({ product, offer, manufacturerDiscountPercent
   return base;
 }
 
-function toProductListResponse(items) {
-  return { products: items.map(serializeProductWithOffer) };
+function toProductListResponse(items, usdToSyp = null) {
+  return { products: items.map((item) => serializeProductWithOffer(item, usdToSyp)), priceRate: usdToSyp > 0 ? usdToSyp : null };
 }
 
 // serializeProductWithOffer is exported so the reorder endpoint

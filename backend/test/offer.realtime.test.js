@@ -73,8 +73,13 @@ function buildOffer(overrides = {}) {
   };
 }
 
+// Offer.create is called as create([doc], { session }) inside a transaction
+// now (the one-offer-per-product check); the single-document form is kept too.
+const createdOffer = (doc) =>
+  Array.isArray(doc) ? doc.map((d) => buildOffer({ ...d, status: 'pending' })) : buildOffer({ ...doc, status: 'pending' });
+
 const offerModelStub = {
-  create: async (doc) => buildOffer({ ...doc, status: 'pending' }),
+  create: async (doc) => createdOffer(doc),
   findOne: async () => buildOffer(),
   findById: async () => buildOffer(),
 };
@@ -82,6 +87,16 @@ stubModule('models/offer.model.js', offerModelStub);
 stubModule('models/product.model.js', { find: async () => [], findOne: async () => null, findById: async () => null });
 stubModule('models/pharmacy.model.js', { find: async () => [], findOne: async () => null });
 stubModule('models/warehouse.model.js', { find: async () => [], findById: async () => null });
+
+// No database here: a transaction just runs its work, and the one-offer-per-
+// product check (covered with a real database in offer.onePerProduct.test.js)
+// is a no-op - patched before the services destructure it.
+stubModule('utils/transaction.js', {
+  runInTransaction: async (work) => work(null),
+  supportsTransactions: async () => true,
+  assertTransactionSupport: async () => {},
+});
+require('../src/services/offer.service').assertNoRunningOffer = async () => {};
 
 const warehouseOfferService = require('../src/services/warehouseOffer.service');
 const adminOfferService = require('../src/services/adminOffer.service');
@@ -98,7 +113,7 @@ test.beforeEach(() => {
   offerSaveBehavior = async () => {};
   offerModelStub.findOne = async () => buildOffer();
   offerModelStub.findById = async () => buildOffer();
-  offerModelStub.create = async (doc) => buildOffer({ ...doc, status: 'pending' });
+  offerModelStub.create = async (doc) => createdOffer(doc);
 });
 
 test('createOffer emits exactly one offer.pending, to admins', async () => {

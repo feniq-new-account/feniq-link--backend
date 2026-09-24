@@ -141,7 +141,7 @@ test.afterEach(async () => {
 test('an active advertisement is returned with catalog prices and a saving %', async () => {
   const advertisement = await makeAdvertisement();
   const { advertisements } = advertisementViewModel.toActiveAdvertisementsResponse(
-    await advertisementService.listActiveAdvertisements()
+    (await advertisementService.listActiveAdvertisements()).rows
   );
 
   assert.strictEqual(advertisements.length, 1);
@@ -162,7 +162,7 @@ test('pending, rejected, expired and not-yet-started advertisements are all excl
   await makeAdvertisement({ startDate: past(30), endDate: past(1) });
   await makeAdvertisement({ startDate: future(1), endDate: future(30) });
 
-  assert.deepStrictEqual(await advertisementService.listActiveAdvertisements(), []);
+  assert.deepStrictEqual((await advertisementService.listActiveAdvertisements()).rows, []);
 });
 
 test('each excluded advertisement is also unorderable, with one generic code', async () => {
@@ -275,7 +275,7 @@ test('the cart payload and the active list carry each line quantity + weighted t
   const advertisement = await makeQtyAdvertisement();
 
   const { advertisements } = advertisementViewModel.toActiveAdvertisementsResponse(
-    await advertisementService.listActiveAdvertisements()
+    (await advertisementService.listActiveAdvertisements()).rows
   );
   const listed = advertisements.find((a) => String(a.id) === String(advertisement._id));
   assert.strictEqual(listed.itemsTotalUsd, 200);

@@ -67,6 +67,19 @@ class CartState {
 
   num get subtotalUsd => items.fold<num>(0, (sum, item) => sum + item.lineTotalUsd);
 
+  /// The subtotal in lira at [usdToSyp] - the sum of each line's own lira
+  /// total, exactly as the order adds them up (catalog overhaul Phase 7).
+  /// Null while no rate is known.
+  int? subtotalSypAt(double? usdToSyp) {
+    var total = 0;
+    for (final item in items) {
+      final line = item.lineTotalSypAt(usdToSyp);
+      if (line == null) return null;
+      total += line;
+    }
+    return total;
+  }
+
   /// The packages in the cart, as their own lines. Used by the repository to
   /// split the checkout payload, and by the summary to name them.
   List<CartItem> get packageLines => items.where((item) => item.isPackage).toList();
@@ -77,6 +90,10 @@ class CartState {
   /// confirmed yet (CartItem.previousPriceUsd). CartCubit.submitOrder will not
   /// send the cart until it is confirmed.
   bool get hasUnconfirmedPriceChanges => items.any((item) => item.hasUnconfirmedPriceChange);
+
+  /// Lines whose bonus changed at checkout and wait for the pharmacist to see
+  /// the new terms (BONUS_CHANGED, catalog overhaul Phase 8).
+  bool get hasUnconfirmedBonusChanges => items.any((item) => item.hasUnconfirmedBonusChange);
 
   /// Those changes in the shape of the server's PRICE_CHANGED
   /// `details.problems`, so CartView describes them with the very
