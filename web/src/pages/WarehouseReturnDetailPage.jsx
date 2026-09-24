@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
-import { withArFallback } from '../utils/displayName';
+import { localizedName } from '../utils/displayName';
 import { formatSyp } from '../utils/currency';
 
 const REASON_KEYS = {
@@ -156,7 +156,7 @@ export function WarehouseReturnDetailPage() {
               <div>
                 <div className="wh-pharmacy-label">{t('orderDetail.pharmacy')}</div>
                 <div className="wh-pharmacy-name">
-                  {withArFallback(returnRequest.pharmacyNameEn, returnRequest.pharmacyNameAr)}
+                  {localizedName(returnRequest.pharmacyNameEn, returnRequest.pharmacyNameAr)}
                 </div>
                 <div className="wh-pharmacy-meta">{returnRequest.pharmacyPhone}</div>
               </div>
@@ -192,7 +192,7 @@ export function WarehouseReturnDetailPage() {
                   <tbody>
                     {returnRequest.items.map((item) => (
                       <tr key={item.orderItemId}>
-                        <td>{withArFallback(item.productNameEn, item.productNameAr)}</td>
+                        <td>{localizedName(item.productNameEn, item.productNameAr)}</td>
                         <td className="wh-num">{item.quantity}</td>
                         <td>
                           <span className="wh-reason-badge">{reasonText(item)}</span>

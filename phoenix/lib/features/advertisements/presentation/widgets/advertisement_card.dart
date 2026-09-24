@@ -10,6 +10,7 @@ import 'package:feniq/core/widgets/app_network_image.dart';
 import 'package:feniq/features/advertisements/data/models/advertisement_model.dart';
 import 'package:feniq/features/advertisements/presentation/utils/advertisement_cart_launcher.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // One advertised package: its products, each at its advertised price, and the
 // package total the pharmacy actually pays. Tapping it fetches the package
@@ -130,7 +131,7 @@ class _AdvertisementCardState extends State<AdvertisementCard> {
                     children: [
                       Expanded(
                         child: Text(
-                          isArabic ? item.nameAr : (item.nameEn ?? item.nameAr),
+                          pickName(item.nameAr, item.nameEn, arabic: isArabic),
                           style: context.textTheme.bodyMedium,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

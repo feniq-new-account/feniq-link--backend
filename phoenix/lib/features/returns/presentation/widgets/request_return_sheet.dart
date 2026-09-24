@@ -23,6 +23,7 @@ import 'package:feniq/features/returns/data/repositories/return_repository.dart'
 import 'package:feniq/features/returns/presentation/managers/request_return_cubit.dart';
 import 'package:feniq/features/returns/presentation/managers/request_return_state.dart';
 import 'package:feniq/features/returns/presentation/utils/return_labels.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // Section 6.9: one return per order, covering every problem item in it at
 // once - so this sheet is item-picking, not single-item. Reused for both
@@ -243,7 +244,7 @@ class _RequestReturnSheetBodyState extends State<_RequestReturnSheetBody> {
                 const SizedBox(height: AppSizes.spacingSmall),
                 ...state.orderItems.map((item) {
                   final selected = state.selectedItemIds.contains(item.id);
-                  final name = isArabic ? item.productNameAr : (item.productNameEn ?? item.productNameAr);
+                  final name = pickName(item.productNameAr, item.productNameEn, arabic: isArabic);
                   return _ReturnItemTile(
                     item: item,
                     name: name,

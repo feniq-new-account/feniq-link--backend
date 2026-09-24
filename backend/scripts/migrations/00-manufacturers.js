@@ -100,6 +100,7 @@ async function run({ apply = false, log = () => {} } = {}) {
         nameAr: canonical,
         nameEn,
         key,
+        enKey: (nameEn && normalizeText(nameEn)) || null,
         logoUrl: null,
         isActive: true,
         createdAt: now,

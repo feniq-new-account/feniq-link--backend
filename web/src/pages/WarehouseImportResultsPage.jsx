@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
+import { localizedName } from '../utils/displayName';
 
 const PAGE_SIZE = 50;
 
@@ -23,6 +24,14 @@ const TABS = [
   { bucket: 'error', countKey: 'errors', hideWhenEmpty: true },
   { bucket: 'resolved', countKey: 'resolved', hideWhenEmpty: true },
 ];
+
+// What the file called the row: its name column and, when the file had a
+// separate English column too, that one after it.
+function rawRowName(row) {
+  const { name, nameEn } = row.raw;
+  if (name && nameEn) return `${name} / ${nameEn}`;
+  return name || nameEn || '-';
+}
 
 function formatBonusTiers(tiers) {
   return (tiers ?? []).map((tier) => `${tier.buy}+${tier.free}`).join('، ');
@@ -130,7 +139,7 @@ export function WarehouseImportResultsPage() {
               {rows.map((row) => (
                 <tr key={row.id}>
                   <td>{row.rowNumber}</td>
-                  <td>{row.raw.name}</td>
+                  <td>{rawRowName(row)}</td>
                   <td>{row.raw.manufacturer}</td>
                   <td>
                     {row.raw.price} {row.raw.currency}
@@ -223,7 +232,7 @@ function ReviewRow({ batchId, row, units, onResolved }) {
         <strong>
           {t('importResults.row')} {row.rowNumber}:
         </strong>{' '}
-        {row.raw.name} — {row.raw.manufacturer} — {row.raw.price} {row.raw.currency}
+        {rawRowName(row)} — {row.raw.manufacturer} — {row.raw.price} {row.raw.currency}
         {row.raw.unit && ` — ${row.raw.unit}`}
         {row.raw.bonus && ` — ${t('importResults.bonus')} ${row.raw.bonus}`}
       </p>
@@ -297,7 +306,8 @@ function ReviewRow({ batchId, row, units, onResolved }) {
                     <button className="btn-secondary" disabled={busy} onClick={() => resolveWith(s.masterProductId)}>
                       {t('importResults.pick')}
                     </button>{' '}
-                    {s.nameAr} — {s.manufacturerAr} <span className="hint">({Math.round(s.score * 100)}%)</span>
+                    {localizedName(s.nameEn, s.nameAr)} — {localizedName(s.manufacturerEn, s.manufacturerAr)}{' '}
+                    <span className="hint">({Math.round(s.score * 100)}%)</span>
                   </li>
                 ))}
               </ul>
@@ -428,7 +438,7 @@ function MyCatalogRequests() {
               {requests.map((request) => (
                 <tr key={request.id}>
                   <td>{new Date(request.createdAt).toLocaleString()}</td>
-                  <td>{request.nameAr}</td>
+                  <td>{localizedName(request.nameEn, request.nameAr)}</td>
                   <td>{request.manufacturerAr}</td>
                   <td>{t(`catalogRequests.status.${request.status}`)}</td>
                   <td>{request.rejectReason ?? '-'}</td>

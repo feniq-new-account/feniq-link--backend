@@ -6,7 +6,7 @@ import { StarRating } from '../components/StarRating';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
-import { withArFallback } from '../utils/displayName';
+import { localizedName } from '../utils/displayName';
 import { formatSyp } from '../utils/currency';
 
 const PAGE_SIZE = 20;
@@ -235,7 +235,7 @@ export function WarehouseOrdersPage() {
                       </span>
                     </td>
                     <td>
-                      {withArFallback(order.pharmacy?.nameEn, order.pharmacy?.nameAr)}
+                      {localizedName(order.pharmacy?.nameEn, order.pharmacy?.nameAr)}
                       <div className="wh-table-sub">{order.pharmacy?.city}</div>
                     </td>
                     <td className="wh-num">{order.items.length}</td>

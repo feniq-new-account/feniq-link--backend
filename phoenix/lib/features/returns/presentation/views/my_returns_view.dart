@@ -19,6 +19,7 @@ import 'package:feniq/features/returns/presentation/managers/my_returns_cubit.da
 import 'package:feniq/features/returns/presentation/managers/my_returns_state.dart';
 import 'package:feniq/features/returns/presentation/widgets/request_return_sheet.dart';
 import 'package:feniq/features/returns/presentation/widgets/return_list_tile.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // Extra room under the scrolling content so the floating "Request Return"
 // button never sits on top of the last card or a page-level empty/error
@@ -596,7 +597,7 @@ class _ReturnableOrderCard extends StatelessWidget {
     final shownItems = order.items.take(3).toList();
     final hiddenCount = order.items.length - shownItems.length;
     final itemsText = shownItems
-        .map((item) => isArabic ? item.productNameAr : (item.productNameEn ?? item.productNameAr))
+        .map((item) => pickName(item.productNameAr, item.productNameEn, arabic: isArabic))
         .join(isArabic ? '، ' : ', ');
 
     return Container(

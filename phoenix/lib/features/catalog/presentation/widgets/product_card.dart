@@ -14,6 +14,7 @@ import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/catalog/presentation/widgets/quantity_picker_sheet.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // Two layouts sharing the same data/logic: a grid tile (image on top,
 // details below - the default) and a compact list row, toggled from
@@ -94,8 +95,8 @@ class _GridCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final name = isArabic ? product.nameAr : (product.nameEn ?? product.nameAr);
-    final manufacturer = isArabic ? product.manufacturerAr : (product.manufacturerEn ?? product.manufacturerAr);
+    final name = pickName(product.nameAr, product.nameEn, arabic: isArabic);
+    final manufacturer = pickName(product.manufacturerAr, product.manufacturerEn, arabic: isArabic);
 
     return CustomCard(
       padding: EdgeInsets.zero,
@@ -185,8 +186,8 @@ class _ListRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final name = isArabic ? product.nameAr : (product.nameEn ?? product.nameAr);
-    final manufacturer = isArabic ? product.manufacturerAr : (product.manufacturerEn ?? product.manufacturerAr);
+    final name = pickName(product.nameAr, product.nameEn, arabic: isArabic);
+    final manufacturer = pickName(product.manufacturerAr, product.manufacturerEn, arabic: isArabic);
 
     return CustomCard(
       child: Row(

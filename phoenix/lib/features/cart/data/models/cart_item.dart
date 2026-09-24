@@ -1,6 +1,7 @@
 import 'package:feniq/core/utils/pricing.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 /// One product inside a package, for the package line's expandable detail.
 ///
@@ -23,7 +24,7 @@ class CartPackageContent {
   /// coming.
   final int quantityPerCopy;
 
-  String name(bool isArabic) => isArabic ? nameAr : (nameEn ?? nameAr);
+  String name(bool isArabic) => pickName(nameAr, nameEn, arabic: isArabic);
 }
 
 /// A line in the cart. It is either an ordinary product or a whole package,

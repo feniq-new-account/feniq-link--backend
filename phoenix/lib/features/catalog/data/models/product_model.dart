@@ -103,14 +103,15 @@ class ProductModel {
   }
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    final nameAr = json['nameAr'] as String?;
-    final nameEn = json['nameEn'] as String?;
+    // A medicine may be named in one language only: a missing name is kept as
+    // empty, never filled from the other language here - the widgets show the
+    // name in the UI language, else the other one (core/utils/display_name.dart).
     return ProductModel(
       id: json['id'] as String,
       categoryId: json['categoryId'] as String?,
-      nameAr: (nameAr != null && nameAr.isNotEmpty) ? nameAr : (nameEn ?? ''),
-      nameEn: nameEn,
-      manufacturerAr: (json['manufacturerAr'] as String?) ?? (json['manufacturerEn'] as String?) ?? '',
+      nameAr: (json['nameAr'] as String?) ?? '',
+      nameEn: json['nameEn'] as String?,
+      manufacturerAr: (json['manufacturerAr'] as String?) ?? '',
       manufacturerEn: json['manufacturerEn'] as String?,
       image: json['image'] as String?,
       unitAr: json['unitAr'] as String?,

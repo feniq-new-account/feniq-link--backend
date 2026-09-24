@@ -357,3 +357,133 @@ test('the live suggestion search finds a misspelled medicine', async () => {
   assert.strictEqual(String(suggestions[0].masterProductId), String(ids.amox._id));
   assert.ok(suggestions[0].score > 0.5);
 });
+
+// --- English names (pre-merge review) --------------------------------------
+// Warehouses often write their price lists in English. A row's name matches a
+// catalog item on either of its names, and its manufacturer resolves by the
+// company's Arabic or English name; a file may carry both name columns.
+
+async function englishCatalog() {
+  if (ids.panadol500) return;
+  const gsk = await Manufacturer.findOne({ key: 'جي اس كي' });
+  gsk.nameEn = 'GSK';
+  await gsk.save();
+  ids.panadol500 = await ProductCatalog.create({ nameAr: 'بنادول 500', nameEn: 'Panadol 500', manufacturerAr: 'جي اس كي' });
+  ids.augmentin = await ProductCatalog.create({ nameAr: 'اوجمنتين 1 غ', nameEn: 'Augmentin 1g', manufacturerAr: 'جي اس كي' });
+}
+
+test('English only: "Panadol 500" by "GSK" matches the Arabic catalog item', async () => {
+  await englishCatalog();
+  assert.strictEqual((await Manufacturer.findOne({ key: 'جي اس كي' }).lean()).enKey, 'gsk');
+  const { userId, warehouseId } = await makeWarehouse();
+  const report = await importProductsFromExcel(warehouseId, userId, await xlsx([
+    ['Item Name', 'Company', 'Price', 'Currency'],
+    ['Panadol 500', 'GSK', 2, 'USD'],
+  ]));
+  assert.strictEqual(report.counts.added, 1, JSON.stringify(report.counts));
+  const product = await Product.findOne({ warehouseId, masterProductId: ids.panadol500._id }).lean();
+  assert.strictEqual(product.price, 2);
+
+  // Spelling, spacing and case variants of the same English text are the same item.
+  const again = await importProductsFromExcel(warehouseId, userId, await xlsx([
+    ['Item Name', 'Company', 'Price', 'Currency'],
+    ['PANADOL  500', 'gsk', 3, 'USD'],
+  ]));
+  assert.strictEqual(again.counts.updated, 1, JSON.stringify(again.counts));
+});
+
+test('mixed: an Arabic name with an English manufacturer, and the other way round', async () => {
+  await englishCatalog();
+  const { userId, warehouseId } = await makeWarehouse();
+  const report = await importProductsFromExcel(warehouseId, userId, await xlsx([
+    ['اسم المادة', 'الشركة', 'السعر', 'العملة'],
+    ['بنادول 500', 'GSK', 2, 'USD'],
+    ['Augmentin 1g', 'جي إس كي', 5, 'USD'],
+  ]));
+  assert.strictEqual(report.counts.added, 2, JSON.stringify(report.counts));
+  assert.ok(await Product.exists({ warehouseId, masterProductId: ids.panadol500._id }));
+  assert.ok(await Product.exists({ warehouseId, masterProductId: ids.augmentin._id }));
+});
+
+test('both name columns: the Arabic one first, then the English one', async () => {
+  await englishCatalog();
+  const { userId, warehouseId } = await makeWarehouse();
+  const report = await importProductsFromExcel(warehouseId, userId, await xlsx([
+    ['الاسم العربي', 'الاسم الانكليزي', 'الشركة', 'السعر', 'العملة'],
+    // The Arabic name matches nothing exactly - the English one matches.
+    ['بنادول خمسمية', 'Panadol 500', 'GSK', 2, 'USD'],
+    // The Arabic name matches; the wrong English one is never consulted.
+    ['اوجمنتين 1 غ', 'Something Else', 'جي اس كي', 5, 'USD'],
+    // Only the English cell filled.
+    ['', 'Panadol Extra', 'GSK', 1, 'USD'],
+  ]));
+  assert.strictEqual(report.counts.added, 3, JSON.stringify(report.counts));
+  for (const item of [ids.panadol500, ids.augmentin, ids.panadol]) {
+    assert.ok(await Product.exists({ warehouseId, masterProductId: item._id }), item.nameAr);
+  }
+  const rows = await ImportBatchRow.find({ batchId: report.batchId }).sort({ rowNumber: 1 }).lean();
+  assert.strictEqual(rows[0].raw.name, 'بنادول خمسمية');
+  assert.strictEqual(rows[0].raw.nameEn, 'Panadol 500');
+});
+
+test('an English name column alone is the name column', async () => {
+  await englishCatalog();
+  const { userId, warehouseId } = await makeWarehouse();
+  const report = await importProductsFromExcel(warehouseId, userId, await xlsx([
+    ['English Name', 'Manufacturer', 'Price', 'Currency'],
+    ['Augmentin 1g', 'GSK', 5, 'USD'],
+  ]));
+  assert.strictEqual(report.counts.added, 1, JSON.stringify(report.counts));
+});
+
+test('an English typo gets the right item in the top-5 suggestions, with both names shown', async () => {
+  await englishCatalog();
+  const suggestions = await importService.suggestCatalogItems({ name: 'Panadoll 500', manufacturer: 'GSK' });
+  const top = suggestions.slice(0, 5).map((s) => String(s.masterProductId));
+  assert.ok(top.includes(String(ids.panadol500._id)), JSON.stringify(suggestions));
+  const hit = suggestions.find((s) => String(s.masterProductId) === String(ids.panadol500._id));
+  assert.strictEqual(hit.nameEn, 'Panadol 500');
+  assert.strictEqual(hit.nameAr, 'بنادول 500');
+
+  // A misspelled English manufacturer still earns the manufacturer bonus.
+  const loose = await importService.suggestCatalogItems({ name: 'Augmentn 1g', manufacturer: 'GSKK' });
+  assert.strictEqual(String(loose[0].masterProductId), String(ids.augmentin._id), JSON.stringify(loose));
+});
+
+test('a resolved row is remembered under every name it carried; either text matches next time', async () => {
+  await englishCatalog();
+  const { userId, warehouseId } = await makeWarehouse();
+  const report = await importProductsFromExcel(warehouseId, userId, await xlsx([
+    ['الاسم العربي', 'الاسم الانكليزي', 'الشركة', 'السعر', 'العملة'],
+    ['بندول خمسمئة', 'Pandol Five Hundred', 'GSK', 2, 'USD'],
+  ]));
+  const [row] = await rowsOf(report.batchId, 'review');
+  await importService.resolveImportRow(warehouseId, userId, report.batchId, row._id, {
+    masterProductId: String(ids.panadol500._id),
+  });
+  assert.strictEqual(await WarehouseProductAlias.countDocuments({ warehouseId }), 2);
+
+  for (const rows of [
+    [['Item Name', 'Company', 'Price', 'Currency'], ['Pandol Five Hundred', 'GSK', 3, 'USD']],
+    [['اسم المادة', 'الشركة', 'السعر', 'العملة'], ['بندول خمسمئة', 'GSK', 4, 'USD']],
+  ]) {
+    const again = await importProductsFromExcel(warehouseId, userId, await xlsx(rows));
+    assert.strictEqual(again.counts.updated, 1, JSON.stringify(again.counts));
+  }
+});
+
+test('an English manufacturer name shared by two companies resolves to neither', async () => {
+  await englishCatalog();
+  await Manufacturer.create([
+    { nameAr: 'فايزر الأولى', nameEn: 'Pfizer' },
+    { nameAr: 'فايزر الثانية', nameEn: 'pfizer' },
+  ]);
+  await ProductCatalog.create({ nameAr: 'دواء فايزر', nameEn: 'Pfizer Drug', manufacturerAr: 'فايزر الأولى' });
+  const { userId, warehouseId } = await makeWarehouse();
+  const report = await importProductsFromExcel(warehouseId, userId, await xlsx([
+    ['Item Name', 'Company', 'Price', 'Currency'],
+    ['Pfizer Drug', 'Pfizer', 2, 'USD'],
+  ]));
+  const [row] = await rowsOf(report.batchId, 'review');
+  assert.deepStrictEqual(row.reasons, ['unknown_manufacturer']);
+});

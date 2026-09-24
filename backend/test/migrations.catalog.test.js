@@ -130,6 +130,8 @@ test('00: one Manufacturer per normalized name, canonical spelling on the catalo
   const east = manufacturers.find((m) => m.key === 'شركه الشرق');
   assert.strictEqual(east.nameAr, 'شركة الشرق'); // most frequent spelling
   assert.strictEqual(east.nameEn, 'East Co');
+  // The English key the warehouse import resolves 'East Co' by.
+  assert.strictEqual(east.enKey, 'east co');
 
   const b = await db.collection('productcatalogs').findOne({ _id: ids.B._id });
   assert.strictEqual(b.manufacturerAr, 'شركة الشرق');
@@ -162,6 +164,11 @@ test('02: normalized keys on catalog items and products', async () => {
   assert.strictEqual(p.nameKey, 'اموكسيسيلين');
   const legacy = await db.collection('products').findOne({ _id: ids.pLegacy._id });
   assert.strictEqual(legacy.manufacturerKey, 'شركه الشرق');
+  // A manufacturer written before enKey existed gets it.
+  await db.collection('manufacturers').updateMany({}, { $unset: { enKey: '' } });
+  const again = await migrations[2].run({ apply: true });
+  assert.ok(again.manufacturersUpdated >= 1);
+  assert.strictEqual((await db.collection('manufacturers').findOne({ nameEn: 'East Co' })).enKey, 'east co');
 });
 
 test('03: inactive products get their reason', async () => {

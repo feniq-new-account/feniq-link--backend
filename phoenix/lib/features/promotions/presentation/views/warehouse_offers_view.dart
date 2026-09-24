@@ -21,6 +21,7 @@ import 'package:feniq/features/promotions/data/models/promotion.dart';
 import 'package:feniq/features/promotions/presentation/managers/promotions_state.dart';
 import 'package:feniq/features/promotions/presentation/managers/warehouse_offers_cubit.dart';
 import 'package:feniq/features/promotions/presentation/widgets/promotion_hero_card.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 /// What a tapped Offer card on the Offers & Ads tab opens: the offers running
 /// at that offer's own warehouse, and no other warehouse's.
@@ -80,7 +81,7 @@ class WarehouseOffersView extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final offer = promotion.offer;
     final product = offer.toCartProduct();
-    final name = isArabic ? product.nameAr : (product.nameEn ?? product.nameAr);
+    final name = pickName(product.nameAr, product.nameEn, arabic: isArabic);
     final cartCubit = context.read<CartCubit>();
     final warehouseId = offer.warehouseId;
     // The offer's own warehouse name, localized - `warehouseName` above is the

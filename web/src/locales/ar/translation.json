@@ -724,7 +724,11 @@
       "uploadImage": "رفع صورة",
       "replaceImage": "تبديل الصورة",
       "clearImage": "حذف الصورة",
-      "linkExisting": "أو ربطها بشركة موجودة"
+      "linkExisting": "أو ربطها بشركة موجودة",
+      "nameEnLabel": "الاسم الإنجليزي",
+      "oneNameRequired": "أدخل اسماً عربياً أو إنجليزياً.",
+      "unknownCategoriesTitle": "فئة غير معروفة",
+      "unknownCategoriesHint": "استُوردت هذه الأسطر بلا فئة لأن الفئة المكتوبة في الملف لا تطابق أي فئة. الاستيراد لا ينشئ فئات؛ حدّد الفئة للدواء، أو أضف الفئة ثم أعد الاستيراد."
     },
     "exchangeRate": {
       "title": "سعر الصرف",
@@ -871,8 +875,10 @@
     "duplicated": "كل حقل يُختار لعمود واحد فقط.",
     "field": {
       "name": "اسم الدواء",
+      "nameEn": "الاسم الإنجليزي",
       "price": "السعر",
       "manufacturer": "الشركة",
+      "category": "الفئة",
       "unit": "الوحدة",
       "currency": "العملة",
       "bonus": "البونص"

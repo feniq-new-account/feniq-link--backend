@@ -5,6 +5,7 @@ import { LoadMoreControl } from '../components/LoadMoreControl';
 import { CatalogItemPicker, ManufacturerPicker } from '../components/CatalogPickers';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { formatBonusTiers } from '../components/ProductFormModal';
+import { localizedName } from '../utils/displayName';
 
 const PAGE_SIZE = 30;
 const STATUSES = ['pending', 'approved', 'merged', 'rejected', 'all'];
@@ -125,7 +126,7 @@ function RequestCard({ request, categories, isOpen, onToggle, onDone }) {
   return (
     <div className="exchange-rate-card">
       <p>
-        <strong>{request.nameAr}</strong> — {request.manufacturerAr} — ${request.priceUsd}
+        <strong>{localizedName(request.nameEn, request.nameAr)}</strong> — {request.manufacturerAr} — ${request.priceUsd}
         {request.unit && ` — ${request.unit}`}
         {request.bonuses.length > 0 && ` — ${t('importResults.bonus')} ${formatBonusTiers(request.bonuses)}`}
       </p>
@@ -200,13 +201,14 @@ function RequestCard({ request, categories, isOpen, onToggle, onDone }) {
             <>
               {mergeTarget ? (
                 <p>
-                  {t('catalogRequests.mergeInto')}: <strong>{mergeTarget.nameAr}</strong> — {mergeTarget.manufacturerAr}{' '}
+                  {t('catalogRequests.mergeInto')}: <strong>{localizedName(mergeTarget.nameEn, mergeTarget.nameAr)}</strong> —{' '}
+                  {localizedName(mergeTarget.manufacturerEn, mergeTarget.manufacturerAr)}{' '}
                   <button type="button" className="btn-secondary" onClick={() => setMergeTarget(null)}>
                     {t('productForm.change')}
                   </button>
                 </p>
               ) : (
-                <CatalogItemPicker onSelect={setMergeTarget} initialQuery={request.nameAr} />
+                <CatalogItemPicker onSelect={setMergeTarget} initialQuery={request.nameAr || request.nameEn || ''} />
               )}
               <button className="btn-primary" disabled={busy || !mergeTarget} onClick={() => run(() => api.mergeCatalogRequest(request.id, mergeTarget.id))}>
                 {t('catalogRequests.action.merge')}

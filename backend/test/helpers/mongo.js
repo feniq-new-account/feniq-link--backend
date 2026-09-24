@@ -12,6 +12,7 @@
 //
 // The first run downloads a MongoDB binary into node_modules/.cache - one
 // time, and cached across test files and runs.
+const fs = require('node:fs/promises');
 const mongoose = require('mongoose');
 
 // mongodb-memory-server defaults to a 10s launch timeout, which is not enough
@@ -47,8 +48,26 @@ async function stopMemoryMongo() {
     await mongoose.disconnect();
   }
   if (replSet) {
-    await replSet.stop();
+    // The temp directories are removed here rather than by the library's own
+    // cleanup: on Windows a just-exited mongod can still hold mongod.lock for
+    // a moment, and the library's single fs.rm attempt then rejects with
+    // EBUSY - out of this after() hook, failing a test file whose tests all
+    // passed. fs.rm retries EBUSY/EPERM/ENOTEMPTY itself when asked to.
+    const dirs = [...replSet.servers.map((server) => server.instanceInfo?.tmpDir), replSet._keyfiletmp].filter(Boolean);
+    await replSet.stop({ doCleanup: false });
     replSet = null;
+    await Promise.all(dirs.map(removeTempDir));
+  }
+}
+
+// A leftover temp directory is harmless (the OS temp folder), so a removal
+// that still fails after the retries is a warning, never a failed test file.
+async function removeTempDir(dir) {
+  try {
+    await fs.rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn(`[test] could not remove ${dir}: ${err.code || err.message}`);
   }
 }
 

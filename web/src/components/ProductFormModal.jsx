@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
-import { withArFallback } from '../utils/displayName';
+import { localizedName } from '../utils/displayName';
 import { sypFromUsd, formatUsd } from '../utils/currency';
 import { submitWithRateCheck, withRateUsed } from '../utils/exchangeRate';
 import { useExchangeRateActions } from '../context/ExchangeRateContext';
@@ -167,8 +167,8 @@ function CatalogSearchField({ onSelect }) {
           {results.map((item) => (
             <li key={item.id}>
               <button type="button" onClick={() => onSelect(item)}>
-                <strong>{item.nameAr}</strong>
-                <span className="hint"> — {item.manufacturerAr}</span>
+                <strong>{localizedName(item.nameEn, item.nameAr)}</strong>
+                <span className="hint"> — {localizedName(item.manufacturerEn, item.manufacturerAr)}</span>
               </button>
             </li>
           ))}
@@ -428,9 +428,9 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
           ) : (
             <div className="catalog-selected-display">
               <p>
-                <strong>{withArFallback(form.nameEn, form.nameAr)}</strong>
+                <strong>{localizedName(form.nameEn, form.nameAr)}</strong>
               </p>
-              <p className="hint">{withArFallback(form.manufacturerEn, form.manufacturerAr)}</p>
+              <p className="hint">{localizedName(form.manufacturerEn, form.manufacturerAr)}</p>
               {mode === 'create' && (
                 <button type="button" className="btn-secondary" onClick={handleChangeSelection}>
                   {t('productForm.change')}

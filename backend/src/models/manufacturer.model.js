@@ -19,6 +19,10 @@ const manufacturerSchema = new Schema(
     nameAr: { type: String, required: true, trim: true },
     nameEn: { type: String, default: null, trim: true },
     key: { type: String, required: true },
+    // normalizeText(nameEn): the English name as an import or a search writes
+    // it ("GSK", "Glaxo Smith Kline"). Not unique - two companies may share an
+    // English name, and then an English name alone resolves to neither.
+    enKey: { type: String, default: null },
     // Cloudinary only, set by an admin (never a warehouse). null means the
     // app draws the first letter of the name in a coloured circle instead.
     logoUrl: { type: String, default: null },
@@ -31,9 +35,11 @@ const manufacturerSchema = new Schema(
 // through .save() - the only way anything edits a manufacturer.
 manufacturerSchema.pre('validate', function setKey(next) {
   this.key = normalizeText(this.nameAr);
+  this.enKey = normalizeText(this.nameEn) || null;
   next();
 });
 
 manufacturerSchema.index({ key: 1 }, { unique: true });
+manufacturerSchema.index({ enKey: 1 });
 
 module.exports = model('Manufacturer', manufacturerSchema);

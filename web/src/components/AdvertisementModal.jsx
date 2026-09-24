@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import { LoadMoreControl } from './LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { formatSyp, formatUsd, formatMoneyFromUsd, sypFromUsd } from '../utils/currency';
-import { withArFallback } from '../utils/displayName';
+import { localizedName } from '../utils/displayName';
 
 const SEARCH_PAGE_SIZE = 10;
 // Matches AdminProductsPage - long enough that typing a medicine name doesn't
@@ -89,9 +89,9 @@ function ProductPicker({ selectedIds, onAdd }) {
               return (
                 <li key={product.id} className="wh-ad-result">
                   <span className="wh-ad-result-name">
-                    {withArFallback(product.nameEn, product.nameAr)}
+                    {localizedName(product.nameEn, product.nameAr)}
                     <span className="wh-table-sub">
-                      {withArFallback(product.manufacturerEn, product.manufacturerAr)}
+                      {localizedName(product.manufacturerEn, product.manufacturerAr)}
                     </span>
                   </span>
                   <button
@@ -332,7 +332,7 @@ export function AdvertisementModal({
             <ul className="wh-ad-selected">
               {selected.map((item) => (
                 <li key={item.productId} className="wh-ad-selected-row">
-                  <span className="wh-ad-selected-name">{withArFallback(item.nameEn, item.nameAr)}</span>
+                  <span className="wh-ad-selected-name">{localizedName(item.nameEn, item.nameAr)}</span>
                   <label className="wh-ad-qty-label">
                     {t('advertisements.quantity')}
                     <input

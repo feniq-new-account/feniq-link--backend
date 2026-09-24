@@ -24,7 +24,10 @@ const bonusTierSchema = new Schema(
 const catalogRequestSchema = new Schema(
   {
     warehouseId: { type: Schema.Types.ObjectId, ref: 'Warehouse', required: true },
-    nameAr: { type: String, required: true, trim: true },
+    // The medicine's name as the warehouse wrote it, filed by language
+    // (utils/nameLanguage.js) - at least one of the two (validated below).
+    nameAr: { type: String, default: null, trim: true },
+    nameEn: { type: String, default: null, trim: true },
     // The raw manufacturer text the warehouse used. `manufacturerId` is set
     // when it already resolves to a Manufacturer; otherwise the admin links it
     // to an existing one or creates it on approval.
@@ -52,6 +55,13 @@ const catalogRequestSchema = new Schema(
   },
   { timestamps: true }
 );
+
+catalogRequestSchema.pre('validate', function requireAName(next) {
+  if (typeof this.nameAr === 'string' && !this.nameAr.trim()) this.nameAr = null;
+  if (typeof this.nameEn === 'string' && !this.nameEn.trim()) this.nameEn = null;
+  if (!this.nameAr && !this.nameEn) this.invalidate('nameAr', 'A catalog request needs an Arabic or an English name.');
+  next();
+});
 
 // The admin queue (pending, oldest first) and the warehouse's own list.
 catalogRequestSchema.index({ status: 1, _id: 1 });

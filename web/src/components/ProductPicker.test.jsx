@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import i18next from 'i18next';
@@ -63,6 +63,10 @@ describe('ProductPicker', () => {
 });
 
 describe('OfferModal product field', () => {
+  // Product names follow the panel's language (utils/displayName.js reads the
+  // shared i18next instance) - English here, as the labels are.
+  beforeAll(() => i18next.init({ lng: 'en', resources: {} }));
+
   const offer = { productId: 'p1', productNameEn: 'Panadol', productNameAr: 'بنادول', titleAr: 'ع', titleEn: 'O', discountPercentage: 10, startDate: '2026-09-01', isPermanent: true };
 
   it('the warehouse edits the product through the picker, starting on the current one', () => {

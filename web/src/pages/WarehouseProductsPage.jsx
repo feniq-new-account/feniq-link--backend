@@ -15,7 +15,7 @@ import { ImportColumnMappingModal } from '../components/ImportColumnMappingModal
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { useExchangeRate } from '../context/ExchangeRateContext';
 import { formatUsdAsSyp } from '../utils/currency';
-import { withArFallback } from '../utils/displayName';
+import { localizedName } from '../utils/displayName';
 
 const PAGE_SIZE = 20;
 
@@ -168,7 +168,7 @@ export function WarehouseProductsPage() {
   };
 
   const manufacturerLabel = (manufacturer) =>
-    withArFallback(manufacturer.manufacturerEn, manufacturer.manufacturerAr);
+    localizedName(manufacturer.manufacturerEn, manufacturer.manufacturerAr);
 
   // Whichever list is on screen owns the error line; `actionError` (template
   // download, import) belongs to the toolbar and shows on both levels.
@@ -258,9 +258,9 @@ export function WarehouseProductsPage() {
                 {products.map((product) => (
                   <tr key={product.id}>
                     <td>
-                      <div className="product-name">{withArFallback(product.nameEn, product.nameAr)}</div>
+                      <div className="product-name">{localizedName(product.nameEn, product.nameAr)}</div>
                       <div className="product-manufacturer">
-                        {withArFallback(product.manufacturerEn, product.manufacturerAr)}
+                        {localizedName(product.manufacturerEn, product.manufacturerAr)}
                       </div>
                     </td>
                     <td>{categoryName(product.categoryId)}</td>
@@ -334,7 +334,7 @@ function CompanyList({ manufacturers, isLoading, onSelect }) {
           onClick={() => onSelect(manufacturer)}
         >
           <span className="wh-company-card-name">
-            {withArFallback(manufacturer.manufacturerEn, manufacturer.manufacturerAr)}
+            {localizedName(manufacturer.manufacturerEn, manufacturer.manufacturerAr)}
           </span>
           <span className="wh-company-card-count">
             {t('products.companyProductCount', { count: manufacturer.productCount })}

@@ -4,7 +4,9 @@ function serializeCatalogRequest({ request, warehouse }) {
     warehouseId: request.warehouseId,
     warehouseNameAr: warehouse ? warehouse.nameAr : null,
     warehouseNameEn: warehouse ? warehouse.nameEn : null,
-    nameAr: request.nameAr,
+    nameAr: request.nameAr ?? null,
+    // Additive: requests may name the medicine in English only.
+    nameEn: request.nameEn ?? null,
     manufacturerAr: request.manufacturerAr,
     manufacturerId: request.manufacturerId ?? null,
     unit: request.unit ?? null,

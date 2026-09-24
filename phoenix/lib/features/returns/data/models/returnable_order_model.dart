@@ -22,7 +22,8 @@ class ReturnableOrderItemModel {
   factory ReturnableOrderItemModel.fromJson(Map<String, dynamic> json) => ReturnableOrderItemModel(
     orderItemId: json['orderItemId'] as String,
     productId: json['productId'] as String,
-    productNameAr: json['productNameAr'] as String,
+    // Empty for a medicine named in English only - shown through pickName.
+    productNameAr: (json['productNameAr'] as String?) ?? '',
     productNameEn: json['productNameEn'] as String?,
     quantity: json['quantity'] as int,
     discountPrice: json['discountPrice'] as num,

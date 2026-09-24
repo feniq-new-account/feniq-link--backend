@@ -12,6 +12,7 @@ import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 class CartItemTile extends StatelessWidget {
   const CartItemTile({
@@ -31,7 +32,7 @@ class CartItemTile extends StatelessWidget {
   Future<void> _confirmRemoval(BuildContext context) async {
     final l10n = context.l10n;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final name = isArabic ? item.nameAr : (item.nameEn ?? item.nameAr);
+    final name = pickName(item.nameAr, item.nameEn, arabic: isArabic);
 
     await AppDialog.show(
       context: context,
@@ -46,7 +47,7 @@ class CartItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final name = isArabic ? item.nameAr : (item.nameEn ?? item.nameAr);
+    final name = pickName(item.nameAr, item.nameEn, arabic: isArabic);
     // Every figure on this tile is SYP, converted from the stored USD price
     // at the current rate.
     final usdToSyp = context.watch<ExchangeRateCubit>().state.usdToSyp;
@@ -95,7 +96,7 @@ class CartItemTile extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSizes.spacingXSmall),
                     Text(
-                      isArabic ? item.manufacturerAr : (item.manufacturerEn ?? item.manufacturerAr),
+                      pickName(item.manufacturerAr, item.manufacturerEn, arabic: isArabic),
                       style: context.textTheme.bodyMedium?.copyWith(color: secondary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

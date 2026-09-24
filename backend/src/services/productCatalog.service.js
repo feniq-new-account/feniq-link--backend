@@ -18,6 +18,7 @@ const { UNITS, resolveUnit } = require('../config/units');
 const { fieldForHeader, IMPORT_FIELDS, REQUIRED_FIELDS } = require('../config/importSynonyms');
 const { parsePriceCell, resolveRowCurrency } = require('../utils/importValues');
 const { parseBonus } = require('../utils/bonus');
+const { splitNameByLanguage, namesByLanguage } = require('../utils/nameLanguage');
 const { loadSavedMapping, parseExplicitMapping, saveMapping } = require('./importMapping.service');
 
 function escapeRegex(value) {
@@ -316,15 +317,22 @@ async function validateCategoryId(categoryId) {
 async function updateCatalogItem(id, changes, { userId = null, confirmed = false } = {}) {
   const item = await findCatalogItemOrThrow(id);
 
-  if (changes.nameAr !== undefined) {
-    if (typeof changes.nameAr !== 'string' || !changes.nameAr.trim()) {
-      throw ApiError.badRequest('Invalid name.', undefined, 'INVALID_PRODUCT_NAME');
+  // Either name may change, and either may be emptied - as long as one is left.
+  const nextNameOf = (value, current) => {
+    if (value === undefined) return current ?? null;
+    if (value === null) return null;
+    if (typeof value !== 'string') throw ApiError.badRequest('Invalid name.', undefined, 'INVALID_PRODUCT_NAME');
+    return value.trim() || null;
+  };
+  if (changes.nameAr !== undefined || changes.nameEn !== undefined) {
+    const nextNameAr = nextNameOf(changes.nameAr, item.nameAr);
+    const nextNameEn = nextNameOf(changes.nameEn, item.nameEn);
+    if (!nextNameAr && !nextNameEn) {
+      throw ApiError.badRequest('A medicine needs an Arabic or an English name.', undefined, 'INVALID_PRODUCT_NAME');
     }
-
-    const nextName = changes.nameAr.trim();
     // Only a real change needs confirming - re-saving the form without
     // touching the name (to set a category, say) must not demand it.
-    if (nextName !== item.nameAr) {
+    if (nextNameAr !== (item.nameAr ?? null) || nextNameEn !== (item.nameEn ?? null)) {
       const linkedProductCount = await Product.countDocuments({
         masterProductId: item._id,
         isActive: true,
@@ -333,7 +341,13 @@ async function updateCatalogItem(id, changes, { userId = null, confirmed = false
       if (linkedProductCount > 0 && !confirmed) {
         throw ApiError.badRequest(
           `Renaming this medicine changes it for ${linkedProductCount} product(s) across warehouses.`,
-          { linkedProductCount, currentNameAr: item.nameAr, nextNameAr: nextName },
+          {
+            linkedProductCount,
+            currentNameAr: item.nameAr ?? null,
+            nextNameAr,
+            currentNameEn: item.nameEn ?? null,
+            nextNameEn,
+          },
           'CATALOG_RENAME_NEEDS_CONFIRMATION'
         );
       }
@@ -343,12 +357,15 @@ async function updateCatalogItem(id, changes, { userId = null, confirmed = false
       // live everywhere, so without this there is no record anywhere of what
       // the medicine used to be called.
       item.nameHistory.push({
-        oldNameAr: item.nameAr,
-        newNameAr: nextName,
+        oldNameAr: item.nameAr ?? null,
+        newNameAr: nextNameAr,
+        oldNameEn: item.nameEn ?? null,
+        newNameEn: nextNameEn,
         changedBy: userId,
         changedAt: new Date(),
       });
-      item.nameAr = nextName;
+      item.nameAr = nextNameAr;
+      item.nameEn = nextNameEn;
     }
   }
 
@@ -716,7 +733,8 @@ function locateTable(workbook, options) {
       const score = mapped.fieldColumns.size;
       if (!best || score > best.score) best = { sheet, headerRowNumber: number, score, ...mapped };
     }
-    if (best && best.sheet === sheet && best.fieldColumns.has('name') && best.fieldColumns.has('price')) {
+    const hasName = best && (best.fieldColumns.has('name') || best.fieldColumns.has('nameEn'));
+    if (best && best.sheet === sheet && hasName && best.fieldColumns.has('price')) {
       return best;
     }
   }
@@ -744,7 +762,7 @@ function columnsNeedMapping(located, missing) {
 // Reads the uploaded workbook into plain rows. Throws IMPORT_COLUMNS_UNRECOGNIZED
 // (with the detected headers) when a required column can't be identified.
 //
-// Every returned row: { rowNumber, raw, name, manufacturer, price, priceEmpty,
+// Every returned row: { rowNumber, raw, name, nameEn, manufacturer, price, priceEmpty,
 // currency, unit, unitGiven, bonuses, bonusGiven, problems[] }. `problems`
 // holds what the row itself got wrong - 'missing_name', 'invalid_price',
 // 'missing_currency', 'unknown_currency', 'unknown_unit', 'bad_bonus'.
@@ -763,28 +781,42 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
   }
 
   const located = locateTable(workbook, { explicitMapping, savedMapping });
-  const missing = REQUIRED_FIELDS.filter((field) => !located || !located.fieldColumns.has(field));
+  // An English name column alone stands in for the name column.
+  const hasField = (field) =>
+    located && (located.fieldColumns.has(field) || (field === 'name' && located.fieldColumns.has('nameEn')));
+  const missing = REQUIRED_FIELDS.filter((field) => !hasField(field));
   let companyRowMode = false;
   if (missing.length === 1 && missing[0] === 'manufacturer') {
-    companyRowMode = hasCompanyRows(located.sheet, located.headerRowNumber, located.fieldColumns.get('name'));
+    companyRowMode = hasCompanyRows(
+      located.sheet,
+      located.headerRowNumber,
+      located.fieldColumns.get('name') ?? located.fieldColumns.get('nameEn')
+    );
   }
   if (missing.length > 0 && !companyRowMode) throw columnsNeedMapping(located, missing);
 
   const { sheet, headerRowNumber, fieldColumns, columns } = located;
   const col = (field) => fieldColumns.get(field);
   const headerKeys = new Set(columns.map((c) => c.headerKey));
+  // The name column is `name`, or the English column when it is the only one.
+  // With both, the English column is a second name the row is also matched on.
+  const nameColumn = col('name') ?? col('nameEn');
+  const nameEnColumn = col('name') && col('nameEn') ? col('nameEn') : null;
 
   const rows = [];
   let currentCompany = null;
   for (let number = headerRowNumber + 1; number <= sheet.rowCount; number += 1) {
     const row = sheet.getRow(number);
-    const nameCell = row.getCell(col('name'));
-    const name = cellText(nameCell);
+    const nameCell = row.getCell(nameColumn);
+    const nameCellText = cellText(nameCell);
+    const nameEnText = nameEnColumn ? cellText(row.getCell(nameEnColumn)) : '';
+    // The row's name: the name column, else the English one.
+    const name = nameCellText || nameEnText;
     const values = [...fieldColumns.values()].map((index) => cellText(row.getCell(index)));
     if (values.every((value) => !value)) continue; // blank / separator row
 
-    if (companyRowMode && name) {
-      const company = companyRowName(name, nameCell);
+    if (companyRowMode && nameCellText) {
+      const company = companyRowName(nameCellText, nameCell);
       if (company) {
         currentCompany = company;
         continue;
@@ -792,14 +824,18 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
     }
     // A repeated header row further down the sheet (a printed report with
     // headers on every page).
-    if (name && headerKeys.has(normalizeText(name)) && fieldForHeader(name) === 'name') continue;
+    if (nameCellText && headerKeys.has(normalizeText(nameCellText)) && ['name', 'nameEn'].includes(fieldForHeader(nameCellText))) {
+      continue;
+    }
 
     const priceCell = row.getCell(col('price'));
     const rawPrice = typeof priceCell.value === 'number' ? priceCell.value : cellText(priceCell);
     const manufacturer = companyRowMode ? currentCompany ?? '' : cellText(row.getCell(col('manufacturer')));
     const raw = {
-      name,
+      name: nameCellText,
+      nameEn: nameEnColumn ? nameEnText : '',
       manufacturer,
+      category: col('category') ? cellText(row.getCell(col('category'))) : '',
       price: rawPrice === '' ? '' : String(rawPrice),
       currency: col('currency') ? cellText(row.getCell(col('currency'))) : '',
       unit: col('unit') ? cellText(row.getCell(col('unit'))) : '',
@@ -810,7 +846,10 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
       rowNumber: number,
       raw,
       name,
+      // A second name to match on - only when both name columns are filled.
+      nameEn: nameCellText && nameEnText ? nameEnText : null,
       manufacturer,
+      category: raw.category,
       price: null,
       priceEmpty: false,
       currency: null,
@@ -855,6 +894,8 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
     headerRowNumber,
     columns,
     companyRowMode,
+    // Separate Arabic and English name columns (not just an English one alone).
+    hasEnglishColumn: Boolean(nameEnColumn),
     rows,
   };
 }
@@ -918,7 +959,7 @@ async function priceRowsInUsd(rows) {
 async function importFromExcel(file, { confirmNewManufacturers = [], manufacturerLinks = {}, mapping = null } = {}) {
   const explicitMapping = parseExplicitMapping(mapping);
   const savedMapping = await loadSavedMapping(null);
-  const { rows } = await readImportWorkbook(file, { explicitMapping, savedMapping });
+  const { rows, hasEnglishColumn } = await readImportWorkbook(file, { explicitMapping, savedMapping });
   await saveMapping(null, explicitMapping);
   const errors = [];
   const usable = [];
@@ -969,37 +1010,94 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
     newManufacturers.get(key).rows.push(row.rowNumber);
   }
 
-  const identityOf = (row) => identityKeyOf(normalizeText(row.name), manufacturerByKey.get(normalizeText(row.manufacturer))?.key);
+  // A row's names: with separate Arabic and English columns, the two cells;
+  // with one name column, that cell filed under the language it is written in.
+  for (const row of usable) {
+    const names = hasEnglishColumn ? namesByLanguage(row.raw.name, row.raw.nameEn) : splitNameByLanguage(row.name);
+    row.nameAr = names.nameAr;
+    row.nameEnValue = names.nameEn;
+    row.nameKey = normalizeText(names.nameAr) || null;
+    row.nameEnKey = normalizeText(names.nameEn) || null;
+  }
+  const manufacturerOf = (row) => manufacturerByKey.get(normalizeText(row.manufacturer));
+  const identityOf = (row) => identityKeyOf(row.nameKey, manufacturerOf(row)?.key, row.nameEnKey);
   const ready = usable.filter((row) => manufacturerByKey.has(normalizeText(row.manufacturer)));
-  const existingItems = await ProductCatalog.find({ identityKey: { $in: [...new Set(ready.map(identityOf))] } });
+  // An existing item is found by its identity, or by its English name under the
+  // same manufacturer (an English-only row for a medicine the catalog already
+  // has in Arabic updates that item, never adds an English twin).
+  const existingItems = await ProductCatalog.find({
+    $or: [
+      { identityKey: { $in: [...new Set(ready.map(identityOf))] } },
+      {
+        manufacturerId: { $in: [...new Set(ready.map((row) => manufacturerOf(row)._id))] },
+        nameEnKey: { $in: [...new Set(ready.map((row) => row.nameEnKey).filter(Boolean))] },
+      },
+    ],
+  });
   const itemByIdentity = new Map(existingItems.map((item) => [item.identityKey, item]));
+  const itemByEnglishName = new Map(
+    existingItems.filter((item) => item.nameEnKey).map((item) => [`${item.nameEnKey}|${item.manufacturerId}`, item])
+  );
+  // Categories: the file's text matched against every category's Arabic and
+  // English name after normalizeText ("صادات حيوية" = "صادات حيويه"). Never
+  // created here - an unknown one leaves the item without a category and is
+  // listed in the report; an empty cell is simply no category.
+  const categories = await Category.find({}).select('nameAr nameEn').lean();
+  const categoryByKey = new Map();
+  for (const category of categories) {
+    for (const name of [category.nameAr, category.nameEn]) {
+      const key = normalizeText(name);
+      if (key && !categoryByKey.has(key)) categoryByKey.set(key, category._id);
+    }
+  }
+  const unknownCategories = [];
+  const categoryOf = (row) => {
+    const text = typeof row.category === 'string' ? row.category.trim() : '';
+    if (!text) return { categoryId: null, text: null };
+    return { categoryId: categoryByKey.get(normalizeText(text)) ?? null, text };
+  };
+
+  const findItem = (row) =>
+    itemByIdentity.get(identityOf(row)) ??
+    (row.nameEnKey ? itemByEnglishName.get(`${row.nameEnKey}|${manufacturerOf(row)._id}`) : undefined);
 
   let added = 0;
   let updated = 0;
   const withdrawn = [];
   for (const row of ready) {
-    const manufacturer = manufacturerByKey.get(normalizeText(row.manufacturer));
-    const identity = identityOf(row);
+    const manufacturer = manufacturerOf(row);
+    const category = categoryOf(row);
     try {
-      const item = itemByIdentity.get(identity);
+      const item = findItem(row);
       if (item && item.isActive === false) {
-        withdrawn.push({ row: row.rowNumber, nameAr: item.nameAr });
+        withdrawn.push({ row: row.rowNumber, nameAr: item.nameAr, nameEn: item.nameEn ?? null });
         continue;
       }
       if (item) {
         // A blank price on the file never erases a price the item already has.
         if (row.priceUsd !== null) item.priceUsd = row.priceUsd;
+        // A name the item lacks is filled in; a name it has is never replaced.
+        if (!item.nameAr && row.nameAr) item.nameAr = row.nameAr;
+        if (!item.nameEn && row.nameEnValue) item.nameEn = row.nameEnValue;
+        // A known category files it there; an unknown or empty cell leaves
+        // the item's category as it was.
+        if (category.categoryId) item.categoryId = category.categoryId;
         await item.save();
         updated += 1;
+        if (category.text && !category.categoryId) unknownCategories.push({ row: row.rowNumber, category: category.text });
         continue;
       }
       const created = await ProductCatalog.create({
-        nameAr: row.name,
+        nameAr: row.nameAr,
+        nameEn: row.nameEnValue,
         manufacturerAr: manufacturer.nameAr,
         manufacturerId: manufacturer._id,
+        categoryId: category.categoryId,
         priceUsd: row.priceUsd,
       });
-      itemByIdentity.set(identity, created);
+      if (category.text && !category.categoryId) unknownCategories.push({ row: row.rowNumber, category: category.text });
+      itemByIdentity.set(created.identityKey, created);
+      if (created.nameEnKey) itemByEnglishName.set(`${created.nameEnKey}|${created.manufacturerId}`, created);
       added += 1;
     } catch {
       errors.push({ row: row.rowNumber, reason: 'Failed to save this row.' });
@@ -1011,6 +1109,8 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
     updated,
     withdrawn,
     newManufacturers: [...newManufacturers.values()],
+    // Imported without a category: { row, category } - the file's text.
+    unknownCategories,
     errors,
     exchangeRateUsed,
     convertedFromSyp,

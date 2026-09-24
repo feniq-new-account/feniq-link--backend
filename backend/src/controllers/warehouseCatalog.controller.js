@@ -15,7 +15,8 @@ const search = asyncHandler(async (req, res) => {
 });
 
 // The import review screen's live search: the top catalog matches for a
-// (possibly misspelled) name and manufacturer, scored - see
+// (possibly misspelled) name and manufacturer, in Arabic or English, scored
+// against both names of each item and both names of its manufacturer - see
 // warehouseImport.service.js's suggestCatalogItems.
 const suggestions = asyncHandler(async (req, res) => {
   const name = catalogService.optionalString(req.query.name, 'name');

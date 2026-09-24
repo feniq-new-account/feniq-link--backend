@@ -20,7 +20,9 @@ const orderItemSchema = new Schema(
     // no English name/manufacturer set (Excel import only captures Arabic,
     // see productCatalog.service.js), so the snapshot can't guarantee one
     // either. Callers fall back to the Arabic value for display.
-    productNameAr: { type: String, required: true },
+    // Either may be missing (a medicine named in one language only); clients
+    // show the name in their language, else the other one.
+    productNameAr: { type: String, default: null },
     productNameEn: { type: String, default: null },
     manufacturerAr: { type: String, required: true },
     manufacturerEn: { type: String, default: null },

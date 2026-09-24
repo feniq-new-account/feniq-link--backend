@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 export function ImportColumnMappingModal({ details, onSubmit, onClose, isSubmitting }) {
   const { t } = useTranslation();
   const headers = details?.headers ?? [];
-  const fields = details?.fields ?? ['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus'];
+  const fields = details?.fields ?? ['name', 'nameEn', 'price', 'manufacturer', 'category', 'unit', 'currency', 'bonus'];
   const required = details?.required ?? ['name', 'price', 'manufacturer'];
   const [choice, setChoice] = useState(() =>
     Object.fromEntries(headers.map((header) => [header.headerKey, header.field ?? '']))
