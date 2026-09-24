@@ -329,10 +329,10 @@ class _ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO(seed-images): `product.image` is still always null (no image API
-    // chosen yet, Section 14) - so this renders the icon today. When real
-    // URLs land, AppNetworkImage already handles Cloudinary right-sizing +
-    // caching + graceful failure with no further change here.
+    // `product.image` is the effective image the server resolves (the
+    // warehouse's override, else the catalog's central one - catalog overhaul
+    // Phase 9), always on Cloudinary; AppNetworkImage right-sizes and caches it
+    // and falls back to the icon when there is none.
     final image = AppNetworkImage(
       url: url,
       fit: BoxFit.cover,

@@ -441,6 +441,14 @@ export const api = {
     return request(`/warehouse/products${qs ? `?${qs}` : ''}`);
   },
   createWarehouseProduct: (data) => request('/warehouse/products', { method: 'POST', body: data }),
+  // The warehouse's override image for its own product (catalog overhaul
+  // Phase 9) - uploaded, never a typed link. Clearing it is an update with
+  // image: null.
+  uploadWarehouseProductImage: (productId, file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return requestFormData(`/warehouse/products/${productId}/image`, formData);
+  },
   updateWarehouseProduct: (productId, changes) =>
     request(`/warehouse/products/${productId}`, { method: 'PATCH', body: changes }),
   // Filtered (status pill / search / discount range) and cursor-paginated -

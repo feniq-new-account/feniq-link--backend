@@ -40,7 +40,7 @@ function isAdvertisementAvailable(advertisement) {
 // Only what a card and a cart line actually need off a product.
 const ADVERTISEMENT_PRODUCT_SELECT =
   'categoryId nameAr nameEn manufacturerAr manufacturerEn image unitAr unitEn price isAvailable masterProductId';
-const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
+const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl';
 
 // One $in for every advertisement in the list, however many items each holds -
 // never a query per advertisement or per item.

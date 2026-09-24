@@ -24,7 +24,7 @@ const {
 // warehouse; the populated catalog entry is only used for identity resolution
 // (its four name/manufacturer fields).
 const ADMIN_PRODUCT_WAREHOUSE_SELECT = 'nameAr nameEn';
-const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
+const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl';
 
 async function listAllProducts() {
   const products = await Product.find({})

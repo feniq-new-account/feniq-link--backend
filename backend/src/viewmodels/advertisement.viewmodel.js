@@ -1,3 +1,5 @@
+const { effectiveImage } = require('../utils/productImage');
+
 // The pharmacist-facing shape of a warehouse advertisement package.
 //
 // Prices stay USD across the boundary (`*Usd`), like every other product price
@@ -16,7 +18,7 @@ function serializeItem(item, productById) {
     productId: item.productId,
     nameAr: product ? product.nameAr : null,
     nameEn: product ? product.nameEn : null,
-    image: product ? product.image : null,
+    image: effectiveImage(product),
     unitAr: product ? product.unitAr : null,
     unitEn: product ? product.unitEn : null,
     // The current catalog price. Null when the product is gone.
@@ -86,7 +88,7 @@ function toAdvertisementCartResponse({ advertisement, warehouse, items, unavaila
         nameEn: product.nameEn,
         manufacturerAr: product.manufacturerAr,
         manufacturerEn: product.manufacturerEn,
-        image: product.image,
+        image: effectiveImage(product),
         unitAr: product.unitAr,
         unitEn: product.unitEn,
         priceUsd: product.price,

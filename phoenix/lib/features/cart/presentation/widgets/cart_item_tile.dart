@@ -239,9 +239,7 @@ class _ItemImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO(seed-images): same note as ProductCard - `item.image` is still
-    // always null. AppNetworkImage covers Cloudinary right-sizing + caching
-    // for when real URLs land.
+    // The product's effective image, as the catalog showed it (see ProductCard).
     return AppNetworkImage(
       url: url,
       width: 72,

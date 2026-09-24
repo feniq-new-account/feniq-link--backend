@@ -904,6 +904,26 @@ h2 {
   padding: 12px 14px;
 }
 
+/* The warehouse's override image (ProductFormModal, catalog overhaul Phase 9). */
+.product-image-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.product-image-preview {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+}
+
+.product-image-field .btn-secondary {
+  width: auto;
+  align-self: flex-start;
+}
+
 .catalog-selected-display p {
   margin: 0;
 }

@@ -9,6 +9,7 @@ const { assertRateUsedIsCurrent } = require('./exchangeRate.service');
 const { runInTransaction } = require('../utils/transaction');
 const { UNIT_CODES, unitNameAr, unitNameEn } = require('../config/units');
 const { normalizeBonusTiers } = require('../utils/bonus');
+const { imageUrlInput, storeUploadedImage, releaseImage } = require('./imageAsset.service');
 
 const WAREHOUSE_PRODUCTS_DEFAULT_LIMIT = 20;
 
@@ -174,7 +175,7 @@ async function listProductsForWarehouse(warehouseId, { availableOnly = false } =
   }
   const products = await Product.find(filter)
     .select(LIST_PRODUCT_SELECT)
-    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' });
+    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn imageUrl' });
   products.forEach(applyResolvedIdentity);
   products.sort((a, b) => (a.nameEn || a.nameAr || '').localeCompare(b.nameEn || b.nameAr || ''));
   return products;
@@ -240,6 +241,7 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
   validatePrice(data.priceUsd);
   unitFieldsFrom(data);
   bonusesFrom(data);
+  imageUrlInput(data.image);
   await assertRateUsedIsCurrent(data.rateUsed, { required: requireRateUsed });
 
   const manuallyDisabled = data.manuallyDisabled === true;
@@ -287,7 +289,7 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
             bonuses: bonusesFrom(data) ?? [],
             description:
               typeof data.description === 'string' && data.description.trim() ? data.description.trim() : null,
-            image: typeof data.image === 'string' && data.image.trim() ? data.image.trim() : null,
+            image: imageUrlInput(data.image) ?? null,
             price: data.priceUsd,
             manuallyDisabled,
             isAvailable: computeIsAvailable(manuallyDisabled),
@@ -310,6 +312,7 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
   // Resolved strictly *after* the write, purely so the response reflects the
   // linked catalog's name - this in-memory-only doc is never saved again
   // within this request, so it can't leak back into storage.
+  await releaseReplacedImage(product);
   await product.populate('masterProductId');
   applyResolvedIdentity(product);
   product.$locals.reEnabled = reEnabled;
@@ -385,10 +388,13 @@ async function applyProductUpdate(
       : null;
   }
 
-  if (changes.image !== undefined) {
-    product.image = typeof changes.image === 'string' && changes.image.trim()
-      ? changes.image.trim()
-      : null;
+  // Phase 9 (M7): only an image we uploaded (imageUrlInput, 400
+  // INVALID_IMAGE_URL otherwise); null or '' clears the override (L3). The
+  // replaced one is released once the write is durable (releaseReplacedImage).
+  const image = imageUrlInput(changes.image);
+  if (image !== undefined && image !== product.image) {
+    product.$locals.replacedImage = product.image ?? null;
+    product.image = image;
   }
 
   if (changes.priceUsd !== undefined) {
@@ -431,12 +437,37 @@ async function applyProductUpdate(
     }
     throw err;
   }
+  // Outside a transaction the save above is final; inside one the caller
+  // releases after the commit (createProduct).
+  if (!session) await releaseReplacedImage(product);
   if (!resolve) return product;
 
   // Same "resolve only after the write is durable" reasoning as
   // createProduct above - this response-only mutation never gets saved.
   await product.populate('masterProductId');
   return applyResolvedIdentity(product);
+}
+
+// Deletes the image an update replaced or cleared - only if it is ours and
+// nothing else points at it (imageAsset.service.js). Best effort.
+async function releaseReplacedImage(product) {
+  const replaced = product.$locals.replacedImage;
+  if (!replaced) return;
+  product.$locals.replacedImage = null;
+  await releaseImage(replaced);
+}
+
+// Uploads the warehouse's override image for its own product (Phase 9) and
+// releases the one it replaces.
+async function setProductImage(productId, warehouseId, userId, file) {
+  const product = await findOwnedProductOrThrow(productId, warehouseId);
+  const url = await storeUploadedImage(file, 'products');
+  try {
+    return await applyProductUpdate(product, userId, { image: url });
+  } catch (err) {
+    await releaseImage(url);
+    throw err;
+  }
 }
 
 async function updateProduct(productId, warehouseId, userId, changes, options) {
@@ -474,6 +505,7 @@ module.exports = {
   searchPaginatedProductsForWarehouse,
   createProduct,
   updateProduct,
+  setProductImage,
   findOwnedProductOrThrow,
   applyProductUpdate,
   importProductsFromExcel,

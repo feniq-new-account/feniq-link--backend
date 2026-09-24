@@ -22,7 +22,7 @@ const { emitToAdmins, emitToWarehouse, EVENTS } = require('../realtime');
 // price; off the warehouse: nameAr/nameEn. productId/warehouseId are the join
 // keys.
 const OFFER_PRODUCT_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn price masterProductId';
-const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
+const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl';
 const OFFER_WAREHOUSE_SELECT = 'nameAr nameEn';
 
 // The moderation queue: a brand-new offer waiting to go live, OR an approved

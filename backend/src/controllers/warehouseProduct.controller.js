@@ -102,6 +102,14 @@ const update = asyncHandler(async (req, res) => {
   });
 });
 
+// The warehouse's override image for its own product (catalog overhaul Phase 9):
+// uploaded to Cloudinary, never a typed URL. Clearing it is PATCH image:null.
+const uploadImage = asyncHandler(async (req, res) => {
+  const warehouse = await loadWarehouseOrThrow(req.user._id);
+  const product = await warehouseProductService.setProductImage(req.params.id, warehouse._id, req.user._id, req.file);
+  res.json({ success: true, message: 'Image updated.', ...warehouseProductViewModel.toProductResponse(product) });
+});
+
 const downloadTemplate = asyncHandler(async (req, res) => {
   const buffer = await productCatalogService.generateWarehouseTemplateBuffer();
   res.setHeader(
@@ -182,6 +190,7 @@ module.exports = {
   search,
   create,
   update,
+  uploadImage,
   downloadTemplate,
   importExcel,
   listImports,

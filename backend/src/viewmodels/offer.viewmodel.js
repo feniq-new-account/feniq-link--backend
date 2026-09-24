@@ -1,3 +1,4 @@
+const { effectiveImage } = require('../utils/productImage');
 const { computeFinalPrice } = require('../services/manufacturerDiscount.service');
 
 // The pharmacist-facing shape of a warehouse product offer, as the Offers &
@@ -44,7 +45,7 @@ function serializeActiveOffer({ offer, product, warehouse, manufacturerDiscountP
     // catalog flow with this, exactly as a tapped banner does.
     manufacturerAr: product.manufacturerAr,
     manufacturerEn: product.manufacturerEn,
-    image: product.image,
+    image: effectiveImage(product),
     unitAr: product.unitAr,
     unitEn: product.unitEn,
     priceUsd: product.price,

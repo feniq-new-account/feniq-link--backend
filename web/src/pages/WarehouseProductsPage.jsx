@@ -303,6 +303,7 @@ export function WarehouseProductsPage() {
               ? api.createWarehouseProduct(payload)
               : api.updateWarehouseProduct(modal.product.id, payload)
           }
+          onUploadImage={(productId, file) => api.uploadWarehouseProductImage(productId, file)}
         />
       )}
     </div>

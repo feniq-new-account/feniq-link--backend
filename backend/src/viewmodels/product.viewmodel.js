@@ -1,3 +1,4 @@
+const { effectiveImage } = require('../utils/productImage');
 const { computeFinalPrice } = require('../services/manufacturerDiscount.service');
 
 // Section 15: `discountPriceUsd` is the one number the Flutter catalog
@@ -30,7 +31,7 @@ function serializeProductWithOffer({ product, offer, manufacturerDiscountPercent
     nameEn: product.nameEn,
     manufacturerAr: product.manufacturerAr,
     manufacturerEn: product.manufacturerEn,
-    image: product.image,
+    image: effectiveImage(product),
     unitAr: product.unitAr,
     unitEn: product.unitEn,
     priceUsd: product.price,

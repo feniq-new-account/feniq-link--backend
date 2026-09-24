@@ -99,7 +99,7 @@ async function assertNoRunningOffer(productId, { excludeOfferId = null, session 
 // resolved identity - Section 14 Part 2).
 const OFFER_PRODUCT_SELECT =
   'warehouseId nameAr nameEn manufacturerAr manufacturerEn manufacturerId image unitAr unitEn price isAvailable masterProductId';
-const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
+const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl';
 
 // Every offer a pharmacy may currently see, across every warehouse. Pending,
 // expired and not-yet-started ones are all excluded by the one filter above,

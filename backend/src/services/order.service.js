@@ -1295,7 +1295,7 @@ async function prepareReorder(orderId, pharmacyId) {
         .select(
           'categoryId nameAr nameEn manufacturerAr manufacturerEn manufacturerId image unitAr unitEn price isAvailable masterProductId'
         )
-        .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' })
+        .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn imageUrl' })
         .lean()
     : [];
   products.forEach(applyResolvedIdentity);

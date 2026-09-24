@@ -170,7 +170,7 @@ async function attachProducts(advertisements) {
   // entry).
   const products = await Product.find({ _id: { $in: productIds } })
     .select('nameAr nameEn manufacturerAr manufacturerEn price masterProductId')
-    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn' });
+    .populate({ path: 'masterProductId', select: 'nameAr nameEn manufacturerAr manufacturerEn imageUrl' });
   products.forEach(applyResolvedIdentity);
   const productById = new Map(products.map((p) => [p._id.toString(), p]));
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { withArFallback } from '../utils/displayName';
@@ -27,7 +27,13 @@ export const EMPTY_PRODUCT_FORM = {
   price: '',
   priceUsd: null,
   description: '',
-  image: '',
+  // Images are uploaded, never typed (catalog overhaul Phase 9): the
+  // warehouse's current override, the catalog's central image it falls back
+  // to, a picked file waiting to upload, and whether the override was removed.
+  imageOverride: '',
+  catalogImageUrl: null,
+  imageFile: null,
+  clearImage: false,
   manuallyDisabled: false,
 };
 
@@ -54,7 +60,11 @@ export function productFormFromProduct(product, usdToSyp) {
     price: priceSyp != null ? String(priceSyp) : '',
     priceUsd: product.priceUsd,
     description: product.description ?? '',
-    image: product.image ?? '',
+    // An older server sends only `image`, which was the override itself.
+    imageOverride: ('imageOverride' in product ? product.imageOverride : product.image) ?? '',
+    catalogImageUrl: product.catalogImageUrl ?? null,
+    imageFile: null,
+    clearImage: false,
     manuallyDisabled: product.manuallyDisabled,
   };
 }
@@ -76,7 +86,21 @@ export function productSaveErrorMessage(err, t) {
   if (err?.code === 'PRODUCT_DISABLED_BY_ADMIN') return t('productForm.errorDisabledByAdmin');
   if (err?.code === 'PRODUCT_CHANGED') return t('productForm.errorChanged');
   if (err?.code === 'INVALID_BONUS') return t('productForm.errorBonus');
+  if (err?.code === 'INVALID_IMAGE_URL' || err?.code === 'INVALID_MEDIA_TYPE') return t('productForm.errorImage');
   return err?.message || t('common.unexpectedError');
+}
+
+// The description and image keys of a save (catalog overhaul Phase 9, L3).
+// An emptied description on an edit is sent (empty), which clears it -
+// dropping the key used to leave the old text in place. The image is only
+// ever sent as null, to remove the override; a new image is uploaded after
+// the save, never sent as a link.
+export function descriptionAndImageFields({ mode, form, initial, imagesEnabled }) {
+  const description = form.description.trim();
+  return {
+    description: mode === 'edit' ? description : description || undefined,
+    image: imagesEnabled && form.clearImage && initial.imageOverride ? null : undefined,
+  };
 }
 
 // Bonus tiers -> the text the form and the product tables show ("10+1، 20+3").
@@ -108,17 +132,23 @@ function CatalogSearchField({ onSelect }) {
       return undefined;
     }
     setIsSearching(true);
+    // A slower response for an older query must never overwrite a newer one:
+    // once the query changes, this effect's results are dropped.
+    let stale = false;
     const timeout = setTimeout(async () => {
       try {
         const data = await api.warehouseCatalogSearch(query.trim());
-        setResults(data.items);
+        if (!stale) setResults(data.items);
       } catch {
-        setResults([]);
+        if (!stale) setResults([]);
       } finally {
-        setIsSearching(false);
+        if (!stale) setIsSearching(false);
       }
     }, 300);
-    return () => clearTimeout(timeout);
+    return () => {
+      stale = true;
+      clearTimeout(timeout);
+    };
   }, [query]);
 
   return (
@@ -151,12 +181,59 @@ function CatalogSearchField({ onSelect }) {
   );
 }
 
+// The warehouse's override image: a preview of what the pharmacist will see
+// (the picked file, else the override, else the catalog's central image), a
+// file picker (JPEG/PNG/WEBP - the server re-checks the bytes) and a remove
+// button that falls back to the catalog image.
+export function ProductImageField({ form, setForm }) {
+  const { t } = useTranslation();
+  const fileUrl = useMemo(() => (form.imageFile ? URL.createObjectURL(form.imageFile) : null), [form.imageFile]);
+  useEffect(() => () => fileUrl && URL.revokeObjectURL(fileUrl), [fileUrl]);
+
+  const override = form.clearImage ? '' : form.imageOverride;
+  const preview = fileUrl || override || form.catalogImageUrl;
+  const showsCatalogImage = !fileUrl && !override && Boolean(form.catalogImageUrl);
+
+  return (
+    <div className="product-image-field">
+      <span>{t('productForm.imageOptional')}</span>
+      {preview ? (
+        <img src={preview} alt="" className="product-image-preview" />
+      ) : (
+        <p className="hint">{t('productForm.noImage')}</p>
+      )}
+      {showsCatalogImage && <p className="hint">{t('productForm.catalogImageHint')}</p>}
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        aria-label={t('productForm.chooseImage')}
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null;
+          setForm((prev) => ({ ...prev, imageFile: file }));
+        }}
+      />
+      {(fileUrl || override) && (
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => setForm((prev) => ({ ...prev, imageFile: null, clearImage: true }))}
+        >
+          {t('productForm.removeImage')}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // The form itself is identical whether a warehouse is creating/editing its
 // own product or an admin is editing someone else's (Section 13c: admin
 // edits/deletes, it never creates) - only WHERE the submission goes differs,
 // so that's left entirely to the caller via onSubmit rather than hardcoded
 // here.
-export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onClose, onSaved, onSubmit }) {
+// `onUploadImage(productId, file)`, when given, shows the image section (the
+// warehouse's override image, uploaded after the product saves); without it
+// (the admin's edit) the form never touches the image.
+export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onClose, onSaved, onSubmit, onUploadImage }) {
   const { t } = useTranslation();
   const rateActions = useExchangeRateActions();
   const [form, setForm] = useState(initialForm);
@@ -170,6 +247,9 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
   // Set by a RATE_CHANGED refusal until the next submit - see RateChangedNotice.
   const [rateChange, setRateChange] = useState(null);
   const [units, setUnits] = useState([]);
+  // Set once the product itself saved but its image upload failed: submitting
+  // again only retries the upload (a second create would be refused).
+  const [savedProductId, setSavedProductId] = useState(null);
 
   useEffect(() => {
     api
@@ -234,7 +314,23 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
     }
   };
 
+  const uploadPickedImage = async (productId) => {
+    try {
+      await onUploadImage(productId, form.imageFile);
+      onSaved();
+    } catch (err) {
+      setSavedProductId(productId);
+      setError(`${t('productForm.imageUploadFailed')} ${productSaveErrorMessage(err, t)}`);
+    }
+  };
+
   const submitForm = async () => {
+    if (savedProductId) {
+      setIsSaving(true);
+      await uploadPickedImage(savedProductId);
+      setIsSaving(false);
+      return;
+    }
     if (mode === 'create' && !form.masterProductId) {
       setError(t('productForm.selectMedicineRequired'));
       return;
@@ -290,8 +386,7 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
         // there is nothing to clear.
         bonus: mode === 'edit' || form.bonus.trim() ? form.bonus.trim() : undefined,
         priceUsd,
-        description: form.description.trim() || undefined,
-        image: form.image.trim() || undefined,
+        ...descriptionAndImageFields({ mode, form, initial, imagesEnabled: Boolean(onUploadImage) }),
         manuallyDisabled: form.manuallyDisabled,
       },
       rateUsed
@@ -302,12 +397,17 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
     try {
       // Sent once. A RATE_CHANGED refusal moves the panel's rate on and comes
       // back as `changed`; the price then waits for the user to confirm it.
-      const { rateChange: changed } = await submitWithRateCheck(() => onSubmit(payload), {
+      const { result, rateChange: changed } = await submitWithRateCheck(() => onSubmit(payload), {
         rateUsed,
         actions: rateActions,
       });
       if (changed) {
         setRateChange(changed);
+        return;
+      }
+      const productId = result?.product?.id;
+      if (onUploadImage && form.imageFile && productId) {
+        await uploadPickedImage(productId);
         return;
       }
       onSaved();
@@ -404,10 +504,7 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
               rows={2}
             />
           </label>
-          <label>
-            {t('productForm.imageUrlOptional')}
-            <input value={form.image} onChange={(e) => setField('image', e.target.value)} placeholder="https://" />
-          </label>
+          {onUploadImage && <ProductImageField form={form} setForm={setForm} />}
           <label className="checkbox-row">
             <input
               type="checkbox"
