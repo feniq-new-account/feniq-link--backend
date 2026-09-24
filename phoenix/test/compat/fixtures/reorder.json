@@ -1,0 +1,82 @@
+{
+  "success": true,
+  "reorder": {
+    "warehouseId": "6a0c00000000000000000004",
+    "warehouseNameAr": "مستودع التوافق",
+    "warehouseNameEn": "Compat Warehouse",
+    "items": [
+      {
+        "id": "6a0c00000000000000000009",
+        "categoryId": "6a0c00000000000000000005",
+        "nameAr": "بنادول أكسترا",
+        "nameEn": "Panadol Extra",
+        "manufacturerAr": "جي إس كي",
+        "manufacturerEn": "GSK",
+        "image": "https://res.cloudinary.com/feniq/image/upload/v1/catalog/panadol.png",
+        "unitAr": "علبة",
+        "unitEn": "Box",
+        "priceUsd": 1.37,
+        "discountPriceUsd": 1.2,
+        "isAvailable": true,
+        "offer": {
+          "titleAr": "عرض بنادول",
+          "titleEn": "Panadol offer",
+          "discountPercentage": 7.5,
+          "discountPriceUsd": 1.27
+        },
+        "finalPriceSyp": 15650,
+        "priceRate": 13000,
+        "offerDiscountPercentage": 7.5,
+        "manufacturerDiscountPercentage": 5,
+        "unit": null,
+        "bonuses": [],
+        "quantity": 25
+      },
+      {
+        "id": "6a0c00000000000000000010",
+        "categoryId": "6a0c00000000000000000005",
+        "nameAr": "أموكسيل 500",
+        "nameEn": "Amoxil 500",
+        "manufacturerAr": "جي إس كي",
+        "manufacturerEn": "GSK",
+        "image": null,
+        "unitAr": "شريط",
+        "unitEn": "Strip",
+        "priceUsd": 2.5,
+        "discountPriceUsd": 2.38,
+        "isAvailable": true,
+        "offer": null,
+        "finalPriceSyp": 30875,
+        "priceRate": 13000,
+        "offerDiscountPercentage": null,
+        "manufacturerDiscountPercentage": 5,
+        "unit": null,
+        "bonuses": [],
+        "quantity": 2
+      },
+      {
+        "id": "6a0c00000000000000000011",
+        "categoryId": "6a0c00000000000000000005",
+        "nameAr": "فيتامين سي قديم",
+        "nameEn": "Vitamin C (legacy)",
+        "manufacturerAr": "شركة قديمة",
+        "manufacturerEn": null,
+        "image": null,
+        "unitAr": "علبة",
+        "unitEn": "Box",
+        "priceUsd": 0.8,
+        "discountPriceUsd": 0.8,
+        "isAvailable": true,
+        "offer": null,
+        "finalPriceSyp": 10400,
+        "priceRate": 13000,
+        "offerDiscountPercentage": null,
+        "manufacturerDiscountPercentage": null,
+        "unit": null,
+        "bonuses": [],
+        "quantity": 3
+      }
+    ],
+    "unavailableItems": []
+  }
+}

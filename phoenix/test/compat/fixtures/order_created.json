@@ -1,0 +1,17 @@
+{
+  "success": true,
+  "message": "Order submitted.",
+  "order": {
+    "id": "6ab56e260e5e3d3a17dc72a9",
+    "orderNumber": 1,
+    "status": "pending",
+    "totalPrice": 487450,
+    "discountAmount": 0,
+    "commissionAmount": 0,
+    "advertisementId": "6a0c00000000000000000013",
+    "advertisementDiscountAmount": 6500,
+    "finalPrice": 480950,
+    "notes": "old app order",
+    "warehouseId": "6a0c00000000000000000004"
+  }
+}

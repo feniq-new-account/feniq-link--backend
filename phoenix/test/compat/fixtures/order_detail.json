@@ -1,0 +1,83 @@
+{
+  "success": true,
+  "order": {
+    "id": "6ab56e260e5e3d3a17dc72a9",
+    "orderNumber": 1,
+    "status": "pending",
+    "totalPrice": 487450,
+    "discountAmount": 0,
+    "commissionAmount": 0,
+    "advertisementId": "6a0c00000000000000000013",
+    "advertisementDiscountAmount": 6500,
+    "finalPrice": 480950,
+    "notes": "old app order",
+    "warehouseId": "6a0c00000000000000000004",
+    "cancelReason": null,
+    "warehouseNameAr": "مستودع التوافق",
+    "warehouseNameEn": "Compat Warehouse",
+    "requiresDeliverySealPhoto": false,
+    "deliverySealPhoto": null,
+    "deliverySealConfirmedAt": null,
+    "statusHistory": [
+      {
+        "status": "pending",
+        "changedAt": "2026-09-24T18:38:30.904Z",
+        "note": null
+      }
+    ],
+    "createdAt": "2026-09-24T18:38:30.924Z",
+    "complaints": [],
+    "items": [
+      {
+        "id": "6ab56e260e5e3d3a17dc72ac",
+        "productId": "6a0c00000000000000000009",
+        "productNameAr": "بنادول أكسترا",
+        "productNameEn": "Panadol Extra",
+        "manufacturerAr": "جي إس كي",
+        "manufacturerEn": "GSK",
+        "quantity": 25,
+        "unitPrice": 17810,
+        "discountPrice": 15650,
+        "lineTotal": 391250,
+        "savingsUsd": 4.25,
+        "freeQuantity": 2,
+        "bonusApplied": {
+          "buy": 10,
+          "free": 1
+        }
+      },
+      {
+        "id": "6ab56e260e5e3d3a17dc72ad",
+        "productId": "6a0c00000000000000000011",
+        "productNameAr": "فيتامين سي قديم",
+        "productNameEn": "Vitamin C (legacy)",
+        "manufacturerAr": "شركة قديمة",
+        "manufacturerEn": null,
+        "quantity": 3,
+        "unitPrice": 10400,
+        "discountPrice": 10400,
+        "lineTotal": 31200,
+        "savingsUsd": 0,
+        "freeQuantity": 0,
+        "bonusApplied": null
+      },
+      {
+        "id": "6ab56e260e5e3d3a17dc72ae",
+        "productId": "6a0c00000000000000000010",
+        "productNameAr": "أموكسيل 500",
+        "productNameEn": "Amoxil 500",
+        "manufacturerAr": "جي إس كي",
+        "manufacturerEn": "GSK",
+        "quantity": 2,
+        "unitPrice": 32500,
+        "discountPrice": 32500,
+        "lineTotal": 65000,
+        "savingsUsd": 0,
+        "freeQuantity": 0,
+        "bonusApplied": null
+      }
+    ],
+    "linkedReturn": null,
+    "myReview": null
+  }
+}

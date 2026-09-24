@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "manufacturers": [
+    {
+      "manufacturerAr": "جي إس كي",
+      "discountPercentage": 5,
+      "manufacturerId": "6a0c00000000000000000006",
+      "manufacturerEn": "GSK",
+      "logoUrl": "https://res.cloudinary.com/feniq/image/upload/v1/manufacturers/gsk.png"
+    },
+    {
+      "manufacturerAr": "شركة قديمة",
+      "discountPercentage": 0,
+      "manufacturerId": null,
+      "manufacturerEn": null,
+      "logoUrl": null
+    }
+  ]
+}
