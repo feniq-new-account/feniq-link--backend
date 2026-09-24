@@ -8,7 +8,7 @@ import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { AdvertisementsSubNav } from '../components/AdvertisementsSubNav';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
-import { withArFallback } from '../utils/displayName';
+import { localizedName } from '../utils/displayName';
 import { contactAdminOnWhatsApp } from '../utils/whatsapp';
 
 const PAGE_SIZE = 15;
@@ -56,7 +56,7 @@ function useBannerStatusLabel() {
 function CreateBannerModal({ editingBanner, onClose, onCreated, onSaved }) {
   const { t } = useTranslation();
   // A banner listed before its product's name was known still names it.
-  const productLabel = (product) => withArFallback(product.nameEn, product.nameAr) || t('banners.linkedProduct');
+  const productLabel = (product) => localizedName(product.nameEn, product.nameAr) || t('banners.linkedProduct');
   const isEditing = Boolean(editingBanner);
   const [form, setForm] = useState(isEditing ? bannerFormFromBanner(editingBanner) : EMPTY_BANNER_FORM);
   const [isSaving, setIsSaving] = useState(false);
@@ -267,7 +267,7 @@ export function WarehouseBannersPage() {
   };
 
   const handleRequestBannerViaWhatsApp = () => {
-    const warehouseName = withArFallback(warehouse?.nameEn, warehouse?.nameAr);
+    const warehouseName = localizedName(warehouse?.nameEn, warehouse?.nameAr);
     const text = `مرحباً، أريد نشر إعلان جديد.${warehouseName ? `\nاسم المستودع: ${warehouseName}` : ''}`;
     contactAdminOnWhatsApp(text);
   };

@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
+import { localizedName } from '../utils/displayName';
 
 const PAGE_SIZE = 50;
 
@@ -305,7 +306,8 @@ function ReviewRow({ batchId, row, units, onResolved }) {
                     <button className="btn-secondary" disabled={busy} onClick={() => resolveWith(s.masterProductId)}>
                       {t('importResults.pick')}
                     </button>{' '}
-                    {s.nameAr} — {s.manufacturerAr} <span className="hint">({Math.round(s.score * 100)}%)</span>
+                    {localizedName(s.nameEn, s.nameAr)} — {localizedName(s.manufacturerEn, s.manufacturerAr)}{' '}
+                    <span className="hint">({Math.round(s.score * 100)}%)</span>
                   </li>
                 ))}
               </ul>
@@ -436,7 +438,7 @@ function MyCatalogRequests() {
               {requests.map((request) => (
                 <tr key={request.id}>
                   <td>{new Date(request.createdAt).toLocaleString()}</td>
-                  <td>{request.nameAr}</td>
+                  <td>{localizedName(request.nameEn, request.nameAr)}</td>
                   <td>{request.manufacturerAr}</td>
                   <td>{t(`catalogRequests.status.${request.status}`)}</td>
                   <td>{request.rejectReason ?? '-'}</td>

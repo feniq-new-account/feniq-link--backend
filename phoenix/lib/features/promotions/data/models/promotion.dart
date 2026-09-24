@@ -1,5 +1,6 @@
 import 'package:feniq/features/advertisements/data/models/advertisement_model.dart';
 import 'package:feniq/features/offers/data/models/offer_model.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 /// The two things the Offers & Ads tab browses: a product-level [Offer]
 /// discount and a warehouse [Package] (an advertisement).
@@ -71,7 +72,7 @@ class OfferPromotion extends Promotion {
   /// The discounted product's own name - the offer's subtitle, and what the
   /// pharmacist is really looking for.
   String productName(bool isArabic) =>
-      isArabic ? offer.nameAr : (offer.nameEn ?? offer.nameAr);
+      pickName(offer.nameAr, offer.nameEn, arabic: isArabic);
 }
 
 class PackagePromotion extends Promotion {
@@ -129,5 +130,5 @@ class PromotionWarehouse {
   final String nameAr;
   final String? nameEn;
 
-  String name(bool isArabic) => isArabic ? nameAr : (nameEn ?? nameAr);
+  String name(bool isArabic) => pickName(nameAr, nameEn, arabic: isArabic);
 }

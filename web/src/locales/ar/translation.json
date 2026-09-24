@@ -724,7 +724,9 @@
       "uploadImage": "رفع صورة",
       "replaceImage": "تبديل الصورة",
       "clearImage": "حذف الصورة",
-      "linkExisting": "أو ربطها بشركة موجودة"
+      "linkExisting": "أو ربطها بشركة موجودة",
+      "nameEnLabel": "الاسم الإنجليزي",
+      "oneNameRequired": "أدخل اسماً عربياً أو إنجليزياً."
     },
     "exchangeRate": {
       "title": "سعر الصرف",

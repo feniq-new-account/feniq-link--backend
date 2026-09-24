@@ -5,7 +5,7 @@ import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
-import { withArFallback } from '../utils/displayName';
+import { localizedName } from '../utils/displayName';
 
 const PAGE_SIZE = 20;
 
@@ -123,13 +123,13 @@ export function AdminComplaintsPage() {
                             {t('complaints.numberValue', { number: complaint.complaintNumber })}
                           </span>
                         </td>
-                        <td>{withArFallback(complaint.pharmacy?.nameEn, complaint.pharmacy?.nameAr)}</td>
+                        <td>{localizedName(complaint.pharmacy?.nameEn, complaint.pharmacy?.nameAr)}</td>
                         <td>
                           <span className="adm-tag">{t(`complaints.context.${complaint.contextType}`)}</span>
                         </td>
                         <td>
                           {complaint.warehouse
-                            ? withArFallback(complaint.warehouse.nameEn, complaint.warehouse.nameAr)
+                            ? localizedName(complaint.warehouse.nameEn, complaint.warehouse.nameAr)
                             : '—'}
                         </td>
                         <td className="adm-num">

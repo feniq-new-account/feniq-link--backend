@@ -95,7 +95,7 @@ class AdvertisementCartPreparation {
       contents: rawItems
           .map((map) => CartPackageContent(
                 productId: map['id'] as String,
-                nameAr: map['nameAr'] as String,
+                nameAr: (map['nameAr'] as String?) ?? '',
                 nameEn: map['nameEn'] as String?,
                 quantityPerCopy: (map['quantity'] as num).toInt(),
               ))

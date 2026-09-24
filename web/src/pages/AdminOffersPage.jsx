@@ -5,7 +5,7 @@ import { OfferModal } from '../components/OfferModal';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
-import { withArFallback } from '../utils/displayName';
+import { localizedName } from '../utils/displayName';
 import { OFFER_FILTERS, isInReview } from './offersFilters';
 
 const PAGE_SIZE = 20;
@@ -215,12 +215,12 @@ export function AdminOffersPage() {
                       <tr key={offer.id}>
                         <td>{offer.warehouseNameEn}</td>
                         <td>
-                          {withArFallback(offer.productNameEn, offer.productNameAr)}
+                          {localizedName(offer.productNameEn, offer.productNameAr)}
                           <div className="adm-table-sub">{offer.titleEn}</div>
                           {u && (
                             <div className="adm-offer-proposed">
                               {t('offers.admin.proposedLabel')}:{' '}
-                              <strong>{withArFallback(u.productNameEn, u.productNameAr)}</strong> — {u.titleEn}
+                              <strong>{localizedName(u.productNameEn, u.productNameAr)}</strong> — {u.titleEn}
                             </div>
                           )}
                         </td>

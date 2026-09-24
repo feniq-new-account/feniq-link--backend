@@ -11,6 +11,7 @@ import 'package:feniq/features/cart/data/models/reorder_preparation.dart';
 import 'package:feniq/features/cart/data/repositories/order_repository.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // "Reorder" - drops a past delivered order into the existing cart, bound to
 // that order's own warehouse, then opens the Cart screen for the pharmacist to
@@ -131,7 +132,7 @@ class _ReorderButtonState extends State<ReorderButton> {
 
     if (preparation.unavailableItems.isNotEmpty) {
       final names = preparation.unavailableItems
-          .map((item) => isArabic ? item.productNameAr : (item.productNameEn ?? item.productNameAr))
+          .map((item) => pickName(item.productNameAr, item.productNameEn, arabic: isArabic))
           .join(isArabic ? '، ' : ', ');
       await AppDialog.show(
         context: context,

@@ -15,6 +15,7 @@ import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/catalog/presentation/managers/catalog_cubit.dart';
 import 'package:feniq/features/catalog/presentation/managers/catalog_state.dart';
 import 'package:feniq/features/catalog/presentation/widgets/product_card.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // The product results of a CatalogCubit - loading skeleton, error, empty
 // state, the grid/list of ProductCards with their cart actions, and "load
@@ -64,7 +65,7 @@ class _CatalogProductListState extends State<CatalogProductList> {
   void _handleAdd(ProductModel product, int quantity) {
     final l10n = context.l10n;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final name = isArabic ? product.nameAr : (product.nameEn ?? product.nameAr);
+    final name = pickName(product.nameAr, product.nameEn, arabic: isArabic);
     final cartCubit = context.read<CartCubit>();
 
     // Section 6.6: every order belongs to exactly one warehouse, so a cart

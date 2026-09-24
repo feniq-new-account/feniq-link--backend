@@ -9,6 +9,7 @@ import 'package:feniq/features/advertisements/data/models/advertisement_cart_pre
 import 'package:feniq/features/advertisements/data/repositories/advertisements_repository.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // The one path from "a pharmacist tapped an advertised package" to the cart
 // screen, wherever the package was tapped - the warehouse screen's
@@ -106,7 +107,7 @@ Future<void> launchAdvertisementCart(BuildContext context, String advertisementI
   // checkout (ADVERTISEMENT_ITEM_MISSING), so it is never half-added here.
   if (!preparation.isComplete) {
     final names = preparation.unavailableItems
-        .map((item) => isArabic ? item.productNameAr : (item.productNameEn ?? item.productNameAr))
+        .map((item) => pickName(item.productNameAr, item.productNameEn, arabic: isArabic))
         .where((name) => name.isNotEmpty)
         .join(isArabic ? '، ' : ', ');
     await AppDialog.show(

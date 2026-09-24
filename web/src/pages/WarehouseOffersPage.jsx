@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { useExchangeRate } from '../context/ExchangeRateContext';
 import { OfferModal } from '../components/OfferModal';
-import { withArFallback } from '../utils/displayName';
+import { localizedName } from '../utils/displayName';
 import { OFFER_FILTERS, filterOffers, offerEditSource, reviewCount } from './offersFilters';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
@@ -179,7 +179,7 @@ export function WarehouseOffersPage() {
               {visibleOffers.map((offer) => (
                 <tr key={offer.id}>
                   <td>
-                    {withArFallback(offer.productNameEn, offer.productNameAr)}
+                    {localizedName(offer.productNameEn, offer.productNameAr)}
                     <div className="wh-table-sub">{offer.titleEn}</div>
                   </td>
                   <td className="wh-num" style={{ color: 'var(--wh-orange)', fontWeight: 700 }}>

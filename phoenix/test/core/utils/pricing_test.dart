@@ -96,7 +96,10 @@ void main() {
       'discountPriceUsd': 1,
       'isAvailable': true,
     });
-    expect(product.nameAr, 'Name');
+    // No Arabic name: kept empty (never filled from English), and the product
+    // is still parsed - the widgets show the English name (display_name.dart).
+    expect(product.nameAr, '');
+    expect(product.nameEn, 'Name');
     expect(product.manufacturerAr, '');
     expect(product.bonuses, isEmpty);
   });

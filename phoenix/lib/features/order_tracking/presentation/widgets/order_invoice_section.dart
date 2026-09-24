@@ -8,6 +8,7 @@ import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/features/cart/data/models/order_line_item.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // Section 6.8: the digital invoice - full line items plus the same
 // totalPrice -> discountAmount -> finalPrice breakdown computed at order
@@ -90,7 +91,7 @@ class _InvoiceLineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final name = isArabic ? item.productNameAr : (item.productNameEn ?? item.productNameAr);
+    final name = pickName(item.productNameAr, item.productNameEn, arabic: isArabic);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.spacingXSmall),

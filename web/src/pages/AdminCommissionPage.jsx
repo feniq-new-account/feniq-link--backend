@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { formatSyp } from '../utils/currency';
-import { withArFallback } from '../utils/displayName';
+import { localizedName } from '../utils/displayName';
 import { PAYMENT_METHODS } from '../utils/payments';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
@@ -405,7 +405,7 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
       {backButton}
 
       <div className="adm-page-head">
-        <h1>{withArFallback(warehouse.nameEn, warehouse.nameAr)}</h1>
+        <h1>{localizedName(warehouse.nameEn, warehouse.nameAr)}</h1>
         {warehouse.phone && (
           <div className="adm-page-head-meta adm-num" dir="ltr">
             {warehouse.phone}
@@ -663,7 +663,7 @@ export function AdminCommissionPage() {
                     onClick={() => setSelectedWarehouseId(row.warehouseId)}
                   >
                     <td>
-                      <div>{withArFallback(row.nameEn, row.nameAr)}</div>
+                      <div>{localizedName(row.nameEn, row.nameAr)}</div>
                       {row.phone && (
                         <div className="adm-table-sub adm-num" dir="ltr">
                           {row.phone}

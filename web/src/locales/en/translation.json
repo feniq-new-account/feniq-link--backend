@@ -708,7 +708,9 @@
       "uploadImage": "Upload image",
       "replaceImage": "Replace image",
       "clearImage": "Remove image",
-      "linkExisting": "or link to an existing company"
+      "linkExisting": "or link to an existing company",
+      "nameEnLabel": "English name",
+      "oneNameRequired": "Enter an Arabic or an English name."
     },
     "exchangeRate": {
       "title": "Exchange rate",

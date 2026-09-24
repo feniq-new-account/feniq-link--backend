@@ -7,6 +7,7 @@ import 'package:feniq/core/theme/app_text_theme.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/features/catalog/data/models/manufacturer_model.dart';
 import 'package:feniq/features/catalog/presentation/widgets/manufacturer_avatar.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // The pharmacist's entry into a warehouse's catalog is now this card, not a
 // medicine directly - tapping one filters the catalog down to this
@@ -45,7 +46,13 @@ class ManufacturerCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.spacingSmall),
           Text(
-            manufacturer.name,
+            // The name in the UI language, else the other one; the filter still
+            // sends manufacturer.name (the Arabic name it matches on).
+            pickName(
+              manufacturer.name,
+              manufacturer.nameEn,
+              arabic: Localizations.localeOf(context).languageCode == 'ar',
+            ),
             textAlign: TextAlign.center,
             style: context.textTheme.titleSmall,
             maxLines: 2,
