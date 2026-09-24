@@ -86,7 +86,7 @@ const reactivateAsWarehouse = (advertisementId) =>
   warehouseAdvertisementService.updateAdvertisementAvailability(advertisementId, ids.warehouse, true);
 
 const listedIds = async () =>
-  (await advertisementService.listActiveAdvertisements()).map((row) => String(row.advertisement._id));
+  (await advertisementService.listActiveAdvertisements()).rows.map((row) => String(row.advertisement._id));
 
 // Asserts an ApiError by its code - assert.rejects with a regex would only
 // match the message.

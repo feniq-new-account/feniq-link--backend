@@ -111,6 +111,11 @@ const productSchema = new Schema(
     // Why isActive is false - see DEACTIVATED_BY above. Null while active.
     deactivatedBy: { type: String, enum: [...DEACTIVATED_BY, null], default: null },
     lastPriceUpdate: { type: Date, default: Date.now },
+    // Written inside every offer create/approve transaction for this product
+    // (offer.service.js's assertNoRunningOffer): two concurrent attempts to
+    // put an offer on the same product then conflict, and the retry sees the
+    // first one - so "one offer per product" holds under concurrency.
+    lastOfferCheckAt: { type: Date, default: null },
     priceHistory: { type: [priceHistoryEntrySchema], default: [] },
   },
   // optimisticConcurrency: every .save() carries a `__v` precondition, so an

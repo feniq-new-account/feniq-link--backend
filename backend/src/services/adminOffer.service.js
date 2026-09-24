@@ -6,7 +6,13 @@ const Pharmacy = require('../models/pharmacy.model');
 const Warehouse = require('../models/warehouse.model');
 const { applyResolvedIdentity } = require('./productCatalog.service');
 const { buildOfferFields } = require('./warehouseOffer.service');
-const { buildOfferListFilter, listPaginatedOffers, OFFER_REVIEW_FILTER } = require('./offer.service');
+const {
+  buildOfferListFilter,
+  listPaginatedOffers,
+  OFFER_REVIEW_FILTER,
+  assertNoRunningOffer,
+} = require('./offer.service');
+const { runInTransaction } = require('../utils/transaction');
 const notificationService = require('./notification.service');
 const { emitToAdmins, emitToWarehouse, EVENTS } = require('../realtime');
 
@@ -208,9 +214,9 @@ function offerChangedError() {
   );
 }
 
-async function saveOfferOrConflict(offer) {
+async function saveOfferOrConflict(offer, session = null) {
   try {
-    await offer.save();
+    await offer.save({ session });
   } catch (err) {
     if (err.name === 'VersionError') throw offerChangedError();
     throw err;
@@ -232,7 +238,13 @@ async function approveOffer(offerId, userId, { expectedVersion } = {}) {
   }
   offer.approvedBy = userId;
   offer.approvedAt = new Date();
-  await saveOfferOrConflict(offer);
+  // One offer per product, re-checked at approval (Phase 6.1): the product
+  // this approval puts an offer on must not already have another one running
+  // or waiting. Same transaction as the save.
+  await runInTransaction(async (session) => {
+    await assertNoRunningOffer(offer.productId, { excludeOfferId: offer._id, session });
+    await saveOfferOrConflict(offer, session);
+  });
 
   // Clears this offer from every other admin's open queue. Emitted before the
   // best-effort FCM block below - the queue shouldn't wait on a slow fan-out.

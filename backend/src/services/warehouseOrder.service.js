@@ -5,6 +5,7 @@ const OrderItem = require('../models/orderItem.model');
 const Pharmacy = require('../models/pharmacy.model');
 const Product = require('../models/product.model');
 const Offer = require('../models/offer.model');
+const { offerMapFor } = require('./offer.service');
 const Warehouse = require('../models/warehouse.model');
 const Review = require('../models/review.model');
 const Return = require('../models/return.model');
@@ -557,7 +558,8 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
       }),
       getDiscountMapForWarehouse(warehouseId),
     ]);
-    const offerByProductId = new Map(offers.map((o) => [o.productId.toString(), o]));
+    // The one deterministic "offer for this product" (offer.service.js).
+    const offerByProductId = offerMapFor(offers);
 
     const newItemsData = addItems.map((item) => {
       const product = productById.get(item.productId);

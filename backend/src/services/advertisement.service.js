@@ -60,9 +60,20 @@ async function loadProductsFor(advertisements) {
 // Every advertisement a pharmacy may currently see. Pending, rejected, expired,
 // not-yet-started and paused ones are all excluded by listableFilter, whose
 // status/date part the {status, startDate, endDate} index backs directly.
-async function listActiveAdvertisements() {
-  const advertisements = await Advertisement.find(listableFilter()).sort({ createdAt: -1 });
-  if (advertisements.length === 0) return [];
+//
+// Cursor-paginated (catalog overhaul Phase 6.3), newest first: `limit`
+// (default ACTIVE_ADVERTISEMENTS_DEFAULT_LIMIT, at most 100) and `after`. A
+// caller that sends neither - an installed app build - gets the first page.
+const ACTIVE_ADVERTISEMENTS_DEFAULT_LIMIT = 50;
+
+async function listActiveAdvertisements({ limit = ACTIVE_ADVERTISEMENTS_DEFAULT_LIMIT, after = null } = {}) {
+  const filter = listableFilter();
+  if (after) filter._id = { $lt: after };
+  const fetched = await Advertisement.find(filter).sort({ _id: -1 }).limit(limit + 1);
+  const hasMore = fetched.length > limit;
+  const advertisements = hasMore ? fetched.slice(0, limit) : fetched;
+  const nextCursor = advertisements.length ? String(advertisements[advertisements.length - 1]._id) : null;
+  if (advertisements.length === 0) return { rows: [], hasMore: false, nextCursor: null };
 
   const warehouseIds = [...new Set(advertisements.map((ad) => ad.warehouseId.toString()))];
   const [productById, warehouses] = await Promise.all([
@@ -71,7 +82,7 @@ async function listActiveAdvertisements() {
   ]);
   const warehouseById = new Map(warehouses.map((w) => [w._id.toString(), w]));
 
-  return (
+  const rows = (
     advertisements
       .map((advertisement) => ({
         advertisement,
@@ -82,6 +93,7 @@ async function listActiveAdvertisements() {
       // ordered from - hidden for the same reason the catalog hides it.
       .filter((row) => row.warehouse !== null)
   );
+  return { rows, hasMore, nextCursor };
 }
 
 // The single gate for "is this advertisement still live". Both the

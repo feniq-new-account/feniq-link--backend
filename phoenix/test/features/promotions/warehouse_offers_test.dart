@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:feniq/core/models/paginated_result.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -87,7 +88,7 @@ void main() {
   });
 
   void stubOffers(List<OfferModel> offers) {
-    when(() => offersRepository.getActiveOffers()).thenAnswer((_) async => offers);
+    when(() => offersRepository.getActiveOffers(cursor: any(named: 'cursor'), limit: any(named: 'limit'))).thenAnswer((_) async => PaginatedResult(items: offers, hasMore: false));
   }
 
   group('WarehouseOffersCubit', () {
@@ -119,7 +120,7 @@ void main() {
     });
 
     test('a failed load is the error state', () async {
-      when(() => offersRepository.getActiveOffers()).thenAnswer(
+      when(() => offersRepository.getActiveOffers(cursor: any(named: 'cursor'), limit: any(named: 'limit'))).thenAnswer(
         (_) async => throw ServerFailure('offers are down', code: 'SERVER_ERROR'),
       );
       final cubit = WarehouseOffersCubit(offersRepository: offersRepository, warehouseId: 'W1');
@@ -412,8 +413,8 @@ void main() {
         offersRepository: offersRepository,
         advertisementsRepository: advertisementsRepository,
       );
-      when(() => advertisementsRepository.getActiveAdvertisements())
-          .thenAnswer((_) async => const <AdvertisementModel>[]);
+      when(() => advertisementsRepository.getActiveAdvertisements(cursor: any(named: 'cursor'), limit: any(named: 'limit')))
+          .thenAnswer((_) async => const PaginatedResult<AdvertisementModel>(items: [], hasMore: false));
     });
 
     tearDown(() async {

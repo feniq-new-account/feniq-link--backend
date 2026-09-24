@@ -6,7 +6,7 @@ const { normalizeText } = require('../utils/normalizeText');
 const { isWarehouseAvailable } = require('./warehouse.service');
 const { buildProductFilter, findProductPage } = require('./productCatalog.service');
 const { getDiscountMapForWarehouse, discountPercentageFor } = require('./manufacturerDiscount.service');
-const { activeOfferFilter } = require('./offer.service');
+const { activeOfferFilter, offerMapFor } = require('./offer.service');
 
 // Everything the pharmacist-facing catalog actually consumes off a product
 // row: product.viewmodel.js's serializeProductWithOffer needs categoryId /
@@ -65,10 +65,12 @@ async function listWarehouseProducts(
       // stays live from its start date on.
       ...activeOfferFilter(now),
       productId: { $in: products.map((p) => p._id) },
-    }).select('productId discountPercentage titleAr titleEn'),
+    }).select('productId discountPercentage titleAr titleEn approvedAt'),
     getDiscountMapForWarehouse(warehouseId),
   ]);
-  const offerByProductId = new Map(offers.map((o) => [o.productId.toString(), o]));
+  // The one deterministic "offer for this product" (offer.service.js) - never
+  // last-one-wins over an unsorted query.
+  const offerByProductId = offerMapFor(offers);
 
   // Section 15: the manufacturer discount (if any) stacks with an active
   // Offer - see product.viewmodel.js for where the two combine into one

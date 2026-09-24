@@ -25,6 +25,75 @@ function activeOfferFilter(now = new Date()) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// "The offer for product X" (catalog overhaul Phase 6.2, M2)
+// ---------------------------------------------------------------------------
+//
+// A product has at most one running or waiting offer from now on (see
+// assertNoRunningOffer), but data written before that rule can still hold two
+// overlapping live offers for one product. The catalog, the offers tab and the
+// order all used to build `new Map(offers.map(...))` from an unsorted query -
+// last one wins, in whatever order each query happened to return - so the three
+// could apply different offers to the same product. This is now the one
+// deterministic choice they all make: the highest discount, then the most
+// recently approved, then the newest.
+function compareOffers(a, b) {
+  if (b.discountPercentage !== a.discountPercentage) return b.discountPercentage - a.discountPercentage;
+  const approvedA = a.approvedAt ? new Date(a.approvedAt).getTime() : 0;
+  const approvedB = b.approvedAt ? new Date(b.approvedAt).getTime() : 0;
+  if (approvedB !== approvedA) return approvedB - approvedA;
+  return String(b._id).localeCompare(String(a._id));
+}
+
+function pickOfferForProduct(offers) {
+  if (!offers || offers.length === 0) return null;
+  return [...offers].sort(compareOffers)[0];
+}
+
+// Map<productId, the offer that applies> for a list of live offers.
+function offerMapFor(offers) {
+  const byProduct = new Map();
+  for (const offer of offers) {
+    const key = String(offer.productId);
+    if (!byProduct.has(key)) byProduct.set(key, []);
+    byProduct.get(key).push(offer);
+  }
+  return new Map([...byProduct].map(([key, list]) => [key, pickOfferForProduct(list)]));
+}
+
+// One offer per product (Phase 6.1): a product that already has an offer
+// waiting for approval, or approved and not yet expired, cannot get another -
+// the warehouse edits or cancels the existing one. Expired and stopped offers
+// don't count. Enforced at create/edit AND at admin approval; the check runs
+// inside a transaction that also writes to the product (lastOfferCheckAt), so
+// two concurrent creates for one product conflict instead of both passing.
+async function assertNoRunningOffer(productId, { excludeOfferId = null, session = null, now = new Date() } = {}) {
+  const Product = require('../models/product.model');
+  if (session) {
+    await Product.updateOne({ _id: productId }, { $set: { lastOfferCheckAt: now } }, { session });
+  }
+  const filter = {
+    $or: [{ productId }, { 'pendingUpdate.productId': productId }],
+    $and: [
+      {
+        $or: [
+          { status: 'pending' },
+          { status: 'approved', $or: [{ isPermanent: true }, { endDate: null }, { endDate: { $gte: now } }] },
+        ],
+      },
+    ],
+  };
+  if (excludeOfferId) filter._id = { $ne: excludeOfferId };
+  const existing = await Offer.findOne(filter).select('_id').session(session).lean();
+  if (existing) {
+    throw ApiError.conflict(
+      'This product already has an offer running or waiting for approval - edit or cancel that one instead.',
+      'OFFER_ALREADY_EXISTS',
+      { offerId: existing._id }
+    );
+  }
+}
+
 // Only what an offer card actually needs off a product, plus warehouseId (the
 // ownership check below) and masterProductId (the populate key for the
 // resolved identity - Section 14 Part 2).
@@ -39,13 +108,37 @@ const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn';
 // `pendingUpdate` is deliberately never read: a warehouse's proposed edit to
 // an already-approved offer is not what pharmacies see until an admin
 // approves it (see offer.model.js).
-async function listActiveOffers() {
+//
+// Cursor-paginated (catalog overhaul Phase 6.3), newest first: `limit`
+// (default ACTIVE_OFFERS_DEFAULT_LIMIT, at most 100) and `after` (the previous
+// page's nextCursor). A caller that sends neither - an installed app build -
+// gets the first page. Where legacy data still holds two live offers for one
+// product, only the one pickOfferForProduct chooses is listed, so the tab
+// shows the same offer the catalog and the order apply.
+const ACTIVE_OFFERS_DEFAULT_LIMIT = 50;
+
+async function listActiveOffers({ limit = ACTIVE_OFFERS_DEFAULT_LIMIT, after = null } = {}) {
+  const now = new Date();
+  const filter = activeOfferFilter(now);
+  if (after) filter._id = { $lt: after };
   // .lean(): read-only, straight into offer.viewmodel.js.
-  const offers = await Offer.find(activeOfferFilter())
-    .select('titleAr titleEn discountPercentage startDate endDate isPermanent warehouseId productId')
-    .sort({ createdAt: -1 })
+  const fetched = await Offer.find(filter)
+    .select('titleAr titleEn discountPercentage startDate endDate isPermanent warehouseId productId approvedAt')
+    .sort({ _id: -1 })
+    .limit(limit + 1)
     .lean();
-  if (offers.length === 0) return [];
+  const hasMore = fetched.length > limit;
+  const pageOffers = hasMore ? fetched.slice(0, limit) : fetched;
+  const nextCursor = pageOffers.length ? String(pageOffers[pageOffers.length - 1]._id) : null;
+  if (pageOffers.length === 0) return { rows: [], hasMore: false, nextCursor: null };
+
+  // The chosen offer per product, across every live offer of these products.
+  const siblings = await Offer.find({ ...activeOfferFilter(now), productId: { $in: pageOffers.map((o) => o.productId) } })
+    .select('productId discountPercentage approvedAt')
+    .lean();
+  const chosen = offerMapFor(siblings);
+  const offers = pageOffers.filter((offer) => String(chosen.get(String(offer.productId))?._id) === String(offer._id));
+  if (offers.length === 0) return { rows: [], hasMore, nextCursor };
 
   const productIds = [...new Set(offers.map((offer) => offer.productId.toString()))];
   const warehouseIds = [...new Set(offers.map((offer) => offer.warehouseId.toString()))];
@@ -72,7 +165,7 @@ async function listActiveOffers() {
   );
   const discountMapByWarehouseId = new Map(discountMapEntries);
 
-  return offers
+  const rows = offers
     .map((offer) => {
       const warehouseId = offer.warehouseId.toString();
       const product = productById.get(offer.productId.toString()) ?? null;
@@ -95,6 +188,7 @@ async function listActiveOffers() {
         row.product !== null &&
         row.product.warehouseId.toString() === row.offer.warehouseId.toString()
     );
+  return { rows, hasMore, nextCursor };
 }
 
 // ---------------------------------------------------------------------------
@@ -271,6 +365,9 @@ async function listPaginatedOffers(filter, { limit, after = null } = {}) {
 
 module.exports = {
   activeOfferFilter,
+  pickOfferForProduct,
+  offerMapFor,
+  assertNoRunningOffer,
   listActiveOffers,
   OFFER_STATUS_VALUES,
   OFFER_REVIEW_FILTER,

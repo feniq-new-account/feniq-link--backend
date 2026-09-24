@@ -85,7 +85,10 @@ export function OfferModal({ mode, offer, products, usdToSyp, onClose, onSubmit,
       await onSubmit(payload);
       onSaved();
     } catch (err) {
-      setError(err.message);
+      // One offer per product: the product already has one running or waiting.
+      if (err.code === 'OFFER_ALREADY_EXISTS') setError(t('offers.warehouse.alreadyHasOffer'));
+      else if (err.code === 'OFFER_STOPPED') setError(t('offers.warehouse.offerStopped'));
+      else setError(err.message);
     } finally {
       setIsSaving(false);
     }

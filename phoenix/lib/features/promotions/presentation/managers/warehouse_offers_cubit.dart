@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/error/failure.dart';
+import 'package:feniq/features/offers/data/models/offer_model.dart';
 import 'package:feniq/features/offers/data/repositories/offers_repository.dart';
 import 'package:feniq/features/promotions/data/models/promotion.dart';
 
@@ -34,9 +35,17 @@ class WarehouseOffersCubit extends Cubit<PromotionsState> {
   Future<void> load() async {
     emit(state.copyWith(status: PromotionsStatus.loading));
     try {
-      final offers = await _offersRepository.getActiveOffers();
-      // A pushed screen can be closed while the request is still out.
-      if (isClosed) return;
+      // The listing is paginated; this screen needs every one of this
+      // warehouse's offers, so it walks the pages (large ones) to the end.
+      final offers = <OfferModel>[];
+      String? cursor;
+      do {
+        final page = await _offersRepository.getActiveOffers(cursor: cursor, limit: 100);
+        // A pushed screen can be closed while the request is still out.
+        if (isClosed) return;
+        offers.addAll(page.items);
+        cursor = page.hasMore ? page.nextCursor : null;
+      } while (cursor != null);
       final promotions = <Promotion>[
         for (final offer in offers)
           if (offer.warehouseId == _warehouseId) OfferPromotion(offer),

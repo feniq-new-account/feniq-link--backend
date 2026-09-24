@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const Product = require('../models/product.model');
 const Offer = require('../models/offer.model');
+const { offerMapFor } = require('./offer.service');
 const Order = require('../models/order.model');
 const OrderItem = require('../models/orderItem.model');
 const Warehouse = require('../models/warehouse.model');
@@ -542,7 +543,9 @@ async function createOrder({
     }),
     getDiscountMapForWarehouse(warehouseId),
   ]);
-  const offerByProductId = new Map(offers.map((o) => [o.productId.toString(), o]));
+  // The one deterministic "offer for this product" (offer.service.js) - never
+  // last-one-wins over an unsorted query.
+  const offerByProductId = offerMapFor(offers);
 
   // Section 7/8 (price half of the same guarantee the availability check
   // above gives): the cart snapshots a unit price when an item is added and
@@ -1263,12 +1266,14 @@ async function prepareReorder(orderId, pharmacyId) {
           // and stays live from its start date on.
           $or: [{ isPermanent: true }, { endDate: { $gte: now } }],
           productId: { $in: products.map((p) => p._id) },
-        }).select('productId discountPercentage titleAr titleEn')
+        }).select('productId discountPercentage titleAr titleEn approvedAt')
       : [],
     getDiscountMapForWarehouse(order.warehouseId),
     Warehouse.findById(order.warehouseId).select('nameAr nameEn').lean(),
   ]);
-  const offerByProductId = new Map(offers.map((o) => [o.productId.toString(), o]));
+  // The one deterministic "offer for this product" (offer.service.js) - never
+  // last-one-wins over an unsorted query.
+  const offerByProductId = offerMapFor(offers);
 
   const items = products.map((product) => ({
     product,

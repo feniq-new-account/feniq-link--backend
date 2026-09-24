@@ -4,7 +4,13 @@ const Offer = require('../models/offer.model');
 const Product = require('../models/product.model');
 const { findOwnedProductOrThrow } = require('./warehouseProduct.service');
 const { applyResolvedIdentity } = require('./productCatalog.service');
-const { buildOfferListFilter, listPaginatedOffers, OFFER_REVIEW_FILTER } = require('./offer.service');
+const {
+  buildOfferListFilter,
+  listPaginatedOffers,
+  OFFER_REVIEW_FILTER,
+  assertNoRunningOffer,
+} = require('./offer.service');
+const { runInTransaction } = require('../utils/transaction');
 const { emitToAdmins, EVENTS } = require('../realtime');
 
 function validateTitle(value, field) {
@@ -88,10 +94,19 @@ async function findOwnedOfferOrThrow(offerId, warehouseId) {
 // Section 7/13c: an offer always starts 'pending' - only an admin can move it
 // to 'approved' (adminOffer.service.js). The warehouse never sets its own
 // offer live.
+//
+// One offer per product (catalog overhaul Phase 6.1): refused with
+// OFFER_ALREADY_EXISTS while the product has an offer running or waiting -
+// checked in the same transaction as the insert (offer.service.js's
+// assertNoRunningOffer).
 async function createOffer(warehouseId, data) {
   const { fields, product } = await buildOfferFields(warehouseId, data);
 
-  const offer = await Offer.create({ warehouseId, ...fields, status: 'pending' });
+  let offer;
+  await runInTransaction(async (session) => {
+    await assertNoRunningOffer(fields.productId, { session });
+    [offer] = await Offer.create([{ warehouseId, ...fields, status: 'pending' }], { session });
+  });
 
   // Straight into the admin moderation queue - an offer cannot go live until
   // an admin approves it, so the warehouse is blocked on that decision.
@@ -117,6 +132,11 @@ async function updateOffer(offerId, warehouseId, data) {
     throw ApiError.conflict('This offer was stopped and can no longer be edited.', 'OFFER_STOPPED');
   }
   const { fields, product } = await buildOfferFields(warehouseId, data);
+  // Moving the offer onto another product must not give that product a second
+  // offer (Phase 6.1).
+  if (String(fields.productId) !== String(offer.productId)) {
+    await runInTransaction((session) => assertNoRunningOffer(fields.productId, { excludeOfferId: offer._id, session }));
+  }
 
   if (offer.status === 'pending') {
     Object.assign(offer, fields);

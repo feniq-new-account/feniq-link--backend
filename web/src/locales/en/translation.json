@@ -491,7 +491,9 @@
       "approvalNotice": "Every offer goes through admin approval before it publishes - once approved, all pharmacies are notified. Editing an approved offer keeps the live one unchanged until the admin approves your change.",
       "fromColumn": "From",
       "toColumn": "To",
-      "statusStopped": "Stopped"
+      "statusStopped": "Stopped",
+      "alreadyHasOffer": "This product already has an offer running or waiting for approval - edit or cancel that one instead.",
+      "offerStopped": "This offer was stopped (its product was withdrawn) and can no longer be edited."
     },
     "admin": {
       "noOffers": "No offers match this filter.",
