@@ -1,4 +1,4 @@
-const { computeDiscountedPriceUsd } = require('../services/manufacturerDiscount.service');
+const { computeFinalPrice } = require('../services/manufacturerDiscount.service');
 
 // The pharmacist-facing shape of a warehouse product offer, as the Offers &
 // Ads tab lists it.
@@ -11,7 +11,17 @@ const { computeDiscountedPriceUsd } = require('../services/manufacturerDiscount.
 // (product.viewmodel.js -> computeDiscountedPriceUsd), with the same inputs, so
 // the price shown here and the price shown on the catalog card for the same
 // product are the same number by construction. Nothing new is calculated here.
-function serializeActiveOffer({ offer, product, warehouse, manufacturerDiscountPercentage }) {
+//
+// Catalog overhaul Phase 7 (additive): `finalPriceSyp` - the lira price an
+// order charges, from the order's own function at `priceRate` - plus the two
+// discount percentages, exactly as the catalog product carries them.
+function serializeActiveOffer({ offer, product, warehouse, manufacturerDiscountPercentage }, usdToSyp = null) {
+  const price = computeFinalPrice({
+    priceUsd: product.price,
+    offerDiscountPercentage: offer.discountPercentage,
+    manufacturerDiscountPercentage,
+    usdToSyp,
+  });
   return {
     id: offer._id,
     titleAr: offer.titleAr,
@@ -38,17 +48,17 @@ function serializeActiveOffer({ offer, product, warehouse, manufacturerDiscountP
     unitAr: product.unitAr,
     unitEn: product.unitEn,
     priceUsd: product.price,
-    discountPriceUsd: computeDiscountedPriceUsd(
-      product.price,
-      offer.discountPercentage,
-      manufacturerDiscountPercentage
-    ),
+    discountPriceUsd: price.finalUsd,
     isAvailable: product.isAvailable,
+    finalPriceSyp: price.finalSyp,
+    priceRate: usdToSyp > 0 ? usdToSyp : null,
+    offerDiscountPercentage: offer.discountPercentage,
+    manufacturerDiscountPercentage: manufacturerDiscountPercentage ?? null,
   };
 }
 
-function toActiveOffersResponse(rows) {
-  return { offers: rows.map(serializeActiveOffer) };
+function toActiveOffersResponse(rows, usdToSyp = null) {
+  return { offers: rows.map((row) => serializeActiveOffer(row, usdToSyp)), priceRate: usdToSyp > 0 ? usdToSyp : null };
 }
 
 module.exports = { toActiveOffersResponse };

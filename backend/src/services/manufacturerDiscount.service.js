@@ -150,6 +150,9 @@ function discountPercentageFor(discountMap, product) {
 // percentage discounts commute, so "which one first" doesn't change the
 // result; this order just matches how the two are usually reasoned about
 // (product-specific promotion, then a standing catalog-wide rule).
+//
+// Clamped at 0 (catalog overhaul Phase 7): a discount can never produce a
+// negative price.
 function computeDiscountedPriceUsd(priceUsd, offerDiscountPercentage, manufacturerDiscountPercentage) {
   let price = priceUsd;
   if (offerDiscountPercentage) {
@@ -158,7 +161,38 @@ function computeDiscountedPriceUsd(priceUsd, offerDiscountPercentage, manufactur
   if (manufacturerDiscountPercentage) {
     price *= 1 - manufacturerDiscountPercentage / 100;
   }
-  return Math.round(price * 100) / 100;
+  return Math.max(0, Math.round(price * 100) / 100);
+}
+
+// The same stacking in SYP, exactly as an order charges it: the offer, then
+// the manufacturer discount, rounding to the nearest lira after each stage.
+// Either percentage being falsy skips that stage. Clamped at 0.
+function stackedDiscountSyp(baseSyp, offerPercentage, manufacturerDiscountPercentage) {
+  let price = baseSyp;
+  if (offerPercentage) {
+    price = Math.round(price * (1 - offerPercentage / 100));
+  }
+  if (manufacturerDiscountPercentage) {
+    price = Math.round(price * (1 - manufacturerDiscountPercentage / 100));
+  }
+  return Math.max(0, price);
+}
+
+// THE price of one unit of a product (catalog overhaul Phase 7): the final
+// USD price, and - given the rate - the unit and final SYP prices with the
+// exact rounding an order charges them at. The order computes its lines with
+// this very function, and the catalog, reorder and offers responses expose its
+// `finalSyp`, so the lira figure a pharmacist is shown is the one they are
+// charged. `unitSyp` / `finalSyp` are null without a rate.
+function computeFinalPrice({ priceUsd, offerDiscountPercentage = null, manufacturerDiscountPercentage = null, usdToSyp = null }) {
+  const finalUsd = computeDiscountedPriceUsd(priceUsd, offerDiscountPercentage, manufacturerDiscountPercentage);
+  if (!(usdToSyp > 0)) return { finalUsd, unitSyp: null, finalSyp: null };
+  const unitSyp = Math.round(priceUsd * usdToSyp);
+  return {
+    finalUsd,
+    unitSyp,
+    finalSyp: stackedDiscountSyp(unitSyp, offerDiscountPercentage, manufacturerDiscountPercentage),
+  };
 }
 
 module.exports = {
@@ -169,4 +203,6 @@ module.exports = {
   getDiscountMapForWarehouse,
   discountPercentageFor,
   computeDiscountedPriceUsd,
+  stackedDiscountSyp,
+  computeFinalPrice,
 };

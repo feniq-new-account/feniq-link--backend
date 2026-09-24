@@ -154,14 +154,14 @@ function toOrderListResponse(items) {
 // live prices. `unavailableItems` are lines the warehouse no longer sells -
 // shown to the pharmacist, never added to the cart. No order id / number /
 // status here: reorder creates nothing.
-function toReorderResponse({ warehouse, items = [], unavailableItems = [] }) {
+function toReorderResponse({ warehouse, items = [], unavailableItems = [] }, usdToSyp = null) {
   return {
     reorder: {
       warehouseId: warehouse ? warehouse._id : null,
       warehouseNameAr: warehouse ? warehouse.nameAr : null,
       warehouseNameEn: warehouse ? warehouse.nameEn : null,
       items: items.map(({ quantity, ...productItem }) => ({
-        ...serializeProductWithOffer(productItem),
+        ...serializeProductWithOffer(productItem, usdToSyp),
         quantity,
       })),
       unavailableItems: unavailableItems.map((item) => ({

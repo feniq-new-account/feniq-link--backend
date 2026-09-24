@@ -1,6 +1,7 @@
 const { asyncHandler } = require('../utils/asyncHandler');
 const offerService = require('../services/offer.service');
 const offerViewModel = require('../viewmodels/offer.viewmodel');
+const { getRate } = require('../services/exchangeRate.service');
 const { parseCursorQuery, parseObjectIdCursor, paginationMeta } = require('../utils/pagination');
 
 // Optional cursor pagination: `limit` (default 50, at most 100) and `cursor`
@@ -12,7 +13,12 @@ function pageQuery(query) {
 
 const listActive = asyncHandler(async (req, res) => {
   const { rows, hasMore, nextCursor } = await offerService.listActiveOffers(pageQuery(req.query));
-  res.json({ success: true, ...offerViewModel.toActiveOffersResponse(rows), pagination: paginationMeta(hasMore, nextCursor) });
+  const rate = await getRate();
+  res.json({
+    success: true,
+    ...offerViewModel.toActiveOffersResponse(rows, rate?.usdToSyp ?? null),
+    pagination: paginationMeta(hasMore, nextCursor),
+  });
 });
 
 module.exports = { listActive };

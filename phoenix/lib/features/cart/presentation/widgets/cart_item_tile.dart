@@ -114,7 +114,7 @@ class CartItemTile extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            formatMoneyFromUsd(item.discountPriceUsd, usdToSyp, l10n.currencySuffix),
+                            formatMoneySyp(item.unitSypAt(usdToSyp), l10n.currencySuffix),
                             style: TextStyle(
                               color: AppColors.secondaryOf(context),
                               fontWeight: FontWeight.bold,
@@ -125,7 +125,7 @@ class CartItemTile extends StatelessWidget {
                       )
                     else
                       Text(
-                        formatMoneyFromUsd(item.discountPriceUsd, usdToSyp, l10n.currencySuffix),
+                        formatMoneySyp(item.unitSypAt(usdToSyp), l10n.currencySuffix),
                         style: TextStyle(
                           color: AppColors.primaryOf(context),
                           fontWeight: FontWeight.bold,
@@ -201,7 +201,7 @@ class CartItemTile extends StatelessWidget {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      formatMoneyFromUsd(item.lineTotalUsd, usdToSyp, l10n.currencySuffix),
+                      formatMoneySyp(item.lineTotalSypAt(usdToSyp), l10n.currencySuffix),
                       style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                       maxLines: 1,
                     ),

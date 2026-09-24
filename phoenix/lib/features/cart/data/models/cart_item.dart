@@ -1,3 +1,5 @@
+import 'package:feniq/core/utils/pricing.dart';
+import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
 
 /// One product inside a package, for the package line's expandable detail.
@@ -56,6 +58,12 @@ class CartItem {
     this.packageContents = const [],
     this.isAvailable = true,
     this.previousPriceUsd,
+    this.finalPriceSyp,
+    this.priceRate,
+    this.offerDiscountPercentage,
+    this.manufacturerDiscountPercentage,
+    this.hasDiscountInputs = false,
+    this.bonuses = const [],
   });
 
   /// A product's id on an ordinary line; the PACKAGE's id on a package line.
@@ -96,7 +104,46 @@ class CartItem {
   /// cart until it is. Null on every line the server has not repriced.
   final num? previousPriceUsd;
 
+  // Catalog overhaul Phase 7: the lira price of one unit as the server priced
+  // it (at [priceRate]), with the discount inputs to recompute it exactly if
+  // the rate moves - see core/utils/pricing.dart. Snapshotted when the line is
+  // added, refreshed when checkout reprices it (PRICE_CHANGED).
+  final num? finalPriceSyp;
+  final num? priceRate;
+  final num? offerDiscountPercentage;
+  final num? manufacturerDiscountPercentage;
+  final bool hasDiscountInputs;
+
+  // The product's bonus tiers as they were when the line was added - sent back
+  // at checkout so the server can refuse (BONUS_CHANGED) if they moved.
+  final List<BonusTier> bonuses;
+
   bool get isPackage => packageId != null;
+
+  /// The lira price of one unit at [usdToSyp] - what the order charges for a
+  /// loose line. A package copy has no per-unit SYP from the server and keeps
+  /// the plain conversion of its package price.
+  int? unitSypAt(double? usdToSyp) => isPackage
+      ? (usdToSyp == null || usdToSyp <= 0 ? null : (discountPriceUsd * usdToSyp).round())
+      : displayedPriceSyp(
+          priceUsd: unitPriceUsd,
+          discountPriceUsd: discountPriceUsd,
+          serverPriceSyp: finalPriceSyp,
+          serverRate: priceRate,
+          offerPercentage: offerDiscountPercentage,
+          manufacturerDiscountPercentage: manufacturerDiscountPercentage,
+          hasDiscountInputs: hasDiscountInputs,
+          usdToSyp: usdToSyp,
+        );
+
+  /// The line's lira total at [usdToSyp] (free bonus units are not charged).
+  int? lineTotalSypAt(double? usdToSyp) {
+    final unit = unitSypAt(usdToSyp);
+    return unit == null ? null : unit * quantity;
+  }
+
+  /// Free units this line earns from its bonus (the server's own rule).
+  int get freeQuantity => isPackage ? 0 : BonusTier.freeQuantity(bonuses, quantity);
 
   bool get hasUnconfirmedPriceChange => previousPriceUsd != null;
 
@@ -123,6 +170,12 @@ class CartItem {
       unitPriceUsd: product.priceUsd,
       discountPriceUsd: product.discountPriceUsd,
       quantity: quantity,
+      finalPriceSyp: product.finalPriceSyp,
+      priceRate: product.priceRate,
+      offerDiscountPercentage: product.offerDiscountPercentage,
+      manufacturerDiscountPercentage: product.manufacturerDiscountPercentage,
+      hasDiscountInputs: product.hasDiscountInputs,
+      bonuses: product.bonuses,
     );
   }
 
@@ -166,6 +219,12 @@ class CartItem {
     num? discountPriceUsd,
     num? previousPriceUsd,
     bool clearPreviousPrice = false,
+    num? finalPriceSyp,
+    num? priceRate,
+    num? offerDiscountPercentage,
+    num? manufacturerDiscountPercentage,
+    bool? hasDiscountInputs,
+    List<BonusTier>? bonuses,
   }) {
     return CartItem(
       productId: productId,
@@ -183,6 +242,13 @@ class CartItem {
       packageContents: packageContents,
       isAvailable: isAvailable ?? this.isAvailable,
       previousPriceUsd: clearPreviousPrice ? null : (previousPriceUsd ?? this.previousPriceUsd),
+      finalPriceSyp: finalPriceSyp ?? this.finalPriceSyp,
+      priceRate: priceRate ?? this.priceRate,
+      offerDiscountPercentage: hasDiscountInputs != null ? offerDiscountPercentage : this.offerDiscountPercentage,
+      manufacturerDiscountPercentage:
+          hasDiscountInputs != null ? manufacturerDiscountPercentage : this.manufacturerDiscountPercentage,
+      hasDiscountInputs: hasDiscountInputs ?? this.hasDiscountInputs,
+      bonuses: bonuses ?? this.bonuses,
     );
   }
 }

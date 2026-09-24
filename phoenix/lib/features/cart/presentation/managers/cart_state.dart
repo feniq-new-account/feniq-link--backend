@@ -67,6 +67,19 @@ class CartState {
 
   num get subtotalUsd => items.fold<num>(0, (sum, item) => sum + item.lineTotalUsd);
 
+  /// The subtotal in lira at [usdToSyp] - the sum of each line's own lira
+  /// total, exactly as the order adds them up (catalog overhaul Phase 7).
+  /// Null while no rate is known.
+  int? subtotalSypAt(double? usdToSyp) {
+    var total = 0;
+    for (final item in items) {
+      final line = item.lineTotalSypAt(usdToSyp);
+      if (line == null) return null;
+      total += line;
+    }
+    return total;
+  }
+
   /// The packages in the cart, as their own lines. Used by the repository to
   /// split the checkout payload, and by the summary to name them.
   List<CartItem> get packageLines => items.where((item) => item.isPackage).toList();

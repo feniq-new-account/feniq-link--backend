@@ -160,9 +160,9 @@ export function WarehouseDiscountsPage() {
                         {editingId === discount.id ? (
                           <input
                             type="number"
-                            min="1"
+                            min="0.01"
                             max="100"
-                            step="1"
+                            step="0.01"
                             value={editPercentage}
                             onChange={(e) => setEditPercentage(e.target.value)}
                             style={{ width: 80 }}
@@ -236,9 +236,9 @@ export function WarehouseDiscountsPage() {
               {t('discounts.discountPercent')}
               <input
                 type="number"
-                min="1"
+                min="0.01"
                 max="100"
-                step="1"
+                step="0.01"
                 value={percentage}
                 onChange={(e) => setPercentage(e.target.value)}
                 required

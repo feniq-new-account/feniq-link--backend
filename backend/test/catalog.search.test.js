@@ -319,7 +319,9 @@ test('the catalog list viewmodel is unchanged by the product projection', async 
     assert.deepStrictEqual(
       Object.keys(row).sort(),
       ['discountPriceUsd', 'id', 'image', 'isAvailable', 'manufacturerAr', 'manufacturerEn',
-        'nameAr', 'nameEn', 'offer', 'priceUsd', 'unitAr', 'unitEn', 'categoryId'].sort()
+        'nameAr', 'nameEn', 'offer', 'priceUsd', 'unitAr', 'unitEn', 'categoryId',
+        // Additive (catalog overhaul Phases 7-8) - nothing was dropped.
+        'finalPriceSyp', 'priceRate', 'offerDiscountPercentage', 'manufacturerDiscountPercentage', 'unit', 'bonuses'].sort()
     );
     assert.strictEqual(typeof row.priceUsd, 'number', 'priceUsd must be a real number, not undefined');
     assert.strictEqual(typeof row.discountPriceUsd, 'number');

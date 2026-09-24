@@ -47,3 +47,10 @@ String formatMoneyFromUsd(num usdAmount, double? usdToSyp, String currencySuffix
   final syp = sypFromUsd(usdAmount, usdToSyp);
   return syp == null ? kMoneyUnavailable : formatSyp(syp, currencySuffix);
 }
+
+/// Money text for an amount that is already in SYP (e.g. a product's
+/// server-computed `finalPriceSyp`, see core/utils/pricing.dart) -
+/// [kMoneyUnavailable] while there is none.
+String formatMoneySyp(num? sypAmount, String currencySuffix) {
+  return sypAmount == null ? kMoneyUnavailable : formatSyp(sypAmount, currencySuffix);
+}

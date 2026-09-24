@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { getRate } = require('../services/exchangeRate.service');
 const { ApiError } = require('../utils/ApiError');
 const Pharmacy = require('../models/pharmacy.model');
 const orderService = require('../services/order.service');
@@ -264,7 +265,9 @@ const listReturnable = asyncHandler(async (req, res) => {
 const reorder = asyncHandler(async (req, res) => {
   const pharmacy = await loadPharmacyOrThrow(req.user._id);
   const preparation = await orderService.prepareReorder(req.params.id, pharmacy._id);
-  res.json({ success: true, ...orderViewModel.toReorderResponse(preparation) });
+  // Priced like the catalog: lira figures at the current rate (Phase 7).
+  const rate = await getRate();
+  res.json({ success: true, ...orderViewModel.toReorderResponse(preparation, rate?.usdToSyp ?? null) });
 });
 
 module.exports = {

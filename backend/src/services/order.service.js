@@ -29,26 +29,17 @@ const {
   getDiscountMapForWarehouse,
   discountPercentageFor,
   computeDiscountedPriceUsd,
+  stackedDiscountSyp,
+  computeFinalPrice,
 } = require('./manufacturerDiscount.service');
 // advertisement.service depends on warehouse/productCatalog only - it never
 // requires this file back, so there is no cycle here.
 const { loadActiveAdvertisementOrThrow, isAdvertisementAvailable } = require('./advertisement.service');
 const { emitToWarehouse, EVENTS } = require('../realtime');
 
-// Section 15: applies an Offer percentage then a manufacturer-discount
-// percentage, in SYP, rounding to the nearest lira after each stage (same
-// per-stage-rounding convention the rest of this file already uses) -
-// either argument being falsy just skips that stage.
-function stackedDiscountSyp(baseSyp, offerPercentage, manufacturerDiscountPercentage) {
-  let price = baseSyp;
-  if (offerPercentage) {
-    price = Math.round(price * (1 - offerPercentage / 100));
-  }
-  if (manufacturerDiscountPercentage) {
-    price = Math.round(price * (1 - manufacturerDiscountPercentage / 100));
-  }
-  return price;
-}
+// Section 15: the SYP stacking lives with its USD twin now
+// (manufacturerDiscount.service.js stackedDiscountSyp / computeFinalPrice), so the
+// catalog's shown lira price and the order's charged one come from one function.
 
 // Section 6.7/7: the five tracked stages, in order - 'cancelled' is
 // deliberately excluded, since it's a special status shown outside the
@@ -602,6 +593,20 @@ async function createOrder({
         productId: item.productId,
         displayedPriceUsd: item.displayedUnitPriceUsd,
         currentPriceUsd,
+        // Additive (catalog overhaul Phase 7): the lira price this order would
+        // charge, from the same function, at the rate it is priced at - so the
+        // app shows the repriced line exactly.
+        currentPriceSyp: computeFinalPrice({
+          priceUsd: product.price,
+          offerDiscountPercentage: offer?.discountPercentage,
+          manufacturerDiscountPercentage,
+          usdToSyp,
+        }).finalSyp,
+        priceRate: usdToSyp,
+        // The undiscounted unit price, for the struck-through figure.
+        priceUsd: product.price,
+        offerDiscountPercentage: offer?.discountPercentage ?? null,
+        manufacturerDiscountPercentage: manufacturerDiscountPercentage ?? null,
       });
       priceFallbackText.push(
         `${product.nameEn} is now $${currentPriceUsd} (was $${item.displayedUnitPriceUsd}).`
@@ -632,8 +637,17 @@ async function createOrder({
     const manufacturerDiscountPercentage = discountPercentageFor(manufacturerDiscountByName, product);
 
     // product.price is USD - converted to SYP here, at order time, using
-    // today's rate (see comment above).
-    const unitPrice = Math.round(product.price * usdToSyp);
+    // today's rate (see comment above). One shared function for the unit and
+    // final prices in both currencies (manufacturerDiscount.service.js's
+    // computeFinalPrice) - the very one the catalog's shown lira price comes
+    // from, so what the pharmacist saw is what this charges.
+    const linePrice = computeFinalPrice({
+      priceUsd: product.price,
+      offerDiscountPercentage: offer?.discountPercentage,
+      manufacturerDiscountPercentage,
+      usdToSyp,
+    });
+    const unitPrice = linePrice.unitSyp;
 
     // Section 4/15: the product-level offer and the warehouse's
     // manufacturer discount (if any) both apply here, stacked - the
@@ -644,11 +658,7 @@ async function createOrder({
     // gets its own separate line below and does not affect this one, so
     // buying a package no longer costs the pharmacy the product's own offer
     // on the units it bought outside that package.
-    const discountPrice = stackedDiscountSyp(
-      unitPrice,
-      offer?.discountPercentage,
-      manufacturerDiscountPercentage
-    );
+    const discountPrice = linePrice.finalSyp;
     totalPrice += discountPrice * item.quantity;
 
     // Section 15: computed independently in USD, straight from the
@@ -656,11 +666,7 @@ async function createOrder({
     // figures above - avoids compounding two separate roundings. Only the
     // amount is stored, deliberately not the percentage or which
     // manufacturer it came from (project owner's decision).
-    const discountedPriceUsd = computeDiscountedPriceUsd(
-      product.price,
-      offer?.discountPercentage,
-      manufacturerDiscountPercentage
-    );
+    const discountedPriceUsd = linePrice.finalUsd;
     const savingsUsd = Math.max(
       0,
       Math.round((product.price - discountedPriceUsd) * item.quantity * 100) / 100

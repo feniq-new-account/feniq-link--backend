@@ -373,6 +373,10 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   // decides the idempotency key, exactly as for any other edit.
   ({List<CartItem> items, bool changed}) _applyPriceChanges(Object? problems) {
     final currentPriceByProductId = <String, num>{};
+    // The rest of each problem (catalog overhaul Phase 7, sent by a current
+    // backend): the lira price the order would charge, the rate it was priced
+    // at, and the discount inputs - so the repriced line shows exactly that.
+    final problemByProductId = <String, Map>{};
     if (problems is List) {
       for (final problem in problems) {
         if (problem is! Map) continue;
@@ -380,6 +384,7 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
         final currentPriceUsd = problem['currentPriceUsd'];
         if (productId is String && currentPriceUsd is num) {
           currentPriceByProductId[productId] = currentPriceUsd;
+          problemByProductId[productId] = problem;
         }
       }
     }
@@ -391,10 +396,19 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
         return item;
       }
       changed = true;
+      final problem = problemByProductId[item.productId]!;
+      final hasInputs = problem.containsKey('offerDiscountPercentage');
       return item.copyWith(
-        unitPriceUsd: currentPriceUsd,
         discountPriceUsd: currentPriceUsd,
         previousPriceUsd: item.previousPriceUsd ?? item.discountPriceUsd,
+        finalPriceSyp: problem['currentPriceSyp'] as num?,
+        priceRate: problem['priceRate'] as num?,
+        // The undiscounted price as the server sent it; an older backend sent
+        // none, and the old behaviour treated the new price as both.
+        unitPriceUsd: (problem['priceUsd'] as num?) ?? currentPriceUsd,
+        hasDiscountInputs: hasInputs,
+        offerDiscountPercentage: problem['offerDiscountPercentage'] as num?,
+        manufacturerDiscountPercentage: problem['manufacturerDiscountPercentage'] as num?,
       );
     }).toList();
     return (items: items, changed: changed);

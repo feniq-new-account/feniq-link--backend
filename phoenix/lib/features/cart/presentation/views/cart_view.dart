@@ -449,11 +449,7 @@ class _CartViewState extends State<CartView> {
                                     .state
                                     .usdToSyp;
                                 return Text(
-                                  formatMoneyFromUsd(
-                                    state.subtotalUsd,
-                                    usdToSyp,
-                                    l10n.currencySuffix,
-                                  ),
+                                  formatMoneySyp(state.subtotalSypAt(usdToSyp), l10n.currencySuffix),
                                   textAlign: TextAlign.end,
                                   style: context.textTheme.titleLarge?.copyWith(
                                     color: AppColors.primaryOf(context),

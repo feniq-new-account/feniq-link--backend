@@ -253,14 +253,15 @@ class _PriceDisplay extends StatelessWidget {
     // discounted one. Equal prices -> a single plain number. The card only
     // shows the figures, never why a price is lower.
     //
-    // SYP is the only figure shown - formatMoneyFromUsd converts the stored
-    // USD price at the current rate.
+    // SYP is the only figure shown - the lira price the order will charge,
+    // as the server computed it (ProductModel.finalSypAt, catalog overhaul
+    // Phase 7), never a local conversion of the USD figure.
     final usdToSyp = context.watch<ExchangeRateCubit>().state.usdToSyp;
     final hasDiscount = product.discountPriceUsd < product.priceUsd;
 
     if (!hasDiscount) {
       return Text(
-        formatMoneyFromUsd(product.discountPriceUsd, usdToSyp, l10n.currencySuffix),
+        formatMoneySyp(product.finalSypAt(usdToSyp), l10n.currencySuffix),
         style: context.textTheme.titleSmall?.copyWith(
           color: AppColors.primaryOf(context),
           fontSize: 15,
@@ -273,7 +274,7 @@ class _PriceDisplay extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          formatMoneyFromUsd(product.priceUsd, usdToSyp, l10n.currencySuffix),
+          formatMoneySyp(product.unitSypAt(usdToSyp), l10n.currencySuffix),
           style: TextStyle(
             decoration: TextDecoration.lineThrough,
             color: AppColors.textSecondaryOf(context),
@@ -282,7 +283,7 @@ class _PriceDisplay extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          formatMoneyFromUsd(product.discountPriceUsd, usdToSyp, l10n.currencySuffix),
+          formatMoneySyp(product.finalSypAt(usdToSyp), l10n.currencySuffix),
           style: TextStyle(
             color: AppColors.secondaryOf(context),
             fontWeight: FontWeight.bold,

@@ -283,7 +283,7 @@
     "noDiscounts": "No manufacturer discounts yet.",
     "discountColumn": "Discount",
     "pleaseSelectManufacturer": "Please select a manufacturer.",
-    "percentRange": "Discount percentage must be between 1 and 100.",
+    "percentRange": "Discount percentage must be greater than 0 and at most 100 (decimals like 2.5 are fine).",
     "confirmRemove": "Remove the discount for \"{{name}}\"?",
     "emptyTitle": "No manufacturer discounts yet",
     "emptyBody": "A manufacturer's discount applies automatically to every one of its products in your catalog. Add your first discount using the form on the right.",
