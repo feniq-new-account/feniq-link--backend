@@ -54,6 +54,7 @@ const importBatchRowSchema = new Schema(
       // The separate English name column, when the file has one.
       nameEn: { type: String, default: null },
       manufacturer: { type: String, default: null },
+      category: { type: String, default: null },
       price: { type: String, default: null },
       currency: { type: String, default: null },
       unit: { type: String, default: null },

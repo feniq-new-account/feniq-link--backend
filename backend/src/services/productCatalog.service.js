@@ -835,6 +835,7 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
       name: nameCellText,
       nameEn: nameEnColumn ? nameEnText : '',
       manufacturer,
+      category: col('category') ? cellText(row.getCell(col('category'))) : '',
       price: rawPrice === '' ? '' : String(rawPrice),
       currency: col('currency') ? cellText(row.getCell(col('currency'))) : '',
       unit: col('unit') ? cellText(row.getCell(col('unit'))) : '',
@@ -848,6 +849,7 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
       // A second name to match on - only when both name columns are filled.
       nameEn: nameCellText && nameEnText ? nameEnText : null,
       manufacturer,
+      category: raw.category,
       price: null,
       priceEmpty: false,
       currency: null,
@@ -1036,6 +1038,25 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
   const itemByEnglishName = new Map(
     existingItems.filter((item) => item.nameEnKey).map((item) => [`${item.nameEnKey}|${item.manufacturerId}`, item])
   );
+  // Categories: the file's text matched against every category's Arabic and
+  // English name after normalizeText ("صادات حيوية" = "صادات حيويه"). Never
+  // created here - an unknown one leaves the item without a category and is
+  // listed in the report; an empty cell is simply no category.
+  const categories = await Category.find({}).select('nameAr nameEn').lean();
+  const categoryByKey = new Map();
+  for (const category of categories) {
+    for (const name of [category.nameAr, category.nameEn]) {
+      const key = normalizeText(name);
+      if (key && !categoryByKey.has(key)) categoryByKey.set(key, category._id);
+    }
+  }
+  const unknownCategories = [];
+  const categoryOf = (row) => {
+    const text = typeof row.category === 'string' ? row.category.trim() : '';
+    if (!text) return { categoryId: null, text: null };
+    return { categoryId: categoryByKey.get(normalizeText(text)) ?? null, text };
+  };
+
   const findItem = (row) =>
     itemByIdentity.get(identityOf(row)) ??
     (row.nameEnKey ? itemByEnglishName.get(`${row.nameEnKey}|${manufacturerOf(row)._id}`) : undefined);
@@ -1045,6 +1066,7 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
   const withdrawn = [];
   for (const row of ready) {
     const manufacturer = manufacturerOf(row);
+    const category = categoryOf(row);
     try {
       const item = findItem(row);
       if (item && item.isActive === false) {
@@ -1057,8 +1079,12 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
         // A name the item lacks is filled in; a name it has is never replaced.
         if (!item.nameAr && row.nameAr) item.nameAr = row.nameAr;
         if (!item.nameEn && row.nameEnValue) item.nameEn = row.nameEnValue;
+        // A known category files it there; an unknown or empty cell leaves
+        // the item's category as it was.
+        if (category.categoryId) item.categoryId = category.categoryId;
         await item.save();
         updated += 1;
+        if (category.text && !category.categoryId) unknownCategories.push({ row: row.rowNumber, category: category.text });
         continue;
       }
       const created = await ProductCatalog.create({
@@ -1066,8 +1092,10 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
         nameEn: row.nameEnValue,
         manufacturerAr: manufacturer.nameAr,
         manufacturerId: manufacturer._id,
+        categoryId: category.categoryId,
         priceUsd: row.priceUsd,
       });
+      if (category.text && !category.categoryId) unknownCategories.push({ row: row.rowNumber, category: category.text });
       itemByIdentity.set(created.identityKey, created);
       if (created.nameEnKey) itemByEnglishName.set(`${created.nameEnKey}|${created.manufacturerId}`, created);
       added += 1;
@@ -1081,6 +1109,8 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
     updated,
     withdrawn,
     newManufacturers: [...newManufacturers.values()],
+    // Imported without a category: { row, category } - the file's text.
+    unknownCategories,
     errors,
     exchangeRateUsed,
     convertedFromSyp,

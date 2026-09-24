@@ -710,7 +710,9 @@
       "clearImage": "Remove image",
       "linkExisting": "or link to an existing company",
       "nameEnLabel": "English name",
-      "oneNameRequired": "Enter an Arabic or an English name."
+      "oneNameRequired": "Enter an Arabic or an English name.",
+      "unknownCategoriesTitle": "Unknown category",
+      "unknownCategoriesHint": "These rows were imported without a category - the category in the file matches none. Categories are never created by an import; set it on the medicine, or add the category and import again."
     },
     "exchangeRate": {
       "title": "Exchange rate",
@@ -860,6 +862,7 @@
       "nameEn": "English name",
       "price": "Price",
       "manufacturer": "Company",
+      "category": "Category",
       "unit": "Unit",
       "currency": "Currency",
       "bonus": "Bonus"

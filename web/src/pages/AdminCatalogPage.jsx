@@ -134,6 +134,9 @@ function EditCatalogItemModal({ item, categories, onClose, onSaved }) {
 function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturers, isImporting }) {
   const { t } = useTranslation();
   const withdrawn = report.withdrawn ?? [];
+  // Rows imported without a category because the file's category matched none
+  // (the import never creates a category).
+  const unknownCategories = report.unknownCategories ?? [];
   const newManufacturers = report.newManufacturers ?? [];
   const skippedForManufacturers = newManufacturers.reduce((sum, m) => sum + m.rows.length, 0);
   const totalRows = report.added + report.updated + report.errors.length + withdrawn.length + skippedForManufacturers;
@@ -257,7 +260,19 @@ function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturer
             {withdrawn.map((w) => (
               <div key={w.row} className="adm-import-error-row">
                 <span className="adm-import-error-row-num">{w.row}</span>
-                {w.nameAr}
+                {localizedName(w.nameEn, w.nameAr)}
+              </div>
+            ))}
+          </div>
+        )}
+        {unknownCategories.length > 0 && (
+          <div className="adm-import-errors">
+            <div className="adm-import-errors-head">{t('admin.catalog.unknownCategoriesTitle')}</div>
+            <p className="hint">{t('admin.catalog.unknownCategoriesHint')}</p>
+            {unknownCategories.map((u) => (
+              <div key={u.row} className="adm-import-error-row">
+                <span className="adm-import-error-row-num">{u.row}</span>
+                {u.category}
               </div>
             ))}
           </div>

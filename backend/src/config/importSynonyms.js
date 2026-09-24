@@ -25,6 +25,10 @@ const FIELD_SYNONYMS = {
     'الشركة', 'شركة', 'اسم الشركة', 'الشركة المصنعة', 'المصنع',
     'company', 'manufacturer', 'mfr', 'brand',
   ],
+  // The admin catalog import files the item under an existing category by
+  // this (matched after normalizeText, never created); the warehouse import
+  // ignores it - a warehouse product's category is the catalog's.
+  category: ['الفئة', 'فئة', 'التصنيف', 'تصنيف', 'الفئة الدوائية', 'المجموعة الدوائية', 'category', 'class'],
   unit: ['الوحدة', 'وحدة', 'الشكل', 'الشكل الصيدلاني', 'العبوة', 'unit', 'form', 'pack'],
   currency: ['العملة', 'عملة', 'currency', 'cur'],
   bonus: ['البونص', 'بونص', 'العرض', 'عرض', 'الهدية', 'bonus', 'free'],
