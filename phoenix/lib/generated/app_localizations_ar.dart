@@ -696,6 +696,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorPriceChangedGeneric => 'تغيّرت بعض الأسعار في سلتك.';
 
   @override
+  String get errorBonusChangedGeneric =>
+      'تغيّر البونص على بعض الأصناف في سلتك.';
+
+  @override
+  String bonusValue(String tiers) {
+    return 'بونص $tiers';
+  }
+
+  @override
+  String freeUnits(int count) {
+    return '+$count مجاناً';
+  }
+
+  @override
+  String get noBonus => 'بدون بونص';
+
+  @override
+  String bonusChangedLine(String name, String bonus) {
+    return '$name: $bonus';
+  }
+
+  @override
   String errorPriceChanged(String name, String newPrice, String oldPrice) {
     return '$name أصبح بـ $newPrice (كان $oldPrice).';
   }

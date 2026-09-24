@@ -3,6 +3,7 @@ const { ApiError } = require('../utils/ApiError');
 const Product = require('../models/product.model');
 const Offer = require('../models/offer.model');
 const { offerMapFor } = require('./offer.service');
+const { freeQuantityFor, sameBonus } = require('../utils/bonus');
 const Order = require('../models/order.model');
 const OrderItem = require('../models/orderItem.model');
 const Warehouse = require('../models/warehouse.model');
@@ -62,10 +63,22 @@ function mergeDuplicateItems(items) {
         // price at all (an older app build, or approveReturn's internal
         // items) - that line just skips the price check below.
         displayedUnitPriceUsd: item.displayedUnitPriceUsd ?? null,
+        // Same reasoning: both lines showed the same bonus.
+        displayedBonuses: item.displayedBonuses ?? null,
       });
     }
   }
   return Array.from(merged.values());
+}
+
+// The bonus fields of an order line (OrderItem.freeQuantity / bonusApplied /
+// bonusTiers) for `quantity` units under `tiers` - also used when a warehouse
+// edit changes a line's quantity (warehouseOrder.service.js), with the tiers
+// frozen on the line.
+function bonusSnapshotFor(tiers, quantity) {
+  const bonusTiers = (tiers ?? []).map((tier) => ({ buy: tier.buy, free: tier.free }));
+  const { freeQuantity, tier } = freeQuantityFor(bonusTiers, quantity);
+  return { freeQuantity, bonusApplied: tier, bonusTiers };
 }
 
 async function nextOrderNumber(session = null) {
@@ -622,6 +635,28 @@ async function createOrder({
     );
   }
 
+  // Catalog overhaul Phase 8: the bonus half of the same guarantee. A line
+  // that says which bonus tiers the cart was showing is refused if the
+  // product's bonus has changed since (BONUS_CHANGED, the current tiers
+  // returned) - the pharmacist confirms the new terms, exactly as for a price.
+  // A line that sent none (an older app build, approveReturn) skips it.
+  const bonusProblems = [];
+  for (const item of merged) {
+    if (item.displayedBonuses === null || item.displayedBonuses === undefined) continue;
+    const product = productById.get(item.productId);
+    const currentBonuses = (product.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free }));
+    if (!sameBonus(item.displayedBonuses, currentBonuses)) {
+      bonusProblems.push({ code: 'BONUS_CHANGED', productId: item.productId, currentBonuses });
+    }
+  }
+  if (bonusProblems.length > 0) {
+    throw ApiError.badRequest(
+      'The bonus on some products has changed.',
+      { problems: bonusProblems },
+      'BONUS_CHANGED'
+    );
+  }
+
   let totalPrice = 0;
   // Accumulated natively in USD rather than back-converted from the SYP
   // figures below (same reasoning as savingsUsd) - this is the number the
@@ -691,6 +726,10 @@ async function createOrder({
       savingsSyp: Math.max(0, (unitPrice - discountPrice) * item.quantity),
       // A loose line belongs to no package and is freely editable.
       packageGroupId: null,
+      // Phase 8: the free units this quantity earns under the product's bonus
+      // (on top of - never taken off - the discounts above), and the terms,
+      // frozen. `quantity` stays the charged quantity.
+      ...bonusSnapshotFor(product.bonuses, item.quantity),
     };
   });
 
@@ -977,7 +1016,7 @@ async function getOrderForPharmacy(orderId, pharmacyId) {
   const [warehouse, items, returnRequest, myReview, complaints] = await Promise.all([
     Warehouse.findById(order.warehouseId).select('nameAr nameEn').lean(),
     OrderItem.find({ orderId: order._id })
-      .select('productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice savingsUsd')
+      .select('productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice savingsUsd freeQuantity bonusApplied')
       .lean(),
     Return.findOne({ orderId: order._id }).select('status rejectionNote creditSyp creditUsd').lean(),
     Review.findOne({ orderId: order._id, reviewerType: 'pharmacy' })
@@ -1321,4 +1360,5 @@ module.exports = {
   rollUpOrderMoney,
   normalizePackageRequests,
   computeOrderFingerprint,
+  bonusSnapshotFor,
 };

@@ -91,6 +91,10 @@ class CartState {
   /// send the cart until it is confirmed.
   bool get hasUnconfirmedPriceChanges => items.any((item) => item.hasUnconfirmedPriceChange);
 
+  /// Lines whose bonus changed at checkout and wait for the pharmacist to see
+  /// the new terms (BONUS_CHANGED, catalog overhaul Phase 8).
+  bool get hasUnconfirmedBonusChanges => items.any((item) => item.hasUnconfirmedBonusChange);
+
   /// Those changes in the shape of the server's PRICE_CHANGED
   /// `details.problems`, so CartView describes them with the very
   /// describePriceProblems it used for the refusal itself.

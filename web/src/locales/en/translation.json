@@ -152,6 +152,7 @@
     "cannotRemoveLastItem": "Cannot remove the last item",
     "confirmRemoveItem": "Remove this item from the order?",
     "packageBadge": "Package",
+    "freeUnits": "+{{count}} free",
     "packageCopies": "Copies",
     "packagePriceLocked": "agreed price",
     "removePackageButton": "Remove package",

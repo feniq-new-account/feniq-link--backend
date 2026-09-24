@@ -275,7 +275,9 @@ test('pharmacy order detail keeps warehouse/items/return/review fields', async (
   assert.deepStrictEqual(
     Object.keys(d.items[0]).sort(),
     ['id', 'productId', 'productNameAr', 'productNameEn', 'manufacturerAr', 'manufacturerEn',
-      'quantity', 'unitPrice', 'discountPrice', 'lineTotal', 'savingsUsd'].sort()
+      'quantity', 'unitPrice', 'discountPrice', 'lineTotal', 'savingsUsd',
+      // Additive (catalog overhaul Phase 8) - nothing was dropped.
+      'freeQuantity', 'bonusApplied'].sort()
   );
   assert.strictEqual(d.items[0].savingsUsd, 2.4);
   assert.strictEqual(d.items[0].lineTotal, 320 * 3);

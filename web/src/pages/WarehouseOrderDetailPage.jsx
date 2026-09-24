@@ -820,7 +820,14 @@ export function WarehouseOrderDetailPage() {
                             </div>
                           )}
                         </td>
-                        <td className="wh-num">{item.quantity}</td>
+                        <td className="wh-num">
+                          {item.quantity}
+                          {/* Bonus units ride along free (catalog overhaul
+                              Phase 8): shown so they get packed, never charged. */}
+                          {item.freeQuantity > 0 && (
+                            <div className="hint">{t('orderDetail.freeUnits', { count: item.freeQuantity })}</div>
+                          )}
+                        </td>
                         <td className="wh-num">{formatSyp(item.unitPrice)}</td>
                         <td className="wh-num">{formatSyp(item.discountPrice)}</td>
                         <td className="wh-num wh-table-total">{formatSyp(item.lineTotal)}</td>

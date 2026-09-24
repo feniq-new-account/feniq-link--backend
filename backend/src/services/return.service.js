@@ -108,6 +108,11 @@ function validateItems(items, orderItemById) {
     if (!Number.isInteger(quantity) || quantity <= 0) {
       throw ApiError.badRequest('Invalid return quantity.', undefined, 'INVALID_QUANTITY');
     }
+    // `quantity` is the CHARGED quantity - free bonus units (OrderItem
+    // .freeQuantity, catalog overhaul Phase 8) are on top of it and are not
+    // returnable for credit: a return credits paid units only (project owner's
+    // decision), each at the price it was charged. Do not add freeQuantity to
+    // this cap without also changing returnCredit.service.js's valuation.
     if (quantity > orderItem.quantity) {
       throw ApiError.badRequest(
         'The return quantity exceeds what was ordered for this item.',

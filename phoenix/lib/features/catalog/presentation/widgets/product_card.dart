@@ -10,6 +10,7 @@ import 'package:feniq/core/widgets/app_network_image.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/core/widgets/status_badge.dart';
+import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/catalog/presentation/widgets/quantity_picker_sheet.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
@@ -243,8 +244,32 @@ class _PriceDisplay extends StatelessWidget {
 
   final ProductModel product;
 
+  // The price, and under it the warehouse's bonus when the product has one
+  // ("بونص 10+1", catalog overhaul Phase 8).
   @override
   Widget build(BuildContext context) {
+    final price = _buildPrice(context);
+    if (product.bonuses.isEmpty) return price;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        price,
+        const SizedBox(height: 2),
+        Text(
+          context.l10n.bonusValue(BonusTier.format(product.bonuses)),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.textTheme.bodySmall?.copyWith(
+            color: AppColors.secondaryOf(context),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrice(BuildContext context) {
     final l10n = context.l10n;
     // Purely visual: whenever the server-computed discounted price comes in
     // below the list price (discountPriceUsd already has any active Offer AND

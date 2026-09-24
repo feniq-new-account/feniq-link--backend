@@ -111,6 +111,10 @@ function toOrderDetailResponse(
         discountPrice: item.discountPrice,
         lineTotal: item.discountPrice * item.quantity,
         savingsUsd: item.savingsUsd,
+        // Free bonus units delivered on top of `quantity` (never charged), and
+        // the tier that earned them - additive (catalog overhaul Phase 8).
+        freeQuantity: item.freeQuantity ?? 0,
+        bonusApplied: item.bonusApplied ? { buy: item.bonusApplied.buy, free: item.bonusApplied.free } : null,
       })),
       linkedReturn: serializeLinkedReturn(returnRequest),
       myReview: serializeMyReview(myReview),

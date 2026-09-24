@@ -64,6 +64,7 @@ class CartItem {
     this.manufacturerDiscountPercentage,
     this.hasDiscountInputs = false,
     this.bonuses = const [],
+    this.previousBonuses,
   });
 
   /// A product's id on an ordinary line; the PACKAGE's id on a package line.
@@ -117,6 +118,13 @@ class CartItem {
   // The product's bonus tiers as they were when the line was added - sent back
   // at checkout so the server can refuse (BONUS_CHANGED) if they moved.
   final List<BonusTier> bonuses;
+
+  // Set when checkout was refused with BONUS_CHANGED: the tiers the line had
+  // before [bonuses] took the server's current ones. Non-null = the
+  // pharmacist has not yet seen the new bonus (same gate as a repriced line).
+  final List<BonusTier>? previousBonuses;
+
+  bool get hasUnconfirmedBonusChange => previousBonuses != null;
 
   bool get isPackage => packageId != null;
 
@@ -225,6 +233,8 @@ class CartItem {
     num? manufacturerDiscountPercentage,
     bool? hasDiscountInputs,
     List<BonusTier>? bonuses,
+    List<BonusTier>? previousBonuses,
+    bool clearPreviousBonuses = false,
   }) {
     return CartItem(
       productId: productId,
@@ -249,6 +259,7 @@ class CartItem {
           hasDiscountInputs != null ? manufacturerDiscountPercentage : this.manufacturerDiscountPercentage,
       hasDiscountInputs: hasDiscountInputs ?? this.hasDiscountInputs,
       bonuses: bonuses ?? this.bonuses,
+      previousBonuses: clearPreviousBonuses ? null : (previousBonuses ?? this.previousBonuses),
     );
   }
 }

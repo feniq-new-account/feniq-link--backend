@@ -15,6 +15,7 @@ const { runInTransaction } = require('../utils/transaction');
 const notificationService = require('./notification.service');
 const {
   stackedDiscountSyp,
+  bonusSnapshotFor,
   advertisementDiscountSyp,
   rollUpOrderMoney,
 } = require('./order.service');
@@ -83,7 +84,7 @@ async function listOrdersForWarehouse(
   const [items, pharmacies, reviews] = await Promise.all([
     // serializeOrderItem (list variant) reads everything but savingsUsd.
     OrderItem.find({ orderId: { $in: orderIds } })
-      .select('orderId productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice packageGroupId'),
+      .select('orderId productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice packageGroupId freeQuantity bonusApplied'),
     // serializePharmacy (auth.viewmodel) field set.
     Pharmacy.find({ _id: { $in: pharmacyIds } })
       .select('nameAr nameEn ownerName address city phone verificationPhoto'),
@@ -271,7 +272,7 @@ async function getOrderDetailForWarehouse(orderId, warehouseId) {
   const [items, pharmacy, returnRequest] = await Promise.all([
     // Detail item shape adds lineTotal (discountPrice*quantity) and savingsUsd.
     OrderItem.find({ orderId: order._id })
-      .select('productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice savingsUsd packageGroupId'),
+      .select('productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice savingsUsd packageGroupId freeQuantity bonusApplied'),
     Pharmacy.findById(order.pharmacyId)
       .select('nameAr nameEn ownerName address city phone verificationPhoto'),
     Return.findOne({ orderId: order._id }).select('_id'),
@@ -449,7 +450,12 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
 
   for (const { orderItemId, quantity } of updateItems) {
     if (removeIdSet.has(orderItemId)) continue; // being deleted below anyway
-    currentById.get(orderItemId).quantity = quantity;
+    const line = currentById.get(orderItemId);
+    line.quantity = quantity;
+    // Catalog overhaul Phase 8 (owner decision): the free units follow the
+    // new quantity, under the bonus terms frozen on this line at order time -
+    // never the product's current ones.
+    Object.assign(line, bonusSnapshotFor(line.bonusTiers, quantity));
   }
   const changedExisting = updateItems
     .filter(({ orderItemId }) => !removeIdSet.has(orderItemId))
@@ -586,6 +592,8 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
         unitPrice,
         discountPrice,
         savingsUsd,
+        // A line added now takes the product's bonus as it is now.
+        ...bonusSnapshotFor(product.bonuses, item.quantity),
       };
     });
     newItems = await OrderItem.insertMany(newItemsData);

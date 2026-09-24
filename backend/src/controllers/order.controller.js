@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { normalizeBonusTiers } = require('../utils/bonus');
 const { getRate } = require('../services/exchangeRate.service');
 const { ApiError } = require('../utils/ApiError');
 const Pharmacy = require('../models/pharmacy.model');
@@ -55,7 +56,18 @@ function validateItems(items) {
       displayedUnitPriceUsd = price;
     }
 
-    return { productId: item.productId, quantity, displayedUnitPriceUsd };
+    // The bonus tiers the cart was showing (catalog overhaul Phase 8) - like
+    // the displayed price, only compared against (BONUS_CHANGED), never what
+    // the free quantity is computed from. Optional: an older app build sends
+    // none and skips the check.
+    let displayedBonuses = null;
+    if (item.displayedBonuses !== undefined && item.displayedBonuses !== null) {
+      const parsed = normalizeBonusTiers(item.displayedBonuses);
+      if (!parsed.ok) throw ApiError.badRequest('Invalid bonus in cart.', undefined, 'INVALID_BONUS');
+      displayedBonuses = parsed.tiers;
+    }
+
+    return { productId: item.productId, quantity, displayedUnitPriceUsd, displayedBonuses };
   });
 }
 

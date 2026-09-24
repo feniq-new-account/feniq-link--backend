@@ -108,7 +108,8 @@ class _InvoiceLineRow extends StatelessWidget {
                 // communicated once, combined, at the foot of the invoice
                 // (see OrderInvoiceSection's totalSavingsUsd).
                 Text(
-                  '${item.quantity} × ${formatSyp(item.unitPrice, l10n.currencySuffix)}',
+                  '${item.quantity} × ${formatSyp(item.unitPrice, l10n.currencySuffix)}'
+                  '${item.freeQuantity > 0 ? '  ${l10n.freeUnits(item.freeQuantity)}' : ''}',
                   style: context.textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondaryOf(context),
                   ),

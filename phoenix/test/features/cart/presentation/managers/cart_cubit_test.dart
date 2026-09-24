@@ -8,6 +8,7 @@ import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/cart/data/repositories/order_repository.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_state.dart';
+import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/warehouse_selection/data/models/warehouse_profile_model.dart';
 import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_repository.dart';
@@ -1298,6 +1299,68 @@ void main() {
       expect(profileCalls, 1);
       expect(cubit.state.minOrderAmountUsd, 5);
       await cubit.close();
+    });
+  });
+
+  // Catalog overhaul Phase 8: a BONUS_CHANGED refusal gives the refused lines
+  // the product's current bonus, and nothing is resent until the pharmacist
+  // confirms - the same path a repriced line follows.
+  group('BONUS_CHANGED refreshes the cart bonuses', () {
+    late List<List<CartItem>> sentItems;
+    late List<Failure> nextFailures;
+
+    setUp(() {
+      sentItems = [];
+      nextFailures = [];
+      when(
+        () => orderRepo.submitOrder(
+          warehouseId: any(named: 'warehouseId'),
+          items: any(named: 'items'),
+          notes: any(named: 'notes'),
+          idempotencyKey: any(named: 'idempotencyKey'),
+          rateUsed: any(named: 'rateUsed'),
+        ),
+      ).thenAnswer((invocation) async {
+        sentItems.add(List.of(invocation.namedArguments[#items] as List<CartItem>));
+        if (nextFailures.isNotEmpty) throw nextFailures.removeAt(0);
+        return _fakeOrder;
+      });
+      cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 25);
+    });
+
+    test('the line takes the current bonus and waits for confirmation', () async {
+      nextFailures.add(
+        ServerFailure(
+          'The bonus changed.',
+          code: 'BONUS_CHANGED',
+          details: {
+            'problems': [
+              {
+                'code': 'BONUS_CHANGED',
+                'productId': 'p1',
+                'currentBonuses': [
+                  {'buy': 10, 'free': 1},
+                ],
+              },
+            ],
+          },
+          statusCode: 400,
+        ),
+      );
+      expect(await cubit.submitOrder(), isNull);
+      final line = cubit.state.items.single;
+      expect(line.bonuses, const [BonusTier(buy: 10, free: 1)]);
+      expect(line.hasUnconfirmedBonusChange, isTrue);
+      expect(line.freeQuantity, 2);
+
+      // Not resent without confirmation.
+      expect(await cubit.submitOrder(), isNull);
+      expect(cubit.state.errorCode, 'BONUS_CHANGE_UNCONFIRMED');
+      expect(sentItems.length, 1);
+
+      // Confirmed: sent with the new bonus.
+      expect(await cubit.submitOrder(acceptPriceChanges: true), isNotNull);
+      expect(sentItems.last.single.bonuses, const [BonusTier(buy: 10, free: 1)]);
     });
   });
 }

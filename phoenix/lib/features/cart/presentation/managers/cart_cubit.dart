@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:uuid/uuid.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/core/session/session_scope.dart';
@@ -414,6 +415,27 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     return (items: items, changed: changed);
   }
 
+  // A BONUS_CHANGED refusal names every loose line whose bonus moved, with the
+  // current tiers: each takes them and waits for the pharmacist to confirm
+  // (catalog overhaul Phase 8) - the same path a repriced line follows.
+  List<CartItem> _applyBonusChanges(Object? problems) {
+    final currentByProductId = <String, List<BonusTier>>{};
+    if (problems is List) {
+      for (final problem in problems) {
+        if (problem is! Map) continue;
+        final productId = problem['productId'];
+        if (productId is String) {
+          currentByProductId[productId] = BonusTier.listFromJson(problem['currentBonuses']);
+        }
+      }
+    }
+    return state.items.map((item) {
+      final current = currentByProductId[item.productId];
+      if (item.isPackage || current == null) return item;
+      return item.copyWith(bonuses: current, previousBonuses: item.previousBonuses ?? item.bonuses);
+    }).toList();
+  }
+
   // Works the same for a product line and a package line: for a package the
   // number IS the copy count. There is no "breaking a package" any more - its
   // contents are not cart lines, so nothing can be taken out of one.
@@ -500,26 +522,29 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
       return null;
     }
 
-    // A line the server repriced is never sent on the strength of the
-    // pharmacist's earlier confirmation - that one was for the old price.
-    if (state.hasUnconfirmedPriceChanges) {
+    // A line the server repriced (or whose bonus changed) is never sent on
+    // the strength of the pharmacist's earlier confirmation - that one was for
+    // the old terms. `acceptPriceChanges` accepts both.
+    if (state.hasUnconfirmedPriceChanges || state.hasUnconfirmedBonusChanges) {
       if (!acceptPriceChanges) {
-        // CartView routes a submit to its price-change dialog before it gets
+        // CartView routes a submit to its confirmation dialog before it gets
         // here; this is the backstop. The error is cleared first so the
         // listener shows that dialog even if this repeats.
         emit(state.copyWith(clearError: true));
         emit(state.copyWith(
           errorMessage: 'Confirm the new prices before submitting.',
-          errorCode: 'PRICE_CHANGE_UNCONFIRMED',
+          errorCode: state.hasUnconfirmedPriceChanges ? 'PRICE_CHANGE_UNCONFIRMED' : 'BONUS_CHANGE_UNCONFIRMED',
         ));
         return null;
       }
       // Accepting changes nothing that is sent - the lines already carry the
-      // new prices - so the idempotency key is left as it is.
+      // new prices and bonuses - so the idempotency key is left as it is.
       emit(state.copyWith(
         items: [
           for (final item in state.items)
-            item.hasUnconfirmedPriceChange ? item.copyWith(clearPreviousPrice: true) : item,
+            item.hasUnconfirmedPriceChange || item.hasUnconfirmedBonusChange
+                ? item.copyWith(clearPreviousPrice: true, clearPreviousBonuses: true)
+                : item,
         ],
       ));
     }
@@ -579,6 +604,8 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
         final repriced = _applyPriceChanges(f.details?['problems']);
         updatedItems = repriced.items;
         pricesChanged = repriced.changed;
+      } else if (f.code == 'BONUS_CHANGED') {
+        updatedItems = _applyBonusChanges(f.details?['problems']);
       } else if (f.code == 'PACKAGE_UNAVAILABLE') {
         final refusedPackageIds = ((f.details?['advertisementIds'] as List?) ?? const [])
             .map((id) => id.toString())

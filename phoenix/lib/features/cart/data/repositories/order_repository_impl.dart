@@ -46,6 +46,9 @@ class OrderRepositoryImpl implements OrderRepository {
                     'productId': item.productId,
                     'quantity': item.quantity,
                     'displayedUnitPriceUsd': item.discountPriceUsd,
+                    // The bonus the cart showed (catalog overhaul Phase 8) -
+                    // compared, never trusted: BONUS_CHANGED if it moved.
+                    'displayedBonuses': item.bonuses.map((tier) => tier.toJson()).toList(),
                   })
               .toList(),
           // `quantity` on a package line IS the number of copies.

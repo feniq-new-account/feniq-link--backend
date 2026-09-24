@@ -14,6 +14,7 @@ class OrderLineItem {
     required this.discountPrice,
     required this.lineTotal,
     this.savingsUsd,
+    this.freeQuantity = 0,
   });
 
   // The underlying OrderItem's own id - what a return request references
@@ -37,6 +38,9 @@ class OrderLineItem {
   // order placed before Section 15, or a line nothing discounted - either
   // way, no "you saved" line to show.
   final num? savingsUsd;
+  // Free bonus units delivered on top of [quantity] and never charged
+  // (catalog overhaul Phase 8). 0 on an older order or backend.
+  final int freeQuantity;
 
   bool get hasOffer => discountPrice != unitPrice;
 
@@ -52,5 +56,6 @@ class OrderLineItem {
     discountPrice: json['discountPrice'] as num,
     lineTotal: json['lineTotal'] as num,
     savingsUsd: json['savingsUsd'] as num?,
+    freeQuantity: (json['freeQuantity'] as num?)?.toInt() ?? 0,
   );
 }

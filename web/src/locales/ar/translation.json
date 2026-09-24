@@ -164,6 +164,7 @@
     "cannotRemoveLastItem": "لا يمكن حذف الصنف الأخير",
     "confirmRemoveItem": "حذف هذا الصنف من الطلب؟",
     "packageBadge": "باقة",
+    "freeUnits": "+{{count}} مجاناً",
     "packageCopies": "عدد النسخ",
     "packagePriceLocked": "سعر متفق عليه",
     "removePackageButton": "حذف الباقة",

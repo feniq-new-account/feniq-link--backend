@@ -1250,6 +1250,36 @@ abstract class AppLocalizations {
   /// **'Some prices in your cart have changed.'**
   String get errorPriceChangedGeneric;
 
+  /// No description provided for @errorBonusChangedGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'The bonus changed on some items in your cart.'**
+  String get errorBonusChangedGeneric;
+
+  /// No description provided for @bonusValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonus {tiers}'**
+  String bonusValue(String tiers);
+
+  /// No description provided for @freeUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} free'**
+  String freeUnits(int count);
+
+  /// No description provided for @noBonus.
+  ///
+  /// In en, this message translates to:
+  /// **'No bonus'**
+  String get noBonus;
+
+  /// No description provided for @bonusChangedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {bonus}'**
+  String bonusChangedLine(String name, String bonus);
+
   /// No description provided for @errorPriceChanged.
   ///
   /// In en, this message translates to:

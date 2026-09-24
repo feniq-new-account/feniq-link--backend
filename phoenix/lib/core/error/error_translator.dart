@@ -78,6 +78,12 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
       return l10n.errorRateChangedTitle;
     case 'STOCK_CHECK_FAILED':
       return l10n.errorStockCheckFailedGeneric;
+    // 400 from POST /orders: a product's bonus changed since it was added to
+    // the cart (catalog overhaul Phase 8). CartView answers with its own
+    // confirmation; this is the fallback.
+    case 'BONUS_CHANGED':
+    case 'BONUS_CHANGE_UNCONFIRMED':
+      return l10n.errorBonusChangedGeneric;
     case 'PACKAGE_UNAVAILABLE':
       return l10n.errorPackageUnavailable;
     // 409 from POST /orders: the idempotency key already placed an order from
