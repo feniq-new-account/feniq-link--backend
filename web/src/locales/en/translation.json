@@ -486,7 +486,8 @@
       "discountRange": "Discount must be a number between 1 and 100.",
       "approvalNotice": "Every offer goes through admin approval before it publishes - once approved, all pharmacies are notified. Editing an approved offer keeps the live one unchanged until the admin approves your change.",
       "fromColumn": "From",
-      "toColumn": "To"
+      "toColumn": "To",
+      "statusStopped": "Stopped"
     },
     "admin": {
       "noOffers": "No offers match this filter.",
@@ -500,7 +501,8 @@
       "confirmApprove": "Approve \"{{title}}\"?",
       "confirmReject": "Reject \"{{title}}\"? This permanently deletes the offer.",
       "confirmRejectUpdate": "Reject this edit to \"{{title}}\"? The live offer stays unchanged.",
-      "confirmDelete": "Delete \"{{title}}\"? This permanently removes it from every pharmacy."
+      "confirmDelete": "Delete \"{{title}}\"? This permanently removes it from every pharmacy.",
+      "offerChanged": "The warehouse changed this offer while you were reviewing it - it has been reloaded, please review it again."
     },
     "percentOff": "{{percent}}% off"
   },
@@ -549,7 +551,10 @@
     "temporarilyPaused": "Temporarily paused (hidden from pharmacies)",
     "saveChanges": "Save changes",
     "selectMedicineRequired": "Please select a medicine from the central catalog.",
-    "pricePositive": "Price must be a positive number."
+    "pricePositive": "Price must be a positive number.",
+    "errorWithdrawn": "This medicine has been withdrawn from the central catalog.",
+    "errorDisabledByAdmin": "This product has been disabled by the administration.",
+    "errorChanged": "Someone else changed this product in the meantime - close the form and open it again."
   },
   "dashboard": {
     "viewAll": "View all",
@@ -674,7 +679,9 @@
       "importConvertedRate": "Exchange rate: 1 USD = {{rate}} SYP",
       "importErrorsTitle": "Error details",
       "importDone": "Done",
-      "downloadErrorReport": "Download error report"
+      "downloadErrorReport": "Download error report",
+      "disabledSideEffects": "{{offers}} offer(s) stopped, {{packages}} package(s) updated.",
+      "reenabledWithProducts": "Re-enabled. {{count}} withdrawn product(s) are back on sale."
     },
     "exchangeRate": {
       "title": "Exchange rate",

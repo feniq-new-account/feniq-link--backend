@@ -61,6 +61,17 @@ export function productFormFromProduct(product, usdToSyp) {
 // backend/src/models/product.model.js.
 // `t` is threaded in explicitly (not a hook itself) since this runs outside
 // component render in some call sites (table cell helpers).
+// The save refusals that need their own wording rather than the server's
+// English fallback: the medicine was withdrawn from the central catalog, the
+// admin disabled this warehouse's product, or someone else saved the product
+// while this form was open.
+export function productSaveErrorMessage(err, t) {
+  if (err?.code === 'CATALOG_ITEM_WITHDRAWN') return t('productForm.errorWithdrawn');
+  if (err?.code === 'PRODUCT_DISABLED_BY_ADMIN') return t('productForm.errorDisabledByAdmin');
+  if (err?.code === 'PRODUCT_CHANGED') return t('productForm.errorChanged');
+  return err?.message || t('common.unexpectedError');
+}
+
 export function productAvailabilityLabel(product, t) {
   return product.manuallyDisabled ? t('products.paused') : t('products.available');
 }
@@ -277,7 +288,7 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
       }
       onSaved();
     } catch (err) {
-      setError(err.message);
+      setError(productSaveErrorMessage(err, t));
     } finally {
       setIsSaving(false);
     }

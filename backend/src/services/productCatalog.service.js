@@ -9,6 +9,8 @@ const { searchKey, identityKeyOf } = require('../models/productCatalog.model');
 const Product = require('../models/product.model');
 const Category = require('../models/category.model');
 const Manufacturer = require('../models/manufacturer.model');
+const Offer = require('../models/offer.model');
+const Advertisement = require('../models/advertisement.model');
 const { getRate } = require('./exchangeRate.service');
 const { runInTransaction } = require('../utils/transaction');
 const { normalizeText } = require('../utils/normalizeText');
@@ -357,16 +359,25 @@ async function updateCatalogItem(id, changes, { userId = null, confirmed = false
     }
   }
 
+  // isActive is also accepted here so the panel's single toggle button can
+  // re-enable via PATCH - and turning it off here is the same recall DELETE
+  // runs (recallCatalogItem below), so the two paths can never differ.
+  const wasActive = item.isActive !== false;
   if (changes.isActive !== undefined) {
     item.isActive = changes.isActive === true;
   }
+  const nowActive = item.isActive !== false;
 
   // The rename also rewrites the search keys every linked product carries a
   // copy of (product.model.js) - in the same transaction, so a search can
   // never find a product under its old name after the catalog says the new one.
   const renamed = item.isModified('nameAr');
+  let recallSummary = null;
+  let restoredProductCount = 0;
   try {
     await runInTransaction(async (session) => {
+      recallSummary = null;
+      restoredProductCount = 0;
       await item.save({ session });
       if (renamed) {
         await Product.updateMany(
@@ -375,14 +386,14 @@ async function updateCatalogItem(id, changes, { userId = null, confirmed = false
           { session }
         );
       }
+      if (wasActive && !nowActive) recallSummary = await recallLinkedProducts(item, session);
+      if (!wasActive && nowActive) restoredProductCount = await restoreRecalledProducts(item, session);
     });
   } catch (err) {
-    // The (nameAr, manufacturerAr) unique index - renaming an item onto an
-    // existing name/manufacturer pair. Without this the raw E11000 became a
-    // 500, which errorHandler.js masks in production as "Something went
-    // wrong", leaving the admin with no idea a duplicate is what stopped
-    // them. Same treatment createProduct already gives its own unique index
-    // (warehouseProduct.service.js).
+    // The unique identityKey index - renaming an item onto an existing
+    // name/manufacturer pair. Without this the raw E11000 became a 500, which
+    // errorHandler.js masks in production as "Something went wrong", leaving
+    // the admin with no idea a duplicate is what stopped them.
     if (err.code === 11000) {
       throw ApiError.conflict(
         'Another medicine already has this name for this manufacturer.',
@@ -391,46 +402,133 @@ async function updateCatalogItem(id, changes, { userId = null, confirmed = false
     }
     throw err;
   }
+  if (recallSummary) announceRecall(recallSummary);
+  item.restoredProductCount = restoredProductCount;
   return item;
 }
 
-// Deactivating a master-list entry now takes every warehouse's product linked
-// to it with it. It used to flip this flag alone, and every read path
-// deliberately ignored it (see product.service.js's search and manufacturer
-// list) - so an admin who "removed" a medicine watched it disappear from the
-// admin catalog while every pharmacist could still find, add and order it
-// from every warehouse that stocked it. The gap between what the panel showed
-// and what the platform did is what makes this the wrong default for a
-// pharmaceutical catalog, where the reason to pull a medicine is usually a
-// recall.
-//
-// The reads stay as they are: they resolve identity through a populated
-// catalog entry regardless of its isActive, which is still correct - a
-// product deactivated below is already excluded by its OWN isActive, which
-// every catalog query filters on. Nothing needs to start checking the
-// catalog's flag at read time.
-//
-// Not reversible in one step, matching adminProduct.service.js's own
-// deactivateProduct: re-enabling the catalog entry (PATCH isActive: true)
-// leaves the products deactivated, since there is no reactivate flow for a
-// product anywhere yet and inventing one silently here would resurrect rows a
-// warehouse may have since replaced.
+// A catalog recall (catalog overhaul Phase 3.1) - what withdrawing a medicine
+// from the central list does to everything built on it, inside the caller's
+// transaction:
+//   - every warehouse product linked to it -> isActive:false with
+//     deactivatedBy 'catalog_recall', so a later reactivation knows which
+//     products the recall took (and only those come back);
+//   - every running or waiting offer on those products -> 'stopped' (kept as a
+//     record, never live again, never restored);
+//   - every package (advertisement) containing one of them loses that line and
+//     otherwise stays as it is; a package left with no lines is taken off sale
+//     (isAvailable:false).
+// Orders already placed are untouched - each froze its lines and package terms
+// at order time.
+async function recallLinkedProducts(item, session) {
+  const products = await Product.find({ masterProductId: item._id, isActive: true })
+    .select('_id warehouseId')
+    .session(session)
+    .lean();
+  const productIds = products.map((product) => product._id);
+  const summary = {
+    catalogItemId: item._id,
+    deactivatedProductCount: 0,
+    stoppedOffers: [],
+    affectedPackages: [],
+    emptiedPackageCount: 0,
+  };
+  if (productIds.length === 0) return summary;
+
+  const now = new Date();
+  const productResult = await Product.updateMany(
+    { _id: { $in: productIds } },
+    { $set: { isActive: false, deactivatedBy: 'catalog_recall' } },
+    { session }
+  );
+  summary.deactivatedProductCount = productResult.modifiedCount ?? 0;
+
+  const offers = await Offer.find({
+    $or: [{ productId: { $in: productIds } }, { 'pendingUpdate.productId': { $in: productIds } }],
+    status: { $in: ['pending', 'approved'] },
+  })
+    .select('_id warehouseId')
+    .session(session)
+    .lean();
+  if (offers.length > 0) {
+    await Offer.updateMany(
+      { _id: { $in: offers.map((offer) => offer._id) } },
+      { $set: { status: 'stopped', stoppedAt: now, stoppedReason: 'catalog_recall', pendingUpdate: null } },
+      { session }
+    );
+    summary.stoppedOffers = offers.map((offer) => ({ offerId: offer._id, warehouseId: offer.warehouseId }));
+  }
+
+  const idSet = new Set(productIds.map(String));
+  const packages = await Advertisement.find({ 'items.productId': { $in: productIds } }).session(session);
+  for (const advertisement of packages) {
+    advertisement.items = advertisement.items.filter((line) => !idSet.has(String(line.productId)));
+    if (advertisement.items.length === 0) {
+      advertisement.isAvailable = false;
+      summary.emptiedPackageCount += 1;
+    }
+    // `items` is required and may legitimately be left empty here - the
+    // package is kept as a record, off sale.
+    await advertisement.save({ session, validateModifiedOnly: true });
+    summary.affectedPackages.push({ advertisementId: advertisement._id, warehouseId: advertisement.warehouseId });
+  }
+
+  return summary;
+}
+
+// Reactivating a catalog item (Phase 3.2): the products its recall took come
+// back. Only those - a product the warehouse itself disabled keeps its
+// manuallyDisabled (and so stays unavailable), and one an admin disabled
+// individually (deactivatedBy 'admin') stays off. Offers the recall stopped
+// and package lines it removed are NOT restored.
+async function restoreRecalledProducts(item, session) {
+  const result = await Product.updateMany(
+    { masterProductId: item._id, isActive: false, deactivatedBy: 'catalog_recall' },
+    { $set: { isActive: true, deactivatedBy: null } },
+    { session }
+  );
+  return result.modifiedCount ?? 0;
+}
+
+// After the recall has committed: every panel showing one of the stopped
+// offers or changed packages is told to re-read (signal-only realtime).
+function announceRecall(summary) {
+  const { emitToAdmins, emitToWarehouse, EVENTS } = require('../realtime');
+  for (const { offerId, warehouseId } of summary.stoppedOffers) {
+    const payload = { offerId: String(offerId), warehouseId: String(warehouseId), status: 'stopped' };
+    emitToAdmins(EVENTS.OFFER_STATUS_UPDATED, payload);
+    emitToWarehouse(warehouseId, EVENTS.OFFER_STATUS_UPDATED, payload);
+  }
+  for (const { advertisementId, warehouseId } of summary.affectedPackages) {
+    const payload = { advertisementId: String(advertisementId), warehouseId: String(warehouseId) };
+    emitToAdmins(EVENTS.ADVERTISEMENT_AVAILABILITY_UPDATED, payload);
+    emitToWarehouse(warehouseId, EVENTS.ADVERTISEMENT_AVAILABILITY_UPDATED, payload);
+  }
+}
+
+// DELETE /admin/catalog/:id - withdrawing a medicine from the central list is
+// a recall (see recallLinkedProducts): the item and everything the recall
+// touches change in ONE transaction, so a failure can never leave products
+// live under a withdrawn item. Reversible through PATCH isActive:true, which
+// brings back exactly the products this took.
 async function deactivateCatalogItem(id) {
   const item = await findCatalogItemOrThrow(id);
+  let summary = null;
+  await runInTransaction(async (session) => {
+    const fresh = await ProductCatalog.findById(item._id).session(session);
+    fresh.isActive = false;
+    await fresh.save({ session });
+    summary = await recallLinkedProducts(fresh, session);
+  });
+  announceRecall(summary);
   item.isActive = false;
-  await item.save();
-
-  // Not in a transaction: the dev/local MongoDB is a standalone instance
-  // (same constraint order.service.js documents). The order here is the safe
-  // one either way - the catalog entry is flagged first, so a failure below
-  // leaves products live under a deactivated entry, which is exactly the
-  // previous behaviour rather than a new inconsistency.
-  const result = await Product.updateMany(
-    { masterProductId: item._id, isActive: true },
-    { $set: { isActive: false } }
-  );
-
-  return { item, deactivatedProductCount: result.modifiedCount ?? 0 };
+  return {
+    item,
+    deactivatedProductCount: summary.deactivatedProductCount,
+    stoppedOfferCount: summary.stoppedOffers.length,
+    affectedPackageCount: summary.affectedPackages.length,
+    emptiedPackageCount: summary.emptiedPackageCount,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -832,6 +930,8 @@ async function importFromExcel(file) {
 
   let added = 0;
   let updated = 0;
+  // "Withdrawn - not reactivated" rows (see below).
+  const withdrawn = [];
 
   for (const candidate of candidates) {
     try {
@@ -846,14 +946,19 @@ async function importFromExcel(file) {
       const existing = await ProductCatalog.findOne({
         identityKey: identityKeyOf(searchKey(candidate.nameAr), searchKey(candidate.manufacturerAr)),
       });
-      if (existing) {
+      if (existing && existing.isActive === false) {
+        // A withdrawn (recalled) medicine is never brought back by a
+        // re-import (M1) - an old file still listing it must not undo a
+        // recall. Nothing about it is changed; the row is reported instead,
+        // and only an explicit PATCH isActive:true reactivates it.
+        withdrawn.push({ row: candidate.rowNumber, nameAr: existing.nameAr });
+      } else if (existing) {
         // A blank price on the file never erases a price the item already
         // has - only a real number (re)sets it. Leaves the field untouched
         // rather than nulling out a price a warehouse already filled in.
         if (candidate.priceUsd !== null) {
           existing.priceUsd = candidate.priceUsd;
         }
-        existing.isActive = true;
         await existing.save();
         updated += 1;
       } else {
@@ -869,7 +974,7 @@ async function importFromExcel(file) {
     }
   }
 
-  return { added, updated, errors, exchangeRateUsed, convertedFromSyp };
+  return { added, updated, withdrawn, errors, exchangeRateUsed, convertedFromSyp };
 }
 
 module.exports = {

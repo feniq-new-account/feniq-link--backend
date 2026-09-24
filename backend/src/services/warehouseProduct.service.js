@@ -12,6 +12,7 @@ const {
 } = require('./productCatalog.service');
 const { registerManufacturers } = require('./warehouseManufacturer.service');
 const { assertRateUsedIsCurrent } = require('./exchangeRate.service');
+const { runInTransaction } = require('../utils/transaction');
 
 const WAREHOUSE_PRODUCTS_DEFAULT_LIMIT = 20;
 
@@ -59,19 +60,61 @@ async function validateCategoryId(categoryId) {
 }
 
 // Section 14 Part 2: every new product must link to an active central-
-// catalog entry - returns it (not just validates) since createProduct needs
-// nothing else from it, but importProductsFromExcel below does its own
-// lookup by name instead of by id.
+// catalog entry. A malformed or unknown id is a 400; an item that exists but
+// has been withdrawn (recalled) gets its own code, so the warehouse is told
+// why rather than "invalid".
 async function validateMasterProductId(masterProductId) {
   if (typeof masterProductId !== 'string' || !mongoose.Types.ObjectId.isValid(masterProductId)) {
     throw ApiError.badRequest('Invalid catalog item.', undefined, 'INVALID_MASTER_PRODUCT');
   }
-  const catalogItem = await ProductCatalog.findOne({ _id: masterProductId, isActive: true });
+  const catalogItem = await ProductCatalog.findById(masterProductId).select('isActive').lean();
   if (!catalogItem) {
     throw ApiError.badRequest('Invalid catalog item.', undefined, 'INVALID_MASTER_PRODUCT');
   }
+  if (catalogItem.isActive === false) throw withdrawnError();
   return catalogItem;
 }
+
+function withdrawnError() {
+  return ApiError.conflict(
+    'This medicine has been withdrawn from the central catalog.',
+    'CATALOG_ITEM_WITHDRAWN'
+  );
+}
+
+function disabledByAdminError() {
+  return ApiError.conflict('This product has been disabled by the administration.', 'PRODUCT_DISABLED_BY_ADMIN');
+}
+
+// Why an existing product of this warehouse cannot be touched by an add or an
+// import (catalog overhaul Phase 3.4): the platform switched it off. Its
+// catalog item was withdrawn (recall), or an admin disabled it individually.
+// Null when the warehouse may update it. Rows written before deactivatedBy
+// existed (null) count as admin-disabled - 03-deactivated-by.js fills them in.
+function blockedCodeFor(product) {
+  if (!product || product.isActive !== false) return null;
+  return product.deactivatedBy === 'catalog_recall' ? 'CATALOG_ITEM_WITHDRAWN' : 'PRODUCT_DISABLED_BY_ADMIN';
+}
+
+function throwIfBlocked(product) {
+  const code = blockedCodeFor(product);
+  if (code === 'CATALOG_ITEM_WITHDRAWN') throw withdrawnError();
+  if (code === 'PRODUCT_DISABLED_BY_ADMIN') throw disabledByAdminError();
+}
+
+// Inside a create/link transaction: confirms the catalog item is still active
+// AND writes to it (lastLinkedAt), so a recall of the same item running at
+// the same moment conflicts with this transaction - one of the two retries
+// and sees the other's result (M5). A plain read would not conflict.
+async function claimActiveCatalogItem(masterProductId, session) {
+  const result = await ProductCatalog.updateOne(
+    { _id: masterProductId, isActive: true },
+    { $set: { lastLinkedAt: new Date() } },
+    { session }
+  );
+  if (result.matchedCount === 0) throw withdrawnError();
+}
+
 
 // `price` on the Product doc is USD (Section: USD-first catalog pricing) -
 // kept as the Mongoose field name to avoid a schema migration, but every
@@ -149,16 +192,22 @@ async function searchPaginatedProductsForWarehouse(
 // Section 8/14 Part 2: every field a warehouse can set at creation.
 // name/manufacturer are no longer among them - masterProductId (chosen via
 // catalog search, see warehouseCatalog.routes.js) is what identifies the
-// product now. image stays optional/null for now - no upload provider is
-// wired up yet (same as the pharmacist-facing catalog), though a plain URL
-// can be pasted in if the warehouse already has one hosted somewhere.
+// product now.
 //
 // `priceUsd` is converted from the SYP the warehouse typed, so the request
 // must say at which rate (`rateUsed`) and that rate must still be the current
 // one - see exchangeRate.service.js's assertRateUsedIsCurrent.
 // `requireRateUsed` is set by the HTTP controller; a direct caller that sends
 // no rate is not checked.
-async function createProduct(warehouseId, data, { requireRateUsed = false } = {}) {
+//
+// Adding a medicine this warehouse already has (catalog overhaul Phase 3.4):
+//  - it disabled that product itself (manuallyDisabled) -> the product is
+//    re-enabled with the new price and fields, and returned as such;
+//  - the platform disabled it (recall / admin) -> refused with
+//    CATALOG_ITEM_WITHDRAWN / PRODUCT_DISABLED_BY_ADMIN, nothing changes;
+//  - it is live -> PRODUCT_ALREADY_LINKED, as before.
+// All in one transaction that also re-checks the catalog item is still active.
+async function createProduct(warehouseId, data, { requireRateUsed = false, userId = null } = {}) {
   validateRequiredStrings(data);
   await validateMasterProductId(data.masterProductId);
   await validateCategoryId(data.categoryId);
@@ -168,40 +217,73 @@ async function createProduct(warehouseId, data, { requireRateUsed = false } = {}
   const manuallyDisabled = data.manuallyDisabled === true;
 
   let product;
+  let reEnabled = false;
   try {
-    product = await Product.create({
-      warehouseId,
-      masterProductId: data.masterProductId,
-      categoryId: data.categoryId,
-      unitAr: data.unitAr.trim(),
-      unitEn: data.unitEn.trim(),
-      description:
-        typeof data.description === 'string' && data.description.trim() ? data.description.trim() : null,
-      image: typeof data.image === 'string' && data.image.trim() ? data.image.trim() : null,
-      price: data.priceUsd,
-      manuallyDisabled,
-      isAvailable: computeIsAvailable(manuallyDisabled),
-      lastPriceUpdate: new Date(),
+    await runInTransaction(async (session) => {
+      reEnabled = false;
+      await claimActiveCatalogItem(data.masterProductId, session);
+
+      const existing = await Product.findOne({ warehouseId, masterProductId: data.masterProductId }).session(session);
+      if (existing) {
+        throwIfBlocked(existing);
+        if (!existing.manuallyDisabled) {
+          throw ApiError.conflict('You already have a product linked to this medicine.', 'PRODUCT_ALREADY_LINKED');
+        }
+        product = await applyProductUpdate(
+          existing,
+          userId,
+          {
+            categoryId: data.categoryId,
+            unitAr: data.unitAr,
+            unitEn: data.unitEn,
+            description: data.description,
+            image: data.image,
+            priceUsd: data.priceUsd,
+            manuallyDisabled,
+          },
+          { session, resolve: false }
+        );
+        reEnabled = true;
+        return;
+      }
+
+      [product] = await Product.create(
+        [
+          {
+            warehouseId,
+            masterProductId: data.masterProductId,
+            categoryId: data.categoryId,
+            unitAr: data.unitAr.trim(),
+            unitEn: data.unitEn.trim(),
+            description:
+              typeof data.description === 'string' && data.description.trim() ? data.description.trim() : null,
+            image: typeof data.image === 'string' && data.image.trim() ? data.image.trim() : null,
+            price: data.priceUsd,
+            manuallyDisabled,
+            isAvailable: computeIsAvailable(manuallyDisabled),
+            lastPriceUpdate: new Date(),
+          },
+        ],
+        { session }
+      );
     });
   } catch (err) {
-    // The (warehouseId, masterProductId) unique index (product.model.js) -
-    // a raw Mongo E11000 error would otherwise leak internal index/field
-    // names straight to the client.
+    // The (warehouseId, masterProductId) unique index (product.model.js) - two
+    // adds of the same medicine racing each other. A raw Mongo E11000 error
+    // would otherwise leak internal index/field names straight to the client.
     if (err.code === 11000) {
-      throw ApiError.conflict(
-        'You already have a product linked to this medicine.',
-        'PRODUCT_ALREADY_LINKED'
-      );
+      throw ApiError.conflict('You already have a product linked to this medicine.', 'PRODUCT_ALREADY_LINKED');
     }
     throw err;
   }
 
-  // Resolved strictly *after* create, purely so the response reflects the
+  // Resolved strictly *after* the write, purely so the response reflects the
   // linked catalog's name - this in-memory-only doc is never saved again
-  // within this request, so it can't leak back into storage (see the
-  // Section 14 Part 2 note on listAllProducts in adminProduct.service.js).
+  // within this request, so it can't leak back into storage.
   await product.populate('masterProductId');
-  return applyResolvedIdentity(product);
+  applyResolvedIdentity(product);
+  product.$locals.reEnabled = reEnabled;
+  return product;
 }
 
 // IDOR guard: scoped to warehouseId, same pattern as every other
@@ -228,7 +310,22 @@ async function findOwnedProductOrThrow(productId, warehouseId) {
 // `rateUsed` and is refused if that rate is no longer current (same rule as
 // createProduct). Re-sending the stored price unchanged depends on no rate and
 // needs none - the panel does exactly that for an untouched price field.
-async function applyProductUpdate(product, userId, changes, { requireRateUsed = false } = {}) {
+//
+// Concurrency (M5): the product schema has optimisticConcurrency, so this
+// save only lands if nobody else saved the product since it was loaded. An
+// admin edit and a warehouse edit racing each other therefore can't silently
+// overwrite one another (or record a priceHistory `oldPrice` that was already
+// stale) - the loser gets 409 PRODUCT_CHANGED and re-reads.
+//
+// `session` runs the save inside the caller's transaction (createProduct's
+// re-enable path); `resolve: false` skips the response-only identity
+// resolution when the caller does its own.
+async function applyProductUpdate(
+  product,
+  userId,
+  changes,
+  { requireRateUsed = false, session = null, resolve = true } = {}
+) {
   for (const [field, code] of REQUIRED_STRING_FIELDS) {
     if (changes[field] !== undefined) {
       if (typeof changes[field] !== 'string' || !changes[field].trim()) {
@@ -284,7 +381,18 @@ async function applyProductUpdate(product, userId, changes, { requireRateUsed = 
 
   product.isAvailable = computeIsAvailable(product.manuallyDisabled);
 
-  await product.save();
+  try {
+    await product.save({ session });
+  } catch (err) {
+    if (err.name === 'VersionError') {
+      throw ApiError.conflict(
+        'This product was changed by someone else in the meantime. Reload it and try again.',
+        'PRODUCT_CHANGED'
+      );
+    }
+    throw err;
+  }
+  if (!resolve) return product;
 
   // Same "resolve only after the write is durable" reasoning as
   // createProduct above - this response-only mutation never gets saved.
@@ -319,9 +427,11 @@ async function importProductsFromExcel(warehouseId, userId, file) {
 
   let added = 0;
   let updated = 0;
+  // Rows whose product exists but is disabled by the platform (see below).
+  const blocked = [];
 
   if (candidates.length === 0) {
-    return { added, updated, errors, exchangeRateUsed, convertedFromSyp };
+    return { added, updated, blocked, errors, exchangeRateUsed, convertedFromSyp };
   }
 
   // Two bounded queries for the whole file instead of two per row. Each row
@@ -346,9 +456,8 @@ async function importProductsFromExcel(warehouseId, userId, file) {
   const catalogItems = await ProductCatalog.find({
     nameKey: { $in: [...new Set(keyedCandidates.map((c) => c.nameKey))] },
     manufacturerKey: { $in: [...new Set(keyedCandidates.map((c) => c.manufacturerKey))] },
-    isActive: true,
   })
-    .select('_id nameKey nameEnKey manufacturerKey manufacturerEnKey manufacturerId')
+    .select('_id nameKey nameEnKey manufacturerKey manufacturerEnKey manufacturerId isActive')
     .lean();
 
   // The two $in clauses above match the cross-product of names and
@@ -365,11 +474,17 @@ async function importProductsFromExcel(warehouseId, userId, file) {
       errors.push({ row: candidate.rowNumber, reason: 'Medicine not found in the central catalog.' });
       continue;
     }
+    // A withdrawn (recalled) medicine: reported as such, never created or
+    // updated - whether or not this warehouse already had it.
+    if (catalogItem.isActive === false) {
+      blocked.push({ row: candidate.rowNumber, code: 'CATALOG_ITEM_WITHDRAWN' });
+      continue;
+    }
     matched.push({ candidate, catalogId: catalogItem._id, catalogItem });
   }
 
   if (matched.length === 0) {
-    return { added, updated, errors, exchangeRateUsed, convertedFromSyp };
+    return { added, updated, blocked, errors, exchangeRateUsed, convertedFromSyp };
   }
 
   // Only price + priceHistory are read off an existing product, so the rest
@@ -379,7 +494,7 @@ async function importProductsFromExcel(warehouseId, userId, file) {
     warehouseId,
     masterProductId: { $in: matched.map((m) => m.catalogId) },
   })
-    .select('masterProductId price')
+    .select('masterProductId price isActive deactivatedBy manuallyDisabled')
     .lean();
   const existingByCatalogId = new Map(
     existingProducts.map((product) => [String(product.masterProductId), product])
@@ -392,12 +507,27 @@ async function importProductsFromExcel(warehouseId, userId, file) {
   for (const { candidate, catalogId, catalogItem } of matched) {
     const existing = existingByCatalogId.get(String(catalogId));
 
+    // Switched off by the platform (catalog recall / admin): left exactly as
+    // it is and reported in its own bucket - never counted as "updated"
+    // (H3). It used to get its price rewritten while staying invisible.
+    const blockedCode = blockedCodeFor(existing);
+    if (blockedCode) {
+      blocked.push({ row: candidate.rowNumber, code: blockedCode });
+      continue;
+    }
+
     if (existing) {
       // A price that didn't move writes no history entry and no
       // lastPriceUpdate, exactly as the per-row save did - re-importing an
       // unchanged file must not fill priceHistory with no-op entries.
       const set = {};
       const push = {};
+      // A product the warehouse had disabled itself comes back on import
+      // (Phase 3.4) - the file is the warehouse saying it sells it again.
+      if (existing.manuallyDisabled) {
+        set.manuallyDisabled = false;
+        set.isAvailable = true;
+      }
       if (candidate.priceUsd !== existing.price) {
         set.price = candidate.priceUsd;
         set.lastPriceUpdate = now;
@@ -481,7 +611,7 @@ async function importProductsFromExcel(warehouseId, userId, file) {
     else updated += 1;
   });
 
-  return { added, updated, errors, exchangeRateUsed, convertedFromSyp };
+  return { added, updated, blocked, errors, exchangeRateUsed, convertedFromSyp };
 }
 
 module.exports = {

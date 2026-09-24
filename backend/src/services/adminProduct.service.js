@@ -147,9 +147,14 @@ async function updateProduct(productId, userId, changes, options) {
 // isActive, so this is immediately invisible on both sides. Idempotent: no
 // error if it's already inactive, since there's no meaningful "undo" state
 // to protect here (no reactivate flow exists yet).
+//
+// Recorded as deactivatedBy 'admin' - also over an earlier 'catalog_recall',
+// since the admin's explicit decision must survive the catalog item being
+// reactivated later (which only brings back 'catalog_recall' products).
 async function deactivateProduct(productId) {
   const product = await findAnyProductOrThrow(productId);
   product.isActive = false;
+  product.deactivatedBy = 'admin';
   await product.save();
   return product;
 }

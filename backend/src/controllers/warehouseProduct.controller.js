@@ -70,10 +70,15 @@ const create = asyncHandler(async (req, res) => {
   // used (exchangeRate.service.js's assertRateUsedIsCurrent).
   const product = await warehouseProductService.createProduct(warehouse._id, req.body, {
     requireRateUsed: true,
+    userId: req.user._id,
   });
-  res.status(201).json({
+  // Adding a medicine the warehouse had disabled itself re-enables that
+  // product instead of creating a second one (200, reEnabled: true).
+  const reEnabled = product.$locals.reEnabled === true;
+  res.status(reEnabled ? 200 : 201).json({
     success: true,
-    message: 'Product created.',
+    message: reEnabled ? 'Product re-enabled.' : 'Product created.',
+    reEnabled,
     ...warehouseProductViewModel.toProductResponse(product),
   });
 });

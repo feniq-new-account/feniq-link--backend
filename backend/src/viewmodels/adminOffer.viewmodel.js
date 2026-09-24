@@ -36,6 +36,9 @@ function serializeOffer({ offer, product, pendingUpdateProduct, warehouse }) {
     status: offer.status,
     pendingUpdate: serializeProposedOffer(offer.pendingUpdate, pendingUpdateProduct),
     createdAt: offer.createdAt,
+    // The version the admin is looking at - sent back on approve/reject so a
+    // decision can't land on an offer the warehouse changed in the meantime.
+    version: offer.__v ?? 0,
   };
 }
 

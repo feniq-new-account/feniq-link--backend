@@ -48,7 +48,12 @@ const offerSchema = new Schema(
     // is itself waiting for the admin. null the rest of the time.
     pendingUpdate: { type: offerUpdateSchema, default: null },
   },
-  { timestamps: true }
+  // optimisticConcurrency: `__v` goes up on every save and each save is
+  // conditional on it, so an admin approving a parked edit can never apply it
+  // over a newer one the warehouse saved in between (adminOffer.service.js
+  // turns that into 409 OFFER_CHANGED). The admin serializer exposes `__v` as
+  // the offer's `version`.
+  { timestamps: true, optimisticConcurrency: true }
 );
 
 offerSchema.index({ productId: 1 });

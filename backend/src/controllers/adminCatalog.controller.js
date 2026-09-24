@@ -54,19 +54,31 @@ const update = asyncHandler(async (req, res) => {
     userId: req.user._id,
     confirmed: req.query.confirm === 'true',
   });
-  res.json({ success: true, ...catalogViewModel.toCatalogItemResponse(item) });
+  // restoredProductCount: how many recalled products came back when this PATCH
+  // re-enabled the item (0 otherwise) - so the panel can say so.
+  res.json({
+    success: true,
+    ...catalogViewModel.toCatalogItemResponse(item),
+    restoredProductCount: item.restoredProductCount ?? 0,
+  });
 });
 
 // Reports how many warehouse products went with it - deactivating a master
 // entry now cascades to every product linked to it, and that is a large
 // enough consequence that the panel should be able to say so rather than
 // leave the admin to discover it.
+// The recall also stops the offers on those products and takes them out of any
+// package - the counts let the panel spell the whole consequence out.
 const deactivate = asyncHandler(async (req, res) => {
-  const { deactivatedProductCount } = await catalogService.deactivateCatalogItem(req.params.id);
+  const { deactivatedProductCount, stoppedOfferCount, affectedPackageCount, emptiedPackageCount } =
+    await catalogService.deactivateCatalogItem(req.params.id);
   res.json({
     success: true,
     message: 'Catalog item deactivated.',
     deactivatedProductCount,
+    stoppedOfferCount,
+    affectedPackageCount,
+    emptiedPackageCount,
   });
 });
 

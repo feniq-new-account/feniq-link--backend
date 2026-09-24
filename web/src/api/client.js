@@ -466,8 +466,12 @@ export const api = {
     const qs = params.toString();
     return request(`/admin/offers/all${qs ? `?${qs}` : ''}`);
   },
-  approveOffer: (offerId) => request(`/admin/offers/${offerId}/approve`, { method: 'POST' }),
-  rejectOffer: (offerId) => request(`/admin/offers/${offerId}/reject`, { method: 'POST' }),
+  // `version`: the offer version on screen - the server refuses with
+  // OFFER_CHANGED if the warehouse changed the offer since it was loaded.
+  approveOffer: (offerId, version) =>
+    request(`/admin/offers/${offerId}/approve`, { method: 'POST', body: { version } }),
+  rejectOffer: (offerId, version) =>
+    request(`/admin/offers/${offerId}/reject`, { method: 'POST', body: { version } }),
   updateAdminOffer: (offerId, data) => request(`/admin/offers/${offerId}`, { method: 'PATCH', body: data }),
   deleteAdminOffer: (offerId) => request(`/admin/offers/${offerId}`, { method: 'DELETE' }),
   // Always paginated, unlike `warehouseProducts` above: this backs the

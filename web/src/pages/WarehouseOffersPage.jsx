@@ -24,8 +24,12 @@ export function WarehouseOffersPage() {
   const [discountMin, setDiscountMin] = useState('');
   const [discountMax, setDiscountMax] = useState('');
 
-  const statusLabel = (offer) =>
-    offer.status === 'approved' ? t('offers.warehouse.statusApproved') : t('offers.warehouse.statusPending');
+  // 'stopped': the platform took it off air (its product was withdrawn from
+  // the central catalog) - kept as a record, no longer editable.
+  const statusLabel = (offer) => {
+    if (offer.status === 'stopped') return t('offers.warehouse.statusStopped');
+    return offer.status === 'approved' ? t('offers.warehouse.statusApproved') : t('offers.warehouse.statusPending');
+  };
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -182,7 +186,13 @@ export function WarehouseOffersPage() {
                   <td className="wh-num wh-table-date">{periodCell(offer)}</td>
                   <td>
                     <span
-                      className={`status-badge ${offer.status === 'approved' ? 'status-delivered' : 'status-pending'}`}
+                      className={`status-badge ${
+                        offer.status === 'approved'
+                          ? 'status-delivered'
+                          : offer.status === 'stopped'
+                            ? 'status-cancelled'
+                            : 'status-pending'
+                      }`}
                     >
                       {statusLabel(offer)}
                     </span>
@@ -192,9 +202,11 @@ export function WarehouseOffersPage() {
                   </td>
                   <td>
                     <div className="table-row-actions">
-                      <button className="btn-secondary" onClick={() => setEditing(offer)}>
-                        {t('common.edit')}
-                      </button>
+                      {offer.status !== 'stopped' && (
+                        <button className="btn-secondary" onClick={() => setEditing(offer)}>
+                          {t('common.edit')}
+                        </button>
+                      )}
                       <button
                         className="btn-reject"
                         disabled={busyId === offer.id}

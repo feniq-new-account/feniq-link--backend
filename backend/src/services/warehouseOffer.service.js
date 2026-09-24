@@ -111,6 +111,11 @@ async function createOffer(warehouseId, data) {
 //   it, rejectOffer discards it).
 async function updateOffer(offerId, warehouseId, data) {
   const offer = await findOwnedOfferOrThrow(offerId, warehouseId);
+  // A stopped offer (its product was recalled or merged away) is a record -
+  // a new offer is how the warehouse promotes the product again.
+  if (offer.status === 'stopped') {
+    throw ApiError.conflict('This offer was stopped and can no longer be edited.', 'OFFER_STOPPED');
+  }
   const { fields, product } = await buildOfferFields(warehouseId, data);
 
   if (offer.status === 'pending') {

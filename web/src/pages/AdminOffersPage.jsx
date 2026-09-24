@@ -95,7 +95,14 @@ export function AdminOffersPage() {
       await fn();
       reset();
     } catch (err) {
-      setActionError(err.message);
+      // The warehouse changed the offer while it was on screen: the decision
+      // was not applied - reload so the admin reviews what is there now.
+      if (err.code === 'OFFER_CHANGED') {
+        setActionError(t('offers.admin.offerChanged'));
+        reset();
+      } else {
+        setActionError(err.message);
+      }
     } finally {
       setBusyId(null);
     }
@@ -103,13 +110,13 @@ export function AdminOffersPage() {
 
   const handleApprove = (offer) => {
     if (!window.confirm(t('offers.admin.confirmApprove', { title: offer.titleEn }))) return;
-    runAction(offer.id, () => api.approveOffer(offer.id));
+    runAction(offer.id, () => api.approveOffer(offer.id, offer.version));
   };
 
   const handleReject = (offer) => {
     const key = offer.pendingUpdate ? 'offers.admin.confirmRejectUpdate' : 'offers.admin.confirmReject';
     if (!window.confirm(t(key, { title: offer.titleEn }))) return;
-    runAction(offer.id, () => api.rejectOffer(offer.id));
+    runAction(offer.id, () => api.rejectOffer(offer.id, offer.version));
   };
 
   const handleDelete = (offer) => {
@@ -239,7 +246,11 @@ export function AdminOffersPage() {
                           )}
                         </td>
                         <td>
-                          {isInReview(offer) ? (
+                          {offer.status === 'stopped' ? (
+                            <span className="status-badge status-cancelled">
+                              {t('offers.warehouse.statusStopped')}
+                            </span>
+                          ) : isInReview(offer) ? (
                             <span className="status-badge status-pending">
                               {u ? t('offers.admin.updateRequestBadge') : t('offers.warehouse.statusPending')}
                             </span>

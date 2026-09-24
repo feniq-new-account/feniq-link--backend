@@ -301,16 +301,28 @@ export function AdminCatalogPage() {
         // it, not just from this list - the server reports how many products
         // went with it, and that is worth saying out loud rather than
         // letting the admin find out later.
+        // The recall also stops those products' offers and takes them out of
+        // any package - the counts come back so all of it can be said.
         const result = await api.deactivateCatalogItem(item.id);
         if (result.deactivatedProductCount > 0) {
           setActionNotice(
-            t('admin.catalog.disabledWithProducts', { count: result.deactivatedProductCount })
+            t('admin.catalog.disabledWithProducts', { count: result.deactivatedProductCount }) +
+              (result.stoppedOfferCount > 0 || result.affectedPackageCount > 0
+                ? ` ${t('admin.catalog.disabledSideEffects', {
+                    offers: result.stoppedOfferCount ?? 0,
+                    packages: result.affectedPackageCount ?? 0,
+                  })}`
+                : '')
           );
         }
       } else {
-        // Re-enabling the entry does NOT bring those products back - there is
-        // no reactivate flow for a product, so each warehouse re-adds its own.
-        await api.updateCatalogItem(item.id, { isActive: true });
+        // Re-enabling the entry brings back exactly the products its recall
+        // took (not ones a warehouse or admin disabled themselves); stopped
+        // offers and removed package lines are not restored.
+        const result = await api.updateCatalogItem(item.id, { isActive: true });
+        if (result.restoredProductCount > 0) {
+          setActionNotice(t('admin.catalog.reenabledWithProducts', { count: result.restoredProductCount }));
+        }
       }
       reset();
     } catch (err) {

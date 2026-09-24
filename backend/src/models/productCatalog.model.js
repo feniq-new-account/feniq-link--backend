@@ -74,6 +74,12 @@ const productCatalogSchema = new Schema(
     imageUrl: { type: String, default: null },
     nameHistory: { type: [nameHistoryEntrySchema], default: [] },
     isActive: { type: Boolean, default: true },
+    // Written by every warehouse product create/link, inside its transaction
+    // (warehouseProduct.service.js). Its real job is concurrency: that write
+    // makes a create and a concurrent recall of the same item conflict, so one
+    // of them retries and sees the other - a product can never be linked to an
+    // item in the instant it is being withdrawn.
+    lastLinkedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

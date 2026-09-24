@@ -502,7 +502,8 @@
       "discountRange": "يجب أن يكون الحسم رقماً بين 1 و100.",
       "approvalNotice": "كل عرض يمرّ بموافقة الأدمن قبل نشره — عند الموافقة يُرسل إشعار لكل الصيدليات. تعديل عرض مقبول يُبقي العرض الحالي كما هو حتى يوافق الأدمن على تعديلك.",
       "fromColumn": "من",
-      "toColumn": "إلى"
+      "toColumn": "إلى",
+      "statusStopped": "موقوف"
     },
     "admin": {
       "noOffers": "لا توجد عروض مطابقة لهذا الفلتر.",
@@ -516,7 +517,8 @@
       "confirmApprove": "الموافقة على \"{{title}}\"؟",
       "confirmReject": "رفض \"{{title}}\"؟ هذا يحذف العرض نهائياً.",
       "confirmRejectUpdate": "رفض هذا التعديل على \"{{title}}\"؟ العرض الحالي يبقى كما هو.",
-      "confirmDelete": "حذف \"{{title}}\"؟ هذا يزيله نهائياً من جميع الصيدليات."
+      "confirmDelete": "حذف \"{{title}}\"؟ هذا يزيله نهائياً من جميع الصيدليات.",
+      "offerChanged": "غيّر المستودع هذا العرض أثناء مراجعتك له - أُعيد تحميله، راجعه مرة أخرى."
     },
     "percentOff": "حسم {{percent}}%"
   },
@@ -565,7 +567,10 @@
     "temporarilyPaused": "متوقف مؤقتاً (مخفي عن الصيدليات)",
     "saveChanges": "حفظ التعديلات",
     "selectMedicineRequired": "الرجاء اختيار دواء من الكتالوج المركزي.",
-    "pricePositive": "يجب أن يكون السعر رقماً موجباً."
+    "pricePositive": "يجب أن يكون السعر رقماً موجباً.",
+    "errorWithdrawn": "الصنف مسحوب من القائمة المركزية",
+    "errorDisabledByAdmin": "معطّل من الإدارة",
+    "errorChanged": "عدّل شخص آخر هذا المنتج في الأثناء - أغلق النموذج وافتحه من جديد."
   },
   "dashboard": {
     "viewAll": "عرض الكل",
@@ -690,7 +695,9 @@
       "importConvertedRate": "بسعر صرف: 1$ = {{rate}} ل.س",
       "importErrorsTitle": "تفاصيل الأخطاء",
       "importDone": "تم",
-      "downloadErrorReport": "تحميل تقرير الأخطاء"
+      "downloadErrorReport": "تحميل تقرير الأخطاء",
+      "disabledSideEffects": "أُوقف {{offers}} عرض، وعُدّلت {{packages}} باقة.",
+      "reenabledWithProducts": "تمت إعادة التفعيل. عاد {{count}} منتج مسحوب للبيع."
     },
     "exchangeRate": {
       "title": "سعر الصرف",
