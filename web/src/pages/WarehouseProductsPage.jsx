@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import {
   EMPTY_PRODUCT_FORM,
+  formatBonusTiers,
   ProductFormModal,
   productAvailabilityClass,
   productAvailabilityLabel,
   productFormFromProduct,
 } from '../components/ProductFormModal';
 import { LoadMoreControl } from '../components/LoadMoreControl';
+import { ImportColumnMappingModal } from '../components/ImportColumnMappingModal';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { useExchangeRate } from '../context/ExchangeRateContext';
 import { formatUsdAsSyp } from '../utils/currency';
@@ -29,7 +32,10 @@ export function WarehouseProductsPage() {
   const [categories, setCategories] = useState([]);
   const [modal, setModal] = useState(null); // null | { mode: 'create' } | { mode: 'edit', product }
   const [isImporting, setIsImporting] = useState(false);
-  const [importReport, setImportReport] = useState(null);
+  // Set when an upload came back IMPORT_COLUMNS_UNRECOGNIZED: the file waits
+  // here while the warehouse maps its columns, then goes up again with them.
+  const [pendingMapping, setPendingMapping] = useState(null); // null | { file, details }
+  const navigate = useNavigate();
   const [actionError, setActionError] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -133,24 +139,32 @@ export function WarehouseProductsPage() {
     }
   };
 
+  // Every import opens its results page (catalog overhaul Phase 4.6), where
+  // rows that need the warehouse are resolved.
+  const uploadImport = async (file, mapping) => {
+    setIsImporting(true);
+    setActionError(null);
+    try {
+      const report = await api.importWarehouseProducts(file, { mapping });
+      setPendingMapping(null);
+      navigate(`/warehouse/products/imports/${report.batchId}`);
+    } catch (err) {
+      if (err.code === 'IMPORT_COLUMNS_UNRECOGNIZED') {
+        setPendingMapping({ file, details: err.details });
+      } else {
+        setPendingMapping(null);
+        setActionError(err.message);
+      }
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const handleFilePicked = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-
-    setIsImporting(true);
-    setActionError(null);
-    setImportReport(null);
-    try {
-      const report = await api.importWarehouseProducts(file);
-      setImportReport(report);
-      if (selectedManufacturerAr !== null) reset();
-      loadManufacturers();
-    } catch (err) {
-      setActionError(err.message);
-    } finally {
-      setIsImporting(false);
-    }
+    await uploadImport(file);
   };
 
   const manufacturerLabel = (manufacturer) =>
@@ -194,44 +208,21 @@ export function WarehouseProductsPage() {
           {isImporting ? t('products.importing') : t('products.importExcel')}
         </button>
         <input ref={fileInputRef} type="file" accept=".xlsx" hidden onChange={handleFilePicked} />
+        <Link className="btn-secondary" to="/warehouse/products/imports">
+          {t('importResults.recentTitle')}
+        </Link>
         <button className="btn-primary" onClick={() => setModal({ mode: 'create' })}>
           {t('products.addProduct')}
         </button>
       </div>
 
-      {importReport && (
-        <div className="exchange-rate-card">
-          <p>
-            {t('products.importReport', {
-              added: importReport.added,
-              updated: importReport.updated,
-              failed:
-                importReport.errors.length > 0
-                  ? t('products.importReportFailed', { count: importReport.errors.length })
-                  : '',
-            })}
-          </p>
-          {importReport.convertedFromSyp > 0 && (
-            <p className="import-conversion-note">
-              {t('products.importConverted', { count: importReport.convertedFromSyp })}
-              {importReport.exchangeRateUsed != null && (
-                <>
-                  <br />
-                  {t('products.importConvertedRate', { rate: importReport.exchangeRateUsed })}
-                </>
-              )}
-            </p>
-          )}
-          {importReport.errors.length > 0 && (
-            <ul>
-              {importReport.errors.map((e, index) => (
-                <li key={index} className="error-text">
-                  {t('products.importRowError', { row: e.row, reason: e.reason })}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      {pendingMapping && (
+        <ImportColumnMappingModal
+          details={pendingMapping.details}
+          isSubmitting={isImporting}
+          onClose={() => setPendingMapping(null)}
+          onSubmit={(mapping) => uploadImport(pendingMapping.file, mapping)}
+        />
       )}
 
       {(listError || actionError) && <p className="error-text">{listError || actionError}</p>}
@@ -258,6 +249,7 @@ export function WarehouseProductsPage() {
                   <th>{t('common.name')}</th>
                   <th>{t('common.category')}</th>
                   <th>{t('common.price')}</th>
+                  <th>{t('productForm.bonus')}</th>
                   <th>{t('common.status')}</th>
                   <th></th>
                 </tr>
@@ -273,6 +265,7 @@ export function WarehouseProductsPage() {
                     </td>
                     <td>{categoryName(product.categoryId)}</td>
                     <td className="wh-num">{formatUsdAsSyp(product.priceUsd, usdToSyp)}</td>
+                    <td>{formatBonusTiers(product.bonuses) || '-'}</td>
                     <td>
                       <span className={`availability-badge ${productAvailabilityClass(product)}`}>
                         {productAvailabilityLabel(product, t)}

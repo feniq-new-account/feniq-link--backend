@@ -14,6 +14,7 @@ const Product = require('../src/models/product.model');
 const ProductCatalog = require('../src/models/productCatalog.model');
 const Offer = require('../src/models/offer.model');
 const Advertisement = require('../src/models/advertisement.model');
+const ImportBatchRow = require('../src/models/importBatchRow.model');
 
 const catalogService = require('../src/services/productCatalog.service');
 const warehouseProductService = require('../src/services/warehouseProduct.service');
@@ -268,8 +269,9 @@ test('the warehouse import puts withdrawn and admin-disabled rows in their own b
       ['موقوف ذاتيا', 7, 'USD'],
     ])
   );
-  assert.deepStrictEqual(report.blocked.map((b) => b.code).sort(), ['CATALOG_ITEM_WITHDRAWN', 'PRODUCT_DISABLED_BY_ADMIN']);
-  assert.strictEqual(report.updated, 1);
+  const blocked = await ImportBatchRow.find({ batchId: report.batchId, bucket: 'blocked' }).lean();
+  assert.deepStrictEqual(blocked.map((b) => b.blockedCode).sort(), ['CATALOG_ITEM_WITHDRAWN', 'PRODUCT_DISABLED_BY_ADMIN']);
+  assert.strictEqual(report.counts.updated, 1);
   const adminProduct = await Product.findOne({ masterProductId: adminItem._id }).lean();
   assert.strictEqual(adminProduct.price, 5, 'an admin-disabled product is left untouched');
   const self = await Product.findOne({ masterProductId: selfItem._id }).lean();

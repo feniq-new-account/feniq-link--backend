@@ -22,6 +22,12 @@ const REVIEW_REASONS = [
   'unknown_unit',
   'unknown_currency',
   'missing_currency',
+  // Unreadable rows (bucket 'error').
+  'missing_name',
+  'missing_manufacturer',
+  'missing_price',
+  'invalid_price',
+  'save_failed',
 ];
 
 const suggestionSchema = new Schema(

@@ -1,4 +1,6 @@
 const { asyncHandler } = require('../utils/asyncHandler');
+const { ApiError } = require('../utils/ApiError');
+const { normalizeText } = require('../utils/normalizeText');
 const catalogService = require('../services/productCatalog.service');
 const catalogViewModel = require('../viewmodels/productCatalog.viewmodel');
 const { parseCursorQuery, parseObjectIdCursor, paginationMeta } = require('../utils/pagination');
@@ -41,8 +43,32 @@ const downloadTemplate = asyncHandler(async (req, res) => {
   res.send(buffer);
 });
 
+// Multipart text fields, each JSON: `confirmNewManufacturers` (names from a
+// previous report's newManufacturers to create), `manufacturerLinks`
+// ({ rawName: manufacturerId } to file them under an existing one) and
+// `mapping` ({ headerKey: field }, the column-mapping step). A malformed one is
+// a 400, never silently ignored.
+function jsonField(value, name) {
+  if (value === undefined || value === null || value === '') return undefined;
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw ApiError.badRequest(`Invalid ${name}.`, undefined, 'INVALID_QUERY_PARAM');
+  }
+}
+
 const importExcel = asyncHandler(async (req, res) => {
-  const report = await catalogService.importFromExcel(req.file);
+  const confirmNewManufacturers = jsonField(req.body?.confirmNewManufacturers, 'confirmNewManufacturers') ?? [];
+  const manufacturerLinks = jsonField(req.body?.manufacturerLinks, 'manufacturerLinks') ?? {};
+  const mapping = jsonField(req.body?.mapping, 'mapping');
+  if (!Array.isArray(confirmNewManufacturers) || typeof manufacturerLinks !== 'object' || Array.isArray(manufacturerLinks)) {
+    throw ApiError.badRequest('Invalid manufacturer confirmation.', undefined, 'INVALID_QUERY_PARAM');
+  }
+  const report = await catalogService.importFromExcel(req.file, {
+    confirmNewManufacturers,
+    manufacturerLinks,
+    explicitMapping: mapping ? new Map(Object.entries(mapping).map(([key, field]) => [normalizeText(key), field])) : null,
+  });
   res.json({ success: true, ...report });
 });
 

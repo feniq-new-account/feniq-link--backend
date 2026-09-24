@@ -35,7 +35,8 @@
     "allResultsShown": "تم عرض كل النتائج",
     "noMatches": "لا توجد نتائج",
     "unexpectedError": "حدث خطأ غير متوقع. حاول مرة أخرى.",
-    "retry": "إعادة المحاولة"
+    "retry": "إعادة المحاولة",
+    "view": "عرض"
   },
   "app": {
     "brand": "فينيق - لوحة الإدارة"
@@ -570,7 +571,11 @@
     "pricePositive": "يجب أن يكون السعر رقماً موجباً.",
     "errorWithdrawn": "الصنف مسحوب من القائمة المركزية",
     "errorDisabledByAdmin": "معطّل من الإدارة",
-    "errorChanged": "عدّل شخص آخر هذا المنتج في الأثناء - أغلق النموذج وافتحه من جديد."
+    "errorChanged": "عدّل شخص آخر هذا المنتج في الأثناء - أغلق النموذج وافتحه من جديد.",
+    "unit": "الوحدة",
+    "bonus": "البونص (مثل 10+1)",
+    "legacyUnit": "الحالية",
+    "errorBonus": "البونص غير مفهوم - اكتبه مثل 10+1 أو 10+1، 20+3."
   },
   "dashboard": {
     "viewAll": "عرض الكل",
@@ -697,7 +702,12 @@
       "importDone": "تم",
       "downloadErrorReport": "تحميل تقرير الأخطاء",
       "disabledSideEffects": "أُوقف {{offers}} عرض، وعُدّلت {{packages}} باقة.",
-      "reenabledWithProducts": "تمت إعادة التفعيل. عاد {{count}} منتج مسحوب للبيع."
+      "reenabledWithProducts": "تمت إعادة التفعيل. عاد {{count}} منتج مسحوب للبيع.",
+      "newManufacturersTitle": "شركات جديدة",
+      "newManufacturersHint": "هذه الشركات غير موجودة بالنظام بعد، لذلك تم تخطي صفوفها. حدّد ما تريد إنشاءه وأعد استيراد الملف.",
+      "rowsCount": "{{count}} صف",
+      "createAndReimport": "إنشاء وإعادة الاستيراد",
+      "withdrawnTitle": "مسحوب — لم يُعد تفعيله"
     },
     "exchangeRate": {
       "title": "سعر الصرف",
@@ -832,5 +842,72 @@
   "exchangeRateChange": {
     "notice": "تغيّر سعر الصرف أثناء التعديل: كان 1$ = {{from}} وأصبح {{to}}. القيم بالدولار تُحسب الآن بالسعر الجديد — راجعها ثم أكّد الحفظ.",
     "confirmButton": "تأكيد وحفظ بالسعر الجديد"
+  },
+  "importMapping": {
+    "title": "أي عمود هو أي حقل؟",
+    "hint": "لم نتعرّف على بعض أعمدة الملف. اختر ماذا يحتوي كل عمود - سنتذكّر اختيارك في المرة القادمة.",
+    "header": "العمود في الملف",
+    "meaning": "يحتوي",
+    "ignore": "— تجاهل —",
+    "submit": "استيراد بهذه الأعمدة",
+    "missing": "ما زال ناقصاً: {{fields}}",
+    "duplicated": "كل حقل يُختار لعمود واحد فقط.",
+    "field": {
+      "name": "اسم الدواء",
+      "price": "السعر",
+      "manufacturer": "الشركة",
+      "unit": "الوحدة",
+      "currency": "العملة",
+      "bonus": "البونص"
+    }
+  },
+  "importResults": {
+    "title": "نتيجة الاستيراد",
+    "recentTitle": "آخر عمليات الاستيراد",
+    "backToCatalog": "العودة إلى الكتالوج",
+    "empty": "لا شيء في هذا التبويب.",
+    "tab": {
+      "added": "انضاف",
+      "updated": "تحدّث سعره",
+      "added_disabled": "انضاف متوقف — سعر صفر",
+      "blocked": "معطّل من الإدارة / مسحوب",
+      "review": "بحاجة مراجعة",
+      "error": "صفوف غير مقروءة",
+      "resolved": "تمت معالجتها"
+    },
+    "row": "الصف",
+    "name": "الاسم",
+    "manufacturer": "الشركة",
+    "price": "السعر",
+    "currency": "العملة",
+    "unit": "الوحدة",
+    "bonus": "البونص",
+    "note": "ملاحظة",
+    "date": "التاريخ",
+    "file": "الملف",
+    "open": "فتح",
+    "pick": "اختيار",
+    "noSuggestions": "لا يوجد دواء مطابق - عدّل الاسم أو الشركة للبحث من جديد.",
+    "requestNewItem": "طلب إضافة صنف جديد",
+    "keepThisPrice": "اعتماد سعر هذا الصف",
+    "confirmRow": "تأكيد هذا الصف",
+    "reason": {
+      "not_matched": "غير مطابق في القائمة المركزية",
+      "unknown_manufacturer": "شركة غير معروفة",
+      "duplicate_in_file": "مكرر في الملف",
+      "bad_bonus": "البونص غير مفهوم",
+      "unknown_unit": "وحدة غير معروفة",
+      "unknown_currency": "عملة غير معروفة",
+      "missing_currency": "بدون عملة",
+      "missing_name": "بدون اسم",
+      "missing_manufacturer": "بدون شركة",
+      "missing_price": "بدون سعر",
+      "invalid_price": "السعر غير مفهوم",
+      "save_failed": "تعذّر الحفظ"
+    },
+    "blocked": {
+      "CATALOG_ITEM_WITHDRAWN": "الصنف مسحوب من القائمة المركزية",
+      "PRODUCT_DISABLED_BY_ADMIN": "معطّل من الإدارة"
+    }
   }
 }

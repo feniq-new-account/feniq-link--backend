@@ -16,6 +16,10 @@ export const EMPTY_PRODUCT_FORM = {
   categoryId: '',
   unitAr: '',
   unitEn: '',
+  // A code from the fixed unit list (GET /units) - the form's dropdown.
+  unit: '',
+  // Bonus tiers as typed, e.g. "10+1" or "10+1، 20+3" - parsed by the server.
+  bonus: '',
   // The price the warehouse types is in SYP now (converted to the catalog's
   // stored USD on save, see handleSubmit). `priceUsd` carries the currently
   // stored value so an untouched edit re-sends it exactly, never a
@@ -42,6 +46,8 @@ export function productFormFromProduct(product, usdToSyp) {
     categoryId: product.categoryId ?? '',
     unitAr: product.unitAr ?? '',
     unitEn: product.unitEn ?? '',
+    unit: product.unit ?? '',
+    bonus: formatBonusTiers(product.bonuses),
     // The SYP field is left blank when the rate hasn't loaded - the warehouse
     // then can't edit the price this session, but every other field still saves
     // (the untouched-price path re-sends the stored USD value).
@@ -69,7 +75,13 @@ export function productSaveErrorMessage(err, t) {
   if (err?.code === 'CATALOG_ITEM_WITHDRAWN') return t('productForm.errorWithdrawn');
   if (err?.code === 'PRODUCT_DISABLED_BY_ADMIN') return t('productForm.errorDisabledByAdmin');
   if (err?.code === 'PRODUCT_CHANGED') return t('productForm.errorChanged');
+  if (err?.code === 'INVALID_BONUS') return t('productForm.errorBonus');
   return err?.message || t('common.unexpectedError');
+}
+
+// Bonus tiers -> the text the form and the product tables show ("10+1، 20+3").
+export function formatBonusTiers(tiers) {
+  return (tiers ?? []).map((tier) => `${tier.buy}+${tier.free}`).join('، ');
 }
 
 export function productAvailabilityLabel(product, t) {
@@ -157,6 +169,14 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
   const [error, setError] = useState(null);
   // Set by a RATE_CHANGED refusal until the next submit - see RateChangedNotice.
   const [rateChange, setRateChange] = useState(null);
+  const [units, setUnits] = useState([]);
+
+  useEffect(() => {
+    api
+      .units()
+      .then((data) => setUnits(data.units))
+      .catch(() => setUnits([]));
+  }, []);
 
   // When the rate moves (it loads late, or a refusal replaced it), an
   // untouched price follows it: the SYP shown is re-derived from the stored
@@ -220,8 +240,10 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
       return;
     }
 
-    const requiredFields = ['unitAr', 'unitEn', 'categoryId'];
-    if (requiredFields.some((field) => !form[field].trim())) {
+    // A unit from the list is required - except on an edit of an older
+    // product that still carries its free-text unit, which may keep it.
+    const hasLegacyUnit = mode === 'edit' && form.unitAr.trim() && form.unitEn.trim();
+    if (!form.categoryId.trim() || (!form.unit && !hasLegacyUnit)) {
       setError(t('common.requiredFields'));
       return;
     }
@@ -263,8 +285,10 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
       {
         masterProductId: mode === 'create' ? form.masterProductId : undefined,
         categoryId: form.categoryId,
-        unitAr: form.unitAr.trim(),
-        unitEn: form.unitEn.trim(),
+        ...(form.unit ? { unit: form.unit } : { unitAr: form.unitAr.trim(), unitEn: form.unitEn.trim() }),
+        // An emptied bonus field on an edit clears the bonus; on a create
+        // there is nothing to clear.
+        bonus: mode === 'edit' || form.bonus.trim() ? form.bonus.trim() : undefined,
         priceUsd,
         description: form.description.trim() || undefined,
         image: form.image.trim() || undefined,
@@ -316,22 +340,25 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
           )}
           <div className="form-row">
             <label>
-              {t('productForm.unitEn')}
-              <input
-                value={form.unitEn}
-                onChange={(e) => setField('unitEn', e.target.value)}
-                placeholder="Box"
-                required
-              />
+              {t('productForm.unit')}
+              <select value={form.unit} onChange={(e) => setField('unit', e.target.value)}>
+                <option value="">
+                  {form.unit === '' && form.unitAr ? `${form.unitAr} (${t('productForm.legacyUnit')})` : '—'}
+                </option>
+                {units.map((unit) => (
+                  <option key={unit.code} value={unit.code}>
+                    {unit.nameAr} · {unit.nameEn}
+                  </option>
+                ))}
+              </select>
             </label>
             <label>
-              {t('productForm.unitAr')}
+              {t('productForm.bonus')}
               <input
-                value={form.unitAr}
-                onChange={(e) => setField('unitAr', e.target.value)}
-                dir="rtl"
-                placeholder="علبة"
-                required
+                value={form.bonus}
+                onChange={(e) => setField('bonus', e.target.value)}
+                placeholder="10+1"
+                dir="ltr"
               />
             </label>
           </div>

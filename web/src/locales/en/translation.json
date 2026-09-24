@@ -35,7 +35,8 @@
     "allResultsShown": "All results shown",
     "noMatches": "No matches",
     "unexpectedError": "Something went wrong. Please try again.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "view": "View"
   },
   "app": {
     "brand": "Feniq Admin"
@@ -554,7 +555,11 @@
     "pricePositive": "Price must be a positive number.",
     "errorWithdrawn": "This medicine has been withdrawn from the central catalog.",
     "errorDisabledByAdmin": "This product has been disabled by the administration.",
-    "errorChanged": "Someone else changed this product in the meantime - close the form and open it again."
+    "errorChanged": "Someone else changed this product in the meantime - close the form and open it again.",
+    "unit": "Unit",
+    "bonus": "Bonus (e.g. 10+1)",
+    "legacyUnit": "current",
+    "errorBonus": "The bonus could not be read - write it like 10+1 or 10+1، 20+3."
   },
   "dashboard": {
     "viewAll": "View all",
@@ -681,7 +686,12 @@
       "importDone": "Done",
       "downloadErrorReport": "Download error report",
       "disabledSideEffects": "{{offers}} offer(s) stopped, {{packages}} package(s) updated.",
-      "reenabledWithProducts": "Re-enabled. {{count}} withdrawn product(s) are back on sale."
+      "reenabledWithProducts": "Re-enabled. {{count}} withdrawn product(s) are back on sale.",
+      "newManufacturersTitle": "New companies",
+      "newManufacturersHint": "These companies are not in the system yet, so their rows were skipped. Tick the ones to create and import the file again.",
+      "rowsCount": "{{count}} row(s)",
+      "createAndReimport": "Create and import again",
+      "withdrawnTitle": "Withdrawn — not reactivated"
     },
     "exchangeRate": {
       "title": "Exchange rate",
@@ -816,5 +826,72 @@
   "exchangeRateChange": {
     "notice": "The exchange rate changed while you were editing: $1 was {{from}} and is now {{to}}. Amounts in USD are now worked out at the new rate — review them, then confirm to save.",
     "confirmButton": "Confirm and save at the new rate"
+  },
+  "importMapping": {
+    "title": "Which column is which?",
+    "hint": "Some columns in this file were not recognized. Choose what each column holds - your choice is remembered for next time.",
+    "header": "Column in the file",
+    "meaning": "Holds",
+    "ignore": "— ignore —",
+    "submit": "Import with these columns",
+    "missing": "Still missing: {{fields}}",
+    "duplicated": "Each field can be chosen for one column only.",
+    "field": {
+      "name": "Medicine name",
+      "price": "Price",
+      "manufacturer": "Company",
+      "unit": "Unit",
+      "currency": "Currency",
+      "bonus": "Bonus"
+    }
+  },
+  "importResults": {
+    "title": "Import results",
+    "recentTitle": "Recent imports",
+    "backToCatalog": "Back to the catalog",
+    "empty": "Nothing in this tab.",
+    "tab": {
+      "added": "Added",
+      "updated": "Price updated",
+      "added_disabled": "Added stopped — price 0",
+      "blocked": "Disabled by the admin / withdrawn",
+      "review": "Needs review",
+      "error": "Unreadable rows",
+      "resolved": "Resolved"
+    },
+    "row": "Row",
+    "name": "Name",
+    "manufacturer": "Company",
+    "price": "Price",
+    "currency": "Currency",
+    "unit": "Unit",
+    "bonus": "Bonus",
+    "note": "Note",
+    "date": "Date",
+    "file": "File",
+    "open": "Open",
+    "pick": "Choose",
+    "noSuggestions": "No matching medicine - edit the name or company to search again.",
+    "requestNewItem": "Request a new item",
+    "keepThisPrice": "Keep this row's price",
+    "confirmRow": "Confirm this row",
+    "reason": {
+      "not_matched": "Not matched in the central catalog",
+      "unknown_manufacturer": "Unknown company",
+      "duplicate_in_file": "Appears more than once in the file",
+      "bad_bonus": "Bonus could not be read",
+      "unknown_unit": "Unknown unit",
+      "unknown_currency": "Unknown currency",
+      "missing_currency": "No currency",
+      "missing_name": "No name",
+      "missing_manufacturer": "No company",
+      "missing_price": "No price",
+      "invalid_price": "Price could not be read",
+      "save_failed": "Could not be saved"
+    },
+    "blocked": {
+      "CATALOG_ITEM_WITHDRAWN": "Withdrawn from the central catalog",
+      "PRODUCT_DISABLED_BY_ADMIN": "Disabled by the administration"
+    }
   }
 }

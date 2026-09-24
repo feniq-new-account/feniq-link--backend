@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ImportColumnMappingModal } from '../components/ImportColumnMappingModal';
 import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { SearchableSelect } from '../components/SearchableSelect';
@@ -118,9 +119,23 @@ function EditCatalogItemModal({ item, categories, onClose, onSaved }) {
 // Section: the import-result dialog (mockup frame 1g) - a distinct
 // sharp-cornered overlay rather than the generic rounded `.modal`, since the
 // mockup calls it out as its own component with its own stat cards.
-function ImportResultModal({ report, fileName, onClose }) {
+// `onConfirmNewManufacturers(names)` re-imports the same file creating the
+// manufacturers the admin ticked (catalog overhaul Phase 4.3: an unknown
+// manufacturer is never created silently).
+function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturers, isImporting }) {
   const { t } = useTranslation();
-  const totalRows = report.added + report.updated + report.errors.length;
+  const withdrawn = report.withdrawn ?? [];
+  const newManufacturers = report.newManufacturers ?? [];
+  const skippedForManufacturers = newManufacturers.reduce((sum, m) => sum + m.rows.length, 0);
+  const totalRows = report.added + report.updated + report.errors.length + withdrawn.length + skippedForManufacturers;
+  const [toCreate, setToCreate] = useState(() => new Set(newManufacturers.map((m) => m.name)));
+  const toggleCreate = (name) =>
+    setToCreate((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
 
   const handleDownloadErrors = () => {
     const lines = ['row,reason', ...report.errors.map((e) => `${e.row},"${e.reason.replace(/"/g, '""')}"`)];
@@ -162,6 +177,42 @@ function ImportResultModal({ report, fileName, onClose }) {
             {report.exchangeRateUsed != null && (
               <div>{t('admin.catalog.importConvertedRate', { rate: report.exchangeRateUsed })}</div>
             )}
+          </div>
+        )}
+        {newManufacturers.length > 0 && (
+          <div className="adm-import-errors">
+            <div className="adm-import-errors-head">{t('admin.catalog.newManufacturersTitle')}</div>
+            <p className="hint">{t('admin.catalog.newManufacturersHint')}</p>
+            {newManufacturers.map((manufacturer) => (
+              <label key={manufacturer.name} className="adm-import-error-row">
+                <input
+                  type="checkbox"
+                  checked={toCreate.has(manufacturer.name)}
+                  onChange={() => toggleCreate(manufacturer.name)}
+                />{' '}
+                {manufacturer.name}{' '}
+                <span className="hint">({t('admin.catalog.rowsCount', { count: manufacturer.rows.length })})</span>
+              </label>
+            ))}
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={isImporting || toCreate.size === 0}
+              onClick={() => onConfirmNewManufacturers([...toCreate])}
+            >
+              {isImporting ? t('products.importing') : t('admin.catalog.createAndReimport')}
+            </button>
+          </div>
+        )}
+        {withdrawn.length > 0 && (
+          <div className="adm-import-errors">
+            <div className="adm-import-errors-head">{t('admin.catalog.withdrawnTitle')}</div>
+            {withdrawn.map((w) => (
+              <div key={w.row} className="adm-import-error-row">
+                <span className="adm-import-error-row-num">{w.row}</span>
+                {w.nameAr}
+              </div>
+            ))}
           </div>
         )}
         {report.errors.length > 0 && (
@@ -207,6 +258,10 @@ export function AdminCatalogPage() {
   const [actionNotice, setActionNotice] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importReport, setImportReport] = useState(null);
+  // The last uploaded file - re-sent when the admin confirms new manufacturers
+  // or maps the columns.
+  const [lastImportFile, setLastImportFile] = useState(null);
+  const [pendingMapping, setPendingMapping] = useState(null); // null | { details }
   const [importFileName, setImportFileName] = useState('');
   const [editingItem, setEditingItem] = useState(null);
   const fileInputRef = useRef(null);
@@ -276,16 +331,26 @@ export function AdminCatalogPage() {
     event.target.value = '';
     if (!file) return;
 
+    await runImport(file);
+  };
+
+  const runImport = async (file, options = {}) => {
     setIsImporting(true);
     setActionError(null);
-    setImportReport(null);
     try {
-      const report = await api.importCatalogExcel(file);
+      const report = await api.importCatalogExcel(file, options);
       setImportReport(report);
       setImportFileName(file.name);
+      setLastImportFile(file);
+      setPendingMapping(null);
       reset();
     } catch (err) {
-      setActionError(err.message);
+      if (err.code === 'IMPORT_COLUMNS_UNRECOGNIZED') {
+        setLastImportFile(file);
+        setPendingMapping({ details: err.details });
+      } else {
+        setActionError(err.message);
+      }
     } finally {
       setIsImporting(false);
     }
@@ -469,9 +534,20 @@ export function AdminCatalogPage() {
 
       {importReport && (
         <ImportResultModal
+          key={importReport.added + ':' + importReport.updated + ':' + (importReport.newManufacturers?.length ?? 0)}
           report={importReport}
           fileName={importFileName}
+          isImporting={isImporting}
           onClose={() => setImportReport(null)}
+          onConfirmNewManufacturers={(names) => runImport(lastImportFile, { confirmNewManufacturers: names })}
+        />
+      )}
+      {pendingMapping && (
+        <ImportColumnMappingModal
+          details={pendingMapping.details}
+          isSubmitting={isImporting}
+          onClose={() => setPendingMapping(null)}
+          onSubmit={(mapping) => runImport(lastImportFile, { mapping })}
         />
       )}
     </div>

@@ -13,6 +13,9 @@ function serializeAdminProduct({ product, warehouse }) {
     image: product.image,
     unitAr: product.unitAr,
     unitEn: product.unitEn,
+    // Additive (catalog overhaul): the fixed unit code and the bonus tiers.
+    unit: product.unit ?? null,
+    bonuses: (product.bonuses || []).map((tier) => ({ buy: tier.buy, free: tier.free })),
     priceUsd: product.price,
     isAvailable: product.isAvailable,
     manuallyDisabled: product.manuallyDisabled,

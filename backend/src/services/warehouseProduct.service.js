@@ -3,16 +3,12 @@ const { ApiError } = require('../utils/ApiError');
 const Product = require('../models/product.model');
 const Category = require('../models/category.model');
 const ProductCatalog = require('../models/productCatalog.model');
-const { searchKey } = require('../models/productCatalog.model');
-const {
-  applyResolvedIdentity,
-  loadAndParseUpload,
-  buildProductFilter,
-  findProductPage,
-} = require('./productCatalog.service');
-const { registerManufacturers } = require('./warehouseManufacturer.service');
+const { applyResolvedIdentity, buildProductFilter, findProductPage } = require('./productCatalog.service');
+const { importWarehouseFile } = require('./warehouseImport.service');
 const { assertRateUsedIsCurrent } = require('./exchangeRate.service');
 const { runInTransaction } = require('../utils/transaction');
+const { UNIT_CODES, unitNameAr, unitNameEn } = require('../config/units');
+const { normalizeBonusTiers } = require('../utils/bonus');
 
 const WAREHOUSE_PRODUCTS_DEFAULT_LIMIT = 20;
 
@@ -130,11 +126,41 @@ function validatePrice(priceUsd) {
 }
 
 function validateRequiredStrings(data) {
+  // A unit code (the form's dropdown, config/units.js) stands in for the two
+  // free-text unit fields; a client that still sends only unitAr/unitEn keeps
+  // working.
+  if (data.unit !== undefined && data.unit !== null) return;
   for (const [field, code] of REQUIRED_STRING_FIELDS) {
     if (typeof data[field] !== 'string' || !data[field].trim()) {
       throw ApiError.badRequest(`Invalid ${field}.`, undefined, code);
     }
   }
+}
+
+// The unit fields to write for a unit input: a code from the fixed list
+// (catalog overhaul §4.5) also fills the legacy unitAr/unitEn with its labels,
+// so installed app builds that only read those keep showing a unit. Returns
+// undefined when no unit was sent at all.
+function unitFieldsFrom(data) {
+  if (data.unit !== undefined && data.unit !== null) {
+    if (!UNIT_CODES.includes(data.unit)) {
+      throw ApiError.badRequest('Invalid unit.', undefined, 'INVALID_UNIT');
+    }
+    return { unit: data.unit, unitAr: unitNameAr(data.unit), unitEn: unitNameEn(data.unit) };
+  }
+  if (typeof data.unitAr === 'string' && typeof data.unitEn === 'string') {
+    return { unitAr: data.unitAr.trim(), unitEn: data.unitEn.trim() };
+  }
+  return undefined;
+}
+
+// Bonus tiers from the form - an array of { buy, free } or the text form
+// ("10+1، 20+3"); undefined when not sent, [] to clear (utils/bonus.js).
+function bonusesFrom(data) {
+  const input = data.bonuses !== undefined ? data.bonuses : data.bonus;
+  const parsed = normalizeBonusTiers(input);
+  if (!parsed.ok) throw ApiError.badRequest('Invalid bonus.', undefined, 'INVALID_BONUS');
+  return parsed.tiers;
 }
 
 // isActive: true - a product an admin has deactivated (adminProduct.service.js)
@@ -212,6 +238,8 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
   await validateMasterProductId(data.masterProductId);
   await validateCategoryId(data.categoryId);
   validatePrice(data.priceUsd);
+  unitFieldsFrom(data);
+  bonusesFrom(data);
   await assertRateUsedIsCurrent(data.rateUsed, { required: requireRateUsed });
 
   const manuallyDisabled = data.manuallyDisabled === true;
@@ -234,8 +262,10 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
           userId,
           {
             categoryId: data.categoryId,
+            unit: data.unit,
             unitAr: data.unitAr,
             unitEn: data.unitEn,
+            bonuses: data.bonuses !== undefined ? data.bonuses : data.bonus,
             description: data.description,
             image: data.image,
             priceUsd: data.priceUsd,
@@ -253,8 +283,8 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
             warehouseId,
             masterProductId: data.masterProductId,
             categoryId: data.categoryId,
-            unitAr: data.unitAr.trim(),
-            unitEn: data.unitEn.trim(),
+            ...unitFieldsFrom(data),
+            bonuses: bonusesFrom(data) ?? [],
             description:
               typeof data.description === 'string' && data.description.trim() ? data.description.trim() : null,
             image: typeof data.image === 'string' && data.image.trim() ? data.image.trim() : null,
@@ -326,13 +356,22 @@ async function applyProductUpdate(
   changes,
   { requireRateUsed = false, session = null, resolve = true } = {}
 ) {
-  for (const [field, code] of REQUIRED_STRING_FIELDS) {
-    if (changes[field] !== undefined) {
-      if (typeof changes[field] !== 'string' || !changes[field].trim()) {
-        throw ApiError.badRequest(`Invalid ${field}.`, undefined, code);
+  if (changes.unit !== undefined && changes.unit !== null) {
+    Object.assign(product, unitFieldsFrom(changes));
+  } else {
+    for (const [field, code] of REQUIRED_STRING_FIELDS) {
+      if (changes[field] !== undefined) {
+        if (typeof changes[field] !== 'string' || !changes[field].trim()) {
+          throw ApiError.badRequest(`Invalid ${field}.`, undefined, code);
+        }
+        product[field] = changes[field].trim();
       }
-      product[field] = changes[field].trim();
     }
+  }
+
+  const bonuses = bonusesFrom(changes);
+  if (bonuses !== undefined) {
+    product.bonuses = bonuses;
   }
 
   if (changes.categoryId !== undefined) {
@@ -405,213 +444,28 @@ async function updateProduct(productId, warehouseId, userId, changes, options) {
   return applyProductUpdate(product, userId, changes, options);
 }
 
-// Section 14 Part 2: bulk-adds/updates this warehouse's own products from an
-// Excel file shaped like generateWarehouseTemplateBuffer's output. Reuses
-// the exact same row-parsing as the admin's catalog import
-// (productCatalog.service.js) - the three-column (name / price / currency)
-// company-row shape is identical, only what happens with each parsed row
-// differs. `candidates` come back already priced in USD (SYP rows converted
-// at the current rate; a missing rate has already aborted the whole import
-// by this point).
-async function importProductsFromExcel(warehouseId, userId, file) {
-  const { candidates, errors, manufacturers, exchangeRateUsed, convertedFromSyp } = await loadAndParseUpload(file);
-
-  // Registers every manufacturer row recognized in the file - regardless of
-  // whether any of its medicines matched the central catalog, so a
-  // warehouse's manufacturer registry (the Discounts tab's dropdown, see
-  // warehouseManufacturer.service.js) grows the moment a company appears in
-  // an import, not only once one of its products is actually linked.
-  if (manufacturers.length > 0) {
-    await registerManufacturers(warehouseId, manufacturers);
-  }
-
-  let added = 0;
-  let updated = 0;
-  // Rows whose product exists but is disabled by the platform (see below).
-  const blocked = [];
-
-  if (candidates.length === 0) {
-    return { added, updated, blocked, errors, exchangeRateUsed, convertedFromSyp };
-  }
-
-  // Two bounded queries for the whole file instead of two per row. Each row
-  // used to run a case-insensitive RegExp findOne against ProductCatalog -
-  // which cannot use its index, so every row scanned the entire master list -
-  // plus its own Product findOne and save. On a 2,000-row file against a
-  // large catalog that is the single most expensive request in the app, and
-  // it blocks the event loop for the whole import.
-  //
-  // Matched on both name and manufacturer (not name alone) - the central
-  // catalog allows the same drug name under different manufacturers (Section
-  // 14 Part 1's own upsert key), so name-only would risk linking to the
-  // wrong one. The normalized keys (productCatalog.model.js) make that pair
-  // an indexed equality match rather than a scan, and carry the same
-  // case/whitespace tolerance the RegExp had.
-  const keyedCandidates = candidates.map((candidate) => ({
-    ...candidate,
-    nameKey: searchKey(candidate.nameAr),
-    manufacturerKey: searchKey(candidate.manufacturerAr),
-  }));
-
-  const catalogItems = await ProductCatalog.find({
-    nameKey: { $in: [...new Set(keyedCandidates.map((c) => c.nameKey))] },
-    manufacturerKey: { $in: [...new Set(keyedCandidates.map((c) => c.manufacturerKey))] },
-  })
-    .select('_id nameKey nameEnKey manufacturerKey manufacturerEnKey manufacturerId isActive')
-    .lean();
-
-  // The two $in clauses above match the cross-product of names and
-  // manufacturers, so a row is only really matched once the exact pair is
-  // found here.
-  const catalogByPair = new Map(
-    catalogItems.map((item) => [`${item.nameKey}\u0000${item.manufacturerKey}`, item])
-  );
-
-  const matched = [];
-  for (const candidate of keyedCandidates) {
-    const catalogItem = catalogByPair.get(`${candidate.nameKey}\u0000${candidate.manufacturerKey}`);
-    if (!catalogItem) {
-      errors.push({ row: candidate.rowNumber, reason: 'Medicine not found in the central catalog.' });
-      continue;
-    }
-    // A withdrawn (recalled) medicine: reported as such, never created or
-    // updated - whether or not this warehouse already had it.
-    if (catalogItem.isActive === false) {
-      blocked.push({ row: candidate.rowNumber, code: 'CATALOG_ITEM_WITHDRAWN' });
-      continue;
-    }
-    matched.push({ candidate, catalogId: catalogItem._id, catalogItem });
-  }
-
-  if (matched.length === 0) {
-    return { added, updated, blocked, errors, exchangeRateUsed, convertedFromSyp };
-  }
-
-  // Only price + priceHistory are read off an existing product, so the rest
-  // of the document never needs to leave the database or become a Mongoose
-  // document - the writes below are built by hand rather than via .save().
-  const existingProducts = await Product.find({
-    warehouseId,
-    masterProductId: { $in: matched.map((m) => m.catalogId) },
-  })
-    .select('masterProductId price isActive deactivatedBy manuallyDisabled')
-    .lean();
-  const existingByCatalogId = new Map(
-    existingProducts.map((product) => [String(product.masterProductId), product])
-  );
-
-  const now = new Date();
-  const operations = [];
-  const rowsByOperationIndex = [];
-
-  for (const { candidate, catalogId, catalogItem } of matched) {
-    const existing = existingByCatalogId.get(String(catalogId));
-
-    // Switched off by the platform (catalog recall / admin): left exactly as
-    // it is and reported in its own bucket - never counted as "updated"
-    // (H3). It used to get its price rewritten while staying invisible.
-    const blockedCode = blockedCodeFor(existing);
-    if (blockedCode) {
-      blocked.push({ row: candidate.rowNumber, code: blockedCode });
-      continue;
-    }
-
-    if (existing) {
-      // A price that didn't move writes no history entry and no
-      // lastPriceUpdate, exactly as the per-row save did - re-importing an
-      // unchanged file must not fill priceHistory with no-op entries.
-      const set = {};
-      const push = {};
-      // A product the warehouse had disabled itself comes back on import
-      // (Phase 3.4) - the file is the warehouse saying it sells it again.
-      if (existing.manuallyDisabled) {
-        set.manuallyDisabled = false;
-        set.isAvailable = true;
-      }
-      if (candidate.priceUsd !== existing.price) {
-        set.price = candidate.priceUsd;
-        set.lastPriceUpdate = now;
-        push.priceHistory = {
-          // H5: the array is capped as it grows rather than left unbounded -
-          // it is read back in full by the single-product response.
-          $each: [
-            {
-              oldPrice: existing.price,
-              newPrice: candidate.priceUsd,
-              changedBy: userId,
-              changedAt: now,
-            },
-          ],
-          $slice: -PRICE_HISTORY_LIMIT,
-        };
-      }
-
-      operations.push({
-        updateOne: {
-          filter: { _id: existing._id },
-          update: {
-            ...(Object.keys(set).length > 0 ? { $set: set } : {}),
-            ...(Object.keys(push).length > 0 ? { $push: push } : {}),
-          },
-        },
-      });
-      rowsByOperationIndex.push({ row: candidate.rowNumber, kind: 'updated' });
-    } else {
-      // categoryId/unitAr/unitEn are left null (Section 14 Part 2's schema
-      // note on product.model.js) - the import format carries no columns
-      // for them, same reasoning as the catalog's own import.
-      operations.push({
-        insertOne: {
-          document: {
-            warehouseId,
-            masterProductId: catalogId,
-            // A bulk insert skips product.model.js's pre-validate hook, so the
-            // denormalized search keys are copied from the catalog item here.
-            nameKey: catalogItem.nameKey,
-            nameEnKey: catalogItem.nameEnKey ?? null,
-            manufacturerKey: catalogItem.manufacturerKey,
-            manufacturerEnKey: catalogItem.manufacturerEnKey ?? null,
-            manufacturerId: catalogItem.manufacturerId ?? null,
-            price: candidate.priceUsd,
-            manuallyDisabled: false,
-            isAvailable: true,
-            isActive: true,
-            lastPriceUpdate: now,
-            priceHistory: [],
-            createdAt: now,
-            updatedAt: now,
-          },
-        },
-      });
-      rowsByOperationIndex.push({ row: candidate.rowNumber, kind: 'added' });
-    }
-  }
-
-  // ordered:false so one bad row (a duplicate racing another import of the
-  // same file, say) doesn't abandon every row after it - the per-row loop
-  // this replaces had that property too, via its own try/catch.
-  let writeErrorIndexes = new Set();
-  try {
-    await Product.bulkWrite(operations, { ordered: false });
-  } catch (err) {
-    if (!err.writeErrors) throw err;
-    writeErrorIndexes = new Set(err.writeErrors.map((writeError) => writeError.index));
-    for (const writeError of err.writeErrors) {
-      const source = rowsByOperationIndex[writeError.index];
-      errors.push({
-        row: source ? source.row : null,
-        reason: 'Failed to save this row.',
-      });
-    }
-  }
-
-  rowsByOperationIndex.forEach((source, index) => {
-    if (writeErrorIndexes.has(index)) return;
-    if (source.kind === 'added') added += 1;
-    else updated += 1;
+// Section 14 Part 2 / catalog overhaul Phase 4: the warehouse's Excel import.
+// The whole flow - reading any reasonable price list, matching rows to the
+// central catalog (remembered aliases first), the added / updated / price-0 /
+// blocked / review / error outcomes, and the ImportBatch the results page
+// opens - lives in warehouseImport.service.js; this stays the entry point the
+// controller has always called. `mapping` is the web's column-mapping answer
+// ({ headerKey: field }), sent when the first upload came back
+// IMPORT_COLUMNS_UNRECOGNIZED.
+async function importProductsFromExcel(warehouseId, userId, file, { mapping = null } = {}) {
+  const { batch, counts, exchangeRateUsed, convertedFromSyp } = await importWarehouseFile(warehouseId, userId, file, {
+    mapping,
   });
-
-  return { added, updated, blocked, errors, exchangeRateUsed, convertedFromSyp };
+  return {
+    batchId: batch._id,
+    counts,
+    exchangeRateUsed,
+    convertedFromSyp,
+    // The old report fields, for a panel that predates the results page.
+    added: counts.added + counts.addedDisabled,
+    updated: counts.updated,
+    errors: [],
+  };
 }
 
 module.exports = {
