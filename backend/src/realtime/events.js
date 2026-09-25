@@ -63,6 +63,14 @@ const EVENTS = {
   // merged / rejected) reaches the admins and the one warehouse that asked.
   CATALOG_REQUEST_PENDING: 'catalogRequest.pending',
   CATALOG_REQUEST_UPDATED: 'catalogRequest.updated',
+
+  // Discount codes: the same moderation pair as offers. PENDING reaches the
+  // admin queue (a new warehouse code, or a first edit parked on an approved
+  // one). STATUS_UPDATED carries an admin's decision, edit or stop to the
+  // admins AND the owning warehouse (an admin code has no warehouse room), and
+  // a warehouse's own stop of a queued code to the admins only.
+  DISCOUNT_CODE_PENDING: 'discountCode.pending',
+  DISCOUNT_CODE_STATUS_UPDATED: 'discountCode.status.updated',
 };
 
 // One room per warehouse. The business rule is that an order/delivery belongs

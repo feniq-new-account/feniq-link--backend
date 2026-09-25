@@ -45,6 +45,13 @@ function pickLang(user, payload) {
   };
 }
 
+function pickWarehouseName(user, payload) {
+  const isArabic = (user.lang || 'ar') === 'ar';
+  return isArabic
+    ? payload.warehouseNameAr ?? payload.warehouseNameEn
+    : payload.warehouseNameEn ?? payload.warehouseNameAr;
+}
+
 function chunk(array, size) {
   const chunks = [];
   for (let i = 0; i < array.length; i += size) {
@@ -105,6 +112,7 @@ async function sendToUser(userId, payload) {
       type: payload.type,
       relatedOrderId: payload.relatedOrderId ?? null,
       relatedComplaintId: payload.relatedComplaintId ?? null,
+      relatedWarehouseId: payload.relatedWarehouseId ?? null,
       sentByAdminId: payload.sentByAdminId ?? null,
     });
     debugLog('NOTIFICATION_DEBUG: Notification.create() succeeded');
@@ -130,6 +138,15 @@ async function sendToUser(userId, payload) {
         ...(payload.relatedOrderId ? { relatedOrderId: String(payload.relatedOrderId) } : {}),
         ...(payload.relatedComplaintId
           ? { relatedComplaintId: String(payload.relatedComplaintId) }
+          : {}),
+        // A discount code's warehouse, plus its name in the user's language -
+        // the app's warehouse screen is titled with it and has no other way to
+        // learn it from a cold-start tap.
+        ...(payload.relatedWarehouseId
+          ? {
+              relatedWarehouseId: String(payload.relatedWarehouseId),
+              warehouseName: String(pickWarehouseName(user, payload) ?? ''),
+            }
           : {}),
       },
     };
