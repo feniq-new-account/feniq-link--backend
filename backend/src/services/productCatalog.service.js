@@ -15,7 +15,7 @@ const { getRate } = require('./exchangeRate.service');
 const { runInTransaction } = require('../utils/transaction');
 const { normalizeText } = require('../utils/normalizeText');
 const { UNITS, resolveUnit } = require('../config/units');
-const { fieldForHeader, IMPORT_FIELDS, REQUIRED_FIELDS } = require('../config/importSynonyms');
+const { fieldForHeader, IMPORT_COLUMN_SETS } = require('../config/importSynonyms');
 const { parsePriceCell, resolveRowCurrency } = require('../utils/importValues');
 const { parseBonus } = require('../utils/bonus');
 const { loadSavedMapping, parseExplicitMapping, saveMapping } = require('./importMapping.service');
@@ -574,9 +574,10 @@ async function deactivateCatalogItem(id) {
 // (it finds the header row and reads columns in any order - see the parser
 // below), so these are a convenient starting point, not a contract.
 
-const INSTRUCTION_TEXT =
-  'جدول عادي: صف عناوين ثم صنف في كل صف. ترتيب الأعمدة غير مهم.\nالعملة إجبارية لكل سعر: SYP = ليرة سورية (تتحوّل للدولار حسب سعر الصرف الحالي)، USD = دولار';
-const WAREHOUSE_INSTRUCTION_TEXT = `${INSTRUCTION_TEXT}\nالبونص مثل 10+1 (أو 10+1، 20+3). الوحدة من القائمة.`;
+const TABLE_INSTRUCTION = 'جدول عادي: صف عناوين ثم صنف في كل صف. ترتيب الأعمدة غير مهم.';
+// The central catalog has no price - a price belongs to a warehouse's product.
+const INSTRUCTION_TEXT = `${TABLE_INSTRUCTION}\nالفئة اختيارية ويجب أن تطابق فئة موجودة (لا تُنشأ فئات من الاستيراد). لا سعر في القائمة المركزية: السعر يضعه كل مستودع لمنتجه.`;
+const WAREHOUSE_INSTRUCTION_TEXT = `${TABLE_INSTRUCTION}\nالعملة إجبارية لكل سعر: SYP = ليرة سورية (تتحوّل للدولار حسب سعر الصرف الحالي)، USD = دولار\nالبونص مثل 10+1 (أو 10+1، 20+3). الوحدة من القائمة.`;
 const TEMPLATE_VALIDATION_LAST_ROW = 2000;
 
 async function buildTemplateWorkbook({ headers, instruction, examples, lists = {} }) {
@@ -621,17 +622,23 @@ const TEMPLATE_EXAMPLES = [
   { name: 'فولتارين 50 ملغ', manufacturer: 'شركة سوريا فارم', price: 15000, currency: 'SYP', unit: 'شريط', bonus: '20+3' },
 ];
 
+const CATALOG_TEMPLATE_EXAMPLES = [
+  { name: 'باراسيتامول 500 ملغ', manufacturer: 'شركة الشرق للأدوية', category: 'مسكنات' },
+  { name: 'أموكسيسيلين 250 ملغ', manufacturer: 'شركة الشرق للأدوية', category: 'صادات حيوية' },
+  { name: 'فولتارين 50 ملغ', manufacturer: 'شركة سوريا فارم', category: '' },
+];
+
+// The admin's central catalog template: the import's own columns (name,
+// company, optional category) - no price.
 async function generateTemplateBuffer() {
   const workbook = await buildTemplateWorkbook({
     headers: [
       { key: 'name', text: 'اسم الدواء', width: 38 },
       { key: 'manufacturer', text: 'الشركة', width: 28 },
-      { key: 'price', text: 'السعر', width: 12 },
-      { key: 'currency', text: 'العملة', width: 10 },
+      { key: 'category', text: 'الفئة', width: 20 },
     ],
     instruction: INSTRUCTION_TEXT,
-    examples: TEMPLATE_EXAMPLES,
-    lists: { currency: ['USD', 'SYP'] },
+    examples: CATALOG_TEMPLATE_EXAMPLES,
   });
   return workbook.xlsx.writeBuffer();
 }
@@ -693,8 +700,9 @@ function companyRowName(nameText, nameCell) {
   return null;
 }
 
-// Which field each column of one row names, given the warehouse's mappings.
-function mapHeaderRow(row, { explicitMapping, savedMapping }) {
+// Which field each column of one row names, given the remembered mappings.
+// A column naming a field outside the import's column set is ignored.
+function mapHeaderRow(row, { explicitMapping, savedMapping, columnSet }) {
   const columns = [];
   const fieldColumns = new Map();
   const cellCount = Math.max(row.cellCount, row.actualCellCount || 0);
@@ -702,11 +710,12 @@ function mapHeaderRow(row, { explicitMapping, savedMapping }) {
     const header = cellText(row.getCell(index));
     if (!header) continue;
     const headerKey = normalizeText(header);
-    const field =
+    const named =
       (explicitMapping && explicitMapping.get(headerKey)) ||
       (savedMapping && savedMapping.get(headerKey)) ||
       fieldForHeader(header);
-    columns.push({ index, header, headerKey, field: field || null });
+    const field = named && columnSet.fields.includes(named) ? named : null;
+    columns.push({ index, header, headerKey, field });
     if (field && !fieldColumns.has(field)) fieldColumns.set(field, index);
   }
   return { columns, fieldColumns };
@@ -732,14 +741,14 @@ function locateTable(workbook, options) {
       const score = mapped.fieldColumns.size;
       if (!best || score > best.score) best = { sheet, headerRowNumber: number, score, ...mapped };
     }
-    if (best && best.sheet === sheet && best.fieldColumns.has('name') && best.fieldColumns.has('price')) {
+    if (best && best.sheet === sheet && options.columnSet.required.every((field) => best.fieldColumns.has(field))) {
       return best;
     }
   }
   return best;
 }
 
-function columnsNeedMapping(located, missing) {
+function columnsNeedMapping(located, missing, columnSet) {
   return ApiError.badRequest(
     'Some required columns could not be recognized - choose which column is which.',
     {
@@ -750,21 +759,26 @@ function columnsNeedMapping(located, missing) {
         headerKey,
         field,
       })),
-      fields: IMPORT_FIELDS,
-      required: REQUIRED_FIELDS,
+      // The mapping step offers exactly this import's fields.
+      fields: columnSet.fields,
+      required: columnSet.required,
     },
     'IMPORT_COLUMNS_UNRECOGNIZED'
   );
 }
 
-// Reads the uploaded workbook into plain rows. Throws IMPORT_COLUMNS_UNRECOGNIZED
+// Reads the uploaded workbook into plain rows, for one import's column set
+// (config/importSynonyms.js IMPORT_COLUMN_SETS - required, so the two imports
+// can never share a column list by default). Throws IMPORT_COLUMNS_UNRECOGNIZED
 // (with the detected headers) when a required column can't be identified.
+// Price, currency, unit and bonus are only read when the set has them.
 //
 // Every returned row: { rowNumber, raw, name, manufacturer, category, price, priceEmpty,
 // currency, unit, unitGiven, bonuses, bonusGiven, problems[] }. `problems`
 // holds what the row itself got wrong - 'missing_name', 'invalid_price',
 // 'missing_currency', 'unknown_currency', 'unknown_unit', 'bad_bonus'.
-async function readImportWorkbook(file, { explicitMapping = null, savedMapping = null } = {}) {
+async function readImportWorkbook(file, { explicitMapping = null, savedMapping = null, columnSet } = {}) {
+  if (!columnSet) throw new Error('readImportWorkbook needs the import\'s column set');
   if (!file) {
     throw ApiError.badRequest('No file uploaded.', undefined, 'NO_IMPORT_FILE');
   }
@@ -778,13 +792,13 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
     throw ApiError.badRequest('The uploaded file has no worksheet.', undefined, 'INVALID_IMPORT_FILE');
   }
 
-  const located = locateTable(workbook, { explicitMapping, savedMapping });
-  const missing = REQUIRED_FIELDS.filter((field) => !located || !located.fieldColumns.has(field));
+  const located = locateTable(workbook, { explicitMapping, savedMapping, columnSet });
+  const missing = columnSet.required.filter((field) => !located || !located.fieldColumns.has(field));
   let companyRowMode = false;
   if (missing.length === 1 && missing[0] === 'manufacturer') {
     companyRowMode = hasCompanyRows(located.sheet, located.headerRowNumber, located.fieldColumns.get('name'));
   }
-  if (missing.length > 0 && !companyRowMode) throw columnsNeedMapping(located, missing);
+  if (missing.length > 0 && !companyRowMode) throw columnsNeedMapping(located, missing, columnSet);
 
   const { sheet, headerRowNumber, fieldColumns, columns } = located;
   const col = (field) => fieldColumns.get(field);
@@ -810,8 +824,8 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
     // headers on every page).
     if (name && headerKeys.has(normalizeText(name)) && fieldForHeader(name) === 'name') continue;
 
-    const priceCell = row.getCell(col('price'));
-    const rawPrice = typeof priceCell.value === 'number' ? priceCell.value : cellText(priceCell);
+    const priceCell = col('price') ? row.getCell(col('price')) : null;
+    const rawPrice = !priceCell ? '' : typeof priceCell.value === 'number' ? priceCell.value : cellText(priceCell);
     const manufacturer = companyRowMode ? currentCompany ?? '' : cellText(row.getCell(col('manufacturer')));
     const raw = {
       name,
@@ -841,16 +855,18 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
 
     if (!name) parsedRow.problems.push('missing_name');
 
-    const parsedPrice = parsePriceCell(rawPrice);
-    if (parsedPrice.empty) {
-      parsedRow.priceEmpty = true;
-    } else if (parsedPrice.value === null) {
-      parsedRow.problems.push('invalid_price');
-    } else {
-      parsedRow.price = parsedPrice.value;
-      const currency = resolveRowCurrency(raw.currency, parsedPrice.currencyMarker);
-      if (currency.problem) parsedRow.problems.push(currency.problem);
-      else parsedRow.currency = currency.currency;
+    if (col('price')) {
+      const parsedPrice = parsePriceCell(rawPrice);
+      if (parsedPrice.empty) {
+        parsedRow.priceEmpty = true;
+      } else if (parsedPrice.value === null) {
+        parsedRow.problems.push('invalid_price');
+      } else {
+        parsedRow.price = parsedPrice.value;
+        const currency = resolveRowCurrency(raw.currency, parsedPrice.currencyMarker);
+        if (currency.problem) parsedRow.problems.push(currency.problem);
+        else parsedRow.currency = currency.currency;
+      }
     }
 
     if (raw.unit) {
@@ -921,8 +937,10 @@ async function priceRowsInUsd(rows) {
 // ---------------------------------------------------------------------------
 //
 // Upserts central-catalog items by normalized identity (name + manufacturer).
-//  - A priceless row is fine (a warehouse fills the price in later - project
-//    owner's call); a priced row needs its currency.
+//  - Its columns are its own (IMPORT_COLUMN_SETS.catalog): name and company
+//    required, category optional. The central catalog has no price - a price
+//    belongs to a warehouse's product - so price, currency, unit and bonus
+//    columns are ignored, and an existing item's price is never touched.
 //  - A manufacturer name that matches no Manufacturer is NOT created silently:
 //    its rows are skipped and listed under `newManufacturers`, and the admin
 //    re-submits the file confirming it (`confirmNewManufacturers`, created
@@ -934,14 +952,17 @@ async function priceRowsInUsd(rows) {
 // field }); it is remembered for the next catalog import once the file reads
 // (the admins share one set - importMapping.service.js).
 async function importFromExcel(file, { confirmNewManufacturers = [], manufacturerLinks = {}, mapping = null } = {}) {
-  const explicitMapping = parseExplicitMapping(mapping);
+  const columnSet = IMPORT_COLUMN_SETS.catalog;
+  const explicitMapping = parseExplicitMapping(mapping, columnSet.fields);
   const savedMapping = await loadSavedMapping(null);
-  const { rows } = await readImportWorkbook(file, { explicitMapping, savedMapping });
+  const { rows } = await readImportWorkbook(file, { explicitMapping, savedMapping, columnSet });
   await saveMapping(null, explicitMapping);
   const errors = [];
   const usable = [];
   for (const row of rows) {
-    const rowProblems = row.problems.filter((problem) => !['unknown_unit', 'bad_bonus'].includes(problem));
+    // Only the name and the company can be wrong here - the catalog reads
+    // nothing else that could be (no price, currency, unit or bonus).
+    const rowProblems = row.problems.filter((problem) => problem === 'missing_name');
     if (!row.manufacturer) rowProblems.push('missing_manufacturer');
     if (rowProblems.length > 0) {
       errors.push({ row: row.rowNumber, reason: rowProblems.join(', '), code: rowProblems[0].toUpperCase() });
@@ -949,7 +970,6 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
     }
     usable.push(row);
   }
-  const { exchangeRateUsed, convertedFromSyp } = await priceRowsInUsd(usable);
 
   // Manufacturers: existing by key, explicitly linked, or confirmed as new.
   const confirmedKeys = new Set((confirmNewManufacturers || []).map((name) => normalizeText(name)).filter(Boolean));
@@ -1014,7 +1034,10 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
   };
 
   let added = 0;
+  // An existing item whose category the file set (updated), or that the file
+  // only confirms (unchanged) - the catalog import changes nothing else.
   let updated = 0;
+  let unchanged = 0;
   const withdrawn = [];
   for (const row of ready) {
     const manufacturer = manufacturerOf(row);
@@ -1026,13 +1049,15 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
         continue;
       }
       if (item) {
-        // A blank price on the file never erases a price the item already has.
-        if (row.priceUsd !== null) item.priceUsd = row.priceUsd;
         // A known category files it there; an unknown or empty cell leaves
         // the item's category as it was.
-        if (category.categoryId) item.categoryId = category.categoryId;
-        await item.save();
-        updated += 1;
+        if (category.categoryId && String(item.categoryId) !== String(category.categoryId)) {
+          item.categoryId = category.categoryId;
+          await item.save();
+          updated += 1;
+        } else {
+          unchanged += 1;
+        }
         if (category.text && !category.categoryId) unknownCategories.push({ row: row.rowNumber, category: category.text });
         continue;
       }
@@ -1041,7 +1066,6 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
         manufacturerAr: manufacturer.nameAr,
         manufacturerId: manufacturer._id,
         categoryId: category.categoryId,
-        priceUsd: row.priceUsd,
       });
       if (category.text && !category.categoryId) unknownCategories.push({ row: row.rowNumber, category: category.text });
       itemByIdentity.set(created.identityKey, created);
@@ -1054,13 +1078,12 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
   return {
     added,
     updated,
+    unchanged,
     withdrawn,
     newManufacturers: [...newManufacturers.values()],
     // Imported without a category: { row, category } - the file's text.
     unknownCategories,
     errors,
-    exchangeRateUsed,
-    convertedFromSyp,
   };
 }
 

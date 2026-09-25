@@ -7,11 +7,25 @@ import { useTranslation } from 'react-i18next';
 // warehouse says which column is which. The answer ({ headerKey: field }) is
 // sent with the same file again - and the server remembers it, so the next file
 // with these headers imports without asking.
-export function ImportColumnMappingModal({ details, onSubmit, onClose, isSubmitting }) {
+//
+// Each import has its own columns (backend config/importSynonyms.js
+// IMPORT_COLUMN_SETS), and the server sends them with the refusal. `columns`
+// is only the fallback for a refusal that carried none.
+export const WAREHOUSE_IMPORT_COLUMNS = {
+  fields: ['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus'],
+  required: ['name', 'price', 'manufacturer'],
+};
+// The central catalog has no price - a price belongs to a warehouse's product.
+export const CATALOG_IMPORT_COLUMNS = {
+  fields: ['name', 'manufacturer', 'category'],
+  required: ['name', 'manufacturer'],
+};
+
+export function ImportColumnMappingModal({ details, columns = WAREHOUSE_IMPORT_COLUMNS, onSubmit, onClose, isSubmitting }) {
   const { t } = useTranslation();
   const headers = details?.headers ?? [];
-  const fields = details?.fields ?? ['name', 'price', 'manufacturer', 'category', 'unit', 'currency', 'bonus'];
-  const required = details?.required ?? ['name', 'price', 'manufacturer'];
+  const fields = details?.fields ?? columns.fields;
+  const required = details?.required ?? columns.required;
   const [choice, setChoice] = useState(() =>
     Object.fromEntries(headers.map((header) => [header.headerKey, header.field ?? '']))
   );

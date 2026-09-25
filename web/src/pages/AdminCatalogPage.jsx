@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImportColumnMappingModal } from '../components/ImportColumnMappingModal';
+import { CATALOG_IMPORT_COLUMNS, ImportColumnMappingModal } from '../components/ImportColumnMappingModal';
 import { ManufacturerPicker } from '../components/CatalogPickers';
 import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
@@ -139,7 +139,8 @@ function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturer
   const unknownCategories = report.unknownCategories ?? [];
   const newManufacturers = report.newManufacturers ?? [];
   const skippedForManufacturers = newManufacturers.reduce((sum, m) => sum + m.rows.length, 0);
-  const totalRows = report.added + report.updated + report.errors.length + withdrawn.length + skippedForManufacturers;
+  const totalRows =
+    report.added + report.updated + (report.unchanged ?? 0) + report.errors.length + withdrawn.length + skippedForManufacturers;
   const [toCreate, setToCreate] = useState(() => new Set(newManufacturers.map((m) => m.name)));
   // { rawName: { id, nameAr } } - an unknown name filed under an existing company instead.
   const [links, setLinks] = useState({});
@@ -181,19 +182,17 @@ function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturer
             <div className="adm-import-stat-value">{report.updated}</div>
             <div className="adm-import-stat-label">{t('admin.catalog.importResultUpdated')}</div>
           </div>
+          {/* Already in the catalog, nothing to change - the catalog import sets
+              only a category on an existing item (it has no price). */}
+          <div className="adm-import-stat adm-import-stat-updated">
+            <div className="adm-import-stat-value">{report.unchanged ?? 0}</div>
+            <div className="adm-import-stat-label">{t('admin.catalog.importResultUnchanged')}</div>
+          </div>
           <div className="adm-import-stat adm-import-stat-failed">
             <div className="adm-import-stat-value">{report.errors.length}</div>
             <div className="adm-import-stat-label">{t('admin.catalog.importResultFailed')}</div>
           </div>
         </div>
-        {report.convertedFromSyp > 0 && (
-          <div className="adm-import-conversion">
-            <div>{t('admin.catalog.importConverted', { count: report.convertedFromSyp })}</div>
-            {report.exchangeRateUsed != null && (
-              <div>{t('admin.catalog.importConvertedRate', { rate: report.exchangeRateUsed })}</div>
-            )}
-          </div>
-        )}
         {newManufacturers.length > 0 && (
           <div className="adm-import-errors">
             <div className="adm-import-errors-head">{t('admin.catalog.newManufacturersTitle')}</div>
@@ -657,6 +656,7 @@ export function AdminCatalogPage() {
       )}
       {pendingMapping && (
         <ImportColumnMappingModal
+          columns={CATALOG_IMPORT_COLUMNS}
           details={pendingMapping.details}
           isSubmitting={isImporting}
           onClose={() => setPendingMapping(null)}

@@ -13,8 +13,9 @@ async function loadSavedMapping(warehouseId) {
   return new Map(rows.map((row) => [row.headerKey, row.field]));
 }
 
-// { headerKey: field } from the web's mapping step -> Map, validated.
-function parseExplicitMapping(input) {
+// { headerKey: field } from the web's mapping step -> Map, validated against
+// the fields the import reads (`allowedFields`, its column set).
+function parseExplicitMapping(input, allowedFields = ImportColumnMapping.schema.path('field').enumValues) {
   if (!input) return null;
   let object = input;
   if (typeof input === 'string') {
@@ -27,7 +28,7 @@ function parseExplicitMapping(input) {
   if (!object || typeof object !== 'object' || Array.isArray(object)) {
     throw ApiError.badRequest('Invalid column mapping.', undefined, 'INVALID_COLUMN_MAPPING');
   }
-  const allowed = new Set(ImportColumnMapping.schema.path('field').enumValues);
+  const allowed = new Set(allowedFields);
   const mapping = new Map();
   for (const [headerKey, field] of Object.entries(object)) {
     if (!field) continue;

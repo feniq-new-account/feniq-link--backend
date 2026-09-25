@@ -207,11 +207,11 @@ test('approval: an English name already used under the manufacturer is a merge c
 
 test('admin import: the one name column goes to the Arabic name and never touches the English name', async () => {
   const report = await catalogService.importFromExcel(await xlsx([
-    ['اسم المادة', 'الشركة', 'السعر', 'العملة'],
-    ['بنادول 500', 'شركة الأسماء', 7, 'USD'],
+    ['اسم المادة', 'الشركة'],
+    ['بنادول 500', 'شركة الأسماء'],
   ]));
-  assert.strictEqual(report.updated, 1, JSON.stringify(report));
+  assert.strictEqual(report.unchanged, 1, JSON.stringify(report));
   const item = await ProductCatalog.findById(ids.panadol._id).lean();
-  assert.strictEqual(item.priceUsd, 7);
+  assert.strictEqual(item.nameAr, 'بنادول 500');
   assert.strictEqual(item.nameEn, 'Panadol 500');
 });

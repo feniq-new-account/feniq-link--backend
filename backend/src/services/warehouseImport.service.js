@@ -14,6 +14,7 @@ const WarehouseProductAlias = require('../models/warehouseProductAlias.model');
 const ImportBatch = require('../models/importBatch.model');
 const ImportBatchRow = require('../models/importBatchRow.model');
 const { loadSavedMapping, parseExplicitMapping, saveMapping } = require('./importMapping.service');
+const { IMPORT_COLUMN_SETS } = require('../config/importSynonyms');
 const CatalogRequest = require('../models/catalogRequest.model');
 const { readImportWorkbook, priceRowsInUsd, escapeRegex } = require('./productCatalog.service');
 const { registerManufacturers } = require('./warehouseManufacturer.service');
@@ -285,9 +286,10 @@ function rowRecord(batchId, warehouseId, row, extra) {
 }
 
 async function importWarehouseFile(warehouseId, userId, file, { mapping = null } = {}) {
-  const explicitMapping = parseExplicitMapping(mapping);
+  const columnSet = IMPORT_COLUMN_SETS.warehouse;
+  const explicitMapping = parseExplicitMapping(mapping, columnSet.fields);
   const savedMapping = await loadSavedMapping(warehouseId);
-  const { rows } = await readImportWorkbook(file, { explicitMapping, savedMapping });
+  const { rows } = await readImportWorkbook(file, { explicitMapping, savedMapping, columnSet });
   // Remembered only once the file actually read with it.
   await saveMapping(warehouseId, explicitMapping);
 

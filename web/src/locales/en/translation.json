@@ -693,8 +693,6 @@
       "importResultAdded": "Added",
       "importResultUpdated": "Updated",
       "importResultFailed": "Failed",
-      "importConverted": "💱 Converted {{count}} item(s) from Syrian pounds",
-      "importConvertedRate": "Exchange rate: 1 USD = {{rate}} SYP",
       "importErrorsTitle": "Error details",
       "importDone": "Done",
       "downloadErrorReport": "Download error report",
@@ -711,7 +709,8 @@
       "linkExisting": "or link to an existing company",
       "nameEnLabel": "English name (for search)",
       "unknownCategoriesTitle": "Unknown category",
-      "unknownCategoriesHint": "These rows were imported without a category - the category in the file matches none. Categories are never created by an import; set it on the medicine, or add the category and import again."
+      "unknownCategoriesHint": "These rows were imported without a category - the category in the file matches none. Categories are never created by an import; set it on the medicine, or add the category and import again.",
+      "importResultUnchanged": "Already in the catalog"
     },
     "exchangeRate": {
       "title": "Exchange rate",
