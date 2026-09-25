@@ -1264,8 +1264,8 @@ async function getOrderForPharmacy(orderId, pharmacyId) {
   // myReview: this pharmacy's own rating of the warehouse for this order, if
   // it's submitted one already (Section 8/13c).
   //
-  // `order` above is deliberately NOT lean: cancelOrder calls this function
-  // and then mutates and saves that document. The four below are only ever
+  // `order` above is not lean (cancelOrder reads it before its own
+  // conditional write; it never saves this copy). The four below are only ever
   // read - both this function's callers pass them straight to
   // order.viewmodel.js - so they skip hydration. `items` is the one that
   // matters, being the only unbounded set of the four.
@@ -1428,26 +1428,16 @@ async function getSavingsSummaryForPharmacy(pharmacyId) {
 async function cancelOrder(orderId, pharmacyId, userId) {
   const { order, warehouse, items } = await getOrderForPharmacy(orderId, pharmacyId);
 
+  // The early answer for an order that is plainly past cancelling. The real
+  // gate is the compare-and-swap below: this read can be stale by the time the
+  // write happens.
   if (!CANCELLABLE_STATUSES.includes(order.status)) {
-    throw ApiError.badRequest(
-      'This order can no longer be cancelled from the app.',
-      undefined,
-      'ORDER_NOT_CANCELLABLE'
-    );
+    throw notCancellableError();
   }
 
-  const now = new Date();
-  let cancelled = order;
-  if (order.discountCode && !order.discountCode.releasedAt) {
-    cancelled = await cancelAndReleaseDiscountCode(order, userId, now);
-  } else {
-    order.status = 'cancelled';
-    order.cancelledBy = userId;
-    order.statusHistory.push({ status: 'cancelled', changedBy: userId, changedAt: now });
-    await order.save();
-  }
+  const cancelled = await cancelWithCompareAndSwap(order, userId, new Date());
 
-  // Only after the cancellation is persisted. This is the one order event the
+  // Only after the cancellation is committed. This is the one order event the
   // warehouse has no other way of learning about promptly - it's the pharmacy
   // that cancels, and there's no FCM to warehouses today.
   emitToWarehouse(order.warehouseId, EVENTS.ORDER_CANCELLED, {
@@ -1459,18 +1449,26 @@ async function cancelOrder(orderId, pharmacyId, userId) {
   return { order: cancelled, warehouse, items };
 }
 
-// Cancelling an order that used a discount code hands the use back, so the
-// pharmacy can use the code again (and a total limit gets its slot back). The
-// status change and the release are one transaction, and the status change is
-// a compare-and-swap: if the warehouse moved the order past 'preparing' a
-// moment ago, the cancel loses cleanly and no use is released for an order
-// that is going out after all. (An order without a code keeps the plain
-// read-then-save above - nothing else hangs on it.)
+function notCancellableError() {
+  return ApiError.badRequest(
+    'This order can no longer be cancelled from the app.',
+    undefined,
+    'ORDER_NOT_CANCELLABLE'
+  );
+}
+
+// The one cancellation path, for every order. The status change is a
+// compare-and-swap on a cancellable status, so a cancel racing the warehouse
+// moving the order past 'preparing' loses cleanly (ORDER_NOT_CANCELLABLE)
+// instead of overwriting the warehouse's step - a plain read-then-save used to
+// let the pharmacy's stale copy win. In the same transaction, a discount code
+// the order used is handed back (the pharmacy can use it again, and a total
+// limit gets its slot back); an order without a code releases nothing.
 //
-// No compensation to undo: an admin code's compensation only accrues when an
-// order is DELIVERED (settlement.service.js), and a cancellable order never
-// has been.
-async function cancelAndReleaseDiscountCode(order, userId, now) {
+// No money to undo: a charge is only posted when an order is DELIVERED
+// (orderLedger.service.js), and so is an admin code's compensation
+// (settlement.service.js) - a cancellable order never has been.
+async function cancelWithCompareAndSwap(order, userId, now) {
   return runInTransaction(async (session) => {
     const updated = await Order.findOneAndUpdate(
       { _id: order._id, status: { $in: CANCELLABLE_STATUSES } },
@@ -1480,13 +1478,7 @@ async function cancelAndReleaseDiscountCode(order, userId, now) {
       },
       { new: true, session }
     );
-    if (!updated) {
-      throw ApiError.badRequest(
-        'This order can no longer be cancelled from the app.',
-        undefined,
-        'ORDER_NOT_CANCELLABLE'
-      );
-    }
+    if (!updated) throw notCancellableError();
     await discountCodes.releaseUse(updated, 'cancelled', session);
     return updated;
   });

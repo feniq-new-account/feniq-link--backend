@@ -41,9 +41,22 @@ const PHARMACY_ID = new mongoose.Types.ObjectId();
 const ORDER_ID = new mongoose.Types.ObjectId();
 const USER_ID = new mongoose.Types.ObjectId();
 
-// `saveBehavior` is what each test flips to make the persistence step succeed
-// or fail.
-let saveBehavior = async () => {};
+// Cancelling is ONE path for every order (with or without a discount code): a
+// compare-and-swap on a cancellable status, inside a transaction. The
+// transaction helper is stubbed to hand the work a recognisable session, and
+// `writeBehavior` is what each test flips to make the conditional write
+// succeed, fail, or match nothing (the warehouse moved the order on first).
+const FAKE_SESSION = { fake: 'session' };
+const writes = [];
+let writeBehavior = async () => ({ ...buildOrder(), status: 'cancelled', cancelledBy: USER_ID });
+
+stubModule('utils/transaction.js', {
+  runInTransaction: async (work) => work(FAKE_SESSION),
+  supportsTransactions: async () => true,
+  assertTransactionSupport: async () => {},
+  TRANSIENT_LABEL: 'TransientTransactionError',
+  UNKNOWN_COMMIT_LABEL: 'UnknownTransactionCommitResult',
+});
 
 function buildOrder() {
   return {
@@ -54,18 +67,22 @@ function buildOrder() {
     status: 'pending',
     statusHistory: [],
     cancelledBy: null,
-    save: () => saveBehavior(),
+    discountCode: null,
   };
 }
 
 // Mutated in place, never reassigned: order.service captured this exact
 // object at require time, so swapping require.cache's `exports` wholesale
 // after the fact would have no effect on it.
-// The order itself stays a bare promise-returning stub: cancelOrder mutates
-// and saves that document, so it is deliberately not a .lean() read. The
-// sibling reads below ARE lean, hence modelQuery - see the note in
-// helpers/model-query-stub.js. Resolved values are unchanged.
-const orderModelStub = { findOne: async () => buildOrder() };
+// The order read stays a bare promise-returning stub; the sibling reads below
+// ARE lean, hence modelQuery - see the note in helpers/model-query-stub.js.
+const orderModelStub = {
+  findOne: async () => buildOrder(),
+  findOneAndUpdate: async (filter, update, options) => {
+    writes.push({ filter, update, options });
+    return writeBehavior();
+  },
+};
 stubModule('models/order.model.js', orderModelStub);
 stubModule('models/warehouse.model.js', { findById: modelQuery(() => ({ _id: WAREHOUSE_ID })) });
 stubModule('models/orderItem.model.js', { find: modelQuery(() => []) });
@@ -79,13 +96,15 @@ const orderService = require('../src/services/order.service');
 
 test.beforeEach(() => {
   emitted.length = 0;
-  saveBehavior = async () => {};
+  writes.length = 0;
+  writeBehavior = async () => ({ ...buildOrder(), status: 'cancelled', cancelledBy: USER_ID });
   orderModelStub.findOne = async () => buildOrder();
 });
 
 test('a successful cancellation emits order.cancelled to that order\'s warehouse', async () => {
-  await orderService.cancelOrder(ORDER_ID.toString(), PHARMACY_ID, USER_ID);
+  const { order } = await orderService.cancelOrder(ORDER_ID.toString(), PHARMACY_ID, USER_ID);
 
+  assert.strictEqual(order.status, 'cancelled');
   assert.strictEqual(emitted.length, 1);
   assert.strictEqual(emitted[0].event, 'order.cancelled');
   assert.strictEqual(String(emitted[0].warehouseId), String(WAREHOUSE_ID));
@@ -93,8 +112,20 @@ test('a successful cancellation emits order.cancelled to that order\'s warehouse
   assert.strictEqual(emitted[0].payload.orderNumber, 4242);
 });
 
+test('an order without a discount code takes the same compare-and-swap path, in a transaction', async () => {
+  await orderService.cancelOrder(ORDER_ID.toString(), PHARMACY_ID, USER_ID);
+
+  assert.strictEqual(writes.length, 1);
+  const [{ filter, update, options }] = writes;
+  assert.deepStrictEqual(filter.status, { $in: ['pending', 'confirmed', 'preparing'] });
+  assert.strictEqual(update.$set.status, 'cancelled');
+  assert.strictEqual(String(update.$set.cancelledBy), String(USER_ID));
+  assert.strictEqual(update.$push.statusHistory.status, 'cancelled');
+  assert.strictEqual(options.session, FAKE_SESSION, 'the write runs inside the transaction');
+});
+
 test('a FAILED database write emits nothing at all', async () => {
-  saveBehavior = async () => {
+  writeBehavior = async () => {
     throw new Error('mongo write failed');
   };
 
@@ -108,9 +139,22 @@ test('a FAILED database write emits nothing at all', async () => {
   assert.deepStrictEqual(emitted, [], 'no event may be emitted when persistence fails');
 });
 
+test('a cancel that loses the race to the warehouse is refused and emits nothing', async () => {
+  // The read saw 'pending'; by the write the warehouse had moved it on, so the
+  // conditional update matches nothing.
+  writeBehavior = async () => null;
+
+  await assert.rejects(
+    () => orderService.cancelOrder(ORDER_ID.toString(), PHARMACY_ID, USER_ID),
+    (err) => err.code === 'ORDER_NOT_CANCELLABLE'
+  );
+  assert.deepStrictEqual(emitted, []);
+});
+
 test('a rejected business rule emits nothing (order not in a cancellable state)', async () => {
   orderModelStub.findOne = async () => ({ ...buildOrder(), status: 'delivered' });
 
   await assert.rejects(() => orderService.cancelOrder(ORDER_ID.toString(), PHARMACY_ID, USER_ID));
   assert.deepStrictEqual(emitted, [], 'a rejected cancellation is not an event');
+  assert.strictEqual(writes.length, 0, 'nothing is written for an order plainly past cancelling');
 });
