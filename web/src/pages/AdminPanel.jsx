@@ -47,10 +47,10 @@ export function AdminPanel() {
     { path: '/admin/advertisements', label: t('nav.advertisements') },
     { path: '/admin/products', label: t('nav.products') },
     { path: '/admin/catalog', label: t('nav.centralCatalog') },
-    // Catalog overhaul Phase 5: warehouses' new-item requests, the duplicate
-    // groups the dedupe migration left for review, and the manufacturer list.
+    // Catalog overhaul Phase 5: warehouses' new-item requests and the
+    // manufacturer list.
     { path: '/admin/catalog-requests', label: t('nav.catalogRequests') },
-    { path: '/admin/catalog-duplicates', label: t('nav.catalogDuplicates') },
+    // Duplicate review (/admin/catalog-duplicates, route kept below) is hidden: the unique identityKey index prevents duplicates, so it is only needed after migrating a legacy database.
     { path: '/admin/manufacturers', label: t('nav.manufacturers') },
     // Where the categories the catalog import creates get renamed or merged.
     { path: '/admin/categories', label: t('nav.categories') },

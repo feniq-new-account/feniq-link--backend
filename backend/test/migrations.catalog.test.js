@@ -1,4 +1,4 @@
-// The catalog-overhaul migrations (scripts/migrations/00..06, MIGRATIONS.md),
+// The catalog-overhaul migrations (scripts/migrations/00..07, MIGRATIONS.md),
 // run in order against legacy-shaped documents inserted straight through the
 // driver (no model hooks), exactly as they sit in a database written before
 // the overhaul:
@@ -15,6 +15,7 @@ const { startMemoryMongo, stopMemoryMongo } = require('./helpers/mongo');
 
 const ProductCatalog = require('../src/models/productCatalog.model');
 const CatalogDuplicateReview = require('../src/models/catalogDuplicateReview.model');
+const Category = require('../src/models/category.model');
 
 const migrations = [
   require('../scripts/migrations/00-manufacturers'),
@@ -24,6 +25,7 @@ const migrations = [
   require('../scripts/migrations/04-dedupe-catalog'),
   require('../scripts/migrations/05-remove-dropped-fields'),
   require('../scripts/migrations/06-drop-legacy-indexes'),
+  require('../scripts/migrations/07-category-keys'),
 ];
 
 const { ObjectId } = mongoose.Types;
@@ -31,7 +33,7 @@ const ids = {};
 let db;
 
 async function snapshot() {
-  const names = ['productcatalogs', 'products', 'manufacturers', 'manufacturerdiscounts', 'warehousemanufacturers'];
+  const names = ['productcatalogs', 'products', 'manufacturers', 'manufacturerdiscounts', 'warehousemanufacturers', 'categories'];
   const out = {};
   for (const name of names) {
     out[name] = await db.collection(name).find({}).sort({ _id: 1 }).toArray();
@@ -47,6 +49,16 @@ test.before(async () => {
   // be inserted - on a real legacy database that build fails anyway.
   await ProductCatalog.init();
   await ProductCatalog.collection.dropIndex('identityKey_1').catch(() => {});
+  // Likewise the unique category key (07 builds it once every category has one).
+  await Category.init();
+  await Category.collection.dropIndex('key_1').catch(() => {});
+
+  // Categories as written before they had a key: two spellings of one
+  // (07 merges the younger into the older) and one on its own.
+  ids.catOld = { _id: new ObjectId(), nameAr: 'صادات حيوية', nameEn: 'Antibiotics', icon: null, sortOrder: 1 };
+  ids.catDup = { _id: new ObjectId(), nameAr: 'صادات حيويه', nameEn: 'Antibiotic', icon: null, sortOrder: 5 };
+  ids.catSolo = { _id: new ObjectId(), nameAr: 'مسكنات', nameEn: 'Painkillers', icon: null, sortOrder: 2 };
+  await db.collection('categories').insertMany([ids.catOld, ids.catDup, ids.catSolo]);
 
   const w1 = new ObjectId();
   const w2 = new ObjectId();
@@ -66,11 +78,11 @@ test.before(async () => {
     ...extra,
   });
   // A and E carry the catalog price the old model had (05 removes it).
-  ids.A = item('باراسيتامول', 'شركة الشرق', { manufacturerEn: 'East Co', priceUsd: 2 });
-  ids.B = item('فيتامين', 'شركه  الشرق'); // same company, other spelling
+  ids.A = item('باراسيتامول', 'شركة الشرق', { manufacturerEn: 'East Co', priceUsd: 2, categoryId: ids.catDup._id });
+  ids.B = item('فيتامين', 'شركه  الشرق', { categoryId: ids.catOld._id }); // same company, other spelling
   ids.C = item('أموكسيسيلين', 'شركة الشرق');
   ids.D = item('اموكسيسيلين', 'شركة الشرق', { imageUrl: 'https://res.cloudinary.com/x/amox.png' }); // dup of C, safe
-  ids.E = item('بروفين', 'ابن سينا', { priceUsd: null });
+  ids.E = item('بروفين', 'ابن سينا', { priceUsd: null, categoryId: ids.catSolo._id });
   ids.F = item('بروفين ', 'إبن سينا'); // dup of E, but w1 stocks both
   ids.G = item('دواء', 'x', { isActive: false });
   ids.H = item('دوآء', 'x'); // dup of G, mixed active state
@@ -94,8 +106,8 @@ test.before(async () => {
   ids.pE = product(ids.E._id);
   ids.pF = product(ids.F._id);
   ids.pRecalled = product(ids.G._id, { isActive: false });
-  ids.pAdmin = product(ids.A._id, { isActive: false, barcode: null });
-  ids.pLegacy = product(null, { nameAr: 'قديم', manufacturerAr: 'شركة  الشرق' });
+  ids.pAdmin = product(ids.A._id, { isActive: false, barcode: null, categoryId: ids.catDup._id });
+  ids.pLegacy = product(null, { nameAr: 'قديم', manufacturerAr: 'شركة  الشرق', categoryId: ids.catDup._id });
   await products.insertMany(Object.values(ids).filter((v) => v && v.price !== undefined));
 
   const discounts = db.collection('manufacturerdiscounts');
@@ -213,6 +225,39 @@ test('05 and 06: barcode and catalog price removed, legacy index dropped, new in
   assert.ok(!productIndexes.includes('warehouseId_1_manufacturerKey_1__id_1'));
 });
 
+test('07: categories get their key, spelling duplicates merge into the oldest, and the unique key index is built', async () => {
+  const dryRun = await migrations[7].run({ apply: false });
+  assert.strictEqual(dryRun.keysSet, 3);
+  assert.strictEqual(dryRun.keyIndex, 'would be created');
+  assert.strictEqual(await db.collection('categories').countDocuments(), 3);
+
+  const report = await migrations[7].run({ apply: true });
+  assert.strictEqual(report.keyIndex, 'created');
+  assert.deepStrictEqual(
+    report.merged.map((group) => [group.key, group.kept.id, group.merged.map((c) => c.id), group.moved]),
+    [['صادات حيويه', String(ids.catOld._id), [String(ids.catDup._id)], { catalogItems: 1, products: 2 }]]
+  );
+
+  // The younger spelling is gone; what was filed under it now points at the
+  // older one, which keeps its own names.
+  assert.strictEqual(await db.collection('categories').findOne({ _id: ids.catDup._id }), null);
+  const kept = await db.collection('categories').findOne({ _id: ids.catOld._id });
+  assert.deepStrictEqual([kept.nameAr, kept.nameEn, kept.key], ['صادات حيوية', 'Antibiotics', 'صادات حيويه']);
+  assert.strictEqual((await db.collection('categories').findOne({ _id: ids.catSolo._id })).key, 'مسكنات');
+  assert.strictEqual(String((await db.collection('productcatalogs').findOne({ _id: ids.A._id })).categoryId), String(ids.catOld._id));
+  assert.strictEqual(String((await db.collection('productcatalogs').findOne({ _id: ids.B._id })).categoryId), String(ids.catOld._id));
+  for (const id of [ids.pAdmin._id, ids.pLegacy._id]) {
+    assert.strictEqual(String((await db.collection('products').findOne({ _id: id })).categoryId), String(ids.catOld._id));
+  }
+  assert.strictEqual(await db.collection('productcatalogs').countDocuments({ categoryId: ids.catDup._id }), 0);
+  assert.strictEqual(await db.collection('products').countDocuments({ categoryId: ids.catDup._id }), 0);
+
+  const index = (await db.collection('categories').indexes()).find((i) => i.name === 'key_1');
+  assert.strictEqual(index.unique, true);
+  // From now on a second spelling cannot be created.
+  await assert.rejects(Category.create({ nameAr: 'صادات حيويّة', nameEn: 'Antibiotics 2' }), (err) => err.code === 11000);
+});
+
 test('every migration is idempotent: a second apply changes nothing', async () => {
   const before = await snapshot();
   for (const migration of migrations) await migration.run({ apply: true });
@@ -259,4 +304,20 @@ test('an item without an Arabic name is reported, and 00/02/04 refuse --apply un
   const fixed = await db.collection('productcatalogs').findOne({ _id: insertedId });
   assert.strictEqual(fixed.identityKey, 'دواء كان بلا اسم عربي|شركه الشرق');
   await db.collection('productcatalogs').deleteOne({ _id: insertedId });
+});
+
+test('07: a category whose Arabic name has no letters is reported, and --apply refuses until it has one', async () => {
+  const { insertedId } = await db.collection('categories').insertOne({ nameAr: '--', nameEn: 'Dashes', sortOrder: 9 });
+  const dryRun = await migrations[7].run({ apply: false });
+  assert.deepStrictEqual(
+    dryRun.categoriesWithoutArabicName.map((c) => [c.id, c.nameEn]),
+    [[String(insertedId), 'Dashes']]
+  );
+  await assert.rejects(migrations[7].run({ apply: true }), /no Arabic name/);
+
+  await db.collection('categories').updateOne({ _id: insertedId }, { $set: { nameAr: 'فئة كانت بلا اسم' } });
+  const report = await migrations[7].run({ apply: true });
+  assert.deepStrictEqual(report.categoriesWithoutArabicName, []);
+  assert.strictEqual((await db.collection('categories').findOne({ _id: insertedId })).key, 'فيه كانت بلا اسم');
+  await db.collection('categories').deleteOne({ _id: insertedId });
 });

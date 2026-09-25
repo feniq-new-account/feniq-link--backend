@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CATALOG_IMPORT_COLUMNS, ImportColumnMappingModal } from '../components/ImportColumnMappingModal';
 import { ManufacturerPicker } from '../components/CatalogPickers';
+import { ImagePicker } from '../components/ImagePicker';
 import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { SearchableSelect } from '../components/SearchableSelect';
@@ -417,10 +418,8 @@ export function AdminCatalogPage() {
     }
   };
 
-  const handleImagePicked = async (item, event) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
+  // A file from the gallery or a photo from the camera - one upload path.
+  const handleImagePicked = async (item, file) => {
     setBusyId(item.id);
     setActionError(null);
     try {
@@ -603,15 +602,12 @@ export function AdminCatalogPage() {
                           {item.isActive ? t('admin.catalog.disable') : t('admin.catalog.enable')}
                         </button>
                         {/* The central image every warehouse product of this medicine shows (Phase 5.3). */}
-                        <label className="adm-row-action">
-                          {item.imageUrl ? t('admin.catalog.replaceImage') : t('admin.catalog.uploadImage')}
-                          <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            hidden
-                            onChange={(event) => handleImagePicked(item, event)}
-                          />
-                        </label>
+                        <ImagePicker
+                          label={item.imageUrl ? t('admin.catalog.replaceImage') : t('admin.catalog.uploadImage')}
+                          buttonClassName="adm-row-action"
+                          disabled={busyId === item.id}
+                          onFile={(file) => handleImagePicked(item, file)}
+                        />
                         {item.imageUrl && (
                           <button className="adm-row-action" disabled={busyId === item.id} onClick={() => handleClearImage(item)}>
                             {t('admin.catalog.clearImage')}

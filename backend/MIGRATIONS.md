@@ -2,7 +2,8 @@
 
 The scripts in `scripts/migrations/` bring a database written before the catalog
 overhaul up to the new model: the central Manufacturer entity, normalized search
-keys, the recall/disable reason on products, and a deduplicated catalog.
+keys, the recall/disable reason on products, a deduplicated catalog, and one
+category per normalized Arabic name.
 
 Every script:
 
@@ -25,6 +26,7 @@ Run them in this order. Each depends on the ones before it.
 | 04 | `04-dedupe-catalog.js` | Groups catalog items that share an `identityKey`. **Safe** groups are merged automatically into the oldest item, one transaction per group, keeping any image. A group is safe when no warehouse is linked to more than one item and all items share the same active state. **Unsafe** groups go to `CatalogDuplicateReview` for the admin's Duplicate review screen. Builds the unique `identityKey` index only once no duplicates remain; otherwise it prints what blocks it. |
 | 05 | `05-remove-dropped-fields.js` | Unsets fields the models no longer have: `Product.barcode`, and `ProductCatalog.priceUsd` (the central catalog has no price; a price belongs only to a warehouse's own product). |
 | 06 | `06-drop-legacy-indexes.js` | Drops the four legacy single-field product indexes (`nameAr_1`, `nameEn_1`, `manufacturerAr_1`, `manufacturerEn_1`), and `warehouseId_1_manufacturerKey_1__id_1` if an earlier build of this branch created it (superseded by the covering `warehouse_manufacturer_page`), then creates every index the catalog models now declare. It only creates, never drops. The unique `identityKey` index is left to 04. |
+| 07 | `07-category-keys.js` | Sets `Category.key` (the Arabic name after `normalizeText`) on every category. Categories that share a key are two spellings of one category: each group is merged into its **oldest** category (its names, icon and order are kept), one transaction per group. Every catalog item and warehouse product filed under the others moves to it, and the others are deleted. Then it builds the unique `key_1` index, which stops two catalog imports racing to create the same new category from making two. Refuses `--apply` while a category's Arabic name has no letters at all (`categoriesWithoutArabicName`). |
 
 Existing image URLs are already on Cloudinary. No script moves or rewrites them.
 
@@ -43,7 +45,7 @@ the server stopped, against the new code, with no compatibility window.
 
 1. **Stop the server.**
 2. **Deploy the new code.**
-3. **Run 00 → 06 in order.** For each script, dry-run it first and read the
+3. **Run 00 → 07 in order.** For each script, dry-run it first and read the
    report, then run it with `--apply`, before moving on to the next one:
 
    ```bash
@@ -62,6 +64,8 @@ the server stopped, against the new code, with no compatibility window.
    node scripts/migrations/05-remove-dropped-fields.js --apply
    node scripts/migrations/06-drop-legacy-indexes.js
    node scripts/migrations/06-drop-legacy-indexes.js --apply
+   node scripts/migrations/07-category-keys.js
+   node scripts/migrations/07-category-keys.js --apply
    ```
 
    Each dry run reads the data as the scripts before it left it. That is why
@@ -71,7 +75,9 @@ the server stopped, against the new code, with no compatibility window.
    at boot. That is expected until step 5.
 5. **Resolve the Duplicate review screen, then re-run 04** (dry run, then
    `--apply`). Once no duplicates remain, it builds the unique `identityKey`
-   index.
+   index. The screen is not in the admin menu (the unique index keeps new
+   duplicates out, so only a migrated legacy database needs it): open
+   `/admin/catalog-duplicates` in the admin panel directly.
 
 ## Read the reports
 
@@ -84,8 +90,11 @@ the server stopped, against the new code, with no compatibility window.
   them out.
 - **04** `sentToReview` lists the duplicate groups waiting on the admin, and
   `identityIndex` says whether the unique index could be built.
+- **07** `merged` lists each group of category spellings: the category kept,
+  the ones folded into it, and how many catalog items and products moved.
+  `keyIndex` says whether the unique index was built.
 
 ## Tests
 
-`test/migrations.catalog.test.js` runs all seven scripts against legacy-shaped
+`test/migrations.catalog.test.js` runs all eight scripts against legacy-shaped
 data in an in-memory database: dry run, apply, and a second apply.

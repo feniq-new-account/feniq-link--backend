@@ -22,6 +22,7 @@ const env = require('../src/config/env');
 const User = require('../src/models/user.model');
 const Warehouse = require('../src/models/warehouse.model');
 const Category = require('../src/models/category.model');
+const { normalizeText } = require('../src/utils/normalizeText');
 const Product = require('../src/models/product.model');
 const Offer = require('../src/models/offer.model');
 
@@ -33,7 +34,9 @@ const CATEGORIES = [
 ];
 
 async function findOrCreateCategory(data) {
-  const existing = await Category.findOne({ nameEn: data.nameEn });
+  // By the unique key, so a category the catalog import already created under
+  // this Arabic name is reused rather than refused as a duplicate.
+  const existing = await Category.findOne({ key: normalizeText(data.nameAr) });
   if (existing) return existing;
   return Category.create({ ...data, icon: null });
 }

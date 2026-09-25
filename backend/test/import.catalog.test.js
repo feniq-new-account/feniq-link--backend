@@ -44,7 +44,7 @@ const itemNamed = (nameAr, manufacturerAr) => ProductCatalog.findOne({ nameAr, m
 
 test.before(async () => {
   await startMemoryMongo({ dbName: 'feniq-import-catalog-test' });
-  await syncIndexes(ProductCatalog, Manufacturer, ImportColumnMapping);
+  await syncIndexes(ProductCatalog, Manufacturer, ImportColumnMapping, Category);
   // Deliberately no exchange rate: the catalog import never needs one.
 });
 
@@ -271,8 +271,8 @@ test('the admin template has the catalog columns only - no price', async () => {
 // file's text as both names) - give it its English name, as an admin would.
 function antibiotics() {
   return Category.findOneAndUpdate(
-    { nameAr: 'صادات حيوية' },
-    { $set: { nameEn: 'Antibiotics' } },
+    { key: normalizeText('صادات حيوية') },
+    { $set: { nameEn: 'Antibiotics' }, $setOnInsert: { nameAr: 'صادات حيوية' } },
     { upsert: true, new: true }
   ).lean();
 }
@@ -390,4 +390,76 @@ test('category: a re-import files an existing item under its category, known or 
   report = await catalogService.importFromExcel(await xlsx([header, ['دواء يعاد استيراده', m, '']]));
   assert.strictEqual(report.unchanged, 1);
   assert.strictEqual(String((await itemNamed('دواء يعاد استيراده', m)).categoryId), newCategoryId);
+});
+
+// --- two imports creating the same new category ------------------------------------
+// Category.key (normalizeText of the Arabic name) is unique. Each import reads
+// the category list once, when it starts, so another import can create the
+// same new category in between: this import's create then fails on the
+// duplicate key, and it files its items under the category that won.
+
+test('category: created by another import after this one read the list - the duplicate key is caught and the winner used', async () => {
+  const m = await manufacturer();
+  // The other import creates it (spelled its own way) at the last moment:
+  // after this import read the list, right before this import's own create.
+  let winner;
+  Category.create = async function createAfterTheOtherImport(...args) {
+    delete Category.create;
+    winner = await Category.create({ nameAr: 'فئة متسابقة', nameEn: 'فئة متسابقة' });
+    return Category.create(...args);
+  };
+  let report;
+  try {
+    report = await catalogService.importFromExcel(await xlsx([
+      ['اسم المادة', 'الشركة', 'الفئة'],
+      ['صنف السباق الأول', m, ' فئه متسابقه '],
+      ['صنف السباق الثاني', m, 'فئة متسابقة'],
+    ]));
+  } finally {
+    delete Category.create;
+  }
+  assert.ok(winner, 'the competing create ran');
+  assert.strictEqual(report.added, 2, JSON.stringify(report));
+  assert.deepStrictEqual(report.errors, []);
+  // Not reported as created by this import - the other one created it.
+  assert.deepStrictEqual(report.newCategories, []);
+  assert.strictEqual(await Category.countDocuments({ key: normalizeText('فئة متسابقة') }), 1);
+  for (const name of ['صنف السباق الأول', 'صنف السباق الثاني']) {
+    assert.strictEqual(String((await itemNamed(name, m)).categoryId), String(winner._id), name);
+  }
+});
+
+// The outcome whichever way the two interleave (the test above forces the
+// race itself; left to timing, these two may or may not overlap).
+test('category: two imports run at once, both naming the same new category - one category, every item under it', async () => {
+  const m = await manufacturer();
+  const file = (prefix, spelling) =>
+    xlsx([
+      ['اسم المادة', 'الشركة', 'الفئة'],
+      [`${prefix} 1`, m, spelling],
+      [`${prefix} 2`, m, spelling],
+    ]);
+  const [first, second] = await Promise.all([
+    catalogService.importFromExcel(await file('صنف ملف أول', 'فئة الملفين')),
+    catalogService.importFromExcel(await file('صنف ملف ثان', 'فئه الملفين')),
+  ]);
+  assert.strictEqual(first.added + second.added, 4, JSON.stringify([first, second]));
+  assert.deepStrictEqual([...first.errors, ...second.errors], []);
+  // Exactly one of them created it, whichever got there first.
+  assert.strictEqual(first.newCategories.length + second.newCategories.length, 1);
+  const categories = await Category.find({ key: normalizeText('فئة الملفين') }).lean();
+  assert.strictEqual(categories.length, 1);
+  const items = await ProductCatalog.find({ manufacturerAr: m }).lean();
+  assert.strictEqual(items.length, 4);
+  for (const item of items) assert.strictEqual(String(item.categoryId), String(categories[0]._id), item.nameAr);
+});
+
+test('category: the unique key refuses a second spelling of a category outright', async () => {
+  await antibiotics();
+  await assert.rejects(Category.create({ nameAr: 'صادات حيويّه', nameEn: 'Antibiotics again' }), (err) => err.code === 11000);
+  // And the key follows a rename.
+  const category = await Category.create({ nameAr: 'فئة ستتغير', nameEn: 'Will change' });
+  category.nameAr = 'فئة تغيرت';
+  await category.save();
+  assert.strictEqual((await Category.findById(category._id).lean()).key, normalizeText('فئة تغيرت'));
 });

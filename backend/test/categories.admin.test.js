@@ -144,9 +144,14 @@ test('a rename to another category\'s name (after normalizeText) is refused - me
 test('a rename may change only its own spelling; an empty name is refused', async () => {
   const c = await category('صادات حيويه', 'Antibiotics');
   assert.strictEqual((await api('PATCH', `/admin/categories/${c._id}`, { nameAr: 'صادات حيوية' })).status, 200);
+  assert.strictEqual((await Category.findById(c._id).lean()).key, 'صادات حيويه'); // the key follows nameAr
   const empty = await api('PATCH', `/admin/categories/${c._id}`, { nameEn: '   ' });
   assert.strictEqual(empty.status, 400);
   assert.strictEqual(empty.body.code, 'INVALID_CATEGORY_NAME');
+  // Punctuation alone normalizes to no key at all.
+  const dashes = await api('PATCH', `/admin/categories/${c._id}`, { nameAr: ' -- ' });
+  assert.strictEqual(dashes.status, 400);
+  assert.strictEqual(dashes.body.code, 'INVALID_CATEGORY_NAME');
   assert.strictEqual((await api('PATCH', `/admin/categories/${new mongoose.Types.ObjectId()}`, { nameAr: 'س' })).status, 404);
 });
 
