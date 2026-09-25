@@ -1756,4 +1756,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorDiscountCodeEdited => 'تغيّرت قيمة كود الخصم.';
+
+  @override
+  String get cartQuoteUnavailable => 'تعذّر حساب الإجمالي.';
 }

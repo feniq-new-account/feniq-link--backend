@@ -634,6 +634,40 @@ test('the savings summary counts the code discount', async () => {
   );
 });
 
+// ---------------------------------------------------------------------------
+// The quote without a code (every cart shows the server's figures)
+
+test('a cart without a code is quoted too, and the quote is exactly what the order is charged', async () => {
+  const quote = await orderService.quoteOrder({
+    pharmacyId: ids.pharmacyA,
+    warehouseId: ids.warehouseA,
+    items: standardItems(),
+  });
+  assert.strictEqual(quote.code, null);
+  assert.strictEqual(quote.subtotalSyp, 594000);
+  assert.strictEqual(quote.platformDiscountSyp, 23760);
+  assert.strictEqual(quote.discountSyp, 0);
+  assert.strictEqual(quote.finalSyp, PRE_CODE_A);
+
+  const order = await submit();
+  assert.strictEqual(order.finalPrice, quote.finalSyp);
+});
+
+test('HTTP: the quote endpoint takes a cart with no code, or an empty one', async () => {
+  const cart = { warehouseId: String(ids.warehouseA), items: standardItems() };
+  for (const body of [cart, { ...cart, code: '' }, { ...cart, code: null }]) {
+    const quoted = await call('POST', '/discount-codes/preview', body);
+    assert.strictEqual(quoted.status, 200);
+    assert.strictEqual(quoted.body.discountCode, null);
+    assert.strictEqual(quoted.body.totals.platformDiscountSyp, 23760);
+    assert.strictEqual(quoted.body.totals.discountSyp, 0);
+    assert.strictEqual(quoted.body.totals.finalSyp, PRE_CODE_A);
+  }
+  const empty = await call('POST', '/discount-codes/preview', { warehouseId: String(ids.warehouseA), items: [] });
+  assert.strictEqual(empty.status, 400);
+  assert.strictEqual(empty.body.code, 'CART_EMPTY');
+});
+
 // Last: it spends this pharmacy's failed-preview budget.
 test('HTTP: wrong codes are rate-limited per account; a correct preview never counts', async () => {
   const code = await adminCode();

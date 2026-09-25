@@ -3001,6 +3001,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The terms of this discount code changed.'**
   String get errorDiscountCodeEdited;
+
+  /// No description provided for @cartQuoteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t work out the total.'**
+  String get cartQuoteUnavailable;
 }
 
 class _AppLocalizationsDelegate

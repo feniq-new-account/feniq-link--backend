@@ -3,8 +3,9 @@ const { authenticate, authorize, requireActiveStatus } = require('../middlewares
 const { discountCodeLimiter } = require('../middlewares/rateLimiter');
 const orderController = require('../controllers/order.controller');
 
-// The pharmacist's side of discount codes: only the cart preview. Applying a
-// code for real happens on POST /orders (discountCode + discountCodeRevision).
+// The cart quote: what the cart costs right now, with or without a discount
+// code (the app quotes every cart). Applying a code for real happens on
+// POST /orders (discountCode + discountCodeRevision).
 const router = Router();
 
 router.post(

@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
-import 'package:feniq/features/cart/data/models/discount_code_quote.dart';
+import 'package:feniq/features/cart/data/models/cart_quote.dart';
 import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/cart/data/repositories/order_repository.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
@@ -33,24 +35,33 @@ const _placedOrder = OrderModel(
   finalPrice: 0,
 );
 
-DiscountCodeQuote _quote({int revision = 1, int discount = 2000, int finalSyp = 18000, num value = 10}) =>
-    DiscountCodeQuote(
-      code: 'ABCD2345',
-      type: 'percentage',
-      value: value,
-      revision: revision,
-      subtotalSyp: 20000,
-      platformDiscountSyp: 0,
-      preCodeSyp: 20000,
-      discountSyp: discount,
-      finalSyp: finalSyp,
-    );
+// The server's quote without a code: 2 x $10 at 1,000 SYP/$ less 4%.
+const _plainQuote = CartQuote(
+  subtotalSyp: 20000,
+  platformDiscountSyp: 800,
+  preCodeSyp: 19200,
+  finalSyp: 19200,
+  usdToSyp: 1000,
+);
+
+CartQuote _codeQuote({int revision = 1, int discount = 1920, num value = 10}) => CartQuote(
+  code: 'ABCD2345',
+  type: 'percentage',
+  value: value,
+  revision: revision,
+  subtotalSyp: 20000,
+  platformDiscountSyp: 800,
+  preCodeSyp: 19200,
+  discountSyp: discount,
+  finalSyp: 19200 - discount,
+  usdToSyp: 1000,
+);
 
 ServerFailure _refusal(String code, {Map<String, dynamic>? details, int status = 400}) =>
     ServerFailure('refused', code: code, details: details, statusCode: status);
 
 // A little past the re-quote debounce.
-Future<void> _settle() => Future<void>.delayed(kDiscountRequoteDelay + const Duration(milliseconds: 80));
+Future<void> _settle() => Future<void>.delayed(kCartQuoteDelay + const Duration(milliseconds: 80));
 
 void main() {
   setUpAll(() {
@@ -59,34 +70,46 @@ void main() {
 
   late _MockOrderRepository orderRepo;
   late CartCubit cubit;
-  // Every code previewed, in order.
-  late List<String> previewed;
-  // What the next preview answers with (a quote, or a Failure to throw).
-  late List<Object> previewAnswers;
+  // The code each quote carried (null: quoted without one), in order.
+  late List<String?> quotedCodes;
+  // What the next quote WITH a code answers (a quote, or a Failure to throw).
+  late List<Object> codeAnswers;
+  // What the next quote WITHOUT a code answers; the plain quote by default.
+  late List<Object> plainAnswers;
 
-  setUp(() {
+  setUp(() async {
     orderRepo = _MockOrderRepository();
     final warehouseRepo = _MockWarehouseRepository();
     when(() => warehouseRepo.getWarehouseProfile(any())).thenAnswer((_) async => throw Exception('not exercised'));
-    previewed = [];
-    previewAnswers = [];
+    quotedCodes = [];
+    codeAnswers = [];
+    plainAnswers = [];
     when(
-      () => orderRepo.previewDiscountCode(
+      () => orderRepo.quoteCart(
         warehouseId: any(named: 'warehouseId'),
         items: any(named: 'items'),
         code: any(named: 'code'),
       ),
     ).thenAnswer((invocation) async {
-      previewed.add(invocation.namedArguments[#code] as String);
-      final answer = previewAnswers.isNotEmpty ? previewAnswers.removeAt(0) : _quote();
+      final code = invocation.namedArguments[#code] as String?;
+      quotedCodes.add(code);
+      final queue = code == null ? plainAnswers : codeAnswers;
+      final answer = queue.isNotEmpty ? queue.removeAt(0) : (code == null ? _plainQuote : _codeQuote());
       if (answer is Failure) throw answer;
-      return answer as DiscountCodeQuote;
+      return answer as CartQuote;
     });
     cubit = CartCubit(orderRepository: orderRepo, warehouseRepository: warehouseRepo);
     cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 2);
   });
 
   tearDown(() => cubit.close());
+
+  // The cart screen opening (CartView attaches in initState).
+  Future<void> openCartScreen() async {
+    cubit.attachQuoteView();
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+  }
 
   void stubSubmit(Future<OrderModel> Function(Invocation invocation) answer) {
     when(
@@ -102,35 +125,102 @@ void main() {
     ).thenAnswer(answer);
   }
 
+  group('the quote on every cart', () {
+    test('nothing is quoted until the cart screen shows; opening it quotes the cart, without a code', () async {
+      cubit.updateQuantity(cubit.state.items.single.lineKey, 3);
+      await _settle();
+      expect(quotedCodes, isEmpty, reason: 'edits from the catalog cost no quotes');
+      expect(cubit.state.isQuoteStale, isTrue);
+
+      await openCartScreen();
+      expect(quotedCodes, [null]);
+      expect(cubit.state.quote?.finalSyp, 19200);
+      expect(cubit.state.hasCurrentQuote, isTrue);
+      expect(cubit.state.isReadyToSubmit, isTrue);
+    });
+
+    test('while the screen shows, edits re-quote once they settle, and hold the submit meanwhile', () async {
+      await openCartScreen();
+      quotedCodes.clear();
+      final key = cubit.state.items.single.lineKey;
+      cubit.updateQuantity(key, 3);
+      cubit.updateQuantity(key, 4);
+
+      expect(cubit.state.isQuoting, isTrue);
+      expect(cubit.state.isReadyToSubmit, isFalse, reason: 'the total on screen is not current yet');
+      await _settle();
+      expect(quotedCodes, [null], reason: 'two taps, one request');
+      expect(cubit.state.isReadyToSubmit, isTrue);
+
+      cubit.detachQuoteView();
+      cubit.updateQuantity(key, 5);
+      await _settle();
+      expect(quotedCodes, [null], reason: 'the screen is gone');
+    });
+
+    test('an edit is one emit: the quote goes stale in the same state as the edit', () async {
+      await openCartScreen();
+      final emitted = [];
+      final sub = cubit.stream.listen(emitted.add);
+      cubit.updateQuantity(cubit.state.items.single.lineKey, 3);
+      await Future<void>.delayed(Duration.zero);
+      expect(emitted, hasLength(1));
+      expect(emitted.single.isQuoteStale, isTrue);
+      await sub.cancel();
+      await _settle();
+    });
+
+    test('a failed quote leaves a retry, and the submit waits for real figures', () async {
+      plainAnswers.add(_refusal('NETWORK_ERROR', status: 0));
+      await openCartScreen();
+      expect(cubit.state.quoteErrorCode, 'NETWORK_ERROR');
+      expect(cubit.state.isReadyToSubmit, isFalse);
+
+      await cubit.refreshQuote();
+      expect(cubit.state.quoteErrorCode, isNull);
+      expect(cubit.state.isReadyToSubmit, isTrue);
+    });
+
+    test('a new cart on a screen already showing is quoted at once', () async {
+      await openCartScreen();
+      quotedCodes.clear();
+      cubit.replaceWithProduct(_product('p9'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+      await Future<void>.delayed(Duration.zero);
+      expect(quotedCodes, [null]);
+    });
+  });
+
   group('applying a code', () {
+    setUp(openCartScreen);
+
     test('a code that works is applied with the server\'s quote, typed in any case', () async {
       await cubit.applyDiscountCode('  abcd2345 ');
 
-      expect(previewed, ['ABCD2345']);
+      expect(quotedCodes.last, 'ABCD2345');
       expect(cubit.state.discountCode, 'ABCD2345');
-      expect(cubit.state.discountQuote?.discountSyp, 2000);
-      expect(cubit.state.isQuotingDiscountCode, isFalse);
+      expect(cubit.state.quote?.discountSyp, 1920);
+      expect(cubit.state.isQuoting, isFalse);
       expect(cubit.state.discountCodeErrorCode, isNull);
-      expect(cubit.state.canSubmit, isTrue);
+      expect(cubit.state.isReadyToSubmit, isTrue);
     });
 
-    test('a refused code leaves the cart as it was, with the reason for the field', () async {
-      previewAnswers.add(_refusal('DISCOUNT_CODE_EXPIRED'));
+    test('a refused code leaves the cart and its quote as they were, with the reason for the field', () async {
+      codeAnswers.add(_refusal('DISCOUNT_CODE_EXPIRED'));
       await cubit.applyDiscountCode('ABCD2345');
 
       expect(cubit.state.discountCode, isNull);
-      expect(cubit.state.discountQuote, isNull);
       expect(cubit.state.discountCodeErrorCode, 'DISCOUNT_CODE_EXPIRED');
-      expect(cubit.state.items.single.quantity, 2);
-      expect(cubit.state.canSubmit, isTrue);
+      expect(cubit.state.quote?.finalSyp, 19200, reason: 'the code-less quote still stands');
+      expect(cubit.state.isReadyToSubmit, isTrue);
     });
 
     test('an empty field sends nothing', () async {
+      final before = quotedCodes.length;
       await cubit.applyDiscountCode('   ');
-      expect(previewed, isEmpty);
+      expect(quotedCodes, hasLength(before));
     });
 
-    test('applying and removing a code both drop the pending idempotency key', () async {
+    test('applying and removing a code both drop the pending idempotency key; removing re-quotes without it', () async {
       stubSubmit((_) async => throw _refusal('NETWORK'));
       await cubit.submitOrder();
       expect(cubit.state.pendingIdempotencyKey, isNotNull);
@@ -143,89 +233,85 @@ void main() {
       cubit.removeDiscountCode();
       expect(cubit.state.discountCode, isNull);
       expect(cubit.state.pendingIdempotencyKey, isNull, reason: 'the order no longer carries it');
+      await Future<void>.delayed(Duration.zero);
+      expect(quotedCodes.last, isNull);
+      expect(cubit.state.quote?.hasCode, isFalse);
+      expect(cubit.state.quote?.finalSyp, 19200);
     });
 
-    test('an answer that arrives after the code was removed is dropped', () async {
+    test('an answer for a cart that has since been replaced is dropped', () async {
+      final slow = Completer<CartQuote>();
+      when(
+        () => orderRepo.quoteCart(
+          warehouseId: any(named: 'warehouseId'),
+          items: any(named: 'items'),
+          code: any(named: 'code'),
+        ),
+      ).thenAnswer((invocation) => invocation.namedArguments[#code] == null ? Future.value(_plainQuote) : slow.future);
+
       final pending = cubit.applyDiscountCode('ABCD2345');
-      cubit.removeDiscountCode();
+      cubit.replaceWithProduct(_product('p9'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+      slow.complete(_codeQuote());
       await pending;
       expect(cubit.state.discountCode, isNull);
-      expect(cubit.state.isQuotingDiscountCode, isFalse);
+      expect(cubit.state.warehouseId, 'B');
     });
   });
 
-  group('re-quoting after edits', () {
+  group('re-quoting a cart with a code', () {
     setUp(() async {
+      await openCartScreen();
       await cubit.applyDiscountCode('ABCD2345');
-      previewed.clear();
+      quotedCodes.clear();
     });
 
-    test('quantity edits re-quote once they settle, and hold the submit meanwhile', () async {
-      previewAnswers.add(_quote(discount: 3000, finalSyp: 27000));
-      final key = cubit.state.items.single.lineKey;
-      cubit.updateQuantity(key, 3);
-      cubit.updateQuantity(key, 4);
-      cubit.updateQuantity(key, 3);
-
-      expect(cubit.state.isQuotingDiscountCode, isTrue);
-      expect(cubit.state.canSubmit, isFalse, reason: 'the total on screen is not current yet');
-      expect(previewed, isEmpty, reason: 'debounced');
-
+    test('quantity edits re-quote with the code', () async {
+      codeAnswers.add(_codeQuote(discount: 2880));
+      cubit.updateQuantity(cubit.state.items.single.lineKey, 3);
+      expect(cubit.state.isReadyToSubmit, isFalse);
       await _settle();
-      expect(previewed, ['ABCD2345'], reason: 'three taps, one request');
-      expect(cubit.state.discountQuote?.discountSyp, 3000);
-      expect(cubit.state.isQuotingDiscountCode, isFalse);
-      expect(cubit.state.canSubmit, isTrue);
+      expect(quotedCodes, ['ABCD2345']);
+      expect(cubit.state.quote?.discountSyp, 2880);
+      expect(cubit.state.isReadyToSubmit, isTrue);
     });
 
-    test('a same-value edit re-quotes nothing', () async {
-      cubit.updateQuantity(cubit.state.items.single.lineKey, 2);
-      await _settle();
-      expect(previewed, isEmpty);
-    });
-
-    test('adding a product and removing a line re-quote too', () async {
-      cubit.addProduct(_product('p2'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
-      await _settle();
-      cubit.removeItem(cubit.state.items.last.lineKey);
-      await _settle();
-      expect(previewed, ['ABCD2345', 'ABCD2345']);
-    });
-
-    test('a code that stopped working meanwhile comes off, with the reason', () async {
-      previewAnswers.add(_refusal('DISCOUNT_CODE_STOPPED'));
+    test('a code that stopped working meanwhile comes off with its reason, and the cart is quoted without it', () async {
+      codeAnswers.add(_refusal('DISCOUNT_CODE_STOPPED'));
       cubit.updateQuantity(cubit.state.items.single.lineKey, 5);
       await _settle();
 
+      expect(quotedCodes, ['ABCD2345', null]);
       expect(cubit.state.discountCode, isNull);
       expect(cubit.state.discountCodeErrorCode, 'DISCOUNT_CODE_STOPPED');
-      expect(cubit.state.canSubmit, isTrue);
+      expect(cubit.state.quote?.hasCode, isFalse);
+      expect(cubit.state.isReadyToSubmit, isTrue);
     });
 
-    test('a network failure keeps the code without an amount until a retry', () async {
-      previewAnswers.add(_refusal('NETWORK_ERROR', status: 0));
+    test('a network failure keeps the code, with no figures until a retry', () async {
+      codeAnswers.add(_refusal('NETWORK_ERROR', status: 0));
       cubit.updateQuantity(cubit.state.items.single.lineKey, 5);
       await _settle();
 
       expect(cubit.state.discountCode, 'ABCD2345');
-      expect(cubit.state.discountQuote, isNull);
-      expect(cubit.state.canSubmit, isFalse, reason: 'no amount - nothing to confirm');
+      expect(cubit.state.quoteErrorCode, 'NETWORK_ERROR');
+      expect(cubit.state.canSubmit, isFalse, reason: 'a code needs its current quote');
 
-      await cubit.refreshDiscountQuote();
-      expect(cubit.state.discountQuote, isNotNull);
-      expect(cubit.state.canSubmit, isTrue);
+      await cubit.refreshQuote();
+      expect(cubit.state.hasCurrentQuote, isTrue);
+      expect(cubit.state.isReadyToSubmit, isTrue);
     });
 
     test('a new cart for another warehouse takes the code with the old one', () async {
       cubit.replaceWithProduct(_product('p9'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
       await _settle();
       expect(cubit.state.discountCode, isNull);
-      expect(previewed, isEmpty);
+      expect(quotedCodes.where((c) => c != null), isEmpty);
     });
   });
 
   group('submitting with a code', () {
     setUp(() async {
+      await openCartScreen();
       await cubit.applyDiscountCode('ABCD2345');
     });
 
@@ -258,6 +344,8 @@ void main() {
       expect(cubit.state.errorDetails?['reason'], 'DISCOUNT_CODE_STOPPED');
       expect(cubit.state.pendingIdempotencyKey, isNull, reason: 'the next order no longer carries the code');
       expect(cubit.state.isSubmitting, isFalse);
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.quote?.hasCode, isFalse, reason: 'quoted again without the code');
     });
 
     test('a code whose amount changed is re-quoted, and the next submit carries the new revision', () async {
@@ -275,15 +363,14 @@ void main() {
         }
         return _placedOrder;
       });
-      previewAnswers.add(_quote(revision: 2, value: 5, discount: 1000, finalSyp: 19000));
+      codeAnswers.add(_codeQuote(revision: 2, value: 5, discount: 960));
 
       expect(await cubit.submitOrder(), isNull);
       expect(cubit.state.discountCode, 'ABCD2345', reason: 'the code still works');
-      expect(cubit.state.discountQuote?.revision, 2);
-      expect(cubit.state.discountQuote?.finalSyp, 19000);
+      expect(cubit.state.quote?.revision, 2);
+      expect(cubit.state.quote?.finalSyp, 18240);
       expect(cubit.state.errorCode, 'DISCOUNT_CODE_CHANGED');
-      final key = cubit.state.pendingIdempotencyKey;
-      expect(key, isNotNull, reason: 'the same code goes again - the key stays, like RATE_CHANGED');
+      expect(cubit.state.pendingIdempotencyKey, isNotNull, reason: 'the same code goes again - the key stays');
 
       expect(await cubit.submitOrder(), isNotNull);
       expect(revisions, [1, 2]);
@@ -312,6 +399,32 @@ void main() {
         ),
       );
       await _settle();
+    });
+  });
+
+  group('a rate that moved at submit', () {
+    setUp(openCartScreen);
+
+    test('the refusal carries both totals from the server - the one on screen and a fresh quote', () async {
+      stubSubmit((_) async => throw _refusal(
+            'RATE_CHANGED',
+            details: {'rateUsed': 1000, 'currentUsdToSyp': 1200},
+            status: 409,
+          ));
+      plainAnswers.add(const CartQuote(
+        subtotalSyp: 24000,
+        platformDiscountSyp: 960,
+        preCodeSyp: 23040,
+        finalSyp: 23040,
+        usdToSyp: 1200,
+      ));
+
+      expect(await cubit.submitOrder(rateUsed: 1000), isNull);
+      expect(cubit.state.errorCode, 'RATE_CHANGED');
+      expect(cubit.state.errorDetails?['previousTotalSyp'], 19200);
+      expect(cubit.state.errorDetails?['currentTotalSyp'], 23040);
+      expect(cubit.state.quote?.usdToSyp, 1200, reason: 'the new figures are on screen');
+      expect(cubit.state.pendingIdempotencyKey, isNotNull, reason: 'nothing about the order changed');
     });
   });
 }

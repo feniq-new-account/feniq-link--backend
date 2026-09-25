@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
-import 'package:feniq/features/cart/data/models/discount_code_quote.dart';
+import 'package:feniq/features/cart/data/models/cart_quote.dart';
 import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/cart/data/repositories/order_repository.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
@@ -48,7 +48,15 @@ const _placedOrder = OrderModel(
 
 // 2 x $10 at 1,000 SYP/$: subtotal 20,000; platform discount 800 (4%);
 // 10% code on the 19,200 left = 1,920; total 17,280.
-const _quote = DiscountCodeQuote(
+const _plainQuote = CartQuote(
+  subtotalSyp: 20000,
+  platformDiscountSyp: 800,
+  preCodeSyp: 19200,
+  finalSyp: 19200,
+  usdToSyp: 1000,
+);
+
+const _quote = CartQuote(
   code: 'ABCD2345',
   type: 'percentage',
   value: 10,
@@ -58,11 +66,13 @@ const _quote = DiscountCodeQuote(
   preCodeSyp: 19200,
   discountSyp: 1920,
   finalSyp: 17280,
+  usdToSyp: 1000,
 );
 
-// The cart with a discount code: the Apply field, the server's quote in the
-// summary, the refusal text under the field, and the two ways a submit can be
-// refused over the code (DISCOUNT_CODE_CHANGED).
+// The cart summary is always the server's quote, and the discount code rides
+// on it: the Apply field, the code's line in the summary, the refusal text
+// under the field, and the two ways a submit can be refused over the code
+// (DISCOUNT_CODE_CHANGED).
 void main() {
   late CartCubit cartCubit;
   late ExchangeRateCubit rateCubit;
@@ -80,16 +90,19 @@ void main() {
     previewAnswers = [];
     submitAnswers = [];
     sentRevisions = [];
+    // Quotes without a code are always the plain one; quotes with a code
+    // take their answers from previewAnswers, in order.
     when(
-      () => orderRepo.previewDiscountCode(
+      () => orderRepo.quoteCart(
         warehouseId: any(named: 'warehouseId'),
         items: any(named: 'items'),
         code: any(named: 'code'),
       ),
-    ).thenAnswer((_) async {
+    ).thenAnswer((invocation) async {
+      if (invocation.namedArguments[#code] == null) return _plainQuote;
       final answer = previewAnswers.isNotEmpty ? previewAnswers.removeAt(0) : _quote;
       if (answer is Failure) throw answer;
-      return answer as DiscountCodeQuote;
+      return answer as CartQuote;
     });
     when(
       () => orderRepo.submitOrder(
@@ -173,11 +186,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('without a code the summary is the plain subtotal, as before', (tester) async {
+  String textOf(WidgetTester tester, String key) => tester.widget<Text>(find.byKey(Key(key))).data!;
+
+  testWidgets('without a code the cart still shows the server\'s figures: subtotal, platform discount, total', (tester) async {
     await pumpCart(tester);
-    // The line and the subtotal both read 20,000; no discount rows at all.
-    expect(find.text('20,000 SYP'), findsNWidgets(2));
-    expect(find.byKey(const Key('discountedTotal')), findsNothing);
+    expect(textOf(tester, 'cartSubtotal'), '20,000 SYP');
+    expect(textOf(tester, 'cartPlatformDiscount'), '- 800 SYP');
+    expect(textOf(tester, 'cartTotal'), '19,200 SYP');
     expect(find.byKey(const Key('discountCodeAmount')), findsNothing);
   });
 
@@ -187,15 +202,16 @@ void main() {
 
     expect(find.text('Code ABCD2345 applied'), findsOneWidget);
     expect(find.text('Discount code (ABCD2345)'), findsOneWidget);
-    expect(find.text('- 800 SYP'), findsOneWidget);
-    expect(find.text('- 1,920 SYP'), findsOneWidget);
-    expect(find.text('17,280 SYP'), findsOneWidget);
+    expect(textOf(tester, 'cartPlatformDiscount'), '- 800 SYP');
+    expect(textOf(tester, 'discountCodeAmount'), '- 1,920 SYP');
+    expect(textOf(tester, 'cartTotal'), '17,280 SYP');
     expect(find.byKey(const Key('discountCodeInput')), findsNothing, reason: 'one code per order');
 
     await tester.tap(find.byKey(const Key('discountCodeRemove')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('discountCodeInput')), findsOneWidget);
-    expect(find.byKey(const Key('discountedTotal')), findsNothing);
+    expect(find.byKey(const Key('discountCodeAmount')), findsNothing);
+    expect(textOf(tester, 'cartTotal'), '19,200 SYP', reason: 'quoted again without the code');
   });
 
   testWidgets('a refused code is explained under the field, in Arabic', (tester) async {
@@ -248,8 +264,7 @@ void main() {
     await tester.tap(inDialog('Close'));
     await tester.pumpAndSettle();
     expect(cartCubit.state.discountCode, isNull);
-    expect(find.byKey(const Key('discountedTotal')), findsNothing, reason: 'the plain subtotal again');
-    expect(find.text('20,000 SYP'), findsNWidgets(2));
+    expect(textOf(tester, 'cartTotal'), '19,200 SYP', reason: 'the total without the code');
     expect(find.text('This discount code has been stopped.'), findsOneWidget, reason: 'and the reason under the field');
   });
 
@@ -262,7 +277,7 @@ void main() {
     ));
     previewAnswers
       ..add(_quote)
-      ..add(const DiscountCodeQuote(
+      ..add(const CartQuote(
         code: 'ABCD2345',
         type: 'percentage',
         value: 5,
@@ -272,6 +287,7 @@ void main() {
         preCodeSyp: 19200,
         discountSyp: 960,
         finalSyp: 18240,
+        usdToSyp: 1000,
       ));
     await pumpCart(tester);
     await applyCode(tester, 'ABCD2345');

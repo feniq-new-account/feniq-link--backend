@@ -305,20 +305,18 @@ const reorder = asyncHandler(async (req, res) => {
   res.json({ success: true, ...orderViewModel.toReorderResponse(preparation, rate?.usdToSyp ?? null) });
 });
 
-// POST /discount-codes/preview - the cart's "Apply" button. The same cart
-// payload an order takes (warehouseId, items, packages) plus the code; answers
-// with what the code would take off right now. Nothing is claimed or written:
-// the order itself claims the use, and re-checks the code (the revision in
-// this answer is what the cart sends back with it).
+// POST /discount-codes/preview - the cart's quote. The same cart payload an
+// order takes (warehouseId, items, packages), plus the discount code when one
+// is applied (`code` is optional: the app quotes every cart, so the pharmacist
+// always sees the real total). Nothing is claimed or written: the order itself
+// claims a code's use and re-checks it (the revision in this answer is what
+// the cart sends back with it).
 const previewDiscountCode = asyncHandler(async (req, res) => {
   const { warehouseId } = req.body;
   if (typeof warehouseId !== 'string' || !mongoose.Types.ObjectId.isValid(warehouseId)) {
     throw ApiError.badRequest('Invalid warehouse.', undefined, 'INVALID_WAREHOUSE');
   }
   const discountCode = parseDiscountCode(req.body.code);
-  if (!discountCode) {
-    throw ApiError.badRequest('This discount code is not valid.', undefined, 'DISCOUNT_CODE_INVALID');
-  }
   const items = validateItems(req.body.items);
   const packages = validatePackages(req.body.packages);
   const pharmacy = await loadPharmacyOrThrow(req.user._id);

@@ -1758,4 +1758,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorDiscountCodeEdited =>
       'The terms of this discount code changed.';
+
+  @override
+  String get cartQuoteUnavailable => 'Couldn\'t work out the total.';
 }

@@ -829,5 +829,6 @@
   "errorDiscountCodeNotForWarehouse": "هذا الكود لا يعمل على طلبات هذا المستودع.",
   "errorDiscountCodePendingApproval": "كود الخصم بانتظار موافقة الإدارة.",
   "errorDiscountCodeStopped": "تم إيقاف كود الخصم.",
-  "errorDiscountCodeEdited": "تغيّرت قيمة كود الخصم."
+  "errorDiscountCodeEdited": "تغيّرت قيمة كود الخصم.",
+  "cartQuoteUnavailable": "تعذّر حساب الإجمالي."
 }

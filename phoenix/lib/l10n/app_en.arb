@@ -964,5 +964,6 @@
   "errorDiscountCodeNotForWarehouse": "This code does not work on orders to this warehouse.",
   "errorDiscountCodePendingApproval": "This discount code is still waiting for approval.",
   "errorDiscountCodeStopped": "This discount code has been stopped.",
-  "errorDiscountCodeEdited": "The terms of this discount code changed."
+  "errorDiscountCodeEdited": "The terms of this discount code changed.",
+  "cartQuoteUnavailable": "Couldn't work out the total."
 }

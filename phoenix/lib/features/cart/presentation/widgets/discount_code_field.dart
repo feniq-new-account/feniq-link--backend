@@ -26,15 +26,22 @@ class DiscountCodeField extends StatefulWidget {
 class _DiscountCodeFieldState extends State<DiscountCodeField> {
   final TextEditingController _controller = TextEditingController();
 
+  // This field's own Apply is in the air - the button's spinner. The cart
+  // re-quoting after an edit also raises CartState.isQuoting, and that is the
+  // summary's business, not this button's.
+  bool _applying = false;
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
-  void _apply() {
+  Future<void> _apply() async {
     FocusScope.of(context).unfocus();
-    context.read<CartCubit>().applyDiscountCode(_controller.text);
+    setState(() => _applying = true);
+    await context.read<CartCubit>().applyDiscountCode(_controller.text);
+    if (mounted) setState(() => _applying = false);
   }
 
   @override
@@ -50,8 +57,7 @@ class _DiscountCodeFieldState extends State<DiscountCodeField> {
       },
       buildWhen: (previous, current) =>
           previous.discountCode != current.discountCode ||
-          previous.discountQuote != current.discountQuote ||
-          previous.isQuotingDiscountCode != current.isQuotingDiscountCode ||
+          previous.isQuoting != current.isQuoting ||
           previous.discountCodeErrorCode != current.discountCodeErrorCode,
       builder: (context, state) {
         final error = state.discountCodeErrorCode == null
@@ -72,12 +78,7 @@ class _DiscountCodeFieldState extends State<DiscountCodeField> {
             if (state.hasDiscountCode)
               _AppliedCode(
                 code: state.discountCode!,
-                // A failed re-quote leaves the code without an amount; retry
-                // is the way forward (the submit button waits for it).
-                canRetry: state.discountQuote == null && !state.isQuotingDiscountCode,
-                isBusy: state.isQuotingDiscountCode,
                 onRemove: context.read<CartCubit>().removeDiscountCode,
-                onRetry: context.read<CartCubit>().refreshDiscountQuote,
               )
             else
               Row(
@@ -108,13 +109,13 @@ class _DiscountCodeFieldState extends State<DiscountCodeField> {
                     height: 48,
                     child: FilledButton(
                       key: const Key('discountCodeApply'),
-                      onPressed: state.isQuotingDiscountCode ? null : _apply,
+                      onPressed: _applying ? null : _apply,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primaryOf(context),
                         foregroundColor: Colors.white,
                         shape: const RoundedRectangleBorder(borderRadius: AppRadius.medium),
                       ),
-                      child: state.isQuotingDiscountCode
+                      child: _applying
                           ? SizedBox(
                               width: AppSizes.iconSizeSmall,
                               height: AppSizes.iconSizeSmall,
@@ -143,20 +144,13 @@ class _DiscountCodeFieldState extends State<DiscountCodeField> {
   }
 }
 
+// The applied code, and the way to take it off. Its amount (and a retry when
+// the quote failed) is in the cart summary, with the other figures.
 class _AppliedCode extends StatelessWidget {
-  const _AppliedCode({
-    required this.code,
-    required this.canRetry,
-    required this.isBusy,
-    required this.onRemove,
-    required this.onRetry,
-  });
+  const _AppliedCode({required this.code, required this.onRemove});
 
   final String code;
-  final bool canRetry;
-  final bool isBusy;
   final VoidCallback onRemove;
-  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -181,23 +175,6 @@ class _AppliedCode extends StatelessWidget {
               style: context.textTheme.bodyMedium?.copyWith(fontWeight: AppTextTheme.semiBold),
             ),
           ),
-          if (isBusy)
-            SizedBox(
-              width: AppSizes.iconSizeSmall,
-              height: AppSizes.iconSizeSmall,
-              child: CircularProgressIndicator(
-                strokeWidth: 1.5,
-                color: AppColors.textSecondaryOf(context),
-                semanticsLabel: l10n.discountCodeUpdating,
-              ),
-            ),
-          if (canRetry)
-            IconButton(
-              key: const Key('discountCodeRetry'),
-              tooltip: l10n.retryButton,
-              icon: const Icon(Icons.refresh, size: 20),
-              onPressed: onRetry,
-            ),
           TextButton(
             key: const Key('discountCodeRemove'),
             onPressed: onRemove,

@@ -60,18 +60,21 @@ function toDiscountCodeResponse(codeDoc, refs = {}) {
   return { discountCode: serializeDiscountCode({ codeDoc, ...refs }) };
 }
 
-// The cart preview (POST /discount-codes/preview): what the code would take
-// off this cart right now, and the totals around it, so the app's summary
-// lines add up exactly. `revision` goes back with the order.
+// The cart quote (POST /discount-codes/preview): the totals the app's summary
+// shows, so its lines add up exactly - and, when a code was given, the code's
+// terms (`revision` goes back with the order). `discountCode` is null on a
+// cart quoted without one.
 function toPreviewResponse(quote) {
   return {
-    discountCode: {
-      code: quote.code,
-      type: quote.type,
-      value: quote.value,
-      revision: quote.revision,
-      fundedBy: quote.fundedBy,
-    },
+    discountCode: quote.code
+      ? {
+          code: quote.code,
+          type: quote.type,
+          value: quote.value,
+          revision: quote.revision,
+          fundedBy: quote.fundedBy,
+        }
+      : null,
     totals: {
       subtotalSyp: quote.subtotalSyp,
       platformDiscountSyp: quote.platformDiscountSyp,

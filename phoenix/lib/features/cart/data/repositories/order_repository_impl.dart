@@ -5,7 +5,7 @@ import 'package:feniq/core/models/paginated_result.dart';
 import 'package:feniq/core/network/api_client.dart';
 import 'package:feniq/core/network/endpoints.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
-import 'package:feniq/features/cart/data/models/discount_code_quote.dart';
+import 'package:feniq/features/cart/data/models/cart_quote.dart';
 import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/cart/data/models/reorder_preparation.dart';
 
@@ -54,21 +54,21 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<DiscountCodeQuote> previewDiscountCode({
+  Future<CartQuote> quoteCart({
     required String warehouseId,
     required List<CartItem> items,
-    required String code,
+    String? code,
   }) async {
     try {
       final response = await _apiClient.dio.post(
-        Endpoints.discountCodePreview,
+        Endpoints.cartQuote,
         data: {
           'warehouseId': warehouseId,
-          'code': code,
+          if (code != null) 'code': code,
           ..._cartLines(items),
         },
       );
-      return DiscountCodeQuote.fromJson(response.data as Map<String, dynamic>);
+      return CartQuote.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ServerFailure.fromDioError(e);
     }
@@ -78,8 +78,8 @@ class OrderRepositoryImpl implements OrderRepository {
   // them as two. A package crosses the wire as nothing but its id and a copy
   // count - no price, no contents - and the server builds the real order lines
   // from its own record of the package (order.service.js). One shape for the
-  // order and the discount-code preview, so the preview prices the very cart
-  // the order would send.
+  // order and the cart quote, so the quote prices the very cart the order
+  // would send.
   Map<String, dynamic> _cartLines(List<CartItem> items) {
     final productLines = items.where((item) => !item.isPackage);
     final packageLines = items.where((item) => item.isPackage);

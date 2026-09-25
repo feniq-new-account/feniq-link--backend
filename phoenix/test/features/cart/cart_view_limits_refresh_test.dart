@@ -20,6 +20,8 @@ import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_r
 import 'package:feniq/generated/app_localizations.dart';
 import 'package:feniq/routes/route_names.dart';
 
+import '../../helpers/cart_quote_stub.dart';
+
 class _MockOrderRepository extends Mock implements OrderRepository {}
 
 class _MockWarehouseRepository extends Mock implements WarehouseRepository {}
@@ -87,6 +89,7 @@ void main() {
     });
 
     final orderRepo = _MockOrderRepository();
+    stubCartQuote(orderRepo, usdToSyp: () => 1000);
     when(
       () => orderRepo.submitOrder(
         warehouseId: any(named: 'warehouseId'),

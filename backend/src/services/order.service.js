@@ -1065,19 +1065,21 @@ async function createOrder({
   return order;
 }
 
-// The cart's discount-code preview (POST /discount-codes/preview): what the
-// code would take off this cart right now, and the totals around it. Priced by
-// the very helpers createOrder charges with (loadPricingContext /
-// priceOrderLines / rollUpOrderMoney), so the preview and the order agree to
-// the lira. Read-only: it claims no use and writes nothing.
+// The cart's quote (POST /discount-codes/preview): what this cart costs right
+// now - subtotal, platform discount, the discount code's amount when one is
+// given, and the total. The app shows these figures on every cart, with or
+// without a code, so the pharmacist always sees what the order will actually
+// cost. Priced by the very helpers createOrder charges with
+// (loadPricingContext / priceOrderLines / rollUpOrderMoney), so the quote and
+// the order agree to the lira. Read-only: it claims no use and writes nothing.
 //
-// Strict about the code - an unusable one is refused with its reason
+// Strict about a code - an unusable one is refused with its reason
 // (DISCOUNT_CODE_EXPIRED, ...). Lenient about the cart: a product or package
 // that could no longer be ordered is left out of the quote rather than
 // refusing it, because checkout refuses those with their own proper errors
 // and the pharmacist should still be able to apply a code meanwhile. No rate,
 // price or bonus comparison either - that is checkout's job too.
-async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, discountCode }) {
+async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, discountCode = null }) {
   const plainItems = Array.isArray(items) ? items : [];
   const packageRequests = normalizePackageRequests({ packages });
   if (plainItems.length === 0 && packageRequests.length === 0) {
@@ -1090,13 +1092,12 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
   }
 
   const now = new Date();
-  const { codeDoc, reason } = await discountCodes.evaluate({
-    code: discountCode,
-    pharmacyId,
-    warehouseId,
-    now,
-  });
-  if (reason) throw discountCodes.reasonError(reason);
+  let codeDoc = null;
+  if (discountCode) {
+    const evaluation = await discountCodes.evaluate({ code: discountCode, pharmacyId, warehouseId, now });
+    if (evaluation.reason) throw discountCodes.reasonError(evaluation.reason);
+    codeDoc = evaluation.codeDoc;
+  }
 
   const rate = await getRate();
   if (!rate) {
@@ -1148,15 +1149,16 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse?.discountRate ?? 0,
     commissionRate: warehouse?.commissionRate ?? 0,
-    discountCodeTerms: discountCodes.termsOf(codeDoc),
+    discountCodeTerms: codeDoc ? discountCodes.termsOf(codeDoc) : null,
   });
 
   return {
-    code: codeDoc.code,
-    type: codeDoc.type,
-    value: codeDoc.value,
-    revision: codeDoc.revision,
-    fundedBy: discountCodes.fundedByFor(codeDoc),
+    // All null on a cart quoted without a code.
+    code: codeDoc?.code ?? null,
+    type: codeDoc?.type ?? null,
+    value: codeDoc?.value ?? null,
+    revision: codeDoc?.revision ?? null,
+    fundedBy: codeDoc ? discountCodes.fundedByFor(codeDoc) : null,
     // What the cart itself shows as its subtotal: packages at their package
     // price, every line after its offer and manufacturer discount.
     subtotalSyp: totalPrice - advertisementDiscountAmount,
