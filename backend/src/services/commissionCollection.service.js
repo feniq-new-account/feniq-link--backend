@@ -3,6 +3,7 @@ const { ApiError } = require('../utils/ApiError');
 const CommissionCollection = require('../models/commissionCollection.model');
 const Warehouse = require('../models/warehouse.model');
 const { getSettlementForWarehouse, resolvePeriod } = require('./settlement.service');
+const { parseRangeStart, parseRangeEnd } = require('../utils/businessTime');
 const { METHODS } = require('./payment.service');
 const financialAudit = require('./financialAudit.service');
 
@@ -55,17 +56,18 @@ function validateMethod(method) {
   return method;
 }
 
-function parseDate(value, field) {
-  const date = value instanceof Date ? value : new Date(value);
-  if (!value || Number.isNaN(date.getTime())) {
-    throw ApiError.badRequest(`Invalid ${field}.`, undefined, 'INVALID_COLLECTION_PERIOD');
-  }
-  return date;
+function invalidPeriod(field) {
+  return ApiError.badRequest(`Invalid ${field}.`, undefined, 'INVALID_COLLECTION_PERIOD');
 }
 
+// The window a collection covers, read like every report range: a bare date is
+// a whole local business day (utils/businessTime.js); a timestamp - what the
+// panel sends back from the period it was shown - is kept as it is.
 function validatePeriod(periodFrom, periodTo) {
-  const from = parseDate(periodFrom, 'period start');
-  const to = parseDate(periodTo, 'period end');
+  const from = parseRangeStart(periodFrom);
+  if (!from) throw invalidPeriod('period start');
+  const to = parseRangeEnd(periodTo);
+  if (!to) throw invalidPeriod('period end');
   if (to < from) {
     throw ApiError.badRequest(
       'The period end cannot be before its start.',

@@ -252,6 +252,13 @@ paidOutSyp           = Σ recorded payouts (to_warehouse) whose period OVERLAPS 
 outstandingSyp       = commissionOwedSyp − compensationOwedSyp − alreadyCollectedSyp + paidOutSyp
 ```
 
+**Report ranges are business days.** Every report that takes `from`/`to`
+(settlement, commission overview and detail, account statements, a
+collection's period) reads a bare date as that whole day in **Asia/Damascus**
+(`utils/businessTime.js`): `to=2026-09-25` runs to 23:59:59.999 local, so a
+range ending today counts what was delivered today, and "this month" starts at
+local midnight on the 1st. A full timestamp is taken as the instant it names.
+
 `outstandingSyp` is **not clamped**: a negative means the platform owes the
 warehouse - its discount-code compensation exceeds its commission, it has
 over-paid, or it paid for a wider window than the one being viewed. Hiding

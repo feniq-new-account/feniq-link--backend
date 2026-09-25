@@ -3,6 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { formatSyp } from '../utils/currency';
 import { displayName } from '../utils/displayName';
+import {
+  businessDateInputValue,
+  formatBusinessDate,
+  formatBusinessTime,
+  startOfBusinessMonthInputValue,
+} from '../utils/businessDate';
 import { PAYMENT_METHODS } from '../utils/payments';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
@@ -27,16 +33,6 @@ const COLLECTIONS_PAGE_SIZE = 50;
 // The date range is owned by this page and applies to the whole table AND to
 // the detail view beneath it, so a warehouse's row and its breakdown always
 // describe the same window.
-
-function toDateInputValue(value) {
-  if (!value) return '';
-  return new Date(value).toISOString().slice(0, 10);
-}
-
-function startOfThisMonth() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1);
-}
 
 // Outstanding is the one figure that can legitimately be negative: the
 // platform owes the warehouse - its discount-code compensation is more than
@@ -136,8 +132,8 @@ function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) 
       <h2 className="adm-detail-card-title">{t('commission.recordCollection')}</h2>
       <p className="adm-detail-card-hint">
         {t('commission.recordCollectionHint', {
-          from: new Date(period.from).toLocaleDateString(),
-          to: new Date(period.to).toLocaleDateString(),
+          from: formatBusinessDate(period.from),
+          to: formatBusinessDate(period.to),
         })}
       </p>
       <form onSubmit={handleSubmit} className="product-form">
@@ -303,14 +299,12 @@ function CollectionHistory({ collections, onReverse }) {
             return (
               <tr key={collection.id}>
                 <td>
-                  <div>{recordedAt.toLocaleDateString()}</div>
-                  <div className="adm-table-sub">
-                    {recordedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
+                  <div>{formatBusinessDate(recordedAt)}</div>
+                  <div className="adm-table-sub">{formatBusinessTime(recordedAt)}</div>
                 </td>
                 <td className="adm-num">
-                  {new Date(collection.periodFrom).toLocaleDateString()} &ndash;{' '}
-                  {new Date(collection.periodTo).toLocaleDateString()}
+                  {formatBusinessDate(collection.periodFrom)} &ndash;{' '}
+                  {formatBusinessDate(collection.periodTo)}
                 </td>
                 <td className="adm-num">
                   <span
@@ -511,7 +505,7 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
                       </td>
                       <td className="adm-num">
                         {order.deliveredAt
-                          ? new Date(order.deliveredAt).toLocaleDateString()
+                          ? formatBusinessDate(order.deliveredAt)
                           : '—'}
                       </td>
                       <td className="adm-num">{formatSyp(order.salesSyp)}</td>
@@ -579,8 +573,8 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
 
 export function AdminCommissionPage() {
   const { t } = useTranslation();
-  const [from, setFrom] = useState(toDateInputValue(startOfThisMonth()));
-  const [to, setTo] = useState(toDateInputValue(new Date()));
+  const [from, setFrom] = useState(startOfBusinessMonthInputValue());
+  const [to, setTo] = useState(businessDateInputValue());
   const [overview, setOverview] = useState(null);
   const [selectedWarehouseId, setSelectedWarehouseId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);

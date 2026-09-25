@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Order = require('../models/order.model');
 const LedgerEntry = require('../models/ledgerEntry.model');
 const { platformCompensationOf } = require('./discountCode.service');
+const { parseRangeStart, parseRangeEnd, startOfBusinessMonth } = require('../utils/businessTime');
 
 // Money-Flow V2. What a warehouse owes the platform, and what it actually
 // nets, for a period.
@@ -51,15 +52,16 @@ function toObjectId(value) {
 }
 
 // Defaults to the current calendar month, which is the period a warehouse
-// actually settles on.
+// actually settles on. Read in the business time zone (utils/businessTime.js):
+// a bare "to" date covers that whole local day, so a range ending today counts
+// what was delivered today, and "this month" starts at local midnight on the
+// 1st - not at whatever midnight the server's own zone happens to have.
 function resolvePeriod({ from, to } = {}) {
   const now = new Date();
-  const start = from
-    ? new Date(from)
-    : new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-  const end = to ? new Date(to) : now;
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: now, invalid: true };
+  const start = from ? parseRangeStart(from) : startOfBusinessMonth(now);
+  const end = to ? parseRangeEnd(to) : now;
+  if (!start || !end) {
+    return { from: startOfBusinessMonth(now), to: now, invalid: true };
   }
   return { from: start, to: end, invalid: false };
 }

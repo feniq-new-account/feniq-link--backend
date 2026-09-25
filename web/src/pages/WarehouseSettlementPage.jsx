@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { formatSyp } from '../utils/currency';
+import {
+  businessDateInputValue,
+  formatBusinessDate,
+  startOfBusinessMonthInputValue,
+} from '../utils/businessDate';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 
 // Money-Flow V2. What the warehouse sold in a period, what came back, what the
@@ -16,16 +21,6 @@ import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 // charged (not what was collected in cash - that is the account balance's job),
 // COMMISSION is what the platform is owed, NET is what the warehouse keeps.
 
-function toDateInputValue(value) {
-  if (!value) return '';
-  return new Date(value).toISOString().slice(0, 10);
-}
-
-function startOfThisMonth() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1);
-}
-
 function SummaryTile({ label, value, hint, tone }) {
   return (
     <div className={`wh-settlement-tile${tone ? ` is-${tone}` : ''}`}>
@@ -38,8 +33,8 @@ function SummaryTile({ label, value, hint, tone }) {
 
 export function WarehouseSettlementPage() {
   const { t } = useTranslation();
-  const [from, setFrom] = useState(toDateInputValue(startOfThisMonth()));
-  const [to, setTo] = useState(toDateInputValue(new Date()));
+  const [from, setFrom] = useState(startOfBusinessMonthInputValue());
+  const [to, setTo] = useState(businessDateInputValue());
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -165,7 +160,7 @@ export function WarehouseSettlementPage() {
                         </div>
                       </td>
                       <td className="wh-num">
-                        {row.deliveredAt ? new Date(row.deliveredAt).toLocaleDateString() : '—'}
+                        {row.deliveredAt ? formatBusinessDate(row.deliveredAt) : '—'}
                       </td>
                       <td className="wh-num">{formatSyp(row.salesSyp)}</td>
                       <td className="wh-num">
