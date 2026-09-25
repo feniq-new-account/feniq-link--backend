@@ -30,6 +30,9 @@ const ACTIONS = [
   // Not a ledger event - see commissionCollection.model.js.
   'commission.collected',
   'commission.collection_reversed',
+  // The platform paid a warehouse (discount-code compensation) - a
+  // CommissionCollection with direction 'to_warehouse'.
+  'commission.payout_recorded',
   'exchangeRate.changed',
   'account.opened',
   'migration.backfill',

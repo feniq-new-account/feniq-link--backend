@@ -2,6 +2,7 @@ const Order = require('../models/order.model');
 const OrderItem = require('../models/orderItem.model');
 const LedgerEntry = require('../models/ledgerEntry.model');
 const { ApiError } = require('../utils/ApiError');
+const { platformCompensationOf } = require('./discountCode.service');
 
 // Money-Flow V2. What an approved return is worth.
 //
@@ -21,6 +22,20 @@ const { ApiError } = require('../utils/ApiError');
 // already baked into discountPrice. Commission is NOT deducted: the pharmacy
 // is credited what it was charged, and the warehouse's commission clawback is
 // a separate concern in the settlement report.
+//
+// A discount code is the third order-level reduction, next to the platform
+// and package discounts: a partial return credits the pharmacy only its NET
+// share of the returned goods - what it actually paid for them after the code.
+// Crediting the gross would let a pharmacy buy big with a large fixed code,
+// return most of it, and be credited more than it ever paid. The code's use is
+// NOT handed back on a partial return (the code was used on the goods kept);
+// a full return hands it back (warehouseReturn.service.js).
+//
+// On an ADMIN code the platform owes the warehouse the code discount
+// (settlement.service.js). A return undoes the same share of that
+// compensation - `compensationClawbackSyp`, frozen here with the rest of the
+// working so the settlement report never recomputes it - and a full return
+// undoes all of it.
 
 function round2(amount) {
   return Math.round(amount * 100) / 100;
@@ -30,19 +45,37 @@ function round2(amount) {
 // only one return per order, so this is always 0 - but the formula is written
 // to stay correct if that rule is ever relaxed, and it costs one indexed read.
 async function priorCreditsForOrder(orderId, session = null) {
+  const { creditsSyp } = await priorReturnsForOrder(orderId, session);
+  return creditsSyp;
+}
+
+// The credits AND the compensation clawbacks already frozen against an order.
+async function priorReturnsForOrder(orderId, session = null) {
   const query = LedgerEntry.find({ kind: 'return_credit', 'metadata.orderId': orderId }).select(
-    'amountSyp'
+    'amountSyp metadata.compensationClawbackSyp'
   );
   if (session) query.session(session);
   const entries = await query.lean();
-  return entries.reduce((sum, entry) => sum + entry.amountSyp, 0);
+  return {
+    creditsSyp: entries.reduce((sum, entry) => sum + entry.amountSyp, 0),
+    compensationClawbackSyp: entries.reduce(
+      (sum, entry) => sum + (entry.metadata?.compensationClawbackSyp ?? 0),
+      0
+    ),
+  };
 }
 
 // The valuation itself, as a pure function of frozen values - no database, no
 // live prices, no current exchange rate. Exported so it can be unit-tested
 // directly and so the "preview" endpoint and the approval path can never
 // disagree about the number.
-function computeCredit({ order, orderItems, returnItems, priorCreditsSyp = 0 }) {
+function computeCredit({
+  order,
+  orderItems,
+  returnItems,
+  priorCreditsSyp = 0,
+  priorCompensationClawbackSyp = 0,
+}) {
   const itemById = new Map(orderItems.map((item) => [String(item._id), item]));
 
   let returnedGrossSyp = 0;
@@ -74,11 +107,14 @@ function computeCredit({ order, orderItems, returnItems, priorCreditsSyp = 0 }) 
   }
 
   const orderGrossSyp = order.totalPrice;
-  const orderReductionsSyp = (order.discountAmount ?? 0) + (order.advertisementDiscountAmount ?? 0);
+  const discountCodeSyp = order.discountCode?.discountSyp ?? 0;
+  const orderReductionsSyp =
+    (order.discountAmount ?? 0) + (order.advertisementDiscountAmount ?? 0) + discountCodeSyp;
 
   // The share of the order-level reductions (platform discount + advertisement
-  // package discount) that belongs to the returned slice. Guarded against a
-  // zero subtotal, which can only happen on a legacy zero-priced order.
+  // package discount + discount code) that belongs to the returned slice.
+  // Guarded against a zero subtotal, which can only happen on a legacy
+  // zero-priced order.
   const reductionShareSyp =
     orderGrossSyp > 0
       ? Math.round((orderReductionsSyp * returnedGrossSyp) / orderGrossSyp)
@@ -103,6 +139,20 @@ function computeCredit({ order, orderItems, returnItems, priorCreditsSyp = 0 }) 
     ? Math.max(0, order.finalPrice - priorCreditsSyp)
     : Math.max(0, rawCreditSyp);
 
+  // An admin code's compensation, undone in the same proportion as the goods
+  // coming back - pinned to whatever is left of it on a full return, the same
+  // way the credit is pinned to finalPrice.
+  const platformCompensationSyp = platformCompensationOf(order);
+  const remainingCompensationSyp = Math.max(0, platformCompensationSyp - priorCompensationClawbackSyp);
+  const compensationClawbackSyp = isFinalReturn
+    ? remainingCompensationSyp
+    : orderGrossSyp > 0
+      ? Math.min(
+          remainingCompensationSyp,
+          Math.round((platformCompensationSyp * returnedGrossSyp) / orderGrossSyp)
+        )
+      : 0;
+
   // Converted through the ORDER's own frozen rate, never today's - the credit
   // undoes a specific historical charge, so it has to speak that charge's
   // currency terms.
@@ -125,6 +175,10 @@ function computeCredit({ order, orderItems, returnItems, priorCreditsSyp = 0 }) 
       rawCreditSyp,
       priorCreditsSyp,
       isFinalReturn,
+      discountCodeSyp,
+      platformCompensationSyp,
+      compensationClawbackSyp,
+      priorCompensationClawbackSyp,
       orderFinalPriceSyp: order.finalPrice,
       fxRate: rate,
       lines,
@@ -148,14 +202,15 @@ async function valueReturn(returnRequest, session = null) {
     throw ApiError.notFound('The original order was not found.', 'ORDER_NOT_FOUND');
   }
 
-  const priorCreditsSyp = await priorCreditsForOrder(order._id, session);
+  const prior = await priorReturnsForOrder(order._id, session);
 
   return computeCredit({
     order,
     orderItems,
     returnItems: returnRequest.items,
-    priorCreditsSyp,
+    priorCreditsSyp: prior.creditsSyp,
+    priorCompensationClawbackSyp: prior.compensationClawbackSyp,
   });
 }
 
-module.exports = { computeCredit, valueReturn, priorCreditsForOrder };
+module.exports = { computeCredit, valueReturn, priorCreditsForOrder, priorReturnsForOrder };

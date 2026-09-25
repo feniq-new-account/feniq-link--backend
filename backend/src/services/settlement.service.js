@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Order = require('../models/order.model');
 const LedgerEntry = require('../models/ledgerEntry.model');
+const { platformCompensationOf } = require('./discountCode.service');
 
 // Money-Flow V2. What a warehouse owes the platform, and what it actually
 // nets, for a period.
@@ -22,6 +23,22 @@ const LedgerEntry = require('../models/ledgerEntry.model');
 //   commissionClawback = commission x (credit / finalPrice)
 //
 // so a warehouse is not charged commission on money it never collected.
+//
+// Discount codes (discountCode.service.js). An ADMIN code is paid by the
+// platform, so on such an order the platform owes the warehouse the whole code
+// discount - frozen on the order as discountCode.platformCompensationSyp. It is
+// part of what the warehouse earns, alongside what the pharmacy was charged:
+//
+//   compensation         = order.discountCode.platformCompensationSyp (0 otherwise)
+//   compensationClawback = the returned slice's share of it, frozen on the
+//                          return's credit (returnCredit.service.js)
+//   net                  = sales - credits + compensation - clawback - commission
+//
+// and the commission clawback is taken on the share of that whole revenue a
+// return undoes - identical to the rule above when there is no admin code.
+// Like commission, the compensation accrues when the order is DELIVERED (a
+// cancelled order never gets here) and is never posted to the pharmacy
+// ledger; commissionCollection.service.js nets it against the commission owed.
 
 function round(amount) {
   return Math.round(amount);
@@ -48,13 +65,24 @@ function resolvePeriod({ from, to } = {}) {
 }
 
 // The commission attributable to a credited return: the same proportion of the
-// order's frozen commission as the credit is of the order's final price.
+// order's frozen commission as the return undoes of what the warehouse earned
+// on it - the pharmacy's credit plus the platform compensation clawed back for
+// an admin code. With no admin code that is simply credit / finalPrice.
 // Rounded once, and clamped so a full credit can never claw back more than was
-// charged in the first place.
-function commissionClawbackFor(order, creditSyp) {
-  if (!order || !order.finalPrice || !order.commissionAmount) return 0;
-  const share = Math.min(1, creditSyp / order.finalPrice);
+// charged in the first place. (Also right on an order a code brought to 0: the
+// warehouse still earned the compensation, and a return still undoes it.)
+function commissionClawbackFor(order, creditSyp, compensationClawbackSyp = 0) {
+  if (!order || !order.commissionAmount) return 0;
+  const revenueSyp = (order.finalPrice ?? 0) + platformCompensationOf(order);
+  if (!revenueSyp) return 0;
+  const share = Math.min(1, (creditSyp + compensationClawbackSyp) / revenueSyp);
   return Math.min(order.commissionAmount, round(order.commissionAmount * share));
+}
+
+// The compensation clawed back on an order: what its return credits froze for
+// it, never more than the order's compensation.
+function compensationClawbackFor(order, frozenClawbackSyp) {
+  return Math.min(platformCompensationOf(order), Math.max(0, round(frozenClawbackSyp)));
 }
 
 async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
@@ -70,7 +98,7 @@ async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
     status: 'delivered',
     deliveredAt: { $gte: period.from, $lte: period.to },
   })
-    .select('orderNumber invoiceNumber deliveredAt totalPrice discountAmount advertisementDiscountAmount finalPrice commissionAmount pharmacyId')
+    .select('orderNumber invoiceNumber deliveredAt totalPrice discountAmount advertisementDiscountAmount discountCode finalPrice commissionAmount pharmacyId')
     .sort({ deliveredAt: 1 })
     .lean();
 
@@ -90,26 +118,39 @@ async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
     : [];
 
   const creditByOrderId = new Map();
+  const compensationClawbackByOrderId = new Map();
   for (const credit of credits) {
     const key = String(credit.metadata.orderId);
     creditByOrderId.set(key, (creditByOrderId.get(key) ?? 0) + credit.amountSyp);
+    compensationClawbackByOrderId.set(
+      key,
+      (compensationClawbackByOrderId.get(key) ?? 0) + (credit.metadata.compensationClawbackSyp ?? 0)
+    );
   }
 
   let grossSalesSyp = 0;
   let grossCommissionSyp = 0;
   let creditedSalesSyp = 0;
   let commissionClawbackSyp = 0;
+  let grossCompensationSyp = 0;
+  let compensationClawbackSyp = 0;
 
   const rows = orders.map((order) => {
-    const creditSyp = creditByOrderId.get(String(order._id)) ?? 0;
-    const clawbackSyp = commissionClawbackFor(order, creditSyp);
+    const key = String(order._id);
+    const creditSyp = creditByOrderId.get(key) ?? 0;
+    const compensationSyp = platformCompensationOf(order);
+    const compClawbackSyp = compensationClawbackFor(order, compensationClawbackByOrderId.get(key) ?? 0);
+    const clawbackSyp = commissionClawbackFor(order, creditSyp, compClawbackSyp);
     const netSalesSyp = order.finalPrice - creditSyp;
     const netCommissionSyp = order.commissionAmount - clawbackSyp;
+    const netCompensationSyp = compensationSyp - compClawbackSyp;
 
     grossSalesSyp += order.finalPrice;
     grossCommissionSyp += order.commissionAmount;
     creditedSalesSyp += creditSyp;
     commissionClawbackSyp += clawbackSyp;
+    grossCompensationSyp += compensationSyp;
+    compensationClawbackSyp += compClawbackSyp;
 
     return {
       orderId: order._id,
@@ -121,19 +162,27 @@ async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
       subtotalSyp: order.totalPrice,
       platformDiscountSyp: order.discountAmount,
       advertisementDiscountSyp: order.advertisementDiscountAmount ?? 0,
+      discountCode: order.discountCode?.code ?? null,
+      discountCodeSyp: order.discountCode?.discountSyp ?? 0,
+      discountCodeFundedBy: order.discountCode?.fundedBy ?? null,
       salesSyp: order.finalPrice,
       commissionSyp: order.commissionAmount,
       creditedSyp: creditSyp,
       commissionClawbackSyp: clawbackSyp,
+      // What the platform owes the warehouse for an admin code on this order.
+      platformCompensationSyp: compensationSyp,
+      compensationClawbackSyp: compClawbackSyp,
+      netCompensationSyp,
       netSalesSyp,
       netCommissionSyp,
       // What the warehouse keeps on this order.
-      warehouseNetSyp: netSalesSyp - netCommissionSyp,
+      warehouseNetSyp: netSalesSyp + netCompensationSyp - netCommissionSyp,
     };
   });
 
   const netSalesSyp = grossSalesSyp - creditedSalesSyp;
   const netCommissionSyp = grossCommissionSyp - commissionClawbackSyp;
+  const netCompensationSyp = grossCompensationSyp - compensationClawbackSyp;
 
   return {
     period: { from: period.from, to: period.to },
@@ -148,12 +197,22 @@ async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
       grossCommissionSyp,
       commissionClawbackSyp,
       netCommissionSyp,
+      // Compensation: what the platform owes the warehouse for admin discount
+      // codes, before and after returns clawed part of it back.
+      grossCompensationSyp,
+      compensationClawbackSyp,
+      netCompensationSyp,
       // What the warehouse keeps. Deliberately the last figure, because it is
       // the one a warehouse actually plans around.
-      warehouseNetSyp: netSalesSyp - netCommissionSyp,
+      warehouseNetSyp: netSalesSyp + netCompensationSyp - netCommissionSyp,
     },
     rows,
   };
 }
 
-module.exports = { getSettlementForWarehouse, commissionClawbackFor, resolvePeriod };
+module.exports = {
+  getSettlementForWarehouse,
+  commissionClawbackFor,
+  compensationClawbackFor,
+  resolvePeriod,
+};
