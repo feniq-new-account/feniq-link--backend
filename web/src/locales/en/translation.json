@@ -709,8 +709,7 @@
       "replaceImage": "Replace image",
       "clearImage": "Remove image",
       "linkExisting": "or link to an existing company",
-      "nameEnLabel": "English name",
-      "oneNameRequired": "Enter an Arabic or an English name.",
+      "nameEnLabel": "English name (for search)",
       "unknownCategoriesTitle": "Unknown category",
       "unknownCategoriesHint": "These rows were imported without a category - the category in the file matches none. Categories are never created by an import; set it on the medicine, or add the category and import again."
     },
@@ -859,7 +858,6 @@
     "duplicated": "Each field can be chosen for one column only.",
     "field": {
       "name": "Medicine name",
-      "nameEn": "English name",
       "price": "Price",
       "manufacturer": "Company",
       "category": "Category",
@@ -940,7 +938,8 @@
     "manufacturerRequired": "Pick an existing company, or tick \"create the company\".",
     "alreadyExists": "This medicine already exists - merge the request into it instead.",
     "mergeInto": "Merge into",
-    "reason": "Reason"
+    "reason": "Reason",
+    "arabicNameRequired": "Enter the Arabic name of the medicine to approve it."
   },
   "duplicates": {
     "title": "Duplicate review",

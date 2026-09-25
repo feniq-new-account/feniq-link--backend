@@ -121,7 +121,7 @@ void main() {
   testWidgets('the submit button is enabled with an item picked and zero photos', (tester) async {
     await openSheet(tester);
 
-    await tester.tap(find.text('Medicine a'));
+    await tester.tap(find.text('دواء a'));
     await tester.pumpAndSettle();
 
     final button = tester.widget<PrimaryButton>(
@@ -134,7 +134,7 @@ void main() {
   testWidgets('tapping submit with no photo attached actually creates the return', (tester) async {
     await openSheet(tester);
 
-    await tester.tap(find.text('Medicine a'));
+    await tester.tap(find.text('دواء a'));
     await tester.pumpAndSettle();
 
     // The sheet scrolls; the button sits below the fold in the test viewport.

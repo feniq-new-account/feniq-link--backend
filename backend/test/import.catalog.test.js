@@ -41,9 +41,7 @@ async function manufacturer() {
   return nameAr;
 }
 
-// A name is stored under the language it is written in (utils/nameLanguage.js).
-const itemNamed = (name, manufacturerAr) =>
-  ProductCatalog.findOne({ $or: [{ nameAr: name }, { nameEn: name }], manufacturerAr }).lean();
+const itemNamed = (nameAr, manufacturerAr) => ProductCatalog.findOne({ nameAr, manufacturerAr }).lean();
 
 test.before(async () => {
   await startMemoryMongo({ dbName: 'feniq-import-catalog-test' });
@@ -84,10 +82,11 @@ test('English header synonyms and the currency written in the price cell; no cur
   assert.strictEqual(report.errors.length, 1);
   assert.strictEqual(report.errors[0].code, 'MISSING_CURRENCY');
   assert.strictEqual((await itemNamed('Voltaren Catalog EN', m)).priceUsd, 120);
-  // A single name column: an English name is filed as nameEn, with no Arabic name.
+  // The one name column is the Arabic name, whatever it is written in; the
+  // import never sets the English name (a helper only an admin sets).
   const voltaren = await itemNamed('Voltaren Catalog EN', m);
-  assert.strictEqual(voltaren.nameEn, 'Voltaren Catalog EN');
-  assert.strictEqual(voltaren.nameAr, null);
+  assert.strictEqual(voltaren.nameAr, 'Voltaren Catalog EN');
+  assert.strictEqual(voltaren.nameEn, null);
   assert.strictEqual(await itemNamed('Amoxil Catalog EN', m), null);
 });
 

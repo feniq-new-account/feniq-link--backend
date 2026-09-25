@@ -6,13 +6,13 @@ import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { SearchableSelect } from '../components/SearchableSelect';
 import { usePaginatedData } from '../hooks/usePaginatedData';
-import { localizedName } from '../utils/displayName';
 
 const PAGE_SIZE = 30;
 
 // Section: edits the fields updateCatalogItem accepts (nameAr/nameEn/unitAr/
-// categoryId/isActive) - see productCatalog.service.js. A medicine needs one
-// name, Arabic or English; either can be cleared while the other remains. The
+// categoryId/isActive) - see productCatalog.service.js. The Arabic name is the
+// medicine's name (required, the one shown); the English name is optional,
+// never shown - search and the warehouse import also match on it. The
 // isActive toggle stays its own row button (mirrors the mockup's separate
 // "toggle" action), so it's left out of this form.
 function EditCatalogItemModal({ item, categories, onClose, onSaved }) {
@@ -28,13 +28,13 @@ function EditCatalogItemModal({ item, categories, onClose, onSaved }) {
     event.preventDefault();
     setError(null);
 
-    if (!nameAr.trim() && !nameEn.trim()) {
-      setError(t('admin.catalog.oneNameRequired'));
+    if (!nameAr.trim()) {
+      setError(t('common.requiredFields'));
       return;
     }
 
     const changes = {
-      nameAr: nameAr.trim() || null,
+      nameAr: nameAr.trim(),
       nameEn: nameEn.trim() || null,
       unitAr: unitAr.trim() || null,
       categoryId: categoryId || null,
@@ -54,8 +54,8 @@ function EditCatalogItemModal({ item, categories, onClose, onSaved }) {
         const confirmed = window.confirm(
           t('admin.catalog.confirmRename', {
             count,
-            oldName: localizedName(err.details?.currentNameEn ?? item.nameEn, err.details?.currentNameAr ?? item.nameAr),
-            newName: localizedName(err.details?.nextNameEn ?? changes.nameEn, err.details?.nextNameAr ?? changes.nameAr),
+            oldName: err.details?.currentNameAr ?? item.nameAr,
+            newName: err.details?.nextNameAr ?? changes.nameAr,
           })
         );
         if (!confirmed) {
@@ -84,10 +84,10 @@ function EditCatalogItemModal({ item, categories, onClose, onSaved }) {
       <div className="modal" onClick={(event) => event.stopPropagation()}>
         <h2>{t('admin.catalog.editTitle')}</h2>
         <form onSubmit={handleSubmit} className="product-form">
-          <p className="hint">{localizedName(item.manufacturerEn, item.manufacturerAr)}</p>
+          <p className="hint">{item.manufacturerAr}</p>
           <label>
             {t('admin.catalog.nameArLabel')}
-            <input value={nameAr} onChange={(e) => setNameAr(e.target.value)} dir="rtl" />
+            <input value={nameAr} onChange={(e) => setNameAr(e.target.value)} dir="rtl" required />
           </label>
           <label>
             {t('admin.catalog.nameEnLabel')}
@@ -260,7 +260,7 @@ function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturer
             {withdrawn.map((w) => (
               <div key={w.row} className="adm-import-error-row">
                 <span className="adm-import-error-row-num">{w.row}</span>
-                {localizedName(w.nameEn, w.nameAr)}
+                {w.nameAr}
               </div>
             ))}
           </div>
@@ -581,9 +581,9 @@ export function AdminCatalogPage() {
                       {item.imageUrl && (
                         <img src={item.imageUrl} alt="" width="32" height="32" style={{ objectFit: 'contain', marginInlineEnd: 8 }} />
                       )}
-                      {localizedName(item.nameEn, item.nameAr)}
+                      {item.nameAr}
                     </td>
-                    <td>{localizedName(item.manufacturerEn, item.manufacturerAr)}</td>
+                    <td>{item.manufacturerAr}</td>
                     <td>
                       <span
                         className={`availability-badge ${item.isActive ? 'availability-available' : 'availability-paused'}`}

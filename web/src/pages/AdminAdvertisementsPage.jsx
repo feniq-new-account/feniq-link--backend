@@ -8,7 +8,7 @@ import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { formatMoneyFromUsd } from '../utils/currency';
 import { AdvertisementsSubNav } from '../components/AdvertisementsSubNav';
 import { AdvertisementFormModal } from '../components/AdvertisementFormModal';
-import { localizedName } from '../utils/displayName';
+import { displayName } from '../utils/displayName';
 
 const PAGE_SIZE = 20;
 
@@ -238,7 +238,7 @@ export function AdminAdvertisementsPage() {
                       <ul className="adm-ad-items">
                         {advertisement.items.map((item) => (
                           <li key={item.productId}>
-                            {localizedName(item.productNameEn, item.productNameAr)}
+                            {displayName(item.productNameEn, item.productNameAr)}
                             {' ×'}
                             {item.quantity}
                             {' — '}

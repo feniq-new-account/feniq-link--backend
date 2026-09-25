@@ -9,7 +9,6 @@ const { UNIT_CODES, unitNameAr, unitNameEn } = require('../config/units');
 const Product = require('../models/product.model');
 const ProductCatalog = require('../models/productCatalog.model');
 const { identityKeyOf } = require('../models/productCatalog.model');
-const { splitNameByLanguage, namesByLanguage } = require('../utils/nameLanguage');
 const Manufacturer = require('../models/manufacturer.model');
 const WarehouseProductAlias = require('../models/warehouseProductAlias.model');
 const ImportBatch = require('../models/importBatch.model');
@@ -91,20 +90,18 @@ async function candidateManufacturers(manufacturerKey) {
   );
 }
 
-// Arabic and English alike: the typed name (and a row's second, English,
-// name) is compared with both of an item's names, and the manufacturer with
-// both of its names.
-async function suggestCatalogItems({ name, nameEn = null, manufacturer, limit = SUGGESTION_LIMIT } = {}) {
-  const inputKeys = [...new Set([normalizeText(name), normalizeText(nameEn)].filter(Boolean))];
-  if (inputKeys.length === 0) return [];
+// Arabic or English alike: the typed name is compared with both of an item's
+// names (the English one is kept for exactly this), and the manufacturer with
+// both of its names. Only the Arabic names are returned for display.
+async function suggestCatalogItems({ name, manufacturer, limit = SUGGESTION_LIMIT } = {}) {
+  const nameKey = normalizeText(name);
+  if (!nameKey) return [];
   const manufacturerKey = normalizeText(manufacturer);
   const manufacturers = await candidateManufacturers(manufacturerKey);
   const manufacturerIds = manufacturers.map((m) => m._id);
 
-  const select = 'nameAr nameEn nameKey nameEnKey manufacturerAr manufacturerEn manufacturerKey manufacturerEnKey manufacturerId';
-  const tokens = [
-    ...new Set(inputKeys.flatMap((key) => key.split(' ')).filter((token) => token.length >= 2)),
-  ].slice(0, 6);
+  const select = 'nameAr nameKey nameEnKey manufacturerAr manufacturerKey manufacturerEnKey manufacturerId';
+  const tokens = [...new Set(nameKey.split(' ').filter((token) => token.length >= 2))].slice(0, 4);
   const queries = [];
   if (manufacturerIds.length) {
     queries.push(
@@ -138,20 +135,16 @@ async function suggestCatalogItems({ name, nameEn = null, manufacturer, limit = 
     if (seen.has(id)) continue;
     seen.add(id);
     let score = 0;
-    for (const key of inputKeys) {
-      for (const itemKey of [item.nameKey, item.nameEnKey]) {
-        if (itemKey) score = Math.max(score, trigramSimilarity(itemKey, key));
-      }
+    for (const itemKey of [item.nameKey, item.nameEnKey]) {
+      if (itemKey) score = Math.max(score, trigramSimilarity(itemKey, nameKey));
     }
     const manufacturerNear = (itemKey) => itemKey && trigramSimilarity(itemKey, manufacturerKey) >= 0.6;
     if (idSet.has(String(item.manufacturerId))) score += 0.15;
     else if (manufacturerKey && (manufacturerNear(item.manufacturerKey) || manufacturerNear(item.manufacturerEnKey))) score += 0.1;
     scored.push({
       masterProductId: item._id,
-      nameAr: item.nameAr ?? null,
-      nameEn: item.nameEn ?? null,
+      nameAr: item.nameAr,
       manufacturerAr: item.manufacturerAr,
-      manufacturerEn: item.manufacturerEn ?? null,
       score: Math.round(Math.min(score, 1) * 100) / 100,
     });
   }
@@ -323,17 +316,16 @@ async function importWarehouseFile(warehouseId, userId, file, { mapping = null }
 
   // 2. Matching: aliases, manufacturers, catalog items - three bounded queries.
   //
-  // A row carries up to two names: its name column and, when the file has a
-  // separate English column too, that one - tried in that order. Each is an
-  // exact match on either of a catalog item's names (normalized), under the
-  // row's manufacturer, which itself resolves by its Arabic or English name.
-  // Anything looser is a suggestion, never a match.
+  // A row's name (the file's one name column) is an exact match on either of
+  // a catalog item's names, normalized - its Arabic name, or its English name,
+  // kept for exactly this - under the row's manufacturer, which itself
+  // resolves by its Arabic or English name. Anything looser is a suggestion,
+  // never a match.
   for (const row of candidates) {
-    row.nameKeys = [...new Set([normalizeText(row.name), normalizeText(row.nameEn)].filter(Boolean))];
-    row.rawNameKey = row.nameKeys[0] ?? '';
+    row.rawNameKey = normalizeText(row.name);
     row.rawManufacturerKey = normalizeText(row.manufacturer);
   }
-  const allNameKeys = [...new Set(candidates.flatMap((r) => r.nameKeys))];
+  const allNameKeys = [...new Set(candidates.map((r) => r.rawNameKey).filter(Boolean))];
   const allManufacturerKeys = [...new Set(candidates.map((r) => r.rawManufacturerKey).filter(Boolean))];
   const [aliases, manufacturers] = await Promise.all([
     WarehouseProductAlias.find({ warehouseId, rawNameKey: { $in: allNameKeys } })
@@ -350,10 +342,8 @@ async function importWarehouseFile(warehouseId, userId, file, { mapping = null }
   const aliasTargets = new Set();
   const manufacturerIds = new Set();
   for (const row of candidates) {
-    // An alias answers for the text the file used, under either of its names.
-    const aliasTarget = row.nameKeys
-      .map((key) => aliasByPair.get(`${key}|${row.rawManufacturerKey}`))
-      .find(Boolean);
+    // An alias answers for the exact text the file used.
+    const aliasTarget = aliasByPair.get(`${row.rawNameKey}|${row.rawManufacturerKey}`);
     if (aliasTarget) {
       row.aliasTarget = aliasTarget;
       aliasTargets.add(String(aliasTarget));
@@ -362,7 +352,7 @@ async function importWarehouseFile(warehouseId, userId, file, { mapping = null }
     row.manufacturerDoc = resolveManufacturer(row.rawManufacturerKey);
     if (row.manufacturerDoc) {
       manufacturerIds.add(String(row.manufacturerDoc._id));
-      for (const key of row.nameKeys) identities.add(identityKeyOf(key, row.manufacturerDoc.key));
+      identities.add(identityKeyOf(row.rawNameKey, row.manufacturerDoc.key));
     }
   }
   const catalogItems = await ProductCatalog.find({
@@ -385,12 +375,10 @@ async function importWarehouseFile(warehouseId, userId, file, { mapping = null }
       row.catalogItem = itemById.get(String(row.aliasTarget));
     } else if (row.manufacturerDoc) {
       const manufacturer = row.manufacturerDoc;
-      row.catalogItem = null;
-      for (const key of row.nameKeys) {
-        row.catalogItem =
-          itemByIdentity.get(identityKeyOf(key, manufacturer.key)) ?? itemByEnglishName.get(`${key}|${manufacturer._id}`) ?? null;
-        if (row.catalogItem) break;
-      }
+      row.catalogItem =
+        itemByIdentity.get(identityKeyOf(row.rawNameKey, manufacturer.key)) ??
+        itemByEnglishName.get(`${row.rawNameKey}|${manufacturer._id}`) ??
+        null;
     } else {
       row.catalogItem = null;
     }
@@ -451,7 +439,7 @@ async function importWarehouseFile(warehouseId, userId, file, { mapping = null }
       let suggestions = [];
       if (!item && suggestionBudget > 0) {
         suggestionBudget -= 1;
-        suggestions = await suggestCatalogItems({ name: row.name, nameEn: row.nameEn, manufacturer: row.manufacturer });
+        suggestions = await suggestCatalogItems({ name: row.name, manufacturer: row.manufacturer });
       }
       records.push(
         rowRecord(batchId, warehouseId, row, {
@@ -707,16 +695,17 @@ async function resolveImportRow(warehouseId, userId, batchId, rowId, body = {}) 
     await Product.bulkWrite([write.op], { session });
     productId = write.productId;
 
-    // Remembered under every name the row carried (its name column and its
-    // English column), so the next file matches whichever text it uses.
-    const aliasKeys = [...new Set([normalizeText(fresh.raw.name), normalizeText(fresh.raw.nameEn)].filter(Boolean))];
-    for (const rawNameKey of aliasKeys) {
-      await WarehouseProductAlias.updateOne(
-        { warehouseId, rawNameKey, rawManufacturerKey: normalizeText(fresh.raw.manufacturer) },
-        { $set: { masterProductId: claimed._id } },
-        { upsert: true, session }
-      );
-    }
+    // Remembered under the exact text the file used, so the next file with
+    // the same name matches directly.
+    await WarehouseProductAlias.updateOne(
+      {
+        warehouseId,
+        rawNameKey: normalizeText(fresh.raw.name),
+        rawManufacturerKey: normalizeText(fresh.raw.manufacturer),
+      },
+      { $set: { masterProductId: claimed._id } },
+      { upsert: true, session }
+    );
 
     const resolvedAt = new Date();
     const siblings = fresh.duplicateOf
@@ -757,20 +746,13 @@ async function resolveImportRow(warehouseId, userId, batchId, rowId, body = {}) 
 async function requestCatalogItemFromRow(warehouseId, userId, batchId, rowId, body = {}) {
   const row = await findReviewRowOrThrow(warehouseId, batchId, rowId);
   const values = await resolutionValues(row, body);
-  // The name, filed under the language it is written in: the warehouse's
-  // corrected text if it sent one (`name`, or `nameAr` as older panels send),
-  // else the row's name column(s). Explicit `nameAr` + `nameEn` are kept as sent.
+  // The name exactly as written - the warehouse's corrected text if it sent
+  // one, else the row's name cell - in whatever language. The admin enters the
+  // Arabic name on approval (catalogRequest.service.js).
   const text = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null);
-  let names;
-  if (text(body.nameEn) !== null) {
-    names = { nameAr: text(body.nameAr), nameEn: text(body.nameEn) };
-  } else if (text(body.name) ?? text(body.nameAr)) {
-    names = splitNameByLanguage(text(body.name) ?? text(body.nameAr));
-  } else {
-    names = namesByLanguage(row.raw.name, row.raw.nameEn);
-  }
+  const nameAr = text(body.nameAr) ?? text(body.name) ?? row.raw.name;
   const manufacturerAr = text(body.manufacturerAr) ?? row.raw.manufacturer;
-  if (!(normalizeText(names.nameAr) || normalizeText(names.nameEn)) || !normalizeText(manufacturerAr)) {
+  if (!normalizeText(nameAr) || !normalizeText(manufacturerAr)) {
     throw ApiError.badRequest('A name and a manufacturer are required.', undefined, 'INVALID_CATALOG_REQUEST');
   }
   const manufacturerKey = normalizeText(manufacturerAr);
@@ -785,8 +767,7 @@ async function requestCatalogItemFromRow(warehouseId, userId, batchId, rowId, bo
       [
         {
           warehouseId,
-          nameAr: names.nameAr,
-          nameEn: names.nameEn,
+          nameAr,
           manufacturerAr,
           manufacturerId: manufacturer ? manufacturer._id : null,
           unit: values.unitGiven ? values.unit : null,

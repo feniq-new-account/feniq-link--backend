@@ -103,9 +103,9 @@ class ProductModel {
   }
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    // A medicine may be named in one language only: a missing name is kept as
-    // empty, never filled from the other language here - the widgets show the
-    // name in the UI language, else the other one (core/utils/display_name.dart).
+    // The Arabic name is the one every screen shows. The English name is kept
+    // for search only and never substituted for it; a row that somehow lacks
+    // an Arabic name parses with an empty one rather than failing the page.
     return ProductModel(
       id: json['id'] as String,
       categoryId: json['categoryId'] as String?,

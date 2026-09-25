@@ -25,13 +25,15 @@
 // Usage: node scripts/migrations/00-manufacturers.js [--apply]
 const mongoose = require('mongoose');
 const { normalizeText } = require('../../src/utils/normalizeText');
-const { runCli, dropIndexIfExists, bulkWriteInBatches } = require('./lib');
+const { runCli, dropIndexIfExists, bulkWriteInBatches, requireArabicNames } = require('./lib');
 
 async function run({ apply = false, log = () => {} } = {}) {
   const db = mongoose.connection.db;
   const catalog = db.collection('productcatalogs');
   const products = db.collection('products');
   const manufacturers = db.collection('manufacturers');
+  // Every catalog item needs an Arabic name before anything is applied.
+  const catalogItemsWithoutNameAr = await requireArabicNames(db, { apply, log });
 
   const droppedRawIndex = await dropIndexIfExists(catalog, 'nameAr_1_manufacturerAr_1', { apply, log });
 
@@ -69,6 +71,7 @@ async function run({ apply = false, log = () => {} } = {}) {
     [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? null;
 
   const report = {
+    catalogItemsWithoutNameAr,
     droppedRawIndex,
     manufacturersCreated: 0,
     manufacturersReused: 0,

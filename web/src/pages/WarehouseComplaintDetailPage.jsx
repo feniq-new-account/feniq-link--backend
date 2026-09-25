@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
-import { localizedName } from '../utils/displayName';
+import { displayName } from '../utils/displayName';
 
 function statusBadgeClass(status) {
   if (status === 'resolved') return 'status-delivered';
@@ -76,7 +76,7 @@ export function WarehouseComplaintDetailPage() {
               <div>
                 <div className="wh-pharmacy-label">{t('complaints.pharmacyColumn')}</div>
                 <div className="wh-pharmacy-name">
-                  {localizedName(complaint.pharmacy?.nameEn, complaint.pharmacy?.nameAr)}
+                  {displayName(complaint.pharmacy?.nameEn, complaint.pharmacy?.nameAr)}
                 </div>
                 <div className="wh-pharmacy-meta">
                   {[complaint.pharmacy?.phone, complaint.pharmacy?.city].filter(Boolean).join(' · ')}

@@ -23,7 +23,6 @@ import 'package:feniq/features/returns/data/repositories/return_repository.dart'
 import 'package:feniq/features/returns/presentation/managers/request_return_cubit.dart';
 import 'package:feniq/features/returns/presentation/managers/request_return_state.dart';
 import 'package:feniq/features/returns/presentation/utils/return_labels.dart';
-import 'package:feniq/core/utils/display_name.dart';
 
 // Section 6.9: one return per order, covering every problem item in it at
 // once - so this sheet is item-picking, not single-item. Reused for both
@@ -194,7 +193,6 @@ class _RequestReturnSheetBodyState extends State<_RequestReturnSheetBody> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return BlocConsumer<RequestReturnCubit, RequestReturnState>(
       listenWhen: (previous, current) =>
@@ -244,7 +242,7 @@ class _RequestReturnSheetBodyState extends State<_RequestReturnSheetBody> {
                 const SizedBox(height: AppSizes.spacingSmall),
                 ...state.orderItems.map((item) {
                   final selected = state.selectedItemIds.contains(item.id);
-                  final name = pickName(item.productNameAr, item.productNameEn, arabic: isArabic);
+                  final name = item.productNameAr;
                   return _ReturnItemTile(
                     item: item,
                     name: name,

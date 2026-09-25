@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
-import { localizedName } from '../utils/displayName';
 
 // Duplicate review (catalog overhaul Phase 5.2): catalog items that are the
 // same medicine spelled differently, which the dedupe migration could not
@@ -59,7 +58,7 @@ function DuplicateGroup({ group, onResolved }) {
     for (const product of item.products) {
       const key = String(product.warehouseId);
       if (!byWarehouse.has(key)) byWarehouse.set(key, { name: product.warehouseNameAr ?? product.warehouseNameEn, products: [] });
-      byWarehouse.get(key).products.push({ ...product, itemName: localizedName(item.nameEn, item.nameAr) });
+      byWarehouse.get(key).products.push({ ...product, itemName: item.nameAr });
     }
   }
   const conflicts = [...byWarehouse.entries()].filter(([, entry]) => entry.products.length > 1);
@@ -83,7 +82,7 @@ function DuplicateGroup({ group, onResolved }) {
       {group.items.map((item) => (
         <label key={item.id} className="adm-import-error-row">
           <input type="radio" name={`survivor-${group.id}`} checked={survivorId === item.id} onChange={() => setSurvivorId(item.id)} />{' '}
-          <strong>{localizedName(item.nameEn, item.nameAr)}</strong> — {item.manufacturerAr}
+          <strong>{item.nameAr}</strong> — {item.manufacturerAr}
           {!item.isActive && <span className="hint"> ({t('duplicates.withdrawn')})</span>}
           <span className="hint"> · {t('duplicates.productCount', { count: item.products.length })}</span>
         </label>

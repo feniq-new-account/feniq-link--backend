@@ -12,14 +12,9 @@ const FIELD_SYNONYMS = {
   name: [
     'اسم المادة', 'المادة', 'اسم الدواء', 'الدواء', 'الاسم', 'اسم الصنف', 'الصنف', 'البيان',
     'اسم الدواء (من القائمة)',
-    // A file with a separate English column heads the Arabic one like this.
     'الاسم العربي', 'اسم المادة بالعربي', 'الاسم عربي',
     'name', 'product', 'product name', 'item', 'item name', 'drug',
   ],
-  // Optional second name column. With a name column too, the row is matched
-  // on that one first and on this one second; on its own it IS the name
-  // column (productCatalog.service.js's readImportWorkbook).
-  nameEn: ['الاسم الانكليزي', 'الاسم الإنجليزي', 'الاسم الاجنبي', 'english name', 'name en'],
   price: ['السعر', 'سعر', 'سعر المبيع', 'السعر الافرادي', 'السعر (دولار)', 'price', 'unit price', 'cost'],
   manufacturer: [
     'الشركة', 'شركة', 'اسم الشركة', 'الشركة المصنعة', 'المصنع',
@@ -38,8 +33,7 @@ const IMPORT_FIELDS = Object.keys(FIELD_SYNONYMS);
 
 // A file is only readable once these are known. `manufacturer` can also come
 // from the old template's company rows (a [bracketed] or yellow row above its
-// medicines) - see productCatalog.service.js's parser. `name` is also met by
-// an English name column alone (`nameEn`).
+// medicines) - see productCatalog.service.js's parser.
 const REQUIRED_FIELDS = ['name', 'price', 'manufacturer'];
 
 const CURRENCY_SYNONYMS = {

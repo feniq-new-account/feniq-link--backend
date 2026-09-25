@@ -12,7 +12,7 @@ import { SearchableSelect } from '../components/SearchableSelect';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { useExchangeRate } from '../context/ExchangeRateContext';
 import { formatUsdAsSyp } from '../utils/currency';
-import { localizedName } from '../utils/displayName';
+import { displayName } from '../utils/displayName';
 
 const PAGE_SIZE = 30;
 
@@ -94,7 +94,7 @@ export function AdminProductsPage() {
   const handleDelete = async (product) => {
     const confirmed = window.confirm(
       t('products.confirmRemove', {
-        name: localizedName(product.nameEn, product.nameAr),
+        name: displayName(product.nameEn, product.nameAr),
         warehouse: product.warehouseNameEn,
       }),
     );
@@ -187,9 +187,9 @@ export function AdminProductsPage() {
               <tbody>
                 {products.map((product) => (
                   <tr key={product.id} className={product.isActive ? '' : 'row-inactive'}>
-                    <td>{localizedName(product.nameEn, product.nameAr)}</td>
+                    <td>{displayName(product.nameEn, product.nameAr)}</td>
                     <td>{product.warehouseNameEn}</td>
-                    <td>{localizedName(product.manufacturerEn, product.manufacturerAr)}</td>
+                    <td>{displayName(product.manufacturerEn, product.manufacturerAr)}</td>
                     <td className="adm-num">{formatUsdAsSyp(product.priceUsd, usdToSyp)}</td>
                     <td>
                       {product.isActive ? (

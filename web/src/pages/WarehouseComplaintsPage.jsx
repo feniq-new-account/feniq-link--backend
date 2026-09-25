@@ -5,7 +5,7 @@ import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
-import { localizedName } from '../utils/displayName';
+import { displayName } from '../utils/displayName';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 
 const PAGE_SIZE = 15;
@@ -115,7 +115,7 @@ export function WarehouseComplaintsPage() {
                         {t('complaints.numberValue', { number: complaint.complaintNumber })}
                       </span>
                     </td>
-                    <td>{localizedName(complaint.pharmacy?.nameEn, complaint.pharmacy?.nameAr)}</td>
+                    <td>{displayName(complaint.pharmacy?.nameEn, complaint.pharmacy?.nameAr)}</td>
                     <td>
                       <span className="wh-reason-badge">{t(`complaints.context.${complaint.contextType}`)}</span>
                     </td>

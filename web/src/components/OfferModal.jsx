@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProductPicker } from './CatalogPickers';
 import { formatUsdAsSyp } from '../utils/currency';
-import { localizedName } from '../utils/displayName';
+import { displayName } from '../utils/displayName';
 
 // The one form used to create AND edit an offer, on both the warehouse and the
 // admin Offers pages - the same "reuse the create form for editing" approach
@@ -50,11 +50,11 @@ export function OfferModal({ mode, offer, searchProducts, usdToSyp, onClose, onS
 
   const setField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
   const isEdit = mode === 'edit';
-  const productName = offer ? localizedName(offer.productNameEn, offer.productNameAr) : '';
+  const productName = offer ? displayName(offer.productNameEn, offer.productNameAr) : '';
   // The price only where the row carries one (search results do; the offer
   // being edited only has the product's name).
   const productLabel = (product) => {
-    const name = localizedName(product.nameEn, product.nameAr);
+    const name = displayName(product.nameEn, product.nameAr);
     return product.priceUsd != null ? `${name} (${formatUsdAsSyp(product.priceUsd, usdToSyp)})` : name;
   };
 
