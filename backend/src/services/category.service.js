@@ -26,6 +26,11 @@ async function listCategories() {
 // until an admin renames it (the model requires both) - once per file,
 // whatever spelling variants of it the file uses. New categories go after the
 // existing ones.
+//
+// The list is read once, when the import starts, so another import (or an
+// admin rename) may create the same category while this one runs. The unique
+// `key` index turns that into a duplicate-key error on create, and the import
+// then files its items under the category that won instead of failing.
 async function categoryResolverForImport() {
   const categories = await Category.find({}).select('nameAr nameEn sortOrder').lean();
   const idByKey = new Map();
@@ -46,7 +51,17 @@ async function categoryResolverForImport() {
       const key = normalizeText(name);
       if (!key) return null;
       if (idByKey.has(key)) return idByKey.get(key);
-      const category = await Category.create({ nameAr: name, nameEn: name, sortOrder: nextSortOrder });
+      let category;
+      try {
+        category = await Category.create({ nameAr: name, nameEn: name, sortOrder: nextSortOrder });
+      } catch (err) {
+        // 11000 = duplicate key: created since this import read the list.
+        if (err?.code !== 11000) throw err;
+        const existing = await Category.findOne({ key }).select('_id').lean();
+        if (!existing) throw err;
+        idByKey.set(key, existing._id);
+        return existing._id;
+      }
       nextSortOrder += 1;
       idByKey.set(key, category._id);
       created.set(String(category._id), { id: category._id, nameAr: name, items: 0 });
@@ -109,19 +124,31 @@ async function renameCategory(id, changes = {}) {
   };
   const nameAr = nextName(changes.nameAr, category.nameAr);
   const nameEn = nextName(changes.nameEn, category.nameEn);
+  // The Arabic name is the category's key: punctuation alone ("--") has none.
+  if (!normalizeText(nameAr)) {
+    throw ApiError.badRequest('A category needs an Arabic and an English name.', undefined, 'INVALID_CATEGORY_NAME');
+  }
 
+  const alreadyExists = (categoryId) =>
+    ApiError.conflict('Another category already has this name - merge the two instead.', 'CATEGORY_ALREADY_EXISTS', {
+      categoryId,
+    });
   const keys = [...new Set([normalizeText(nameAr), normalizeText(nameEn)].filter(Boolean))];
   const others = await Category.find({ _id: { $ne: category._id } }).select('nameAr nameEn').lean();
   const clash = others.find((other) => [other.nameAr, other.nameEn].some((name) => keys.includes(normalizeText(name))));
-  if (clash) {
-    throw ApiError.conflict('Another category already has this name - merge the two instead.', 'CATEGORY_ALREADY_EXISTS', {
-      categoryId: clash._id,
-    });
-  }
+  if (clash) throw alreadyExists(clash._id);
 
   category.nameAr = nameAr;
   category.nameEn = nameEn;
-  await category.save();
+  try {
+    await category.save();
+  } catch (err) {
+    // 11000 = duplicate key on `key`: an import created this name after the
+    // check above.
+    if (err?.code !== 11000) throw err;
+    const winner = await Category.findOne({ key: normalizeText(nameAr) }).select('_id').lean();
+    throw alreadyExists(winner?._id ?? null);
+  }
   return category;
 }
 
