@@ -75,7 +75,9 @@ the server stopped, against the new code, with no compatibility window.
    at boot. That is expected until step 5.
 5. **Resolve the Duplicate review screen, then re-run 04** (dry run, then
    `--apply`). Once no duplicates remain, it builds the unique `identityKey`
-   index.
+   index. The screen is not in the admin menu (the unique index keeps new
+   duplicates out, so only a migrated legacy database needs it): open
+   `/admin/catalog-duplicates` in the admin panel directly.
 
 ## Read the reports
 
