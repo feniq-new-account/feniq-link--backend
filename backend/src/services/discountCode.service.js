@@ -236,6 +236,14 @@ function codeDiscountSyp(terms, preCodeSyp) {
   return Math.max(0, Math.min(preCodeSyp, raw));
 }
 
+// What the platform owes the warehouse for one order: the whole code discount
+// on an admin code, 0 otherwise (and 0 on an order with no code). Frozen on
+// the order at creation (and re-derived by a pending edit) - see
+// order.model.js.
+function platformCompensationOf(order) {
+  return order?.discountCode?.platformCompensationSyp ?? 0;
+}
+
 // ---------------------------------------------------------------------------
 // Can this pharmacy use this code on this order?
 
@@ -391,6 +399,10 @@ async function releaseUse(order, reason, session) {
     { $inc: { count: -1 } },
     { session }
   );
+  // Mirrored onto the caller's copy so what it hands back shows the release.
+  // Written already - a later save of that copy writes the same values.
+  snapshot.releasedAt = now;
+  snapshot.releaseReason = reason;
   return true;
 }
 
@@ -587,6 +599,7 @@ module.exports = {
   fundedByFor,
   termsOf,
   codeDiscountSyp,
+  platformCompensationOf,
   reasonCodeCannotBeUsed,
   evaluate,
   reasonError,

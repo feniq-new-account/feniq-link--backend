@@ -263,7 +263,7 @@ async function getOrderDetailForWarehouse(orderId, warehouseId) {
   // toWarehouseOrderDetailResponse reads exactly these order fields.
   const order = await Order.findOne({ _id: orderId, warehouseId })
     .select(
-      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups finalPrice notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt'
+      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt'
     );
   if (!order) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
@@ -640,11 +640,25 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
   order.advertisementId = liveGroups.length > 0 ? liveGroups[0].advertisementId : null;
   order.advertisementIds = liveGroups.map((group) => group.advertisementId);
 
-  const { discountAmount, commissionAmount, finalPrice } = rollUpOrderMoney({
+  // A discount code the order used is re-applied to the new total on its
+  // FROZEN terms (order.model.js's discountCode) - never the live code, which
+  // may have been edited, stopped or expired since, and whose use this order
+  // already holds. A percentage follows the new total; a fixed amount stays
+  // fixed, capped at the total.
+  const code = order.discountCode;
+  const {
+    discountAmount,
+    commissionAmount,
+    finalPrice,
+    preCodeSyp,
+    discountCodeSyp,
+    platformCompensationSyp,
+  } = rollUpOrderMoney({
     subtotalSyp: totalPrice,
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse.discountRate,
     commissionRate: warehouse.commissionRate,
+    discountCodeTerms: code ? { type: code.type, value: code.value, fundedBy: code.fundedBy } : null,
   });
 
   order.totalPrice = totalPrice;
@@ -652,6 +666,12 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
   order.commissionAmount = commissionAmount;
   order.advertisementDiscountAmount = advertisementDiscountAmount;
   order.finalPrice = finalPrice;
+  if (code) {
+    code.preCodeSyp = preCodeSyp;
+    code.discountSyp = discountCodeSyp;
+    code.discountUsd = order.fx?.rate ? Math.round((discountCodeSyp / order.fx.rate) * 100) / 100 : null;
+    code.platformCompensationSyp = platformCompensationSyp;
+  }
   // The frozen USD figure has to move with the SYP total it mirrors, and it is
   // re-derived through the ORDER's own captured rate - the one its lines were
   // priced at - not whatever the rate happens to be on the day of the edit.

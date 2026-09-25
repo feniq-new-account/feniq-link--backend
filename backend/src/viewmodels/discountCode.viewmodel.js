@@ -84,7 +84,34 @@ function toPreviewResponse(quote) {
   };
 }
 
+// The discount-code line on an order, for the order screens and the invoice.
+// The pharmacy sees the code and what it took off; the warehouse also sees who
+// pays for it and what the platform owes it for this order. null on an order
+// placed without a code.
+function serializeOrderDiscountCode(snapshot, { forWarehouse = false } = {}) {
+  if (!snapshot) return null;
+  const line = {
+    code: snapshot.code,
+    type: snapshot.type,
+    value: snapshot.value,
+    discountSyp: snapshot.discountSyp,
+    discountUsd: snapshot.discountUsd ?? null,
+    released: Boolean(snapshot.releasedAt),
+  };
+  if (!forWarehouse) return line;
+  return {
+    ...line,
+    ownerRole: snapshot.ownerRole,
+    fundedBy: snapshot.fundedBy,
+    preCodeSyp: snapshot.preCodeSyp,
+    platformCompensationSyp: snapshot.platformCompensationSyp ?? 0,
+    releasedAt: snapshot.releasedAt ?? null,
+    releaseReason: snapshot.releaseReason ?? null,
+  };
+}
+
 module.exports = {
+  serializeOrderDiscountCode,
   serializeDiscountCode,
   toDiscountCodeListResponse,
   toDiscountCodeResponse,

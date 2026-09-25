@@ -106,6 +106,7 @@ test('returns a fully zeroed breakdown for a pharmacy that has never ordered', a
     offerAndManufacturerSyp: 0,
     advertisementSyp: 0,
     platformDiscountSyp: 0,
+    discountCodeSyp: 0,
     totalSavingsSyp: 0,
     totalSavingsUsd: 0,
   });
@@ -150,13 +151,14 @@ test('another pharmacy\'s savings never leak in', async () => {
 
 test('the viewmodel nests the breakdown under `savings`', () => {
   // Money-Flow V2: SYP is the primary figure (frozen, so it stops drifting
-  // with the exchange rate) and the three components are broken out because
-  // they answer different questions. The USD total rides along as a hint.
+  // with the exchange rate) and the components are broken out because they
+  // answer different questions. The USD total rides along as a hint.
   const summary = {
     offerAndManufacturerSyp: 1000,
     advertisementSyp: 2000,
     platformDiscountSyp: 500,
-    totalSavingsSyp: 3500,
+    discountCodeSyp: 250,
+    totalSavingsSyp: 3750,
     totalSavingsUsd: 4,
   };
   assert.deepStrictEqual(orderViewModel.toSavingsSummaryResponse(summary), { savings: summary });

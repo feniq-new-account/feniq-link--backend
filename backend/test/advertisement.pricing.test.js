@@ -347,6 +347,10 @@ test('rollUpOrderMoney is the single definition both paths share', () => {
   assert.deepStrictEqual(rolled, {
     discountAmount: 16000,
     advertisementDiscountAmount: 270000,
+    // No discount code: the code stage takes nothing.
+    preCodeSyp: 384000,
+    discountCodeSyp: 0,
+    platformCompensationSyp: 0,
     finalPrice: 384000,
     commissionAmount: 3840,
     warehouseNetSyp: 380160,
