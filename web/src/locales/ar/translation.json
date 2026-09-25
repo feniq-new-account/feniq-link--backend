@@ -709,8 +709,6 @@
       "importResultAdded": "أُضيف",
       "importResultUpdated": "حُدِّث",
       "importResultFailed": "فشل",
-      "importConverted": "💱 تم تحويل {{count}} صنف من الليرة السورية",
-      "importConvertedRate": "بسعر صرف: 1$ = {{rate}} ل.س",
       "importErrorsTitle": "تفاصيل الأخطاء",
       "importDone": "تم",
       "downloadErrorReport": "تحميل تقرير الأخطاء",
@@ -727,7 +725,8 @@
       "linkExisting": "أو ربطها بشركة موجودة",
       "nameEnLabel": "الاسم الإنجليزي (للبحث)",
       "unknownCategoriesTitle": "فئة غير معروفة",
-      "unknownCategoriesHint": "استُوردت هذه الأسطر بلا فئة لأن الفئة المكتوبة في الملف لا تطابق أي فئة. الاستيراد لا ينشئ فئات؛ حدّد الفئة للدواء، أو أضف الفئة ثم أعد الاستيراد."
+      "unknownCategoriesHint": "استُوردت هذه الأسطر بلا فئة لأن الفئة المكتوبة في الملف لا تطابق أي فئة. الاستيراد لا ينشئ فئات؛ حدّد الفئة للدواء، أو أضف الفئة ثم أعد الاستيراد.",
+      "importResultUnchanged": "موجود مسبقاً"
     },
     "exchangeRate": {
       "title": "سعر الصرف",

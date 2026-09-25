@@ -1,11 +1,11 @@
-// Catalog overhaul Phase 12: the admin's catalog Excel import, against the
-// same file shapes the warehouse import is tested with (import.warehouse.test.js)
-// - title rows above the header, reordered columns, Arabic and English header
-// synonyms, a remembered column mapping, Arabic digits and separators, SYP
-// conversion, price 0, duplicate rows in one file, and withdrawn items.
-//
-// Bonus and unit are a warehouse's terms, not the catalog's: on this import a
-// bad bonus or an unknown unit never blocks the row. Aliases are a warehouse
+// The admin's central catalog Excel import. It has its own columns
+// (config/importSynonyms.js IMPORT_COLUMN_SETS.catalog): name and company
+// required, category optional. The central catalog has no price - a price
+// belongs to a warehouse's product - so price, currency, unit and bonus
+// columns are ignored. Tested against the same file shapes as the warehouse
+// import (import.warehouse.test.js): title rows above the header, reordered
+// columns, Arabic and English header synonyms, a remembered column mapping,
+// duplicate rows in one file, and withdrawn items. Aliases are a warehouse
 // import feature only (the catalog import creates the items aliases point at).
 process.env.NODE_ENV = 'test';
 
@@ -18,11 +18,10 @@ const mongoose = require('mongoose');
 const Category = require('../src/models/category.model');
 const ProductCatalog = require('../src/models/productCatalog.model');
 const Manufacturer = require('../src/models/manufacturer.model');
-const ExchangeRate = require('../src/models/exchangeRate.model');
 const ImportColumnMapping = require('../src/models/importColumnMapping.model');
 const catalogService = require('../src/services/productCatalog.service');
-
-const RATE = 100; // 1 USD = 100 SYP
+const { importProductsFromExcel } = require('../src/services/warehouseProduct.service');
+const { normalizeText } = require('../src/utils/normalizeText');
 
 async function xlsx(rows) {
   const workbook = new ExcelJS.Workbook();
@@ -37,7 +36,7 @@ let seq = 0;
 async function manufacturer() {
   seq += 1;
   const nameAr = `مصنع الكتالوج ${seq}`;
-  await Manufacturer.create({ nameAr, key: require('../src/utils/normalizeText').normalizeText(nameAr) });
+  await Manufacturer.create({ nameAr, key: normalizeText(nameAr) });
   return nameAr;
 }
 
@@ -46,89 +45,161 @@ const itemNamed = (nameAr, manufacturerAr) => ProductCatalog.findOne({ nameAr, m
 test.before(async () => {
   await startMemoryMongo({ dbName: 'feniq-import-catalog-test' });
   await syncIndexes(ProductCatalog, Manufacturer, ImportColumnMapping);
-  await ExchangeRate.create({ _id: 'singleton', usdToSyp: RATE, source: 'manual', manualOverride: true });
+  // Deliberately no exchange rate: the catalog import never needs one.
 });
 
 test.after(async () => {
   await stopMemoryMongo();
 });
 
-test('title rows above the header, reordered Arabic columns, Arabic digits and separators, SYP converted', async () => {
+// --- the catalog's own columns ----------------------------------------------------
+
+test('a file with only name, company and category imports with no mapping step', async () => {
+  await Category.create({ nameAr: 'مسكنات', nameEn: 'Painkillers' });
+  const m = await manufacturer();
+  const report = await catalogService.importFromExcel(await xlsx([
+    ['اسم الدواء', 'الشركة', 'الفئة'],
+    ['باراسيتامول كتالوج', m, 'مسكنات'],
+    ['إيبوبروفين كتالوج', m, ''],
+  ]));
+  assert.strictEqual(report.added, 2, JSON.stringify(report));
+  assert.deepStrictEqual(report.errors, []);
+  assert.ok(!('exchangeRateUsed' in report) && !('convertedFromSyp' in report));
+  const paracetamol = await itemNamed('باراسيتامول كتالوج', m);
+  assert.ok(paracetamol.categoryId);
+  assert.strictEqual(paracetamol.priceUsd, null);
+});
+
+test('a price column (and currency, unit, bonus) is ignored, whatever is in it', async () => {
+  const m = await manufacturer();
+  const report = await catalogService.importFromExcel(await xlsx([
+    ['اسم المادة', 'الشركة المصنعة', 'السعر', 'العملة', 'الوحدة', 'البونص'],
+    ['دواء بسعر مهمل', m, '13000', 'ل.س', 'علبة', '10+1'],
+    ['دواء بسعر غير مقروء', m, 'غالي', '', 'دلو', 'كثير'], // would be errors in a warehouse file
+  ]));
+  assert.strictEqual(report.added, 2, JSON.stringify(report));
+  assert.deepStrictEqual(report.errors, []);
+  for (const name of ['دواء بسعر مهمل', 'دواء بسعر غير مقروء']) {
+    assert.strictEqual((await itemNamed(name, m)).priceUsd, null, name);
+  }
+
+  // A re-import never touches the price an item may already carry.
+  await ProductCatalog.updateOne({ nameAr: 'دواء بسعر مهمل', manufacturerAr: m }, { $set: { priceUsd: 4 } });
+  const again = await catalogService.importFromExcel(await xlsx([
+    ['اسم المادة', 'الشركة المصنعة', 'السعر', 'العملة'],
+    ['دواء بسعر مهمل', m, '9', 'USD'],
+  ]));
+  assert.strictEqual(again.unchanged, 1, JSON.stringify(again));
+  assert.strictEqual((await itemNamed('دواء بسعر مهمل', m)).priceUsd, 4);
+});
+
+test('the warehouse import still requires a price column', async () => {
+  const warehouseId = new mongoose.Types.ObjectId();
+  const userId = new mongoose.Types.ObjectId();
+  await assert.rejects(
+    importProductsFromExcel(warehouseId, userId, await xlsx([
+      ['اسم المادة', 'الشركة', 'الفئة'],
+      ['دواء', 'شركة', 'مسكنات'],
+    ])),
+    (err) => {
+      assert.strictEqual(err.code, 'IMPORT_COLUMNS_UNRECOGNIZED');
+      assert.deepStrictEqual(err.details.missing, ['price']);
+      assert.deepStrictEqual(err.details.required, ['name', 'price', 'manufacturer']);
+      assert.deepStrictEqual(err.details.fields, ['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus']);
+      return true;
+    }
+  );
+});
+
+test('title rows above the header, reordered Arabic columns', async () => {
   const m = await manufacturer();
   const report = await catalogService.importFromExcel(await xlsx([
     ['القائمة المركزية للأدوية'],
     ['تحديث ٢٠٢٦/٩'],
     [],
-    ['السعر', 'العملة', 'الشركة المصنعة', 'اسم المادة'],
-    ['١٬٥٠٠', 'ل.س', m, 'اموكسيسيلين كتالوج ٥٠٠'],
-    ['2.5', 'دولار', m, 'بنادول كتالوج'],
+    ['الشركة المصنعة', 'اسم المادة'],
+    [m, 'اموكسيسيلين كتالوج ٥٠٠'],
+    [m, 'بنادول كتالوج'],
   ]));
   assert.strictEqual(report.added, 2, JSON.stringify(report));
   assert.deepStrictEqual(report.errors, []);
-  assert.strictEqual(report.exchangeRateUsed, RATE);
-  assert.strictEqual((await itemNamed('اموكسيسيلين كتالوج ٥٠٠', m)).priceUsd, 15); // 1500 SYP / 100
-  assert.strictEqual((await itemNamed('بنادول كتالوج', m)).priceUsd, 2.5);
+  assert.ok(await itemNamed('اموكسيسيلين كتالوج ٥٠٠', m));
 });
 
-test('English header synonyms and the currency written in the price cell; no currency is a row error', async () => {
+test('English header synonyms; the one name column is the Arabic name', async () => {
   const m = await manufacturer();
   const report = await catalogService.importFromExcel(await xlsx([
-    ['Item Name', 'Manufacturer', 'Unit Price', 'Currency'],
-    ['Panadol Catalog EN', m, '$3', ''],
-    ['Voltaren Catalog EN', m, '12,000 S.P', ''],
-    ['Amoxil Catalog EN', m, '4', ''],
+    ['Item Name', 'Manufacturer', 'Category'],
+    ['Voltaren Catalog EN', m, ''],
   ]));
-  assert.strictEqual(report.added, 2);
-  assert.strictEqual(report.errors.length, 1);
-  assert.strictEqual(report.errors[0].code, 'MISSING_CURRENCY');
-  assert.strictEqual((await itemNamed('Voltaren Catalog EN', m)).priceUsd, 120);
-  // The one name column is the Arabic name, whatever it is written in; the
-  // import never sets the English name (a helper only an admin sets).
+  assert.strictEqual(report.added, 1, JSON.stringify(report));
+  // Whatever it is written in; the import never sets the English name (a
+  // search helper only an admin sets).
   const voltaren = await itemNamed('Voltaren Catalog EN', m);
   assert.strictEqual(voltaren.nameAr, 'Voltaren Catalog EN');
   assert.strictEqual(voltaren.nameEn, null);
-  assert.strictEqual(await itemNamed('Amoxil Catalog EN', m), null);
 });
 
-test('unrecognized headers ask for a mapping, which the next catalog import remembers', async () => {
+test('unrecognized headers ask for a mapping offering only the catalog fields; the next import remembers it', async () => {
   const m = await manufacturer();
-  const rows = (price) => [
-    ['الصنف المركزي', 'جهة الإنتاج', 'قيمة البيع', 'العملة'],
-    ['دواء بخريطة أعمدة', m, price, 'USD'],
+  const rows = [
+    ['الصنف المركزي', 'جهة الإنتاج', 'قيمة البيع'],
+    ['دواء بخريطة أعمدة', m, '5'],
   ];
   let details;
-  await assert.rejects(catalogService.importFromExcel(await xlsx(rows('5'))), (err) => {
+  await assert.rejects(catalogService.importFromExcel(await xlsx(rows)), (err) => {
     assert.strictEqual(err.code, 'IMPORT_COLUMNS_UNRECOGNIZED');
     details = err.details;
     return true;
   });
+  // The mapping dialog offers exactly these.
+  assert.deepStrictEqual(details.fields, ['name', 'manufacturer', 'category']);
+  assert.deepStrictEqual(details.required, ['name', 'manufacturer']);
+  // 'الصنف المركزي' contains the name synonym 'الصنف'; the company is what is missing.
+  assert.deepStrictEqual(details.missing, ['manufacturer']);
   const header = (text) => details.headers.find((h) => h.header === text).headerKey;
-  const mapping = JSON.stringify({
-    [header('الصنف المركزي')]: 'name',
-    [header('جهة الإنتاج')]: 'manufacturer',
-    [header('قيمة البيع')]: 'price',
-  });
 
-  const first = await catalogService.importFromExcel(await xlsx(rows('5')), { mapping });
+  // A price is not a catalog field, so mapping a column to it is refused.
+  await assert.rejects(
+    catalogService.importFromExcel(await xlsx(rows), { mapping: JSON.stringify({ [header('قيمة البيع')]: 'price' }) }),
+    (err) => err.code === 'INVALID_COLUMN_MAPPING'
+  );
+
+  const mapping = JSON.stringify({ [header('الصنف المركزي')]: 'name', [header('جهة الإنتاج')]: 'manufacturer' });
+  const first = await catalogService.importFromExcel(await xlsx(rows), { mapping });
   assert.strictEqual(first.added, 1);
   // Stored for the catalog import (no warehouse), not for any warehouse.
-  assert.strictEqual(await ImportColumnMapping.countDocuments({ warehouseId: null }), 3);
+  assert.strictEqual(await ImportColumnMapping.countDocuments({ warehouseId: null }), 2);
 
-  const again = await catalogService.importFromExcel(await xlsx(rows('6')));
-  assert.strictEqual(again.updated, 1);
-  assert.strictEqual((await itemNamed('دواء بخريطة أعمدة', m)).priceUsd, 6);
+  const again = await catalogService.importFromExcel(await xlsx(rows));
+  assert.strictEqual(again.unchanged, 1, JSON.stringify(again));
 });
 
 test("a warehouse's remembered mapping never applies to the catalog import", async () => {
   const m = await manufacturer();
   const warehouseId = new mongoose.Types.ObjectId();
   const file = () => xlsx([
-    ['اسم المادة', 'الشركة المصنعة', 'رقم غريب للسعر', 'العملة'],
-    ['دواء مخطط مستودع', m, '5', 'USD'],
+    ['اسم المادة', 'اسم المنتج من عند المستودع'],
+    ['دواء مخطط مستودع', m],
   ]);
-  const headerKey = require('../src/utils/normalizeText').normalizeText('رقم غريب للسعر');
-  await ImportColumnMapping.create({ warehouseId, headerKey, field: 'price' });
-  await assert.rejects(catalogService.importFromExcel(await file()), (err) => err.code === 'IMPORT_COLUMNS_UNRECOGNIZED');
+  await ImportColumnMapping.create({ warehouseId, headerKey: normalizeText('اسم المنتج من عند المستودع'), field: 'manufacturer' });
+  await assert.rejects(catalogService.importFromExcel(await file()), (err) => {
+    assert.strictEqual(err.code, 'IMPORT_COLUMNS_UNRECOGNIZED');
+    assert.deepStrictEqual(err.details.missing, ['manufacturer']);
+    return true;
+  });
+});
+
+test('a remembered catalog mapping to a field the catalog does not read is ignored', async () => {
+  const m = await manufacturer();
+  // As saved while the catalog import still read prices.
+  await ImportColumnMapping.create({ warehouseId: null, headerKey: normalizeText('سعر قديم محفوظ'), field: 'price' });
+  const report = await catalogService.importFromExcel(await xlsx([
+    ['اسم المادة', 'الشركة', 'سعر قديم محفوظ'],
+    ['دواء بخريطة قديمة', m, '7'],
+  ]));
+  assert.strictEqual(report.added, 1, JSON.stringify(report));
+  assert.strictEqual((await itemNamed('دواء بخريطة قديمة', m)).priceUsd, null);
 });
 
 test('a malformed mapping is a 400, not a guess', async () => {
@@ -140,63 +211,55 @@ test('a malformed mapping is a 400, not a guess', async () => {
   );
 });
 
-test('price 0 is accepted as a catalog price', async () => {
+test('the same medicine twice in one file becomes one catalog item', async () => {
   const m = await manufacturer();
   const report = await catalogService.importFromExcel(await xlsx([
-    ['اسم المادة', 'الشركة المصنعة', 'السعر', 'العملة'],
-    ['دواء مجاني كتالوج', m, '0', 'USD'],
-  ]));
-  assert.strictEqual(report.added, 1, JSON.stringify(report));
-  assert.strictEqual((await itemNamed('دواء مجاني كتالوج', m)).priceUsd, 0);
-});
-
-test('the same medicine twice in one file becomes one catalog item (the later row wins)', async () => {
-  const m = await manufacturer();
-  const report = await catalogService.importFromExcel(await xlsx([
-    ['اسم المادة', 'الشركة المصنعة', 'السعر', 'العملة'],
-    ['دواء مكرر كتالوج', m, '4', 'USD'],
-    ['دواء  مكرّر كتالوج', m, '5', 'USD'], // spacing and tashkeel differ - same identity
+    ['اسم المادة', 'الشركة المصنعة'],
+    ['دواء مكرر كتالوج', m],
+    ['دواء  مكرّر كتالوج', m], // spacing and tashkeel differ - same identity
   ]));
   assert.strictEqual(report.added, 1);
-  assert.strictEqual(report.updated, 1);
+  assert.strictEqual(report.unchanged, 1);
   const items = await ProductCatalog.find({ manufacturerAr: m }).lean();
   assert.strictEqual(items.length, 1);
-  assert.strictEqual(items[0].priceUsd, 5);
 });
 
-test('a bad bonus or an unknown unit does not block a catalog row', async () => {
+test('rows without a name or a company are errors', async () => {
   const m = await manufacturer();
   const report = await catalogService.importFromExcel(await xlsx([
-    ['اسم المادة', 'الشركة المصنعة', 'السعر', 'العملة', 'البونص', 'الوحدة'],
-    ['دواء ببونص غريب', m, '3', 'USD', 'كثير', 'دلو'],
-  ]));
-  assert.strictEqual(report.added, 1, JSON.stringify(report));
-  assert.deepStrictEqual(report.errors, []);
-});
-
-test('rows without a name or a readable price are errors', async () => {
-  const m = await manufacturer();
-  const report = await catalogService.importFromExcel(await xlsx([
-    ['اسم المادة', 'الشركة المصنعة', 'السعر', 'العملة'],
-    ['', m, '3', 'USD'],
-    ['دواء بسعر غير مقروء', m, 'غالي', 'USD'],
-    ['دواء سليم كتالوج', m, '3', 'USD'],
+    ['اسم المادة', 'الشركة المصنعة'],
+    ['', m],
+    ['دواء بلا شركة', ''],
+    ['دواء سليم كتالوج', m],
   ]));
   assert.strictEqual(report.added, 1);
-  assert.strictEqual(report.errors.length, 2);
+  assert.deepStrictEqual(report.errors.map((e) => e.code), ['MISSING_NAME', 'MISSING_MANUFACTURER']);
 });
 
-test('a withdrawn item is reported, never reactivated or repriced by a re-import', async () => {
+test('a withdrawn item is reported, never reactivated by a re-import', async () => {
   const m = await manufacturer();
-  const withdrawn = await ProductCatalog.create({ nameAr: 'دواء مسحوب كتالوج', manufacturerAr: m, priceUsd: 2, isActive: false });
+  const withdrawn = await ProductCatalog.create({ nameAr: 'دواء مسحوب كتالوج', manufacturerAr: m, isActive: false });
   const report = await catalogService.importFromExcel(await xlsx([
-    ['اسم المادة', 'الشركة المصنعة', 'السعر', 'العملة'],
-    ['دواء مسحوب كتالوج', m, '9', 'USD'],
+    ['اسم المادة', 'الشركة المصنعة'],
+    ['دواء مسحوب كتالوج', m],
   ]));
   assert.strictEqual(report.withdrawn.length, 1);
-  const after = await ProductCatalog.findById(withdrawn._id).lean();
-  assert.strictEqual(after.isActive, false);
-  assert.strictEqual(after.priceUsd, 2);
+  assert.strictEqual((await ProductCatalog.findById(withdrawn._id).lean()).isActive, false);
+});
+
+test('the admin template has the catalog columns only - no price', async () => {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await catalogService.generateTemplateBuffer());
+  const headers = workbook.worksheets[0].getRow(2).values.filter(Boolean);
+  assert.deepStrictEqual(headers, ['اسم الدواء', 'الشركة', 'الفئة']);
+  // And it imports as-is (its example rows), with no mapping step.
+  const m = await manufacturer();
+  const sheet = workbook.worksheets[0];
+  for (let r = 3; r <= sheet.rowCount; r += 1) {
+    if (sheet.getRow(r).getCell(2).value) sheet.getRow(r).getCell(2).value = m;
+  }
+  const report = await catalogService.importFromExcel({ buffer: await workbook.xlsx.writeBuffer(), originalname: 't.xlsx' });
+  assert.strictEqual(report.added, 3, JSON.stringify(report));
 });
 
 // --- categories (pre-merge review) --------------------------------------------
@@ -264,7 +327,7 @@ test('category: a re-import files an existing item under a known category; unkno
   ]));
   const header = ['اسم المادة', 'الشركة', 'السعر', 'العملة', 'الفئة'];
   let report = await catalogService.importFromExcel(await xlsx([header, ['دواء يعاد استيراده', m, '2', 'USD', 'صادات حيوية']]));
-  assert.strictEqual(report.updated, 1);
+  assert.strictEqual(report.updated, 1, JSON.stringify(report));
   assert.strictEqual(String((await itemNamed('دواء يعاد استيراده', m)).categoryId), String(category._id));
 
   report = await catalogService.importFromExcel(await xlsx([header, ['دواء يعاد استيراده', m, '3', 'USD', 'فئة مجهولة']]));

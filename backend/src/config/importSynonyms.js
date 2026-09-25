@@ -31,10 +31,30 @@ const FIELD_SYNONYMS = {
 
 const IMPORT_FIELDS = Object.keys(FIELD_SYNONYMS);
 
-// A file is only readable once these are known. `manufacturer` can also come
-// from the old template's company rows (a [bracketed] or yellow row above its
-// medicines) - see productCatalog.service.js's parser.
-const REQUIRED_FIELDS = ['name', 'price', 'manufacturer'];
+// What each import reads - `fields` it knows (a column naming any other field
+// is ignored) and `required` ones without which the file cannot be read.
+// `manufacturer` can also come from the old template's company rows (a
+// [bracketed] or yellow row above its medicines) - see productCatalog.service.js.
+//
+// They are two sets on purpose: a price only exists on a warehouse's own
+// product, so the admin's central catalog import has no price, currency, unit
+// or bonus - a file that has such columns imports with them ignored. (Both
+// imports once shared one required list, name + price + manufacturer, which
+// made the catalog import demand a price column.)
+const IMPORT_COLUMN_SETS = {
+  // The warehouse's price list: its products, prices, units and bonuses. The
+  // category is the catalog's, so a category column is ignored here.
+  warehouse: {
+    fields: ['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus'],
+    required: ['name', 'price', 'manufacturer'],
+  },
+  // The admin's central catalog: the medicines, their companies and, optionally,
+  // an existing category to file them under.
+  catalog: {
+    fields: ['name', 'manufacturer', 'category'],
+    required: ['name', 'manufacturer'],
+  },
+};
 
 const CURRENCY_SYNONYMS = {
   SYP: ['ل.س', 'ل س', 'ليرة', 'ليرة سورية', 'سوري', 'SYP', 'SP', 'S.P', 'LS', 'ل.س.'],
@@ -86,7 +106,7 @@ function currencyForText(text) {
 module.exports = {
   FIELD_SYNONYMS,
   IMPORT_FIELDS,
-  REQUIRED_FIELDS,
+  IMPORT_COLUMN_SETS,
   CURRENCY_SYNONYMS,
   fieldForHeader,
   currencyForText,

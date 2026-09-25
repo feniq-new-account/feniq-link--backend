@@ -3705,17 +3705,6 @@ a.adm-pill {
   margin-top: 6px;
 }
 
-.adm-import-conversion {
-  border: 1px solid var(--adm-border);
-  border-inline-start: 3px solid var(--adm-navy);
-  background: var(--adm-bg);
-  padding: 12px 14px;
-  margin-bottom: 18px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--adm-text);
-}
-
 .adm-import-errors {
   border: 1px solid var(--adm-border);
   margin-bottom: 20px;
