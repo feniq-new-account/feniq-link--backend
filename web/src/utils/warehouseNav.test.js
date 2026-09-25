@@ -32,6 +32,9 @@ const LEGACY_DESTINATIONS = [
   '/warehouse/settings',
 ];
 
+// Destinations added since, each a new page rather than a moved one.
+const ADDED_DESTINATIONS = ['/warehouse/discount-codes'];
+
 function allDestinations() {
   return WAREHOUSE_NAV.flatMap((item) =>
     item.children ? item.children.map((child) => child.path) : [item.path]
@@ -75,7 +78,7 @@ describe('the warehouse sidebar', () => {
   });
 
   it('has not invented, moved or dropped a destination', () => {
-    expect([...allDestinations()].sort()).toEqual([...LEGACY_DESTINATIONS].sort());
+    expect([...allDestinations()].sort()).toEqual([...LEGACY_DESTINATIONS, ...ADDED_DESTINATIONS].sort());
   });
 
   it('gives every entry a unique id', () => {

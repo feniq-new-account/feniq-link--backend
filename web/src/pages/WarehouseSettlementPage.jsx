@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { formatSyp } from '../utils/currency';
+import {
+  businessDateInputValue,
+  formatBusinessDate,
+  startOfBusinessMonthInputValue,
+} from '../utils/businessDate';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 
 // Money-Flow V2. What the warehouse sold in a period, what came back, what the
@@ -16,16 +21,6 @@ import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 // charged (not what was collected in cash - that is the account balance's job),
 // COMMISSION is what the platform is owed, NET is what the warehouse keeps.
 
-function toDateInputValue(value) {
-  if (!value) return '';
-  return new Date(value).toISOString().slice(0, 10);
-}
-
-function startOfThisMonth() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1);
-}
-
 function SummaryTile({ label, value, hint, tone }) {
   return (
     <div className={`wh-settlement-tile${tone ? ` is-${tone}` : ''}`}>
@@ -38,8 +33,8 @@ function SummaryTile({ label, value, hint, tone }) {
 
 export function WarehouseSettlementPage() {
   const { t } = useTranslation();
-  const [from, setFrom] = useState(toDateInputValue(startOfThisMonth()));
-  const [to, setTo] = useState(toDateInputValue(new Date()));
+  const [from, setFrom] = useState(startOfBusinessMonthInputValue());
+  const [to, setTo] = useState(businessDateInputValue());
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -116,6 +111,15 @@ export function WarehouseSettlementPage() {
               }
               tone="cost"
             />
+            {/* Only once an admin discount code has been used on a delivered
+                order: the platform pays the warehouse the code's discount. */}
+            {(totals.grossCompensationSyp ?? 0) > 0 && (
+              <SummaryTile
+                label={t('settlement.compensation')}
+                value={`+ ${formatSyp(totals.netCompensationSyp)}`}
+                hint={t('settlement.compensationHint')}
+              />
+            )}
             <SummaryTile
               label={t('settlement.net')}
               value={formatSyp(totals.warehouseNetSyp)}
@@ -138,6 +142,7 @@ export function WarehouseSettlementPage() {
                     <th className="wh-num">{t('settlement.orderSales')}</th>
                     <th className="wh-num">{t('settlement.orderCredited')}</th>
                     <th className="wh-num">{t('settlement.orderCommission')}</th>
+                    <th className="wh-num">{t('settlement.orderCompensation')}</th>
                     <th className="wh-num">{t('settlement.orderNet')}</th>
                   </tr>
                 </thead>
@@ -155,7 +160,7 @@ export function WarehouseSettlementPage() {
                         </div>
                       </td>
                       <td className="wh-num">
-                        {row.deliveredAt ? new Date(row.deliveredAt).toLocaleDateString() : '—'}
+                        {row.deliveredAt ? formatBusinessDate(row.deliveredAt) : '—'}
                       </td>
                       <td className="wh-num">{formatSyp(row.salesSyp)}</td>
                       <td className="wh-num">
@@ -163,6 +168,16 @@ export function WarehouseSettlementPage() {
                       </td>
                       <td className="wh-num">
                         {`- ${formatSyp(row.commissionSyp - row.commissionClawbackSyp)}`}
+                      </td>
+                      <td className="wh-num">
+                        {row.platformCompensationSyp > 0 ? (
+                          <>
+                            {`+ ${formatSyp(row.netCompensationSyp)}`}
+                            <div className="wh-table-sub">{row.discountCode}</div>
+                          </>
+                        ) : (
+                          '—'
+                        )}
                       </td>
                       <td className="wh-num wh-table-total">{formatSyp(row.warehouseNetSyp)}</td>
                     </tr>

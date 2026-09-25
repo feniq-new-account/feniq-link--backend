@@ -898,11 +898,32 @@ export function WarehouseOrderDetailPage() {
                   </span>
                 </div>
               )}
+              {/* The pharmacy's discount code - taken off last, after every
+                  discount above. Who pays for it is said right under it. */}
+              {order.discountCode && (
+                <div className="wh-summary-row wh-summary-discount">
+                  <span>
+                    {t('orderDetail.discountCodeLabel', { code: order.discountCode.code })}
+                    <span className="wh-table-sub" style={{ display: 'block' }}>
+                      {t(`orderDetail.discountCodeFundedBy_${order.discountCode.fundedBy}`)}
+                    </span>
+                  </span>
+                  <span className="wh-num">− {formatSyp(order.discountCode.discountSyp)}</span>
+                </div>
+              )}
               <div className="wh-summary-divider" />
               <div className="wh-summary-total">
                 <span>{t('orderDetail.finalPriceColumn')}</span>
                 <span className="wh-num">{formatSyp(order.finalPrice)}</span>
               </div>
+              {/* An admin code: the platform pays this warehouse the code's
+                  discount, so it nets what it would have with no code. */}
+              {order.platformCompensationSyp > 0 && (
+                <div className="wh-summary-row">
+                  <span>{t('orderDetail.platformCompensationLabel')}</span>
+                  <span className="wh-num">+ {formatSyp(order.platformCompensationSyp)}</span>
+                </div>
+              )}
               {/* Money-Flow V2: what this order actually nets the warehouse.
                   V1 stored a commission on every order and showed it nowhere,
                   so a warehouse could not tell what a package deal really

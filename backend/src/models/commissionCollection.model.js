@@ -18,6 +18,13 @@ const { Schema, model } = require('mongoose');
 // If the platform ever needs a real warehouse↔platform ledger - running
 // balances, statements, reversals that compose - this model is the migration's
 // input, not its competitor.
+//
+// Money also flows the OTHER way since discount codes: on an admin code the
+// platform owes the warehouse the whole discount (settlement.service.js's
+// compensation). That is netted against the commission owed, and when the
+// platform owes more than it collects it pays the warehouse - recorded here
+// with direction 'to_warehouse' (a payout). Same row, same history, same
+// reversal; only the direction of the cash differs.
 const commissionCollectionSchema = new Schema(
   {
     warehouseId: { type: Schema.Types.ObjectId, ref: 'Warehouse', required: true },
@@ -36,6 +43,16 @@ const commissionCollectionSchema = new Schema(
     // Whole lira, like every settlement figure. Not necessarily the full
     // amount owed - a partial payment is a normal thing.
     amountSyp: { type: Number, required: true, min: 0 },
+
+    // 'from_warehouse': the warehouse paid the platform (a collection - every
+    // row written before payouts existed). 'to_warehouse': the platform paid
+    // the warehouse (a payout, for discount-code compensation). The amount is
+    // always a positive magnitude; this says which way it went.
+    direction: {
+      type: String,
+      enum: ['from_warehouse', 'to_warehouse'],
+      default: 'from_warehouse',
+    },
 
     // Same vocabulary as a pharmacy payment (payment.model.js's METHODS) so
     // the two read alike; reconciliation detail only, never changes a figure.

@@ -24,6 +24,7 @@ import { WarehouseComplaintDetailPage } from './WarehouseComplaintDetailPage';
 import { WarehouseReviewsPage } from './WarehouseReviewsPage';
 import { WarehouseSettingsPage } from './WarehouseSettingsPage';
 import { WarehouseDiscountsPage } from './WarehouseDiscountsPage';
+import { WarehouseDiscountCodesPage } from './WarehouseDiscountCodesPage';
 import { WarehouseDebtsPage } from './WarehouseDebtsPage';
 import { WarehouseSettlementPage } from './WarehouseSettlementPage';
 import { WarehouseImportResultsPage, WarehouseImportsPage } from './WarehouseImportResultsPage';
@@ -160,6 +161,7 @@ export function WarehousePanel() {
               />
             ))}
             <Route path="/warehouse/discounts" element={<WarehouseDiscountsPage />} />
+            <Route path="/warehouse/discount-codes" element={<WarehouseDiscountCodesPage />} />
             <Route path="/warehouse/debts" element={<WarehouseDebtsPage />} />
             <Route path="/warehouse/settlement" element={<WarehouseSettlementPage />} />
             <Route path="/warehouse/returns" element={<WarehouseReturnsPage />} />

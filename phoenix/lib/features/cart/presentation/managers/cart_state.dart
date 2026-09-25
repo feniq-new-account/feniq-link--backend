@@ -1,4 +1,5 @@
 import 'package:feniq/features/cart/data/models/cart_item.dart';
+import 'package:feniq/features/cart/data/models/cart_quote.dart';
 
 class CartState {
   const CartState({
@@ -15,6 +16,12 @@ class CartState {
     this.errorMessage,
     this.errorCode,
     this.errorDetails,
+    this.discountCode,
+    this.quote,
+    this.isQuoting = false,
+    this.isQuoteStale = false,
+    this.quoteErrorCode,
+    this.discountCodeErrorCode,
   });
 
   final String? warehouseId;
@@ -64,6 +71,36 @@ class CartState {
   final String? errorMessage;
   final String? errorCode;
   final Map<String, dynamic>? errorDetails;
+
+  // What the cart costs, as the server last quoted it (CartCubit, via the
+  // cart quote endpoint): subtotal, platform discount, the discount code's
+  // amount, total. The cart screen shows these figures - never a local sum -
+  // so the pharmacist always sees what the order will actually cost.
+  //
+  // Every edit that changes what the cart costs makes the quote stale
+  // ([isQuoteStale], in the same emit as the edit); while the cart screen is
+  // showing, a fresh quote follows once the edits settle ([isQuoting] up
+  // meanwhile). A failed quote leaves [quoteErrorCode] and a retry.
+  final CartQuote? quote;
+  final bool isQuoting;
+  final bool isQuoteStale;
+  final String? quoteErrorCode;
+
+  // The discount code applied to this cart (as the server spells it). One code
+  // per order. It goes to the server with the order, so applying or removing
+  // one is an edit like any other and drops pendingIdempotencyKey.
+  final String? discountCode;
+
+  // Why the code field's last apply was refused, or why an applied code came
+  // off (DISCOUNT_CODE_EXPIRED...), shown under the field. Separate from
+  // errorCode above, which drives the submit dialogs, and from quoteErrorCode.
+  final String? discountCodeErrorCode;
+
+  bool get hasDiscountCode => discountCode != null;
+
+  /// Whether the figures on screen are the server's figures for this exact
+  /// cart.
+  bool get hasCurrentQuote => quote != null && !isQuoteStale && !isQuoting;
 
   num get subtotalUsd => items.fold<num>(0, (sum, item) => sum + item.lineTotalUsd);
 
@@ -125,7 +162,19 @@ class CartState {
   bool get isAboveMaximum => maxOrderAmountUsd != null && subtotalUsd > maxOrderAmountUsd!;
   num get amountToReachMinimum => isBelowMinimum ? minOrderAmountUsd - subtotalUsd : 0;
   num get amountOverMaximum => isAboveMaximum ? subtotalUsd - maxOrderAmountUsd! : 0;
-  bool get canSubmit => !isEmpty && !isBelowMinimum && !isAboveMaximum;
+  bool get canSubmit =>
+      !isEmpty &&
+      !isBelowMinimum &&
+      !isAboveMaximum &&
+      // Never while a quote is in the air, nor with a code whose amount is
+      // unknown.
+      !isQuoting &&
+      (discountCode == null || hasCurrentQuote);
+
+  /// What the cart screen's submit button follows: everything [canSubmit]
+  /// asks, and the server's figures for this exact cart on screen - the
+  /// pharmacist confirms the total the order will actually cost.
+  bool get isReadyToSubmit => canSubmit && hasCurrentQuote;
   /// The cart badge: how many LINES the cart holds, products and packages
   /// alike - a package counts once however many products are inside it, and
   /// however many copies of it were taken. Deliberately not the sum of the
@@ -151,6 +200,16 @@ class CartState {
     String? errorCode,
     Map<String, dynamic>? errorDetails,
     bool clearError = false,
+    CartQuote? quote,
+    bool clearQuote = false,
+    bool? isQuoting,
+    bool? isQuoteStale,
+    String? quoteErrorCode,
+    bool clearQuoteError = false,
+    String? discountCode,
+    bool clearDiscountCode = false,
+    String? discountCodeErrorCode,
+    bool clearDiscountCodeError = false,
   }) {
     return CartState(
       warehouseId: warehouseId ?? this.warehouseId,
@@ -168,6 +227,14 @@ class CartState {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       errorCode: clearError ? null : (errorCode ?? this.errorCode),
       errorDetails: clearError ? null : (errorDetails ?? this.errorDetails),
+      quote: clearQuote ? null : (quote ?? this.quote),
+      isQuoting: isQuoting ?? this.isQuoting,
+      isQuoteStale: isQuoteStale ?? this.isQuoteStale,
+      quoteErrorCode: clearQuoteError ? null : (quoteErrorCode ?? this.quoteErrorCode),
+      discountCode: clearDiscountCode ? null : (discountCode ?? this.discountCode),
+      discountCodeErrorCode: clearDiscountCodeError
+          ? null
+          : (discountCodeErrorCode ?? this.discountCodeErrorCode),
     );
   }
 }

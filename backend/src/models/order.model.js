@@ -68,6 +68,40 @@ const orderPackageGroupSchema = new Schema({
   totalPriceUsd: { type: Number, required: true, min: 0 },
 });
 
+// The discount code this order used, frozen at order time (the code itself can
+// be edited, stopped or expire afterwards - none of that may reach an order
+// the pharmacy already placed). The discount comes off LAST, after every other
+// discount: `preCodeSyp` is the order total it was taken from, and a warehouse
+// edit of a pending order re-applies these same terms to the new total
+// (warehouseOrder.service.js) rather than reading the live code.
+//
+// `platformCompensationSyp` is what the platform owes the warehouse for this
+// order: the whole discount on an ADMIN code (the platform pays for it, so the
+// warehouse is left as if there were no code), 0 on the warehouse's own code.
+// It is read by the settlement report (settlement.service.js), never posted to
+// the pharmacy ledger.
+//
+// `releasedAt` marks the use as handed back (the order was cancelled or fully
+// returned) - set once, by a compare-and-swap, so it can never release twice.
+const orderDiscountCodeSchema = new Schema(
+  {
+    codeId: { type: Schema.Types.ObjectId, ref: 'DiscountCode', required: true },
+    code: { type: String, required: true },
+    ownerRole: { type: String, enum: ['warehouse', 'admin'], required: true },
+    fundedBy: { type: String, enum: ['warehouse', 'platform'], required: true },
+    type: { type: String, enum: ['percentage', 'fixed'], required: true },
+    value: { type: Number, required: true },
+    revision: { type: Number, default: 1 },
+    preCodeSyp: { type: Number, required: true },
+    discountSyp: { type: Number, required: true, min: 0 },
+    discountUsd: { type: Number, default: null },
+    platformCompensationSyp: { type: Number, default: 0, min: 0 },
+    releasedAt: { type: Date, default: null },
+    releaseReason: { type: String, enum: ['cancelled', 'full_return', null], default: null },
+  },
+  { _id: false }
+);
+
 const orderSchema = new Schema(
   {
     // Sequential, generated via the counters collection - see counter.model.js.
@@ -101,9 +135,10 @@ const orderSchema = new Schema(
     // separate precisely so an order edit can't silently wipe it.
     discountAmount: { type: Number, required: true },
     commissionAmount: { type: Number, required: true },
-    // finalPrice = totalPrice - discountAmount - advertisementDiscountAmount.
+    // finalPrice = totalPrice - discountAmount - advertisementDiscountAmount
+    //              - discountCode.discountSyp (0 without a code).
     // This is the amount the pharmacy owes, and the amount the delivery posts
-    // to the ledger as a `charge`.
+    // to the ledger as a `charge`. Never below 0.
     finalPrice: { type: Number, required: true },
     // Money-Flow V2: the same figure in USD, frozen at creation through
     // fx.rate above. Reports sum THIS rather than dividing finalPrice by
@@ -140,6 +175,8 @@ const orderSchema = new Schema(
     // THIS rather than the groups, so their arithmetic is untouched by the
     // group array above.
     advertisementDiscountAmount: { type: Number, default: 0 },
+    // null on an order placed without a discount code.
+    discountCode: { type: orderDiscountCodeSchema, default: null },
     notes: { type: String, default: null },
     // Opt-in proof-of-delivery, decided PER ORDER. Seeded at creation from the
     // warehouse's own default (warehouse.requireDeliverySealPhoto), then owned

@@ -40,6 +40,12 @@ function chargeMetadata(order) {
     subtotalSyp: order.totalPrice,
     platformDiscountSyp: order.discountAmount,
     advertisementDiscountSyp: order.advertisementDiscountAmount ?? 0,
+    // The discount code, taken off last - and, on an admin code, what the
+    // platform owes the warehouse for this order (settlement.service.js).
+    discountCodeSyp: order.discountCode?.discountSyp ?? 0,
+    discountCode: order.discountCode?.code ?? null,
+    discountCodeFundedBy: order.discountCode?.fundedBy ?? null,
+    platformCompensationSyp: order.discountCode?.platformCompensationSyp ?? 0,
     commissionSyp: order.commissionAmount,
     finalAmountSyp: order.finalPrice,
     // Kept for the statements and disputes that already read it. Approximate:

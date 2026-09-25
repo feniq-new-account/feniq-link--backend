@@ -90,6 +90,31 @@ class MyReviewModel {
   );
 }
 
+/// The discount code an order used, as frozen on it at order time
+/// (order.viewmodel.js). Taken off last, after every other discount.
+class OrderDiscountCode {
+  const OrderDiscountCode({
+    required this.code,
+    required this.type,
+    required this.value,
+    required this.discountSyp,
+  });
+
+  final String code;
+
+  /// 'percentage' or 'fixed'.
+  final String type;
+  final num value;
+  final num discountSyp;
+
+  factory OrderDiscountCode.fromJson(Map<String, dynamic> json) => OrderDiscountCode(
+    code: json['code'] as String,
+    type: json['type'] as String,
+    value: json['value'] as num,
+    discountSyp: (json['discountSyp'] as num?) ?? 0,
+  );
+}
+
 class OrderModel {
   const OrderModel({
     required this.id,
@@ -99,6 +124,7 @@ class OrderModel {
     required this.discountAmount,
     required this.commissionAmount,
     this.advertisementDiscountAmount = 0,
+    this.discountCode,
     required this.finalPrice,
     this.notes,
     this.cancelReason,
@@ -126,6 +152,8 @@ class OrderModel {
   // (which is the platform's rate-derived cut). 0 on a normal order and on
   // every order placed before packages existed.
   final num advertisementDiscountAmount;
+  // The discount code this order used, or null. Its own line on the invoice.
+  final OrderDiscountCode? discountCode;
   final num finalPrice;
   final String? notes;
   final String? cancelReason;
@@ -200,6 +228,7 @@ class OrderModel {
     discountAmount: discountAmount,
     commissionAmount: commissionAmount,
     advertisementDiscountAmount: advertisementDiscountAmount,
+    discountCode: discountCode,
     finalPrice: finalPrice,
     notes: notes,
     cancelReason: cancelReason,
@@ -227,6 +256,9 @@ class OrderModel {
     // Absent on responses from a server that predates packages - defaults to
     // 0, which renders exactly as it did before.
     advertisementDiscountAmount: (json['advertisementDiscountAmount'] as num?) ?? 0,
+    discountCode: json['discountCode'] is Map<String, dynamic>
+        ? OrderDiscountCode.fromJson(json['discountCode'] as Map<String, dynamic>)
+        : null,
     finalPrice: json['finalPrice'] as num,
     notes: json['notes'] as String?,
     cancelReason: json['cancelReason'] as String?,

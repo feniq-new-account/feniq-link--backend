@@ -1683,4 +1683,82 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseOffersTitle => 'Warehouse offers';
+
+  @override
+  String get discountCodeFieldLabel => 'Discount code';
+
+  @override
+  String get discountCodeHint => 'Enter a discount code';
+
+  @override
+  String get discountCodeApply => 'Apply';
+
+  @override
+  String get discountCodeRemove => 'Remove';
+
+  @override
+  String discountCodeApplied(String code) {
+    return 'Code $code applied';
+  }
+
+  @override
+  String discountCodeLine(String code) {
+    return 'Discount code ($code)';
+  }
+
+  @override
+  String get discountCodeUpdating => 'Updating the discount';
+
+  @override
+  String get discountCodeChangedTitle => 'Discount code changed';
+
+  @override
+  String discountCodeRemovedMessage(String reason) {
+    return '$reason The code was removed from your cart - check the total, then submit again.';
+  }
+
+  @override
+  String discountCodeEditedMessage(String code, String discount, String total) {
+    return 'The discount code $code changed. The discount is now $discount and the total $total.';
+  }
+
+  @override
+  String get errorDiscountCodeInvalid => 'This discount code is not valid.';
+
+  @override
+  String get errorDiscountCodeNotStarted =>
+      'This discount code is not active yet.';
+
+  @override
+  String get errorDiscountCodeExpired => 'This discount code has expired.';
+
+  @override
+  String get errorDiscountCodeLimitReached =>
+      'This discount code has reached its usage limit.';
+
+  @override
+  String get errorDiscountCodePharmacyLimitReached =>
+      'You have already used this code the maximum number of times.';
+
+  @override
+  String get errorDiscountCodeNotForPharmacy =>
+      'This code is not for your pharmacy.';
+
+  @override
+  String get errorDiscountCodeNotForWarehouse =>
+      'This code does not work on orders to this warehouse.';
+
+  @override
+  String get errorDiscountCodePendingApproval =>
+      'This discount code is still waiting for approval.';
+
+  @override
+  String get errorDiscountCodeStopped => 'This discount code has been stopped.';
+
+  @override
+  String get errorDiscountCodeEdited =>
+      'The terms of this discount code changed.';
+
+  @override
+  String get cartQuoteUnavailable => 'Couldn\'t work out the total.';
 }

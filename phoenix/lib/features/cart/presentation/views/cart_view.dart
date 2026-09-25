@@ -19,6 +19,7 @@ import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_state.dart';
 import 'package:feniq/features/cart/presentation/utils/cart_error_translator.dart';
 import 'package:feniq/features/cart/presentation/widgets/cart_item_tile.dart';
+import 'package:feniq/features/cart/presentation/widgets/discount_code_field.dart';
 import 'package:feniq/features/catalog/data/models/manufacturers_route_args.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/routes/route_names.dart';
@@ -32,26 +33,33 @@ class CartView extends StatefulWidget {
 
 class _CartViewState extends State<CartView> {
   late final TextEditingController _notesController;
+  // Held for dispose, where the context can no longer look it up.
+  late final CartCubit _cartCubit;
 
   @override
   void initState() {
     super.initState();
-    _notesController = TextEditingController(
-      text: context.read<CartCubit>().state.notes,
-    );
+    _cartCubit = context.read<CartCubit>();
+    _notesController = TextEditingController(text: _cartCubit.state.notes);
     // The limits gate the submit button, and the warehouse can change them
     // while a cart sits open - so they are re-read every time this screen is
     // opened, not just when the cart first pointed at the warehouse. Nothing
     // waits on it: the cart renders from what it already has and the limit
     // line picks up the new figures when they land.
+    //
+    // The summary shows the server's figures for this cart (the quote), so the
+    // screen asks for them as it opens - unless the ones on hand are already
+    // current - and the cubit keeps them current while the screen shows.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<CartCubit>().refreshWarehouseLimits();
+      _cartCubit.refreshWarehouseLimits();
+      _cartCubit.attachQuoteView();
     });
   }
 
   @override
   void dispose() {
+    _cartCubit.detachQuoteView();
     _notesController.dispose();
     super.dispose();
   }
@@ -219,31 +227,78 @@ class _CartViewState extends State<CartView> {
   }
 
   // After a RATE_CHANGED refusal: the rate the pharmacist agreed to had
-  // already moved on the server. The refusal carries both rates, so the totals
-  // below are computed without waiting for anything; the rate itself is
-  // re-read in the background so every other screen stops showing the old one.
-  // Nothing is resent until the action here is tapped - "Close" sends nothing
-  // and the submit button brings this dialog back.
-  Future<void> _confirmRateChange(Map<String, dynamic> details) async {
+  // already moved on the server. The cubit has re-quoted the cart at the new
+  // rate, so both totals here are the server's - the new one and the one that
+  // was on screen, each with the platform discount and any code discount in
+  // it. The rate itself is re-read in the background so every other screen
+  // stops showing the old one. Nothing is resent until the action here is
+  // tapped - "Close" sends nothing and the submit button brings the ordinary
+  // confirmation back, over the new figures now on screen.
+  Future<void> _confirmRateChange(CartState state) async {
     final l10n = context.l10n;
     final cubit = context.read<CartCubit>();
+    final details = state.errorDetails ?? const {};
     final currentRate = (details['currentUsdToSyp'] as num?)?.toDouble();
-    final oldRate = (details['rateUsed'] as num?)?.toDouble();
     if (currentRate == null || currentRate <= 0) return;
 
     // The rate this cart would now be converted at, everywhere in the app.
     unawaited(context.read<ExchangeRateCubit>().load());
 
-    final payable = cubit.state.payableUsd;
+    final newTotal = details['currentTotalSyp'] as num?;
+    final oldTotal = details['previousTotalSyp'] as num?;
+    if (newTotal == null || oldTotal == null) {
+      // No fresh quote (the network): nothing honest to put in the dialog.
+      // The summary shows the retry; the pharmacist submits again from there.
+      await AppDialog.show(
+        context: context,
+        title: l10n.errorRateChangedTitle,
+        content: l10n.cartQuoteUnavailable,
+      );
+      return;
+    }
     await AppDialog.show(
       context: context,
       title: l10n.errorRateChangedTitle,
       content: '${l10n.rateChangedTotals(
-        formatMoneyFromUsd(payable, currentRate, l10n.currencySuffix),
-        formatMoneyFromUsd(payable, oldRate, l10n.currencySuffix),
+        formatSyp(newTotal, l10n.currencySuffix),
+        formatSyp(oldTotal, l10n.currencySuffix),
       )}\n\n${l10n.rateChangedConfirmHint}',
       actionLabel: l10n.submitOrderButton,
       onAction: () => _submit(cubit, rateUsed: currentRate),
+    );
+  }
+
+  // After a DISCOUNT_CODE_CHANGED refusal - nothing was ordered. Either the
+  // code still works on new terms (EDITED: the cubit already re-quoted it, so
+  // this names the new discount and total and can submit at once), or it no
+  // longer works and has come off the cart (the reason says why, and the
+  // pharmacist looks at the total without it before submitting again).
+  Future<void> _showDiscountCodeChanged(CartState state) async {
+    final l10n = context.l10n;
+    final cubit = context.read<CartCubit>();
+    final reason = state.errorDetails?['reason'] as String?;
+    final quote = state.quote;
+
+    if (reason == 'DISCOUNT_CODE_EDITED' && quote != null && state.discountCode != null) {
+      await AppDialog.show(
+        context: context,
+        title: l10n.discountCodeChangedTitle,
+        content: l10n.discountCodeEditedMessage(
+          state.discountCode!,
+          formatSyp(quote.discountSyp, l10n.currencySuffix),
+          formatSyp(quote.finalSyp, l10n.currencySuffix),
+        ),
+        actionLabel: l10n.submitOrderButton,
+        onAction: () => _submit(cubit),
+      );
+      return;
+    }
+    await AppDialog.show(
+      context: context,
+      title: l10n.discountCodeChangedTitle,
+      content: l10n.discountCodeRemovedMessage(
+        translateErrorCode(l10n, reason, l10n.errorDiscountCodeInvalid),
+      ),
     );
   }
 
@@ -258,12 +313,13 @@ class _CartViewState extends State<CartView> {
     // which is why the screen used to never actually reach the navigation
     // below (mounted went false mid-flight).
     //
-    // The rate goes with the request: the totals on this screen were converted
-    // with it, and the server refuses the order rather than billing a total
+    // The rate goes with the request: the rate the totals on this screen were
+    // converted with - the quote's, since the summary shows the server's
+    // figures - and the server refuses the order rather than billing a total
     // the pharmacist never saw (order.service.js).
     final order = await cubit.submitOrder(
       acceptPriceChanges: acceptPriceChanges,
-      rateUsed: rateUsed ?? context.read<ExchangeRateCubit>().state.usdToSyp,
+      rateUsed: rateUsed ?? cubit.state.quote?.usdToSyp ?? context.read<ExchangeRateCubit>().state.usdToSyp,
     );
     if (!mounted) return;
 
@@ -332,7 +388,12 @@ class _CartViewState extends State<CartView> {
           // A rate that moved gets the same treatment as a price that moved:
           // the new figure and a fresh confirmation, not a dead-end error.
           if (state.errorCode == 'RATE_CHANGED' && state.errorDetails != null) {
-            _confirmRateChange(state.errorDetails!);
+            _confirmRateChange(state);
+            return;
+          }
+
+          if (state.errorCode == 'DISCOUNT_CODE_CHANGED') {
+            _showDiscountCodeChanged(state);
             return;
           }
 
@@ -428,6 +489,10 @@ class _CartViewState extends State<CartView> {
                         ),
                       ),
                       const SizedBox(height: AppSizes.spacingMedium),
+                      // One code per order. Its amount shows in the summary
+                      // below, quoted by the server.
+                      const DiscountCodeField(),
+                      const SizedBox(height: AppSizes.spacingMedium),
                       AppTextField(
                         label: l10n.notesLabel,
                         controller: _notesController,
@@ -465,36 +530,10 @@ class _CartViewState extends State<CartView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              l10n.subtotalLabel,
-                              style: context.textTheme.titleMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Flexible(
-                            child: Builder(
-                              builder: (context) {
-                                final usdToSyp = context
-                                    .watch<ExchangeRateCubit>()
-                                    .state
-                                    .usdToSyp;
-                                return Text(
-                                  formatMoneySyp(state.subtotalSypAt(usdToSyp), l10n.currencySuffix),
-                                  textAlign: TextAlign.end,
-                                  style: context.textTheme.titleLarge?.copyWith(
-                                    color: AppColors.primaryOf(context),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                      // The server's figures for this cart - subtotal,
+                      // platform discount, any code discount, total - so
+                      // what is on screen is what the order will cost.
+                      _QuoteSummary(state: state),
                       // Section: this warehouse's order-size limits. Shown
                       // against the subtotal above - the same figure the
                       // backend checks (order.service.js) - so the hint, the
@@ -572,7 +611,9 @@ class _CartViewState extends State<CartView> {
                         // Blocked locally so the pharmacist sees why before
                         // spending a round trip; order.service.js enforces
                         // the same rule regardless (double validation).
-                        onPressed: state.canSubmit ? _confirmSubmit : null,
+                        // ...and only once the server's figures for this
+                        // exact cart are on screen (CartState.isReadyToSubmit).
+                        onPressed: state.isReadyToSubmit ? _confirmSubmit : null,
                       ),
                     ],
                   ),
@@ -582,6 +623,116 @@ class _CartViewState extends State<CartView> {
           );
         },
       ),
+    );
+  }
+}
+
+// The cart summary: every figure is the server's quote (the cart quote
+// endpoint), so the lines add up to exactly what the order will cost - the
+// platform discount, and a discount code after it. While a re-quote is in the
+// air the last figures stay, with a small indicator; with no current figures
+// (the screen just opened, or a quote failed) the subtotal is the cart's own
+// sum, the rest read as a dash, and a failed quote offers a retry - the submit
+// button waits for real figures.
+class _QuoteSummary extends StatelessWidget {
+  const _QuoteSummary({required this.state});
+
+  final CartState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final usdToSyp = context.watch<ExchangeRateCubit>().state.usdToSyp;
+    // Stale figures stay up only while their replacement is on its way.
+    final quote = state.quote != null && (!state.isQuoteStale || state.isQuoting) ? state.quote : null;
+    final muted = context.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondaryOf(context));
+    final positive = context.textTheme.bodyMedium?.copyWith(
+      color: AppColors.secondaryOf(context),
+      fontWeight: AppTextTheme.semiBold,
+    );
+
+    Widget row(String label, String amount, {TextStyle? style, Key? key}) => Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.spacingXSmall),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: style ?? muted, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Text(amount, key: key, style: style ?? muted),
+        ],
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        row(
+          l10n.subtotalLabel,
+          quote != null
+              ? formatSyp(quote.subtotalSyp, l10n.currencySuffix)
+              : formatMoneySyp(state.subtotalSypAt(usdToSyp), l10n.currencySuffix),
+          key: const Key('cartSubtotal'),
+        ),
+        if (quote != null && quote.platformDiscountSyp > 0)
+          row(
+            l10n.discountLabel,
+            '- ${formatSyp(quote.platformDiscountSyp, l10n.currencySuffix)}',
+            key: const Key('cartPlatformDiscount'),
+          ),
+        if (state.hasDiscountCode)
+          row(
+            l10n.discountCodeLine(state.discountCode!),
+            quote != null && quote.hasCode ? '- ${formatSyp(quote.discountSyp, l10n.currencySuffix)}' : kMoneyUnavailable,
+            style: positive,
+            key: const Key('discountCodeAmount'),
+          ),
+        const SizedBox(height: AppSizes.spacingXSmall),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.invoiceTotalLabel,
+                style: context.textTheme.titleMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (state.isQuoting) ...[
+              SizedBox(
+                width: AppSizes.iconSizeSmall,
+                height: AppSizes.iconSizeSmall,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: AppColors.textSecondaryOf(context),
+                  semanticsLabel: l10n.discountCodeUpdating,
+                ),
+              ),
+              const SizedBox(width: AppSizes.spacingSmall),
+            ],
+            Text(
+              quote != null ? formatSyp(quote.finalSyp, l10n.currencySuffix) : kMoneyUnavailable,
+              key: const Key('cartTotal'),
+              textAlign: TextAlign.end,
+              style: context.textTheme.titleLarge?.copyWith(color: AppColors.primaryOf(context)),
+            ),
+          ],
+        ),
+        if (state.quoteErrorCode != null && !state.isQuoting)
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.cartQuoteUnavailable,
+                  key: const Key('cartQuoteUnavailable'),
+                  style: context.textTheme.bodySmall?.copyWith(color: AppColors.errorOf(context)),
+                ),
+              ),
+              TextButton(
+                key: const Key('cartQuoteRetry'),
+                onPressed: context.read<CartCubit>().refreshQuote,
+                child: Text(l10n.retryButton),
+              ),
+            ],
+          ),
+      ],
     );
   }
 }

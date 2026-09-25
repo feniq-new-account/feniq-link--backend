@@ -8,6 +8,7 @@ const { valueReturn } = require('./returnCredit.service');
 const { runInTransaction } = require('../utils/transaction');
 const ledger = require('./ledger.service');
 const financialAudit = require('./financialAudit.service');
+const discountCodes = require('./discountCode.service');
 const { emitToWarehouse, EVENTS } = require('../realtime');
 
 const WAREHOUSE_RETURNS_DEFAULT_LIMIT = 15;
@@ -211,6 +212,20 @@ async function approveReturn(returnId, warehouseId, userId) {
     // updateOne would leave `claimed` stale in memory.
     claimed.creditEntryId = entry._id;
     await claimed.save({ session });
+
+    // A FULL return undoes the order, so a discount code it used is handed
+    // back - the pharmacy can use it again - in the same transaction as the
+    // credit. (A partial return keeps the use: the code was used on the goods
+    // kept.) The admin code's compensation is undone by the clawback frozen in
+    // the valuation above, which the settlement report reads.
+    if (valuation.breakdown.isFinalReturn) {
+      const order = await Order.findById(returnRequest.orderId)
+        .select('pharmacyId discountCode')
+        .session(session);
+      if (order && order.discountCode) {
+        await discountCodes.releaseUse(order, 'full_return', session);
+      }
+    }
 
     await financialAudit.record(
       {

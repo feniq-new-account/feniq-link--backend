@@ -45,11 +45,15 @@ const recordCollection = asyncHandler(async (req, res) => {
     method: req.body.method,
     reference: req.body.reference,
     note: req.body.note,
+    // 'from_warehouse' (default): the warehouse paid its commission.
+    // 'to_warehouse': the platform paid the warehouse its discount-code
+    // compensation.
+    direction: req.body.direction,
     actorId: req.user._id,
   });
   res.status(201).json({
     success: true,
-    message: 'Collection recorded.',
+    message: collection.direction === 'to_warehouse' ? 'Payout recorded.' : 'Collection recorded.',
     ...viewModel.toCollectionResponse(collection),
   });
 });

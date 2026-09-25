@@ -6,6 +6,7 @@ const { ApiError } = require('../utils/ApiError');
 const Pharmacy = require('../models/pharmacy.model');
 const orderService = require('../services/order.service');
 const orderViewModel = require('../viewmodels/order.viewmodel');
+const discountCodeViewModel = require('../viewmodels/discountCode.viewmodel');
 const { verifyImageMagicBytes } = require('../middlewares/upload.middleware');
 const { uploadImage, deleteImageByUrl } = require('../services/upload.service');
 const { parseCursorQuery, parseNumericCursor, paginationMeta } = require('../utils/pagination');
@@ -108,6 +109,26 @@ function parseIdempotencyKey(value) {
   return value;
 }
 
+// The discount code the cart applied (shape only - the service decides whether
+// it works) and the revision the cart previewed it at. An empty code is no
+// code at all.
+function parseDiscountCode(value) {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value !== 'string' || value.length > 32) {
+    throw ApiError.badRequest('This discount code is not valid.', undefined, 'DISCOUNT_CODE_INVALID');
+  }
+  return value.trim() || null;
+}
+
+function parseDiscountCodeRevision(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const revision = Number(value);
+  if (!Number.isInteger(revision) || revision < 1) {
+    throw ApiError.badRequest('Invalid discount code revision.', undefined, 'INVALID_DISCOUNT_CODE_REVISION');
+  }
+  return revision;
+}
+
 const create = asyncHandler(async (req, res) => {
   const { warehouseId, notes, advertisementId } = req.body;
   const idempotencyKey = parseIdempotencyKey(req.body.idempotencyKey);
@@ -151,6 +172,8 @@ const create = asyncHandler(async (req, res) => {
     // for this endpoint and the panel's alike. An app build that sends none
     // is not checked - see createOrder.
     rateUsed: req.body.rateUsed,
+    discountCode: parseDiscountCode(req.body.discountCode),
+    discountCodeRevision: parseDiscountCodeRevision(req.body.discountCodeRevision),
   });
 
   // A replayed idempotent request gets 200 + the header rather than a second
@@ -282,5 +305,40 @@ const reorder = asyncHandler(async (req, res) => {
   res.json({ success: true, ...orderViewModel.toReorderResponse(preparation, rate?.usdToSyp ?? null) });
 });
 
+// POST /discount-codes/preview - the cart's quote. The same cart payload an
+// order takes (warehouseId, items, packages), plus the discount code when one
+// is applied (`code` is optional: the app quotes every cart, so the pharmacist
+// always sees the real total). Nothing is claimed or written: the order itself
+// claims a code's use and re-checks it (the revision in this answer is what
+// the cart sends back with it).
+const previewDiscountCode = asyncHandler(async (req, res) => {
+  const { warehouseId } = req.body;
+  if (typeof warehouseId !== 'string' || !mongoose.Types.ObjectId.isValid(warehouseId)) {
+    throw ApiError.badRequest('Invalid warehouse.', undefined, 'INVALID_WAREHOUSE');
+  }
+  const discountCode = parseDiscountCode(req.body.code);
+  const items = validateItems(req.body.items);
+  const packages = validatePackages(req.body.packages);
+  const pharmacy = await loadPharmacyOrThrow(req.user._id);
+
+  const quote = await orderService.quoteOrder({
+    pharmacyId: pharmacy._id,
+    warehouseId,
+    items,
+    packages,
+    discountCode,
+  });
+  res.json({ success: true, ...discountCodeViewModel.toPreviewResponse(quote) });
+});
+
 module.exports = {
-  listReturnable, savingsSummary, create, list, getOne, cancel, confirmDelivery, reorder };
+  listReturnable,
+  savingsSummary,
+  create,
+  list,
+  getOne,
+  cancel,
+  confirmDelivery,
+  reorder,
+  previewDiscountCode,
+};

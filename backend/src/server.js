@@ -6,6 +6,7 @@ const { startScheduledRefresh } = require('./services/exchangeRate.service');
 const { supportsTransactions } = require('./utils/transaction');
 const { startLedgerVerifier } = require('./services/ledgerVerifier.service');
 const { ensureFinancialIndexes } = require('./services/ledger.service');
+const { ensureDiscountCodeIndexes } = require('./services/discountCode.service');
 const { initRealtime } = require('./realtime');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
@@ -61,6 +62,9 @@ async function start() {
       // Built before the first request rather than lazily under one - see
       // ledger.service.js's ensureFinancialIndexes.
       await ensureFinancialIndexes();
+      // The discount-code usage counters are written inside the order
+      // transaction too - same reasoning.
+      await ensureDiscountCodeIndexes();
       startLedgerVerifier();
     } else {
       // eslint-disable-next-line no-console

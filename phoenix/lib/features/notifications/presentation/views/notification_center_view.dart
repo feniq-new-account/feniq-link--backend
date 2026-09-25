@@ -12,6 +12,7 @@ import 'package:feniq/core/widgets/empty_view.dart';
 import 'package:feniq/features/notifications/data/models/notification_model.dart';
 import 'package:feniq/features/notifications/presentation/managers/notification_cubit.dart';
 import 'package:feniq/features/notifications/presentation/managers/notification_state.dart';
+import 'package:feniq/features/notifications/presentation/utils/discount_code_deep_link.dart';
 import 'package:feniq/routes/route_names.dart';
 
 /// The in-app inbox. Reads the single app-wide [NotificationCubit]; the FCM
@@ -47,6 +48,12 @@ class _NotificationCenterViewState extends State<NotificationCenterView> {
       context.pushNamed(
         RouteNames.complaintDetail,
         pathParameters: {'complaintId': notification.relatedComplaintId!},
+      );
+    } else if (notification.isDiscountCode) {
+      openDiscountCodeTarget(
+        context,
+        warehouseId: notification.relatedWarehouseId,
+        warehouseName: notification.warehouseName,
       );
     }
   }
@@ -122,6 +129,8 @@ class _NotificationTile extends StatelessWidget {
         return Icons.campaign_outlined;
       case NotificationType.complaint:
         return Icons.support_agent_outlined;
+      case NotificationType.discountCode:
+        return Icons.confirmation_number_outlined;
       case NotificationType.unknown:
         return Icons.notifications_outlined;
     }

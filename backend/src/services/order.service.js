@@ -33,6 +33,9 @@ const {
   stackedDiscountSyp,
   computeFinalPrice,
 } = require('./manufacturerDiscount.service');
+// discountCode.service never requires this file back either.
+const discountCodes = require('./discountCode.service');
+const { codeDiscountSyp } = discountCodes;
 // advertisement.service depends on warehouse/productCatalog only - it never
 // requires this file back, so there is no cycle here.
 const { loadActiveAdvertisementOrThrow, isAdvertisementAvailable } = require('./advertisement.service');
@@ -115,27 +118,54 @@ async function nextOrderNumber(session = null) {
 // The two together give the warehouse a predictable cut off its advertised
 // price: discountRate + commissionRate x (1 - discountRate), i.e. 4.96% at the
 // default 4% + 1%.
+//
+// Discount codes (discountCode.service.js) come off LAST, after every other
+// discount - offer and manufacturer (already in the line prices), the package
+// discount and the platform discount. `discountCodeTerms` is the code's frozen
+// { type, value, fundedBy }, or null:
+//
+//   preCode     = subtotal - package discount - platform discount
+//   code        = min(preCode, round(preCode x %))  or  min(preCode, fixed)
+//   finalPrice  = preCode - code                     (what the pharmacy owes)
+//
+// Who pays for the code decides what the warehouse earns. A warehouse's own
+// code is its own discount, like the platform discount above: it earns
+// finalPrice and pays commission on that. An ADMIN code is paid by the
+// platform, which compensates the warehouse for the whole of it - the
+// warehouse earns exactly what it would have with no code, and pays exactly
+// the same commission (owner's decision: commission follows what the
+// warehouse actually earns).
 function rollUpOrderMoney({
   subtotalSyp,
   advertisementDiscountSypAmount = 0,
   discountRate = 0,
   commissionRate = 0,
+  discountCodeTerms = null,
 }) {
   // What the pharmacy owes before the platform's own discount comes off.
   const discountBaseSyp = subtotalSyp - advertisementDiscountSypAmount;
   const discountAmount = Math.round((discountBaseSyp * discountRate) / 100);
-  const finalPrice = discountBaseSyp - discountAmount;
-  const commissionAmount = Math.round((finalPrice * commissionRate) / 100);
+  const preCodeSyp = discountBaseSyp - discountAmount;
+  const discountCodeSyp = codeDiscountSyp(discountCodeTerms, preCodeSyp);
+  const finalPrice = preCodeSyp - discountCodeSyp;
+  const platformCompensationSyp = discountCodeTerms?.fundedBy === 'platform' ? discountCodeSyp : 0;
+  // What the warehouse earns on the order: the pharmacy's payment plus
+  // whatever the platform owes it for an admin code.
+  const warehouseRevenueSyp = finalPrice + platformCompensationSyp;
+  const commissionAmount = Math.round((warehouseRevenueSyp * commissionRate) / 100);
 
   return {
     discountAmount,
     advertisementDiscountAmount: advertisementDiscountSypAmount,
+    preCodeSyp,
+    discountCodeSyp,
+    platformCompensationSyp,
     finalPrice,
     commissionAmount,
     // What the warehouse actually receives once the platform takes its cut.
     // Not stored on the order - derived wherever it is shown, and summed by
     // the settlement report.
-    warehouseNetSyp: finalPrice - commissionAmount,
+    warehouseNetSyp: warehouseRevenueSyp - commissionAmount,
   };
 }
 
@@ -273,7 +303,7 @@ function compareStrings(a, b) {
 // The "order-v1:" prefix versions the format: changing what goes in here must
 // change the prefix too, or orders stored under the old format would start
 // refusing their own retries.
-function computeOrderFingerprint({ warehouseId, items, packageRequests, notes }) {
+function computeOrderFingerprint({ warehouseId, items, packageRequests, notes, discountCode = null }) {
   const lines = mergeDuplicateItems(Array.isArray(items) ? items : [])
     .map((item) => [
       String(item.productId),
@@ -294,12 +324,22 @@ function computeOrderFingerprint({ warehouseId, items, packageRequests, notes })
   // Order written under the old inline version still replays correctly: the
   // scope stays 'order-v1', and payment.service.js's fingerprints already use
   // this same helper.
-  return requestFingerprint('order-v1', {
+  const payload = {
     warehouseId: String(warehouseId),
     items: lines,
     packages: packageLines,
     notes: trimmedNotes,
-  });
+  };
+  // A discount code changes the order, so it is part of what a key stands
+  // for - but only when there is one. An order without a code hashes exactly
+  // as it did before codes existed, which is why the 'order-v1' prefix did not
+  // have to move. Normalized the way the code is looked up (trimmed, upper
+  // case), so "abc234" and "ABC234 " are the same request.
+  const normalizedCode = typeof discountCode === 'string' && discountCode.trim()
+    ? discountCode.trim().toUpperCase()
+    : null;
+  if (normalizedCode) payload.discountCode = normalizedCode;
+  return requestFingerprint('order-v1', payload);
 }
 
 // `existing` is the order a key already produced. The same request again is a
@@ -328,81 +368,26 @@ function replayOrRejectIdempotentOrder(existing, fingerprint) {
   return existing;
 }
 
-async function createOrder({
-  userId,
-  pharmacyId,
-  warehouseId,
-  items,
-  notes,
-  advertisementId = null,
-  packages = null,
-  idempotencyKey = null,
-  // The exchange rate the client converted the displayed total with, when it
-  // sent one. Never part of the idempotency fingerprint: it does not change
-  // which order this is, and a retry after the rate moved must still replay
-  // the order it already placed rather than be refused as a different one.
-  rateUsed = null,
-}) {
-  // Money-Flow V2 idempotency. A retried submission (flaky network, a
-  // double-tap on "Place order") must not become a second order the pharmacy
-  // is later billed for. Checked here before any work, and enforced for real
-  // by the unique partial index on (pharmacyId, idempotencyKey) inside the
-  // transaction below - this read only makes the common case cheap.
-  //
-  // The packages are normalized first because the fingerprint covers them.
-  const packageRequests = normalizePackageRequests({ packages, advertisementId });
-  const idempotencyFingerprint = idempotencyKey
-    ? computeOrderFingerprint({ warehouseId, items, packageRequests, notes })
-    : null;
-  if (idempotencyKey) {
-    const existing = await Order.findOne({ pharmacyId, idempotencyKey });
-    if (existing) return replayOrRejectIdempotentOrder(existing, idempotencyFingerprint);
-  }
-
-  // Defense in depth: order.controller.js's validateItems already rejects an
-  // empty/invalid cart before this is ever called from the API, and a
-  // return's own items are validated non-empty at creation time (the other
-  // caller, approveReturn in warehouseReturn.service.js) - but this is the
-  // one choke point every order write passes through, so it re-checks rather
-  // than trusting every future caller to remember to.
-  //
-  // A cart holding nothing but packages has no loose items at all and is a
-  // perfectly good order - the package's own products become lines below.
-  const plainItems = Array.isArray(items) ? items : [];
-  if (plainItems.length === 0 && packageRequests.length === 0) {
-    throw ApiError.badRequest('Your cart is empty.', undefined, 'CART_EMPTY');
-  }
-  const invalidItem = plainItems.find(
-    (item) => !Number.isInteger(item.quantity) || item.quantity <= 0
-  );
-  if (invalidItem) {
-    throw ApiError.badRequest('Invalid quantity in cart.', undefined, 'INVALID_QUANTITY');
-  }
-
-  const available = await isWarehouseAvailable(warehouseId);
-  if (!available) {
-    throw ApiError.notFound('Warehouse not found.', 'WAREHOUSE_NOT_FOUND');
-  }
-
-  const warehouse = await Warehouse.findById(warehouseId);
-
-  // Section: packages. The client names a package by id and says how many
-  // copies it wants - nothing else. Every product in it, every price and the
-  // package total are read here, server-side, so a tampered request can't buy
-  // at its own numbers.
-  //
-  // Loaded BEFORE the items are merged, because a legacy client's cart holds
-  // duplicates of the package's own products that have to come off first.
+// The packages a request names, loaded and checked. `lenient` is the cart
+// preview's mode: a package that could not be ordered is simply left out of the
+// quote (checkout will refuse it with the proper error) instead of refusing
+// the preview itself.
+async function loadRequestedPackages(packageRequests, warehouseId, { lenient = false } = {}) {
   const advertisements = [];
-  // Collected rather than thrown on the first one, so a cart holding two
-  // paused packages learns about both in a single round trip.
   const unavailableAdvertisementIds = [];
   for (const request of packageRequests) {
     // Throws ADVERTISEMENT_UNAVAILABLE unless it is approved AND inside its
     // date window right now - the same single gate the cart-prefill endpoint
     // used, so what the pharmacist saw and what checkout accepts agree.
-    const advertisement = await loadActiveAdvertisementOrThrow(request.advertisementId);
+    let advertisement;
+    try {
+      advertisement = await loadActiveAdvertisementOrThrow(request.advertisementId);
+    } catch (err) {
+      if (lenient) continue;
+      throw err;
+    }
     if (String(advertisement.warehouseId) !== String(warehouseId)) {
+      if (lenient) continue;
       throw ApiError.badRequest(
         'This advertisement belongs to a different warehouse.',
         undefined,
@@ -422,119 +407,26 @@ async function createOrder({
       fromLegacyField: request.fromLegacyField,
     });
   }
+  return { advertisements, unavailableAdvertisementIds };
+}
 
-  // Refused before any product is read or anything is priced. The ids travel
-  // in `details` so the app can flag exactly those cart lines and offer to
-  // remove them - the same "server sends ids, the client already knows the
-  // names" contract STOCK_CHECK_FAILED follows.
-  if (unavailableAdvertisementIds.length > 0) {
-    throw ApiError.badRequest(
-      'This package is no longer available.',
-      { advertisementIds: unavailableAdvertisementIds },
-      'PACKAGE_UNAVAILABLE'
-    );
-  }
-
-  const merged = deductLegacyPackageItems(mergeDuplicateItems(plainItems), advertisements);
-  const productIds = merged.map((item) => item.productId);
-
-  const packageProductIds = advertisements.flatMap(({ advertisement }) =>
-    advertisement.items.map((item) => item.productId.toString())
-  );
-
-  // Section 14 Part 2: resolved here (read-only - these docs are never
-  // saved, only their values get snapshotted into OrderItem below) so the
-  // order's own productNameAr/productNameEn are correct whether the product
-  // is catalog-linked or legacy.
+// Section 14 Part 2: resolved here (read-only - these docs are never saved,
+// only their values get snapshotted into OrderItem) so the order's own
+// productNameAr/productNameEn are correct whether the product is
+// catalog-linked or legacy.
+async function loadOrderProducts(productIds, warehouseId) {
   const products = await Product.find({
-    _id: { $in: [...new Set([...productIds, ...packageProductIds])] },
+    _id: { $in: [...new Set(productIds)] },
     warehouseId,
     isActive: true,
   }).populate('masterProductId');
   products.forEach(applyResolvedIdentity);
-  const productById = new Map(products.map((p) => [p._id.toString(), p]));
+  return new Map(products.map((p) => [p._id.toString(), p]));
+}
 
-  // Each problem is a structured { code, productId, ...params } rather than a
-  // pre-rendered sentence - the Flutter client already knows every cart
-  // item's localized name (it's the one that put them there), so it only
-  // needs the code + numeric params to render its own Arabic/English
-  // message. `fallbackText` below is only for the English `message` field
-  // (logs, and any client that hasn't adopted the code-based translation yet).
-  const problems = [];
-  const fallbackText = [];
-  for (const item of merged) {
-    const product = productById.get(item.productId);
-    if (!product) {
-      problems.push({ code: 'PRODUCT_NOT_FOUND', productId: item.productId });
-      fallbackText.push('One of the requested products is no longer available from this warehouse.');
-      continue;
-    }
-    if (!product.isAvailable) {
-      problems.push({ code: 'PRODUCT_UNAVAILABLE', productId: item.productId });
-      fallbackText.push(`${product.nameEn} is currently unavailable.`);
-    }
-  }
-
-  if (problems.length > 0) {
-    throw ApiError.badRequest(fallbackText.join(' '), { problems }, 'STOCK_CHECK_FAILED');
-  }
-
-  // Every advertised product must still be one of this warehouse's own live
-  // products. `productById` was built from
-  // { _id: {$in}, warehouseId, isActive: true }, so membership plus
-  // isAvailable is the whole check - no extra query. A package is
-  // all-or-nothing: one missing product and the whole thing is refused,
-  // rather than quietly shipping a partial package at the package price.
-  for (const { advertisement } of advertisements) {
-    for (const item of advertisement.items) {
-      const product = productById.get(item.productId.toString());
-      if (!product || !product.isAvailable) {
-        throw ApiError.badRequest(
-          'A product in this advertisement is no longer available.',
-          undefined,
-          'ADVERTISEMENT_PRODUCT_UNAVAILABLE'
-        );
-      }
-    }
-  }
-
-  // Section: USD-first catalog pricing - product.price is USD, but orders/
-  // invoices stay SYP (locked in at purchase time, same as any real
-  // invoice). The live rate is fetched once here and applied to every line
-  // below, rather than per-item, so a single order is never priced against
-  // two different rates. No rate at all (API never configured, no admin
-  // manual entry) means there's nothing to charge in SYP - fail clearly
-  // rather than order at a made-up rate.
-  //
-  // `rateUsed` is the rate the app converted with to show the pharmacist a
-  // total in lira. The order is priced in USD either way, so a stale rate
-  // never changes what is ordered - but it does change the figure they
-  // agreed to, and the PRICE_CHANGED check below compares USD prices, so it
-  // catches none of that. The same assertion the web panel uses does:
-  // 409 RATE_CHANGED with { rateUsed, currentUsdToSyp }, and the app asks
-  // for a fresh confirmation at the new rate.
-  //
-  // `required: false` on purpose, unlike the panel: an installed app build
-  // that predates this field must keep ordering (it cannot be reloaded the
-  // way a browser tab can), and approveReturn builds its order server-side
-  // with no rate of its own. Both simply aren't checked. The assertion hands
-  // back the very rate row getRate() would have, so a checked order reads the
-  // rate once, not twice.
-  const rate = (await assertRateUsedIsCurrent(rateUsed, { required: false })) ?? (await getRate());
-  if (!rate) {
-    throw ApiError.badRequest(
-      'Exchange rate is not available yet - orders cannot be priced.',
-      undefined,
-      'EXCHANGE_RATE_UNAVAILABLE'
-    );
-  }
-  const usdToSyp = rate.usdToSyp;
-  // Frozen onto the order below. Captured ONCE for the whole order, so a
-  // single order is never priced against two different rates, and never
-  // re-derived afterwards.
-  const fx = await captureFxSnapshot();
-
-  const now = new Date();
+// The live offers and the warehouse's manufacturer discounts the lines are
+// priced with.
+async function loadPricingContext(warehouseId, productIds, now) {
   const [offers, manufacturerDiscountByName] = await Promise.all([
     Offer.find({
       warehouseId,
@@ -550,113 +442,22 @@ async function createOrder({
   // The one deterministic "offer for this product" (offer.service.js) - never
   // last-one-wins over an unsorted query.
   const offerByProductId = offerMapFor(offers);
+  return { offerByProductId, manufacturerDiscountByName };
+}
 
-  // Section 7/8 (price half of the same guarantee the availability check
-  // above gives): the cart snapshots a unit price when an item is added and
-  // nothing refreshes it, so a warehouse editing a price in the meantime used
-  // to mean the pharmacist saw one number and was billed another, with no
-  // signal at all. Every line that told us what it was showing is compared
-  // against what it would actually be charged, and the whole order is
-  // rejected if any of them moved - same shape as STOCK_CHECK_FAILED, so the
-  // client renders it through the same per-item path.
-  //
-  // Deliberately NOT a repricing: the server's number still wins, this only
-  // decides whether to charge silently or ask first. Resubmitting with the
-  // refreshed price is what confirms it.
-  //
-  // Only loose lines are checked. A package's own lines never are: the client
-  // never quoted a per-unit price for them (it showed one package price, and
-  // the package is named by id), so there is nothing to compare against.
-  // Lines that sent no price at all (an older app build, or approveReturn's
-  // internally-built items) skip it too.
-  //
-  // assertRateUsedIsCurrent above already threw RATE_CHANGED before we ever
-  // get here, so today the two never surface together - a considered choice,
-  // not an oversight: merging them into one combined dialog was evaluated and
-  // rejected. The cost (restructuring this function so both checks run and
-  // report before either throws, then teaching every client - Flutter and
-  // web - to render a combined confirmation) outweighs the benefit (avoiding
-  // a second round trip in the rare case both happen to have moved at once,
-  // with no financial risk either way: the server price always wins
-  // regardless of which dialog the pharmacist sees first), and a partial fix
-  // would not even cover every path (approveReturn's server-built orders
-  // carry no rateUsed to check against). Revisit only if the two really do
-  // start colliding often enough in practice to justify it.
-  const priceProblems = [];
-  const priceFallbackText = [];
-  for (const item of merged) {
-    if (item.displayedUnitPriceUsd === null) continue;
-
-    const product = productById.get(item.productId);
-    const offer = offerByProductId.get(item.productId);
-    const manufacturerDiscountPercentage =
-      discountPercentageFor(manufacturerDiscountByName, product);
-    const currentPriceUsd = computeDiscountedPriceUsd(
-      product.price,
-      offer?.discountPercentage,
-      manufacturerDiscountPercentage
-    );
-
-    // Half a cent: both sides are already rounded to two decimals by
-    // computeDiscountedPriceUsd, so anything below this is float noise from
-    // the JSON round-trip rather than a real price change.
-    if (Math.abs(currentPriceUsd - item.displayedUnitPriceUsd) > 0.005) {
-      priceProblems.push({
-        code: 'PRICE_CHANGED',
-        productId: item.productId,
-        displayedPriceUsd: item.displayedUnitPriceUsd,
-        currentPriceUsd,
-        // Additive (catalog overhaul Phase 7): the lira price this order would
-        // charge, from the same function, at the rate it is priced at - so the
-        // app shows the repriced line exactly.
-        currentPriceSyp: computeFinalPrice({
-          priceUsd: product.price,
-          offerDiscountPercentage: offer?.discountPercentage,
-          manufacturerDiscountPercentage,
-          usdToSyp,
-        }).finalSyp,
-        priceRate: usdToSyp,
-        // The undiscounted unit price, for the struck-through figure.
-        priceUsd: product.price,
-        offerDiscountPercentage: offer?.discountPercentage ?? null,
-        manufacturerDiscountPercentage: manufacturerDiscountPercentage ?? null,
-      });
-      priceFallbackText.push(
-        `${product.nameEn} is now $${currentPriceUsd} (was $${item.displayedUnitPriceUsd}).`
-      );
-    }
-  }
-
-  if (priceProblems.length > 0) {
-    throw ApiError.badRequest(
-      priceFallbackText.join(' '),
-      { problems: priceProblems },
-      'PRICE_CHANGED'
-    );
-  }
-
-  // Catalog overhaul Phase 8: the bonus half of the same guarantee. A line
-  // that says which bonus tiers the cart was showing is refused if the
-  // product's bonus has changed since (BONUS_CHANGED, the current tiers
-  // returned) - the pharmacist confirms the new terms, exactly as for a price.
-  // A line that sent none (an older app build, approveReturn) skips it.
-  const bonusProblems = [];
-  for (const item of merged) {
-    if (item.displayedBonuses === null || item.displayedBonuses === undefined) continue;
-    const product = productById.get(item.productId);
-    const currentBonuses = (product.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free }));
-    if (!sameBonus(item.displayedBonuses, currentBonuses)) {
-      bonusProblems.push({ code: 'BONUS_CHANGED', productId: item.productId, currentBonuses });
-    }
-  }
-  if (bonusProblems.length > 0) {
-    throw ApiError.badRequest(
-      'The bonus on some products has changed.',
-      { problems: bonusProblems },
-      'BONUS_CHANGED'
-    );
-  }
-
+// The pricing half of an order, shared by createOrder and the cart's discount
+// code preview (quoteOrder) so the preview can never quote a different total
+// from the one the order is then charged. Pure: everything it reads was loaded
+// by the caller. Returns the OrderItem data, the package groups and the
+// subtotals; the order-level roll-up (rollUpOrderMoney) is the caller's.
+function priceOrderLines({
+  merged,
+  advertisements,
+  productById,
+  offerByProductId,
+  manufacturerDiscountByName,
+  usdToSyp,
+}) {
   let totalPrice = 0;
   // Accumulated natively in USD rather than back-converted from the SYP
   // figures below (same reasoning as savingsUsd) - this is the number the
@@ -804,6 +605,327 @@ async function createOrder({
     subtotalUsd += advertisement.totalPriceUsd * copies;
   }
 
+  return { orderItemsData, packageGroups, totalPrice, advertisementDiscountAmount, subtotalUsd };
+}
+
+async function createOrder({
+  userId,
+  pharmacyId,
+  warehouseId,
+  items,
+  notes,
+  advertisementId = null,
+  packages = null,
+  idempotencyKey = null,
+  // The exchange rate the client converted the displayed total with, when it
+  // sent one. Never part of the idempotency fingerprint: it does not change
+  // which order this is, and a retry after the rate moved must still replay
+  // the order it already placed rather than be refused as a different one.
+  rateUsed = null,
+  // The discount code the pharmacist applied, as typed, and the revision the
+  // cart previewed it at (POST /discount-codes/preview). With a revision, a
+  // code that stopped working - or whose amount changed - since the preview
+  // is DISCOUNT_CODE_CHANGED, like RATE_CHANGED for the rate. The code is part
+  // of the idempotency fingerprint (it changes the order); the revision is not.
+  discountCode = null,
+  discountCodeRevision = null,
+}) {
+  // Money-Flow V2 idempotency. A retried submission (flaky network, a
+  // double-tap on "Place order") must not become a second order the pharmacy
+  // is later billed for. Checked here before any work, and enforced for real
+  // by the unique partial index on (pharmacyId, idempotencyKey) inside the
+  // transaction below - this read only makes the common case cheap.
+  //
+  // The packages are normalized first because the fingerprint covers them.
+  const packageRequests = normalizePackageRequests({ packages, advertisementId });
+  const idempotencyFingerprint = idempotencyKey
+    ? computeOrderFingerprint({ warehouseId, items, packageRequests, notes, discountCode })
+    : null;
+  if (idempotencyKey) {
+    const existing = await Order.findOne({ pharmacyId, idempotencyKey });
+    if (existing) return replayOrRejectIdempotentOrder(existing, idempotencyFingerprint);
+  }
+
+  // Defense in depth: order.controller.js's validateItems already rejects an
+  // empty/invalid cart before this is ever called from the API, and a
+  // return's own items are validated non-empty at creation time (the other
+  // caller, approveReturn in warehouseReturn.service.js) - but this is the
+  // one choke point every order write passes through, so it re-checks rather
+  // than trusting every future caller to remember to.
+  //
+  // A cart holding nothing but packages has no loose items at all and is a
+  // perfectly good order - the package's own products become lines below.
+  const plainItems = Array.isArray(items) ? items : [];
+  if (plainItems.length === 0 && packageRequests.length === 0) {
+    throw ApiError.badRequest('Your cart is empty.', undefined, 'CART_EMPTY');
+  }
+  const invalidItem = plainItems.find(
+    (item) => !Number.isInteger(item.quantity) || item.quantity <= 0
+  );
+  if (invalidItem) {
+    throw ApiError.badRequest('Invalid quantity in cart.', undefined, 'INVALID_QUANTITY');
+  }
+
+  const available = await isWarehouseAvailable(warehouseId);
+  if (!available) {
+    throw ApiError.notFound('Warehouse not found.', 'WAREHOUSE_NOT_FOUND');
+  }
+
+  const warehouse = await Warehouse.findById(warehouseId);
+
+  // Section: packages. The client names a package by id and says how many
+  // copies it wants - nothing else. Every product in it, every price and the
+  // package total are read here, server-side, so a tampered request can't buy
+  // at its own numbers.
+  //
+  // Loaded BEFORE the items are merged, because a legacy client's cart holds
+  // duplicates of the package's own products that have to come off first.
+  // Collected rather than thrown on the first one, so a cart holding two
+  // paused packages learns about both in a single round trip.
+  const { advertisements, unavailableAdvertisementIds } = await loadRequestedPackages(
+    packageRequests,
+    warehouseId
+  );
+
+  // Refused before any product is read or anything is priced. The ids travel
+  // in `details` so the app can flag exactly those cart lines and offer to
+  // remove them - the same "server sends ids, the client already knows the
+  // names" contract STOCK_CHECK_FAILED follows.
+  if (unavailableAdvertisementIds.length > 0) {
+    throw ApiError.badRequest(
+      'This package is no longer available.',
+      { advertisementIds: unavailableAdvertisementIds },
+      'PACKAGE_UNAVAILABLE'
+    );
+  }
+
+  const merged = deductLegacyPackageItems(mergeDuplicateItems(plainItems), advertisements);
+  const productIds = merged.map((item) => item.productId);
+
+  const packageProductIds = advertisements.flatMap(({ advertisement }) =>
+    advertisement.items.map((item) => item.productId.toString())
+  );
+
+  const productById = await loadOrderProducts([...productIds, ...packageProductIds], warehouseId);
+
+  // Each problem is a structured { code, productId, ...params } rather than a
+  // pre-rendered sentence - the Flutter client already knows every cart
+  // item's localized name (it's the one that put them there), so it only
+  // needs the code + numeric params to render its own Arabic/English
+  // message. `fallbackText` below is only for the English `message` field
+  // (logs, and any client that hasn't adopted the code-based translation yet).
+  const problems = [];
+  const fallbackText = [];
+  for (const item of merged) {
+    const product = productById.get(item.productId);
+    if (!product) {
+      problems.push({ code: 'PRODUCT_NOT_FOUND', productId: item.productId });
+      fallbackText.push('One of the requested products is no longer available from this warehouse.');
+      continue;
+    }
+    if (!product.isAvailable) {
+      problems.push({ code: 'PRODUCT_UNAVAILABLE', productId: item.productId });
+      fallbackText.push(`${product.nameEn} is currently unavailable.`);
+    }
+  }
+
+  if (problems.length > 0) {
+    throw ApiError.badRequest(fallbackText.join(' '), { problems }, 'STOCK_CHECK_FAILED');
+  }
+
+  // Every advertised product must still be one of this warehouse's own live
+  // products. `productById` was built from
+  // { _id: {$in}, warehouseId, isActive: true }, so membership plus
+  // isAvailable is the whole check - no extra query. A package is
+  // all-or-nothing: one missing product and the whole thing is refused,
+  // rather than quietly shipping a partial package at the package price.
+  for (const { advertisement } of advertisements) {
+    for (const item of advertisement.items) {
+      const product = productById.get(item.productId.toString());
+      if (!product || !product.isAvailable) {
+        throw ApiError.badRequest(
+          'A product in this advertisement is no longer available.',
+          undefined,
+          'ADVERTISEMENT_PRODUCT_UNAVAILABLE'
+        );
+      }
+    }
+  }
+
+  // Section: USD-first catalog pricing - product.price is USD, but orders/
+  // invoices stay SYP (locked in at purchase time, same as any real
+  // invoice). The live rate is fetched once here and applied to every line
+  // below, rather than per-item, so a single order is never priced against
+  // two different rates. No rate at all (API never configured, no admin
+  // manual entry) means there's nothing to charge in SYP - fail clearly
+  // rather than order at a made-up rate.
+  //
+  // `rateUsed` is the rate the app converted with to show the pharmacist a
+  // total in lira. The order is priced in USD either way, so a stale rate
+  // never changes what is ordered - but it does change the figure they
+  // agreed to, and the PRICE_CHANGED check below compares USD prices, so it
+  // catches none of that. The same assertion the web panel uses does:
+  // 409 RATE_CHANGED with { rateUsed, currentUsdToSyp }, and the app asks
+  // for a fresh confirmation at the new rate.
+  //
+  // `required: false` on purpose, unlike the panel: an installed app build
+  // that predates this field must keep ordering (it cannot be reloaded the
+  // way a browser tab can), and approveReturn builds its order server-side
+  // with no rate of its own. Both simply aren't checked. The assertion hands
+  // back the very rate row getRate() would have, so a checked order reads the
+  // rate once, not twice.
+  const rate = (await assertRateUsedIsCurrent(rateUsed, { required: false })) ?? (await getRate());
+  if (!rate) {
+    throw ApiError.badRequest(
+      'Exchange rate is not available yet - orders cannot be priced.',
+      undefined,
+      'EXCHANGE_RATE_UNAVAILABLE'
+    );
+  }
+  const usdToSyp = rate.usdToSyp;
+  // Frozen onto the order below. Captured ONCE for the whole order, so a
+  // single order is never priced against two different rates, and never
+  // re-derived afterwards.
+  const fx = await captureFxSnapshot();
+
+  const now = new Date();
+  const { offerByProductId, manufacturerDiscountByName } = await loadPricingContext(
+    warehouseId,
+    productIds,
+    now
+  );
+
+  // Section 7/8 (price half of the same guarantee the availability check
+  // above gives): the cart snapshots a unit price when an item is added and
+  // nothing refreshes it, so a warehouse editing a price in the meantime used
+  // to mean the pharmacist saw one number and was billed another, with no
+  // signal at all. Every line that told us what it was showing is compared
+  // against what it would actually be charged, and the whole order is
+  // rejected if any of them moved - same shape as STOCK_CHECK_FAILED, so the
+  // client renders it through the same per-item path.
+  //
+  // Deliberately NOT a repricing: the server's number still wins, this only
+  // decides whether to charge silently or ask first. Resubmitting with the
+  // refreshed price is what confirms it.
+  //
+  // Only loose lines are checked. A package's own lines never are: the client
+  // never quoted a per-unit price for them (it showed one package price, and
+  // the package is named by id), so there is nothing to compare against.
+  // Lines that sent no price at all (an older app build, or approveReturn's
+  // internally-built items) skip it too.
+  //
+  // assertRateUsedIsCurrent above already threw RATE_CHANGED before we ever
+  // get here, so today the two never surface together - a considered choice,
+  // not an oversight: merging them into one combined dialog was evaluated and
+  // rejected. The cost (restructuring this function so both checks run and
+  // report before either throws, then teaching every client - Flutter and
+  // web - to render a combined confirmation) outweighs the benefit (avoiding
+  // a second round trip in the rare case both happen to have moved at once,
+  // with no financial risk either way: the server price always wins
+  // regardless of which dialog the pharmacist sees first), and a partial fix
+  // would not even cover every path (approveReturn's server-built orders
+  // carry no rateUsed to check against). Revisit only if the two really do
+  // start colliding often enough in practice to justify it.
+  const priceProblems = [];
+  const priceFallbackText = [];
+  for (const item of merged) {
+    if (item.displayedUnitPriceUsd === null) continue;
+
+    const product = productById.get(item.productId);
+    const offer = offerByProductId.get(item.productId);
+    const manufacturerDiscountPercentage =
+      discountPercentageFor(manufacturerDiscountByName, product);
+    const currentPriceUsd = computeDiscountedPriceUsd(
+      product.price,
+      offer?.discountPercentage,
+      manufacturerDiscountPercentage
+    );
+
+    // Half a cent: both sides are already rounded to two decimals by
+    // computeDiscountedPriceUsd, so anything below this is float noise from
+    // the JSON round-trip rather than a real price change.
+    if (Math.abs(currentPriceUsd - item.displayedUnitPriceUsd) > 0.005) {
+      priceProblems.push({
+        code: 'PRICE_CHANGED',
+        productId: item.productId,
+        displayedPriceUsd: item.displayedUnitPriceUsd,
+        currentPriceUsd,
+        // Additive (catalog overhaul Phase 7): the lira price this order would
+        // charge, from the same function, at the rate it is priced at - so the
+        // app shows the repriced line exactly.
+        currentPriceSyp: computeFinalPrice({
+          priceUsd: product.price,
+          offerDiscountPercentage: offer?.discountPercentage,
+          manufacturerDiscountPercentage,
+          usdToSyp,
+        }).finalSyp,
+        priceRate: usdToSyp,
+        // The undiscounted unit price, for the struck-through figure.
+        priceUsd: product.price,
+        offerDiscountPercentage: offer?.discountPercentage ?? null,
+        manufacturerDiscountPercentage: manufacturerDiscountPercentage ?? null,
+      });
+      priceFallbackText.push(
+        `${product.nameEn} is now $${currentPriceUsd} (was $${item.displayedUnitPriceUsd}).`
+      );
+    }
+  }
+
+  if (priceProblems.length > 0) {
+    throw ApiError.badRequest(
+      priceFallbackText.join(' '),
+      { problems: priceProblems },
+      'PRICE_CHANGED'
+    );
+  }
+
+  // Catalog overhaul Phase 8: the bonus half of the same guarantee. A line
+  // that says which bonus tiers the cart was showing is refused if the
+  // product's bonus has changed since (BONUS_CHANGED, the current tiers
+  // returned) - the pharmacist confirms the new terms, exactly as for a price.
+  // A line that sent none (an older app build, approveReturn) skips it.
+  const bonusProblems = [];
+  for (const item of merged) {
+    if (item.displayedBonuses === null || item.displayedBonuses === undefined) continue;
+    const product = productById.get(item.productId);
+    const currentBonuses = (product.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free }));
+    if (!sameBonus(item.displayedBonuses, currentBonuses)) {
+      bonusProblems.push({ code: 'BONUS_CHANGED', productId: item.productId, currentBonuses });
+    }
+  }
+  if (bonusProblems.length > 0) {
+    throw ApiError.badRequest(
+      'The bonus on some products has changed.',
+      { problems: bonusProblems },
+      'BONUS_CHANGED'
+    );
+  }
+
+  // The discount code, checked after the rate, price and bonus refusals: each
+  // of those sends the pharmacist back to confirm the cart, and the code is
+  // judged on the cart they finally confirm. Read here, then CLAIMED inside
+  // the transaction below with a conditional write - this read alone could
+  // not stop two concurrent orders from both taking the last use.
+  const codeDoc = discountCode
+    ? await discountCodes.assertUsableForOrder({
+        code: discountCode,
+        pharmacyId,
+        warehouseId,
+        now,
+        expectedRevision: discountCodeRevision,
+      })
+    : null;
+
+  const { orderItemsData, packageGroups, totalPrice, advertisementDiscountAmount, subtotalUsd } =
+    priceOrderLines({
+      merged,
+      advertisements,
+      productById,
+      offerByProductId,
+      manufacturerDiscountByName,
+      usdToSyp,
+    });
+
   // Section: the warehouse's own order-size limits (warehouse.model.js).
   const orderSubtotalUsd = Math.round(subtotalUsd * 100) / 100;
   if (warehouse.minOrderAmountUsd > 0 && orderSubtotalUsd < warehouse.minOrderAmountUsd) {
@@ -825,18 +947,36 @@ async function createOrder({
   // own subtrahend rather than being folded into discountAmount, which is
   // always re-derived from warehouse.discountRate (here and in
   // warehouseOrder.service.js's edit path) and would silently erase this.
-  const { discountAmount, commissionAmount, finalPrice } = rollUpOrderMoney({
+  const {
+    discountAmount,
+    commissionAmount,
+    finalPrice,
+    preCodeSyp,
+    discountCodeSyp: codeDiscountAmount,
+    platformCompensationSyp,
+  } = rollUpOrderMoney({
     subtotalSyp: totalPrice,
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse.discountRate,
     commissionRate: warehouse.commissionRate,
+    discountCodeTerms: codeDoc ? discountCodes.termsOf(codeDoc) : null,
   });
+
+  // The per-pharmacy counter the claim below increments, created up front -
+  // see discountCodePharmacyUsage.model.js.
+  if (codeDoc) await discountCodes.ensurePharmacyUsage(codeDoc._id, pharmacyId);
 
   // Money-Flow V2: the order number, the order and its line items are one
   // all-or-nothing write. V1 issued the number, created the order and then
   // inserted the items as three independent steps, so a failure on the last
   // one left an order carrying a total but no lines - an invoice for nothing.
   const order = await runInTransaction(async (session) => {
+    // The code's use is taken in the same transaction as the order: if the
+    // claim fails (the limit was reached or the code changed a moment ago) no
+    // order is written, and if the order fails the use is never taken.
+    const claimedCode = codeDoc
+      ? await discountCodes.claimUse({ codeDoc, pharmacyId, now }, session)
+      : null;
     const orderNumber = await nextOrderNumber(session);
 
     const [created] = await Order.create(
@@ -859,6 +999,22 @@ async function createOrder({
           advertisementId: packageGroups.length > 0 ? packageGroups[0].advertisementId : null,
           advertisementIds: packageGroups.map((group) => group.advertisementId),
           advertisementDiscountAmount,
+          discountCode: claimedCode
+            ? {
+                codeId: claimedCode._id,
+                code: claimedCode.code,
+                ownerRole: claimedCode.ownerRole,
+                fundedBy: discountCodes.fundedByFor(claimedCode),
+                type: claimedCode.type,
+                value: claimedCode.value,
+                revision: claimedCode.revision,
+                preCodeSyp,
+                discountSyp: codeDiscountAmount,
+                // Converted through the rate this order was priced at.
+                discountUsd: usdToSyp ? Math.round((codeDiscountAmount / usdToSyp) * 100) / 100 : null,
+                platformCompensationSyp,
+              }
+            : null,
           finalPrice,
           // The order total in USD, frozen at this rate. Reports sum this
           // rather than dividing finalPrice by whatever the rate is later.
@@ -907,6 +1063,112 @@ async function createOrder({
   });
 
   return order;
+}
+
+// The cart's quote (POST /discount-codes/preview): what this cart costs right
+// now - subtotal, platform discount, the discount code's amount when one is
+// given, and the total. The app shows these figures on every cart, with or
+// without a code, so the pharmacist always sees what the order will actually
+// cost. Priced by the very helpers createOrder charges with
+// (loadPricingContext / priceOrderLines / rollUpOrderMoney), so the quote and
+// the order agree to the lira. Read-only: it claims no use and writes nothing.
+//
+// Strict about a code - an unusable one is refused with its reason
+// (DISCOUNT_CODE_EXPIRED, ...). Lenient about the cart: a product or package
+// that could no longer be ordered is left out of the quote rather than
+// refusing it, because checkout refuses those with their own proper errors
+// and the pharmacist should still be able to apply a code meanwhile. No rate,
+// price or bonus comparison either - that is checkout's job too.
+async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, discountCode = null }) {
+  const plainItems = Array.isArray(items) ? items : [];
+  const packageRequests = normalizePackageRequests({ packages });
+  if (plainItems.length === 0 && packageRequests.length === 0) {
+    throw ApiError.badRequest('Your cart is empty.', undefined, 'CART_EMPTY');
+  }
+
+  const available = await isWarehouseAvailable(warehouseId);
+  if (!available) {
+    throw ApiError.notFound('Warehouse not found.', 'WAREHOUSE_NOT_FOUND');
+  }
+
+  const now = new Date();
+  let codeDoc = null;
+  if (discountCode) {
+    const evaluation = await discountCodes.evaluate({ code: discountCode, pharmacyId, warehouseId, now });
+    if (evaluation.reason) throw discountCodes.reasonError(evaluation.reason);
+    codeDoc = evaluation.codeDoc;
+  }
+
+  const rate = await getRate();
+  if (!rate) {
+    throw ApiError.badRequest(
+      'Exchange rate is not available yet - orders cannot be priced.',
+      undefined,
+      'EXCHANGE_RATE_UNAVAILABLE'
+    );
+  }
+  const usdToSyp = rate.usdToSyp;
+
+  const [warehouse, { advertisements: loadedAdvertisements }] = await Promise.all([
+    Warehouse.findById(warehouseId).select('discountRate commissionRate').lean(),
+    loadRequestedPackages(packageRequests, warehouseId, { lenient: true }),
+  ]);
+  const mergedAll = deductLegacyPackageItems(mergeDuplicateItems(plainItems), loadedAdvertisements);
+  const productById = await loadOrderProducts(
+    [
+      ...mergedAll.map((item) => item.productId),
+      ...loadedAdvertisements.flatMap(({ advertisement }) =>
+        advertisement.items.map((item) => item.productId.toString())
+      ),
+    ],
+    warehouseId
+  );
+  // Only what can actually be priced: a line whose product is gone, or a
+  // package missing one of its products, is left out.
+  const merged = mergedAll.filter((item) => productById.has(String(item.productId)));
+  const advertisements = loadedAdvertisements.filter(({ advertisement }) =>
+    advertisement.items.every((item) => productById.has(item.productId.toString()))
+  );
+
+  const { offerByProductId, manufacturerDiscountByName } = await loadPricingContext(
+    warehouseId,
+    merged.map((item) => item.productId),
+    now
+  );
+  const { totalPrice, advertisementDiscountAmount } = priceOrderLines({
+    merged,
+    advertisements,
+    productById,
+    offerByProductId,
+    manufacturerDiscountByName,
+    usdToSyp,
+  });
+
+  const rolled = rollUpOrderMoney({
+    subtotalSyp: totalPrice,
+    advertisementDiscountSypAmount: advertisementDiscountAmount,
+    discountRate: warehouse?.discountRate ?? 0,
+    commissionRate: warehouse?.commissionRate ?? 0,
+    discountCodeTerms: codeDoc ? discountCodes.termsOf(codeDoc) : null,
+  });
+
+  return {
+    // All null on a cart quoted without a code.
+    code: codeDoc?.code ?? null,
+    type: codeDoc?.type ?? null,
+    value: codeDoc?.value ?? null,
+    revision: codeDoc?.revision ?? null,
+    fundedBy: codeDoc ? discountCodes.fundedByFor(codeDoc) : null,
+    // What the cart itself shows as its subtotal: packages at their package
+    // price, every line after its offer and manufacturer discount.
+    subtotalSyp: totalPrice - advertisementDiscountAmount,
+    platformDiscountSyp: rolled.discountAmount,
+    preCodeSyp: rolled.preCodeSyp,
+    discountSyp: rolled.discountCodeSyp,
+    discountUsd: Math.round((rolled.discountCodeSyp / usdToSyp) * 100) / 100,
+    finalSyp: rolled.finalPrice,
+    usdToSyp,
+  };
 }
 
 // Section: the orders this pharmacy could still raise a return against -
@@ -1004,8 +1266,8 @@ async function getOrderForPharmacy(orderId, pharmacyId) {
   // myReview: this pharmacy's own rating of the warehouse for this order, if
   // it's submitted one already (Section 8/13c).
   //
-  // `order` above is deliberately NOT lean: cancelOrder calls this function
-  // and then mutates and saves that document. The four below are only ever
+  // `order` above is not lean (cancelOrder reads it before its own
+  // conditional write; it never saves this copy). The four below are only ever
   // read - both this function's callers pass them straight to
   // order.viewmodel.js - so they skip hydration. `items` is the one that
   // matters, being the only unbounded set of the four.
@@ -1102,10 +1364,11 @@ async function getSavingsSummaryForPharmacy(pharmacyId) {
   //   offer + manufacturer  ->  OrderItem.savingsSyp   (frozen per line)
   //   advertisement package ->  Order.advertisementDiscountAmount
   //   platform subsidy      ->  Order.discountAmount
+  //   discount code         ->  Order.discountCode.discountSyp
   //
   // Cancelled orders are excluded - a cancelled order saved nothing.
   const orders = await Order.find({ pharmacyId, status: { $ne: 'cancelled' } })
-    .select('_id discountAmount advertisementDiscountAmount fx')
+    .select('_id discountAmount advertisementDiscountAmount discountCode.discountSyp fx')
     .lean();
 
   if (orders.length === 0) {
@@ -1113,6 +1376,7 @@ async function getSavingsSummaryForPharmacy(pharmacyId) {
       offerAndManufacturerSyp: 0,
       advertisementSyp: 0,
       platformDiscountSyp: 0,
+      discountCodeSyp: 0,
       totalSavingsSyp: 0,
       totalSavingsUsd: 0,
     };
@@ -1132,23 +1396,27 @@ async function getSavingsSummaryForPharmacy(pharmacyId) {
   const offerAndManufacturerSyp = Math.round(lineRow?.savingsSyp ?? 0);
   let advertisementSyp = 0;
   let platformDiscountSyp = 0;
+  let discountCodeSyp = 0;
   // Each order's own frozen rate, so the USD total is a sum of historically
   // correct conversions rather than one live division at the end.
   let totalSavingsUsd = lineRow?.savingsUsd ?? 0;
 
   for (const order of orders) {
-    const orderSideSyp = (order.advertisementDiscountAmount ?? 0) + (order.discountAmount ?? 0);
+    const codeSyp = order.discountCode?.discountSyp ?? 0;
+    const orderSideSyp = (order.advertisementDiscountAmount ?? 0) + (order.discountAmount ?? 0) + codeSyp;
     advertisementSyp += order.advertisementDiscountAmount ?? 0;
     platformDiscountSyp += order.discountAmount ?? 0;
+    discountCodeSyp += codeSyp;
     if (order.fx?.rate) totalSavingsUsd += orderSideSyp / order.fx.rate;
   }
 
-  const totalSavingsSyp = offerAndManufacturerSyp + advertisementSyp + platformDiscountSyp;
+  const totalSavingsSyp = offerAndManufacturerSyp + advertisementSyp + platformDiscountSyp + discountCodeSyp;
 
   return {
     offerAndManufacturerSyp,
     advertisementSyp,
     platformDiscountSyp,
+    discountCodeSyp,
     totalSavingsSyp,
     // Kept for the clients that still render a USD hint. Same 2-decimal
     // convention as the per-line savingsUsd itself.
@@ -1162,21 +1430,16 @@ async function getSavingsSummaryForPharmacy(pharmacyId) {
 async function cancelOrder(orderId, pharmacyId, userId) {
   const { order, warehouse, items } = await getOrderForPharmacy(orderId, pharmacyId);
 
+  // The early answer for an order that is plainly past cancelling. The real
+  // gate is the compare-and-swap below: this read can be stale by the time the
+  // write happens.
   if (!CANCELLABLE_STATUSES.includes(order.status)) {
-    throw ApiError.badRequest(
-      'This order can no longer be cancelled from the app.',
-      undefined,
-      'ORDER_NOT_CANCELLABLE'
-    );
+    throw notCancellableError();
   }
 
-  const now = new Date();
-  order.status = 'cancelled';
-  order.cancelledBy = userId;
-  order.statusHistory.push({ status: 'cancelled', changedBy: userId, changedAt: now });
-  await order.save();
+  const cancelled = await cancelWithCompareAndSwap(order, userId, new Date());
 
-  // Only after the cancellation is persisted. This is the one order event the
+  // Only after the cancellation is committed. This is the one order event the
   // warehouse has no other way of learning about promptly - it's the pharmacy
   // that cancels, and there's no FCM to warehouses today.
   emitToWarehouse(order.warehouseId, EVENTS.ORDER_CANCELLED, {
@@ -1185,7 +1448,42 @@ async function cancelOrder(orderId, pharmacyId, userId) {
     warehouseId: order.warehouseId.toString(),
   });
 
-  return { order, warehouse, items };
+  return { order: cancelled, warehouse, items };
+}
+
+function notCancellableError() {
+  return ApiError.badRequest(
+    'This order can no longer be cancelled from the app.',
+    undefined,
+    'ORDER_NOT_CANCELLABLE'
+  );
+}
+
+// The one cancellation path, for every order. The status change is a
+// compare-and-swap on a cancellable status, so a cancel racing the warehouse
+// moving the order past 'preparing' loses cleanly (ORDER_NOT_CANCELLABLE)
+// instead of overwriting the warehouse's step - a plain read-then-save used to
+// let the pharmacy's stale copy win. In the same transaction, a discount code
+// the order used is handed back (the pharmacy can use it again, and a total
+// limit gets its slot back); an order without a code releases nothing.
+//
+// No money to undo: a charge is only posted when an order is DELIVERED
+// (orderLedger.service.js), and so is an admin code's compensation
+// (settlement.service.js) - a cancellable order never has been.
+async function cancelWithCompareAndSwap(order, userId, now) {
+  return runInTransaction(async (session) => {
+    const updated = await Order.findOneAndUpdate(
+      { _id: order._id, status: { $in: CANCELLABLE_STATUSES } },
+      {
+        $set: { status: 'cancelled', cancelledBy: userId },
+        $push: { statusHistory: { status: 'cancelled', changedBy: userId, changedAt: now } },
+      },
+      { new: true, session }
+    );
+    if (!updated) throw notCancellableError();
+    await discountCodes.releaseUse(updated, 'cancelled', session);
+    return updated;
+  });
 }
 
 // Section: optional delivery seal photo (per order - order.requiresDeliverySealPhoto).
@@ -1358,6 +1656,7 @@ module.exports = {
   // rule is stated once and the two paths can never drift.
   advertisementDiscountSyp,
   rollUpOrderMoney,
+  quoteOrder,
   normalizePackageRequests,
   computeOrderFingerprint,
   bonusSnapshotFor,

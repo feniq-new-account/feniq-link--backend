@@ -17,6 +17,8 @@ import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_r
 import 'package:feniq/generated/app_localizations.dart';
 import 'package:feniq/routes/route_names.dart';
 
+import '../../helpers/cart_quote_stub.dart';
+
 class _MockOrderRepository extends Mock implements OrderRepository {}
 
 class _MockWarehouseRepository extends Mock implements WarehouseRepository {}
@@ -62,6 +64,7 @@ void main() {
   setUp(() async {
     sentItems = [];
     orderRepo = _MockOrderRepository();
+    stubCartQuote(orderRepo, usdToSyp: () => 1000);
     var calls = 0;
     when(
       () => orderRepo.submitOrder(
@@ -180,8 +183,11 @@ void main() {
     );
     expect(inDialog('Submit order'), findsOneWidget);
     expect(inDialog('Close'), findsOneWidget);
-    // The cart itself already shows the new subtotal: 12 + 10 USD.
-    expect(find.text('22,000 SYP'), findsOneWidget);
+    // The cart itself shows the new subtotal once the repriced lines have been
+    // re-quoted (debounced): 12 + 10 USD - the server's figure.
+    await tester.pump(kCartQuoteDelay);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Text>(find.byKey(const Key('cartSubtotal'))).data, '22,000 SYP');
   });
 
   testWidgets('closing the dialog sends nothing, and the submit button brings it back', (tester) async {

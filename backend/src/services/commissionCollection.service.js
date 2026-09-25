@@ -3,6 +3,7 @@ const { ApiError } = require('../utils/ApiError');
 const CommissionCollection = require('../models/commissionCollection.model');
 const Warehouse = require('../models/warehouse.model');
 const { getSettlementForWarehouse, resolvePeriod } = require('./settlement.service');
+const { parseRangeStart, parseRangeEnd } = require('../utils/businessTime');
 const { METHODS } = require('./payment.service');
 const financialAudit = require('./financialAudit.service');
 
@@ -37,6 +38,16 @@ function validateAmount(amountSyp) {
   return Math.round(amountSyp);
 }
 
+const DIRECTIONS = ['from_warehouse', 'to_warehouse'];
+
+function validateDirection(direction) {
+  if (direction === undefined || direction === null || direction === '') return 'from_warehouse';
+  if (!DIRECTIONS.includes(direction)) {
+    throw ApiError.badRequest('Invalid direction.', undefined, 'INVALID_COLLECTION_DIRECTION');
+  }
+  return direction;
+}
+
 function validateMethod(method) {
   if (method === undefined || method === null) return 'cash';
   if (!METHODS.includes(method)) {
@@ -45,17 +56,18 @@ function validateMethod(method) {
   return method;
 }
 
-function parseDate(value, field) {
-  const date = value instanceof Date ? value : new Date(value);
-  if (!value || Number.isNaN(date.getTime())) {
-    throw ApiError.badRequest(`Invalid ${field}.`, undefined, 'INVALID_COLLECTION_PERIOD');
-  }
-  return date;
+function invalidPeriod(field) {
+  return ApiError.badRequest(`Invalid ${field}.`, undefined, 'INVALID_COLLECTION_PERIOD');
 }
 
+// The window a collection covers, read like every report range: a bare date is
+// a whole local business day (utils/businessTime.js); a timestamp - what the
+// panel sends back from the period it was shown - is kept as it is.
 function validatePeriod(periodFrom, periodTo) {
-  const from = parseDate(periodFrom, 'period start');
-  const to = parseDate(periodTo, 'period end');
+  const from = parseRangeStart(periodFrom);
+  if (!from) throw invalidPeriod('period start');
+  const to = parseRangeEnd(periodTo);
+  if (!to) throw invalidPeriod('period end');
   if (to < from) {
     throw ApiError.badRequest(
       'The period end cannot be before its start.',
@@ -88,8 +100,11 @@ function overlappingPeriod(from, to) {
   return { periodFrom: { $lte: to }, periodTo: { $gte: from } };
 }
 
-async function collectedForWarehouse(warehouseId, from, to) {
-  const [row] = await CommissionCollection.aggregate([
+// The cash that has actually moved for a range, both ways: collected from
+// the warehouse, and paid out to it. A row written before payouts existed has
+// no `direction` and is a collection.
+async function settledForWarehouse(warehouseId, from, to) {
+  const rows = await CommissionCollection.aggregate([
     {
       $match: {
         warehouseId: new mongoose.Types.ObjectId(String(warehouseId)),
@@ -97,24 +112,42 @@ async function collectedForWarehouse(warehouseId, from, to) {
         ...overlappingPeriod(from, to),
       },
     },
-    { $group: { _id: null, total: { $sum: '$amountSyp' } } },
+    {
+      $group: {
+        _id: { $ifNull: ['$direction', 'from_warehouse'] },
+        total: { $sum: '$amountSyp' },
+      },
+    },
   ]);
-  return Math.round(row?.total ?? 0);
+  const byDirection = new Map(rows.map((row) => [row._id, row.total]));
+  return {
+    collectedSyp: Math.round(byDirection.get('from_warehouse') ?? 0),
+    paidOutSyp: Math.round(byDirection.get('to_warehouse') ?? 0),
+  };
 }
 
-// One warehouse's commission position for a range: what it owes, what it has
-// already paid against that range, and the difference.
+async function collectedForWarehouse(warehouseId, from, to) {
+  const { collectedSyp } = await settledForWarehouse(warehouseId, from, to);
+  return collectedSyp;
+}
+
+// One warehouse's position with the platform for a range: the commission it
+// owes, the discount-code compensation the platform owes it, the cash that has
+// moved each way, and what is left.
 async function getWarehouseCommission(warehouse, period) {
   const settlement = await getSettlementForWarehouse(warehouse._id, {
     from: period.from,
     to: period.to,
   });
-  const alreadyCollectedSyp = await collectedForWarehouse(warehouse._id, period.from, period.to);
+  const { collectedSyp, paidOutSyp } = await settledForWarehouse(warehouse._id, period.from, period.to);
 
   // `netCommissionSyp` is already net of the pro-rata clawback on credited
   // returns - that is what the warehouse genuinely owes before anything is
   // collected. Renamed here to the vocabulary the admin screen speaks.
   const commissionOwedSyp = settlement.totals.netCommissionSyp;
+  // What the platform owes the warehouse for admin discount codes, net of
+  // returns - the other side of the same relationship.
+  const compensationOwedSyp = settlement.totals.netCompensationSyp ?? 0;
 
   return {
     warehouseId: warehouse._id,
@@ -123,12 +156,15 @@ async function getWarehouseCommission(warehouse, period) {
     salesSyp: settlement.totals.grossSalesSyp,
     returnsSyp: settlement.totals.creditedSalesSyp,
     commissionOwedSyp,
-    alreadyCollectedSyp,
-    // Can go negative when a warehouse has over-paid, or paid for a wider
-    // window than the one being viewed. Reported as-is rather than clamped:
-    // a negative here is information, and hiding it would make an overpayment
-    // look like a settled account.
-    outstandingSyp: commissionOwedSyp - alreadyCollectedSyp,
+    compensationOwedSyp,
+    alreadyCollectedSyp: collectedSyp,
+    paidOutSyp,
+    // Positive: the warehouse owes the platform. Negative: the platform owes
+    // the warehouse (its compensation exceeds its commission, or it over-paid,
+    // or it paid for a wider window than the one being viewed). Reported
+    // as-is rather than clamped: a negative here is information, and hiding
+    // it would make a debt the platform owes look like a settled account.
+    outstandingSyp: commissionOwedSyp - compensationOwedSyp - collectedSyp + paidOutSyp,
   };
 }
 
@@ -155,10 +191,20 @@ async function getCommissionOverview({ from, to } = {}) {
       salesSyp: acc.salesSyp + row.salesSyp,
       returnsSyp: acc.returnsSyp + row.returnsSyp,
       commissionOwedSyp: acc.commissionOwedSyp + row.commissionOwedSyp,
+      compensationOwedSyp: acc.compensationOwedSyp + row.compensationOwedSyp,
       alreadyCollectedSyp: acc.alreadyCollectedSyp + row.alreadyCollectedSyp,
+      paidOutSyp: acc.paidOutSyp + row.paidOutSyp,
       outstandingSyp: acc.outstandingSyp + row.outstandingSyp,
     }),
-    { salesSyp: 0, returnsSyp: 0, commissionOwedSyp: 0, alreadyCollectedSyp: 0, outstandingSyp: 0 }
+    {
+      salesSyp: 0,
+      returnsSyp: 0,
+      commissionOwedSyp: 0,
+      compensationOwedSyp: 0,
+      alreadyCollectedSyp: 0,
+      paidOutSyp: 0,
+      outstandingSyp: 0,
+    }
   );
 
   return { period, totals, rows };
@@ -207,7 +253,9 @@ async function listCollectionsForWarehouse(warehouseId, { limit = 100, after = n
   return { rows: page, hasMore, nextCursor };
 }
 
-// Records that a warehouse paid its commission.
+// Records that a warehouse paid its commission - or, with direction
+// 'to_warehouse', that the platform paid the warehouse the discount-code
+// compensation it owed it (a payout).
 //
 // No transaction, no CAS, no idempotency key - deliberately. Those exist on
 // the pharmacy paths because those are high-frequency, racy, and move a
@@ -223,17 +271,20 @@ async function recordCollection({
   reference,
   note,
   actorId,
+  direction,
 }) {
   const warehouse = await loadWarehouseOrThrow(warehouseId);
   const amount = validateAmount(amountSyp);
   const period = validatePeriod(periodFrom, periodTo);
   const resolvedMethod = validateMethod(method);
+  const resolvedDirection = validateDirection(direction);
 
   const collection = await CommissionCollection.create({
     warehouseId: warehouse._id,
     periodFrom: period.from,
     periodTo: period.to,
     amountSyp: amount,
+    direction: resolvedDirection,
     method: resolvedMethod,
     reference: normalizeText(reference),
     note: normalizeText(note),
@@ -243,7 +294,7 @@ async function recordCollection({
   });
 
   await financialAudit.record({
-    action: 'commission.collected',
+    action: resolvedDirection === 'to_warehouse' ? 'commission.payout_recorded' : 'commission.collected',
     actorId,
     actorRole: 'admin',
     onBehalfOfWarehouseId: warehouse._id,
@@ -251,6 +302,7 @@ async function recordCollection({
     entityId: collection._id,
     after: {
       amountSyp: amount,
+      direction: resolvedDirection,
       method: resolvedMethod,
       periodFrom: period.from,
       periodTo: period.to,
@@ -326,4 +378,5 @@ module.exports = {
   recordCollection,
   reverseCollection,
   collectedForWarehouse,
+  settledForWarehouse,
 };

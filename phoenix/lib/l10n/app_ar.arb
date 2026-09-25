@@ -775,5 +775,60 @@
   "offerEndsOn": "حتى {date}",
   "offerPermanent": "عرض دائم",
   "addToCartFullButton": "إضافة إلى السلة",
-  "warehouseOffersTitle": "عروض المستودع"
+  "warehouseOffersTitle": "عروض المستودع",
+  "discountCodeFieldLabel": "كود الخصم",
+  "discountCodeHint": "أدخل كود الخصم",
+  "discountCodeApply": "تطبيق",
+  "discountCodeRemove": "إزالة",
+  "discountCodeApplied": "تم تطبيق الكود {code}",
+  "@discountCodeApplied": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "discountCodeLine": "كود الخصم ({code})",
+  "@discountCodeLine": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "discountCodeUpdating": "جارٍ تحديث الخصم",
+  "discountCodeChangedTitle": "تغيّر كود الخصم",
+  "discountCodeRemovedMessage": "{reason} تمت إزالة الكود من السلة، راجع الإجمالي ثم أرسل الطلب من جديد.",
+  "@discountCodeRemovedMessage": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "discountCodeEditedMessage": "تغيّرت قيمة كود الخصم {code}. الخصم الآن {discount} والإجمالي {total}.",
+  "@discountCodeEditedMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "discount": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDiscountCodeInvalid": "كود الخصم غير صحيح.",
+  "errorDiscountCodeNotStarted": "كود الخصم لم يبدأ بعد.",
+  "errorDiscountCodeExpired": "انتهت صلاحية كود الخصم.",
+  "errorDiscountCodeLimitReached": "وصل كود الخصم إلى الحد الأقصى من الاستخدامات.",
+  "errorDiscountCodePharmacyLimitReached": "استخدمت هذا الكود العدد الأقصى المسموح لصيدليتك.",
+  "errorDiscountCodeNotForPharmacy": "هذا الكود غير مخصص لصيدليتك.",
+  "errorDiscountCodeNotForWarehouse": "هذا الكود لا يعمل على طلبات هذا المستودع.",
+  "errorDiscountCodePendingApproval": "كود الخصم بانتظار موافقة الإدارة.",
+  "errorDiscountCodeStopped": "تم إيقاف كود الخصم.",
+  "errorDiscountCodeEdited": "تغيّرت قيمة كود الخصم.",
+  "cartQuoteUnavailable": "تعذّر حساب الإجمالي."
 }

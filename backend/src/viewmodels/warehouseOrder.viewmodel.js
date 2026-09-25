@@ -1,3 +1,5 @@
+const { serializeOrderDiscountCode } = require('./discountCode.viewmodel');
+const { platformCompensationOf } = require('../services/discountCode.service');
 const { serializePharmacy } = require('./auth.viewmodel');
 
 function serializeOrderItem(item) {
@@ -92,13 +94,19 @@ function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn }) {
       // read-only - the API refuses to edit them either
       // (PACKAGE_ITEMS_LOCKED), so the two agree.
       packageGroups: serializePackageGroups(order),
+      // The discount code the pharmacy used, with who pays for it. On an
+      // admin code the platform does, and owes this warehouse the whole
+      // discount (platformCompensationSyp). null without a code.
+      discountCode: serializeOrderDiscountCode(order.discountCode, { forWarehouse: true }),
+      platformCompensationSyp: platformCompensationOf(order),
       finalPrice: order.finalPrice,
       // Money-Flow V2: what the WAREHOUSE actually keeps on this order, once
       // the platform's commission comes off what the pharmacy pays. V1 stored
       // commissionAmount and showed it nowhere, so a warehouse could not see
       // what a package deal really netted it. Derived rather than stored -
-      // it is a pure function of two frozen fields.
-      warehouseNetSyp: order.finalPrice - order.commissionAmount,
+      // it is a pure function of frozen fields. An admin code's compensation
+      // is part of what the warehouse earns.
+      warehouseNetSyp: order.finalPrice + platformCompensationOf(order) - order.commissionAmount,
       notes: order.notes,
       cancelReason: order.cancelReason,
       createdAt: order.createdAt,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
+import 'package:feniq/features/cart/data/models/cart_quote.dart';
 import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/cart/data/repositories/order_repository.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
@@ -16,6 +17,8 @@ import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate
 import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_repository.dart';
 import 'package:feniq/generated/app_localizations.dart';
 import 'package:feniq/routes/route_names.dart';
+
+import '../../helpers/cart_quote_stub.dart';
 
 class _MockOrderRepository extends Mock implements OrderRepository {}
 
@@ -48,6 +51,12 @@ const _placedOrder = OrderModel(
 // The cart screen after a RATE_CHANGED refusal: the order was converted at a
 // rate that has since moved, so the pharmacist is shown what the same cart now
 // comes to and asked again. Nothing is resent on its own.
+//
+// Both totals are the SERVER's: the cart is re-quoted at the new rate, and the
+// old total is the quote that was on screen - each with the platform discount
+// (4% here) in it, and a discount code's when one is applied. 2 x $10:
+//   at 1,000 SYP/$  20,000 - 800 platform   = 19,200 (on screen)
+//   at 1,200 SYP/$  24,000 - 960 platform   = 23,040 (now)
 void main() {
   late CartCubit cartCubit;
   late ExchangeRateCubit rateCubit;
@@ -55,6 +64,8 @@ void main() {
   late _MockExchangeRateRepository rateRepo;
   // The rate each submit carried, in order.
   late List<double?> sentRates;
+  // The rate "the server" prices quotes at; the refusal is where it moves.
+  late double serverRate;
 
   setUpAll(() {
     registerFallbackValue(<CartItem>[]);
@@ -62,7 +73,9 @@ void main() {
 
   setUp(() async {
     sentRates = [];
+    serverRate = 1000;
     orderRepo = _MockOrderRepository();
+    stubCartQuote(orderRepo, usdToSyp: () => serverRate, platformPercent: 4);
     var calls = 0;
     when(
       () => orderRepo.submitOrder(
@@ -71,12 +84,16 @@ void main() {
         notes: any(named: 'notes'),
         idempotencyKey: any(named: 'idempotencyKey'),
         rateUsed: any(named: 'rateUsed'),
+        discountCode: any(named: 'discountCode'),
+        discountCodeRevision: any(named: 'discountCodeRevision'),
       ),
     ).thenAnswer((invocation) async {
       sentRates.add(invocation.namedArguments[#rateUsed] as double?);
       calls += 1;
       if (calls == 1) {
-        // The server's refusal, exactly as exchangeRate.service.js builds it.
+        // The rate moved on the server after the cart was quoted; the refusal
+        // exactly as exchangeRate.service.js builds it.
+        serverRate = 1200;
         throw ServerFailure(
           'The exchange rate changed since this amount was converted.',
           code: 'RATE_CHANGED',
@@ -170,16 +187,17 @@ void main() {
     expect(sentRates, [1000.0]);
   });
 
-  testWidgets('the refusal opens a dialog with both totals, not a plain error', (tester) async {
+  testWidgets('the refusal opens a dialog with both totals from the server, platform discount included', (tester) async {
     await pumpCart(tester);
+    expect(find.byKey(const Key('cartTotal')), findsOneWidget);
+    expect(find.text('19,200 SYP'), findsOneWidget, reason: 'the server\'s total is on screen before submitting');
 
     await submitIntoRateChange(tester);
 
     expect(find.text('The exchange rate changed'), findsOneWidget);
-    // 2 x $10: 24,000 SYP at the new rate, against the 20,000 on screen.
     expect(
       find.text(
-        'Your order comes to 24,000 SYP at the new rate, instead of 20,000 SYP.\n\n'
+        'Your order comes to 23,040 SYP at the new rate, instead of 19,200 SYP.\n\n'
         'Submit again to place the order at the new rate.',
       ),
       findsOneWidget,
@@ -264,10 +282,80 @@ void main() {
     expect(find.text('تغيّر سعر الصرف'), findsOneWidget);
     expect(
       find.text(
-        'مجموع طلبك بالسعر الجديد 24,000 ل.س بدل 20,000 ل.س.\n\n'
+        'مجموع طلبك بالسعر الجديد 23,040 ل.س بدل 19,200 ل.س.\n\n'
         'أرسل الطلب مرة أخرى لتأكيده بالسعر الجديد.',
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('with a discount code applied, both totals have the code discount in them too', (tester) async {
+    // The same quotes, plus a 10% code taken off what the platform discount
+    // leaves: 19,200 - 1,920 = 17,280 on screen; 23,040 - 2,304 = 20,736 now.
+    when(
+      () => orderRepo.quoteCart(
+        warehouseId: any(named: 'warehouseId'),
+        items: any(named: 'items'),
+        code: any(named: 'code'),
+      ),
+    ).thenAnswer((invocation) async {
+      final base = quoteForItems(
+        invocation.namedArguments[#items] as List<CartItem>,
+        usdToSyp: serverRate,
+        platformPercent: 4,
+      );
+      final code = invocation.namedArguments[#code] as String?;
+      if (code == null) return base;
+      final discount = (base.preCodeSyp * 10 / 100).round();
+      return CartQuote(
+        code: code,
+        type: 'percentage',
+        value: 10,
+        revision: 1,
+        subtotalSyp: base.subtotalSyp,
+        platformDiscountSyp: base.platformDiscountSyp,
+        preCodeSyp: base.preCodeSyp,
+        discountSyp: discount,
+        finalSyp: base.preCodeSyp - discount,
+        usdToSyp: serverRate,
+      );
+    });
+    await pumpCart(tester);
+    await cartCubit.applyDiscountCode('ABCD2345');
+    await tester.pumpAndSettle();
+    expect(find.text('17,280 SYP'), findsOneWidget);
+
+    await submitIntoRateChange(tester);
+
+    expect(
+      find.text(
+        'Your order comes to 20,736 SYP at the new rate, instead of 17,280 SYP.\n\n'
+        'Submit again to place the order at the new rate.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('without a fresh quote there are no totals to show, and nothing is resent from the dialog', (tester) async {
+    await pumpCart(tester);
+    // The re-quote after the refusal fails on the network.
+    when(
+      () => orderRepo.quoteCart(
+        warehouseId: any(named: 'warehouseId'),
+        items: any(named: 'items'),
+        code: any(named: 'code'),
+      ),
+    ).thenAnswer((_) async => throw ServerFailure('offline', code: 'NETWORK_ERROR'));
+
+    await submitIntoRateChange(tester);
+
+    expect(find.text('The exchange rate changed'), findsOneWidget);
+    expect(inDialog("Couldn't work out the total."), findsOneWidget);
+    expect(inDialog('Submit order'), findsNothing);
+    await tester.tap(inDialog('Close'));
+    await tester.pumpAndSettle();
+    // The summary offers the retry; the submit button waits for real figures.
+    expect(find.byKey(const Key('cartQuoteRetry')), findsOneWidget);
+    expect(sentRates, hasLength(1));
   });
 }

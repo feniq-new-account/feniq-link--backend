@@ -65,6 +65,12 @@ const ADMIN_BUCKETS = [
     idField: 'complaintId',
     events: [E.COMPLAINT_CREATED, E.COMPLAINT_UPDATED],
   },
+  {
+    id: 'discountCodes',
+    path: '/admin/discount-codes',
+    idField: 'discountCodeId',
+    events: [E.DISCOUNT_CODE_PENDING, E.DISCOUNT_CODE_STATUS_UPDATED],
+  },
 ];
 
 const WAREHOUSE_BUCKETS = [
@@ -99,6 +105,13 @@ const WAREHOUSE_BUCKETS = [
     path: '/warehouse/advertisements/packages',
     idField: 'advertisementId',
     events: [E.ADVERTISEMENT_STATUS_UPDATED, E.ADVERTISEMENT_AVAILABILITY_UPDATED],
+  },
+  // An admin's decision on (or stop of) one of this warehouse's discount codes.
+  {
+    id: 'discountCodes',
+    path: '/warehouse/discount-codes',
+    idField: 'discountCodeId',
+    events: [E.DISCOUNT_CODE_STATUS_UPDATED],
   },
   {
     id: 'reviews',

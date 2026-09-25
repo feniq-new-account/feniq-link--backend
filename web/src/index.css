@@ -1645,6 +1645,20 @@ a.adm-pill {
   font-weight: var(--font-weight-subheading);
 }
 
+/* A discount code as typed at checkout: fixed-width so similar characters
+   read apart, and always left-to-right, even inside an Arabic table. */
+.discount-code-string {
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  direction: ltr;
+  unicode-bidi: isolate;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .wh-badge-review {
   display: inline-block;
   margin-top: 4px;

@@ -16,6 +16,8 @@ import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_r
 import 'package:feniq/generated/app_localizations.dart';
 import 'package:feniq/routes/route_names.dart';
 
+import '../../helpers/cart_quote_stub.dart';
+
 class _MockOrderRepository extends Mock implements OrderRepository {}
 
 class _MockWarehouseRepository extends Mock implements WarehouseRepository {}
@@ -49,8 +51,10 @@ void main() {
     when(
       () => warehouseRepo.getWarehouseProfile(any()),
     ).thenAnswer((_) async => throw Exception('limits fetch not exercised here'));
+    final orderRepo = _MockOrderRepository();
+    stubCartQuote(orderRepo, usdToSyp: () => 1000);
     cartCubit = CartCubit(
-      orderRepository: _MockOrderRepository(),
+      orderRepository: orderRepo,
       warehouseRepository: warehouseRepo,
     );
     rateCubit = ExchangeRateCubit(exchangeRateRepository: _MockExchangeRateRepository());

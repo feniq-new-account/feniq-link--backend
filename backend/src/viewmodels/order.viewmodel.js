@@ -1,4 +1,5 @@
 const { serializeProductWithOffer } = require('./product.viewmodel');
+const { serializeOrderDiscountCode } = require('./discountCode.viewmodel');
 
 function serializeOrder(order) {
   return {
@@ -13,6 +14,9 @@ function serializeOrder(order) {
     // null/0 on a normal order.
     advertisementId: order.advertisementId ?? null,
     advertisementDiscountAmount: order.advertisementDiscountAmount ?? 0,
+    // The discount code this order used - its own line, taken off after every
+    // discount above. null without a code.
+    discountCode: serializeOrderDiscountCode(order.discountCode),
     finalPrice: order.finalPrice,
     notes: order.notes,
     warehouseId: order.warehouseId,
@@ -191,6 +195,7 @@ function toSavingsSummaryResponse(summary) {
       offerAndManufacturerSyp: summary.offerAndManufacturerSyp,
       advertisementSyp: summary.advertisementSyp,
       platformDiscountSyp: summary.platformDiscountSyp,
+      discountCodeSyp: summary.discountCodeSyp ?? 0,
       totalSavingsSyp: summary.totalSavingsSyp,
       // A frozen hint beside the SYP total, not a live conversion of it.
       totalSavingsUsd: summary.totalSavingsUsd,

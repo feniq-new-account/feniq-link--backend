@@ -168,14 +168,42 @@ const refreshLimiter = rateLimit({
   message: TOO_MANY_REQUESTS,
 });
 
+// POST /discount-codes/preview: a pharmacy account guessing codes. Only
+// REFUSED previews count (skipSuccessfulRequests), so the cart re-quoting a
+// code it already applied after every quantity change is never throttled,
+// while guessing is held to a few dozen wrong codes per quarter-hour per
+// account - against 31^8 possible codes. Keyed on the verified account, like
+// apiLimiter; the route requires a signed-in, approved pharmacy anyway.
+const DISCOUNT_CODE_FAILURE_LIMIT = 30;
+const discountCodeLimiter = rateLimit({
+  windowMs: WINDOW_MS,
+  limit: DISCOUNT_CODE_FAILURE_LIMIT,
+  keyGenerator: (req) => {
+    const userId = identify(req);
+    return userId ? `dc:${userId}` : `dc-ip:${req.ip}`;
+  },
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: TOO_MANY_REQUESTS,
+});
+
 module.exports = {
   apiLimiter,
   authLimiter,
   refreshLimiter,
   phoneAuthLimiter,
+  discountCodeLimiter,
   // Exported for the rate-limiter tests, which assert the keying strategy
   // directly rather than by driving 300 requests through an app.
   _identify: identify,
   _phoneKey: phoneKey,
-  _limits: { WINDOW_MS, AUTHENTICATED_LIMIT, ANONYMOUS_LIMIT, PHONE_WINDOW_MS, PHONE_LIMIT },
+  _limits: {
+    WINDOW_MS,
+    AUTHENTICATED_LIMIT,
+    ANONYMOUS_LIMIT,
+    PHONE_WINDOW_MS,
+    PHONE_LIMIT,
+    DISCOUNT_CODE_FAILURE_LIMIT,
+  },
 };

@@ -5,6 +5,7 @@ const Pharmacy = require('../models/pharmacy.model');
 const Warehouse = require('../models/warehouse.model');
 const ledger = require('./ledger.service');
 const { escapeRegex } = require('./productCatalog.service');
+const { parseRangeStart, parseRangeEnd } = require('../utils/businessTime');
 
 // Money-Flow V2. The account statement: what a pharmacy owed, what it paid,
 // what came back, and where that leaves the balance - in order, with a running
@@ -22,13 +23,15 @@ function round2(amount) {
   return Math.round(amount * 100) / 100;
 }
 
+// A bare date is a whole local business day (utils/businessTime.js), the same
+// rule as the settlement report: "to" a date includes all of that day.
 function resolvePeriod({ from, to } = {}) {
   const now = new Date();
-  const end = to ? new Date(to) : now;
+  const end = to ? parseRangeEnd(to) : now;
   const start = from
-    ? new Date(from)
+    ? parseRangeStart(from)
     : new Date(now.getTime() - DEFAULT_STATEMENT_DAYS * 24 * 60 * 60 * 1000);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+  if (!start || !end) {
     throw ApiError.badRequest('Invalid statement period.', undefined, 'INVALID_PERIOD');
   }
   return { from: start, to: end };

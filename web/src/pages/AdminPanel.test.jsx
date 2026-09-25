@@ -56,3 +56,18 @@ describe('the admin menu', () => {
     expect(navLinks(html)).not.toContain('/admin/catalog-duplicates');
   });
 });
+
+describe('discount codes in the admin panel', () => {
+  it('has a Discount codes entry that opens the page, in both languages', () => {
+    const html = renderAt('/admin/discount-codes');
+    expect(navLinks(html)).toContain('/admin/discount-codes');
+    expect(html).toContain('<h1>Discount codes</h1>');
+    // The three views, the review queue first.
+    expect(html).toContain('Review queue (0)');
+    expect(html).toContain('Admin codes');
+    expect(html).toContain('All codes');
+
+    const arHtml = renderAt('/admin/discount-codes', 'ar');
+    expect(arHtml).toContain('<h1>أكواد الخصم</h1>');
+  });
+});

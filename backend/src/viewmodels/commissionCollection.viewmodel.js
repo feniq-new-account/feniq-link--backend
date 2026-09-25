@@ -7,8 +7,11 @@
 //   SALES        what pharmacies were charged for delivered orders
 //   RETURNS      credited back against those orders
 //   OWED         commission the platform is due, after the pro-rata clawback
+//   COMPENSATION what the platform owes the warehouse for admin discount codes
 //   COLLECTED    what the warehouse has actually handed over for this range
-//   OUTSTANDING  owed - collected
+//   PAID OUT     what the platform has paid the warehouse for this range
+//   OUTSTANDING  owed - compensation - collected + paid out
+//                (negative: the platform owes the warehouse)
 
 const { paginationMeta } = require('../utils/pagination');
 
@@ -23,7 +26,9 @@ function serializeWarehouseRow(row) {
     salesSyp: row.salesSyp,
     returnsSyp: row.returnsSyp,
     commissionOwedSyp: row.commissionOwedSyp,
+    compensationOwedSyp: row.compensationOwedSyp ?? 0,
     alreadyCollectedSyp: row.alreadyCollectedSyp,
+    paidOutSyp: row.paidOutSyp ?? 0,
     outstandingSyp: row.outstandingSyp,
   };
 }
@@ -38,6 +43,7 @@ function serializeCollection(collection) {
     periodFrom: collection.periodFrom,
     periodTo: collection.periodTo,
     amountSyp: collection.amountSyp,
+    direction: collection.direction ?? 'from_warehouse',
     method: collection.method,
     reference: collection.reference ?? null,
     note: collection.note ?? null,
@@ -90,6 +96,11 @@ function toWarehouseDetailResponse({
         commissionSyp: order.commissionSyp,
         commissionClawbackSyp: order.commissionClawbackSyp,
         netCommissionSyp: order.netCommissionSyp,
+        discountCode: order.discountCode ?? null,
+        discountCodeSyp: order.discountCodeSyp ?? 0,
+        platformCompensationSyp: order.platformCompensationSyp ?? 0,
+        compensationClawbackSyp: order.compensationClawbackSyp ?? 0,
+        netCompensationSyp: order.netCompensationSyp ?? 0,
       })),
       collections: collections.map(serializeCollection),
       pagination: paginationMeta(hasMoreCollections, nextCollectionsCursor),

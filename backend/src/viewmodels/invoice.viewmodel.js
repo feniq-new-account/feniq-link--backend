@@ -1,3 +1,6 @@
+const { serializeOrderDiscountCode } = require('./discountCode.viewmodel');
+const { platformCompensationOf } = require('../services/discountCode.service');
+
 // Money-Flow V2. The invoice for one delivered order.
 //
 // Not a stored document: every field resolves to a value frozen on the order,
@@ -33,6 +36,12 @@ function toInvoiceResponse({ order, items, charge, credits, totalCreditSyp, netI
       subtotalSyp: order.totalPrice,
       platformDiscountSyp: order.discountAmount,
       advertisementDiscountSyp: order.advertisementDiscountAmount ?? 0,
+      // The discount code line, taken off last. The warehouse's copy also
+      // says who pays for it.
+      discountCodeSyp: order.discountCode?.discountSyp ?? 0,
+      discountCode: serializeOrderDiscountCode(order.discountCode, {
+        forWarehouse: viewerRole === 'warehouse',
+      }),
       finalAmountSyp: order.finalPrice,
       finalAmountUsd: order.finalAmountUsd ?? null,
       // Returns credited against this invoice, and what it nets to.
@@ -48,8 +57,12 @@ function toInvoiceResponse({ order, items, charge, credits, totalCreditSyp, netI
       // Platform-internal: shown to the warehouse (it is what they net), never
       // on the pharmacy's copy.
       commissionSyp: viewerRole === 'warehouse' ? order.commissionAmount : undefined,
+      // What the platform owes the warehouse for an admin code on this order.
+      platformCompensationSyp: viewerRole === 'warehouse' ? platformCompensationOf(order) : undefined,
       warehouseNetSyp:
-        viewerRole === 'warehouse' ? order.finalPrice - order.commissionAmount : undefined,
+        viewerRole === 'warehouse'
+          ? order.finalPrice + platformCompensationOf(order) - order.commissionAmount
+          : undefined,
       chargeEntryNumber: charge ? charge.entryNumber : null,
     },
   };
