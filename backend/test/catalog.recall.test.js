@@ -184,7 +184,7 @@ test('an admin catalog re-import never reactivates a withdrawn item', async () =
   assert.strictEqual(report.updated, 0);
   const fresh = await ProductCatalog.findById(item._id).lean();
   assert.strictEqual(fresh.isActive, false);
-  assert.strictEqual(fresh.priceUsd, null);
+  assert.ok(!('priceUsd' in fresh), 'the central catalog has no price');
 });
 
 test('adding a product the warehouse disabled itself re-enables it with the new price', async () => {

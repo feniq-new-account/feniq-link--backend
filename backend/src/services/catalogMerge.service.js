@@ -141,7 +141,7 @@ async function mergeCatalogItems({ survivorId, loserIds, keepProductByWarehouse 
     { session }
   );
 
-  for (const field of ['imageUrl', 'nameEn', 'manufacturerEn', 'categoryId', 'unitAr', 'unitEn', 'priceUsd']) {
+  for (const field of ['imageUrl', 'nameEn', 'manufacturerEn', 'categoryId', 'unitAr', 'unitEn']) {
     if (survivor[field] == null) {
       const donor = loserItems.find((item) => item[field] != null);
       if (donor) survivor[field] = donor[field];
@@ -222,7 +222,7 @@ async function listDuplicateReviews({ status = 'open', limit = 20, after = null 
   const itemIds = page.flatMap((review) => review.catalogItemIds);
   const [items, products] = await Promise.all([
     ProductCatalog.find({ _id: { $in: itemIds } })
-      .select('nameAr nameEn manufacturerAr imageUrl isActive priceUsd createdAt')
+      .select('nameAr nameEn manufacturerAr imageUrl isActive createdAt')
       .lean(),
     Product.find({ masterProductId: { $in: itemIds } })
       .select('warehouseId masterProductId price isActive manuallyDisabled')
@@ -260,7 +260,6 @@ async function listDuplicateReviews({ status = 'open', limit = 20, after = null 
           manufacturerAr: item.manufacturerAr,
           imageUrl: item.imageUrl ?? null,
           isActive: item.isActive !== false,
-          priceUsd: item.priceUsd ?? null,
           createdAt: item.createdAt,
           products: productsByItem.get(String(item._id)) ?? [],
         })),

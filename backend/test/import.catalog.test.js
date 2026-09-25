@@ -67,7 +67,7 @@ test('a file with only name, company and category imports with no mapping step',
   assert.ok(!('exchangeRateUsed' in report) && !('convertedFromSyp' in report));
   const paracetamol = await itemNamed('باراسيتامول كتالوج', m);
   assert.ok(paracetamol.categoryId);
-  assert.strictEqual(paracetamol.priceUsd, null);
+  assert.ok(!('priceUsd' in paracetamol), 'the central catalog has no price');
 });
 
 test('a price column (and currency, unit, bonus) is ignored, whatever is in it', async () => {
@@ -80,17 +80,16 @@ test('a price column (and currency, unit, bonus) is ignored, whatever is in it',
   assert.strictEqual(report.added, 2, JSON.stringify(report));
   assert.deepStrictEqual(report.errors, []);
   for (const name of ['دواء بسعر مهمل', 'دواء بسعر غير مقروء']) {
-    assert.strictEqual((await itemNamed(name, m)).priceUsd, null, name);
+    assert.ok(!('priceUsd' in (await itemNamed(name, m))), name);
   }
 
-  // A re-import never touches the price an item may already carry.
-  await ProductCatalog.updateOne({ nameAr: 'دواء بسعر مهمل', manufacturerAr: m }, { $set: { priceUsd: 4 } });
+  // A re-import with a price column changes nothing on the item.
   const again = await catalogService.importFromExcel(await xlsx([
     ['اسم المادة', 'الشركة المصنعة', 'السعر', 'العملة'],
     ['دواء بسعر مهمل', m, '9', 'USD'],
   ]));
   assert.strictEqual(again.unchanged, 1, JSON.stringify(again));
-  assert.strictEqual((await itemNamed('دواء بسعر مهمل', m)).priceUsd, 4);
+  assert.ok(!('priceUsd' in (await itemNamed('دواء بسعر مهمل', m))));
 });
 
 test('the warehouse import still requires a price column', async () => {
@@ -199,7 +198,7 @@ test('a remembered catalog mapping to a field the catalog does not read is ignor
     ['دواء بخريطة قديمة', m, '7'],
   ]));
   assert.strictEqual(report.added, 1, JSON.stringify(report));
-  assert.strictEqual((await itemNamed('دواء بخريطة قديمة', m)).priceUsd, null);
+  assert.ok(!('priceUsd' in (await itemNamed('دواء بخريطة قديمة', m))));
 });
 
 test('a malformed mapping is a 400, not a guess', async () => {

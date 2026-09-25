@@ -209,7 +209,8 @@ async function approveRequest(id, adminId, changes = {}) {
           manufacturerEn: manufacturer.nameEn ?? null,
           manufacturerId: manufacturer._id,
           categoryId,
-          priceUsd: request.priceUsd,
+          // No price on the catalog item: the request's price, unit and bonus
+          // go to the warehouse's own product (fulfil, below).
         },
       ],
       { session }

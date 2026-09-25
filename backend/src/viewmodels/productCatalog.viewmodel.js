@@ -11,7 +11,6 @@ function serializeCatalogItem(item) {
     categoryId: item.categoryId,
     unitAr: item.unitAr,
     unitEn: item.unitEn,
-    priceUsd: item.priceUsd,
     isActive: item.isActive,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
