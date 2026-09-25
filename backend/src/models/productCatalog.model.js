@@ -49,12 +49,9 @@ const productCatalogSchema = new Schema(
     categoryId: { type: Schema.Types.ObjectId, ref: 'Category', default: null },
     unitAr: { type: String, default: null, trim: true },
     unitEn: { type: String, default: null, trim: true },
-    // USD, matching every other price in the app (Section: USD-first catalog
-    // pricing) - fed by the Excel template's price column. Nullable: a
-    // medicine can be imported into the central list with no price yet
-    // (project owner's call) - a warehouse fills it in manually later, on its
-    // own product, not here.
-    priceUsd: { type: Number, default: null, min: 0 },
+    // No price: a price belongs only to a warehouse's own product
+    // (Product.price). The field this model once had is removed from existing
+    // documents by scripts/migrations/05-remove-dropped-fields.js.
     // Normalized copies of nameAr/manufacturerAr/nameEn (utils/normalizeText),
     // kept in sync by the pre-validate hook below and never set by hand. They
     // make a lookup by name an indexed equality match, and they are what every

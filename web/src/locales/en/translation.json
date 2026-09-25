@@ -75,7 +75,8 @@
     "openMenuWithUpdates": "Open menu (new updates)",
     "catalogRequests": "Catalog requests",
     "catalogDuplicates": "Duplicate review",
-    "manufacturers": "Manufacturers"
+    "manufacturers": "Manufacturers",
+    "categories": "Categories"
   },
   "auth": {
     "phoneLabel": "Phone number",
@@ -708,8 +709,10 @@
       "clearImage": "Remove image",
       "linkExisting": "or link to an existing company",
       "nameEnLabel": "English name (for search)",
-      "unknownCategoriesTitle": "Unknown category",
-      "unknownCategoriesHint": "These rows were imported without a category - the category in the file matches none. Categories are never created by an import; set it on the medicine, or add the category and import again.",
+      "newCategoriesTitle": "New categories created",
+      "newCategoriesHint": "These categories matched none in the list, so they were created with the name as written in the file. Rename them or merge them into another category on the Categories screen.",
+      "newCategoryItems_one": "{{count}} item",
+      "newCategoryItems_other": "{{count}} items",
       "importResultUnchanged": "Already in the catalog"
     },
     "exchangeRate": {
@@ -968,6 +971,22 @@
     "confirmMerge": "Merge \"{{source}}\" into \"{{target}}\"? This cannot be undone.",
     "nameTaken": "Another company already has this name - merge the two instead.",
     "mergeConflict": "Some medicines exist under both companies and must be resolved in Duplicate review first."
+  },
+  "categories": {
+    "title": "Categories",
+    "hint": "A category the catalog import created carries the file's text as both its Arabic and English name until you rename it.",
+    "nameAr": "Arabic name",
+    "nameEn": "English name",
+    "catalogItems": "Catalog items",
+    "products": "Warehouse products",
+    "empty": "No categories yet.",
+    "merge": "Merge another category into this one",
+    "mergeHint": "Pick the category to fold into \"{{name}}\". Its catalog items and warehouse products move here, and it is deleted.",
+    "mergePick": "Choose a category...",
+    "mergeAction": "Merge",
+    "confirmMerge": "Merge \"{{source}}\" into \"{{target}}\"?\n\nCatalog items that move: {{catalogItems}}\nWarehouse products that move: {{products}}\n\n\"{{source}}\" will be deleted. This cannot be undone.",
+    "nameTaken": "Another category already has this name - merge the two instead.",
+    "nameRequired": "A category needs both an Arabic and an English name."
   },
   "productPicker": {
     "searchPlaceholder": "Search products by name or company",

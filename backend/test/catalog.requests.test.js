@@ -86,8 +86,13 @@ test('a pending request creates no product; approving creates the item, the prod
   const item = await ProductCatalog.findById(approved.resolvedMasterProductId).lean();
   assert.strictEqual(item.nameAr, 'دواء مطلوب 500');
   assert.ok(await Manufacturer.exists({ _id: item.manufacturerId }));
+  // The central catalog has no price - the request's price is the warehouse's.
+  assert.ok(!('priceUsd' in item), 'no price on the catalog item');
 
+  // The warehouse's product gets the request's price, unit and bonus.
   const product = await Product.findById(approved.productId).lean();
+  assert.strictEqual(String(product.warehouseId), String(warehouseId));
+  assert.strictEqual(String(product.masterProductId), String(item._id));
   assert.strictEqual(product.price, 4.5);
   assert.strictEqual(product.unit, 'box');
   assert.deepStrictEqual(product.bonuses.map((b) => [b.buy, b.free]), [[10, 1]]);

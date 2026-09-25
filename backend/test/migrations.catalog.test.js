@@ -22,7 +22,7 @@ const migrations = [
   require('../scripts/migrations/02-search-keys'),
   require('../scripts/migrations/03-deactivated-by'),
   require('../scripts/migrations/04-dedupe-catalog'),
-  require('../scripts/migrations/05-remove-barcode'),
+  require('../scripts/migrations/05-remove-dropped-fields'),
   require('../scripts/migrations/06-drop-legacy-indexes'),
 ];
 
@@ -65,11 +65,12 @@ test.before(async () => {
     nameHistory: [],
     ...extra,
   });
-  ids.A = item('باراسيتامول', 'شركة الشرق', { manufacturerEn: 'East Co' });
+  // A and E carry the catalog price the old model had (05 removes it).
+  ids.A = item('باراسيتامول', 'شركة الشرق', { manufacturerEn: 'East Co', priceUsd: 2 });
   ids.B = item('فيتامين', 'شركه  الشرق'); // same company, other spelling
   ids.C = item('أموكسيسيلين', 'شركة الشرق');
   ids.D = item('اموكسيسيلين', 'شركة الشرق', { imageUrl: 'https://res.cloudinary.com/x/amox.png' }); // dup of C, safe
-  ids.E = item('بروفين', 'ابن سينا');
+  ids.E = item('بروفين', 'ابن سينا', { priceUsd: null });
   ids.F = item('بروفين ', 'إبن سينا'); // dup of E, but w1 stocks both
   ids.G = item('دواء', 'x', { isActive: false });
   ids.H = item('دوآء', 'x'); // dup of G, mixed active state
@@ -197,9 +198,13 @@ test('04: safe duplicates auto-merge (image kept), unsafe ones go to review, and
   assert.match(report.identityIndex, /blocked/);
 });
 
-test('05 and 06: barcode removed, legacy index dropped, new indexes ensured', async () => {
+test('05 and 06: barcode and catalog price removed, legacy index dropped, new indexes ensured', async () => {
+  const dryRun = await migrations[5].run({ apply: false });
+  assert.strictEqual(dryRun.catalogItemsWithPrice, 2);
+  assert.strictEqual(await db.collection('productcatalogs').countDocuments({ priceUsd: { $exists: true } }), 2);
   await migrations[5].run({ apply: true });
   assert.strictEqual(await db.collection('products').countDocuments({ barcode: { $exists: true } }), 0);
+  assert.strictEqual(await db.collection('productcatalogs').countDocuments({ priceUsd: { $exists: true } }), 0);
   const report = await migrations[6].run({ apply: true });
   assert.deepStrictEqual(report.droppedLegacyIndexes, ['nameAr_1']);
   const productIndexes = (await db.collection('products').indexes()).map((i) => i.name);

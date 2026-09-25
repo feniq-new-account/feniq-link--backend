@@ -813,6 +813,14 @@ export const api = {
     return requestFormData(`/admin/manufacturers/${id}/logo`, formData);
   },
   clearManufacturerLogo: (id) => request(`/admin/manufacturers/${id}/logo`, { method: 'DELETE' }),
+  // Admin: categories - each with its catalog item and warehouse product
+  // counts; rename; merge `sourceId` into `targetId`. A merge without
+  // `confirmed` is refused with CATEGORY_MERGE_NEEDS_CONFIRMATION, whose
+  // details carry how many items would move.
+  adminCategories: () => request('/admin/categories'),
+  updateCategory: (id, changes) => request(`/admin/categories/${id}`, { method: 'PATCH', body: changes }),
+  mergeCategory: (targetId, sourceId, { confirmed = false } = {}) =>
+    request(`/admin/categories/${targetId}/merge`, { method: 'POST', body: { sourceId, confirmed } }),
   warehouseDiscounts: () => request('/warehouse/discounts'),
   createWarehouseDiscount: (data) => request('/warehouse/discounts', { method: 'POST', body: data }),
   updateWarehouseDiscount: (id, changes) =>

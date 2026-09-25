@@ -131,12 +131,13 @@ function EditCatalogItemModal({ item, categories, onClose, onSaved }) {
 // `onConfirmNewManufacturers(names)` re-imports the same file creating the
 // manufacturers the admin ticked (catalog overhaul Phase 4.3: an unknown
 // manufacturer is never created silently).
-function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturers, isImporting }) {
+// Exported for its test.
+export function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturers, isImporting }) {
   const { t } = useTranslation();
   const withdrawn = report.withdrawn ?? [];
-  // Rows imported without a category because the file's category matched none
-  // (the import never creates a category).
-  const unknownCategories = report.unknownCategories ?? [];
+  // Categories the file named that matched none, so the import created them:
+  // [{ id, nameAr, items }] - renamed or merged on the Categories screen.
+  const newCategories = report.newCategories ?? [];
   const newManufacturers = report.newManufacturers ?? [];
   const skippedForManufacturers = newManufacturers.reduce((sum, m) => sum + m.rows.length, 0);
   const totalRows =
@@ -264,14 +265,13 @@ function ImportResultModal({ report, fileName, onClose, onConfirmNewManufacturer
             ))}
           </div>
         )}
-        {unknownCategories.length > 0 && (
+        {newCategories.length > 0 && (
           <div className="adm-import-errors">
-            <div className="adm-import-errors-head">{t('admin.catalog.unknownCategoriesTitle')}</div>
-            <p className="hint">{t('admin.catalog.unknownCategoriesHint')}</p>
-            {unknownCategories.map((u) => (
-              <div key={u.row} className="adm-import-error-row">
-                <span className="adm-import-error-row-num">{u.row}</span>
-                {u.category}
+            <div className="adm-import-errors-head">{t('admin.catalog.newCategoriesTitle')}</div>
+            <p className="hint">{t('admin.catalog.newCategoriesHint')}</p>
+            {newCategories.map((c) => (
+              <div key={c.id} className="adm-import-error-row">
+                {c.nameAr} ({t('admin.catalog.newCategoryItems', { count: c.items })})
               </div>
             ))}
           </div>
