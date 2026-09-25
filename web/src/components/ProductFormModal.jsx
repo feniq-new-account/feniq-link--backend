@@ -6,6 +6,7 @@ import { sypFromUsd, formatUsd } from '../utils/currency';
 import { submitWithRateCheck, withRateUsed } from '../utils/exchangeRate';
 import { useExchangeRateActions } from '../context/ExchangeRateContext';
 import { RateChangedNotice } from './RateChangedNotice';
+import { ImagePicker } from './ImagePicker';
 
 export const EMPTY_PRODUCT_FORM = {
   masterProductId: null,
@@ -182,9 +183,10 @@ function CatalogSearchField({ onSelect }) {
 }
 
 // The warehouse's override image: a preview of what the pharmacist will see
-// (the picked file, else the override, else the catalog's central image), a
-// file picker (JPEG/PNG/WEBP - the server re-checks the bytes) and a remove
-// button that falls back to the catalog image.
+// (the picked file, else the override, else the catalog's central image), the
+// shared image picker (a JPEG/PNG/WEBP file or a camera photo - the server
+// re-checks the bytes) and a remove button that falls back to the catalog
+// image.
 export function ProductImageField({ form, setForm }) {
   const { t } = useTranslation();
   const fileUrl = useMemo(() => (form.imageFile ? URL.createObjectURL(form.imageFile) : null), [form.imageFile]);
@@ -203,15 +205,9 @@ export function ProductImageField({ form, setForm }) {
         <p className="hint">{t('productForm.noImage')}</p>
       )}
       {showsCatalogImage && <p className="hint">{t('productForm.catalogImageHint')}</p>}
-      <input
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        aria-label={t('productForm.chooseImage')}
-        onChange={(e) => {
-          const file = e.target.files?.[0] ?? null;
-          setForm((prev) => ({ ...prev, imageFile: file }));
-        }}
-      />
+      {/* A file from the gallery or a photo from the camera: either waits in
+          imageFile and uploads after the product saves. */}
+      <ImagePicker onFile={(file) => setForm((prev) => ({ ...prev, imageFile: file }))} />
       {(fileUrl || override) && (
         <button
           type="button"

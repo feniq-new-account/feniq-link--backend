@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { ManufacturerPicker } from '../components/CatalogPickers';
+import { ImagePicker } from '../components/ImagePicker';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 
 const PAGE_SIZE = 30;
@@ -82,7 +83,6 @@ function ManufacturerRow({ manufacturer, onChanged }) {
   const [nameEn, setNameEn] = useState(manufacturer.nameEn ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-  const fileRef = useRef(null);
 
   const run = async (fn) => {
     setBusy(true);
@@ -99,12 +99,6 @@ function ManufacturerRow({ manufacturer, onChanged }) {
     } finally {
       setBusy(false);
     }
-  };
-
-  const handleLogo = (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (file) run(() => api.uploadManufacturerLogo(manufacturer.id, file));
   };
 
   return (
@@ -132,9 +126,12 @@ function ManufacturerRow({ manufacturer, onChanged }) {
                 {t('common.edit')}
               </button>
             )}
-            <button className="btn-secondary" disabled={busy} onClick={() => fileRef.current?.click()}>
-              {manufacturer.logoUrl ? t('manufacturers.replaceLogo') : t('manufacturers.uploadLogo')}
-            </button>
+            {/* A logo file from the gallery or a photo from the camera - one upload path. */}
+            <ImagePicker
+              label={manufacturer.logoUrl ? t('manufacturers.replaceLogo') : t('manufacturers.uploadLogo')}
+              disabled={busy}
+              onFile={(file) => run(() => api.uploadManufacturerLogo(manufacturer.id, file))}
+            />
             {manufacturer.logoUrl && (
               <button className="btn-secondary" disabled={busy} onClick={() => run(() => api.clearManufacturerLogo(manufacturer.id))}>
                 {t('manufacturers.clearLogo')}
@@ -143,7 +140,6 @@ function ManufacturerRow({ manufacturer, onChanged }) {
             <button className="btn-secondary" onClick={() => setMerging(!merging)}>
               {t('manufacturers.merge')}
             </button>
-            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={handleLogo} />
           </div>
           {error && <p className="error-text">{error}</p>}
         </td>

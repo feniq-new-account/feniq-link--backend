@@ -557,7 +557,6 @@
     "rateRequired": "The exchange rate hasn't loaded yet — the price can't be set until an admin has configured it.",
     "descriptionOptional": "Description (optional)",
     "imageOptional": "Image (optional)",
-    "chooseImage": "Choose an image",
     "removeImage": "Remove image",
     "noImage": "No image",
     "catalogImageHint": "The medicine's catalog image - shown until you upload your own.",
@@ -987,6 +986,26 @@
     "confirmMerge": "Merge \"{{source}}\" into \"{{target}}\"?\n\nCatalog items that move: {{catalogItems}}\nWarehouse products that move: {{products}}\n\n\"{{source}}\" will be deleted. This cannot be undone.",
     "nameTaken": "Another category already has this name - merge the two instead.",
     "nameRequired": "A category needs both an Arabic and an English name."
+  },
+  "imagePicker": {
+    "gallery": "From gallery",
+    "camera": "Take photo",
+    "title": "Take a photo",
+    "starting": "Starting the camera…",
+    "capture": "Capture",
+    "retake": "Retake",
+    "use": "Use photo",
+    "switch": "Switch camera",
+    "capturedAlt": "The captured photo",
+    "errors": {
+      "insecure": "The camera can't start because this page isn't secure: open the dashboard over https (or localhost). You can still choose an image from the gallery.",
+      "denied": "Camera access was not allowed. Allow this site to use the camera in the browser settings and try again, or choose an image from the gallery.",
+      "notFound": "No camera was found on this device. You can choose an image from the gallery.",
+      "inUse": "The camera couldn't start - another app may be using it. Close it and try again, or choose an image from the gallery.",
+      "failed": "The camera couldn't start. Try again, or choose an image from the gallery.",
+      "unsupported": "This browser can't show a live camera. You can choose an image from the gallery.",
+      "captureFailed": "The photo couldn't be captured. Try again, or choose an image from the gallery."
+    }
   },
   "productPicker": {
     "searchPlaceholder": "Search products by name or company",
