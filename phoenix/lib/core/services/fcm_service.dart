@@ -11,6 +11,7 @@ import 'package:feniq/core/session/session_scope.dart';
 import 'package:feniq/features/auth/data/repositories/auth_repository.dart';
 import 'package:feniq/features/notifications/data/models/notification_model.dart';
 import 'package:feniq/features/notifications/data/repositories/notification_repository.dart';
+import 'package:feniq/features/notifications/presentation/utils/discount_code_deep_link.dart';
 import 'package:feniq/routes/route_names.dart';
 
 // Registered as FirebaseMessaging.onBackgroundMessage in main.dart - must be
@@ -367,6 +368,15 @@ class FcmService implements SessionScoped {
       _openComplaintDetail(complaintId);
       return true;
     }
+    // A pharmacy-specific discount code became usable: open the warehouse it
+    // works on (none for an admin's code - the warehouse list instead).
+    if (message.data['type'] == 'discount_code') {
+      _openDiscountCodeTarget(
+        message.data['relatedWarehouseId'] as String?,
+        message.data['warehouseName'] as String?,
+      );
+      return true;
+    }
     return false;
   }
 
@@ -378,6 +388,7 @@ class FcmService implements SessionScoped {
     if (orderId != null && '$orderId'.isNotEmpty) return 'order:$orderId';
     final complaintId = message.data['relatedComplaintId'];
     if (complaintId != null && '$complaintId'.isNotEmpty) return 'complaint:$complaintId';
+    if (message.data['type'] == 'discount_code') return discountCodePayload(message.data);
     return null;
   }
 
@@ -394,6 +405,11 @@ class FcmService implements SessionScoped {
     if (id.isEmpty) return;
     if (kind == 'complaint') {
       _openComplaintDetail(id);
+    } else if (kind == 'warehouse') {
+      final target = parseWarehousePayload(id);
+      _openDiscountCodeTarget(target.warehouseId, target.warehouseName);
+    } else if (kind == 'warehouses') {
+      _openDiscountCodeTarget(null, null);
     } else {
       _openOrderTracking(id);
     }
@@ -421,6 +437,13 @@ class FcmService implements SessionScoped {
       RouteNames.orderTracking,
       pathParameters: {'orderId': orderId},
     );
+  }
+
+  void _openDiscountCodeTarget(String? warehouseId, String? warehouseName) {
+    _logger.info('FCM_DEBUG: _openDiscountCodeTarget() called with warehouseId = $warehouseId');
+    final context = NavigationService.instance.navigatorKey.currentContext;
+    if (context == null) return;
+    openDiscountCodeTarget(context, warehouseId: warehouseId, warehouseName: warehouseName);
   }
 
   // Section 12: tapping "your complaint got a reply" opens that complaint.

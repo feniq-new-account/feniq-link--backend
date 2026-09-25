@@ -19,6 +19,7 @@ import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_state.dart';
 import 'package:feniq/features/cart/presentation/utils/cart_error_translator.dart';
 import 'package:feniq/features/cart/presentation/widgets/cart_item_tile.dart';
+import 'package:feniq/features/cart/presentation/widgets/discount_code_field.dart';
 import 'package:feniq/features/catalog/data/models/manufacturers_route_args.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/routes/route_names.dart';
@@ -247,6 +248,40 @@ class _CartViewState extends State<CartView> {
     );
   }
 
+  // After a DISCOUNT_CODE_CHANGED refusal - nothing was ordered. Either the
+  // code still works on new terms (EDITED: the cubit already re-quoted it, so
+  // this names the new discount and total and can submit at once), or it no
+  // longer works and has come off the cart (the reason says why, and the
+  // pharmacist looks at the total without it before submitting again).
+  Future<void> _showDiscountCodeChanged(CartState state) async {
+    final l10n = context.l10n;
+    final cubit = context.read<CartCubit>();
+    final reason = state.errorDetails?['reason'] as String?;
+    final quote = state.discountQuote;
+
+    if (reason == 'DISCOUNT_CODE_EDITED' && quote != null && state.discountCode != null) {
+      await AppDialog.show(
+        context: context,
+        title: l10n.discountCodeChangedTitle,
+        content: l10n.discountCodeEditedMessage(
+          quote.code,
+          formatSyp(quote.discountSyp, l10n.currencySuffix),
+          formatSyp(quote.finalSyp, l10n.currencySuffix),
+        ),
+        actionLabel: l10n.submitOrderButton,
+        onAction: () => _submit(cubit),
+      );
+      return;
+    }
+    await AppDialog.show(
+      context: context,
+      title: l10n.discountCodeChangedTitle,
+      content: l10n.discountCodeRemovedMessage(
+        translateErrorCode(l10n, reason, l10n.errorDiscountCodeInvalid),
+      ),
+    );
+  }
+
   Future<void> _submit(
     CartCubit cubit, {
     bool acceptPriceChanges = false,
@@ -333,6 +368,11 @@ class _CartViewState extends State<CartView> {
           // the new figure and a fresh confirmation, not a dead-end error.
           if (state.errorCode == 'RATE_CHANGED' && state.errorDetails != null) {
             _confirmRateChange(state.errorDetails!);
+            return;
+          }
+
+          if (state.errorCode == 'DISCOUNT_CODE_CHANGED') {
+            _showDiscountCodeChanged(state);
             return;
           }
 
@@ -428,6 +468,10 @@ class _CartViewState extends State<CartView> {
                         ),
                       ),
                       const SizedBox(height: AppSizes.spacingMedium),
+                      // One code per order. Its amount shows in the summary
+                      // below, quoted by the server.
+                      const DiscountCodeField(),
+                      const SizedBox(height: AppSizes.spacingMedium),
                       AppTextField(
                         label: l10n.notesLabel,
                         controller: _notesController,
@@ -465,36 +509,39 @@ class _CartViewState extends State<CartView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              l10n.subtotalLabel,
-                              style: context.textTheme.titleMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                      if (state.hasDiscountCode)
+                        _DiscountedSummary(state: state)
+                      else
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                l10n.subtotalLabel,
+                                style: context.textTheme.titleMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          Flexible(
-                            child: Builder(
-                              builder: (context) {
-                                final usdToSyp = context
-                                    .watch<ExchangeRateCubit>()
-                                    .state
-                                    .usdToSyp;
-                                return Text(
-                                  formatMoneySyp(state.subtotalSypAt(usdToSyp), l10n.currencySuffix),
-                                  textAlign: TextAlign.end,
-                                  style: context.textTheme.titleLarge?.copyWith(
-                                    color: AppColors.primaryOf(context),
-                                  ),
-                                );
-                              },
+                            Flexible(
+                              child: Builder(
+                                builder: (context) {
+                                  final usdToSyp = context
+                                      .watch<ExchangeRateCubit>()
+                                      .state
+                                      .usdToSyp;
+                                  return Text(
+                                    formatMoneySyp(state.subtotalSypAt(usdToSyp), l10n.currencySuffix),
+                                    textAlign: TextAlign.end,
+                                    style: context.textTheme.titleLarge?.copyWith(
+                                      color: AppColors.primaryOf(context),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                       // Section: this warehouse's order-size limits. Shown
                       // against the subtotal above - the same figure the
                       // backend checks (order.service.js) - so the hint, the
@@ -582,6 +629,97 @@ class _CartViewState extends State<CartView> {
           );
         },
       ),
+    );
+  }
+}
+
+// The summary once a discount code is applied: every figure is the server's
+// quote (POST /discount-codes/preview), so the lines add up to exactly what the
+// order will cost - the code comes off after the platform discount, which is
+// why that discount shows here and not on a cart without a code. While a
+// re-quote is in the air the last figures stay, with a small indicator; with
+// no quote at all (a failed re-quote) the code's amount reads as a dash and
+// the submit button waits.
+class _DiscountedSummary extends StatelessWidget {
+  const _DiscountedSummary({required this.state});
+
+  final CartState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final quote = state.discountQuote;
+    final usdToSyp = context.watch<ExchangeRateCubit>().state.usdToSyp;
+    final muted = context.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondaryOf(context));
+    final positive = context.textTheme.bodyMedium?.copyWith(
+      color: AppColors.secondaryOf(context),
+      fontWeight: AppTextTheme.semiBold,
+    );
+
+    Widget row(String label, String amount, {TextStyle? style, Key? key, Widget? trailing}) => Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.spacingXSmall),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: style ?? muted, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          if (trailing != null) ...[trailing, const SizedBox(width: AppSizes.spacingXSmall)],
+          Text(amount, key: key, style: style ?? muted),
+        ],
+      ),
+    );
+
+    final spinner = state.isQuotingDiscountCode
+        ? SizedBox(
+            width: AppSizes.iconSizeSmall,
+            height: AppSizes.iconSizeSmall,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: AppColors.textSecondaryOf(context),
+              semanticsLabel: l10n.discountCodeUpdating,
+            ),
+          )
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        row(
+          l10n.subtotalLabel,
+          quote != null
+              ? formatSyp(quote.subtotalSyp, l10n.currencySuffix)
+              : formatMoneySyp(state.subtotalSypAt(usdToSyp), l10n.currencySuffix),
+        ),
+        if (quote != null && quote.platformDiscountSyp > 0)
+          row(l10n.discountLabel, '- ${formatSyp(quote.platformDiscountSyp, l10n.currencySuffix)}'),
+        row(
+          l10n.discountCodeLine(state.discountCode!),
+          quote != null ? '- ${formatSyp(quote.discountSyp, l10n.currencySuffix)}' : kMoneyUnavailable,
+          style: positive,
+          key: const Key('discountCodeAmount'),
+          trailing: spinner,
+        ),
+        const SizedBox(height: AppSizes.spacingXSmall),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Text(
+                l10n.invoiceTotalLabel,
+                style: context.textTheme.titleMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Flexible(
+              child: Text(
+                quote != null ? formatSyp(quote.finalSyp, l10n.currencySuffix) : kMoneyUnavailable,
+                key: const Key('discountedTotal'),
+                textAlign: TextAlign.end,
+                style: context.textTheme.titleLarge?.copyWith(color: AppColors.primaryOf(context)),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

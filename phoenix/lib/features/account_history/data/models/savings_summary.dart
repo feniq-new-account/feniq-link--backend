@@ -16,6 +16,7 @@ class SavingsSummary {
     required this.offerAndManufacturerSyp,
     required this.advertisementSyp,
     required this.platformDiscountSyp,
+    this.discountCodeSyp = 0,
     required this.totalSavingsSyp,
     required this.totalSavingsUsd,
   });
@@ -29,6 +30,9 @@ class SavingsSummary {
 
   /// Feniq's own subsidy on every order.
   final num platformDiscountSyp;
+
+  /// Discount codes used on the pharmacy's orders (already inside the total).
+  final num discountCodeSyp;
 
   /// The headline: everything the pharmacy did not pay.
   final num totalSavingsSyp;
@@ -48,6 +52,7 @@ class SavingsSummary {
     offerAndManufacturerSyp: (json['offerAndManufacturerSyp'] as num?) ?? 0,
     advertisementSyp: (json['advertisementSyp'] as num?) ?? 0,
     platformDiscountSyp: (json['platformDiscountSyp'] as num?) ?? 0,
+    discountCodeSyp: (json['discountCodeSyp'] as num?) ?? 0,
     totalSavingsSyp: (json['totalSavingsSyp'] as num?) ?? 0,
     totalSavingsUsd: (json['totalSavingsUsd'] as num?) ?? 0,
   );

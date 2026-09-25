@@ -1,4 +1,5 @@
 import 'package:feniq/features/cart/data/models/cart_item.dart';
+import 'package:feniq/features/cart/data/models/discount_code_quote.dart';
 
 class CartState {
   const CartState({
@@ -15,6 +16,10 @@ class CartState {
     this.errorMessage,
     this.errorCode,
     this.errorDetails,
+    this.discountCode,
+    this.discountQuote,
+    this.isQuotingDiscountCode = false,
+    this.discountCodeErrorCode,
   });
 
   final String? warehouseId;
@@ -64,6 +69,28 @@ class CartState {
   final String? errorMessage;
   final String? errorCode;
   final Map<String, dynamic>? errorDetails;
+
+  // The discount code applied to this cart (as the server spells it), and
+  // what it takes off the cart as the server last quoted it
+  // (CartCubit.applyDiscountCode). One code per order. It goes to the server
+  // with the order, so applying or removing one is an edit like any other
+  // and drops pendingIdempotencyKey.
+  //
+  // The quote goes stale when the cart changes - a percentage follows the
+  // total - so every such edit re-quotes it (CartCubit._scheduleRequote),
+  // with [isQuotingDiscountCode] up meanwhile. A code with no current quote
+  // (a failed re-quote) is not sent: the submit button waits until the
+  // pharmacist retries or removes it (see canSubmit).
+  final String? discountCode;
+  final DiscountCodeQuote? discountQuote;
+  final bool isQuotingDiscountCode;
+
+  // Why the last apply or re-quote refused the code (DISCOUNT_CODE_EXPIRED,
+  // a network error...), shown under the code field. Separate from errorCode
+  // above, which drives the submit dialogs.
+  final String? discountCodeErrorCode;
+
+  bool get hasDiscountCode => discountCode != null;
 
   num get subtotalUsd => items.fold<num>(0, (sum, item) => sum + item.lineTotalUsd);
 
@@ -125,7 +152,14 @@ class CartState {
   bool get isAboveMaximum => maxOrderAmountUsd != null && subtotalUsd > maxOrderAmountUsd!;
   num get amountToReachMinimum => isBelowMinimum ? minOrderAmountUsd - subtotalUsd : 0;
   num get amountOverMaximum => isAboveMaximum ? subtotalUsd - maxOrderAmountUsd! : 0;
-  bool get canSubmit => !isEmpty && !isBelowMinimum && !isAboveMaximum;
+  bool get canSubmit =>
+      !isEmpty &&
+      !isBelowMinimum &&
+      !isAboveMaximum &&
+      // Never while a discount-code quote is in the air, nor with a code whose
+      // amount is unknown: the pharmacist confirms the total the order costs.
+      !isQuotingDiscountCode &&
+      (discountCode == null || discountQuote != null);
   /// The cart badge: how many LINES the cart holds, products and packages
   /// alike - a package counts once however many products are inside it, and
   /// however many copies of it were taken. Deliberately not the sum of the
@@ -151,6 +185,13 @@ class CartState {
     String? errorCode,
     Map<String, dynamic>? errorDetails,
     bool clearError = false,
+    String? discountCode,
+    DiscountCodeQuote? discountQuote,
+    bool clearDiscountCode = false,
+    bool clearDiscountQuote = false,
+    bool? isQuotingDiscountCode,
+    String? discountCodeErrorCode,
+    bool clearDiscountCodeError = false,
   }) {
     return CartState(
       warehouseId: warehouseId ?? this.warehouseId,
@@ -168,6 +209,13 @@ class CartState {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       errorCode: clearError ? null : (errorCode ?? this.errorCode),
       errorDetails: clearError ? null : (errorDetails ?? this.errorDetails),
+      // Clearing the code takes its quote with it - a quote belongs to one code.
+      discountCode: clearDiscountCode ? null : (discountCode ?? this.discountCode),
+      discountQuote: clearDiscountCode || clearDiscountQuote ? null : (discountQuote ?? this.discountQuote),
+      isQuotingDiscountCode: isQuotingDiscountCode ?? this.isQuotingDiscountCode,
+      discountCodeErrorCode: clearDiscountCodeError
+          ? null
+          : (discountCodeErrorCode ?? this.discountCodeErrorCode),
     );
   }
 }

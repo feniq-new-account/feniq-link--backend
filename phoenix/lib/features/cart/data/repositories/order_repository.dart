@@ -1,6 +1,7 @@
 import 'package:image_picker/image_picker.dart';
 import 'package:feniq/core/models/paginated_result.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
+import 'package:feniq/features/cart/data/models/discount_code_quote.dart';
 import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/cart/data/models/reorder_preparation.dart';
 
@@ -26,6 +27,22 @@ abstract class OrderRepository {
     // the pharmacist agreed to a lira figure computed at a rate that has
     // since moved. Null is accepted by the server and simply not checked.
     double? rateUsed,
+    // The discount code applied in the cart, and the revision it was quoted
+    // at (previewDiscountCode). The server re-checks the code and claims its
+    // use; a code that stopped working or changed its amount since the quote
+    // is refused with DISCOUNT_CODE_CHANGED (details.reason says why).
+    String? discountCode,
+    int? discountCodeRevision,
+  });
+
+  // What `code` takes off this cart right now - the same cart payload an order
+  // takes (loose lines + packages), priced by the server. Nothing is claimed
+  // or written. Throws [Failure] with the code's reason (DISCOUNT_CODE_EXPIRED,
+  // DISCOUNT_CODE_NOT_FOR_WAREHOUSE, ...) when it cannot be used.
+  Future<DiscountCodeQuote> previewDiscountCode({
+    required String warehouseId,
+    required List<CartItem> items,
+    required String code,
   });
 
   Future<OrderModel> getOrder(String orderId);

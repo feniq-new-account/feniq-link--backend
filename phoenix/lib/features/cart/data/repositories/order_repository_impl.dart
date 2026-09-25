@@ -5,6 +5,7 @@ import 'package:feniq/core/models/paginated_result.dart';
 import 'package:feniq/core/network/api_client.dart';
 import 'package:feniq/core/network/endpoints.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
+import 'package:feniq/features/cart/data/models/discount_code_quote.dart';
 import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/cart/data/models/reorder_preparation.dart';
 
@@ -22,42 +23,15 @@ class OrderRepositoryImpl implements OrderRepository {
     String? notes,
     String? idempotencyKey,
     double? rateUsed,
+    String? discountCode,
+    int? discountCodeRevision,
   }) async {
-    // The cart holds product lines and package lines in one list; the API
-    // takes them as two. A package crosses the wire as nothing but its id and
-    // a copy count - no price, no contents - and the server builds the real
-    // order lines from its own record of the package (order.service.js).
-    final productLines = items.where((item) => !item.isPackage);
-    final packageLines = items.where((item) => item.isPackage);
-
     try {
       final response = await _apiClient.dio.post(
         Endpoints.orders,
         data: {
           'warehouseId': warehouseId,
-          // productId + quantity, plus the unit price the cart actually
-          // showed. The price is NOT what the order is billed at - the server
-          // still prices every line from its own catalog - it is only what
-          // the pharmacist was looking at when they tapped submit, so the
-          // server can reject with PRICE_CHANGED instead of silently charging
-          // a different number (order.service.js).
-          'items': productLines
-              .map((item) => {
-                    'productId': item.productId,
-                    'quantity': item.quantity,
-                    'displayedUnitPriceUsd': item.discountPriceUsd,
-                    // The bonus the cart showed (catalog overhaul Phase 8) -
-                    // compared, never trusted: BONUS_CHANGED if it moved.
-                    'displayedBonuses': item.bonuses.map((tier) => tier.toJson()).toList(),
-                  })
-              .toList(),
-          // `quantity` on a package line IS the number of copies.
-          'packages': packageLines
-              .map((item) => {
-                    'advertisementId': item.packageId,
-                    'copies': item.quantity,
-                  })
-              .toList(),
+          ..._cartLines(items),
           if (notes != null && notes.isNotEmpty) 'notes': notes,
           if (idempotencyKey != null) 'idempotencyKey': idempotencyKey,
           // The rate the totals on screen were converted at. Omitted rather
@@ -65,6 +39,11 @@ class OrderRepositoryImpl implements OrderRepository {
           // treats "no rate sent" as "nothing to check" either way, and this
           // keeps the body identical to an older build's.
           if (rateUsed != null) 'rateUsed': rateUsed,
+          // Omitted without a code, so a code-less order sends exactly the
+          // body it always has.
+          if (discountCode != null) 'discountCode': discountCode,
+          if (discountCode != null && discountCodeRevision != null)
+            'discountCodeRevision': discountCodeRevision,
         },
       );
       final data = response.data as Map<String, dynamic>;
@@ -72,6 +51,63 @@ class OrderRepositoryImpl implements OrderRepository {
     } on DioException catch (e) {
       throw ServerFailure.fromDioError(e);
     }
+  }
+
+  @override
+  Future<DiscountCodeQuote> previewDiscountCode({
+    required String warehouseId,
+    required List<CartItem> items,
+    required String code,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        Endpoints.discountCodePreview,
+        data: {
+          'warehouseId': warehouseId,
+          'code': code,
+          ..._cartLines(items),
+        },
+      );
+      return DiscountCodeQuote.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ServerFailure.fromDioError(e);
+    }
+  }
+
+  // The cart holds product lines and package lines in one list; the API takes
+  // them as two. A package crosses the wire as nothing but its id and a copy
+  // count - no price, no contents - and the server builds the real order lines
+  // from its own record of the package (order.service.js). One shape for the
+  // order and the discount-code preview, so the preview prices the very cart
+  // the order would send.
+  Map<String, dynamic> _cartLines(List<CartItem> items) {
+    final productLines = items.where((item) => !item.isPackage);
+    final packageLines = items.where((item) => item.isPackage);
+    return {
+      // productId + quantity, plus the unit price the cart actually showed.
+      // The price is NOT what the order is billed at - the server still
+      // prices every line from its own catalog - it is only what the
+      // pharmacist was looking at when they tapped submit, so the server can
+      // reject with PRICE_CHANGED instead of silently charging a different
+      // number (order.service.js).
+      'items': productLines
+          .map((item) => {
+                'productId': item.productId,
+                'quantity': item.quantity,
+                'displayedUnitPriceUsd': item.discountPriceUsd,
+                // The bonus the cart showed (catalog overhaul Phase 8) -
+                // compared, never trusted: BONUS_CHANGED if it moved.
+                'displayedBonuses': item.bonuses.map((tier) => tier.toJson()).toList(),
+              })
+          .toList(),
+      // `quantity` on a package line IS the number of copies.
+      'packages': packageLines
+          .map((item) => {
+                'advertisementId': item.packageId,
+                'copies': item.quantity,
+              })
+          .toList(),
+    };
   }
 
   @override

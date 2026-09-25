@@ -910,5 +910,59 @@
   "warehouseOffersTitle": "Warehouse offers",
   "@warehouseOffersTitle": {
     "description": "Title of the screen a tapped Offer card on the Offers & Ads tab opens: the offers of that offer's own warehouse."
-  }
+  },
+  "discountCodeFieldLabel": "Discount code",
+  "discountCodeHint": "Enter a discount code",
+  "discountCodeApply": "Apply",
+  "discountCodeRemove": "Remove",
+  "discountCodeApplied": "Code {code} applied",
+  "@discountCodeApplied": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "discountCodeLine": "Discount code ({code})",
+  "@discountCodeLine": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "discountCodeUpdating": "Updating the discount",
+  "discountCodeChangedTitle": "Discount code changed",
+  "discountCodeRemovedMessage": "{reason} The code was removed from your cart - check the total, then submit again.",
+  "@discountCodeRemovedMessage": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "discountCodeEditedMessage": "The discount code {code} changed. The discount is now {discount} and the total {total}.",
+  "@discountCodeEditedMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "discount": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDiscountCodeInvalid": "This discount code is not valid.",
+  "errorDiscountCodeNotStarted": "This discount code is not active yet.",
+  "errorDiscountCodeExpired": "This discount code has expired.",
+  "errorDiscountCodeLimitReached": "This discount code has reached its usage limit.",
+  "errorDiscountCodePharmacyLimitReached": "You have already used this code the maximum number of times.",
+  "errorDiscountCodeNotForPharmacy": "This code is not for your pharmacy.",
+  "errorDiscountCodeNotForWarehouse": "This code does not work on orders to this warehouse.",
+  "errorDiscountCodePendingApproval": "This discount code is still waiting for approval.",
+  "errorDiscountCodeStopped": "This discount code has been stopped.",
+  "errorDiscountCodeEdited": "The terms of this discount code changed."
 }

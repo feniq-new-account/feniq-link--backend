@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:uuid/uuid.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/core/session/session_scope.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
+import 'package:feniq/features/cart/data/models/discount_code_quote.dart';
 import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_repository.dart';
 import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/cart/data/repositories/order_repository.dart';
@@ -24,6 +27,16 @@ import 'cart_state.dart';
 /// (refreshWarehouseLimits); this only bounds how wrong a cart left open
 /// through a background/resume can get.
 const Duration kCartLimitsTtl = Duration(minutes: 5);
+
+/// How long after the last cart edit an applied discount code is re-quoted.
+/// Long enough that tapping a stepper five times costs one request, short
+/// enough that the total the pharmacist is about to confirm is current.
+const Duration kDiscountRequoteDelay = Duration(milliseconds: 400);
+
+/// Whether a refusal is about the discount code itself (it stopped working),
+/// as opposed to the network or anything else.
+bool isDiscountCodeRefusal(String? code) =>
+    code != null && code.startsWith('DISCOUNT_CODE_') && code != 'DISCOUNT_CODE_CHANGED';
 
 // Section 6.6: every order belongs to exactly one warehouse, so the cart as a
 // whole is scoped to one warehouseId at a time. Registered globally (like
@@ -55,6 +68,12 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   final DateTime Function() _now;
   final Uuid _uuid = const Uuid();
 
+  // The discount-code quote in the air. Every apply / re-quote / removal bumps
+  // [_quoteRequest], and an answer to an older request is dropped - so a slow
+  // quote for last second's cart never overwrites the current one.
+  Timer? _requoteTimer;
+  int _quoteRequest = 0;
+
   // Bumped by every sign-out. A submit that was in flight when the account
   // changed must not write its outcome into the next account's cart - see
   // submitOrder.
@@ -66,14 +85,146 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   @override
   void resetForSignOut() {
     _session++;
+    _cancelQuote();
     if (isClosed) return;
     emit(const CartState());
   }
 
   @override
   Future<void> close() {
+    _cancelQuote();
     _sessionScope?.unregister(this);
     return super.close();
+  }
+
+  void _cancelQuote() {
+    _requoteTimer?.cancel();
+    _requoteTimer = null;
+    _quoteRequest++;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Discount code (one per order)
+
+  /// Checks [rawCode] against this cart on the server and, if it works, applies
+  /// it: the summary then shows the server's quote (the platform discount, the
+  /// code's discount and the total). A code that cannot be used leaves the
+  /// cart as it was, with the reason in [CartState.discountCodeErrorCode].
+  Future<void> applyDiscountCode(String rawCode) async {
+    final code = rawCode.trim().toUpperCase();
+    final warehouseId = state.warehouseId;
+    if (code.isEmpty || warehouseId == null || state.isEmpty) return;
+
+    _requoteTimer?.cancel();
+    final request = ++_quoteRequest;
+    final session = _session;
+    emit(state.copyWith(isQuotingDiscountCode: true, clearDiscountCodeError: true));
+    try {
+      final quote = await _orderRepository.previewDiscountCode(
+        warehouseId: warehouseId,
+        items: state.items,
+        code: code,
+      );
+      if (_isStaleQuote(request, session, warehouseId)) return;
+      emit(state.copyWith(
+        discountCode: quote.code,
+        discountQuote: quote,
+        isQuotingDiscountCode: false,
+        // The code goes to the server with the order - a different request.
+        clearPendingIdempotencyKey: state.discountCode != quote.code,
+      ));
+    } on Failure catch (f) {
+      if (_isStaleQuote(request, session, warehouseId)) return;
+      emit(state.copyWith(
+        isQuotingDiscountCode: false,
+        discountCodeErrorCode: f.code ?? 'UNEXPECTED_ERROR',
+      ));
+    } catch (_) {
+      if (_isStaleQuote(request, session, warehouseId)) return;
+      emit(state.copyWith(isQuotingDiscountCode: false, discountCodeErrorCode: 'UNEXPECTED_ERROR'));
+    }
+  }
+
+  /// Takes the code off the cart (or just clears a refusal under the field).
+  void removeDiscountCode() {
+    _cancelQuote();
+    if (state.discountCode == null && state.discountCodeErrorCode == null && !state.isQuotingDiscountCode) {
+      return;
+    }
+    emit(state.copyWith(
+      clearDiscountCode: true,
+      clearDiscountCodeError: true,
+      isQuotingDiscountCode: false,
+      clearPendingIdempotencyKey: state.discountCode != null,
+    ));
+  }
+
+  /// Re-quotes the applied code now - the retry after a quote that failed on
+  /// the network.
+  Future<void> refreshDiscountQuote() async {
+    if (state.discountCode == null) return;
+    _requoteTimer?.cancel();
+    final request = ++_quoteRequest;
+    emit(state.copyWith(isQuotingDiscountCode: true, clearDiscountCodeError: true));
+    await _requote(request);
+  }
+
+  bool _isStaleQuote(int request, int session, String warehouseId) =>
+      isClosed || request != _quoteRequest || session != _session || state.warehouseId != warehouseId;
+
+  // After an edit that changes what the cart costs: the code's amount changes
+  // with it (a percentage follows the total, and a fixed amount is capped by
+  // it), so the quote is refreshed once the edits settle. The old figures stay
+  // on screen meanwhile, with the submit button held until the new ones land.
+  void _scheduleRequote() {
+    if (state.discountCode == null || state.isEmpty) return;
+    _requoteTimer?.cancel();
+    final request = ++_quoteRequest;
+    emit(state.copyWith(isQuotingDiscountCode: true));
+    _requoteTimer = Timer(kDiscountRequoteDelay, () => _requote(request));
+  }
+
+  Future<void> _requote(int request) async {
+    final code = state.discountCode;
+    final warehouseId = state.warehouseId;
+    if (code == null || warehouseId == null || state.isEmpty || request != _quoteRequest) return;
+    final session = _session;
+    try {
+      final quote = await _orderRepository.previewDiscountCode(
+        warehouseId: warehouseId,
+        items: state.items,
+        code: code,
+      );
+      if (_isStaleQuote(request, session, warehouseId)) return;
+      emit(state.copyWith(discountQuote: quote, isQuotingDiscountCode: false, clearDiscountCodeError: true));
+    } on Failure catch (f) {
+      if (_isStaleQuote(request, session, warehouseId)) return;
+      if (isDiscountCodeRefusal(f.code)) {
+        // The code stopped working while the cart was being edited (expired,
+        // stopped, used up...): it comes off, with the reason under the field.
+        emit(state.copyWith(
+          clearDiscountCode: true,
+          isQuotingDiscountCode: false,
+          discountCodeErrorCode: f.code,
+          clearPendingIdempotencyKey: true,
+        ));
+      } else {
+        // The network, most likely: the code stays, but with no amount to
+        // show - the pharmacist retries (refreshDiscountQuote) or removes it.
+        emit(state.copyWith(
+          clearDiscountQuote: true,
+          isQuotingDiscountCode: false,
+          discountCodeErrorCode: f.code ?? 'UNEXPECTED_ERROR',
+        ));
+      }
+    } catch (_) {
+      if (_isStaleQuote(request, session, warehouseId)) return;
+      emit(state.copyWith(
+        clearDiscountQuote: true,
+        isQuotingDiscountCode: false,
+        discountCodeErrorCode: 'UNEXPECTED_ERROR',
+      ));
+    }
   }
 
   // The limits read currently in the air, so the cart screen opening while
@@ -222,6 +373,7 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
       ),
     );
     if (warehouseChanged) _loadWarehouseLimits(warehouseId);
+    _scheduleRequote();
   }
 
   // Used after the pharmacist confirms replacing a cart that has items from
@@ -232,6 +384,8 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     required String warehouseName,
     required int quantity,
   }) {
+    // A new cart: any discount code applied to the old one goes with it.
+    _cancelQuote();
     emit(
       CartState(
         warehouseId: warehouseId,
@@ -255,6 +409,7 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     required String warehouseName,
     required List<CartItem> items,
   }) {
+    _cancelQuote();
     emit(
       CartState(
         warehouseId: warehouseId,
@@ -305,6 +460,7 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
       ),
     );
     if (warehouseChanged) _loadWarehouseLimits(warehouseId);
+    _scheduleRequote();
   }
 
   /// Replaces the whole cart with a single package, for the "your cart holds
@@ -314,6 +470,7 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     required String warehouseId,
     required String warehouseName,
   }) {
+    _cancelQuote();
     emit(
       CartState(
         warehouseId: warehouseId,
@@ -346,10 +503,12 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     final updated = state.items.where((item) => !(item.isPackage && !item.isAvailable)).toList();
     if (updated.length == state.items.length) return;
     if (updated.isEmpty) {
+      _cancelQuote();
       emit(const CartState());
       return;
     }
     emit(state.copyWith(items: updated, clearPendingIdempotencyKey: true));
+    _scheduleRequote();
   }
 
   List<CartItem> _flagUnavailablePackages(Set<String> packageIds) => state.items
@@ -454,20 +613,24 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
       return item.copyWith(quantity: clamped);
     }).toList();
     emit(state.copyWith(items: updated, clearPendingIdempotencyKey: changed));
+    if (changed) _scheduleRequote();
   }
 
   void removeItem(String lineKey) {
     final updated = state.items.where((item) => item.lineKey != lineKey).toList();
     if (updated.isEmpty) {
+      _cancelQuote();
       emit(const CartState());
       return;
     }
+    final removed = updated.length != state.items.length;
     emit(
       state.copyWith(
         items: updated,
-        clearPendingIdempotencyKey: updated.length != state.items.length,
+        clearPendingIdempotencyKey: removed,
       ),
     );
+    if (removed) _scheduleRequote();
   }
 
   // "Clear the cart": drops every line at once. Resets to a pristine
@@ -478,6 +641,7 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   // until submitOrder.
   void clearCart() {
     if (state.isEmpty) return;
+    _cancelQuote();
     emit(const CartState());
   }
 
@@ -519,6 +683,12 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     // and this running.
     if (state.items.isEmpty) {
       emit(state.copyWith(errorMessage: 'Your cart is empty.', errorCode: 'CART_EMPTY'));
+      return null;
+    }
+    // The submit button is held while a discount-code quote is in the air, or
+    // while an applied code has no amount (CartState.canSubmit); this is the
+    // backstop - the total on screen would not be the one being confirmed.
+    if (state.isQuotingDiscountCode || (state.discountCode != null && state.discountQuote == null)) {
       return null;
     }
 
@@ -586,12 +756,23 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
         // nothing else, and the server prices it from its own record.
         idempotencyKey: idempotencyKey,
         rateUsed: rateUsed,
+        // With the revision it was quoted at: if the code's amount changed
+        // since, the server refuses (DISCOUNT_CODE_CHANGED) rather than charge
+        // a total the pharmacist never saw. Not part of the idempotency key's
+        // identity beyond the code itself - the server fingerprints the code.
+        discountCode: state.discountCode,
+        discountCodeRevision: state.discountQuote?.revision,
       );
       if (session != _session) return null;
+      _cancelQuote();
       emit(const CartState());
       return order;
     } on Failure catch (f) {
       if (session != _session) return null;
+      if (f.code == 'DISCOUNT_CODE_CHANGED' || isDiscountCodeRefusal(f.code)) {
+        await _handleDiscountCodeRefusal(f, session);
+        return null;
+      }
       // Both refusals below rewrite lines in this same emit, so the lines and
       // the dialog explaining them reach the screen together.
       //
@@ -650,6 +831,8 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
           errorDetails: f.details,
         ),
       );
+      // Repriced lines change the total the code is taken from.
+      if (pricesChanged) _scheduleRequote();
       return null;
     } catch (e) {
       // Anything that isn't a Failure (e.g. a response-parsing bug) must
@@ -660,5 +843,68 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
       emit(state.copyWith(isSubmitting: false, errorMessage: 'Unexpected error', errorCode: 'UNEXPECTED_ERROR'));
       return null;
     }
+  }
+
+  // The order was refused over the discount code - no order was placed.
+  //
+  // DISCOUNT_CODE_EDITED: the code still works, but its amount changed since
+  // the cart quoted it. It is re-quoted right here, so the dialog explaining
+  // it (CartView) already shows the new discount and total, and the next
+  // submit carries the new revision. The code is unchanged, so the idempotency
+  // key stays - exactly like a RATE_CHANGED refusal.
+  //
+  // Any other reason (stopped, expired, used up...): the code comes off the
+  // cart with the reason under the field, and the pharmacist sees the total
+  // without it before submitting again. What would be sent changed, so the
+  // key goes.
+  Future<void> _handleDiscountCodeRefusal(Failure f, int session) async {
+    final reason = (f.details?['reason'] as String?) ?? f.code;
+    final warehouseId = state.warehouseId;
+    final code = state.discountCode;
+
+    if (reason == 'DISCOUNT_CODE_EDITED' && code != null && warehouseId != null) {
+      _requoteTimer?.cancel();
+      final request = ++_quoteRequest;
+      DiscountCodeQuote? quote;
+      Failure? quoteFailure;
+      try {
+        quote = await _orderRepository.previewDiscountCode(warehouseId: warehouseId, items: state.items, code: code);
+      } on Failure catch (failure) {
+        quoteFailure = failure;
+      } catch (_) {
+        quoteFailure = null;
+      }
+      if (isClosed || session != _session || request != _quoteRequest) return;
+      if (quote != null) {
+        emit(state.copyWith(
+          discountQuote: quote,
+          isQuotingDiscountCode: false,
+          isSubmitting: false,
+          errorMessage: f.errMessage,
+          errorCode: 'DISCOUNT_CODE_CHANGED',
+          errorDetails: f.details,
+        ));
+        return;
+      }
+      // The re-quote itself refused it (or failed): fall through to taking it
+      // off, with the newest reason.
+      _removeRefusedCode(f, isDiscountCodeRefusal(quoteFailure?.code) ? quoteFailure!.code! : reason);
+      return;
+    }
+    _removeRefusedCode(f, reason);
+  }
+
+  void _removeRefusedCode(Failure f, String? reason) {
+    _cancelQuote();
+    emit(state.copyWith(
+      clearDiscountCode: true,
+      isQuotingDiscountCode: false,
+      discountCodeErrorCode: reason,
+      clearPendingIdempotencyKey: true,
+      isSubmitting: false,
+      errorMessage: f.errMessage,
+      errorCode: 'DISCOUNT_CODE_CHANGED',
+      errorDetails: {...?f.details, 'reason': reason},
+    ));
   }
 }

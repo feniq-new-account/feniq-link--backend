@@ -91,6 +91,33 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
     // submitting again places the edited cart as a new order.
     case 'IDEMPOTENCY_KEY_REUSED':
       return l10n.errorIdempotencyKeyReused;
+    // Discount codes - from POST /discount-codes/preview (the cart's Apply) as
+    // the code itself, and from POST /orders as details.reason of a 409
+    // DISCOUNT_CODE_CHANGED (the code stopped working after it was applied).
+    case 'DISCOUNT_CODE_INVALID':
+      return l10n.errorDiscountCodeInvalid;
+    case 'DISCOUNT_CODE_NOT_STARTED':
+      return l10n.errorDiscountCodeNotStarted;
+    case 'DISCOUNT_CODE_EXPIRED':
+      return l10n.errorDiscountCodeExpired;
+    case 'DISCOUNT_CODE_LIMIT_REACHED':
+      return l10n.errorDiscountCodeLimitReached;
+    case 'DISCOUNT_CODE_PHARMACY_LIMIT_REACHED':
+      return l10n.errorDiscountCodePharmacyLimitReached;
+    case 'DISCOUNT_CODE_NOT_FOR_PHARMACY':
+      return l10n.errorDiscountCodeNotForPharmacy;
+    case 'DISCOUNT_CODE_NOT_FOR_WAREHOUSE':
+      return l10n.errorDiscountCodeNotForWarehouse;
+    case 'DISCOUNT_CODE_PENDING_APPROVAL':
+      return l10n.errorDiscountCodePendingApproval;
+    case 'DISCOUNT_CODE_STOPPED':
+      return l10n.errorDiscountCodeStopped;
+    case 'DISCOUNT_CODE_EDITED':
+      return l10n.errorDiscountCodeEdited;
+    // CartView answers this with its own dialog naming the reason; this is
+    // the fallback for any other caller.
+    case 'DISCOUNT_CODE_CHANGED':
+      return l10n.discountCodeChangedTitle;
     case 'ORDER_NOT_FOUND':
       return l10n.errorOrderNotFound;
     case 'ORDER_NOT_CANCELLABLE':

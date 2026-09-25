@@ -6,9 +6,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 /// The payload is exactly what `backend/src/services/notification.service.js`
 /// sends and is NOT changed by this feature:
 ///   notification: { title, body }   // already localised by the backend per user.lang
-///   data: { type, relatedOrderId?, relatedComplaintId? }
-///                                   // type ∈ order_update | offer | system | complaint
-enum NotificationType { orderUpdate, offer, system, complaint, unknown }
+///   data: { type, relatedOrderId?, relatedComplaintId?, relatedWarehouseId?, warehouseName? }
+///                                   // type ∈ order_update | offer | system | complaint | discount_code
+enum NotificationType { orderUpdate, offer, system, complaint, discountCode, unknown }
 
 class NotificationModel {
   const NotificationModel({
@@ -50,6 +50,18 @@ class NotificationModel {
 
   bool get hasComplaintDeepLink =>
       relatedComplaintId != null && relatedComplaintId!.isNotEmpty;
+
+  /// A pharmacy-specific discount code just became usable. Tapping it opens
+  /// the warehouse it works on - or the warehouse list for an admin's code,
+  /// which works on every warehouse (no [relatedWarehouseId]).
+  bool get isDiscountCode => type == NotificationType.discountCode;
+
+  String? get relatedWarehouseId {
+    final id = data['relatedWarehouseId'];
+    return (id == null || id.isEmpty) ? null : id;
+  }
+
+  String? get warehouseName => data['warehouseName'];
 
   /// Builds an inbox entry from an FCM message, or `null` when there is
   /// nothing worth showing (no title and no body - the current backend never
@@ -100,6 +112,8 @@ class NotificationModel {
         return NotificationType.system;
       case 'complaint':
         return NotificationType.complaint;
+      case 'discount_code':
+        return NotificationType.discountCode;
       default:
         return NotificationType.unknown;
     }

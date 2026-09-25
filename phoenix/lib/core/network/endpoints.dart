@@ -38,6 +38,9 @@ class Endpoints {
   static const String returnableOrders = '/orders/returnable';
   // Account History "Money Saved" card - a read-only total, no order data.
   static const String savingsSummary = '/orders/savings-summary';
+  // The cart's "Apply" on a discount code: what the code takes off this cart
+  // right now. Read-only - the order itself claims the code's use.
+  static const String discountCodePreview = '/discount-codes/preview';
 
   static const String returns = '/returns';
   static String returnDetail(String returnId) => '/returns/$returnId';

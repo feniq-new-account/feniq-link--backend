@@ -2881,6 +2881,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Warehouse offers'**
   String get warehouseOffersTitle;
+
+  /// No description provided for @discountCodeFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount code'**
+  String get discountCodeFieldLabel;
+
+  /// No description provided for @discountCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a discount code'**
+  String get discountCodeHint;
+
+  /// No description provided for @discountCodeApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get discountCodeApply;
+
+  /// No description provided for @discountCodeRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get discountCodeRemove;
+
+  /// No description provided for @discountCodeApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Code {code} applied'**
+  String discountCodeApplied(String code);
+
+  /// No description provided for @discountCodeLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount code ({code})'**
+  String discountCodeLine(String code);
+
+  /// No description provided for @discountCodeUpdating.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating the discount'**
+  String get discountCodeUpdating;
+
+  /// No description provided for @discountCodeChangedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount code changed'**
+  String get discountCodeChangedTitle;
+
+  /// No description provided for @discountCodeRemovedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason} The code was removed from your cart - check the total, then submit again.'**
+  String discountCodeRemovedMessage(String reason);
+
+  /// No description provided for @discountCodeEditedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The discount code {code} changed. The discount is now {discount} and the total {total}.'**
+  String discountCodeEditedMessage(String code, String discount, String total);
+
+  /// No description provided for @errorDiscountCodeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This discount code is not valid.'**
+  String get errorDiscountCodeInvalid;
+
+  /// No description provided for @errorDiscountCodeNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'This discount code is not active yet.'**
+  String get errorDiscountCodeNotStarted;
+
+  /// No description provided for @errorDiscountCodeExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This discount code has expired.'**
+  String get errorDiscountCodeExpired;
+
+  /// No description provided for @errorDiscountCodeLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'This discount code has reached its usage limit.'**
+  String get errorDiscountCodeLimitReached;
+
+  /// No description provided for @errorDiscountCodePharmacyLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'You have already used this code the maximum number of times.'**
+  String get errorDiscountCodePharmacyLimitReached;
+
+  /// No description provided for @errorDiscountCodeNotForPharmacy.
+  ///
+  /// In en, this message translates to:
+  /// **'This code is not for your pharmacy.'**
+  String get errorDiscountCodeNotForPharmacy;
+
+  /// No description provided for @errorDiscountCodeNotForWarehouse.
+  ///
+  /// In en, this message translates to:
+  /// **'This code does not work on orders to this warehouse.'**
+  String get errorDiscountCodeNotForWarehouse;
+
+  /// No description provided for @errorDiscountCodePendingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'This discount code is still waiting for approval.'**
+  String get errorDiscountCodePendingApproval;
+
+  /// No description provided for @errorDiscountCodeStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'This discount code has been stopped.'**
+  String get errorDiscountCodeStopped;
+
+  /// No description provided for @errorDiscountCodeEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'The terms of this discount code changed.'**
+  String get errorDiscountCodeEdited;
 }
 
 class _AppLocalizationsDelegate

@@ -7,6 +7,7 @@ import 'package:feniq/core/theme/app_text_theme.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/features/cart/data/models/order_line_item.dart';
+import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 
 // Section 6.8: the digital invoice - full line items plus the same
@@ -24,6 +25,7 @@ class OrderInvoiceSection extends StatelessWidget {
     required this.totalPrice,
     required this.discountAmount,
     this.advertisementDiscountAmount = 0,
+    this.discountCode,
     required this.finalPrice,
   });
 
@@ -35,6 +37,9 @@ class OrderInvoiceSection extends StatelessWidget {
   // platform's rate-derived cut). 0 on a normal order, which is how every
   // order placed before packages existed reads.
   final num advertisementDiscountAmount;
+  // The discount code the order used, if any - taken off after every other
+  // discount above, so it is the last line before the total.
+  final OrderDiscountCode? discountCode;
   final num finalPrice;
 
   @override
@@ -62,6 +67,11 @@ class OrderInvoiceSection extends StatelessWidget {
             _TotalsRow(
               label: l10n.advertisementDiscountLabel,
               amount: -advertisementDiscountAmount,
+            ),
+          if (discountCode != null && discountCode!.discountSyp > 0)
+            _TotalsRow(
+              label: l10n.discountCodeLine(discountCode!.code),
+              amount: -discountCode!.discountSyp,
             ),
           const SizedBox(height: AppSizes.spacingXSmall),
           _TotalsRow(label: l10n.invoiceTotalLabel, amount: finalPrice, emphasized: true),

@@ -1684,4 +1684,76 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseOffersTitle => 'عروض المستودع';
+
+  @override
+  String get discountCodeFieldLabel => 'كود الخصم';
+
+  @override
+  String get discountCodeHint => 'أدخل كود الخصم';
+
+  @override
+  String get discountCodeApply => 'تطبيق';
+
+  @override
+  String get discountCodeRemove => 'إزالة';
+
+  @override
+  String discountCodeApplied(String code) {
+    return 'تم تطبيق الكود $code';
+  }
+
+  @override
+  String discountCodeLine(String code) {
+    return 'كود الخصم ($code)';
+  }
+
+  @override
+  String get discountCodeUpdating => 'جارٍ تحديث الخصم';
+
+  @override
+  String get discountCodeChangedTitle => 'تغيّر كود الخصم';
+
+  @override
+  String discountCodeRemovedMessage(String reason) {
+    return '$reason تمت إزالة الكود من السلة، راجع الإجمالي ثم أرسل الطلب من جديد.';
+  }
+
+  @override
+  String discountCodeEditedMessage(String code, String discount, String total) {
+    return 'تغيّرت قيمة كود الخصم $code. الخصم الآن $discount والإجمالي $total.';
+  }
+
+  @override
+  String get errorDiscountCodeInvalid => 'كود الخصم غير صحيح.';
+
+  @override
+  String get errorDiscountCodeNotStarted => 'كود الخصم لم يبدأ بعد.';
+
+  @override
+  String get errorDiscountCodeExpired => 'انتهت صلاحية كود الخصم.';
+
+  @override
+  String get errorDiscountCodeLimitReached =>
+      'وصل كود الخصم إلى الحد الأقصى من الاستخدامات.';
+
+  @override
+  String get errorDiscountCodePharmacyLimitReached =>
+      'استخدمت هذا الكود العدد الأقصى المسموح لصيدليتك.';
+
+  @override
+  String get errorDiscountCodeNotForPharmacy => 'هذا الكود غير مخصص لصيدليتك.';
+
+  @override
+  String get errorDiscountCodeNotForWarehouse =>
+      'هذا الكود لا يعمل على طلبات هذا المستودع.';
+
+  @override
+  String get errorDiscountCodePendingApproval =>
+      'كود الخصم بانتظار موافقة الإدارة.';
+
+  @override
+  String get errorDiscountCodeStopped => 'تم إيقاف كود الخصم.';
+
+  @override
+  String get errorDiscountCodeEdited => 'تغيّرت قيمة كود الخصم.';
 }
