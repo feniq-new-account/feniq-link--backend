@@ -9,7 +9,6 @@ import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/core/widgets/status_badge.dart';
 import 'package:feniq/features/returns/data/models/return_model.dart';
 import 'package:feniq/features/returns/presentation/utils/return_labels.dart';
-import 'package:feniq/core/utils/display_name.dart';
 
 class ReturnListTile extends StatelessWidget {
   const ReturnListTile({
@@ -30,7 +29,7 @@ class ReturnListTile extends StatelessWidget {
     final l10n = context.l10n;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final itemNames = returnRequest.items
-        .map((item) => pickName(item.productNameAr, item.productNameEn, arabic: isArabic))
+        .map((item) => item.productNameAr ?? '')
         .where((name) => name.isNotEmpty)
         .join(isArabic ? '، ' : ', ');
     final reasonTypes = returnRequest.items.map((item) => item.reasonType).toSet();

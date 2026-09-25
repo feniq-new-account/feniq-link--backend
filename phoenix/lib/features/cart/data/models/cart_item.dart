@@ -1,7 +1,6 @@
 import 'package:feniq/core/utils/pricing.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
-import 'package:feniq/core/utils/display_name.dart';
 
 /// One product inside a package, for the package line's expandable detail.
 ///
@@ -23,8 +22,6 @@ class CartPackageContent {
   /// `quantityPerCopy * copies` so the pharmacist can see what is actually
   /// coming.
   final int quantityPerCopy;
-
-  String name(bool isArabic) => pickName(nameAr, nameEn, arabic: isArabic);
 }
 
 /// A line in the cart. It is either an ordinary product or a whole package,
@@ -128,6 +125,13 @@ class CartItem {
   bool get hasUnconfirmedBonusChange => previousBonuses != null;
 
   bool get isPackage => packageId != null;
+
+  /// What the line is called on screen. A product line: the product's Arabic
+  /// name - the only name a medicine is shown by (its English name is a
+  /// search helper). A package line carries the package's title in
+  /// nameAr/nameEn, and a title follows the UI language like every other
+  /// title in the app.
+  String displayName(bool isArabic) => isPackage && !isArabic ? (nameEn ?? nameAr) : nameAr;
 
   /// The lira price of one unit at [usdToSyp] - what the order charges for a
   /// loose line. A package copy has no per-unit SYP from the server and keeps

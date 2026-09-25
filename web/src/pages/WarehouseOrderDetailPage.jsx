@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { ProductPicker } from '../components/CatalogPickers';
-import { localizedName } from '../utils/displayName';
+import { displayName } from '../utils/displayName';
 import { useExchangeRate } from '../context/ExchangeRateContext';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { formatUsdAsSyp, formatSyp, formatMoneyFromUsd, remainingPaymentAmountFromSyp } from '../utils/currency';
@@ -354,7 +354,7 @@ function EditItemsSection({ order, onSaved }) {
           <div className="wh-package-head">
             <span className="wh-package-title">
               <span className="wh-package-badge">{t('orderDetail.packageBadge')}</span>
-              {localizedName(group.titleEn, group.titleAr)}
+              {displayName(group.titleEn, group.titleAr)}
             </span>
             <span className="wh-num wh-package-price">
               {formatSyp(group.totalPriceSyp)}
@@ -395,7 +395,7 @@ function EditItemsSection({ order, onSaved }) {
               );
               return (
                 <li key={item.productId}>
-                  {line ? localizedName(line.productNameEn, line.productNameAr) : item.productId}
+                  {line ? displayName(line.productNameEn, line.productNameAr) : item.productId}
                   <span className="wh-num">
                     {' x'}
                     {item.quantityPerCopy * copiesOf(group)}
@@ -421,7 +421,7 @@ function EditItemsSection({ order, onSaved }) {
               .filter((item) => !removedIds.has(item.id))
               .map((item) => (
                 <tr key={item.id}>
-                  <td>{localizedName(item.productNameEn, item.productNameAr)}</td>
+                  <td>{displayName(item.productNameEn, item.productNameAr)}</td>
                   <td className="wh-num">
                     <input
                       type="number"
@@ -446,7 +446,7 @@ function EditItemsSection({ order, onSaved }) {
               ))}
             {newItems.map((item) => (
               <tr key={item.tempId}>
-                <td>{localizedName(item.productNameEn, item.productNameAr)}</td>
+                <td>{displayName(item.productNameEn, item.productNameAr)}</td>
                 <td className="wh-num">
                   <input
                     type="number"
@@ -483,7 +483,7 @@ function EditItemsSection({ order, onSaved }) {
             selected={selectedProduct}
             onChange={setSelectedProduct}
             renderLabel={(product) =>
-              `${localizedName(product.nameEn, product.nameAr)} (${formatUsdAsSyp(product.priceUsd, usdToSyp)})`
+              `${displayName(product.nameEn, product.nameAr)} (${formatUsdAsSyp(product.priceUsd, usdToSyp)})`
             }
             placeholder={t('orderDetail.selectProductPlaceholder')}
           />
@@ -761,7 +761,7 @@ export function WarehouseOrderDetailPage() {
               <div>
                 <div className="wh-pharmacy-label">{t('orderDetail.pharmacy')}</div>
                 <div className="wh-pharmacy-name">
-                  {localizedName(order.pharmacy?.nameEn, order.pharmacy?.nameAr)}
+                  {displayName(order.pharmacy?.nameEn, order.pharmacy?.nameAr)}
                 </div>
                 <div className="wh-pharmacy-meta">
                   {order.pharmacy?.address}
@@ -804,7 +804,7 @@ export function WarehouseOrderDetailPage() {
                             {item.packageGroupId && (
                               <span className="wh-package-badge">{t('orderDetail.packageBadge')}</span>
                             )}
-                            {localizedName(item.productNameEn, item.productNameAr)}
+                            {displayName(item.productNameEn, item.productNameAr)}
                           </div>
                           {item.savingsUsd > 0 && (
                             <div className="hint">
@@ -939,7 +939,7 @@ export function WarehouseOrderDetailPage() {
                   {pendingReturn.items.map((item) => (
                     <p key={item.orderItemId} className="order-notes">
                       {t('returns.qtyLine', {
-                        name: localizedName(item.productNameEn, item.productNameAr),
+                        name: displayName(item.productNameEn, item.productNameAr),
                         quantity: item.quantity,
                         reason: reasonText(item),
                       })}

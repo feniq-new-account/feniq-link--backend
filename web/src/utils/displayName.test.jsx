@@ -1,71 +1,57 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import i18next from 'i18next';
+import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
+import i18next from 'i18next';
 import en from '../locales/en/translation.json';
 import ar from '../locales/ar/translation.json';
-import { localizedName } from './displayName';
-import { ProductPicker } from '../components/CatalogPickers';
+import { displayName } from './displayName';
+import { OfferModal } from '../components/OfferModal';
+import { hasArabicLetters } from '../pages/AdminCatalogRequestsPage';
 
-// Names in one language only (catalog overhaul, pre-merge review): every
-// product and manufacturer name on the panels shows in the panel's language,
-// else in the other one - never empty.
+// Product names (pre-merge review): the Arabic name is the one shown, in
+// either panel language. A medicine's English name is a search helper only.
 
-async function panelLanguage(lng) {
-  if (!i18next.isInitialized) await i18next.init({ lng, resources: {} });
-  else await i18next.changeLanguage(lng);
+function i18nFor(lng) {
+  const instance = i18next.createInstance();
+  instance.use(initReactI18next).init({
+    lng,
+    fallbackLng: lng,
+    resources: { en: { translation: en }, ar: { translation: ar } },
+    interpolation: { escapeValue: false },
+  });
+  return instance;
 }
 
-describe('localizedName', () => {
-  afterEach(() => panelLanguage('ar'));
-
-  it('the Arabic panel shows the Arabic name, else the English one', async () => {
-    await panelLanguage('ar');
-    expect(localizedName('Panadol', 'بنادول')).toBe('بنادول');
-    // A medicine named in English only still shows, in English.
-    expect(localizedName('Zyrtec 10mg', null)).toBe('Zyrtec 10mg');
-    expect(localizedName('Zyrtec 10mg', '  ')).toBe('Zyrtec 10mg');
+describe('displayName', () => {
+  it('is the Arabic name, whatever the panel language', () => {
+    expect(displayName('Panadol', 'بنادول')).toBe('بنادول');
   });
 
-  it('the English panel shows the English name, else the Arabic one', async () => {
-    await panelLanguage('en');
-    expect(localizedName('Panadol', 'بنادول')).toBe('Panadol');
-    // An Arabic-only medicine still works in the English UI.
-    expect(localizedName(null, 'بنادول')).toBe('بنادول');
-    expect(localizedName('', 'بنادول')).toBe('بنادول');
-  });
-
-  it('never an empty name', async () => {
-    await panelLanguage('en');
-    expect(localizedName(null, null)).toBe('-');
-    expect(localizedName(' ', '')).toBe('-');
-  });
-
-  it('an explicit language wins over the panel one', () => {
-    expect(localizedName('Panadol', 'بنادول', 'en')).toBe('Panadol');
-    expect(localizedName('Panadol', 'بنادول', 'ar')).toBe('بنادول');
+  it('falls back to the English name only for a record with no Arabic name, and is never empty', () => {
+    expect(displayName('Warehouse One', null)).toBe('Warehouse One');
+    expect(displayName(null, null)).toBe('-');
+    expect(displayName(' ', '')).toBe('-');
   });
 });
 
-describe('a catalog screen renders an English-only medicine in the Arabic panel', () => {
-  it('the product picker labels it with its English name', async () => {
-    await panelLanguage('ar');
-    const i18n = i18next.createInstance();
-    await i18n.use(initReactI18next).init({
-      lng: 'ar',
-      resources: { en: { translation: en }, ar: { translation: ar } },
-      interpolation: { escapeValue: false },
-    });
+describe('the English panel shows the Arabic product name', () => {
+  it('in the offer form', () => {
+    const offer = { productId: 'p1', productNameEn: 'Panadol', productNameAr: 'بنادول', titleAr: 'ع', titleEn: 'O', discountPercentage: 10, startDate: '2026-09-01', isPermanent: true };
     const html = renderToStaticMarkup(
-      <I18nextProvider i18n={i18n}>
-        <ProductPicker
-          search={() => Promise.resolve([])}
-          selected={{ id: 'p1', nameAr: null, nameEn: 'Zyrtec 10mg' }}
-          onChange={() => {}}
-          renderLabel={(product) => localizedName(product.nameEn, product.nameAr)}
-        />
+      <I18nextProvider i18n={i18nFor('en')}>
+        <OfferModal mode="edit" offer={offer} searchProducts={null} usdToSyp={130} onClose={() => {}} onSubmit={() => {}} onSaved={() => {}} />
       </I18nextProvider>
     );
-    expect(html).toContain('Zyrtec 10mg');
+    expect(html).toContain('Edit offer'); // the English panel
+    expect(html).toContain('value="بنادول"');
+    expect(html).not.toContain('Panadol');
+  });
+});
+
+describe('approving a catalog request', () => {
+  it('prefills the English field only when the name as written has no Arabic letters', () => {
+    expect(hasArabicLetters('Metformin 850')).toBe(false);
+    expect(hasArabicLetters('ميتفورمين 850')).toBe(true);
+    expect(hasArabicLetters('500')).toBe(false);
   });
 });

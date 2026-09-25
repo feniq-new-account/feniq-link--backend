@@ -34,9 +34,7 @@ const suggestionSchema = new Schema(
   {
     masterProductId: { type: Schema.Types.ObjectId, ref: 'ProductCatalog', required: true },
     nameAr: { type: String, default: null },
-    nameEn: { type: String, default: null },
     manufacturerAr: { type: String, default: null },
-    manufacturerEn: { type: String, default: null },
     score: { type: Number, default: 0 },
   },
   { _id: false }
@@ -51,8 +49,6 @@ const importBatchRowSchema = new Schema(
     // Exactly what the file said, for display on the results page.
     raw: {
       name: { type: String, default: null },
-      // The separate English name column, when the file has one.
-      nameEn: { type: String, default: null },
       manufacturer: { type: String, default: null },
       category: { type: String, default: null },
       price: { type: String, default: null },

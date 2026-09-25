@@ -29,7 +29,7 @@ class PromotionHeroCard extends StatelessWidget {
     // An offer is about one product, a package about several - the subtitle
     // says which, in the terms the pharmacist thinks in.
     final subtitle = switch (promotion) {
-      final OfferPromotion offer => offer.productName(isArabic),
+      final OfferPromotion offer => offer.productName,
       PackagePromotion(:final advertisement) =>
         context.l10n.advertisementProductCount(advertisement.items.length),
     };

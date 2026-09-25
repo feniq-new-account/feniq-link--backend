@@ -127,7 +127,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(cartCubit.state.items, hasLength(2));
-    expect(find.text('Product p1'), findsOneWidget);
+    expect(find.text('دواء p1'), findsOneWidget);
   });
 
   testWidgets('confirming empties the cart and the UI updates immediately', (tester) async {
@@ -145,7 +145,7 @@ void main() {
     // The screen has already swapped to the empty-cart state - no rebuild
     // needed beyond the cubit's own emit.
     expect(find.text('Your cart is empty.'), findsOneWidget);
-    expect(find.text('Product p1'), findsNothing);
+    expect(find.text('دواء p1'), findsNothing);
     // And the button is gone with the items it would have cleared.
     expect(find.text('Clear cart'), findsNothing);
   });

@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import i18next from 'i18next';
@@ -27,7 +27,7 @@ function render(node, lng = 'en') {
 }
 
 const noSearch = () => Promise.resolve([]);
-const label = (product) => product.nameEn;
+const label = (product) => product.nameAr;
 
 describe('ProductPicker', () => {
   it('starts as a search box, not a list of every product', () => {
@@ -40,9 +40,9 @@ describe('ProductPicker', () => {
 
   it('shows the pick with a change button', () => {
     const html = render(
-      <ProductPicker search={noSearch} selected={{ id: 'p1', nameEn: 'Panadol' }} onChange={() => {}} renderLabel={label} />
+      <ProductPicker search={noSearch} selected={{ id: 'p1', nameAr: 'بنادول', nameEn: 'Panadol' }} onChange={() => {}} renderLabel={label} />
     );
-    expect(html).toContain('Panadol');
+    expect(html).toContain('بنادول');
     expect(html).toContain('Change');
     expect(html).not.toContain('type="search"');
   });
@@ -51,7 +51,7 @@ describe('ProductPicker', () => {
     const html = render(
       <ProductPicker
         search={noSearch}
-        selected={{ id: 'p1', nameEn: 'Panadol' }}
+        selected={{ id: 'p1', nameAr: 'بنادول', nameEn: 'Panadol' }}
         onChange={() => {}}
         renderLabel={label}
         allowClear
@@ -63,17 +63,13 @@ describe('ProductPicker', () => {
 });
 
 describe('OfferModal product field', () => {
-  // Product names follow the panel's language (utils/displayName.js reads the
-  // shared i18next instance) - English here, as the labels are.
-  beforeAll(() => i18next.init({ lng: 'en', resources: {} }));
-
   const offer = { productId: 'p1', productNameEn: 'Panadol', productNameAr: 'بنادول', titleAr: 'ع', titleEn: 'O', discountPercentage: 10, startDate: '2026-09-01', isPermanent: true };
 
   it('the warehouse edits the product through the picker, starting on the current one', () => {
     const html = render(
       <OfferModal mode="edit" offer={offer} searchProducts={noSearch} usdToSyp={130} onClose={() => {}} onSubmit={() => {}} onSaved={() => {}} />
     );
-    expect(html).toContain('Panadol');
+    expect(html).toContain('بنادول');
     expect(html).toContain('Change');
     expect(html).not.toContain('<select');
   });
@@ -82,7 +78,7 @@ describe('OfferModal product field', () => {
     const html = render(
       <OfferModal mode="edit" offer={offer} searchProducts={null} usdToSyp={130} onClose={() => {}} onSubmit={() => {}} onSaved={() => {}} />
     );
-    expect(html).toContain('value="Panadol"');
+    expect(html).toContain('value="بنادول"');
     expect(html).toContain('disabled');
     expect(html).not.toContain('Change');
   });

@@ -47,7 +47,6 @@ class OrderLineItem {
   factory OrderLineItem.fromJson(Map<String, dynamic> json) => OrderLineItem(
     id: json['id'] as String,
     productId: json['productId'] as String,
-    // Empty for a medicine named in English only - shown through pickName.
     productNameAr: (json['productNameAr'] as String?) ?? '',
     productNameEn: json['productNameEn'] as String?,
     manufacturerAr: (json['manufacturerAr'] as String?) ?? '',

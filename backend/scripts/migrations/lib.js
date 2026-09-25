@@ -56,4 +56,34 @@ async function bulkWriteInBatches(collection, operations, { apply, batchSize = 5
   return modified;
 }
 
-module.exports = { isApply, makeLogger, runCli, dropIndexIfExists, bulkWriteInBatches };
+// Every catalog item must have an Arabic name: it is the name every screen
+// shows and what the identity key is built from. Items written without one
+// (English-only items created while that was briefly allowed during testing)
+// are listed by the migrations that touch the catalog (00, 02, 04), and
+// those refuse --apply until each has one - give it an Arabic name in the
+// admin catalog, then re-run. A dry run reports them and carries on.
+async function requireArabicNames(db, { apply, log }) {
+  const missing = await db
+    .collection('productcatalogs')
+    .find(
+      { $or: [{ nameAr: { $in: [null, ''] } }, { nameAr: /^\s*$/ }] },
+      { projection: { nameEn: 1, manufacturerAr: 1 } }
+    )
+    .toArray();
+  const list = missing.map((item) => ({
+    id: String(item._id),
+    nameEn: item.nameEn ?? null,
+    manufacturerAr: item.manufacturerAr ?? null,
+  }));
+  if (list.length > 0) {
+    log(`${list.length} catalog item(s) have no Arabic name: ${list.map((item) => `${item.id} (${item.nameEn ?? '-'})`).join(', ')}`);
+    if (apply) {
+      throw new Error(
+        `Refusing --apply: ${list.length} catalog item(s) have no Arabic name. Give each one an Arabic name in the admin catalog, then re-run.`
+      );
+    }
+  }
+  return list;
+}
+
+module.exports = { isApply, makeLogger, runCli, dropIndexIfExists, bulkWriteInBatches, requireArabicNames };

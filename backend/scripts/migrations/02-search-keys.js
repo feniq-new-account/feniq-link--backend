@@ -18,7 +18,7 @@
 const mongoose = require('mongoose');
 const { normalizeText } = require('../../src/utils/normalizeText');
 const { identityKeyOf } = require('../../src/models/productCatalog.model');
-const { runCli, bulkWriteInBatches, dropIndexIfExists } = require('./lib');
+const { runCli, bulkWriteInBatches, dropIndexIfExists, requireArabicNames } = require('./lib');
 
 const keyOf = (value) => (typeof value === 'string' && normalizeText(value)) || null;
 
@@ -27,6 +27,8 @@ async function run({ apply = false, log = () => {} } = {}) {
   const catalog = db.collection('productcatalogs');
   const products = db.collection('products');
   const manufacturersCollection = db.collection('manufacturers');
+  // The identity key is built from the Arabic name - none may be missing.
+  const catalogItemsWithoutNameAr = await requireArabicNames(db, { apply, log });
 
   // Manufacturers: the English key the warehouse import resolves "GSK" by.
   const manufacturerOps = [];
@@ -51,7 +53,7 @@ async function run({ apply = false, log = () => {} } = {}) {
       manufacturerKey: keyOf(item.manufacturerAr),
       manufacturerEnKey: keyOf(item.manufacturerEn),
     };
-    keys.identityKey = identityKeyOf(keys.nameKey, keys.manufacturerKey, keys.nameEnKey);
+    keys.identityKey = identityKeyOf(keys.nameKey, keys.manufacturerKey);
     itemKeys.set(String(item._id), { ...keys, manufacturerId: item.manufacturerId ?? null });
     if (Object.entries(keys).some(([field, value]) => item[field] !== value)) {
       catalogOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: keys } } });
@@ -114,6 +116,7 @@ async function run({ apply = false, log = () => {} } = {}) {
   const collidingIdentities = [...identityCounts].filter(([, count]) => count > 1).length;
 
   const report = {
+    catalogItemsWithoutNameAr,
     manufacturersToUpdate: manufacturerOps.length,
     catalogItemsToUpdate: catalogOps.length,
     productsToUpdate: productOps.length,

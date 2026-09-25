@@ -1,6 +1,5 @@
 import 'package:feniq/features/cart/data/models/cart_item.dart';
 import 'package:feniq/generated/app_localizations.dart';
-import 'package:feniq/core/utils/display_name.dart';
 
 // Renders order.service.js's STOCK_CHECK_FAILED `details.problems` into a
 // localized, human-readable sentence. The server only sends { code,
@@ -17,7 +16,7 @@ String describeStockProblems(
     final productId = problem['productId'] as String?;
     final item = _findItem(cartItems, productId);
     final name = item != null
-        ? pickName(item.nameAr, item.nameEn, arabic: isArabic)
+        ? item.displayName(isArabic)
         : l10n.thisItemFallback;
 
     switch (problem['code']) {
@@ -50,7 +49,7 @@ String describePriceProblems(
     final productId = problem['productId'] as String?;
     final item = _findItem(cartItems, productId);
     final name = item != null
-        ? pickName(item.nameAr, item.nameEn, arabic: isArabic)
+        ? item.displayName(isArabic)
         : l10n.thisItemFallback;
 
     final newPrice = problem['currentPriceUsd'];
@@ -78,7 +77,7 @@ String describeUnavailablePackages(
 ) {
   final names = cartItems
       .where((item) => item.isPackage && !item.isAvailable)
-      .map((item) => pickName(item.nameAr, item.nameEn, arabic: isArabic))
+      .map((item) => item.displayName(isArabic))
       .join(isArabic ? '، ' : ', ');
   if (names.isEmpty) return l10n.errorPackageUnavailable;
   return l10n.packageUnavailableCheckoutMessage(names);

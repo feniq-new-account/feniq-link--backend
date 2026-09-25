@@ -5,7 +5,6 @@ import { LoadMoreControl } from '../components/LoadMoreControl';
 import { CatalogItemPicker, ManufacturerPicker } from '../components/CatalogPickers';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { formatBonusTiers } from '../components/ProductFormModal';
-import { localizedName } from '../utils/displayName';
 
 const PAGE_SIZE = 30;
 const STATUSES = ['pending', 'approved', 'merged', 'rejected', 'all'];
@@ -78,11 +77,21 @@ export function AdminCatalogRequestsPage() {
   );
 }
 
+// Arabic letters, the same test the server applies (utils/nameLanguage.js).
+const ARABIC_LETTER = /[\u0621-\u064A\u0671-\u06D3\u06FA-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+export function hasArabicLetters(text) {
+  return typeof text === 'string' && ARABIC_LETTER.test(text);
+}
+
 function RequestCard({ request, categories, isOpen, onToggle, onDone }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState('approve'); // approve | merge | reject
+  // The request keeps the name as the warehouse wrote it. The Arabic name is
+  // prefilled with it (the admin must end up with an Arabic name - the server
+  // refuses one with no Arabic letters); when it has none, it is likely the
+  // English name, so the optional English field starts with it too.
   const [nameAr, setNameAr] = useState(request.nameAr);
-  const [nameEn, setNameEn] = useState('');
+  const [nameEn, setNameEn] = useState(hasArabicLetters(request.nameAr) ? '' : request.nameAr);
   const [manufacturer, setManufacturer] = useState(null); // an existing Manufacturer, or null
   const [createManufacturer, setCreateManufacturer] = useState(false);
   const [categoryId, setCategoryId] = useState('');
@@ -99,7 +108,9 @@ function RequestCard({ request, categories, isOpen, onToggle, onDone }) {
       onDone();
     } catch (err) {
       // An approve whose name already exists points at the item to merge into.
-      if (err.code === 'CATALOG_ITEM_ALREADY_EXISTS') {
+      if (err.code === 'ARABIC_NAME_REQUIRED') {
+        setError(t('catalogRequests.arabicNameRequired'));
+      } else if (err.code === 'CATALOG_ITEM_ALREADY_EXISTS') {
         setMode('merge');
         setError(t('catalogRequests.alreadyExists'));
       } else if (err.code === 'MANUFACTURER_CONFIRMATION_REQUIRED') {
@@ -126,7 +137,7 @@ function RequestCard({ request, categories, isOpen, onToggle, onDone }) {
   return (
     <div className="exchange-rate-card">
       <p>
-        <strong>{localizedName(request.nameEn, request.nameAr)}</strong> — {request.manufacturerAr} — ${request.priceUsd}
+        <strong>{request.nameAr}</strong> — {request.manufacturerAr} — ${request.priceUsd}
         {request.unit && ` — ${request.unit}`}
         {request.bonuses.length > 0 && ` — ${t('importResults.bonus')} ${formatBonusTiers(request.bonuses)}`}
       </p>
@@ -201,14 +212,13 @@ function RequestCard({ request, categories, isOpen, onToggle, onDone }) {
             <>
               {mergeTarget ? (
                 <p>
-                  {t('catalogRequests.mergeInto')}: <strong>{localizedName(mergeTarget.nameEn, mergeTarget.nameAr)}</strong> —{' '}
-                  {localizedName(mergeTarget.manufacturerEn, mergeTarget.manufacturerAr)}{' '}
+                  {t('catalogRequests.mergeInto')}: <strong>{mergeTarget.nameAr}</strong> — {mergeTarget.manufacturerAr}{' '}
                   <button type="button" className="btn-secondary" onClick={() => setMergeTarget(null)}>
                     {t('productForm.change')}
                   </button>
                 </p>
               ) : (
-                <CatalogItemPicker onSelect={setMergeTarget} initialQuery={request.nameAr || request.nameEn || ''} />
+                <CatalogItemPicker onSelect={setMergeTarget} initialQuery={request.nameAr} />
               )}
               <button className="btn-primary" disabled={busy || !mergeTarget} onClick={() => run(() => api.mergeCatalogRequest(request.id, mergeTarget.id))}>
                 {t('catalogRequests.action.merge')}

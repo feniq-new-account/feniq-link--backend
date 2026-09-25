@@ -224,3 +224,34 @@ test('04 builds the unique identityKey index once the reviews are resolved', asy
   const index = (await ProductCatalog.collection.indexes()).find((i) => i.name === 'identityKey_1');
   assert.strictEqual(index.unique, true);
 });
+
+test('an item without an Arabic name is reported, and 00/02/04 refuse --apply until it has one', async () => {
+  // As created while English-only items were briefly allowed during testing.
+  const { insertedId } = await db.collection('productcatalogs').insertOne({
+    nameAr: null,
+    nameEn: 'English Only Drug',
+    manufacturerAr: 'شركة الشرق',
+    identityKey: 'en:english only drug|شركه الشرق',
+    isActive: true,
+  });
+
+  for (const index of [0, 2, 4]) {
+    const dryRun = await migrations[index].run({ apply: false });
+    assert.deepStrictEqual(
+      dryRun.catalogItemsWithoutNameAr.map((item) => [item.id, item.nameEn]),
+      [[String(insertedId), 'English Only Drug']],
+      `migration 0${index} dry run`
+    );
+    await assert.rejects(migrations[index].run({ apply: true }), /no Arabic name/, `migration 0${index} --apply`);
+  }
+  // Nothing was written while refusing.
+  assert.strictEqual((await db.collection('productcatalogs').findOne({ _id: insertedId })).identityKey, 'en:english only drug|شركه الشرق');
+
+  // Given an Arabic name, 02 applies and rebuilds its identity from it.
+  await db.collection('productcatalogs').updateOne({ _id: insertedId }, { $set: { nameAr: 'دواء كان بلا اسم عربي' } });
+  const report = await migrations[2].run({ apply: true });
+  assert.deepStrictEqual(report.catalogItemsWithoutNameAr, []);
+  const fixed = await db.collection('productcatalogs').findOne({ _id: insertedId });
+  assert.strictEqual(fixed.identityKey, 'دواء كان بلا اسم عربي|شركه الشرق');
+  await db.collection('productcatalogs').deleteOne({ _id: insertedId });
+});

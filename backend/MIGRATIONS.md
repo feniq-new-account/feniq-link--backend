@@ -28,6 +28,13 @@ Run them in this order. Each depends on the ones before it.
 
 Existing image URLs are already on Cloudinary. No script moves or rewrites them.
 
+**Every catalog item needs an Arabic name.** It is the only name shown, and the
+identity key is built from it. 00, 02 and 04 list any catalog item without one
+(`catalogItemsWithoutNameAr`, with its English name to help find it) and refuse
+`--apply` while any is left. Give each an Arabic name in the admin catalog, then
+re-run. Such items can only come from recent testing, when English-only items
+were briefly allowed.
+
 ## Deploying
 
 The app is still in testing: there are no real users and no old app versions to

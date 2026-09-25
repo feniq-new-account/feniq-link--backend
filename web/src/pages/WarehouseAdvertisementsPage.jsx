@@ -8,7 +8,7 @@ import { AdvertisementsSubNav } from '../components/AdvertisementsSubNav';
 import { AdvertisementFormModal } from '../components/AdvertisementFormModal';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
-import { localizedName } from '../utils/displayName';
+import { displayName } from '../utils/displayName';
 import { contactAdminOnWhatsApp } from '../utils/whatsapp';
 
 // Step 2 of the request flow, mirroring the banner's BannerRequestSuccessModal
@@ -147,7 +147,7 @@ export function WarehouseAdvertisementsPage() {
   };
 
   const handleRequestViaWhatsApp = () => {
-    const warehouseName = localizedName(warehouse?.nameEn, warehouse?.nameAr);
+    const warehouseName = displayName(warehouse?.nameEn, warehouse?.nameAr);
     contactAdminOnWhatsApp(t('advertisements.whatsappRequestMessage', { warehouseName }));
   };
 
@@ -236,7 +236,7 @@ export function WarehouseAdvertisementsPage() {
                       {advertisement.items
                         .map(
                           (item) =>
-                            `${localizedName(item.productNameEn, item.productNameAr)} ×${item.quantity}`
+                            `${displayName(item.productNameEn, item.productNameAr)} ×${item.quantity}`
                         )
                         .join(' · ')}
                     </div>

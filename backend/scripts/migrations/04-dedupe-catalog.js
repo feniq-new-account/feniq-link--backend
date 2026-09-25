@@ -27,7 +27,7 @@ const { runInTransaction } = require('../../src/utils/transaction');
 const ProductCatalog = require('../../src/models/productCatalog.model');
 const CatalogDuplicateReview = require('../../src/models/catalogDuplicateReview.model');
 const { analyzeGroup, mergeCatalogItems } = require('../../src/services/catalogMerge.service');
-const { runCli } = require('./lib');
+const { runCli, requireArabicNames } = require('./lib');
 
 async function findDuplicateGroups() {
   return ProductCatalog.aggregate([
@@ -39,8 +39,11 @@ async function findDuplicateGroups() {
 }
 
 async function run({ apply = false, log = () => {} } = {}) {
+  // Duplicates are grouped by identity key, which is built from the Arabic
+  // name - an item without one would group wrongly.
+  const catalogItemsWithoutNameAr = await requireArabicNames(mongoose.connection.db, { apply, log });
   const groups = await findDuplicateGroups();
-  const report = { groups: groups.length, autoMerged: [], sentToReview: [], identityIndex: null };
+  const report = { catalogItemsWithoutNameAr, groups: groups.length, autoMerged: [], sentToReview: [], identityIndex: null };
 
   for (const group of groups) {
     const ids = group.ids.map(String).sort(); // ObjectId hex sorts by creation time

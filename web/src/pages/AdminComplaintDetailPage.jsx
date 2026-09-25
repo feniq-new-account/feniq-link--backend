@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
-import { localizedName } from '../utils/displayName';
+import { displayName } from '../utils/displayName';
 
 const STATUSES = ['pending', 'in_review', 'resolved', 'closed'];
 
@@ -165,7 +165,7 @@ export function AdminComplaintDetailPage() {
             <div className="adm-detail-card">
               <p className="adm-detail-card-title">{t('complaints.pharmacyColumn')}</p>
               <p style={{ margin: '0 0 4px', fontWeight: 600 }}>
-                {localizedName(complaint.pharmacy?.nameEn, complaint.pharmacy?.nameAr)}
+                {displayName(complaint.pharmacy?.nameEn, complaint.pharmacy?.nameAr)}
               </p>
               {complaint.pharmacy?.ownerName && (
                 <p className="adm-detail-card-hint" style={{ margin: '0 0 4px' }}>{complaint.pharmacy.ownerName}</p>
@@ -179,7 +179,7 @@ export function AdminComplaintDetailPage() {
               <div className="adm-detail-card">
                 <p className="adm-detail-card-title">{t('complaints.warehouseColumn')}</p>
                 <p style={{ margin: '0 0 4px', fontWeight: 600 }}>
-                  {localizedName(complaint.warehouse.nameEn, complaint.warehouse.nameAr)}
+                  {displayName(complaint.warehouse.nameEn, complaint.warehouse.nameAr)}
                 </p>
                 <p className="adm-detail-card-hint" style={{ margin: 0 }}>
                   {[complaint.warehouse.phone, complaint.warehouse.city].filter(Boolean).join(' · ')}

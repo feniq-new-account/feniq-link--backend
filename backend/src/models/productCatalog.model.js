@@ -4,13 +4,7 @@ const { normalizeText } = require('../utils/normalizeText');
 
 // The one place the identity key's shape is spelled out - the hook below, the
 // rename/merge syncs and the migrations all build it through this.
-//
-// An item is identified by its Arabic name, or - when it has only an English
-// one - by that, prefixed "en:". A normalized Arabic key can never start with
-// "en:" (normalizeText turns ":" into a space), so an Arabic identity and an
-// English identity never collide.
-function identityKeyOf(nameKey, manufacturerKey, nameEnKey = null) {
-  if (!nameKey && nameEnKey) return `en:${nameEnKey}|${manufacturerKey ?? ''}`;
+function identityKeyOf(nameKey, manufacturerKey) {
   return `${nameKey ?? ''}|${manufacturerKey ?? ''}`;
 }
 
@@ -23,9 +17,10 @@ function identityKeyOf(nameKey, manufacturerKey, nameEnKey = null) {
 // script rather than a logged-in admin.
 const nameHistoryEntrySchema = new Schema(
   {
-    // Either name can change - and either can be missing (one-language items).
-    oldNameAr: { type: String, default: null },
-    newNameAr: { type: String, default: null },
+    oldNameAr: { type: String, required: true },
+    newNameAr: { type: String, required: true },
+    // The English name is a search helper the admin may also change; recorded
+    // alongside (null when there was none).
     oldNameEn: { type: String, default: null },
     newNameEn: { type: String, default: null },
     changedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
@@ -44,9 +39,10 @@ const nameHistoryEntrySchema = new Schema(
 // admin fills them in via PATCH.
 const productCatalogSchema = new Schema(
   {
-    // At least one of the two names (validated below): a medicine may be
-    // known by its Arabic name only, its English name only, or both.
-    nameAr: { type: String, default: null, trim: true },
+    // The Arabic name is the medicine's name: required, and the only one any
+    // screen shows. The English name is optional and never shown - a helper
+    // that search and the warehouse import also match on (nameEnKey).
+    nameAr: { type: String, required: true, trim: true },
     nameEn: { type: String, default: null, trim: true },
     manufacturerAr: { type: String, required: true, trim: true },
     manufacturerEn: { type: String, default: null, trim: true },
@@ -120,12 +116,7 @@ function searchKey(value) {
 // and productCatalog.service.js) bypass this hook and set the same keys
 // explicitly.
 productCatalogSchema.pre('validate', async function setSearchKeys() {
-  // An empty name is no name.
-  if (typeof this.nameAr === 'string' && !this.nameAr.trim()) this.nameAr = null;
   if (typeof this.nameEn === 'string' && !this.nameEn.trim()) this.nameEn = null;
-  if (!this.nameAr && !this.nameEn) {
-    this.invalidate('nameAr', 'A catalog item needs an Arabic or an English name.');
-  }
   if (!this.manufacturerId && typeof this.manufacturerAr === 'string' && this.manufacturerAr.trim()) {
     const key = normalizeText(this.manufacturerAr);
     const manufacturer = await Manufacturer.findOneAndUpdate(
@@ -150,7 +141,7 @@ productCatalogSchema.pre('validate', async function setSearchKeys() {
   this.nameEnKey = searchKey(this.nameEn);
   this.manufacturerKey = searchKey(this.manufacturerAr);
   this.manufacturerEnKey = searchKey(this.manufacturerEn);
-  this.identityKey = identityKeyOf(this.nameKey, this.manufacturerKey, this.nameEnKey);
+  this.identityKey = identityKeyOf(this.nameKey, this.manufacturerKey);
 });
 
 // What makes a catalog item unique (see identityKey above). It replaces the

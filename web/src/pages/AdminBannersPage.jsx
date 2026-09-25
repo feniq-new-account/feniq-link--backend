@@ -6,7 +6,7 @@ import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { AdvertisementsSubNav } from '../components/AdvertisementsSubNav';
-import { localizedName } from '../utils/displayName';
+import { displayName } from '../utils/displayName';
 
 const PAGE_SIZE = 20;
 
@@ -52,7 +52,7 @@ function BannerFilePreview({ file }) {
 // list of every product on the platform (catalog overhaul Phase 10).
 const searchAdminProducts = (q) => api.adminProducts({ search: q, limit: 20 }).then((data) => data.products);
 const adminProductLabel = (product) =>
-  `${localizedName(product.nameEn, product.nameAr)} · ${product.warehouseNameEn ?? ''}`;
+  `${displayName(product.nameEn, product.nameAr)} · ${product.warehouseNameEn ?? ''}`;
 
 function BannerComposer({ onCreated }) {
   const { t } = useTranslation();
@@ -442,7 +442,7 @@ export function AdminBannersPage() {
                             <div className="adm-table-sub">
                               {banner.title}
                               {banner.productNameEn && (
-                                <> &middot; {localizedName(banner.productNameEn, banner.productNameAr)}</>
+                                <> &middot; {displayName(banner.productNameEn, banner.productNameAr)}</>
                               )}
                             </div>
                             {banner.status === 'rejected' && banner.rejectionNote && (

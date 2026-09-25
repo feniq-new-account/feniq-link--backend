@@ -22,7 +22,6 @@ import 'package:feniq/features/cart/presentation/widgets/cart_item_tile.dart';
 import 'package:feniq/features/catalog/data/models/manufacturers_route_args.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/routes/route_names.dart';
-import 'package:feniq/core/utils/display_name.dart';
 
 class CartView extends StatefulWidget {
   const CartView({super.key});
@@ -202,12 +201,11 @@ class _CartViewState extends State<CartView> {
   Future<void> _confirmBonusChanges() async {
     final l10n = context.l10n;
     final cubit = context.read<CartCubit>();
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final lines = [
       for (final item in cubit.state.items)
         if (item.hasUnconfirmedBonusChange)
           l10n.bonusChangedLine(
-            pickName(item.nameAr, item.nameEn, arabic: isArabic),
+            item.nameAr,
             item.bonuses.isEmpty ? l10n.noBonus : l10n.bonusValue(BonusTier.format(item.bonuses)),
           ),
     ];

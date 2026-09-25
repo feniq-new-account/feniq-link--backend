@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
-import { localizedName } from '../utils/displayName';
 
 // A debounced type-ahead where only the newest response is allowed to land -
 // a slow broad search must never overwrite the narrower one typed after it.
@@ -55,7 +54,8 @@ export function ManufacturerPicker({ onSelect, excludeId, initialQuery = '' }) {
               <button type="button" className="btn-secondary" onClick={() => onSelect(m)}>
                 {t('importResults.pick')}
               </button>{' '}
-              {localizedName(m.nameEn, m.nameAr)}
+              {m.nameAr}
+              {m.nameEn ? ` · ${m.nameEn}` : ''}
             </li>
           ))}
       </ul>
@@ -80,7 +80,7 @@ export function CatalogItemPicker({ onSelect, initialQuery = '' }) {
             <button type="button" className="btn-secondary" disabled={!item.isActive} onClick={() => onSelect(item)}>
               {t('importResults.pick')}
             </button>{' '}
-            {localizedName(item.nameEn, item.nameAr)} — {localizedName(item.manufacturerEn, item.manufacturerAr)}
+            {item.nameAr} — {item.manufacturerAr}
             {!item.isActive && <span className="hint"> ({t('importResults.blocked.CATALOG_ITEM_WITHDRAWN')})</span>}
           </li>
         ))}
