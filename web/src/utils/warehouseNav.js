@@ -37,6 +37,9 @@ export const WAREHOUSE_NAV = [
       // stays lit across both halves. /general alone would go dark on /packages.
       { id: 'advertisements', labelKey: 'nav.advertisements', path: '/warehouse/advertisements' },
       { id: 'discounts', labelKey: 'nav.discounts', path: '/warehouse/discounts' },
+      // Codes a pharmacy types at checkout - not the manufacturer discounts
+      // above, which apply on their own.
+      { id: 'discountCodes', labelKey: 'nav.discountCodes', path: '/warehouse/discount-codes' },
     ],
   },
   {

@@ -102,4 +102,10 @@ export const REALTIME_EVENTS = {
   // triage queue and the one warehouse a complaint is filed against.
   COMPLAINT_CREATED: 'complaint.created',
   COMPLAINT_UPDATED: 'complaint.updated',
+
+  // Discount codes - the same moderation pair as offers. PENDING reaches the
+  // admin room only; STATUS_UPDATED reaches the admins and, for an admin's
+  // decision/stop on a warehouse's code, that warehouse too.
+  DISCOUNT_CODE_PENDING: 'discountCode.pending',
+  DISCOUNT_CODE_STATUS_UPDATED: 'discountCode.status.updated',
 };

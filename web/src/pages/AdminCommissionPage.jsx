@@ -38,16 +38,20 @@ function startOfThisMonth() {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-// Outstanding is the one figure that can legitimately be negative: a warehouse
-// that has handed over more than the window shows as owed. Rendered as a
-// credit rather than clamped to zero, because an overpayment is something the
-// admin needs to see, not something to tidy away.
+// Outstanding is the one figure that can legitimately be negative: the
+// platform owes the warehouse - its discount-code compensation is more than
+// its commission, or it has handed over more than the window. Rendered as
+// such rather than clamped to zero, because it is money the platform has to
+// pay, not something to tidy away.
 function OutstandingAmount({ amountSyp }) {
   const { t } = useTranslation();
   if (amountSyp < 0) {
     return (
-      <span className="adm-green" title={t('commission.overpaidHint')}>
+      <span className="adm-green" title={t('commission.platformOwesHint')}>
         {formatSyp(amountSyp)}
+        <span className="adm-table-sub" style={{ display: 'block' }}>
+          {t('commission.platformOwes')}
+        </span>
       </span>
     );
   }
@@ -64,16 +68,20 @@ function StatCard({ label, value, hint, tone }) {
   );
 }
 
-// Records that a warehouse paid. The amount is pre-filled with what is
-// outstanding for the current window but stays editable - a partial payment is
-// a normal thing, and the admin may be recording a round figure that was
-// actually handed over.
+// Records cash between the platform and a warehouse, either way: the
+// warehouse paying its commission (a collection), or the platform paying the
+// warehouse the discount-code compensation it owes it (a payout). The
+// direction and amount are pre-filled from what is outstanding for the current
+// window - positive: the warehouse owes; negative: the platform does - but
+// stay editable: a partial payment is a normal thing, and the admin may be
+// recording a round figure that was actually handed over.
 //
 // The period submitted is the window currently being viewed: that is what the
 // admin was looking at when they decided how much was owed, so it is the
 // honest thing to file the payment against.
 function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) {
   const { t } = useTranslation();
+  const [direction, setDirection] = useState('from_warehouse');
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('cash');
   const [reference, setReference] = useState('');
@@ -81,12 +89,15 @@ function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
 
+  const owedDirection = outstandingSyp < 0 ? 'to_warehouse' : 'from_warehouse';
+
   // Re-prefills whenever the warehouse or the window changes, so the field
   // always opens on the figure sitting in the row above it.
   useEffect(() => {
-    setAmount(outstandingSyp > 0 ? String(outstandingSyp) : '');
+    setDirection(owedDirection);
+    setAmount(outstandingSyp !== 0 ? String(Math.abs(outstandingSyp)) : '');
     setError(null);
-  }, [warehouseId, outstandingSyp, period.from, period.to]);
+  }, [warehouseId, outstandingSyp, owedDirection, period.from, period.to]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -105,6 +116,7 @@ function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) 
         periodFrom: period.from,
         periodTo: period.to,
         amountSyp: Math.round(value),
+        direction,
         method,
         reference: reference.trim() || undefined,
         note: note.trim() || undefined,
@@ -129,6 +141,13 @@ function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) 
         })}
       </p>
       <form onSubmit={handleSubmit} className="product-form">
+        <label>
+          {t('commission.direction')}
+          <select value={direction} onChange={(e) => setDirection(e.target.value)}>
+            <option value="from_warehouse">{t('commission.direction_from_warehouse')}</option>
+            <option value="to_warehouse">{t('commission.direction_to_warehouse')}</option>
+          </select>
+        </label>
         <label>
           {t('commission.amount')}
           <input
@@ -170,13 +189,20 @@ function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) 
           <button
             type="button"
             className="btn-secondary"
-            disabled={outstandingSyp <= 0}
-            onClick={() => setAmount(String(outstandingSyp))}
+            disabled={outstandingSyp === 0}
+            onClick={() => {
+              setDirection(owedDirection);
+              setAmount(String(Math.abs(outstandingSyp)));
+            }}
           >
             {t('commission.fullOutstanding')}
           </button>
           <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={isSaving}>
-            {isSaving ? t('common.saving') : t('commission.recordCollectionButton')}
+            {isSaving
+              ? t('common.saving')
+              : direction === 'to_warehouse'
+                ? t('commission.recordPayoutButton')
+                : t('commission.recordCollectionButton')}
           </button>
         </div>
       </form>
@@ -294,6 +320,7 @@ function CollectionHistory({ collections, onReverse }) {
                   </span>
                 </td>
                 <td>
+                  <div>{t(`commission.direction_${collection.direction ?? 'from_warehouse'}`)}</div>
                   <div className="adm-table-sub">{t(`debts.method_${collection.method}`)}</div>
                   {collection.reference && (
                     <div className="adm-table-sub adm-num">{collection.reference}</div>
@@ -432,10 +459,16 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
           tone="adm-stat-info"
         />
         <StatCard
+          label={t('commission.compensation')}
+          value={formatSyp(summary.compensationOwedSyp ?? 0)}
+          hint={t('commission.compensationHint')}
+        />
+        <StatCard
           label={t('commission.outstanding')}
           value={formatSyp(summary.outstandingSyp)}
-          hint={t('commission.collectedSoFar', {
-            amount: formatSyp(summary.alreadyCollectedSyp),
+          hint={t('commission.settledSoFar', {
+            collected: formatSyp(summary.alreadyCollectedSyp),
+            paidOut: formatSyp(summary.paidOutSyp ?? 0),
           })}
           tone={summary.outstandingSyp > 0 ? 'adm-stat-pending' : 'adm-stat-success'}
         />
@@ -460,6 +493,7 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
                     <th className="adm-num">{t('commission.sales')}</th>
                     <th className="adm-num">{t('commission.returns')}</th>
                     <th className="adm-num">{t('commission.owed')}</th>
+                    <th className="adm-num">{t('commission.compensation')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -485,6 +519,18 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
                         {order.creditedSyp > 0 ? `- ${formatSyp(order.creditedSyp)}` : '—'}
                       </td>
                       <td className="adm-num">{formatSyp(order.netCommissionSyp)}</td>
+                      <td className="adm-num">
+                        {order.platformCompensationSyp > 0 ? (
+                          <>
+                            {formatSyp(order.netCompensationSyp)}
+                            <div className="adm-table-sub">
+                              {t('commission.compensationForCode', { code: order.discountCode })}
+                            </div>
+                          </>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -630,10 +676,16 @@ export function AdminCommissionPage() {
               tone="adm-stat-info"
             />
             <StatCard
+              label={t('commission.compensation')}
+              value={formatSyp(totals.compensationOwedSyp ?? 0)}
+              hint={t('commission.compensationHint')}
+            />
+            <StatCard
               label={t('commission.outstanding')}
               value={formatSyp(totals.outstandingSyp)}
-              hint={t('commission.collectedSoFar', {
-                amount: formatSyp(totals.alreadyCollectedSyp),
+              hint={t('commission.settledSoFar', {
+                collected: formatSyp(totals.alreadyCollectedSyp),
+                paidOut: formatSyp(totals.paidOutSyp ?? 0),
               })}
               tone={totals.outstandingSyp > 0 ? 'adm-stat-pending' : 'adm-stat-success'}
             />
@@ -647,7 +699,9 @@ export function AdminCommissionPage() {
                   <th className="adm-num">{t('commission.sales')}</th>
                   <th className="adm-num">{t('commission.returns')}</th>
                   <th className="adm-num">{t('commission.owed')}</th>
+                  <th className="adm-num">{t('commission.compensation')}</th>
                   <th className="adm-num">{t('commission.collected')}</th>
+                  <th className="adm-num">{t('commission.paidOut')}</th>
                   <th className="adm-num">{t('commission.outstanding')}</th>
                 </tr>
               </thead>
@@ -676,8 +730,12 @@ export function AdminCommissionPage() {
                     </td>
                     <td className="adm-num">{formatSyp(row.commissionOwedSyp)}</td>
                     <td className="adm-num">
+                      {row.compensationOwedSyp > 0 ? formatSyp(row.compensationOwedSyp) : '—'}
+                    </td>
+                    <td className="adm-num">
                       {row.alreadyCollectedSyp > 0 ? formatSyp(row.alreadyCollectedSyp) : '—'}
                     </td>
+                    <td className="adm-num">{row.paidOutSyp > 0 ? formatSyp(row.paidOutSyp) : '—'}</td>
                     <td className="adm-num">
                       <OutstandingAmount amountSyp={row.outstandingSyp} />
                     </td>

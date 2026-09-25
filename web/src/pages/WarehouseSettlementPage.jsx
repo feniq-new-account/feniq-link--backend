@@ -116,6 +116,15 @@ export function WarehouseSettlementPage() {
               }
               tone="cost"
             />
+            {/* Only once an admin discount code has been used on a delivered
+                order: the platform pays the warehouse the code's discount. */}
+            {(totals.grossCompensationSyp ?? 0) > 0 && (
+              <SummaryTile
+                label={t('settlement.compensation')}
+                value={`+ ${formatSyp(totals.netCompensationSyp)}`}
+                hint={t('settlement.compensationHint')}
+              />
+            )}
             <SummaryTile
               label={t('settlement.net')}
               value={formatSyp(totals.warehouseNetSyp)}
@@ -138,6 +147,7 @@ export function WarehouseSettlementPage() {
                     <th className="wh-num">{t('settlement.orderSales')}</th>
                     <th className="wh-num">{t('settlement.orderCredited')}</th>
                     <th className="wh-num">{t('settlement.orderCommission')}</th>
+                    <th className="wh-num">{t('settlement.orderCompensation')}</th>
                     <th className="wh-num">{t('settlement.orderNet')}</th>
                   </tr>
                 </thead>
@@ -163,6 +173,16 @@ export function WarehouseSettlementPage() {
                       </td>
                       <td className="wh-num">
                         {`- ${formatSyp(row.commissionSyp - row.commissionClawbackSyp)}`}
+                      </td>
+                      <td className="wh-num">
+                        {row.platformCompensationSyp > 0 ? (
+                          <>
+                            {`+ ${formatSyp(row.netCompensationSyp)}`}
+                            <div className="wh-table-sub">{row.discountCode}</div>
+                          </>
+                        ) : (
+                          '—'
+                        )}
                       </td>
                       <td className="wh-num wh-table-total">{formatSyp(row.warehouseNetSyp)}</td>
                     </tr>

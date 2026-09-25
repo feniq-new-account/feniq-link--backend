@@ -8,6 +8,7 @@ import { useUnreadBadges } from '../realtime/UnreadBadgesProvider';
 import { AdminDashboardPage } from './AdminDashboardPage';
 import { AccountsPage } from './AccountsPage';
 import { AdminOffersPage } from './AdminOffersPage';
+import { AdminDiscountCodesPage } from './AdminDiscountCodesPage';
 import { AdminAdvertisementsPage } from './AdminAdvertisementsPage';
 import { AdminProductsPage } from './AdminProductsPage';
 import { AdminCatalogPage } from './AdminCatalogPage';
@@ -41,6 +42,8 @@ export function AdminPanel() {
     { path: '/admin/dashboard', label: t('nav.dashboard') },
     { path: '/admin/accounts', label: t('nav.accounts') },
     { path: '/admin/offers', label: t('nav.offers') },
+    // Review queue for warehouse codes, the platform's own codes, every code.
+    { path: '/admin/discount-codes', label: t('nav.discountCodes') },
     // One tab, two sub-sections (general ads / package ads) - see
     // AdvertisementsSubNav. They were separate tabs until it turned out both
     // render as "الإعلانات" in Arabic.
@@ -120,6 +123,7 @@ export function AdminPanel() {
             {/* Old bookmark - the section was renamed Pending Accounts -> Accounts. */}
             <Route path="/admin/pending-accounts" element={<Navigate to="/admin/accounts" replace />} />
             <Route path="/admin/offers" element={<AdminOffersPage />} />
+            <Route path="/admin/discount-codes" element={<AdminDiscountCodesPage />} />
             <Route
               path="/admin/advertisements"
               element={<Navigate to="/admin/advertisements/general" replace />}

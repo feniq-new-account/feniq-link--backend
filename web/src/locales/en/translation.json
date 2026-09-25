@@ -76,7 +76,8 @@
     "catalogRequests": "Catalog requests",
     "catalogDuplicates": "Duplicate review",
     "manufacturers": "Manufacturers",
-    "categories": "Categories"
+    "categories": "Categories",
+    "discountCodes": "Discount codes"
   },
   "auth": {
     "phoneLabel": "Phone number",
@@ -173,7 +174,11 @@
     "sealRequirementHint": "When on, this order can't be marked delivered until the pharmacy uploads a photo of the shipment seal. Only affects this order.",
     "confirmApproveReturnCredit": "Approve the return on order #{{number}}?\n\nThis credits {{amount}} to the pharmacy account.",
     "commissionLabel": "Platform commission",
-    "warehouseNetLabel": "You receive"
+    "warehouseNetLabel": "You receive",
+    "discountCodeLabel": "Discount code {{code}}",
+    "discountCodeFundedBy_warehouse": "Paid by your warehouse",
+    "discountCodeFundedBy_platform": "Paid by Feniq",
+    "platformCompensationLabel": "Feniq compensation"
   },
   "returns": {
     "filterAll": "All",
@@ -785,7 +790,10 @@
     "orderCredited": "Returned",
     "orderCommission": "Commission",
     "orderNet": "You receive",
-    "footnote": "Sales is what pharmacies were charged, not what has been collected — see Invoices for outstanding balances."
+    "footnote": "Sales is what pharmacies were charged, not what has been collected — see Invoices for outstanding balances.",
+    "compensation": "Discount-code compensation",
+    "compensationHint": "Feniq pays you the discount on its own discount codes",
+    "orderCompensation": "Compensation"
   },
   "commission": {
     "warehouse": "Warehouse",
@@ -817,7 +825,18 @@
     "reverseExplain": "This marks the {{amount}} collection as reversed, so it stops counting toward what has been collected. The record stays on the history - nothing is deleted.",
     "reverseReasonRequired": "A reason is required to reverse a collection.",
     "reverseReasonPlaceholder": "e.g. the transfer bounced",
-    "reverseButton": "Reverse collection"
+    "reverseButton": "Reverse collection",
+    "platformOwes": "Feniq owes the warehouse",
+    "platformOwesHint": "Negative: the discount-code compensation Feniq owes is more than the commission, or the warehouse paid for a wider window.",
+    "direction": "Direction",
+    "direction_from_warehouse": "Warehouse paid Feniq (commission)",
+    "direction_to_warehouse": "Feniq paid the warehouse (payout)",
+    "recordPayoutButton": "Record payout",
+    "compensation": "Code compensation",
+    "compensationHint": "What Feniq owes for admin discount codes, net of returns",
+    "compensationForCode": "Code {{code}}",
+    "paidOut": "Paid out",
+    "settledSoFar": "Collected {{collected}} - paid out {{paidOut}}"
   },
   "statement": {
     "title": "Account statement",
@@ -1011,5 +1030,108 @@
     "searchPlaceholder": "Search products by name or company",
     "change": "Change",
     "clear": "Remove"
+  },
+  "discountCodes": {
+    "newCode": "New code",
+    "searchPlaceholder": "Search by code",
+    "empty": "No discount codes yet.",
+    "proposed": "Proposed",
+    "updatePendingBadge": "Edit awaiting approval",
+    "perPharmacyLimit": "Max {{count}} per pharmacy",
+    "stop": "Stop",
+    "filters": {
+      "all": "All",
+      "review": "Review ({{count}})",
+      "active": "Active",
+      "scheduled": "Scheduled",
+      "expired": "Expired",
+      "exhausted": "Used up",
+      "stopped": "Stopped",
+      "rejected": "Rejected"
+    },
+    "status": {
+      "pending": "Pending approval",
+      "active": "Active",
+      "scheduled": "Scheduled",
+      "expired": "Expired",
+      "exhausted": "Used up",
+      "stopped": "Stopped",
+      "rejected": "Rejected"
+    },
+    "type": {
+      "percentage": "Percentage",
+      "fixed": "Fixed amount (SYP)"
+    },
+    "scope": {
+      "general": "All pharmacies",
+      "pharmacy": "One pharmacy"
+    },
+    "fundedBy": {
+      "warehouse": "Paid by the warehouse",
+      "platform": "Paid by Feniq"
+    },
+    "columns": {
+      "code": "Code",
+      "owner": "Owner",
+      "discount": "Discount",
+      "scope": "For",
+      "period": "Valid",
+      "usage": "Uses"
+    },
+    "warehouse": {
+      "notice": "A code works only on orders to your warehouse, and only after an admin approves it. You pay for the discount. Editing an approved code sends the change for approval - the code keeps its current terms until then. You can stop a code at any time.",
+      "confirmStop": "Stop code {{code}}? It stops working immediately and cannot be restarted. Orders already placed keep their discount."
+    },
+    "admin": {
+      "views": {
+        "review": "Review queue ({{count}})",
+        "admin": "Admin codes",
+        "all": "All codes"
+      },
+      "fundingHint": "Admin codes work on every warehouse from the moment they are created, and Feniq pays for them: the warehouse is compensated in full (see Commission). Warehouse codes are paid by the warehouse.",
+      "allWarehouses": "Admin - every warehouse",
+      "confirmApprove": "Approve code {{code}}?",
+      "rejectPrompt": "Why is code {{code}} rejected? The warehouse will see this reason.",
+      "rejectUpdatePrompt": "Why is the edit to code {{code}} rejected? The code keeps its current terms.",
+      "confirmStop": "Stop code {{code}}? It stops working immediately and cannot be restarted.",
+      "reviewEmpty": "Nothing waiting for review."
+    },
+    "form": {
+      "createTitle": "New discount code",
+      "editTitle": "Edit code {{code}}",
+      "codeGeneratedHint": "The code itself is generated automatically once you save.",
+      "editNeedsApproval": "This code is live. Your change goes to an admin for approval; until then the code keeps working on its current terms.",
+      "percentValue": "Discount (%)",
+      "fixedValue": "Discount (SYP)",
+      "fixedHint": "Taken off the order total after every other discount. An order smaller than this amount comes to 0.",
+      "maxUses": "Total uses (optional)",
+      "maxUsesPerPharmacy": "Uses per pharmacy (optional)",
+      "unlimited": "Unlimited",
+      "scopeLabel": "For",
+      "pharmacy": "Pharmacy",
+      "searchCustomers": "Search your customers",
+      "searchPharmacies": "Search pharmacies",
+      "pharmacyNotifiedHint": "The pharmacy is notified when the code becomes active.",
+      "saving": "Saving...",
+      "save": "Save changes",
+      "submitForApproval": "Submit for approval",
+      "create": "Create code",
+      "errors": {
+        "value": "Enter a valid discount.",
+        "percentage": "A percentage must be above 0 and at most 100, with up to two decimals.",
+        "fixed": "A fixed discount must be a whole amount in SYP, above 0.",
+        "limit": "A usage limit must be a whole number of at least 1.",
+        "pharmacy": "Choose the pharmacy this code is for."
+      }
+    },
+    "errors": {
+      "limitBelowUsed": "The total usage limit cannot be lower than the uses already made.",
+      "pharmacyNotCustomer": "You can only aim a code at one of your own customers.",
+      "pharmacyNotFound": "That pharmacy was not found.",
+      "notEditable": "This code can no longer be changed.",
+      "versionConflict": "This code changed while you were reviewing it. The list has been reloaded.",
+      "notInReview": "This code is no longer waiting for review. The list has been reloaded.",
+      "rejectionNoteRequired": "A rejection reason is required."
+    }
   }
 }
