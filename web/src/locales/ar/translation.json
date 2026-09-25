@@ -79,7 +79,8 @@
     "openMenuWithUpdates": "فتح القائمة (يوجد جديد)",
     "catalogRequests": "طلبات الأصناف",
     "catalogDuplicates": "مراجعة المكرر",
-    "manufacturers": "الشركات المصنعة"
+    "manufacturers": "الشركات المصنعة",
+    "categories": "الفئات"
   },
   "auth": {
     "phoneLabel": "رقم الهاتف",
@@ -724,8 +725,14 @@
       "clearImage": "حذف الصورة",
       "linkExisting": "أو ربطها بشركة موجودة",
       "nameEnLabel": "الاسم الإنجليزي (للبحث)",
-      "unknownCategoriesTitle": "فئة غير معروفة",
-      "unknownCategoriesHint": "استُوردت هذه الأسطر بلا فئة لأن الفئة المكتوبة في الملف لا تطابق أي فئة. الاستيراد لا ينشئ فئات؛ حدّد الفئة للدواء، أو أضف الفئة ثم أعد الاستيراد.",
+      "newCategoriesTitle": "فئات جديدة أُنشئت",
+      "newCategoriesHint": "لم تطابق هذه الفئات أي فئة موجودة، فأُنشئت بالاسم المكتوب في الملف. يمكنك تعديل أسمائها أو دمجها بفئة أخرى من صفحة الفئات.",
+      "newCategoryItems_zero": "لا أصناف",
+      "newCategoryItems_one": "صنف واحد",
+      "newCategoryItems_two": "صنفان",
+      "newCategoryItems_few": "{{count}} أصناف",
+      "newCategoryItems_many": "{{count}} صنفاً",
+      "newCategoryItems_other": "{{count}} صنف",
       "importResultUnchanged": "موجود مسبقاً"
     },
     "exchangeRate": {
@@ -984,6 +991,22 @@
     "confirmMerge": "دمج \"{{source}}\" في \"{{target}}\"؟ لا يمكن التراجع.",
     "nameTaken": "يوجد شركة أخرى بهذا الاسم - ادمج الاثنتين.",
     "mergeConflict": "بعض الأدوية موجودة تحت الشركتين ويجب حلها في مراجعة المكرر أولاً."
+  },
+  "categories": {
+    "title": "الفئات",
+    "hint": "الفئة التي أنشأها استيراد الكتالوج تحمل النص المكتوب في الملف اسماً عربياً وإنجليزياً إلى أن تعدّل اسمها.",
+    "nameAr": "الاسم العربي",
+    "nameEn": "الاسم الإنجليزي",
+    "catalogItems": "أصناف الكتالوج",
+    "products": "منتجات المستودعات",
+    "empty": "لا توجد فئات بعد.",
+    "merge": "دمج فئة أخرى بهذه",
+    "mergeHint": "اختر الفئة التي ستُدمج في \"{{name}}\". تنتقل أصنافها ومنتجات المستودعات فيها إلى هنا، ثم تُحذف.",
+    "mergePick": "اختر فئة...",
+    "mergeAction": "دمج",
+    "confirmMerge": "دمج \"{{source}}\" في \"{{target}}\"؟\n\nعدد أصناف الكتالوج التي ستنتقل: {{catalogItems}}\nعدد منتجات المستودعات التي ستنتقل: {{products}}\n\nستُحذف \"{{source}}\". لا يمكن التراجع.",
+    "nameTaken": "توجد فئة أخرى بهذا الاسم - ادمج الاثنتين.",
+    "nameRequired": "الفئة تحتاج اسماً عربياً وإنجليزياً."
   },
   "productPicker": {
     "searchPlaceholder": "ابحث عن منتج بالاسم أو الشركة",

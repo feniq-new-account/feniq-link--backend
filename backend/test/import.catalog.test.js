@@ -261,46 +261,87 @@ test('the admin template has the catalog columns only - no price', async () => {
   assert.strictEqual(report.added, 3, JSON.stringify(report));
 });
 
-// --- categories (pre-merge review) --------------------------------------------
-// A category cell is matched against the existing categories' Arabic and
-// English names after normalizeText. The import never creates a category: an
-// unknown one leaves the item without a category and is listed in the report
-// with the file's text; an empty cell is simply no category.
+// --- categories ------------------------------------------------------------------
+// A category cell matches an existing category by its Arabic or English name
+// after normalizeText. One that matches none is created - the text as written
+// in the file - once per file, whatever spelling variants of it the file
+// uses, and the items are filed under it. An empty cell is simply no category.
 
-async function antibiotics() {
-  return (
-    (await Category.findOne({ nameEn: 'Antibiotics' }).lean()) ??
-    (await Category.create({ nameAr: 'صادات حيوية', nameEn: 'Antibiotics' })).toObject()
-  );
+// The template test's example rows may already have created it (with the
+// file's text as both names) - give it its English name, as an admin would.
+function antibiotics() {
+  return Category.findOneAndUpdate(
+    { nameAr: 'صادات حيوية' },
+    { $set: { nameEn: 'Antibiotics' } },
+    { upsert: true, new: true }
+  ).lean();
 }
 
-test('category: a spelling variant of an existing category matches it (Arabic or English name)', async () => {
+test('category: a spelling variant of an existing category matches it (Arabic or English name); nothing is created', async () => {
   const category = await antibiotics();
+  const categoriesBefore = await Category.countDocuments();
   const m = await manufacturer();
   const report = await catalogService.importFromExcel(await xlsx([
-    ['اسم المادة', 'الشركة', 'السعر', 'العملة', 'الفئة'],
-    ['دواء بفئة مكتوبة بالهاء', m, '1', 'USD', 'صادات حيويه'],
-    ['دواء بفئة إنجليزية', m, '1', 'USD', ' ANTIBIOTICS '],
+    ['اسم المادة', 'الشركة', 'الفئة'],
+    ['دواء بفئة مكتوبة بالهاء', m, 'صادات حيويه'],
+    ['دواء بفئة إنجليزية', m, ' ANTIBIOTICS '],
   ]));
   assert.strictEqual(report.added, 2, JSON.stringify(report));
-  assert.deepStrictEqual(report.unknownCategories, []);
+  assert.deepStrictEqual(report.newCategories, []);
+  assert.strictEqual(await Category.countDocuments(), categoriesBefore);
   for (const name of ['دواء بفئة مكتوبة بالهاء', 'دواء بفئة إنجليزية']) {
     assert.strictEqual(String((await itemNamed(name, m)).categoryId), String(category._id), name);
   }
 });
 
-test('category: an unknown one imports the item without a category, lists the row, and creates nothing', async () => {
-  await antibiotics();
+function newCategoriesFile(m) {
+  return xlsx([
+    ['اسم المادة', 'الشركة', 'الفئة'],
+    ['مكمل أول', m, 'مكملات غذائية'],
+    ['مكمل ثان', m, ' مكملات غذائيه '], // ta marbuta written as ha, extra spaces
+    ['مكمل ثالث', m, 'مكمّلات  غذائية'], // tashkeel and a double space
+    ['فيتامين أول', m, 'Vitamins'],
+    ['فيتامين ثان', m, 'VITAMINS'],
+    ['دواء بلا فئة جديد', m, ''],
+  ]);
+}
+
+test('category: a new one is created once per file, whatever spelling variants the file uses', async () => {
   const categoriesBefore = await Category.countDocuments();
   const m = await manufacturer();
-  const report = await catalogService.importFromExcel(await xlsx([
-    ['اسم المادة', 'الشركة', 'السعر', 'العملة', 'التصنيف'],
-    ['دواء بفئة مجهولة', m, '1', 'USD', 'فئة لا وجود لها'],
+  const report = await catalogService.importFromExcel(await newCategoriesFile(m));
+  assert.strictEqual(report.added, 6, JSON.stringify(report));
+  assert.deepStrictEqual(
+    report.newCategories.map((c) => [c.nameAr, c.items]),
+    [['مكملات غذائية', 3], ['Vitamins', 2]]
+  );
+  assert.strictEqual(await Category.countDocuments(), categoriesBefore + 2);
+
+  // Created with the name as written in the file (both names until renamed).
+  const supplements = await Category.findById(report.newCategories[0].id).lean();
+  assert.strictEqual(supplements.nameAr, 'مكملات غذائية');
+  assert.strictEqual(supplements.nameEn, 'مكملات غذائية');
+  for (const name of ['مكمل أول', 'مكمل ثان', 'مكمل ثالث']) {
+    assert.strictEqual(String((await itemNamed(name, m)).categoryId), String(supplements._id), name);
+  }
+  assert.strictEqual((await itemNamed('دواء بلا فئة جديد', m)).categoryId, null);
+});
+
+test('category: a re-import finds the categories it created instead of creating them again', async () => {
+  const m = await manufacturer();
+  await catalogService.importFromExcel(await newCategoriesFile(m));
+  const categoriesBefore = await Category.countDocuments();
+
+  const again = await catalogService.importFromExcel(await newCategoriesFile(m));
+  assert.deepStrictEqual(again.newCategories, []);
+  assert.strictEqual(again.unchanged, 6, JSON.stringify(again));
+  assert.strictEqual(await Category.countDocuments(), categoriesBefore);
+  // Nor does another file with another spelling of one of them.
+  const other = await catalogService.importFromExcel(await xlsx([
+    ['اسم المادة', 'الشركة', 'الفئة'],
+    ['مكمل رابع', m, 'مُكَمِّلات غذائيه'],
   ]));
-  assert.strictEqual(report.added, 1, JSON.stringify(report));
-  assert.strictEqual((await itemNamed('دواء بفئة مجهولة', m)).categoryId, null);
-  assert.deepStrictEqual(report.unknownCategories, [{ row: 2, category: 'فئة لا وجود لها' }]);
-  assert.deepStrictEqual(report.errors, []);
+  assert.deepStrictEqual(other.newCategories, []);
   assert.strictEqual(await Category.countDocuments(), categoriesBefore);
 });
 
@@ -308,30 +349,45 @@ test('category: an empty cell imports the item without a category, with no warni
   await antibiotics();
   const m = await manufacturer();
   const report = await catalogService.importFromExcel(await xlsx([
-    ['اسم المادة', 'الشركة', 'السعر', 'العملة', 'الفئة'],
-    ['دواء بلا فئة', m, '1', 'USD', ''],
+    ['اسم المادة', 'الشركة', 'الفئة'],
+    ['دواء بلا فئة', m, ''],
   ]));
   assert.strictEqual(report.added, 1, JSON.stringify(report));
   assert.strictEqual((await itemNamed('دواء بلا فئة', m)).categoryId, null);
-  assert.deepStrictEqual(report.unknownCategories, []);
+  assert.deepStrictEqual(report.newCategories, []);
   assert.deepStrictEqual(report.errors, []);
 });
 
-test('category: a re-import files an existing item under a known category; unknown or empty leaves it as it was', async () => {
+test('category: a row skipped for an unconfirmed new manufacturer creates no category', async () => {
+  const categoriesBefore = await Category.countDocuments();
+  const report = await catalogService.importFromExcel(await xlsx([
+    ['اسم المادة', 'الشركة', 'الفئة'],
+    ['دواء شركة جديدة', 'شركة لم تُعتمد بعد', 'فئة لن تُنشأ'],
+  ]));
+  assert.strictEqual(report.newManufacturers.length, 1);
+  assert.deepStrictEqual(report.newCategories, []);
+  assert.strictEqual(await Category.countDocuments(), categoriesBefore);
+});
+
+test('category: a re-import files an existing item under its category, known or new; an empty cell leaves it as it was', async () => {
   const category = await antibiotics();
   const m = await manufacturer();
   await catalogService.importFromExcel(await xlsx([
-    ['اسم المادة', 'الشركة', 'السعر', 'العملة'],
-    ['دواء يعاد استيراده', m, '1', 'USD'],
+    ['اسم المادة', 'الشركة'],
+    ['دواء يعاد استيراده', m],
   ]));
-  const header = ['اسم المادة', 'الشركة', 'السعر', 'العملة', 'الفئة'];
-  let report = await catalogService.importFromExcel(await xlsx([header, ['دواء يعاد استيراده', m, '2', 'USD', 'صادات حيوية']]));
+  const header = ['اسم المادة', 'الشركة', 'الفئة'];
+  let report = await catalogService.importFromExcel(await xlsx([header, ['دواء يعاد استيراده', m, 'صادات حيوية']]));
   assert.strictEqual(report.updated, 1, JSON.stringify(report));
   assert.strictEqual(String((await itemNamed('دواء يعاد استيراده', m)).categoryId), String(category._id));
 
-  report = await catalogService.importFromExcel(await xlsx([header, ['دواء يعاد استيراده', m, '3', 'USD', 'فئة مجهولة']]));
-  assert.deepStrictEqual(report.unknownCategories, [{ row: 2, category: 'فئة مجهولة' }]);
-  report = await catalogService.importFromExcel(await xlsx([header, ['دواء يعاد استيراده', m, '4', 'USD', '']]));
-  assert.deepStrictEqual(report.unknownCategories, []);
-  assert.strictEqual(String((await itemNamed('دواء يعاد استيراده', m)).categoryId), String(category._id));
+  report = await catalogService.importFromExcel(await xlsx([header, ['دواء يعاد استيراده', m, 'فئة جديدة للمنتج القائم']]));
+  assert.strictEqual(report.updated, 1);
+  assert.deepStrictEqual(report.newCategories.map((c) => [c.nameAr, c.items]), [['فئة جديدة للمنتج القائم', 1]]);
+  const newCategoryId = String(report.newCategories[0].id);
+  assert.strictEqual(String((await itemNamed('دواء يعاد استيراده', m)).categoryId), newCategoryId);
+
+  report = await catalogService.importFromExcel(await xlsx([header, ['دواء يعاد استيراده', m, '']]));
+  assert.strictEqual(report.unchanged, 1);
+  assert.strictEqual(String((await itemNamed('دواء يعاد استيراده', m)).categoryId), newCategoryId);
 });

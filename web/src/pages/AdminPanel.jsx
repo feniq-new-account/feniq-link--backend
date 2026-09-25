@@ -14,6 +14,7 @@ import { AdminCatalogPage } from './AdminCatalogPage';
 import { AdminCatalogRequestsPage } from './AdminCatalogRequestsPage';
 import { AdminDuplicatesPage } from './AdminDuplicatesPage';
 import { AdminManufacturersPage } from './AdminManufacturersPage';
+import { AdminCategoriesPage } from './AdminCategoriesPage';
 import { AdminBannersPage } from './AdminBannersPage';
 import { AdminCommissionPage } from './AdminCommissionPage';
 import { AdminExchangeRatePage } from './AdminExchangeRatePage';
@@ -51,6 +52,8 @@ export function AdminPanel() {
     { path: '/admin/catalog-requests', label: t('nav.catalogRequests') },
     { path: '/admin/catalog-duplicates', label: t('nav.catalogDuplicates') },
     { path: '/admin/manufacturers', label: t('nav.manufacturers') },
+    // Where the categories the catalog import creates get renamed or merged.
+    { path: '/admin/categories', label: t('nav.categories') },
     // The platform's side of the money: what each warehouse owes in
     // commission for a chosen window, and what it has actually handed over.
     { path: '/admin/commission', label: t('nav.commission') },
@@ -133,6 +136,7 @@ export function AdminPanel() {
             <Route path="/admin/catalog-requests" element={<AdminCatalogRequestsPage />} />
             <Route path="/admin/catalog-duplicates" element={<AdminDuplicatesPage />} />
             <Route path="/admin/manufacturers" element={<AdminManufacturersPage />} />
+            <Route path="/admin/categories" element={<AdminCategoriesPage />} />
             <Route path="/admin/commission" element={<AdminCommissionPage />} />
             <Route path="/admin/exchange-rate" element={<AdminExchangeRatePage />} />
             <Route path="/admin/notifications" element={<AdminNotificationsPage />} />

@@ -18,6 +18,7 @@ const { UNITS, resolveUnit } = require('../config/units');
 const { fieldForHeader, IMPORT_COLUMN_SETS } = require('../config/importSynonyms');
 const { parsePriceCell, resolveRowCurrency } = require('../utils/importValues');
 const { parseBonus } = require('../utils/bonus');
+const { categoryResolverForImport } = require('./category.service');
 const { loadSavedMapping, parseExplicitMapping, saveMapping } = require('./importMapping.service');
 
 function escapeRegex(value) {
@@ -576,7 +577,7 @@ async function deactivateCatalogItem(id) {
 
 const TABLE_INSTRUCTION = 'جدول عادي: صف عناوين ثم صنف في كل صف. ترتيب الأعمدة غير مهم.';
 // The central catalog has no price - a price belongs to a warehouse's product.
-const INSTRUCTION_TEXT = `${TABLE_INSTRUCTION}\nالفئة اختيارية ويجب أن تطابق فئة موجودة (لا تُنشأ فئات من الاستيراد). لا سعر في القائمة المركزية: السعر يضعه كل مستودع لمنتجه.`;
+const INSTRUCTION_TEXT = `${TABLE_INSTRUCTION}\nالفئة اختيارية: تُطابق الفئات الموجودة، والفئة غير الموجودة تُنشأ تلقائياً. لا سعر في القائمة المركزية: السعر يضعه كل مستودع لمنتجه.`;
 const WAREHOUSE_INSTRUCTION_TEXT = `${TABLE_INSTRUCTION}\nالعملة إجبارية لكل سعر: SYP = ليرة سورية (تتحوّل للدولار حسب سعر الصرف الحالي)، USD = دولار\nالبونص مثل 10+1 (أو 10+1، 20+3). الوحدة من القائمة.`;
 const TEMPLATE_VALIDATION_LAST_ROW = 2000;
 
@@ -1015,23 +1016,11 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
   const existingItems = await ProductCatalog.find({ identityKey: { $in: [...new Set(ready.map(identityOf))] } });
   const itemByIdentity = new Map(existingItems.map((item) => [item.identityKey, item]));
   // Categories: the file's text matched against every category's Arabic and
-  // English name after normalizeText ("صادات حيوية" = "صادات حيويه"). Never
-  // created here - an unknown one leaves the item without a category and is
-  // listed in the report; an empty cell is simply no category.
-  const categories = await Category.find({}).select('nameAr nameEn').lean();
-  const categoryByKey = new Map();
-  for (const category of categories) {
-    for (const name of [category.nameAr, category.nameEn]) {
-      const key = normalizeText(name);
-      if (key && !categoryByKey.has(key)) categoryByKey.set(key, category._id);
-    }
-  }
-  const unknownCategories = [];
-  const categoryOf = (row) => {
-    const text = typeof row.category === 'string' ? row.category.trim() : '';
-    if (!text) return { categoryId: null, text: null };
-    return { categoryId: categoryByKey.get(normalizeText(text)) ?? null, text };
-  };
+  // English name after normalizeText ("صادات حيوية" = "صادات حيويه"); one that
+  // matches none is created, once per file (category.service.js). Resolved
+  // only for a row that is actually imported, so a skipped row creates nothing.
+  // An empty cell is simply no category.
+  const categories = await categoryResolverForImport();
 
   let added = 0;
   // An existing item whose category the file set (updated), or that the file
@@ -1041,33 +1030,33 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
   const withdrawn = [];
   for (const row of ready) {
     const manufacturer = manufacturerOf(row);
-    const category = categoryOf(row);
     try {
       const item = itemByIdentity.get(identityOf(row));
       if (item && item.isActive === false) {
         withdrawn.push({ row: row.rowNumber, nameAr: item.nameAr });
         continue;
       }
+      const categoryId = await categories.resolve(row.category);
       if (item) {
-        // A known category files it there; an unknown or empty cell leaves
-        // the item's category as it was.
-        if (category.categoryId && String(item.categoryId) !== String(category.categoryId)) {
-          item.categoryId = category.categoryId;
+        // A category in the file - known or just created - files it there;
+        // an empty cell leaves the item's category as it was.
+        if (categoryId && String(item.categoryId) !== String(categoryId)) {
+          item.categoryId = categoryId;
           await item.save();
           updated += 1;
         } else {
           unchanged += 1;
         }
-        if (category.text && !category.categoryId) unknownCategories.push({ row: row.rowNumber, category: category.text });
+        categories.countItem(categoryId);
         continue;
       }
       const created = await ProductCatalog.create({
         nameAr: row.name,
         manufacturerAr: manufacturer.nameAr,
         manufacturerId: manufacturer._id,
-        categoryId: category.categoryId,
+        categoryId,
       });
-      if (category.text && !category.categoryId) unknownCategories.push({ row: row.rowNumber, category: category.text });
+      categories.countItem(categoryId);
       itemByIdentity.set(created.identityKey, created);
       added += 1;
     } catch {
@@ -1081,8 +1070,9 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
     unchanged,
     withdrawn,
     newManufacturers: [...newManufacturers.values()],
-    // Imported without a category: { row, category } - the file's text.
-    unknownCategories,
+    // Categories this import created: { id, nameAr, items } - the name as
+    // written in the file and how many items were filed under it.
+    newCategories: categories.createdCategories(),
     errors,
   };
 }
