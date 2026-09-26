@@ -26,6 +26,24 @@ const UNKNOWN_COMMIT_LABEL = 'UnknownTransactionCommitResult';
 // worth surfacing rather than retrying forever.
 const MAX_ATTEMPTS = 8;
 
+// withTransaction retries a write conflict immediately. When several writers
+// collide on one hot document (the order-number counter, a discount code's
+// usedCount) they then collide again on the very next attempt, and a loser can
+// burn its whole budget before the winners have committed - it would then fail
+// with TRANSACTION_CONTENTION instead of seeing the real outcome (e.g. the
+// code's limit was reached). A short randomized wait before each retry
+// spreads them out. It runs before the attempt's first command, so the
+// transaction holds nothing while it waits.
+const RETRY_BASE_DELAY_MS = 5;
+const RETRY_MAX_DELAY_MS = 200;
+
+function retryDelayMs(attempt) {
+  const ceiling = Math.min(RETRY_MAX_DELAY_MS, RETRY_BASE_DELAY_MS * 2 ** (attempt - 2));
+  return Math.random() * ceiling;
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // A standalone mongod rejects the very first command of a transaction with
 // this. Detected explicitly so an operator gets a fixable message instead of a
 // raw driver error 40 frames deep.
@@ -67,6 +85,7 @@ async function runInTransaction(work) {
           'TRANSACTION_CONTENTION'
         );
       }
+      if (attempts > 1) await sleep(retryDelayMs(attempts));
       // Reset per attempt - a retried transaction must not observe a value
       // computed by the attempt that was rolled back.
       result = undefined;

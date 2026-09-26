@@ -19,3 +19,12 @@ Claude هو المطوّر الوحيد لهذا المشروع.
 - `phoenix/` — تطبيق الصيدليات: Flutter.
 - `web/` — لوحة الأدمن والمستودعات: React + Vite.
 - `render.yaml` — النشر على حساب Render الخاص بالمالك.
+
+## الاختبارات
+
+```bash
+# السيرفر — قاعدة مؤقتة بالذاكرة، لكن الإعدادات تطلب المتغيرين (أي قيمة):
+cd backend && MONGODB_URI=mongodb://127.0.0.1:27017/unused JWT_SECRET=$(openssl rand -hex 32) npm test
+# لوحة الويب
+cd web && npx vitest run
+```
