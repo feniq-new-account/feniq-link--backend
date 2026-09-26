@@ -46,6 +46,11 @@ jobs:
           flutter-version: 3.35.x
           cache: true
 
+      # The app pins an NDK the runner doesn't have; Gradle installs it only
+      # once the SDK licenses are accepted.
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
       - run: flutter pub get
 
       - name: Tests
