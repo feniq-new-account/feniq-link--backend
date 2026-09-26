@@ -10,7 +10,7 @@ class AppConfig {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 
-    'https://phoenix-1-p2qi.onrender.com/api',
+    'https://feniq-api.onrender.com/api',
     // 'http://localhost:5000/api'
         
   );

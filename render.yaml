@@ -1,0 +1,63 @@
+# فينيق — نشر على Render من Blueprint (ضغطة واحدة).
+# Render → New → Blueprint → اختر هذا الريبو.
+#
+# الأسرار المعلَّمة sync: false تُطلب منك مرة واحدة عند الإنشاء ولا تُكتب هنا.
+# JWT_SECRET يولّده Render تلقائياً: لا أحد يراه، ولا حاجة لنسخه.
+#
+# قاعدة البيانات ليست هنا: Render لا يستضيف MongoDB. استعمل MongoDB Atlas
+# (المجاني يكفي، وهو replica set فيدعم المعاملات التي يشترطها السيرفر).
+services:
+  # السيرفر (Node/Express) — التطبيق واللوحة كلاهما يتكلّم معه.
+  - type: web
+    name: feniq-api
+    runtime: node
+    region: frankfurt
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      # رابط لوحة الويب — بدونه يرفض المتصفح طلباتها (CORS).
+      - key: CORS_ORIGINS
+        value: https://feniq-web.onrender.com
+      # console = رمز التحقق يظهر في سجلات Render بدل إرساله SMS.
+      - key: SMS_PROVIDER
+        value: console
+      # الإشعارات (اختياري — بدونها تتعطّل الإشعارات فقط).
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      # الصور (اختياري — بدونها يتعطّل رفع الصور فقط).
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  # لوحة الويب (React/Vite) — للأدمن والمستودعات.
+  - type: web
+    name: feniq-web
+    runtime: static
+    rootDir: web
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://feniq-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
