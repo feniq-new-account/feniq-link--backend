@@ -31,7 +31,7 @@ jobs:
       run:
         working-directory: phoenix
     env:
-      API_BASE_URL: ${{ inputs.api_base_url || vars.API_BASE_URL || 'https://feniq-api.onrender.com/api' }}
+      API_BASE_URL: ${{ inputs.api_base_url || vars.API_BASE_URL || 'https://feniq-connect-api.onrender.com/api' }}
     steps:
       - uses: actions/checkout@v4
 
