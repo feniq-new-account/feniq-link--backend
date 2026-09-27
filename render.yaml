@@ -9,7 +9,7 @@
 services:
   # السيرفر (Node/Express) — التطبيق واللوحة كلاهما يتكلّم معه.
   - type: web
-    name: feniq-api
+    name: feniq-connect-api
     runtime: node
     region: frankfurt
     plan: free
@@ -28,7 +28,7 @@ services:
         sync: false
       # رابط لوحة الويب — بدونه يرفض المتصفح طلباتها (CORS).
       - key: CORS_ORIGINS
-        value: https://feniq-web.onrender.com
+        value: https://feniq-connect-web.onrender.com
       # console = رمز التحقق يظهر في سجلات Render بدل إرساله SMS.
       - key: SMS_PROVIDER
         value: console
@@ -49,14 +49,14 @@ services:
 
   # لوحة الويب (React/Vite) — للأدمن والمستودعات.
   - type: web
-    name: feniq-web
+    name: feniq-connect-web
     runtime: static
     rootDir: web
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://feniq-api.onrender.com/api
+        value: https://feniq-connect-api.onrender.com/api
     routes:
       - type: rewrite
         source: /*
