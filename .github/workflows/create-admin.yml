@@ -1,0 +1,50 @@
+# ينشئ حساب أدمن (أو يحدّث كلمة سرّه) على قاعدة الإنتاج — بديل عن شاشة
+# الأوامر التي لا تتوفر في خطة Render المجانية.
+#
+# قبل التشغيل، في إعدادات الريبو ← Secrets and variables ← Actions:
+#   MONGODB_URI     نفس رابط قاعدة البيانات الموضوع في Render
+#   ADMIN_PASSWORD  كلمة سر الأدمن (12 حرفاً على الأقل)
+# ثم: Actions ← Create admin ← Run workflow ← الاسم ورقم الهاتف.
+# كلمة السر سرّ في الريبو، لا حقلاً في النموذج، فلا تظهر في صفحة التشغيل.
+name: Create admin
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'اسم الأدمن'
+        required: true
+      phone:
+        description: 'رقم الهاتف (مثلاً 09XXXXXXXX)'
+        required: true
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci --omit=dev
+      - name: Create or update the admin
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_NAME: ${{ inputs.name }}
+          ADMIN_PHONE: ${{ inputs.phone }}
+          # The script loads the server config, which insists on a secret it
+          # does not use here; a throwaway value satisfies the check.
+          JWT_SECRET: ${{ github.run_id }}-${{ github.run_attempt }}-bootstrap-only-not-used-for-tokens
+        run: |
+          if [ -z "$MONGODB_URI" ] || [ -z "$ADMIN_PASSWORD" ]; then
+            echo "::error::Add the MONGODB_URI and ADMIN_PASSWORD repository secrets first."
+            exit 1
+          fi
+          node scripts/create-admin.js "$ADMIN_NAME" "$ADMIN_PHONE" "$ADMIN_PASSWORD"
