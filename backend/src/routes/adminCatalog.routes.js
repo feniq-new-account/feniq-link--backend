@@ -12,6 +12,7 @@ router.param('id', objectIdParam);
 
 // Static paths first, then the /:id-shaped ones.
 router.get('/template', controller.downloadTemplate);
+router.get('/field-forms', controller.downloadFieldForms);
 // Backs the Searchable Dropdown manufacturer filter on both this page and
 // Admin Products.
 router.get('/manufacturers', controller.searchManufacturers);

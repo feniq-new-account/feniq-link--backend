@@ -261,6 +261,32 @@ test('the admin template has the catalog columns only - no price', async () => {
   assert.strictEqual(report.added, 3, JSON.stringify(report));
 });
 
+// The printable forms for the sales reps: both templates' columns, one A4
+// page each - an orange header on row 3 and 25 empty bordered rows.
+test('the printable field forms: both templates on one A4 page each, and a typed-up form imports', async () => {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await catalogService.generateFieldFormsBuffer());
+  const [products, catalog] = workbook.worksheets;
+  assert.deepStrictEqual(products.getRow(3).values.filter(Boolean), ['اسم المادة', 'الشركة', 'السعر', 'العملة', 'الوحدة', 'البونص']);
+  assert.deepStrictEqual(catalog.getRow(3).values.filter(Boolean), ['اسم الدواء', 'الشركة', 'الفئة']);
+  for (const sheet of [products, catalog]) {
+    assert.strictEqual(sheet.pageSetup.paperSize, 9);
+    assert.strictEqual(sheet.pageSetup.fitToHeight, 1);
+    assert.strictEqual(sheet.getCell('A3').fill.fgColor.argb, 'FFF2760A');
+    assert.ok(sheet.getCell('A28').border.bottom, 'the 25th row is bordered');
+    assert.ok(!sheet.getCell('A29').border, 'nothing past the 25th row');
+    assert.ok(sheet.getCell('A4').font.size >= 14);
+  }
+
+  // The catalog form typed up on its own imports with no mapping step.
+  workbook.removeWorksheet(products.id);
+  const m = await manufacturer();
+  catalog.getCell('A4').value = 'دواء من نموذج المندوب';
+  catalog.getCell('B4').value = m;
+  const report = await catalogService.importFromExcel({ buffer: await workbook.xlsx.writeBuffer(), originalname: 'forms.xlsx' });
+  assert.strictEqual(report.added, 1, JSON.stringify(report));
+});
+
 // --- categories ------------------------------------------------------------------
 // A category cell matches an existing category by its Arabic or English name
 // after normalizeText. One that matches none is created - the text as written

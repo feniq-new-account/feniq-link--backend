@@ -522,6 +522,7 @@
   },
   "products": {
     "downloadTemplate": "Download template",
+    "downloadFieldForms": "Printable rep forms",
     "importExcel": "Import Excel",
     "importing": "Importing...",
     "addProduct": "Add product",

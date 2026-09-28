@@ -665,6 +665,118 @@ async function generateWarehouseTemplateBuffer() {
 }
 
 // ---------------------------------------------------------------------------
+// Printable field forms (for the sales reps)
+// ---------------------------------------------------------------------------
+//
+// Both templates above in one workbook, laid out for paper: each sheet is one
+// A4 page - a title, a line for who/where/when, an orange header and empty
+// bordered rows in a large font, meant to be printed and filled by hand. The
+// header row uses the import's own column names, so a typed-up copy of a form
+// imports as-is (the title lines above it are skipped by the header search).
+
+const FORM_ORANGE = 'FFF2760A'; // the brand orange (phoenix AppColors)
+const FORM_BORDER = { style: 'thin', color: { argb: 'FF7A7A7A' } };
+const FORM_CELL_BORDER = { top: FORM_BORDER, bottom: FORM_BORDER, left: FORM_BORDER, right: FORM_BORDER };
+const FORM_ROW_HEIGHT = 26;
+// As many rows as fill a portrait A4 page at this row height.
+const FORM_ROW_COUNT = 25;
+
+function addFormSheet(workbook, { name, title, headers, lists = {} }) {
+  const rowCount = FORM_ROW_COUNT;
+  const sheet = workbook.addWorksheet(name, {
+    views: [{ rightToLeft: true, showGridLines: false }],
+    pageSetup: {
+      paperSize: 9, // A4
+      orientation: 'portrait',
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 1,
+      horizontalCentered: true,
+      margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 },
+    },
+  });
+  sheet.columns = headers.map((header) => ({ width: header.width }));
+  const lastColumn = String.fromCharCode(64 + headers.length);
+  const rtl = { horizontal: 'right', vertical: 'middle', readingOrder: 'rtl' };
+
+  sheet.mergeCells(`A1:${lastColumn}1`);
+  const titleCell = sheet.getCell('A1');
+  titleCell.value = title;
+  titleCell.font = { bold: true, size: 20 };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: 'rtl' };
+  sheet.getRow(1).height = 36;
+
+  sheet.mergeCells(`A2:${lastColumn}2`);
+  const infoCell = sheet.getCell('A2');
+  infoCell.value = 'اسم المستودع: ....................    المندوب: ....................    التاريخ: ........';
+  infoCell.font = { size: 13 };
+  infoCell.alignment = rtl;
+  sheet.getRow(2).height = 30;
+
+  const headerRow = sheet.getRow(3);
+  headerRow.height = 32;
+  headers.forEach((header, index) => {
+    const cell = headerRow.getCell(index + 1);
+    cell.value = header.text;
+    cell.font = { bold: true, size: 15, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FORM_ORANGE } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: 'rtl' };
+    cell.border = FORM_CELL_BORDER;
+  });
+
+  for (let offset = 1; offset <= rowCount; offset += 1) {
+    const row = sheet.getRow(3 + offset);
+    row.height = FORM_ROW_HEIGHT;
+    headers.forEach((header, index) => {
+      const cell = row.getCell(index + 1);
+      cell.font = { size: 14 };
+      cell.alignment = rtl;
+      cell.border = FORM_CELL_BORDER;
+    });
+  }
+
+  headers.forEach((header, index) => {
+    const values = lists[header.key];
+    if (!values) return;
+    const column = String.fromCharCode(65 + index);
+    sheet.dataValidations.add(`${column}4:${column}${3 + rowCount}`, {
+      type: 'list',
+      allowBlank: true,
+      formulae: [`"${values.join(',')}"`],
+    });
+  });
+  sheet.pageSetup.printArea = `A1:${lastColumn}${3 + rowCount}`;
+  return sheet;
+}
+
+async function generateFieldFormsBuffer() {
+  const workbook = new ExcelJS.Workbook();
+  addFormSheet(workbook, {
+    name: 'منتجات المستودع',
+    title: 'قائمة منتجات المستودع',
+    headers: [
+      { key: 'name', text: 'اسم المادة', width: 25 },
+      { key: 'manufacturer', text: 'الشركة', width: 18 },
+      { key: 'price', text: 'السعر', width: 10 },
+      { key: 'currency', text: 'العملة', width: 8 },
+      { key: 'unit', text: 'الوحدة', width: 8 },
+      { key: 'bonus', text: 'البونص', width: 8 },
+    ],
+    lists: { currency: ['USD', 'SYP'], unit: UNITS.map((unit) => unit.nameAr) },
+  });
+  addFormSheet(workbook, {
+    name: 'الكتالوج',
+    title: 'قائمة الأدوية',
+    headers: [
+      { key: 'name', text: 'اسم الدواء', width: 34 },
+      { key: 'manufacturer', text: 'الشركة', width: 24 },
+      { key: 'category', text: 'الفئة', width: 19 },
+    ],
+  });
+  return workbook.xlsx.writeBuffer();
+}
+
+// ---------------------------------------------------------------------------
 // Excel import - reading the file (catalog overhaul Phase 4.1-4.2)
 // ---------------------------------------------------------------------------
 //
@@ -1088,6 +1200,7 @@ module.exports = {
   findCatalogItemOrThrow,
   generateTemplateBuffer,
   generateWarehouseTemplateBuffer,
+  generateFieldFormsBuffer,
   importFromExcel,
   // The shared import reader, reused by the warehouse import
   // (warehouseImport.service.js).

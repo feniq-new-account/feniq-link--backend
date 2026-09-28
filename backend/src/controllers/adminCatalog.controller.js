@@ -46,6 +46,17 @@ const downloadTemplate = asyncHandler(async (req, res) => {
   res.send(buffer);
 });
 
+// Both templates as one printable workbook for the sales reps to fill by hand.
+const downloadFieldForms = asyncHandler(async (req, res) => {
+  const buffer = await catalogService.generateFieldFormsBuffer();
+  res.setHeader(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
+  res.setHeader('Content-Disposition', 'attachment; filename="feniq-field-forms.xlsx"');
+  res.send(buffer);
+});
+
 // Multipart text fields, each JSON: `confirmNewManufacturers` (names from a
 // previous report's newManufacturers to create), `manufacturerLinks`
 // ({ rawName: manufacturerId } to file them under an existing one) and
@@ -186,6 +197,7 @@ module.exports = {
   list,
   searchManufacturers,
   downloadTemplate,
+  downloadFieldForms,
   importExcel,
   update,
   deactivate,

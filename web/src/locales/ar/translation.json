@@ -538,6 +538,7 @@
   },
   "products": {
     "downloadTemplate": "تحميل القالب",
+    "downloadFieldForms": "نماذج المندوبين للطباعة",
     "importExcel": "استيراد Excel",
     "importing": "جارٍ الاستيراد...",
     "addProduct": "إضافة منتج",

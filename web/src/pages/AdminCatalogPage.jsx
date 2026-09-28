@@ -371,14 +371,14 @@ export function AdminCatalogPage() {
     reset();
   };
 
-  const handleDownloadTemplate = async () => {
+  const downloadFile = async (fetchBlob, filename) => {
     setActionError(null);
     try {
-      const blob = await api.downloadCatalogTemplate();
+      const blob = await fetchBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'product-catalog-template.xlsx';
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -496,8 +496,17 @@ export function AdminCatalogPage() {
       <div className="adm-page-head">
         <h1>{t('nav.centralCatalog')}</h1>
         <div className="adm-page-head-actions">
-          <button className="btn-secondary" onClick={handleDownloadTemplate}>
+          <button
+            className="btn-secondary"
+            onClick={() => downloadFile(api.downloadCatalogTemplate, 'product-catalog-template.xlsx')}
+          >
             {t('products.downloadTemplate')}
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={() => downloadFile(api.downloadCatalogFieldForms, 'feniq-field-forms.xlsx')}
+          >
+            {t('products.downloadFieldForms')}
           </button>
           <button
             className="btn-primary"

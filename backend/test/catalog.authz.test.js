@@ -27,6 +27,7 @@ let baseUrl;
 const ROUTES = [
   ['GET', '/admin/catalog', 'admin'],
   ['GET', '/admin/catalog/template', 'admin'],
+  ['GET', '/admin/catalog/field-forms', 'admin'],
   ['GET', '/admin/catalog/manufacturers', 'admin'],
   ['POST', '/admin/catalog/import', 'admin'],
   ['PATCH', `/admin/catalog/${ID}`, 'admin'],

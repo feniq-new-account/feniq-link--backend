@@ -753,6 +753,7 @@ export const api = {
   searchAdminManufacturers: (search) =>
     request(`/admin/catalog/manufacturers${search ? `?search=${encodeURIComponent(search)}` : ''}`),
   downloadCatalogTemplate: () => requestBlob('/admin/catalog/template'),
+  downloadCatalogFieldForms: () => requestBlob('/admin/catalog/field-forms'),
   // `confirmNewManufacturers` (names to create) and `manufacturerLinks`
   // ({ rawName: manufacturerId }) answer a previous report's newManufacturers.
   importCatalogExcel: (file, { confirmNewManufacturers, manufacturerLinks, mapping } = {}) =>
