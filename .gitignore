@@ -16,3 +16,7 @@
 **/.dart_tool/
 .flutter_temp/
 backend/.env.example
+
+# Impeccable review captures (regenerated each round)
+.impeccable/review/
+.impeccable/*.local.json

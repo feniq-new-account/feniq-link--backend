@@ -1,0 +1,93 @@
+# ينشر الموقع التعريفي (site/) مع آخر نسخة APK ناجحة.
+#
+# يجمع site/ + app-release.apk (من آخر تشغيل ناجح لـ Build Android APK على main)
+# في commit واحد ويدفعه إلى الفرع site-dist. خدمة feniq-site في render.yaml تنشر
+# ذلك الفرع كما هو، فيصير التطبيق قابلاً للتنزيل من https://<الموقع>/feniq.apk.
+#
+# يعمل تلقائياً: عند أي تعديل على site/ في main، وبعد كل بناء APK ناجح.
+# أو يدوياً: Actions ← Deploy website ← Run workflow.
+name: Deploy website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/site-deploy.yml'
+  workflow_run:
+    workflows: ['Build Android APK']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: site-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Find the latest successful APK build
+        id: apk
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow android-apk.yml --branch main \
+                --status success --limit 1 --json databaseId,number,createdAt --jq '.[0] // empty')
+          if [ -z "$run" ]; then
+            echo "::warning::No successful APK build yet - the site will offer WhatsApp instead of a download."
+            exit 0
+          fi
+          echo "id=$(jq -r .databaseId <<<"$run")" >> "$GITHUB_OUTPUT"
+          echo "build=$(jq -r .number <<<"$run")" >> "$GITHUB_OUTPUT"
+          echo "date=$(jq -r '.createdAt[0:10]' <<<"$run")" >> "$GITHUB_OUTPUT"
+
+      # Artifacts expire after 30 days (android-apk.yml); a missing one is not fatal.
+      - name: Download APK
+        if: steps.apk.outputs.id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: feniq-apk
+          run-id: ${{ steps.apk.outputs.id }}
+          github-token: ${{ github.token }}
+          path: apk
+
+      - name: Assemble
+        env:
+          BUILD: ${{ steps.apk.outputs.build }}
+          DATE: ${{ steps.apk.outputs.date }}
+        run: |
+          mkdir dist
+          cp -r site/. dist/
+          if [ -f apk/app-release.apk ]; then
+            mv apk/app-release.apk dist/feniq.apk
+            size=$(stat -c %s dist/feniq.apk)
+            jq -n --arg b "$BUILD" --arg d "$DATE" --argjson s "$size" \
+              '{apk: true, build: $b, date: $d, size: $s}' > dist/version.json
+          else
+            echo '{"apk": false}' > dist/version.json
+          fi
+          cat dist/version.json
+
+      # One orphan commit each time, force-pushed, so the APKs never pile up in history.
+      - name: Publish to site-dist
+        working-directory: dist
+        run: |
+          git init -q -b site-dist
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Website build from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" site-dist
