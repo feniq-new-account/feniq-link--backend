@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فينيق | طلب الأدوية بين المستودعات والصيدليات</title>
+<meta name="description" content="فينيق يربط مستودعات الأدوية بالصيدليات: الصيدلية تطلب من التطبيق، والمستودع يستلم الطلبية مرتبة على لوحة تحكم. مرحلة الإطلاق في اللاذقية.">
+<meta name="theme-color" content="#0E1A2C">
+<meta property="og:title" content="فينيق | طلب الأدوية بين المستودعات والصيدليات">
+<meta property="og:description" content="كل أصناف المستودع، بدرج واحد بجيبتك.">
+<meta property="og:image" content="img/og.jpg">
+<meta property="og:locale" content="ar_SY">
+<link rel="icon" href="img/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preload" href="fonts/alexandria-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/reemkufi-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">انتقل إلى المحتوى</a>
+
+<header class="bar">
+  <div class="bar__in">
+    <a class="brand" href="#top" aria-label="فينيق، الصفحة الرئيسية">
+      <img src="img/mark-dark.webp" width="32" height="39" alt="">
+      <span>فينيق</span>
+    </a>
+    <nav class="bar__nav" aria-label="أقسام الصفحة">
+      <a href="#sides">للصيدليات والمستودعات</a>
+      <a href="#start">كيف نبدأ</a>
+      <a href="#contact">تواصل</a>
+    </nav>
+    <a class="btn btn--pull btn--sm" href="#download">نزّل التطبيق</a>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top">
+  <div class="hero__copy">
+    <h1>كل أصناف المستودع، بدرج واحد بجيبتك.</h1>
+    <p class="lede">فينيق يربط مستودعات الأدوية بالصيدليات. الصيدلية تبحث عن الصنف وتطلبه من التطبيق، والمستودع يستلم الطلبية مرتبة على لوحة تحكم، بلا مكالمات ولا تدوين.</p>
+    <div class="actions">
+      <a class="btn btn--pull" href="#download">نزّل تطبيق الصيدلية</a>
+      <a class="btn btn--plate" href="#contact">سجّل مستودعك</a>
+    </div>
+    <p class="where"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>مرحلة الإطلاق: اللاذقية</p>
+  </div>
+
+  <div class="cabinet-wrap">
+    <div class="cabinet" id="cabinet">
+      <form class="labeler" role="search" id="labeler" autocomplete="off">
+        <label for="q" class="labeler__label">جرّب: اكتب اسم دواء</label>
+        <div class="labeler__strip">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+          <input id="q" name="q" type="search" dir="ltr" inputmode="search" placeholder="AMOXI…" aria-describedby="demo-note" aria-controls="drawer-out">
+        </div>
+      </form>
+
+      <div class="drawers" id="drawers" role="group" aria-label="أدراج الأصناف حسب الحرف الأول"></div>
+
+      <div class="drawer-out" id="drawer-out" aria-live="polite" hidden>
+        <div class="drawer-out__head">
+          <span class="plate plate--sm" id="drawer-out-label"></span>
+          <button type="button" class="close" id="drawer-close" aria-label="أغلق الدرج">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </div>
+        <ul class="items" id="items"></ul>
+      </div>
+
+      <div class="slip" id="slip">
+        <div class="slip__row">
+          <strong class="slip__title">الطلبية</strong>
+          <span class="slip__count" id="slip-count">فارغة</span>
+        </div>
+        <ol class="slip__list" id="slip-list"></ol>
+        <button type="button" class="btn btn--pull btn--block" id="send" disabled>أرسل الطلبية للمستودع</button>
+        <ol class="track" id="track" hidden aria-live="polite">
+          <li data-s="0">وصلت للمستودع</li>
+          <li data-s="1">قيد التجهيز</li>
+          <li data-s="2">بالطريق</li>
+          <li data-s="3">تم التسليم</li>
+        </ol>
+      </div>
+    </div>
+    <p class="demo-note" id="demo-note">تجربة فقط: أسماء الأصناف من سجل وزارة الصحة السورية، ولا شيء يُرسل فعلاً.</p>
+  </div>
+</section>
+
+<section class="old" aria-labelledby="old-h">
+  <div class="wrap">
+    <h2 id="old-h">الطلبية نفسها، بطريقتين.</h2>
+    <p class="sec-lede">اليوم تمر الطلبية بمكالمة أو رسالة واتساب، ثم يدوّنها أحد باليد. هكذا يتغير كل شيء حين تمر من فينيق.</p>
+    <div class="compare" role="table" aria-label="مقارنة بين الطلب التقليدي والطلب عبر فينيق">
+      <div class="compare__row compare__row--head" role="row">
+        <span role="columnheader">&nbsp;</span>
+        <span role="columnheader">بالهاتف والواتساب</span>
+        <span role="columnheader">عبر فينيق</span>
+      </div>
+      <div class="compare__row" role="row">
+        <span class="plate" role="rowheader">إرسال الطلب</span>
+        <span role="cell">مكالمات، وتأخير في الرد والتدوين</span>
+        <span role="cell">طلب مباشر من التطبيق بثوانٍ</span>
+      </div>
+      <div class="compare__row" role="row">
+        <span class="plate" role="rowheader">دقة الطلبية</span>
+        <span role="cell">أخطاء بالأصناف والكميات من الكلام الشفهي</span>
+        <span role="cell">كل صنف وكمية مكتوبين كما طلبتهما الصيدلية</span>
+      </div>
+      <div class="compare__row" role="row">
+        <span class="plate" role="rowheader">المرتجعات</span>
+        <span role="cell">تسجيل يدوي يصعب تتبعه</span>
+        <span role="cell">طلب إرجاع منظّم وموثّق</span>
+      </div>
+      <div class="compare__row" role="row">
+        <span class="plate" role="rowheader">الوصول للصيدليات</span>
+        <span role="cell">محدود بالاتصالات وجولات المندوبين</span>
+        <span role="cell">كل صيدليات الشبكة تطلب منك في أي وقت</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sides" id="sides" aria-labelledby="sides-h">
+  <div class="wrap">
+    <h2 id="sides-h">درجان متقابلان: واحد للصيدلية، وواحد للمستودع.</h2>
+    <p class="sec-lede">كل ما تربحه الصيدلية يقابله ما يربحه المستودع في الصف نفسه. اسحب أي درج لترى التفاصيل.</p>
+
+    <div class="pair-cab">
+      <div class="pair-cab__heads" aria-hidden="true">
+        <span class="plate plate--head">الصيدلية <small>تطبيق Android</small></span>
+        <span class="plate plate--head">المستودع <small>لوحة تحكم على الويب</small></span>
+      </div>
+
+      <div class="pair">
+        <details class="d"><summary><span class="side-tag">الصيدلية</span>بحث سريع بالأصناف</summary>
+          <p>كل أصناف المستودع مع السعر والتوفر، تصل إليها بكتابة أول حروف الاسم.</p></details>
+        <details class="d"><summary><span class="side-tag">المستودع</span>طلبات مبوّبة حسب الحالة</summary>
+          <p>كل طلبية تصل مصنّفة: جديدة، قيد التجهيز، مكتملة. لا شيء يضيع بين الرسائل.</p></details>
+      </div>
+      <div class="pair">
+        <details class="d"><summary><span class="side-tag">الصيدلية</span>طلب مباشر وتتبّع</summary>
+          <p>ترسل الطلبية بنقرة وتتابع حالتها خطوة بخطوة حتى تصل.</p></details>
+        <details class="d"><summary><span class="side-tag">المستودع</span>الأصناف والأسعار بيدك</summary>
+          <p>تحدّث الأسعار والكميات والتوفر متى شئت، أو ترفع الكتالوج كاملاً من ملف إكسل.</p></details>
+      </div>
+      <div class="pair">
+        <details class="d"><summary><span class="side-tag">الصيدلية</span>أرشيف وإعادة طلب</summary>
+          <p>كل طلبياتك السابقة محفوظة، وتعيد طلب أي منها بسهولة.</p></details>
+        <details class="d"><summary><span class="side-tag">المستودع</span>تقارير المبيعات</summary>
+          <p>تعرف الأصناف الأكثر طلباً والصيدليات الأكثر نشاطاً، لتقرر على بيّنة.</p></details>
+      </div>
+      <div class="pair">
+        <details class="d"><summary><span class="side-tag">الصيدلية</span>مرتجعات منظّمة</summary>
+          <p>ترسل طلب الإرجاع من التطبيق موثّقاً بالأصناف، وتعرف أين وصل.</p></details>
+        <details class="d"><summary><span class="side-tag">المستودع</span>أخطاء أقل</summary>
+          <p>لا مكالمات تُنسى ولا أرقام تُكتب خطأ. الطلبية مكتوبة كما أرادتها الصيدلية.</p></details>
+      </div>
+      <div class="pair">
+        <details class="d"><summary><span class="side-tag">الصيدلية</span>عروض وأكواد حسم</summary>
+          <p>ترى عروض المستودعات وحسوماتها داخل التطبيق وتستعملها عند الطلب.</p></details>
+        <details class="d"><summary><span class="side-tag">المستودع</span>قناة بيع إضافية</summary>
+          <p>صيدليات أكثر تطلب منك على مدار الساعة، إلى جانب طريقة عملك الحالية.</p></details>
+      </div>
+      <p class="pay">الدفع عند التسليم فقط. لا بطاقات ولا دفع إلكتروني.</p>
+    </div>
+  </div>
+</section>
+
+<section class="rep" aria-labelledby="rep-h">
+  <div class="wrap rep__in">
+    <h2 id="rep-h">هل يستبدل فينيق المندوب؟ <span class="no">لا.</span></h2>
+    <div class="rep__body">
+      <p>المندوب يكمل عمله في الميدان ويبني العلاقة مع الصيادلة. التطبيق يأخذ عنه الطلبيات الروتينية المتكررة، فيتفرغ لما لا يقدر عليه غيره.</p>
+      <p>والمستودع يصل إلى صيدليات المنطقة كلها، أوسع وأسرع مما تسمح به الجولات وحدها.</p>
+    </div>
+  </div>
+</section>
+
+<section class="start" id="start" aria-labelledby="start-h">
+  <div class="wrap">
+    <h2 id="start-h">كيف نبدأ مع مستودعك</h2>
+    <p class="sec-lede">فريق فينيق يزوركم ويتولى الإعداد معكم. أربع خطوات:</p>
+    <ol class="steps">
+      <li><span class="num" aria-hidden="true">1</span><h3>الأصناف والأسعار</h3><p>ندخل بيانات أصنافكم وأسعاركم بالتنسيق مع فريقكم. ملف إكسل من برنامج المحاسبة يكفي.</p></li>
+      <li><span class="num" aria-hidden="true">2</span><h3>التعريف بمستودعكم</h3><p>فريق فينيق يعرّف الصيدليات بمستودعكم ويشجعها على الطلب منه.</p></li>
+      <li><span class="num" aria-hidden="true">3</span><h3>استقبال الطلبيات</h3><p>تبدأ الطلبيات بالوصول إلى لوحة التحكم، وتجهزونها بالطريقة التي نتفق عليها.</p></li>
+      <li><span class="num" aria-hidden="true">4</span><h3>متابعة وتطوير</h3><p>دعم فني مستمر، ونحسّن التجربة بناءً على ملاحظاتكم.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="dl" id="download" aria-labelledby="dl-h">
+  <div class="wrap dl__in">
+    <img class="dl__logo" src="img/logo-dark.webp" width="160" height="260" alt="شعار فينيق" loading="lazy">
+    <div class="dl__copy">
+      <h2 id="dl-h">تطبيق فينيق للصيدليات</h2>
+      <p>للموبايلات التي تعمل بنظام Android. التنزيل مباشر من هنا، بلا حاجة لمتجر Google Play.</p>
+      <a class="btn btn--pull btn--lg" id="apk" href="feniq.apk" download>
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg>
+        <span id="apk-label">نزّل التطبيق</span>
+      </a>
+      <p class="dl__meta" id="apk-meta"></p>
+      <details class="how">
+        <summary>كيف أثبّته؟</summary>
+        <ol>
+          <li>اضغط «نزّل التطبيق» وانتظر حتى يكتمل التنزيل.</li>
+          <li>افتح الملف من الإشعارات أو من مجلد التنزيلات.</li>
+          <li>إذا طلب الموبايل السماح بالتثبيت من هذا المصدر، اسمح لمتصفحك مرة واحدة ثم ارجع واضغط «تثبيت».</li>
+          <li>سجّل برقم هاتفك واسم صيدليتك.</li>
+        </ol>
+      </details>
+      <p class="dl__ios">نسخة iPhone ليست جاهزة بعد.</p>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contact" aria-labelledby="contact-h">
+  <div class="wrap contact__in">
+    <h2 id="contact-h">نزوركم في المستودع.</h2>
+    <p class="sec-lede">نشرح فينيق عملياً في زيارة قصيرة ونتفق معكم على طريقة التعاون المناسبة. نعمل حالياً في اللاذقية.</p>
+    <div class="phones">
+      <div class="phone">
+        <a class="phone__num" href="tel:+963982001415" dir="ltr">0982-001415</a>
+        <a class="btn btn--plate btn--sm" href="https://wa.me/963982001415?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D8%8C%20%D8%A8%D8%AF%D9%8A%20%D8%A3%D8%B9%D8%B1%D9%81%20%D8%A3%D9%83%D8%AB%D8%B1%20%D8%B9%D9%86%20%D9%81%D9%8A%D9%86%D9%8A%D9%82" rel="noopener">راسلنا واتساب</a>
+      </div>
+      <div class="phone">
+        <a class="phone__num" href="tel:+963956634694" dir="ltr">0956-634694</a>
+        <a class="btn btn--plate btn--sm" href="https://wa.me/963956634694?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D8%8C%20%D8%A8%D8%AF%D9%8A%20%D8%A3%D8%B9%D8%B1%D9%81%20%D8%A3%D9%83%D8%AB%D8%B1%20%D8%B9%D9%86%20%D9%81%D9%8A%D9%86%D9%8A%D9%82" rel="noopener">راسلنا واتساب</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <a class="brand" href="#top"><img src="img/mark-dark.webp" width="28" height="34" alt=""><span>فينيق</span></a>
+    <a href="https://feniq-connect-web.onrender.com">دخول المستودعات</a>
+    <small>© 2026 فينيق</small>
+  </div>
+</footer>
+
+<script src="app.js" defer></script>
+</body>
+</html>

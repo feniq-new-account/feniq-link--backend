@@ -61,3 +61,25 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+
+  # الموقع التعريفي العام (site/) + ملف التطبيق feniq.apk.
+  # لا يُبنى هنا: الفرع site-dist يجهّزه .github/workflows/site-deploy.yml كاملاً.
+  - type: web
+    name: feniq-site
+    runtime: static
+    branch: site-dist
+    buildCommand: echo "prebuilt by site-deploy.yml"
+    staticPublishPath: .
+    headers:
+      - path: /feniq.apk
+        name: Content-Type
+        value: application/vnd.android.package-archive
+      - path: /feniq.apk
+        name: Cache-Control
+        value: no-cache
+      - path: /version.json
+        name: Cache-Control
+        value: no-cache
+      - path: /fonts/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

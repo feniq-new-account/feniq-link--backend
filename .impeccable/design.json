@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T18:38:48.475166Z",
+  "title": "Design System: فينيق — الموقع التعريفي",
+  "extensions": {
+    "shadows": {
+      "cabinet": "0 30px 60px -30px rgba(0,0,0,.8)",
+      "drawer-open": "inset 0 -3px 0 #0A1422, 0 14px 22px -8px rgba(0,0,0,.75)",
+      "drawer-interior": "inset 0 3px 8px -3px rgba(10,20,34,.55)",
+      "button-pull": "0 2px 0 #C85A00, 0 6px 12px -6px rgba(0,0,0,.55)"
+    },
+    "motion": {
+      "ease": "cubic-bezier(.16,1,.3,1)",
+      "drawer-pull": "550ms",
+      "details-pull": "450ms",
+      "reducedMotion": "all durations 0.01ms"
+    },
+    "breakpoints": {
+      "hero-stack": "900px",
+      "pairs-stack": "720px",
+      "nav-hide": "760px",
+      "steps-single": "560px"
+    },
+    "narrative": {
+      "northStar": "خزانة أدراج الصيدلية",
+      "overview": "الصفحة خزانة: جسم كحلي، أدراج بلوحات أسماء فضية ومقابض برتقالية، وداخل فاتح. فتح الدرج هو الحركة الوحيدة المقصودة.",
+      "keyCharacteristics": [
+        "ألوان العلامة فقط",
+        "أرضية غامقة وداخل أدراج فاتح",
+        "إغلاق بحقل برتقالي"
+      ]
+    }
+  }
+}
