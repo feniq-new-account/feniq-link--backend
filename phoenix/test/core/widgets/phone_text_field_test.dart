@@ -39,17 +39,16 @@ void main() {
     );
   });
 
-  testWidgets('the prefix sits before the input in the reading direction', (tester) async {
+  testWidgets('in English (LTR) the prefix box is still on the right of the field', (tester) async {
     await pumpField(tester);
 
-    // LTR: the box is to the left of the field it prefixes.
     expect(
-      tester.getTopLeft(find.text('09')).dx,
-      lessThan(tester.getTopLeft(find.byType(TextFormField)).dx),
+      tester.getTopRight(find.text('09')).dx,
+      greaterThan(tester.getTopRight(find.byType(TextFormField)).dx),
     );
   });
 
-  testWidgets('in Arabic the prefix still leads the field (to its right)', (tester) async {
+  testWidgets('in Arabic the prefix box is on the right of the field', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('ar'),

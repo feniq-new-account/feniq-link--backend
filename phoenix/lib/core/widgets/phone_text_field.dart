@@ -8,6 +8,9 @@ import '../constants/app_sizes.dart';
 import '../extensions/build_context_extensions.dart';
 
 // A fixed, non-editable "09" box beside a digits-only field, label above -
+// the box always on the right, whatever the app language (owner's call,
+// 29 Sep 2026: it used to follow the reading direction and sat on the left
+// whenever the phone ran the app in English) -
 // same visual language as AppTextField, just for the one field shaped
 // differently everywhere it appears (registration, login).
 //
@@ -48,6 +51,9 @@ class PhoneTextField extends StatelessWidget {
         ),
         const SizedBox(height: AppSizes.spacingXSmall),
         Row(
+          // Pinned, not inherited: the "09" box stays on the right in both
+          // languages.
+          textDirection: TextDirection.rtl,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
