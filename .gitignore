@@ -1,6 +1,12 @@
-# Claude Code local settings
-.claude/
-**/.claude/
+# Claude Code: skills, hooks and settings.json are shared through the repo
+# (every session and agent - Claude, OpenCode, Cline - loads the same ones);
+# only personal local overrides stay out.
+**/.claude/settings.local.json
+
+# graphify: only GRAPH_REPORT.md is committed. graph.json (~8MB) is rebuilt in
+# seconds by tools/graph/build.py (the session-start hook runs it).
+graphify-out/*
+!graphify-out/GRAPH_REPORT.md
 
 # Dependencies
 **/node_modules/

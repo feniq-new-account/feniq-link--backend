@@ -27,4 +27,25 @@ Claude هو المطوّر الوحيد لهذا المشروع.
 cd backend && MONGODB_URI=mongodb://127.0.0.1:27017/unused JWT_SECRET=$(openssl rand -hex 32) npm test
 # لوحة الويب
 cd web && npx vitest run
+# تطبيق الصيدليات (Flutter 3.35.7 مثبّت في /opt/flutter بسكريبت بداية الجلسة)
+cd phoenix && flutter analyze && flutter test
 ```
+
+## الخريطة: قبل أي تغيير
+
+- `FEATURE_MAP.md` يربط كل ميزة بشاشاتها ونقاط الـAPI والخدمات والموديلات ولوحة
+  الويب والاختبارات. اقرأ سطر الميزة قبل البدء، وحدّثه في نفس الـcommit إذا
+  أضفت أو نقلت أو حذفت ملفاً أو نقطة أو حقلاً.
+- الخريطة الآلية (graphify، بلا LLM): `python3 tools/graph/build.py` ثم
+  `graphify query "..."`. ملخّصها في `graphify-out/GRAPH_REPORT.md`.
+
+## الأدوات المشتركة (داخل الريبو، لكل جلسة ولكل إيجنت)
+
+- السكيلز في `.claude/skills/`: التصميم (impeccable، frontend-design،
+  theme-factory، webapp-testing) وسكيلز Flutter/Dart الرسمية من
+  `flutter/agent-plugins` (منسوخة كما هي، رخصتها `FLUTTER_SKILLS_LICENSE`).
+  لم تُنسخ سكيلز المعمارية وhttp وJSON الرسمية لأنها تفرض أنماطاً غير أنماطنا
+  (التطبيق مبني على Cubit/Bloc وDio وموديلات يدوية).
+- `.mcp.json`: خادم Dart/Flutter MCP الرسمي (تحليل، اختبارات، أخطاء التشغيل).
+- `.claude/hooks/session-start.sh`: يثبّت Flutter وحزم npm ويبني الخريطة الآلية.
+- `AGENTS.md`: مدخل الإيجنتس الأخرى (OpenCode، Cline) إلى نفس التعليمات.
