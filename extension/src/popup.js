@@ -24,8 +24,7 @@ $('open').addEventListener('click', async () => {
   $('msg').textContent = 'هالصفحة ما بتسمح بالإضافات (متل صفحات المتصفح نفسه). جرّبها على واتساب ويب أو من صفحة الإعدادات.';
 });
 
-$('settings').addEventListener('click', (e) => {
-  e.preventDefault();
+$('settings').addEventListener('click', () => {
   ext.runtime.openOptionsPage();
   window.close();
 });

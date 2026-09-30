@@ -139,7 +139,7 @@
 <style>
 :host{all:initial}
 *{box-sizing:border-box}
-.wrap{--navy:#16283F;--ground:#0E1A2C;--orange:#F2760A;--orange-deep:#C85A00;--orange-ink:#A94A00;--silver:#E4E7EB;--paper:#F7F7F8;--line:#DCE0E5;--soft:#46566B;--mute:#6B7A8F;--danger:#B42318;
+.wrap{--navy:#16283F;--ground:#0E1A2C;--orange:#F2760A;--orange-deep:#C85A00;--orange-ink:#A94A00;--silver:#E4E7EB;--paper:#F7F7F8;--line:#DCE0E5;--soft:#46566B;--mute:#5E6D82;--danger:#B42318;
   font-family:FeniqAlexandria,"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;color:var(--navy);font-size:14px;line-height:1.5;direction:rtl;-webkit-font-smoothing:antialiased}
 button,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -168,17 +168,21 @@ button{cursor:pointer}
 .stats{display:flex;flex-wrap:wrap;gap:6px}
 .chip{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:8px;font-size:12px;font-weight:600;background:#fff;border:1px solid var(--line)}
 .chip.ok{color:var(--navy)}.chip.review{color:var(--orange-ink);border-color:#F6C9A2;background:#FEF3EA}.chip.missing{color:var(--danger);border-color:#F3C7C3;background:#FDF1F0}.chip.unavailable{color:var(--soft)}
-ol.lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.ln{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;animation:in .32s cubic-bezier(.16,1,.3,1) both}
+ol.lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(22,40,63,.05)}
+.ln{padding:12px 14px 13px;display:flex;flex-direction:column;gap:7px;transition:background .2s}
+.ln+.ln{border-top:1px solid #EDF0F3}
+.lines.anim .ln{animation:in .42s cubic-bezier(.16,1,.3,1) both}
 @keyframes in{from{opacity:0;transform:translateY(6px)}}
-.ln.st-review{border-color:#F6C9A2}.ln.st-missing{border-color:#F3C7C3}.ln.st-unavailable{opacity:.72}
+.ln.st-review{background:#FFFAF5}.ln.st-missing{background:#FEF7F6}.ln.st-unavailable .pick,.ln.st-unavailable .ln-f{opacity:.6}
 .ln-h{display:flex;align-items:center;gap:8px;min-width:0}
-.badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;flex-shrink:0}
-.st-ok .badge{color:var(--navy)}.st-review .badge{color:var(--orange-ink)}.st-missing .badge{color:var(--danger)}.st-unavailable .badge{color:var(--soft)}
+.badge{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 7px 0 8px;border-radius:6px;font-size:11.5px;font-weight:700;flex-shrink:0}
+.st-ok .badge{color:var(--navy);background:#EDF1F6}.st-review .badge{color:var(--orange-ink);background:#FEEFE2}.st-missing .badge{color:var(--danger);background:#FCE9E7}.st-unavailable .badge{color:var(--soft);background:#EFF1F4}
 .raw{flex:1;min-width:0;font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ln .ib{width:30px;height:30px;color:var(--mute);border-radius:8px}.ln .ib:hover{background:var(--paper);color:var(--danger)}
-.pick{display:flex;align-items:center;gap:8px;width:100%;text-align:right;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 10px}
-.pick:hover{border-color:var(--navy)}
+.pick{display:flex;align-items:center;gap:8px;width:calc(100% + 16px);margin-inline:-8px;text-align:right;border:0;background:transparent;border-radius:10px;padding:6px 8px;color:var(--mute);transition:background .15s}
+.pick .tx{color:var(--navy)}
+.pick:hover,.pick[aria-expanded="true"]{background:var(--paper);color:var(--navy)}
+.pick:active{transform:scale(.99)}
 .pick .tx{flex:1;min-width:0;display:flex;flex-direction:column}
 .nm{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .nm.ph{color:var(--danger);font-weight:600}
@@ -232,7 +236,7 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width
 <div class="wrap">
   <aside class="drawer" role="dialog" aria-label="لاقط طلبيات فينيق" aria-hidden="true">
     <header class="hd">
-      <img class="mark" alt="">
+      <img class="mark" alt="" src="${ext.runtime.getURL('assets/mark-dark.png')}">
       <div class="t"><strong>لاقط الطلبيات</strong><span class="cat"></span></div>
       <button class="ib" data-act="settings" aria-label="الإعدادات">${icon('gear')}</button>
       <button class="ib" data-act="min" aria-label="تصغير">${icon('min')}</button>
@@ -257,7 +261,7 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width
     </footer>
     <div class="toast" role="status"><span></span><button hidden>تراجع</button></div>
   </aside>
-  <button class="pill" data-act="restore"><img class="mark" alt="">لاقط الطلبيات<b class="pill-n">0</b></button>
+  <button class="pill" data-act="restore"><img class="mark" alt="" src="${ext.runtime.getURL('assets/mark-dark.png')}">لاقط الطلبيات<b class="pill-n">0</b></button>
 </div>`;
 
   const $ = (sel) => root.querySelector(sel);
@@ -306,7 +310,7 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width
     return items.map((it) => `<li><button data-act="choose" data-id="${esc(it.id)}"><span class="nm" dir="ltr">${esc(it.name)}</span><span class="sub">${esc(lineMeta(it))}</span></button></li>`).join('');
   }
 
-  function lineHtml(l) {
+  function lineHtml(l, i = 0) {
     const st = STATUS[l.status];
     const p = l.chosen ? priceOf(l.chosen) : null;
     const total = l.chosen && p != null && l.status !== 'unavailable' ? `${M.formatMoney(p * l.qty)} <small>${esc(state.settings.currency)}</small>` : '<small>—</small>';
@@ -315,7 +319,7 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width
       const items = state.pickerQuery.trim() ? M.search(state.pickerQuery, state.index) : l.candidates;
       picker = `<div class="picker"><label class="sbox">${icon('search', 16)}<input data-act="q" value="${esc(state.pickerQuery)}" placeholder="ابحث بالاسم التجاري أو العلمي" aria-label="بحث عن صنف"></label><ul class="res">${resultsHtml(items)}</ul></div>`;
     }
-    return `<li class="ln st-${l.status}" data-key="${esc(l.key)}">
+    return `<li class="ln st-${l.status}" data-key="${esc(l.key)}" style="animation-delay:${Math.min(i, 10) * 40}ms">
       <div class="ln-h"><span class="badge">${icon(st.icon, 14)}${st.label}</span><span class="raw" title="${esc(l.raw)}">${l.raw ? '«' + esc(l.raw) + '»' : 'سطر مضاف يدوياً'}</span>
         <button class="ib" data-act="del" aria-label="احذف السطر">${icon('trash', 16)}</button></div>
       <button class="pick" data-act="pick" aria-expanded="${state.pickerFor === l.key}">
@@ -344,8 +348,10 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width
     }
     const t = totals();
     const chips = Object.entries(t.counts).filter(([, n]) => n).map(([k, n]) => `<span class="chip ${k}">${icon(STATUS[k].icon, 13)}${n} ${STATUS[k].label}</span>`).join('');
+    const anim = state.animateNext;
+    state.animateNext = false;
     dyn.innerHTML = `${chips ? `<div class="stats">${chips}</div>` : ''}
-      <ol class="lines">${lines.map(lineHtml).join('')}</ol>
+      <ol class="lines${anim ? ' anim' : ''}">${lines.map((l, i) => lineHtml(l, i)).join('')}</ol>
       <button class="add" data-act="addline">${icon('plus', 15)}ضيف صنف</button>`;
     const q = dyn.querySelector('input[data-act="q"]');
     if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
@@ -485,7 +491,7 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width
       case 'restore': state.min = false; $('.pill').classList.remove('on'); drawer.classList.add('on'); drawer.removeAttribute('aria-hidden'); break;
       case 'settings': ext.runtime.sendMessage({ type: 'feniq:options' }); break;
       case 'demo': loadDemo(); break;
-      case 'sample': state.text = SAMPLE; textEl.value = SAMPLE; recompute(); renderLines(); renderFooter(); break;
+      case 'sample': state.animateNext = true; state.text = SAMPLE; textEl.value = SAMPLE; recompute(); renderLines(); renderFooter(); break;
       case 'reply': reply(); break;
       case 'excel': copyText(buildTsv()).then((ok) => toast(ok ? 'انسخ الجدول، الصقه بإكسل' : 'ما قدرت انسخ')); break;
       case 'save': saveOrder(false); break;
@@ -538,7 +544,7 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width
   textEl.addEventListener('input', () => {
     state.text = textEl.value;
     clearTimeout(debounce);
-    debounce = setTimeout(() => { recompute(); renderLines(); renderFooter(); }, 220);
+    debounce = setTimeout(() => { state.animateNext = true; recompute(); renderLines(); renderFooter(); }, 220);
   });
   pharmacyEl.addEventListener('input', () => { state.pharmacy = pharmacyEl.value; });
 
@@ -568,6 +574,7 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width
       textEl.value = incoming;
     }
     if (opts.pharmacy != null) { state.pharmacy = opts.pharmacy; pharmacyEl.value = opts.pharmacy; }
+    state.animateNext = true;
     recompute();
     renderAll();
     state.open = true;

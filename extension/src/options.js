@@ -276,8 +276,20 @@ $('btn-export').addEventListener('click', async () => {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 
+// تأكيد بخطوتين داخل الزر نفسه بدل نافذة confirm المزعجة.
+let clearArmed = null;
 $('btn-clear').addEventListener('click', async () => {
-  if (!confirm('أكيد بدك تمسح كل سجل الطلبيات؟ ما في رجعة.')) return;
+  const btn = $('btn-clear');
+  if (!clearArmed) {
+    btn.textContent = 'اكبس كمان مرة للمسح النهائي';
+    btn.classList.add('danger');
+    clearArmed = setTimeout(() => { clearArmed = null; btn.textContent = 'امسح السجل'; btn.classList.remove('danger'); }, 4000);
+    return;
+  }
+  clearTimeout(clearArmed);
+  clearArmed = null;
+  btn.textContent = 'امسح السجل';
+  btn.classList.remove('danger');
   await ext.storage.local.set({ orders: [] });
   renderLog();
 });
