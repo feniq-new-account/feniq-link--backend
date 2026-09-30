@@ -19,6 +19,7 @@ Claude هو المطوّر الوحيد لهذا المشروع.
 - `phoenix/` — تطبيق الصيدليات: Flutter.
 - `web/` — لوحة الأدمن والمستودعات: React + Vite.
 - `render.yaml` — النشر على حساب Render الخاص بالمالك.
+- `social-agent/` — أيجنت صفحات فيسبوك وانستغرام (Cloudflare Worker + تلغرام). النشر: `.github/workflows/social-agent.yml`. التفاصيل: `social-agent/README.md`.
 
 ## الاختبارات
 
@@ -27,4 +28,6 @@ Claude هو المطوّر الوحيد لهذا المشروع.
 cd backend && MONGODB_URI=mongodb://127.0.0.1:27017/unused JWT_SECRET=$(openssl rand -hex 32) npm test
 # لوحة الويب
 cd web && npx vitest run
+# أيجنت التواصل الاجتماعي
+cd social-agent && npm test
 ```

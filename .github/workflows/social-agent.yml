@@ -1,0 +1,156 @@
+# ينشر أيجنت صفحات التواصل (social-agent/) على Cloudflare Workers — مجاني وشغّال 24 ساعة.
+#
+# يحتاج سرّين فقط (Settings ← Secrets and variables ← Actions):
+#   CLOUDFLARE_API_TOKEN  — توكن من dash.cloudflare.com/profile/api-tokens (قالب "Edit Cloudflare Workers" + Workers AI)
+#   TELEGRAM_BOT_TOKEN    — توكن البوت من @BotFather
+# واختيارياً (ذكاء أفضل بالعربي؛ بدونها يشتغل على Workers AI المجاني):
+#   GEMINI_API_KEY، OPENAI_API_KEY
+#
+# بعد النشر: رابط تفعيل المالك يظهر بملخص التشغيل (Summary) لهذا الـ workflow.
+name: Deploy social agent
+
+on:
+  push:
+    branches: [main, claude/social-media-agent-arabic-8s8lqn]
+    paths:
+      - 'social-agent/**'
+      - '.github/workflows/social-agent.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: social-agent-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: social-agent
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      WORKER: feniq-social-agent
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check secrets
+        id: secrets
+        run: |
+          missing=""
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || missing="$missing CLOUDFLARE_API_TOKEN"
+          [ -n "$TELEGRAM_BOT_TOKEN" ] || missing="$missing TELEGRAM_BOT_TOKEN"
+          if [ -n "$missing" ]; then
+            {
+              echo "## ⏸️ الأيجنت لسا ما انتشر: ناقص أسرار"
+              echo
+              echo "ضيف هدول من **Settings ← Secrets and variables ← Actions ← New repository secret**:"
+              for s in $missing; do echo "- \`$s\`"; done
+              echo
+              echo "الشرح الكامل خطوة بخطوة: \`social-agent/README.md\`. بعدها ارجع لهالصفحة واضغط **Re-run all jobs**."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Missing secrets:$missing — skipping deploy (see summary)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: social-agent/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Resolve Cloudflare account and workers.dev subdomain
+        if: steps.secrets.outputs.ok == 'true'
+        id: cf
+        run: |
+          api() { curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" "$@"; }
+          acct="$CLOUDFLARE_ACCOUNT_ID"
+          if [ -z "$acct" ]; then
+            accounts=$(api "https://api.cloudflare.com/client/v4/accounts?per_page=50")
+            if [ "$(jq -r '.success' <<<"$accounts")" != "true" ]; then
+              echo "::error::Cloudflare رفض التوكن: $(jq -c '.errors' <<<"$accounts")"; exit 1
+            fi
+            count=$(jq '.result | length' <<<"$accounts")
+            if [ "$count" != "1" ]; then
+              echo "::error::التوكن يصل إلى $count حسابات Cloudflare. أضف السر CLOUDFLARE_ACCOUNT_ID لتحديد الحساب."; exit 1
+            fi
+            acct=$(jq -r '.result[0].id' <<<"$accounts")
+          fi
+          echo "::add-mask::$acct"
+          echo "account=$acct" >> "$GITHUB_OUTPUT"
+
+          sub=$(api "https://api.cloudflare.com/client/v4/accounts/$acct/workers/subdomain" | jq -r '.result.subdomain // empty')
+          if [ -z "$sub" ]; then
+            # حساب جديد بلا workers.dev: نسجّل اسماً فريداً مرة واحدة.
+            name="feniq-$(openssl rand -hex 3)"
+            res=$(api -X PUT "https://api.cloudflare.com/client/v4/accounts/$acct/workers/subdomain" -d "{\"subdomain\":\"$name\"}")
+            [ "$(jq -r '.success' <<<"$res")" = "true" ] || { echo "::error::ما قدرت سجّل workers.dev: $(jq -c '.errors' <<<"$res")"; exit 1; }
+            sub="$name"
+            echo "new_subdomain=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "url=https://$WORKER.$sub.workers.dev" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy worker
+        if: steps.secrets.outputs.ok == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ steps.cf.outputs.account }}
+        run: npx wrangler deploy
+
+      - name: Upload secrets to the worker
+        if: steps.secrets.outputs.ok == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ steps.cf.outputs.account }}
+        run: |
+          jq -n --arg t "$TELEGRAM_BOT_TOKEN" --arg g "$GEMINI_API_KEY" --arg o "$OPENAI_API_KEY" \
+            '{TELEGRAM_BOT_TOKEN: $t} + (if $g != "" then {GEMINI_API_KEY: $g} else {} end) + (if $o != "" then {OPENAI_API_KEY: $o} else {} end)' \
+            > "$RUNNER_TEMP/secrets.json"
+          npx wrangler secret bulk "$RUNNER_TEMP/secrets.json"
+          rm -f "$RUNNER_TEMP/secrets.json"
+
+      - name: Connect Telegram and print the owner link
+        if: steps.secrets.outputs.ok == 'true'
+        env:
+          URL: ${{ steps.cf.outputs.url }}
+        run: |
+          key=$(printf '%s' 'feniq-setup' | openssl dgst -sha256 -hmac "$TELEGRAM_BOT_TOKEN" -hex | sed 's/^.*= //' | cut -c1-48)
+          echo "::add-mask::$key"
+          # workers.dev جديد قد يحتاج دقيقتين ليشتغل.
+          for i in $(seq 1 30); do
+            out=$(curl -sS -m 20 -X POST -H "x-setup-key: $key" "$URL/setup" || true)
+            [ "$(jq -r '.ok // empty' <<<"$out" 2>/dev/null)" = "true" ] && break
+            sleep 10
+          done
+          if [ "$(jq -r '.ok // empty' <<<"$out" 2>/dev/null)" != "true" ]; then
+            echo "::error::الأيجنت انتشر بس ما رد على /setup: $out"; exit 1
+          fi
+          bot=$(jq -r '.bot' <<<"$out")
+          claim=$(jq -r '.claim_link // empty' <<<"$out")
+          {
+            echo "## ✅ أيجنت فينيق شغّال"
+            echo
+            if [ -n "$claim" ]; then
+              echo "### الخطوة الجاية: افتح هالرابط من موبايلك واضغط Start"
+              echo
+              echo "👉 **$claim**"
+              echo
+              echo "(الرابط بيخليك مالك البوت، وبيشتغل لمرة وحدة. بعدها البوت بيمشي معك بربط فيسبوك وانستغرام.)"
+            else
+              echo "البوت: https://t.me/$bot — المالك مسجّل، والنشر الجديد صار فعّال."
+            fi
+            echo
+            echo "- رابط الأيجنت: $URL"
+            echo "- سياسة الخصوصية (للوحة Meta): $URL/privacy"
+            echo "- حذف البيانات (للوحة Meta): $URL/data-deletion"
+          } >> "$GITHUB_STEP_SUMMARY"

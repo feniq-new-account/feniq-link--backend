@@ -1,0 +1,35 @@
+// أيجنت صفحات التواصل لفينيق — Cloudflare Worker (مجاني، شغّال 24 ساعة بلا سيرفر).
+// النشر تلقائي من .github/workflows/social-agent.yml، ولا حاجة لتشغيل شيء يدوياً.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "feniq-social-agent",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  // أيقونة التطبيق (تطلبها Meta أحياناً قبل التفعيل) تُخدَم من /icon.jpg.
+  "rules": [{ "type": "Data", "globs": ["**/*.jpg"], "fallthrough": true }],
+
+  // ذكاء اصطناعي مجاني بدون أي مفتاح: احتياط للنصوص، ولتوليد الصور.
+  "ai": { "binding": "AI" },
+
+  // كل الحالة (المنشورات، التعليقات، الإعدادات، الصور) بقاعدة SQLite داخل Durable Object واحد.
+  "durable_objects": {
+    "bindings": [{ "name": "AGENT", "class_name": "Agent" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Agent"] }],
+
+  // كل 5 دقائق: نشر المجدول، فحص التعليقات والرسائل، الخطة والتقرير الأسبوعيان.
+  "triggers": { "crons": ["*/5 * * * *"] },
+
+  "vars": {
+    "SITE_URL": "https://feniq-site.onrender.com",
+    "GRAPH_VERSION": "v25.0",
+    "GEMINI_MODELS": "gemini-flash-latest,gemini-flash-lite-latest",
+    "OPENAI_MODEL": "gpt-5-mini",
+    "WORKERS_AI_TEXT_MODEL": "@cf/meta/llama-4-scout-17b-16e-instruct",
+    "WORKERS_AI_IMAGE_MODEL": "@cf/black-forest-labs/flux-1-schnell"
+  }
+  // الأسرار (تُضاف تلقائياً من GitHub عند النشر): TELEGRAM_BOT_TOKEN، واختيارياً GEMINI_API_KEY و OPENAI_API_KEY.
+}
