@@ -7,6 +7,38 @@
    artwork itself before adoption - see assets/branding/README.md. Everything
    else in this file, and both scoped token blocks further down
    (.warehouse-shell, .admin-shell), resolves back to them. */
+/* Self-hosted brand faces (public/fonts, SIL OFL). */
+@font-face {
+  font-family: 'Readex Pro';
+  src: url('/fonts/readex-pro.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/plex-sans-arabic-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/plex-sans-arabic-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/plex-sans-arabic-600.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/plex-sans-arabic-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root {
   --brand-orange: #f2760a;
   --brand-orange-light: #ffa94d;
@@ -25,22 +57,36 @@
   --color-primary: var(--brand-orange);
   --color-secondary: #1e8e5a;
   --color-navy: var(--brand-navy);
-  --color-background: #f7f7f8;
-  --color-surface: #edeef1;
-  --color-border: #dcdfe5;
+  --color-background: #f6f7f9;
+  --color-surface: #f1f2f5;
+  --color-border: #e3e6eb;
   --color-error: #d32f2f;
   --color-text: var(--brand-navy);
   --color-text-secondary: #5c6b7f;
 
-  /* Tajawal, loaded in index.html. Its four tiers: 400 body, 500 buttons and
-     inputs, 700 subheadings, 800 headings and prices. Upstream ships NO
-     SemiBold/600 face, so never ask for 600 - the browser would synthesise it.
-     See .text-body / .text-label / .subheading / .heading below. */
-  --font-family-base: 'Tajawal', system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* The FENIQ website's (and the app's) two faces, self-hosted in
+     public/fonts and declared just above :root:
+       --font-family-display  Readex Pro - headings, buttons, labels, figures.
+       --font-family-base     IBM Plex Sans Arabic - reading text.
+     Both ship real 400/500/600/700 faces. */
+  --font-family-display: 'Readex Pro', 'IBM Plex Sans Arabic', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-family-base: 'IBM Plex Sans Arabic', 'Readex Pro', system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-weight-body: 400;
   --font-weight-label: 500;
-  --font-weight-subheading: 700;
-  --font-weight-heading: 800;
+  --font-weight-subheading: 600;
+  --font-weight-heading: 700;
+
+  /* Shape and depth, shared with the website and the app: soft corners,
+     pills for anything pressed, a wide navy-tinted lift under cards and a
+     warm glow under the primary action. */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --shadow-card: 0 12px 28px rgb(var(--brand-navy-rgb) / 0.07), 0 1px 3px rgb(var(--brand-navy-rgb) / 0.05);
+  --shadow-pop: 0 24px 60px rgb(var(--brand-navy-rgb) / 0.22);
+  --shadow-glow: 0 8px 22px rgb(242 118 10 / 0.32);
+  --ember-glow: radial-gradient(120% 70% at 85% -10%, rgb(232 96 10 / 0.24), transparent 60%);
 
   font: 16px/1.5 var(--font-family-base);
   color: var(--color-text);
@@ -91,11 +137,11 @@ input {
   color: var(--color-text-secondary);
 }
 
-/* --- Typography tiers (Tajawal) ---------------------------------------
-   One class per weight in the identity's ladder, so components stop
-   hand-rolling `font-weight: var(--font-weight-subheading)` (a weight Tajawal does not ship - the
-   browser would synthesise a fake bold from the 500 face). Everything
-   inherits --font-family-base from :root, so these only set weight/size.  */
+/* --- Typography tiers ----------------------------------------------------
+   One class per weight in the identity's ladder (400/500/600/700, all real
+   faces). Reading text inherits --font-family-base (Plex) from :root;
+   headings, buttons, labels and figures switch to the display face (Readex)
+   here and in the surface layer at the end of this file. */
 
 .text-body {
   font-weight: var(--font-weight-body);
@@ -124,6 +170,25 @@ h2 {
   font-weight: var(--font-weight-heading);
 }
 
+h1,
+h2,
+h3,
+h4,
+.heading,
+.subheading,
+.price,
+.text-label,
+button,
+label,
+th {
+  font-family: var(--font-family-display);
+}
+
+h1,
+h2 {
+  letter-spacing: -0.01em;
+}
+
 .error-text {
   color: var(--color-error);
   font-weight: var(--font-weight-subheading);
@@ -144,7 +209,7 @@ h2 {
   width: 100%;
   max-width: 380px;
   background: var(--color-background);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   padding: 32px 24px;
   box-shadow: 0 10px 30px rgb(var(--brand-navy-rgb) / 0.25);
 }
@@ -180,7 +245,7 @@ h2 {
 .auth-card input {
   width: 100%;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   font-size: 16px;
 }
@@ -202,7 +267,7 @@ h2 {
 .btn-reject {
   width: 100%;
   padding: 12px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 15px;
   font-weight: var(--font-weight-label);
   border: none;
@@ -337,7 +402,7 @@ h2 {
 .account-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -356,7 +421,7 @@ h2 {
   width: 56px;
   height: 56px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
 }
@@ -373,14 +438,14 @@ h2 {
   max-width: 90vw;
   max-height: 90vh;
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
 .account-verification-photo {
   width: 100%;
   height: 140px;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--color-border);
 }
 
@@ -461,7 +526,7 @@ h2 {
 .order-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -569,7 +634,7 @@ h2 {
 
 .panel-tab {
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
@@ -622,7 +687,7 @@ h2 {
 .inline-filter select,
 .inline-filter input[type='text'] {
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   font-size: 14px;
   font-weight: var(--font-weight-body);
@@ -634,7 +699,7 @@ h2 {
 .exchange-rate-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   padding: 18px;
   margin-bottom: 24px;
   display: flex;
@@ -681,7 +746,7 @@ h2 {
 
 .exchange-rate-form input {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   font-size: 14px;
   width: 140px;
@@ -796,7 +861,7 @@ h2 {
   max-height: 90vh;
   overflow-y: auto;
   background: var(--color-background);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   padding: 24px;
 }
 
@@ -824,7 +889,7 @@ h2 {
 .product-form select,
 .product-form textarea {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   font-size: 14px;
   font-weight: var(--font-weight-body);
@@ -875,7 +940,7 @@ h2 {
   max-height: 220px;
   overflow-y: auto;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 .catalog-search-results li + li {
@@ -900,7 +965,7 @@ h2 {
 .catalog-selected-display {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 12px 14px;
 }
 
@@ -915,7 +980,7 @@ h2 {
   width: 96px;
   height: 96px;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
 }
 
@@ -968,7 +1033,7 @@ h2 {
   align-items: center;
   justify-content: center;
   background: #000;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -1152,7 +1217,7 @@ h2 {
 
 .wh-nav-link {
   padding: 11px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: #c5cae9;
   font-size: 14px;
   font-weight: var(--font-weight-body);
@@ -1251,7 +1316,7 @@ h2 {
   width: auto;
   margin-top: 0;
   padding: 7px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border-color: var(--wh-border);
   color: var(--wh-navy);
   font-family: inherit;
@@ -1262,7 +1327,7 @@ h2 {
 .wh-logout-btn {
   padding: 7px 16px;
   border: 1px solid var(--wh-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--wh-red);
   font-family: inherit;
@@ -1275,7 +1340,7 @@ h2 {
   width: 36px;
   height: 36px;
   flex: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--wh-border);
   background: #fff;
   align-items: center;
@@ -1382,14 +1447,14 @@ h2 {
    .exchange-rate-card the admin's own exchange-rate widget uses, scoped
    restyle only. */
 .warehouse-shell .exchange-rate-card {
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 /* SYP->USD conversion summary line inside that import-report card. */
 .warehouse-shell .import-conversion-note {
   padding: 10px 12px;
-  border-radius: 8px;
-  border-inline-start: 3px solid var(--wh-navy);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
   background: #e8eaf6;
   color: var(--wh-navy);
   font-size: 13px;
@@ -1398,7 +1463,7 @@ h2 {
 
 .wh-notice {
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: #e8eaf6;
   color: var(--wh-navy);
   font-size: 13px;
@@ -1410,12 +1475,12 @@ h2 {
 
 .warehouse-shell .btn-primary {
   background: var(--wh-orange);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-family: inherit;
 }
 
 .warehouse-shell .btn-secondary {
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border-color: var(--wh-border);
   color: var(--wh-navy);
   font-family: inherit;
@@ -1423,12 +1488,12 @@ h2 {
 
 .warehouse-shell .btn-approve {
   background: var(--wh-green);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-family: inherit;
 }
 
 .warehouse-shell .btn-reject {
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--wh-red);
   border-color: var(--wh-red);
   font-family: inherit;
@@ -1442,7 +1507,7 @@ h2 {
 }
 
 .warehouse-shell .modal {
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   font-family: inherit;
 }
 
@@ -1618,7 +1683,7 @@ a.adm-pill {
   min-height: 40px;
   padding: 0 12px;
   border: 1px solid var(--wh-border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: #fff;
   font-family: inherit;
   font-size: 13px;
@@ -1655,7 +1720,7 @@ a.adm-pill {
   direction: ltr;
   unicode-bidi: isolate;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: 8px;
   background: rgba(0, 0, 0, 0.05);
 }
 
@@ -1673,7 +1738,7 @@ a.adm-pill {
 .wh-card {
   background: #fff;
   border: 1px solid var(--wh-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 /* — catalog: the company cards the products table now sits behind —
@@ -1695,8 +1760,8 @@ a.adm-pill {
   padding: 16px;
   background: #fff;
   border: 1px solid var(--wh-border);
-  border-inline-start: 3px solid var(--wh-navy);
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-family: inherit;
   text-align: start;
   cursor: pointer;
@@ -1783,7 +1848,7 @@ a.adm-pill {
 
 .wh-row-action {
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--wh-orange);
   color: #fff;
   border: none;
@@ -1807,7 +1872,7 @@ a.adm-pill {
   width: 64px;
   height: 40px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--wh-border);
 }
 
@@ -1818,7 +1883,7 @@ a.adm-pill {
 
 .wh-row-actions button {
   padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--wh-border);
   background: none;
   font-family: inherit;
@@ -1860,7 +1925,7 @@ a.adm-pill {
 .wh-detail-card {
   background: #fff;
   border: 1px solid var(--wh-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 18px 20px;
 }
 
@@ -1961,7 +2026,7 @@ a.adm-pill {
 .wh-savings-banner {
   margin-top: 10px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: #e8f5e9;
   color: var(--wh-green);
   font-weight: var(--font-weight-subheading);
@@ -2002,7 +2067,7 @@ a.adm-pill {
 .wh-pending-return-card {
   background: #fff8e1;
   border: 1px solid var(--wh-orange);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 16px 20px;
 }
 
@@ -2034,7 +2099,7 @@ a.adm-pill {
 .wh-empty-state {
   background: #fff;
   border: 1px solid var(--wh-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 64px 24px;
   display: flex;
   flex-direction: column;
@@ -2113,7 +2178,7 @@ a.adm-pill {
   flex: none;
   text-align: end;
   padding: 10px 20px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--wh-bg);
   border: 1px solid var(--wh-border);
 }
@@ -2155,7 +2220,7 @@ a.adm-pill {
 .wh-invoice-stat {
   background: #fff;
   border: 1px solid var(--wh-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 14px 16px;
 }
 
@@ -2289,7 +2354,7 @@ a.adm-pill {
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 3;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 @media (max-width: 480px) {
@@ -2309,7 +2374,7 @@ a.adm-pill {
   grid-template-columns: 200px 1fr;
   background: #fff;
   border: 1px solid var(--wh-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   margin-bottom: 20px;
 }
 
@@ -2354,7 +2419,7 @@ a.adm-pill {
   border: none;
   padding: 4px 6px;
   margin: 0 -6px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font: inherit;
   color: inherit;
@@ -2584,7 +2649,7 @@ a.adm-pill {
 
 .adm-nav-link {
   padding: 12px 20px;
-  border-inline-end: 3px solid transparent;
+  border: 0;
   color: #c5cae9;
   font-size: 14px;
   font-weight: var(--font-weight-body);
@@ -2593,7 +2658,6 @@ a.adm-pill {
 
 .adm-nav-link.active {
   background: rgba(255, 255, 255, 0.08);
-  border-inline-end-color: var(--adm-orange);
   color: #fff;
   font-weight: var(--font-weight-subheading);
 }
@@ -2669,7 +2733,7 @@ a.adm-pill {
   width: auto;
   margin-top: 0;
   padding: 7px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border-color: var(--adm-border);
   color: var(--adm-navy);
   font-family: inherit;
@@ -2680,7 +2744,7 @@ a.adm-pill {
 .adm-logout-btn {
   padding: 7px 16px;
   border: 1px solid var(--adm-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--adm-red);
   font-family: inherit;
@@ -2693,7 +2757,7 @@ a.adm-pill {
   width: 36px;
   height: 36px;
   flex: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--adm-border);
   background: #fff;
   align-items: center;
@@ -2922,7 +2986,7 @@ a.adm-pill {
   padding: 12px 16px;
   background: #fff;
   border: 1px solid var(--adm-border);
-  border-inline-start: 3px solid var(--adm-orange);
+  border: 1px solid var(--color-border);
   font-size: 13px;
   color: var(--adm-text-secondary);
 }
@@ -3176,7 +3240,7 @@ a.adm-pill {
   margin-top: 16px;
   padding: 14px 16px;
   background: #fff8e1;
-  border-inline-start: 4px solid var(--adm-orange);
+  border: 1px solid transparent;
   font-weight: var(--font-weight-subheading);
   font-size: 13px;
   line-height: 1.7;
@@ -3356,7 +3420,7 @@ a.adm-pill {
 
 .wh-ad-picker {
   border: 1px solid var(--wh-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 12px 14px;
   background: var(--wh-bg);
 }
@@ -3487,7 +3551,7 @@ a.adm-pill {
   margin-top: 18px;
   padding: 14px 16px;
   border: 1px solid var(--wh-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--wh-bg);
 }
 
@@ -3941,7 +4005,7 @@ a.adm-pill {
 .wh-settlement-filters input {
   padding: 8px 10px;
   border: 1px solid var(--wh-border, #DDD);
-  border-radius: 6px;
+  border-radius: 8px;
   font: inherit;
 }
 
@@ -3954,7 +4018,7 @@ a.adm-pill {
 .wh-settlement-tile {
   background: var(--wh-surface, #FFF);
   border: 2px solid var(--wh-border, #EEE);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 16px 18px;
 }
 /* The platform's cut and the warehouse's take-home are the two figures a
@@ -3993,8 +4057,8 @@ a.adm-pill {
    controls are the copy count and removing the whole thing. */
 .wh-package-card {
   border: 1px solid var(--wh-border);
-  border-inline-start: 3px solid var(--wh-orange);
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 12px 14px;
   margin-bottom: 12px;
   background: var(--wh-bg);
@@ -4058,4 +4122,386 @@ a.adm-pill {
 
 .wh-package-items li {
   margin-bottom: 2px;
+}
+
+/* =========================================================================
+   FENIQ surface layer - one look for both panels, matching the website and
+   the pharmacy app: Readex for the interface voice, a deep navy sidebar with
+   a faint ember glow, pill-shaped actions, soft 20px cards with a navy-tinted
+   lift, and the orange kept for the primary action and the current place.
+   It sits last so it wins by order at equal specificity; the panel blocks
+   above keep owning layout.
+   ========================================================================= */
+
+/* — login — */
+.auth-screen {
+  background: var(--ember-glow), var(--brand-navy-dark);
+}
+
+.auth-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 36px 28px 30px;
+  box-shadow: var(--shadow-pop);
+}
+
+.auth-card input,
+.warehouse-shell input,
+.warehouse-shell select,
+.warehouse-shell textarea,
+.admin-shell input,
+.admin-shell select,
+.admin-shell textarea {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-card input:focus,
+.warehouse-shell input:focus,
+.warehouse-shell select:focus,
+.warehouse-shell textarea:focus,
+.admin-shell input:focus,
+.admin-shell select:focus,
+.admin-shell textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgb(242 118 10 / 0.16);
+}
+
+/* — buttons: pills in the display face; the primary one is the website's
+   call to action (orange gradient with a warm glow) — */
+.btn-primary,
+.btn-secondary,
+.btn-approve,
+.btn-reject,
+.warehouse-shell .btn-primary,
+.warehouse-shell .btn-secondary,
+.warehouse-shell .btn-approve,
+.warehouse-shell .btn-reject,
+.admin-shell .btn-primary,
+.admin-shell .btn-secondary,
+.admin-shell .btn-approve,
+.admin-shell .btn-reject,
+.wh-topbar-actions .btn-secondary,
+.adm-topbar-actions .btn-secondary,
+.wh-logout-btn {
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-subheading);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, filter 0.2s ease;
+}
+
+.btn-primary,
+.warehouse-shell .btn-primary,
+.admin-shell .btn-primary {
+  background: var(--brand-gradient);
+  color: #fff;
+  box-shadow: var(--shadow-glow);
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-approve:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled),
+.btn-approve:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled,
+.warehouse-shell .btn-primary:disabled,
+.admin-shell .btn-primary:disabled {
+  box-shadow: none;
+}
+
+.btn-secondary,
+.warehouse-shell .btn-secondary,
+.admin-shell .btn-secondary {
+  background: #fff;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+
+/* — shells — */
+.warehouse-shell,
+.admin-shell {
+  background: var(--color-background);
+}
+
+.wh-sidebar,
+.adm-sidebar {
+  background: var(--ember-glow), var(--brand-navy-dark);
+}
+
+.wh-sidebar-header,
+.adm-sidebar-header {
+  border-bottom-color: rgb(255 255 255 / 0.08);
+}
+
+.wh-sidebar-brand,
+.adm-sidebar-brand {
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-heading);
+}
+
+.wh-sidebar-subtitle,
+.adm-sidebar-subtitle {
+  color: #b4c2d6;
+}
+
+.wh-nav,
+.adm-nav {
+  gap: 4px;
+  padding: 14px 12px;
+}
+
+.wh-nav-link,
+.adm-nav-link {
+  margin: 0;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: #b4c2d6;
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-label);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.wh-nav-link:hover,
+.adm-nav-link:hover {
+  background: rgb(255 255 255 / 0.06);
+  color: #fff;
+}
+
+.wh-nav-link.active,
+.adm-nav-link.active {
+  background: rgb(242 118 10 / 0.18);
+  color: #ffc58f;
+  font-weight: var(--font-weight-subheading);
+}
+
+.wh-nav-link.active .nav-badge {
+  background: var(--wh-red);
+  color: #fff;
+}
+
+.wh-topbar,
+.adm-topbar {
+  background: rgb(255 255 255 / 0.9);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom-color: var(--color-border);
+}
+
+.wh-topbar-title,
+.adm-topbar-title {
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-heading);
+  font-size: 17px;
+}
+
+.wh-hamburger,
+.adm-hamburger {
+  border-radius: var(--radius-sm);
+}
+
+.wh-content,
+.adm-content {
+  padding: 28px;
+}
+
+.wh-page-head h1,
+.adm-page-head h1 {
+  font-size: 24px;
+}
+
+/* — cards: soft, wide, navy-tinted lift — */
+.wh-card,
+.wh-company-card,
+.wh-detail-card,
+.wh-empty-state,
+.wh-invoice-stat,
+.wh-review-summary-card,
+.adm-stat-card,
+.adm-card,
+.adm-empty-state,
+.adm-rate-card,
+.adm-detail-card,
+.adm-credentials-panel,
+.exchange-rate-card,
+.warehouse-shell .modal,
+.admin-shell .modal {
+  border-color: var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.adm-card,
+.wh-card {
+  overflow: hidden;
+}
+
+.wh-company-card {
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.wh-company-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px rgb(var(--brand-navy-rgb) / 0.1);
+}
+
+.modal-overlay,
+.warehouse-shell .modal-overlay,
+.admin-shell .modal-overlay {
+  background: rgb(14 26 44 / 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.modal,
+.warehouse-shell .modal,
+.admin-shell .modal {
+  border-radius: 24px;
+  box-shadow: var(--shadow-pop);
+}
+
+/* — tables: quiet headers, generous rows, a warm hover — */
+.wh-table th,
+.adm-table th,
+.product-table th {
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-label);
+  color: var(--color-text-secondary);
+  background: #fafbfc;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.wh-table td,
+.adm-table td,
+.product-table td {
+  border-bottom-color: #eef0f3;
+}
+
+.wh-table tbody tr:hover,
+.adm-table tbody tr:hover {
+  background: rgb(242 118 10 / 0.05);
+}
+
+.wh-table-order-num,
+.wh-table-total,
+.wh-num,
+.adm-num,
+.price {
+  font-family: var(--font-family-display);
+  font-variant-numeric: tabular-nums;
+}
+
+/* — filter pills and sub-navs — */
+.wh-pills,
+.adm-pills {
+  border-bottom-width: 1px;
+  border-bottom-color: var(--color-border);
+}
+
+.wh-pill,
+.adm-pill {
+  background: #fff;
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-label);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.wh-pill:hover,
+.adm-pill:hover {
+  border-color: #c9ced7;
+  color: var(--color-text);
+}
+
+.wh-pill.active,
+.adm-pill.active {
+  background: var(--brand-navy-dark);
+  border-color: var(--brand-navy-dark);
+  color: #fff;
+}
+
+.status-badge,
+.availability-badge,
+.warehouse-shell .status-badge,
+.admin-shell .status-badge {
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-subheading);
+}
+
+::selection {
+  background: rgb(242 118 10 / 0.22);
+}
+
+/* — no side stripes: tone lives in the fill and the figure, not a 3px edge — */
+.adm-stat-card,
+.adm-import-stat,
+.adm-credentials-panel {
+  border-top: 1px solid var(--color-border);
+}
+
+.adm-stat-card {
+  padding: 18px 20px 20px;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.adm-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px rgb(var(--brand-navy-rgb) / 0.1);
+}
+
+.adm-stat-value {
+  font-family: var(--font-family-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.wh-company-card {
+  border-inline-start: 1px solid var(--color-border);
+}
+
+.adm-exchange-footer,
+.wh-package-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.adm-rate-warning,
+.warehouse-shell .import-conversion-note,
+.wh-notice {
+  border: 1px solid rgb(242 118 10 / 0.25);
+  border-radius: var(--radius-md);
+  background: rgb(242 118 10 / 0.07);
+}
+
+.warehouse-shell .import-conversion-note,
+.wh-notice {
+  border-color: rgb(var(--brand-navy-rgb) / 0.12);
+  background: rgb(var(--brand-navy-rgb) / 0.04);
+}
+
+/* Admin filters take the same pill form as the warehouse panel's. */
+.adm-pills {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 12px;
+}
+
+.adm-pill {
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+}
+
+.wh-topbar-actions .btn-secondary,
+.adm-topbar-actions .btn-secondary,
+.wh-logout-btn,
+.adm-logout-btn {
+  white-space: nowrap;
 }
