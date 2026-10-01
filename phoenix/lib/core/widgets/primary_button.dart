@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/app_padding.dart';
-import '../constants/app_radius.dart';
+import '../constants/app_shadows.dart';
 import '../constants/app_sizes.dart';
+import '../extensions/build_context_extensions.dart';
+import '../theme/app_text_theme.dart';
 import 'press_scale.dart';
 
+/// The one primary action on a screen: the FENIQ website's call to action - a
+/// pill of the bird's orange with a warm glow under it.
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
     super.key,
@@ -15,38 +19,46 @@ class PrimaryButton extends StatelessWidget {
   });
 
   final String label;
-  // Nullable so a screen can disable the button outright (a null callback
-  // is what ElevatedButton itself already treats as "disabled") - used by
-  // the cart when an order is outside the warehouse's size limits.
   final VoidCallback? onPressed;
   final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
+    final enabled = onPressed != null && !isLoading;
+    final onColor = context.isDarkMode ? Colors.black : Colors.white;
     return PressScale(
-      child: SizedBox(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         width: double.infinity,
         height: AppSizes.buttonHeight,
+        decoration: ShapeDecoration(
+          shape: const StadiumBorder(),
+          gradient: enabled || isLoading ? AppColors.brandGradient : null,
+          color: enabled || isLoading ? null : AppColors.borderOf(context),
+          shadows: enabled ? AppShadows.glow(context) : const [],
+        ),
+        // A real ElevatedButton over the gradient, so focus, semantics and the
+        // disabled state behave exactly like every other button in the app.
         child: ElevatedButton(
           onPressed: isLoading ? null : onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryOf(context),
-            foregroundColor: Colors.white,
-            shape: const RoundedRectangleBorder(borderRadius: AppRadius.medium),
+            backgroundColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            foregroundColor: onColor,
+            disabledForegroundColor: AppColors.textSecondaryOf(context),
+            elevation: 0,
+            shape: const StadiumBorder(),
             padding: AppPadding.button,
-            elevation: 4,
-            shadowColor: AppColors.primaryOf(context).withValues(alpha: 0.3),
+            textStyle: AppTextTheme.style(fontSize: 15.5, fontWeight: AppTextTheme.semiBold),
           ),
           child: isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   height: 20,
                   width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: onColor),
                 )
-              : Text(label),
+              : Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
       ),
     );

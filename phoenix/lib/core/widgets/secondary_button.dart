@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/app_padding.dart';
-import '../constants/app_radius.dart';
 import '../constants/app_sizes.dart';
 import 'press_scale.dart';
 
@@ -25,9 +24,10 @@ class SecondaryButton extends StatelessWidget {
         child: OutlinedButton(
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.primaryOf(context),
+            foregroundColor: AppColors.textOf(context),
+            backgroundColor: AppColors.surfaceElevatedOf(context),
             side: BorderSide(color: AppColors.borderOf(context)),
-            shape: const RoundedRectangleBorder(borderRadius: AppRadius.medium),
+            shape: const StadiumBorder(),
             padding: AppPadding.button,
           ),
           child: Text(label),

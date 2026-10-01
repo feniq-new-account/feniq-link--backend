@@ -7,6 +7,7 @@ import 'package:feniq/features/catalog/presentation/managers/catalog_cubit.dart'
 import 'package:feniq/features/catalog/presentation/managers/catalog_state.dart';
 import 'package:feniq/features/catalog/presentation/widgets/catalog_product_list.dart';
 import 'package:feniq/features/catalog/presentation/widgets/catalog_search_bar.dart';
+import 'package:feniq/core/widgets/brand_header_glow.dart';
 
 class CatalogView extends StatefulWidget {
   const CatalogView({super.key, required this.warehouseId, required this.warehouseName, required this.manufacturer});
@@ -43,6 +44,7 @@ class _CatalogViewState extends State<CatalogView> {
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
         toolbarHeight: 64,
+        flexibleSpace: const BrandHeaderGlow(),
         title: BlocBuilder<CatalogCubit, CatalogState>(
           buildWhen: (previous, current) => previous.products.length != current.products.length,
           builder: (context, state) {

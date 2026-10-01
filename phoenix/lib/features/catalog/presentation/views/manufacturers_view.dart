@@ -20,6 +20,7 @@ import 'package:feniq/features/catalog/presentation/managers/manufacturers_cubit
 import 'package:feniq/features/catalog/presentation/managers/manufacturers_state.dart';
 import 'package:feniq/features/catalog/presentation/widgets/manufacturer_card.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/brand_header_glow.dart';
 
 // New step between warehouse selection and the catalog (Section 16):
 // warehouse -> manufacturers -> medicines, replacing the old warehouse ->
@@ -102,6 +103,7 @@ class _ManufacturersViewState extends State<ManufacturersView> {
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
         toolbarHeight: 64,
+        flexibleSpace: const BrandHeaderGlow(),
         title: BlocBuilder<ManufacturersCubit, ManufacturersState>(
           buildWhen: (previous, current) => previous.manufacturers.length != current.manufacturers.length,
           builder: (context, state) {

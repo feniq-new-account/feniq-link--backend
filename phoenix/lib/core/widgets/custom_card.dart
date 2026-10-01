@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/app_radius.dart';
+import '../constants/app_shadows.dart';
 import 'press_scale.dart';
 
 // Renders its own BoxShadow rather than going through Material's Card
@@ -12,7 +13,7 @@ class CustomCard extends StatelessWidget {
   const CustomCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(18),
     this.onTap,
   });
 
@@ -28,13 +29,7 @@ class CustomCard extends StatelessWidget {
         color: AppColors.surfaceElevatedOf(context),
         borderRadius: AppRadius.large,
         border: Border.all(color: AppColors.borderOf(context)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.card(context),
       ),
       child: onTap == null
           ? Padding(padding: padding, child: child)

@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
-import '../constants/app_padding.dart';
-import '../constants/app_radius.dart';
 import 'app_text_theme.dart';
+import 'app_theme_builder.dart';
 
 class DarkTheme {
   const DarkTheme._();
 
-  static ThemeData get data => ThemeData(
-    useMaterial3: true,
-    // Catch-all: TextTheme below covers the eight roles the app styles
-    // itself, but Material composes plenty of text from its own defaults
-    // (menu entries, tooltips, date pickers). Setting the family here means
-    // none of those silently fall back to the OS's default Arabic face.
-    fontFamily: AppTextTheme.fontFamily,
+  static ThemeData get data => AppThemeBuilder.build(
     brightness: Brightness.dark,
     colorScheme: ColorScheme.dark(
       primary: AppColors.darkPrimary,
@@ -25,67 +18,17 @@ class DarkTheme {
       onError: Colors.black,
       surface: AppColors.darkBackground,
       onSurface: AppColors.darkText,
+      outline: AppColors.darkBorder,
+      outlineVariant: AppColors.darkBorder,
     ),
-    scaffoldBackgroundColor: AppColors.darkBackground,
     textTheme: AppTextTheme.dark(),
-    appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.darkSurface,
-      foregroundColor: AppColors.darkText,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.4),
-      surfaceTintColor: Colors.transparent,
-      centerTitle: false,
-      titleTextStyle: AppTextTheme.style(fontSize: 20, fontWeight: AppTextTheme.bold, color: AppColors.darkText),
-    ),
-    cardTheme: CardThemeData(
-      color: AppColors.darkSurfaceElevated,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.large,
-        side: BorderSide(color: AppColors.darkBorder),
-      ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: AppColors.darkSurface,
-      contentPadding: AppPadding.input,
-      border: OutlineInputBorder(
-        borderRadius: AppRadius.small,
-        borderSide: BorderSide(color: AppColors.darkBorder),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: AppRadius.small,
-        borderSide: BorderSide(color: AppColors.darkBorder),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: AppRadius.small,
-        borderSide: BorderSide(color: AppColors.darkPrimary, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: AppRadius.small,
-        borderSide: BorderSide(color: AppColors.darkError),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: AppRadius.small,
-        borderSide: BorderSide(color: AppColors.darkError, width: 1.5),
-      ),
-    ),
-    navigationBarTheme: NavigationBarThemeData(
-      height: 65,
-      backgroundColor: AppColors.darkSurfaceElevated,
-      indicatorColor: AppColors.darkPrimary.withValues(alpha: 0.18),
-      indicatorShape: const StadiumBorder(),
-      // 10, not 11: the longest label ("سجل الحسابات" / "Account History")
-      // measures ~78pt at 11 and a fifth of a 360dp phone is only ~72pt, so at
-      // 11 it could not fit the one line the icon alignment depends on. At 10
-      // it lands around 70pt and every label still fits without ellipsis.
-      labelTextStyle: WidgetStateProperty.resolveWith(
-        (states) => AppTextTheme.style(
-          fontSize: 10,
-          fontWeight: states.contains(WidgetState.selected) ? AppTextTheme.semiBold : AppTextTheme.medium,
-          color: states.contains(WidgetState.selected) ? AppColors.darkPrimary : AppColors.darkTextSecondary,
-        ),
-      ),
-    ),
+    background: AppColors.darkBackground,
+    surface: AppColors.darkSurface,
+    surfaceElevated: AppColors.darkSurfaceElevated,
+    border: AppColors.darkBorder,
+    text: AppColors.darkText,
+    textSecondary: AppColors.darkTextSecondary,
+    primary: AppColors.darkPrimary,
+    error: AppColors.darkError,
   );
 }

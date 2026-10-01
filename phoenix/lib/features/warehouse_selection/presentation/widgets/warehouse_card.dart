@@ -98,7 +98,7 @@ class WarehouseCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: AppSizes.spacingXSmall + 2),
+                const SizedBox(height: AppSizes.spacingXSmall + 1),
                 _CityPill(city: warehouse.city),
               ],
             ),
@@ -133,7 +133,7 @@ class WarehouseCard extends StatelessWidget {
                       l10n.warehouseProfileButtonLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.bodySmall?.copyWith(
+                      style: context.textTheme.labelMedium?.copyWith(
                         fontWeight: AppTextTheme.semiBold,
                         color: AppColors.textOf(context),
                       ),
@@ -221,7 +221,7 @@ class _CityPill extends StatelessWidget {
           Flexible(
             child: Text(
               city,
-              style: context.textTheme.bodySmall?.copyWith(
+              style: context.textTheme.labelSmall?.copyWith(
                 color: AppColors.textSecondaryOf(context),
                 fontWeight: AppTextTheme.semiBold,
                 fontSize: 11,
