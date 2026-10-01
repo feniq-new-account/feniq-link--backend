@@ -48,6 +48,7 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), typed); // phone
     await tester.enterText(fields.at(1), 'pharmacist-password'); // password
+    await tester.ensureVisible(find.byType(PrimaryButton));
     await tester.tap(find.byType(PrimaryButton));
     await tester.pump();
 
@@ -96,6 +97,7 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), '0912345678');
     await tester.enterText(fields.at(1), 'S3cret-pw!');
+    await tester.ensureVisible(find.byType(PrimaryButton));
     await tester.tap(find.byType(PrimaryButton));
     await tester.pump();
 
@@ -115,6 +117,7 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), '123456');
     await tester.enterText(fields.at(1), 'pharmacist-password');
+    await tester.ensureVisible(find.byType(PrimaryButton));
     await tester.tap(find.byType(PrimaryButton));
     await tester.pump();
 

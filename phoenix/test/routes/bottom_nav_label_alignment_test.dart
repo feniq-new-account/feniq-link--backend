@@ -23,11 +23,12 @@ const _englishLabels = ['Warehouses', 'Offers', 'My Orders', 'Account History', 
 
 // The real face matters here - this is a measurement test, and the stand-in
 // font flutter_test ships is fixed-width, which would make every label wrap.
-Future<void> _loadTajawal(WidgetTester tester) async {
+// The nav labels are set in the display face (Readex).
+Future<void> _loadReadex(WidgetTester tester) async {
   await tester.runAsync(() async {
-    final loader = FontLoader('Tajawal');
-    for (final file in ['Tajawal-Regular.ttf', 'Tajawal-Medium.ttf', 'Tajawal-Bold.ttf']) {
-      final bytes = await File('assets/fonts/$file').readAsBytes();
+    final loader = FontLoader('Readex');
+    for (final weight in [400, 500, 600, 700]) {
+      final bytes = await File('assets/fonts/ReadexPro-$weight.ttf').readAsBytes();
       loader.addFont(Future.value(ByteData.view(bytes.buffer)));
     }
     await loader.load();
@@ -57,7 +58,7 @@ GoRouter _shellRouter() => GoRouter(
 );
 
 Future<void> _pump(WidgetTester tester, {required Locale locale, required ThemeData theme}) async {
-  await _loadTajawal(tester);
+  await _loadReadex(tester);
   await tester.pumpWidget(
     MaterialApp.router(
       routerConfig: _shellRouter(),

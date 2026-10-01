@@ -114,20 +114,31 @@ flutter:
   assets:
     - assets/images/
 
-  # Tajawal (SIL OFL, see assets/fonts/OFL.txt). Bundled rather than fetched at
-  # runtime through google_fonts. Upstream ships no SemiBold/600 face, so the
-  # identity's four tiers map onto 400/500/700/800 - see AppTextTheme.
+  # Same two faces as the FENIQ website, so app and site read as one brand
+  # (SIL OFL, see assets/fonts/OFL-*.txt). Readex Pro carries titles, buttons,
+  # labels and prices; IBM Plex Sans Arabic carries reading text. Static
+  # instances subset to Arabic + Latin, bundled rather than fetched at runtime.
   fonts:
-    - family: Tajawal
+    - family: Readex
       fonts:
-        - asset: assets/fonts/Tajawal-Regular.ttf
+        - asset: assets/fonts/ReadexPro-400.ttf
           weight: 400
-        - asset: assets/fonts/Tajawal-Medium.ttf
+        - asset: assets/fonts/ReadexPro-500.ttf
           weight: 500
-        - asset: assets/fonts/Tajawal-Bold.ttf
+        - asset: assets/fonts/ReadexPro-600.ttf
+          weight: 600
+        - asset: assets/fonts/ReadexPro-700.ttf
           weight: 700
-        - asset: assets/fonts/Tajawal-ExtraBold.ttf
-          weight: 800
+    - family: Plex
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-400.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansArabic-500.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSansArabic-600.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSansArabic-700.ttf
+          weight: 700
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

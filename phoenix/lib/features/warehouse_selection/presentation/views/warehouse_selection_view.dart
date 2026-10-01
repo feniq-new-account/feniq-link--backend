@@ -26,6 +26,7 @@ import 'package:feniq/features/warehouse_selection/presentation/managers/warehou
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_card.dart';
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_city_scope_bar.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/brand_header_glow.dart';
 
 // One set of grid metrics for the loaded grid and its loading skeleton, so
 // the placeholder cells land exactly where the cards are about to. The tile
@@ -145,6 +146,7 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
               backgroundColor: AppColors.navyOf(context),
               foregroundColor: Colors.white,
               toolbarHeight: 68,
+              flexibleSpace: const BrandHeaderGlow(),
               leading: const Padding(
                 padding: EdgeInsets.all(AppSizes.spacingSmall),
                 child: BrandLogo.mark(height: 32, onDark: true),

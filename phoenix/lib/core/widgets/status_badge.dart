@@ -49,7 +49,7 @@ class StatusBadge extends StatelessWidget {
         label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: context.textTheme.bodySmall?.copyWith(color: fg, fontWeight: AppTextTheme.semiBold),
+        style: AppTextTheme.style(fontSize: 12, fontWeight: AppTextTheme.semiBold, color: fg, height: 1.4),
       ),
     );
   }
