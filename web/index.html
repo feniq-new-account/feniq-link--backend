@@ -5,21 +5,15 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#16283f" />
+    <meta name="theme-color" content="#0e1a2c" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FENIQ Admin</title>
-    <!-- Tajawal is now the base family for both panels (index.css's
-         --font-family-base), so this is no longer warehouse-scoped.
-         Weights are the identity's four tiers: 400 body, 500 buttons and
-         inputs, 700 subheadings, 800 headings and prices. Tajawal ships no
-         SemiBold/600 face upstream, so 600 is deliberately not requested -
-         asking for it would leave the browser synthesising a fake weight. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
-    />
+    <!-- The FENIQ website's two faces, self-hosted from public/fonts (no
+         Google Fonts round trip, which is slow or blocked on some Syrian
+         connections): Readex Pro for headings, buttons, labels and numbers,
+         IBM Plex Sans Arabic for reading text. See index.css. -->
+    <link rel="preload" href="/fonts/readex-pro.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/plex-sans-arabic-400.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body>
     <div id="root"></div>
