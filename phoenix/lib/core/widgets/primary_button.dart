@@ -27,8 +27,10 @@ class PrimaryButton extends StatelessWidget {
     final enabled = onPressed != null && !isLoading;
     final onColor = context.isDarkMode ? Colors.black : Colors.white;
     return PressScale(
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+      // A plain Container: animating between the gradient and the disabled
+      // flat colour asserts on older Flutter (ShapeDecoration can't lerp a
+      // colour into a gradient).
+      child: Container(
         width: double.infinity,
         height: AppSizes.buttonHeight,
         decoration: ShapeDecoration(
