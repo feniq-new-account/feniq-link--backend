@@ -1,4 +1,5 @@
 const cloudinary = require('../config/cloudinary');
+const mediaStorage = require('./mediaStorage.service');
 
 // Uploads one file buffer to Cloudinary under `folder` (e.g. 'banners',
 // 'returns') and resolves to its permanent https delivery URL. Rejects on
@@ -22,6 +23,9 @@ function uploadMedia(fileBuffer, folder, resourceType = 'image') {
 // Every pre-existing call site only ever uploads images - kept as its own
 // name so none of them have to pass resourceType.
 function uploadImage(fileBuffer, folder) {
+  // On this server's own disk when MEDIA_DIR is configured (in-country
+  // deployment), on Cloudinary otherwise.
+  if (mediaStorage.isEnabled()) return mediaStorage.saveImage(fileBuffer, folder);
   return uploadMedia(fileBuffer, folder, 'image');
 }
 
@@ -66,6 +70,10 @@ function resourceTypeFromUrl(url) {
 
 // Convenience wrapper for the call sites that only ever hold the URL.
 async function deleteImageByUrl(url) {
+  if (mediaStorage.isOwnMediaUrl(url)) {
+    await mediaStorage.deleteByUrl(url);
+    return;
+  }
   await deleteImage(publicIdFromUrl(url), resourceTypeFromUrl(url));
 }
 

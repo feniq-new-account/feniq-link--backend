@@ -77,6 +77,13 @@ const productCatalogSchema = new Schema(
     // unless the product carries its own override (Product.image). Cloudinary
     // only, set by an admin.
     imageUrl: { type: String, default: null },
+    // Where a bulk-linked image came from (scripts/link-catalog-images.js) and how
+    // sure the match was: 'exact' (same name and strength), 'brand' (the brand's
+    // own picture, strength not told apart), 'fuzzy' (spelling/transliteration
+    // match). Null for an image an admin uploaded. Cleared whenever the image is
+    // replaced or removed.
+    imageSourceUrl: { type: String, default: null },
+    imageMatch: { type: String, enum: ['exact', 'brand', 'fuzzy', null], default: null },
     // What the medicine is made of ("PARACETAMOL", "METFORMIN+SITAGLIPTIN"), how
     // strong it is ("500 MG/TAB.") and its dosage form ("أقراص"). Together they
     // say which other items can stand in for it: the pharmacist's "alternatives"

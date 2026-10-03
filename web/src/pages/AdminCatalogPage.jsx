@@ -580,6 +580,10 @@ export function AdminCatalogPage() {
                         <img src={item.imageUrl} alt="" width="32" height="32" style={{ objectFit: 'contain', marginInlineEnd: 8 }} />
                       )}
                       {item.nameAr}
+                      {/* A picture linked in bulk from a company's site, matched by brand or by spelling rather than by name and strength. */}
+                      {item.imageUrl && (item.imageMatch === 'brand' || item.imageMatch === 'fuzzy') && (
+                        <div className="hint">{t('admin.catalog.imageApprox')}</div>
+                      )}
                       {item.activeIngredient && (
                         <div className="hint" dir="ltr" style={{ textAlign: 'start' }}>
                           {item.activeIngredient}

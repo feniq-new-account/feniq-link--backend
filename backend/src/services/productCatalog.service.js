@@ -478,6 +478,8 @@ async function setCatalogImage(id, imageUrl) {
   const item = await findCatalogItemOrThrow(id);
   const previousImageUrl = item.imageUrl ?? null;
   item.imageUrl = imageUrl ?? null;
+  item.imageSourceUrl = null;
+  item.imageMatch = null;
   await item.save();
   return { item, previousImageUrl };
 }

@@ -5,6 +5,7 @@ const { verifyImageMagicBytes } = require('../middlewares/upload.middleware');
 const ProductCatalog = require('../models/productCatalog.model');
 const Product = require('../models/product.model');
 const Manufacturer = require('../models/manufacturer.model');
+const mediaStorage = require('./mediaStorage.service');
 
 // Catalog images (catalog overhaul Phase 5.3 / Phase 9, M7): the central image
 // of a catalog item, a manufacturer's logo and a warehouse's override image on
@@ -28,13 +29,18 @@ function isOwnCloudinaryUrl(url) {
   );
 }
 
+// Ours: on our Cloudinary cloud, or on this server's own disk (MEDIA_DIR).
+function isOwnImageUrl(url) {
+  return isOwnCloudinaryUrl(url) || mediaStorage.isOwnMediaUrl(url);
+}
+
 // An image field sent as data (a product edit carrying `image`): null or ''
 // clears it; anything else must be one of our Cloudinary URLs (400 otherwise).
 // Returns undefined when the field was not sent.
 function imageUrlInput(value) {
   if (value === undefined) return undefined;
   if (value === null || (typeof value === 'string' && !value.trim())) return null;
-  if (typeof value === 'string' && isOwnCloudinaryUrl(value.trim())) return value.trim();
+  if (typeof value === 'string' && isOwnImageUrl(value.trim())) return value.trim();
   throw ApiError.badRequest('Images must be uploaded - only our own image links are accepted.', undefined, 'INVALID_IMAGE_URL');
 }
 
@@ -52,7 +58,7 @@ async function storeUploadedImage(file, folder) {
 // points at it (the same URL can be a catalog image and a product override,
 // or survive a merge on another document). Best effort, never throws.
 async function releaseImage(url) {
-  if (!url || !isOwnCloudinaryUrl(url)) return;
+  if (!url || !isOwnImageUrl(url)) return;
   try {
     const [catalog, products, manufacturers] = await Promise.all([
       ProductCatalog.exists({ imageUrl: url }),
@@ -67,4 +73,4 @@ async function releaseImage(url) {
   }
 }
 
-module.exports = { isOwnCloudinaryUrl, imageUrlInput, storeUploadedImage, releaseImage };
+module.exports = { isOwnCloudinaryUrl, isOwnImageUrl, imageUrlInput, storeUploadedImage, releaseImage };

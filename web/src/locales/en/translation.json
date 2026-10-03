@@ -710,6 +710,7 @@
       "withdrawnTitle": "Withdrawn — not reactivated",
       "uploadImage": "Upload image",
       "replaceImage": "Replace image",
+      "imageApprox": "Approximate picture - please check",
       "clearImage": "Remove image",
       "linkExisting": "or link to an existing company",
       "nameEnLabel": "English name (for search)",
