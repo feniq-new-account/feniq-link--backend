@@ -35,4 +35,11 @@ const manufacturers = asyncHandler(async (req, res) => {
   res.json({ success: true, manufacturers: items });
 });
 
-module.exports = { list, manufacturers };
+const alternatives = asyncHandler(async (req, res) => {
+  const { warehouseId, productId } = req.params;
+  const items = await productService.listAlternatives(warehouseId, productId);
+  const rate = await getRate();
+  res.json({ success: true, ...productViewModel.toProductListResponse(items, rate?.usdToSyp ?? null) });
+});
+
+module.exports = { list, manufacturers, alternatives };

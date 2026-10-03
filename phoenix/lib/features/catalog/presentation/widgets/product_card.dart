@@ -31,6 +31,7 @@ class ProductCard extends StatelessWidget {
     this.cartQuantity = 0,
     this.onCartQuantityChanged,
     this.onCartRemove,
+    this.onShowAlternatives,
     this.isGrid = true,
   });
 
@@ -43,6 +44,9 @@ class ProductCard extends StatelessWidget {
   final int cartQuantity;
   final ValueChanged<int>? onCartQuantityChanged;
   final VoidCallback? onCartRemove;
+  // Opens the alternatives (same ingredient, strength and form). Only offered when
+  // the product has an active ingredient, since that is what the match is on.
+  final VoidCallback? onShowAlternatives;
   final bool isGrid;
 
   Future<void> _handleAddTap(BuildContext context) async {
@@ -63,6 +67,7 @@ class ProductCard extends StatelessWidget {
               onAddTap: () => _handleAddTap(context),
               onCartQuantityChanged: onCartQuantityChanged,
               onCartRemove: onCartRemove,
+              onShowAlternatives: onShowAlternatives,
             )
           : _ListRow(
               product: product,
@@ -70,6 +75,7 @@ class ProductCard extends StatelessWidget {
               onAddTap: () => _handleAddTap(context),
               onCartQuantityChanged: onCartQuantityChanged,
               onCartRemove: onCartRemove,
+              onShowAlternatives: onShowAlternatives,
             ),
     );
   }
@@ -82,6 +88,7 @@ class _GridCard extends StatelessWidget {
     required this.onAddTap,
     required this.onCartQuantityChanged,
     required this.onCartRemove,
+    required this.onShowAlternatives,
   });
 
   final ProductModel product;
@@ -89,6 +96,7 @@ class _GridCard extends StatelessWidget {
   final VoidCallback onAddTap;
   final ValueChanged<int>? onCartQuantityChanged;
   final VoidCallback? onCartRemove;
+  final VoidCallback? onShowAlternatives;
 
   @override
   Widget build(BuildContext context) {
@@ -139,8 +147,10 @@ class _GridCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                _IngredientLine(product: product),
                 const SizedBox(height: AppSizes.spacingXSmall),
                 _PriceDisplay(product: product),
+                _AlternativesLink(product: product, onTap: onShowAlternatives),
                 const SizedBox(height: AppSizes.spacingSmall),
                 if (product.isAvailable && cartQuantity > 0)
                   Align(
@@ -172,6 +182,7 @@ class _ListRow extends StatelessWidget {
     required this.onAddTap,
     required this.onCartQuantityChanged,
     required this.onCartRemove,
+    required this.onShowAlternatives,
   });
 
   final ProductModel product;
@@ -179,6 +190,7 @@ class _ListRow extends StatelessWidget {
   final VoidCallback onAddTap;
   final ValueChanged<int>? onCartQuantityChanged;
   final VoidCallback? onCartRemove;
+  final VoidCallback? onShowAlternatives;
 
   @override
   Widget build(BuildContext context) {
@@ -212,8 +224,10 @@ class _ListRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                _IngredientLine(product: product),
                 const SizedBox(height: AppSizes.spacingXSmall),
                 _PriceDisplay(product: product),
+                _AlternativesLink(product: product, onTap: onShowAlternatives),
               ],
             ),
           ),
@@ -232,6 +246,59 @@ class _ListRow extends StatelessWidget {
           else
             AddToCartButton(available: true, onTap: onAddTap, compact: true),
         ],
+      ),
+    );
+  }
+}
+
+// "PARACETAMOL · 500 MG/TAB." under the company - what the medicine is made of
+// and how strong. Nothing when the catalog item has no ingredient.
+class _IngredientLine extends StatelessWidget {
+  const _IngredientLine({required this.product});
+
+  final ProductModel product;
+
+  @override
+  Widget build(BuildContext context) {
+    final ingredient = product.activeIngredient;
+    if (ingredient == null || ingredient.isEmpty) return const SizedBox.shrink();
+    final strength = product.strength;
+    final text = strength == null || strength.isEmpty ? ingredient : '$ingredient · $strength';
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Text(
+        text,
+        style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 11.5),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+}
+
+// "البدائل" - opens the other medicines with the same ingredient, strength and form.
+class _AlternativesLink extends StatelessWidget {
+  const _AlternativesLink({required this.product, required this.onTap});
+
+  final ProductModel product;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ingredient = product.activeIngredient;
+    if (onTap == null || ingredient == null || ingredient.isEmpty) return const SizedBox.shrink();
+    return InkWell(
+      onTap: onTap,
+      borderRadius: AppRadius.small,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Text(
+          context.l10n.alternativesLink,
+          style: context.textTheme.bodySmall?.copyWith(
+            color: AppColors.primaryOf(context),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

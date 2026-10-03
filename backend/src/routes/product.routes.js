@@ -18,4 +18,16 @@ router.get(
   controller.list
 );
 
+// The other medicines in this warehouse with the same active ingredient,
+// strength and form.
+router.get(
+  '/:productId/alternatives',
+  authenticate,
+  authorize('pharmacy'),
+  requireActiveStatus,
+  stringQueryOnly,
+  objectIdParams('warehouseId', 'productId'),
+  controller.alternatives
+);
+
 module.exports = router;

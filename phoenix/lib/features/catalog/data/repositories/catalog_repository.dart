@@ -19,6 +19,10 @@ abstract class CatalogRepository {
     String? after,
   });
 
+  // The other medicines in this warehouse with the same active ingredient,
+  // strength and form as [productId] - available ones first, then cheapest.
+  Future<List<ProductModel>> getAlternatives({required String warehouseId, required String productId});
+
   // The pharmacist's entry point into a warehouse's catalog: distinct
   // manufacturers (manufacturerAr) with at least one product in this
   // warehouse, each carrying the warehouse's standing discount for it - see

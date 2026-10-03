@@ -1,6 +1,7 @@
 const { Schema, model } = require('mongoose');
 const Manufacturer = require('./manufacturer.model');
 const { normalizeText } = require('../utils/normalizeText');
+const { strengthKeyOf, formKeyOf } = require('../utils/medicineKeys');
 
 // The one place the identity key's shape is spelled out - the hook below, the
 // rename/merge syncs and the migrations all build it through this.
@@ -76,6 +77,20 @@ const productCatalogSchema = new Schema(
     // unless the product carries its own override (Product.image). Cloudinary
     // only, set by an admin.
     imageUrl: { type: String, default: null },
+    // What the medicine is made of ("PARACETAMOL", "METFORMIN+SITAGLIPTIN"), how
+    // strong it is ("500 MG/TAB.") and its dosage form ("أقراص"). Together they
+    // say which other items can stand in for it: the pharmacist's "alternatives"
+    // are the items sharing all three keys below. Optional - an item imported
+    // without them simply has no alternatives.
+    activeIngredient: { type: String, default: null, trim: true },
+    strength: { type: String, default: null, trim: true },
+    dosageForm: { type: String, default: null, trim: true },
+    // Normalized copies, set by the pre-validate hook and never by hand:
+    // activeIngredientKey through normalizeText (also what the search matches),
+    // strengthKey and formKey through utils/medicineKeys.js.
+    activeIngredientKey: { type: String, default: null },
+    strengthKey: { type: String, default: null },
+    formKey: { type: String, default: null },
     nameHistory: { type: [nameHistoryEntrySchema], default: [] },
     isActive: { type: Boolean, default: true },
     // Written by every warehouse product create/link, inside its transaction
@@ -139,6 +154,12 @@ productCatalogSchema.pre('validate', async function setSearchKeys() {
   this.manufacturerKey = searchKey(this.manufacturerAr);
   this.manufacturerEnKey = searchKey(this.manufacturerEn);
   this.identityKey = identityKeyOf(this.nameKey, this.manufacturerKey);
+  for (const field of ['activeIngredient', 'strength', 'dosageForm']) {
+    if (typeof this[field] === 'string' && !this[field].trim()) this[field] = null;
+  }
+  this.activeIngredientKey = normalizeText(this.activeIngredient) || null;
+  this.strengthKey = strengthKeyOf(this.strength);
+  this.formKey = formKeyOf(this.dosageForm);
 });
 
 // What makes a catalog item unique (see identityKey above). It replaces the
@@ -165,6 +186,9 @@ productCatalogSchema.index({ manufacturerId: 1 });
 // search on the English names - NOT a text index, see product.model.js.
 productCatalogSchema.index({ nameEn: 1 });
 productCatalogSchema.index({ manufacturerEn: 1 });
+
+// The alternatives lookup: same ingredient + strength + form, one index seek.
+productCatalogSchema.index({ activeIngredientKey: 1, strengthKey: 1, formKey: 1 });
 
 module.exports = model('ProductCatalog', productCatalogSchema);
 // Exported so the import path and the migrations derive their lookup keys

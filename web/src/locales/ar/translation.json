@@ -903,7 +903,10 @@
       "category": "الفئة",
       "unit": "الوحدة",
       "currency": "العملة",
-      "bonus": "البونص"
+      "bonus": "البونص",
+      "activeIngredient": "المادة الفعالة",
+      "strength": "العيار",
+      "form": "الشكل الدوائي"
     }
   },
   "importResults": {

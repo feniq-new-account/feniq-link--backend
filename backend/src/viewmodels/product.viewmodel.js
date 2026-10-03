@@ -32,6 +32,9 @@ function serializeProductWithOffer({ product, offer, manufacturerDiscountPercent
     manufacturerAr: product.manufacturerAr,
     manufacturerEn: product.manufacturerEn,
     image: effectiveImage(product),
+    // Additive: what the medicine is made of and how strong, for the app to show under the name.
+    activeIngredient: product.activeIngredient ?? null,
+    strength: product.strength ?? null,
     unitAr: product.unitAr,
     unitEn: product.unitEn,
     priceUsd: product.price,

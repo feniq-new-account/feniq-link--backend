@@ -404,6 +404,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get unavailableLabel => 'غير متوفر';
 
   @override
+  String get alternativesLink => 'البدائل';
+
+  @override
+  String get alternativesTitle => 'البدائل';
+
+  @override
+  String get alternativesSubtitle => 'نفس المادة الفعالة والعيار والشكل، من هذا المستودع';
+
+  @override
+  String get alternativesEmpty => 'لا توجد بدائل في هذا المستودع.';
+
+  @override
   String get offerBadgeLabel => 'عرض';
 
   @override

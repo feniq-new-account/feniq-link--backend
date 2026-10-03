@@ -580,6 +580,12 @@ export function AdminCatalogPage() {
                         <img src={item.imageUrl} alt="" width="32" height="32" style={{ objectFit: 'contain', marginInlineEnd: 8 }} />
                       )}
                       {item.nameAr}
+                      {item.activeIngredient && (
+                        <div className="hint" dir="ltr" style={{ textAlign: 'start' }}>
+                          {item.activeIngredient}
+                          {item.strength ? ` · ${item.strength}` : ''}
+                        </div>
+                      )}
                     </td>
                     <td>{item.manufacturerAr}</td>
                     <td>

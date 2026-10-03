@@ -152,7 +152,7 @@ test('unrecognized headers ask for a mapping offering only the catalog fields; t
     return true;
   });
   // The mapping dialog offers exactly these.
-  assert.deepStrictEqual(details.fields, ['name', 'manufacturer', 'category']);
+  assert.deepStrictEqual(details.fields, ['name', 'manufacturer', 'category', 'activeIngredient', 'strength', 'form']);
   assert.deepStrictEqual(details.required, ['name', 'manufacturer']);
   // 'الصنف المركزي' contains the name synonym 'الصنف'; the company is what is missing.
   assert.deepStrictEqual(details.missing, ['manufacturer']);
