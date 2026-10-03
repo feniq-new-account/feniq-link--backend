@@ -42,6 +42,8 @@ function resolveProductIdentity(product) {
       nameEn: catalogItem.nameEn,
       manufacturerAr: catalogItem.manufacturerAr,
       manufacturerEn: catalogItem.manufacturerEn,
+      activeIngredient: catalogItem.activeIngredient ?? null,
+      strength: catalogItem.strength ?? null,
     };
   }
   return {
@@ -49,6 +51,8 @@ function resolveProductIdentity(product) {
     nameEn: product.nameEn,
     manufacturerAr: product.manufacturerAr,
     manufacturerEn: product.manufacturerEn,
+    activeIngredient: null,
+    strength: null,
   };
 }
 
@@ -63,6 +67,9 @@ function applyResolvedIdentity(product) {
   product.nameEn = identity.nameEn;
   product.manufacturerAr = identity.manufacturerAr;
   product.manufacturerEn = identity.manufacturerEn;
+  // Not Product fields: set on the (lean / unsaved) doc for the viewmodels only.
+  product.activeIngredient = identity.activeIngredient;
+  product.strength = identity.strength;
   return product;
 }
 
@@ -115,6 +122,27 @@ function productSearchClause(search) {
   };
 }
 
+// Searching by active ingredient ("باراسيتامول" finds every paracetamol brand).
+// A product does not carry the ingredient (only its catalog item does), so the
+// matching catalog ids are looked up first and handed to buildProductFilter,
+// which adds them to the same single query. Two safeguards keep a vague term
+// from becoming a huge $in: at least 3 characters, and a cap on the ids.
+const INGREDIENT_SEARCH_MIN_LENGTH = 3;
+const INGREDIENT_SEARCH_MAX_ITEMS = 2000;
+
+async function catalogIdsMatchingIngredient(search) {
+  const term = normalizeText(optionalString(search, 'search'));
+  if (!term || term.length < INGREDIENT_SEARCH_MIN_LENGTH) return [];
+  const rows = await ProductCatalog.find({
+    isActive: true,
+    activeIngredientKey: new RegExp(escapeRegex(term)),
+  })
+    .select('_id')
+    .limit(INGREDIENT_SEARCH_MAX_ITEMS)
+    .lean();
+  return rows.map((row) => row._id);
+}
+
 // Builds the Mongo filter.
 //  - warehouseId: required for every warehouse and pharmacist caller; only the
 //    admin's cross-warehouse list omits it.
@@ -134,6 +162,7 @@ function buildProductFilter({
   manufacturer,
   categoryId,
   availableOnly = false,
+  masterProductIds = [],
 } = {}) {
   const filter = {};
   if (warehouseId) filter.warehouseId = warehouseId;
@@ -152,14 +181,17 @@ function buildProductFilter({
   if (manufacturerKey) filter.manufacturerKey = manufacturerKey;
 
   const searchClause = productSearchClause(search);
-  if (searchClause) filter.$or = searchClause.$or;
+  if (searchClause) {
+    filter.$or = searchClause.$or;
+    if (masterProductIds.length > 0) filter.$or.push({ masterProductId: { $in: masterProductIds } });
+  }
 
   return filter;
 }
 
 const PRODUCT_IDENTITY_POPULATE = {
   path: 'masterProductId',
-  select: 'nameAr nameEn manufacturerAr manufacturerEn imageUrl',
+  select: 'nameAr nameEn manufacturerAr manufacturerEn imageUrl activeIngredient strength',
 };
 
 // One page of products for a filter from buildProductFilter, cursored on `_id`
@@ -224,7 +256,7 @@ async function listCatalog({
   }
   const searchClause = productSearchClause(search);
   if (searchClause) {
-    filter.$or = searchClause.$or;
+    filter.$or = [...searchClause.$or, { activeIngredientKey: new RegExp(escapeRegex(normalizeText(search))) }];
   }
   if (after) {
     filter._id = { $gt: after };
@@ -250,7 +282,7 @@ async function searchActiveForWarehouse(search) {
   const term = normalizeText(optionalString(search, 'search'));
   if (term) {
     const pattern = new RegExp(escapeRegex(term));
-    filter.$or = [{ nameKey: pattern }, { nameEnKey: pattern }];
+    filter.$or = [{ nameKey: pattern }, { nameEnKey: pattern }, { activeIngredientKey: pattern }];
   }
   return ProductCatalog.find(filter).select('-nameHistory').sort({ nameAr: 1 }).limit(50).lean();
 }
@@ -365,6 +397,14 @@ async function updateCatalogItem(id, changes, { userId = null, confirmed = false
       item.nameAr = nextNameAr;
       item.nameEn = nextNameEn;
     }
+  }
+
+  for (const field of ['activeIngredient', 'strength', 'dosageForm']) {
+    if (changes[field] === undefined) continue;
+    if (changes[field] !== null && typeof changes[field] !== 'string') {
+      throw ApiError.badRequest(`Invalid ${field}.`, undefined, 'INVALID_MEDICINE_FIELD');
+    }
+    item[field] = changes[field] && changes[field].trim() ? changes[field].trim() : null;
   }
 
   if (changes.unitAr !== undefined) {
@@ -714,6 +754,7 @@ function mapHeaderRow(row, { explicitMapping, savedMapping, columnSet }) {
     const named =
       (explicitMapping && explicitMapping.get(headerKey)) ||
       (savedMapping && savedMapping.get(headerKey)) ||
+      (columnSet.headerAliases && columnSet.headerAliases[headerKey]) ||
       fieldForHeader(header);
     const field = named && columnSet.fields.includes(named) ? named : null;
     columns.push({ index, header, headerKey, field });
@@ -832,6 +873,9 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
       name,
       manufacturer,
       category: col('category') ? cellText(row.getCell(col('category'))) : '',
+      activeIngredient: col('activeIngredient') ? cellText(row.getCell(col('activeIngredient'))) : '',
+      strength: col('strength') ? cellText(row.getCell(col('strength'))) : '',
+      form: col('form') ? cellText(row.getCell(col('form'))) : '',
       price: rawPrice === '' ? '' : String(rawPrice),
       currency: col('currency') ? cellText(row.getCell(col('currency'))) : '',
       unit: col('unit') ? cellText(row.getCell(col('unit'))) : '',
@@ -844,6 +888,9 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
       name,
       manufacturer,
       category: raw.category,
+      activeIngredient: raw.activeIngredient,
+      strength: raw.strength,
+      form: raw.form,
       price: null,
       priceEmpty: false,
       currency: null,
@@ -936,6 +983,16 @@ async function priceRowsInUsd(rows) {
 // ---------------------------------------------------------------------------
 // Admin catalog import
 // ---------------------------------------------------------------------------
+
+// The file's active ingredient / strength / form cells as the catalog item's
+// fields - only the ones the file actually filled in.
+function medicineFactsOf(row) {
+  const facts = {};
+  if (row.activeIngredient) facts.activeIngredient = row.activeIngredient;
+  if (row.strength) facts.strength = row.strength;
+  if (row.form) facts.dosageForm = row.form;
+  return facts;
+}
 //
 // Upserts central-catalog items by normalized identity (name + manufacturer).
 //  - Its columns are its own (IMPORT_COLUMN_SETS.catalog): name and company
@@ -1039,9 +1096,21 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
       const categoryId = await categories.resolve(row.category);
       if (item) {
         // A category in the file - known or just created - files it there;
-        // an empty cell leaves the item's category as it was.
+        // an empty cell leaves the item's category as it was. The same goes
+        // for the active ingredient, strength and form: a re-import fills in
+        // what an earlier file did not carry, and never blanks anything.
+        let changed = false;
         if (categoryId && String(item.categoryId) !== String(categoryId)) {
           item.categoryId = categoryId;
+          changed = true;
+        }
+        for (const [field, value] of Object.entries(medicineFactsOf(row))) {
+          if (value && item[field] !== value) {
+            item[field] = value;
+            changed = true;
+          }
+        }
+        if (changed) {
           await item.save();
           updated += 1;
         } else {
@@ -1055,6 +1124,7 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
         manufacturerAr: manufacturer.nameAr,
         manufacturerId: manufacturer._id,
         categoryId,
+        ...medicineFactsOf(row),
       });
       categories.countItem(categoryId);
       itemByIdentity.set(created.identityKey, created);
@@ -1078,6 +1148,8 @@ async function importFromExcel(file, { confirmNewManufacturers = [], manufacture
 }
 
 module.exports = {
+  catalogIdsMatchingIngredient,
+  PRODUCT_IDENTITY_POPULATE,
   listCatalog,
   searchActiveForWarehouse,
   searchManufacturers,

@@ -11,6 +11,8 @@ class ProductModel {
     required this.manufacturerAr,
     this.manufacturerEn,
     this.image,
+    this.activeIngredient,
+    this.strength,
     this.unitAr,
     this.unitEn,
     required this.priceUsd,
@@ -40,6 +42,10 @@ class ProductModel {
   final String? manufacturerEn;
   // The effective image: the warehouse's own, else the catalog item's.
   final String? image;
+  // What the medicine is made of and how strong (e.g. 'PARACETAMOL', '500 MG/TAB.').
+  // Null when the catalog item has none - then there are no alternatives to offer either.
+  final String? activeIngredient;
+  final String? strength;
   final String? unitAr;
   final String? unitEn;
   // USD, not SYP - see backend/src/models/product.model.js. SYP is what the
@@ -114,6 +120,8 @@ class ProductModel {
       manufacturerAr: (json['manufacturerAr'] as String?) ?? '',
       manufacturerEn: json['manufacturerEn'] as String?,
       image: json['image'] as String?,
+      activeIngredient: json['activeIngredient'] as String?,
+      strength: json['strength'] as String?,
       unitAr: json['unitAr'] as String?,
       unitEn: json['unitEn'] as String?,
       priceUsd: json['priceUsd'] as num,

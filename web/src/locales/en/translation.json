@@ -883,7 +883,10 @@
       "category": "Category",
       "unit": "Unit",
       "currency": "Currency",
-      "bonus": "Bonus"
+      "bonus": "Bonus",
+      "activeIngredient": "Active ingredient",
+      "strength": "Strength",
+      "form": "Dosage form"
     }
   },
   "importResults": {

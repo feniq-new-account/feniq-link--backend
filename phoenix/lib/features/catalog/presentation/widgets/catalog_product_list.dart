@@ -14,6 +14,7 @@ import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/catalog/presentation/managers/catalog_cubit.dart';
 import 'package:feniq/features/catalog/presentation/managers/catalog_state.dart';
+import 'package:feniq/features/catalog/presentation/widgets/alternatives_sheet.dart';
 import 'package:feniq/features/catalog/presentation/widgets/product_card.dart';
 
 // The product results of a CatalogCubit - loading skeleton, error, empty
@@ -167,6 +168,12 @@ class _CatalogProductListState extends State<CatalogProductList> {
             onAdd: (quantity) => _handleAdd(product, quantity),
             onCartQuantityChanged: (quantity) => _setCartQuantity(product, quantity),
             onCartRemove: () => _removeFromCart(product),
+            onShowAlternatives: () => showAlternativesSheet(
+              context,
+              warehouseId: widget.warehouseId,
+              product: product,
+              onAdd: _handleAdd,
+            ),
           );
         }
 
@@ -189,7 +196,7 @@ class _CatalogProductListState extends State<CatalogProductList> {
                         // card and overflow the cell - this leaves headroom
                         // for that case, plus the in-cart quantity stepper
                         // that can replace the "Add" button.
-                        mainAxisExtent: 316,
+                        mainAxisExtent: 344,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) => cardFor(state.products[index], grid: true),
@@ -232,7 +239,7 @@ class CatalogProductsSkeleton extends StatelessWidget {
       return SkeletonGrid(
         itemCount: itemCount ?? 6,
         maxCrossAxisExtent: 170,
-        mainAxisExtent: 316,
+        mainAxisExtent: 344,
         itemBuilder: (context, index) => const _ProductGridCellSkeleton(),
       );
     }

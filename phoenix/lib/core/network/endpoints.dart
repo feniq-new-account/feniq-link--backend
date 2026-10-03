@@ -23,6 +23,8 @@ class Endpoints {
   static const String categories = '/categories';
 
   static String warehouseProducts(String warehouseId) => '/warehouses/$warehouseId/products';
+  static String productAlternatives(String warehouseId, String productId) =>
+      '/warehouses/$warehouseId/products/$productId/alternatives';
   static String warehouseManufacturers(String warehouseId) => '/warehouses/$warehouseId/manufacturers';
   static String warehouseProfile(String warehouseId) => '/warehouses/$warehouseId/profile';
 

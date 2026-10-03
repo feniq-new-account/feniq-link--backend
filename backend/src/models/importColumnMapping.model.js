@@ -16,7 +16,7 @@ const importColumnMappingSchema = new Schema(
     headerKey: { type: String, required: true },
     field: {
       type: String,
-      enum: ['name', 'price', 'manufacturer', 'category', 'unit', 'currency', 'bonus'],
+      enum: ['name', 'price', 'manufacturer', 'category', 'unit', 'currency', 'bonus', 'activeIngredient', 'strength', 'form'],
       required: true,
     },
   },

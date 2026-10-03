@@ -17,7 +17,7 @@ export const WAREHOUSE_IMPORT_COLUMNS = {
 };
 // The central catalog has no price - a price belongs to a warehouse's product.
 export const CATALOG_IMPORT_COLUMNS = {
-  fields: ['name', 'manufacturer', 'category'],
+  fields: ['name', 'manufacturer', 'category', 'activeIngredient', 'strength', 'form'],
   required: ['name', 'manufacturer'],
 };
 

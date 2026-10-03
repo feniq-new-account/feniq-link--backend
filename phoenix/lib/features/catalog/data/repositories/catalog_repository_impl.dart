@@ -87,6 +87,17 @@ class CatalogRepositoryImpl implements CatalogRepository, SessionScoped {
   }
 
   @override
+  Future<List<ProductModel>> getAlternatives({required String warehouseId, required String productId}) async {
+    try {
+      final response = await _apiClient.dio.get(Endpoints.productAlternatives(warehouseId, productId));
+      final data = response.data as Map<String, dynamic>;
+      return PaginatedResult.fromJsonSkippingInvalid(data, 'products', ProductModel.tryFromJson).items;
+    } on DioException catch (e) {
+      throw ServerFailure.fromDioError(e);
+    }
+  }
+
+  @override
   Future<List<ManufacturerModel>> getManufacturers({required String warehouseId}) async {
     try {
       final response = await _apiClient.dio.get(Endpoints.warehouseManufacturers(warehouseId));

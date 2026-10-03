@@ -26,6 +26,14 @@ const FIELD_SYNONYMS = {
   category: ['الفئة', 'فئة', 'التصنيف', 'تصنيف', 'الفئة الدوائية', 'المجموعة الدوائية', 'category', 'class'],
   unit: ['الوحدة', 'وحدة', 'الشكل', 'الشكل الصيدلاني', 'العبوة', 'unit', 'form', 'pack'],
   currency: ['العملة', 'عملة', 'currency', 'cur'],
+  // Catalog import only: what the medicine is made of, how strong it is and
+  // what shape it takes - the basis of the pharmacist's alternatives.
+  activeIngredient: [
+    'المادة الفعالة', 'المادة الفعاله', 'المواد الفعالة', 'التركيب', 'المركب', 'المادة العلمية', 'الاسم العلمي',
+    'active ingredient', 'active substance', 'generic', 'generic name', 'composition', 'ingredient',
+  ],
+  strength: ['العيار', 'التركيز', 'القوة', 'strength', 'dose strength'],
+  form: ['الشكل الدوائي', 'dosage form', 'pharmaceutical form'],
   bonus: ['البونص', 'بونص', 'العرض', 'عرض', 'الهدية', 'bonus', 'free'],
 };
 
@@ -51,8 +59,12 @@ const IMPORT_COLUMN_SETS = {
   // The admin's central catalog: the medicines, their companies and, optionally,
   // an existing category to file them under.
   catalog: {
-    fields: ['name', 'manufacturer', 'category'],
+    fields: ['name', 'manufacturer', 'category', 'activeIngredient', 'strength', 'form'],
     required: ['name', 'manufacturer'],
+    // The Ministry's list heads the dosage form "الشكل الصيدلاني", which the
+    // warehouse import reads as the unit. Here, where there is no unit, it is
+    // the form.
+    headerAliases: { 'الشكل الصيدلاني': 'form', 'الشكل': 'form' },
   },
 };
 

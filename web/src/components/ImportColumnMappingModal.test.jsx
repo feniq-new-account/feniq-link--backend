@@ -28,13 +28,13 @@ const optionValues = (html) => [...html.matchAll(/<option value="([^"]+)"/g)].ma
 const headers = [{ index: 1, header: 'Mystery', headerKey: 'mystery', field: null }];
 
 describe('the column-mapping step', () => {
-  it('offers the admin catalog import only name, company and category', () => {
+  it('offers the admin catalog import its own columns and no price', () => {
     // As the server sends it for the catalog import...
     const fromServer = render({ details: { headers, ...CATALOG_IMPORT_COLUMNS, missing: ['manufacturer'] }, columns: CATALOG_IMPORT_COLUMNS });
-    expect([...new Set(optionValues(fromServer))]).toEqual(['name', 'manufacturer', 'category']);
+    expect([...new Set(optionValues(fromServer))]).toEqual(['name', 'manufacturer', 'category', 'activeIngredient', 'strength', 'form']);
     // ...and as the admin page's fallback, should a refusal carry no fields.
     const fallback = render({ details: { headers }, columns: CATALOG_IMPORT_COLUMNS });
-    expect([...new Set(optionValues(fallback))]).toEqual(['name', 'manufacturer', 'category']);
+    expect([...new Set(optionValues(fallback))]).toEqual(['name', 'manufacturer', 'category', 'activeIngredient', 'strength', 'form']);
     expect(fallback).not.toContain('Price');
   });
 

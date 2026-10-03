@@ -4,7 +4,14 @@ const Offer = require('../models/offer.model');
 const Manufacturer = require('../models/manufacturer.model');
 const { normalizeText } = require('../utils/normalizeText');
 const { isWarehouseAvailable } = require('./warehouse.service');
-const { buildProductFilter, findProductPage } = require('./productCatalog.service');
+const ProductCatalog = require('../models/productCatalog.model');
+const {
+  buildProductFilter,
+  findProductPage,
+  catalogIdsMatchingIngredient,
+  applyResolvedIdentity,
+  PRODUCT_IDENTITY_POPULATE,
+} = require('./productCatalog.service');
 const { getDiscountMapForWarehouse, discountPercentageFor } = require('./manufacturerDiscount.service');
 const { activeOfferFilter, offerMapFor } = require('./offer.service');
 
@@ -46,7 +53,10 @@ async function listWarehouseProducts(
     throw ApiError.notFound('Warehouse not found.');
   }
 
-  const filter = buildProductFilter({ warehouseId, search, manufacturer, categoryId });
+  // A search also finds a medicine by its active ingredient (a paracetamol
+  // brand when the pharmacist types "باراسيتامول").
+  const masterProductIds = search ? await catalogIdsMatchingIngredient(search) : [];
+  const filter = buildProductFilter({ warehouseId, search, manufacturer, categoryId, masterProductIds });
   const { rows: products, hasMore, nextCursor } = await findProductPage(filter, {
     limit,
     after,
@@ -54,6 +64,12 @@ async function listWarehouseProducts(
     select: CATALOG_PRODUCT_SELECT,
   });
 
+  return { items: await attachOffersAndDiscounts(warehouseId, products), hasMore, nextCursor };
+}
+
+// Each product with its live offer and its manufacturer's discount, the shape
+// product.viewmodel.js serializes. Two queries for the whole page.
+async function attachOffersAndDiscounts(warehouseId, products) {
   const now = new Date();
   const [offers, manufacturerDiscountByName] = await Promise.all([
     Offer.find({
@@ -75,12 +91,59 @@ async function listWarehouseProducts(
   // Section 15: the manufacturer discount (if any) stacks with an active
   // Offer - see product.viewmodel.js for where the two combine into one
   // discountPriceUsd.
-  const items = products.map((product) => ({
+  return products.map((product) => ({
     product,
     offer: offerByProductId.get(product._id.toString()) ?? null,
     manufacturerDiscountPercentage: discountPercentageFor(manufacturerDiscountByName, product),
   }));
-  return { items, hasMore, nextCursor };
+}
+
+const ALTERNATIVES_LIMIT = 20;
+const ALTERNATIVE_CATALOG_ITEMS_CAP = 500;
+
+// The other medicines in this warehouse that can stand in for one: same active
+// ingredient, same strength, same kind of dosage form (the three keys on the
+// catalog item, productCatalog.model.js). Available ones first, then cheapest -
+// the point is to give the pharmacist something to order when the medicine she
+// came for is out. Empty when the item has no ingredient data, or no match.
+async function listAlternatives(warehouseId, productId) {
+  const available = await isWarehouseAvailable(warehouseId);
+  if (!available) {
+    throw ApiError.notFound('Warehouse not found.');
+  }
+  const product = await Product.findOne({ _id: productId, warehouseId, isActive: true })
+    .select('masterProductId')
+    .populate({ path: 'masterProductId', select: 'activeIngredientKey strengthKey formKey' })
+    .lean();
+  if (!product) {
+    throw ApiError.notFound('Product not found.', 'PRODUCT_NOT_FOUND');
+  }
+  const source = product.masterProductId;
+  if (!source || !source.activeIngredientKey || !source.strengthKey || !source.formKey) return [];
+
+  const siblings = await ProductCatalog.find({
+    _id: { $ne: source._id },
+    isActive: true,
+    activeIngredientKey: source.activeIngredientKey,
+    strengthKey: source.strengthKey,
+    formKey: source.formKey,
+  })
+    .select('_id')
+    .limit(ALTERNATIVE_CATALOG_ITEMS_CAP)
+    .lean();
+  if (siblings.length === 0) return [];
+
+  const candidates = await Product.find({
+    warehouseId,
+    isActive: true,
+    masterProductId: { $in: siblings.map((item) => item._id) },
+  })
+    .select(CATALOG_PRODUCT_SELECT)
+    .populate(PRODUCT_IDENTITY_POPULATE)
+    .lean();
+  candidates.forEach(applyResolvedIdentity);
+  candidates.sort((a, b) => Number(b.isAvailable) - Number(a.isAvailable) || a.price - b.price);
+  return attachOffersAndDiscounts(warehouseId, candidates.slice(0, ALTERNATIVES_LIMIT));
 }
 
 // The pharmacist's new entry point into a warehouse's catalog (warehouse ->
@@ -176,6 +239,7 @@ async function listManufacturersWithDiscountsForWarehouse(warehouseId) {
 
 module.exports = {
   listWarehouseProducts,
+  listAlternatives,
   listDistinctManufacturersForWarehouse,
   listManufacturersWithDiscountsForWarehouse,
 };

@@ -8,6 +8,9 @@ function serializeCatalogItem(item) {
     // Additive (catalog overhaul): the central manufacturer and image.
     manufacturerId: item.manufacturerId ?? null,
     imageUrl: item.imageUrl ?? null,
+    activeIngredient: item.activeIngredient ?? null,
+    strength: item.strength ?? null,
+    dosageForm: item.dosageForm ?? null,
     categoryId: item.categoryId,
     unitAr: item.unitAr,
     unitEn: item.unitEn,

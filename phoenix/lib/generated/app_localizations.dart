@@ -782,6 +782,30 @@ abstract class AppLocalizations {
   /// **'Unavailable'**
   String get unavailableLabel;
 
+  /// No description provided for @alternativesLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Alternatives'**
+  String get alternativesLink;
+
+  /// No description provided for @alternativesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alternatives'**
+  String get alternativesTitle;
+
+  /// No description provided for @alternativesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Same active ingredient, strength and form, from this warehouse'**
+  String get alternativesSubtitle;
+
+  /// No description provided for @alternativesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No alternatives in this warehouse.'**
+  String get alternativesEmpty;
+
   /// No description provided for @offerBadgeLabel.
   ///
   /// In en, this message translates to:

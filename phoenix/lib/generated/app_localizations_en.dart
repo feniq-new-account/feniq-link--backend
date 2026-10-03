@@ -403,6 +403,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unavailableLabel => 'Unavailable';
 
   @override
+  String get alternativesLink => 'Alternatives';
+
+  @override
+  String get alternativesTitle => 'Alternatives';
+
+  @override
+  String get alternativesSubtitle => 'Same active ingredient, strength and form, from this warehouse';
+
+  @override
+  String get alternativesEmpty => 'No alternatives in this warehouse.';
+
+  @override
   String get offerBadgeLabel => 'Offer';
 
   @override
