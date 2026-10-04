@@ -43,6 +43,7 @@ dependencies:
   logger: ^2.7.0
   flutter_secure_storage: ^10.3.1
   shared_preferences: ^2.5.5
+  path_provider: ^2.1.5
   flutter_bloc: ^9.1.1
   image_picker: ^1.2.0
   # 12.x resolves permission_handler_android 13.x (AGP 8 / Groovy build). 13.x

@@ -173,6 +173,14 @@
   "searchWarehouseProductsHint": "ابحث في كل أصناف المستودع",
   "addToCartButton": "إضافة",
   "unavailableLabel": "غير متوفر",
+  "offlineBannerMessage": "لا يوجد اتصال - تُعرض النسخة المحفوظة على هاتفك من {time}. قد تكون الأسعار والتوفر تغيّرت، وإرسال الطلب يحتاج اتصالاً.",
+  "@offlineBannerMessage": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "alternativesLink": "البدائل",
   "alternativesTitle": "البدائل",
   "alternativesSubtitle": "نفس المادة الفعالة والعيار والشكل، من هذا المستودع",

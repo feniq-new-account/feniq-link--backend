@@ -782,6 +782,12 @@ abstract class AppLocalizations {
   /// **'Unavailable'**
   String get unavailableLabel;
 
+  /// No description provided for @offlineBannerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection - showing the copy saved on your phone from {time}. Prices and availability may have changed, and sending an order needs a connection.'**
+  String offlineBannerMessage(String time);
+
   /// No description provided for @alternativesLink.
   ///
   /// In en, this message translates to:

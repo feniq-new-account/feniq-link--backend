@@ -44,6 +44,7 @@ function resolveProductIdentity(product) {
       manufacturerEn: catalogItem.manufacturerEn,
       activeIngredient: catalogItem.activeIngredient ?? null,
       strength: catalogItem.strength ?? null,
+      dosageForm: catalogItem.dosageForm ?? null,
     };
   }
   return {
@@ -53,6 +54,7 @@ function resolveProductIdentity(product) {
     manufacturerEn: product.manufacturerEn,
     activeIngredient: null,
     strength: null,
+    dosageForm: null,
   };
 }
 
@@ -70,6 +72,7 @@ function applyResolvedIdentity(product) {
   // Not Product fields: set on the (lean / unsaved) doc for the viewmodels only.
   product.activeIngredient = identity.activeIngredient;
   product.strength = identity.strength;
+  product.dosageForm = identity.dosageForm;
   return product;
 }
 
@@ -191,7 +194,7 @@ function buildProductFilter({
 
 const PRODUCT_IDENTITY_POPULATE = {
   path: 'masterProductId',
-  select: 'nameAr nameEn manufacturerAr manufacturerEn imageUrl activeIngredient strength',
+  select: 'nameAr nameEn manufacturerAr manufacturerEn imageUrl activeIngredient strength dosageForm',
 };
 
 // One page of products for a filter from buildProductFilter, cursored on `_id`

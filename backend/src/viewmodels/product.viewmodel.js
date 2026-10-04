@@ -35,6 +35,8 @@ function serializeProductWithOffer({ product, offer, manufacturerDiscountPercent
     // Additive: what the medicine is made of and how strong, for the app to show under the name.
     activeIngredient: product.activeIngredient ?? null,
     strength: product.strength ?? null,
+    // The dosage form, so the app can find alternatives on its own when it is offline.
+    dosageForm: product.dosageForm ?? null,
     unitAr: product.unitAr,
     unitEn: product.unitEn,
     priceUsd: product.price,

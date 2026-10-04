@@ -403,13 +403,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unavailableLabel => 'Unavailable';
 
   @override
+  String offlineBannerMessage(String time) {
+    return 'No connection - showing the copy saved on your phone from $time. Prices and availability may have changed, and sending an order needs a connection.';
+  }
+
+  @override
   String get alternativesLink => 'Alternatives';
 
   @override
   String get alternativesTitle => 'Alternatives';
 
   @override
-  String get alternativesSubtitle => 'Same active ingredient, strength and form, from this warehouse';
+  String get alternativesSubtitle =>
+      'Same active ingredient, strength and form, from this warehouse';
 
   @override
   String get alternativesEmpty => 'No alternatives in this warehouse.';
