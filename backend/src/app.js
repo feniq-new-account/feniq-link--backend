@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const morgan = require('morgan');
 const mongoSanitize = require('express-mongo-sanitize');
 
@@ -52,6 +53,9 @@ if (env.media.dir) {
   );
 }
 
+// Text responses (the product lists, the 13,000-item directory) are sent gzipped:
+// a fraction of the bytes on a mobile connection.
+app.use(compression());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(mongoSanitize());

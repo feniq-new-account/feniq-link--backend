@@ -194,6 +194,9 @@ productCatalogSchema.index({ manufacturerId: 1 });
 productCatalogSchema.index({ nameEn: 1 });
 productCatalogSchema.index({ manufacturerEn: 1 });
 
+// The phones' incremental directory sync: items changed since a moment.
+productCatalogSchema.index({ updatedAt: 1 });
+
 // The alternatives lookup: same ingredient + strength + form, one index seek.
 productCatalogSchema.index({ activeIngredientKey: 1, strengthKey: 1, formKey: 1 });
 

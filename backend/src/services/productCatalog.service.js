@@ -291,6 +291,47 @@ async function listCatalog({
   return { items: page, hasMore, nextCursor };
 }
 
+// ---------------------------------------------------------------------------
+// The directory: the whole medicine list, for the phone to keep (offline use)
+// ---------------------------------------------------------------------------
+
+const DIRECTORY_DEFAULT_LIMIT = 1000;
+const DIRECTORY_MAX_LIMIT = 3000;
+
+// Every catalog item, light, in pages by id - so a phone can download the whole
+// list once, keep it, and browse and search it with no connection. `since` (an
+// ISO date) makes it incremental: only items changed from that moment, and those
+// include the withdrawn ones (isActive false) so the phone can drop them.
+async function listDirectory({ after = null, limit = DIRECTORY_DEFAULT_LIMIT, since = null } = {}) {
+  const pageSize = Number(limit);
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > DIRECTORY_MAX_LIMIT) {
+    throw ApiError.badRequest('Invalid limit.', undefined, 'INVALID_LIMIT');
+  }
+  const filter = {};
+  if (since) {
+    const sinceDate = new Date(since);
+    if (Number.isNaN(sinceDate.getTime())) throw ApiError.badRequest('Invalid since.', undefined, 'INVALID_SINCE');
+    filter.updatedAt = { $gte: sinceDate };
+  } else {
+    filter.isActive = true;
+  }
+  // The first page also says how many there are in all, so the phone can show
+  // a real progress bar while it downloads the rest.
+  const total = after ? null : await ProductCatalog.countDocuments(filter);
+  if (after) {
+    if (!mongoose.Types.ObjectId.isValid(after)) throw ApiError.badRequest('Invalid cursor.', undefined, 'INVALID_CURSOR');
+    filter._id = { $gt: after };
+  }
+  const rows = await ProductCatalog.find(filter)
+    .select('nameAr nameEn manufacturerAr manufacturerEn activeIngredient strength dosageForm imageUrl categoryId isActive updatedAt')
+    .sort({ _id: 1 })
+    .limit(pageSize + 1)
+    .lean();
+  const hasMore = rows.length > pageSize;
+  const page = hasMore ? rows.slice(0, pageSize) : rows;
+  return { items: page, hasMore, total, nextCursor: page.length > 0 ? String(page[page.length - 1]._id) : null };
+}
+
 // How far the catalog's pictures have got: the totals, how sure the bulk-linked
 // ones are, and which companies have the most items still without one - the
 // list the admin chases (company representatives, a photo session).
@@ -1218,6 +1259,7 @@ module.exports = {
   catalogIdsMatchingIngredient,
   PRODUCT_IDENTITY_POPULATE,
   listCatalog,
+  listDirectory,
   imageStats,
   searchActiveForWarehouse,
   searchManufacturers,

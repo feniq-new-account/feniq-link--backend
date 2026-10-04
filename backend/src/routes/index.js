@@ -43,6 +43,7 @@ const adminComplaintRoutes = require('./adminComplaint.routes');
 const warehouseDiscountCodeRoutes = require('./warehouseDiscountCode.routes');
 const adminDiscountCodeRoutes = require('./adminDiscountCode.routes');
 const discountCodeRoutes = require('./discountCode.routes');
+const catalogDirectoryRoutes = require('./catalogDirectory.routes');
 
 const router = Router();
 
@@ -57,6 +58,7 @@ router.use('/admin/ledger', adminLedgerRoutes);
 router.use('/admin/commission', adminCommissionRoutes);
 router.use('/exchange-rate', exchangeRateRoutes);
 router.use('/admin/catalog', adminCatalogRoutes);
+router.use('/catalog', catalogDirectoryRoutes);
 router.use('/admin/manufacturers', adminManufacturerRoutes);
 router.use('/admin/categories', adminCategoryRoutes);
 router.use('/warehouse/catalog', warehouseCatalogRoutes);
