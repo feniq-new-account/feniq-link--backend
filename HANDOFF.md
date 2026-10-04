@@ -1,17 +1,19 @@
 # تسليم: نشر فينيق على حسابات المالك
 
-آخر تحديث: 27 أيلول 2026. اقرأ `CLAUDE.md` أولاً (قاعدة العمل: كل ما تقدر عليه اعمله بنفسك).
+آخر تحديث: 4 تشرين الأول 2026 (جلسة التطوير 1). اقرأ `CLAUDE.md` أولاً (قاعدة العمل: كل ما تقدر عليه اعمله بنفسك).
 
 ## الوضع الحالي
 
 - الكود الكامل في هذا الريبو (Private)، فرع `main`: السيرفر `backend/`، تطبيق الصيدليات `phoenix/` (Flutter)، لوحة الويب `web/`.
 - المطوّر السابق (يزن) كان ينشر كل شيء على حساباته هو: سيرفر `phoenix-1-p2qi.onrender.com`، مشروع Firebase `phoenix-pharmacy-e54d2`. **لا شيء منها يُستعمل بعد الآن.** لا يوجد مستخدمون حقيقيون ولا بيانات يلزم نقلها.
-- الاختبارات: السيرفر 1163/1163، لوحة الويب 354/354.
-- `render.yaml` جاهز (Blueprint): خدمتان `feniq-api` (Node، `backend/`) و `feniq-web` (static، `web/`)، منطقة frankfurt، الخطة المجانية.
-- تطبيق الموبايل يشير إلى `https://feniq-api.onrender.com/api` (`phoenix/lib/config/app_config.dart`).
+- الاختبارات: السيرفر 1199/1199، لوحة الويب 358/358.
+- `render.yaml` جاهز (Blueprint): `feniq-connect-api` (السيرفر، Node، `backend/`) و `feniq-connect-web` (لوحة الويب، static، `web/`) و `feniq-site` (الموقع + ملف APK)، منطقة frankfurt، الخطة المجانية.
+- تطبيق الموبايل يشير إلى `https://feniq-connect-api.onrender.com/api` (`phoenix/lib/config/app_config.dart`). معرّفه `com.feniq.link`.
 - GitHub Actions:
-  - `android-apk.yml` يبني APK مع كل تعديل على `phoenix/` (يعمل ✅).
+  - `android-apk.yml` يبني APK مع كل تعديل على `phoenix/` (وعلى كل PR). موقّع بالمفتاح الدائم من الأسرار → `feniq-apk`؛ بدونها → `feniq-apk-TEST-ONLY` لا يُنشر. يعرض بصمة التوقيع في صفحة التشغيل.
   - `create-admin.yml` ينشئ أول أدمن (يدوي، يحتاج سرّين، انظر الخطوة 4).
+  - `db-backup.yml` نسخة احتياطية يومية مشفّرة + تجربة استرجاع (انظر الخطوة 5.6).
+  - `site-deploy.yml` ينشر الموقع مع آخر APK موقّع.
 - المالك أنشأ: حساب **MongoDB Atlas** (Cluster0، FREE M0، AWS — المنطقة لم تُؤكَّد بعد) وحساب **Render**.
 
 ## ملاحظات مهمة
@@ -35,11 +37,11 @@
 2. **New ← Blueprint ←** الريبو `phoenixxx-dev/feniq-backend`، الفرع `main`.
 3. عند طلب القيم: `MONGODB_URI` = رابط الخطوة 1. اترك Firebase و Cloudinary فارغة الآن.
 4. **Apply**، وانتظر حتى تصير الخدمتان Live.
-5. إن أعطى Render اسماً غير `feniq-api` / `feniq-web` (الاسم محجوز): سجّل الأسماء الفعلية — يجب تحديث `CORS_ORIGINS` في Render، و`VITE_API_BASE_URL` في `render.yaml`، و`phoenix/lib/config/app_config.dart`، و`API_BASE_URL` في `.github/workflows/android-apk.yml`.
+5. إن أعطى Render اسماً غير `feniq-connect-api` / `feniq-connect-web` (الاسم محجوز): سجّل الأسماء الفعلية — يجب تحديث `CORS_ORIGINS` في Render، و`VITE_API_BASE_URL` في `render.yaml`، و`phoenix/lib/config/app_config.dart`، و`API_BASE_URL` في `.github/workflows/android-apk.yml`.
 
 ### 3. التحقق
-- افتح `https://feniq-api.onrender.com/api/health` ← يجب أن يظهر `"db":"connected"`.
-- افتح `https://feniq-web.onrender.com` ← صفحة الدخول.
+- افتح `https://feniq-connect-api.onrender.com/api/health` ← يجب أن يظهر `"db":"connected"`.
+- افتح `https://feniq-connect-web.onrender.com` ← صفحة الدخول.
 - اطلب من المالك فتح الرابطين **بدون VPN** من سوريا. إن لم يفتحا، سجّل ذلك — نحتاج بديلاً (دومين خاص عبر Cloudflare مثلاً).
 
 ### 4. أول حساب أدمن
@@ -47,12 +49,22 @@
    - `MONGODB_URI` = نفس رابط الخطوة 1.
    - `ADMIN_PASSWORD` = كلمة سر قوية (12 حرفاً على الأقل). المالك يختارها ويحفظها — لا تُكتب في المحادثة.
 2. **Actions ← Create admin ← Run workflow**: الاسم ورقم هاتف المالك.
-3. سجّل الدخول إلى `feniq-web.onrender.com` برقم الهاتف وكلمة السر.
+3. سجّل الدخول إلى `feniq-connect-web.onrender.com` برقم الهاتف وكلمة السر.
 
 ### 5. بعد ذلك (بالترتيب)
-1. **معرّف التطبيق:** غيّر `com.example.phoenix` إلى معرّف للمالك (مثلاً `com.feniq.app`) في `phoenix/android/app/build.gradle.kts` (`namespace` و `applicationId`) ومسار `MainActivity.kt`، و `PRODUCT_BUNDLE_IDENTIFIER` في iOS.
-2. **Firebase** (الإشعارات): مشروع جديد على حساب المالك، تطبيق Android بالمعرّف الجديد، نزّل `google-services.json` الجديد مكان `phoenix/android/app/google-services.json`، وحدّث `phoenix/lib/firebase_options.dart`. للسيرفر: Service account ← Generate key ← ضع `FIREBASE_PROJECT_ID` و `FIREBASE_CLIENT_EMAIL` و `FIREBASE_PRIVATE_KEY` في Render.
-3. **مفتاح التوقيع الدائم:** `keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`، ثم أسرار GitHub: `ANDROID_KEYSTORE_BASE64` (الملف بـ base64) و `ANDROID_KEYSTORE_PASSWORD` و `ANDROID_KEY_ALIAS` و `ANDROID_KEY_PASSWORD`. **سلّم الملف وكلماته للمالك ليحفظه في مكانين** — بدونه لا تحديثات للتطبيق أبداً.
+1. ✅ **معرّف التطبيق:** صار `com.feniq.link` — مكانه الوحيد أول `phoenix/android/app/build.gradle.kts` (`feniqApplicationId`). iOS ما زال `com.example.phoenix` (غير منشور).
+2. **مفتاح التوقيع الدائم** (خطوة المالك): `phoenix/android/README.md` القسم 2 — إنشاء الـkeystore، حفظه بمكانين، وأربعة أسرار GitHub `ANDROID_KEYSTORE_BASE64` و `ANDROID_KEYSTORE_PASSWORD` و `ANDROID_KEY_ALIAS` و `ANDROID_KEY_PASSWORD`، ثم المتغيّر `ANDROID_CERT_SHA256` بالبصمة.
+3. **Firebase** (خطوة المالك): `phoenix/android/README.md` القسم 3 — مشروع جديد، تطبيق Android `com.feniq.link`، رفع `google-services.json` الجديد مكان القديم (البناء يتجاهل القديم تلقائياً لأنه لـ`com.example.phoenix`؛ التطبيق يعمل بلا إشعارات حتى ذلك). على أندرويد لا حاجة لتعديل `firebase_options.dart`. للسيرفر: `FIREBASE_PROJECT_ID` و `FIREBASE_CLIENT_EMAIL` و `FIREBASE_PRIVATE_KEY` في Render.
 4. **Cloudinary** (الصور): حساب مجاني، ضع `CLOUDINARY_CLOUD_NAME` و `CLOUDINARY_API_KEY` و `CLOUDINARY_API_SECRET` في Render.
-5. **SMS:** `SMS_PROVIDER=console` حالياً (رمز التحقق يظهر في سجلات Render). يلزم مزوّد يرسل لأرقام سورية لاحقاً.
-6. نسخ احتياطي يومي لقاعدة البيانات (Atlas المجاني بلا نسخ احتياطية).
+5. **SMS / نسيت كلمة السر:** `SMS_PROVIDER=console` حالياً. بالإنتاج الرمز **لا يُكتب** في السجلات (فقط في development)، ومخزّن في القاعدة كـHMAC لا كأرقام. حتى يجي مزوّد SMS: الصيدلاني يتواصل مع الدعم (زر واتساب في التطبيق)، والأدمن من لوحة الويب ← **الحسابات ← إعادة تعيين كلمة المرور**: تتولّد كلمة مؤقتة، تُعرض مرة واحدة للنسخ، وينسجّل خروج الحساب من كل الأجهزة. ناقص: شاشة "تغيير كلمة السر" داخل التطبيق (الـAPI `POST /auth/change-password` موجود).
+6. ✅ **نسخ احتياطي يومي:** `.github/workflows/db-backup.yml` + `backend/scripts/backup/` (شرح الاسترجاع في `README.md` هناك). يحتاج سرّاً واحداً جديداً `BACKUP_ENCRYPTION_KEY` (يحفظه المالك بمكانين) بجانب `MONGODB_URI`.
+
+## جلسة التطوير 1 (4 تشرين الأول 2026) — ما انعمل
+
+- **رمز التحقق:** لا يُطبع بالسجلات خارج development (`consoleSmsProvider.js`)، يُخزَّن HMAC-SHA256 بمفتاح `JWT_SECRET` ويُقارن بزمن ثابت (`otp.service.js`). الرموز القديمة غير المشفّرة تنتهي خلال 5 دقائق.
+- **نسيت كلمة السر:** زر الأدمن يولّد كلمة مؤقتة (12 حرفاً بلا أحرف متشابهة) في المتصفح، ولوحة تعرضها مرة واحدة مع زر نسخ.
+- **صورة الختم:** `requireDeliverySealPhoto` افتراضه `true` للمستودعات الجديدة والقديمة التي بلا قيمة؛ المستودع يقدر يطفيه من الإعدادات، وكل طلب يقدر يتغيّر لوحده كما قبل.
+- **سقف الكمية:** 10000 للصنف الواحد بالطلب؛ أكثر → 400 `QUANTITY_TOO_LARGE` برسالة عربية، والتطبيق يترجمها.
+- **هوية وتوقيع التطبيق:** `com.feniq.link`، توقيع دائم من الأسرار، التحقق من البصمة، شرح كامل في `phoenix/android/README.md`.
+- **نسخ احتياطي:** يومي، مشفّر، مع تجربة استرجاع تلقائية كل مرة؛ جُرّب محلياً (نسخ ← استرجاع ← مطابقة، كلمة سر خاطئة، `--drop`).
+- ملاحظة للاختبارات محلياً: إذا تعذّر تنزيل MongoDB لـ mongodb-memory-server، استعمل `MONGOMS_SYSTEM_BINARY=<مسار mongod>` و `MONGOMS_VERSION=<نسخته>`.
