@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -56,14 +57,35 @@ import 'package:feniq/generated/app_localizations.dart';
 import 'package:feniq/routes/app_router.dart';
 import 'package:feniq/routes/route_paths.dart';
 
+// Firebase is optional at runtime: push notifications and the update checker
+// need it, nothing else does. On Android its configuration comes from
+// android/app/google-services.json (applied by the google-services Gradle
+// plugin only when that file matches the app's id - see
+// android/app/build.gradle.kts), so there is no Dart-side copy to keep in
+// step; iOS still reads firebase_options.dart. When the configuration is
+// missing (e.g. a build made before the owner's Firebase project was wired
+// in) the app starts without notifications instead of crashing - FcmService
+// and RemoteConfigService already swallow their own errors.
+Future<void> _initializeFirebase() async {
+  try {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      await Firebase.initializeApp();
+    } else {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    }
+    // TEMP DIAGNOSTIC LOG (see FCM_DEBUG task).
+    debugPrint('FCM_DEBUG: Firebase.initializeApp() succeeded');
+    // Must be registered before any background/terminated message can be
+    // received at all - see the handler's own doc comment in fcm_service.dart.
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('Firebase not configured - push notifications disabled: $e');
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // TEMP DIAGNOSTIC LOG (see FCM_DEBUG task).
-  debugPrint('FCM_DEBUG: Firebase.initializeApp() succeeded');
-  // Must be registered before any background/terminated message can be
-  // received at all - see the handler's own doc comment in fcm_service.dart.
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  await _initializeFirebase();
 
   final prefs = await SharedPreferences.getInstance();
   final storageService = StorageService(prefs);

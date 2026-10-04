@@ -1,4 +1,4 @@
-package com.example.phoenix
+package com.feniq.link
 
 import io.flutter.embedding.android.FlutterActivity
 
