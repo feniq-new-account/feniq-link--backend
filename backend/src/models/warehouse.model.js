@@ -21,13 +21,15 @@ const warehouseSchema = new Schema(
       enum: ['self', 'third_party'],
       default: 'self',
     },
-    // Opt-in proof-of-delivery: when true, the warehouse can only advance an
-    // order to 'delivered' once the pharmacy has uploaded a photo of the
-    // shipment seal/stamp ("الختم") - see warehouseOrder.service.js's
+    // Proof-of-delivery: when true, the warehouse can only advance an order
+    // to 'delivered' once the pharmacy has uploaded a photo of the shipment
+    // seal/stamp ("الختم") - see warehouseOrder.service.js's
     // advanceOrderStatus gate and order.service.js's attachDeliverySealPhoto.
-    // Defaults to false so every existing warehouse is completely unaffected;
-    // documents predating this field read as false.
-    requireDeliverySealPhoto: { type: Boolean, default: false },
+    // ON by default (product decision, 2026-10-04): a delivery without the
+    // seal photo is refused unless the warehouse turns this off in its
+    // settings. Documents predating the field read as true as well (the
+    // readers use `?? true`).
+    requireDeliverySealPhoto: { type: Boolean, default: true },
     // Per-warehouse order size limits, in USD - the same currency the cart
     // totals in, so no conversion sits between what the pharmacist sees and
     // what's enforced (order.service.js). Both are opt-in: 0 means "no

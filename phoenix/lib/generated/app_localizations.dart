@@ -1220,6 +1220,12 @@ abstract class AppLocalizations {
   /// **'Something about this request wasn\'t valid. Please try again.'**
   String get errorInvalidRequest;
 
+  /// No description provided for @errorQuantityTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'A single item can\'t exceed 10,000 units per order. Please lower the quantity.'**
+  String get errorQuantityTooLarge;
+
   /// No description provided for @errorInvalidCredentials.
   ///
   /// In en, this message translates to:

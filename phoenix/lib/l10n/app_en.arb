@@ -338,6 +338,7 @@
   "noNotificationsYetHint": "Order updates and offers will show up here.",
   "markAllAsRead": "Mark all as read",
   "errorInvalidRequest": "Something about this request wasn't valid. Please try again.",
+  "errorQuantityTooLarge": "A single item can't exceed 10,000 units per order. Please lower the quantity.",
   "errorInvalidCredentials": "The phone number or password is incorrect.",
   "errorAccountBlocked": "This account has been blocked. Please contact support.",
   "errorAccountNotFound": "No account found for this phone number. Please create one first.",

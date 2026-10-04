@@ -132,7 +132,7 @@ test.before(async () => {
   ids.warehouse = (
     await Warehouse.create({
       userId: whUser._id, nameAr: 'مستودع', nameEn: 'Warehouse', address: 'a', city: 'Latakia', phone: '0940000971',
-      deliveryType: 'self', isActive: true, discountRate: 4, commissionRate: 1,
+      deliveryType: 'self', requireDeliverySealPhoto: false, isActive: true, discountRate: 4, commissionRate: 1,
     })
   )._id;
   ids.pharmacy = (

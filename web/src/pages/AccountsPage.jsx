@@ -6,6 +6,7 @@ import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import {
   canAdminResetPassword,
+  generateTemporaryPassword,
   minPasswordLengthFor,
   passwordPolicyError,
 } from '../utils/passwordPolicy';
@@ -217,6 +218,55 @@ function NewWarehouseSuccess({ credentials, onDismiss }) {
   );
 }
 
+// Shown once after a successful reset: the temporary password the admin now
+// passes on to the account owner (phone call, WhatsApp, in person). Nothing
+// here is fetched - it is the value the admin's own browser generated.
+function TemporaryPasswordPanel({ result, onDismiss }) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+  const key = 'admin.accounts.resetPassword';
+
+  const handleCopy = async () => {
+    const text = `${t('admin.newWarehouse.credentialsPhone')}: ${result.phone}\n${t(`${key}.tempPasswordLabel`)}: ${result.password}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard blocked - the password is visible and selectable below.
+    }
+  };
+
+  return (
+    <div className="adm-credentials-panel">
+      <div className="adm-credentials-title">{t(`${key}.success`, { name: result.name })}</div>
+      <div className="adm-credentials-grid">
+        <div>
+          <div className="adm-credentials-label">{t('admin.newWarehouse.credentialsPhone')}</div>
+          <div className="adm-credentials-value" dir="ltr">
+            {result.phone}
+          </div>
+        </div>
+        <div>
+          <div className="adm-credentials-label">{t(`${key}.tempPasswordLabel`)}</div>
+          <div className="adm-credentials-value" dir="ltr">
+            {result.password}
+          </div>
+        </div>
+      </div>
+      <div className="adm-credentials-hint">{t(`${key}.tempPasswordHint`)}</div>
+      <div className="adm-credentials-actions">
+        <button type="button" className="adm-row-action" onClick={handleCopy}>
+          {copied ? t('admin.newWarehouse.copied') : t(`${key}.copy`)}
+        </button>
+        <button type="button" className="adm-row-action" onClick={onDismiss}>
+          {t('admin.newWarehouse.done')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Maps the endpoint's rejections onto the panel's own strings. Everything the
 // server sends is already a sentence, but an English one - the admin panel is
 // used in Arabic, so anything predictable gets a translated message and only
@@ -231,10 +281,9 @@ function translateResetError(t, err, minLength) {
   return err.message;
 }
 
-// Emergency password reset (audit H-3). The manual recovery path for a user who
-// is locked out of their own account: the pharmacy app's self-service
-// /auth/forgot-password exists on the server but cannot reach anyone until an
-// SMS provider is wired up, so until then support does this by hand.
+// Emergency password reset (audit H-3) - and, until an SMS gateway exists,
+// the ONLY way a pharmacist who forgot their password gets back in: they call
+// support, the admin opens this, and hands them the temporary password.
 //
 // Two things this form is careful about, both of which the hint text says out
 // loud rather than leaving implicit:
@@ -242,24 +291,25 @@ function translateResetError(t, err, minLength) {
 //  - It is an identity check that happens OUTSIDE the software. Nothing here
 //    can verify the caller is who they say they are, so the modal names that as
 //    the admin's job before they type anything.
-//  - It restores access; it does not revoke it. A token issued before the reset
-//    stays valid until it expires (the JWT is stateless and carries no version
-//    to invalidate against), so it is the wrong tool for a suspected
-//    compromise - the warning points at Block instead.
+//  - It signs the account out everywhere: the server bumps the token version
+//    and drops every refresh token (auth.service.js adminResetPassword).
 //
-// The typed password lives in this component's state and nowhere else. The
-// endpoint deliberately does not echo it back, and unlike NewWarehouseSuccess
-// there is no panel showing it afterwards: the admin types it, passes it on,
-// and it is gone.
+// The modal opens with a generated temporary password already filled in
+// (utils/passwordPolicy.js generateTemporaryPassword) - the admin can
+// regenerate it or type their own. It is made in this browser, lives in this
+// component's state, and after a successful reset is shown once in
+// TemporaryPasswordPanel so it can be copied and passed on. The endpoint
+// never echoes it back.
 function ResetPasswordModal({ account, onClose, onDone }) {
   const { t } = useTranslation();
-  const [password, setPassword] = useState('');
+  const role = account.user.role;
+  const [password, setPassword] = useState(() => generateTemporaryPassword(role));
   const [reason, setReason] = useState('');
-  const [revealed, setRevealed] = useState(false);
+  // Shown by default: a generated password is meant to be read out.
+  const [revealed, setRevealed] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  const role = account.user.role;
   const minLength = minPasswordLengthFor(role);
 
   // Mirrors the server's per-role rule (utils/passwordPolicy.js) so a password
@@ -286,7 +336,7 @@ function ResetPasswordModal({ account, onClose, onDone }) {
         password,
         reason: reason.trim() || undefined,
       });
-      onDone();
+      onDone(password);
     } catch (err) {
       setError(translateResetError(t, err, minLength));
       setIsSaving(false);
@@ -320,6 +370,16 @@ function ResetPasswordModal({ account, onClose, onDone }) {
                 {revealed
                   ? t('admin.accounts.resetPassword.hide')
                   : t('admin.accounts.resetPassword.show')}
+              </button>
+              <button
+                type="button"
+                className="adm-row-action"
+                onClick={() => {
+                  setPassword(generateTemporaryPassword(role));
+                  setRevealed(true);
+                }}
+              >
+                {t('admin.accounts.resetPassword.generate')}
               </button>
             </div>
           </label>
@@ -374,7 +434,7 @@ export function AccountsPage() {
   const [showNewWarehouse, setShowNewWarehouse] = useState(false);
   const [newWarehouseCredentials, setNewWarehouseCredentials] = useState(null);
   // The account whose password is being reset (null = modal closed), and the
-  // green line left behind afterwards.
+  // temporary-password panel left behind afterwards ({ name, phone, password }).
   const [resetTarget, setResetTarget] = useState(null);
   const [resetSuccess, setResetSuccess] = useState(null);
   // Per-status totals for the pills - the backend returns them on every request,
@@ -572,7 +632,9 @@ export function AccountsPage() {
         />
       )}
 
-      {resetSuccess && <p className="adm-notify-success">{resetSuccess}</p>}
+      {resetSuccess && (
+        <TemporaryPasswordPanel result={resetSuccess} onDismiss={() => setResetSuccess(null)} />
+      )}
 
       {(error || actionError) && <p className="error-text">{error || actionError}</p>}
 
@@ -699,14 +761,16 @@ export function AccountsPage() {
         <ResetPasswordModal
           account={resetTarget}
           onClose={() => setResetTarget(null)}
-          onDone={() => {
+          onDone={(password) => {
             // No reset() of the list: a password change alters nothing that is
             // displayed - not the status, not the counts - so re-reading the
             // page would only cost a request and lose the admin's scroll
             // position.
-            setResetSuccess(
-              t('admin.accounts.resetPassword.success', { name: accountName(resetTarget) })
-            );
+            setResetSuccess({
+              name: accountName(resetTarget),
+              phone: resetTarget.user.phone,
+              password,
+            });
             setResetTarget(null);
           }}
         />

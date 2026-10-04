@@ -102,8 +102,8 @@ test.before(async () => {
   // discountRate/commissionRate zeroed (default 4/1) so most tests isolate the
   // package arithmetic; the two that care turn them on and put them back.
   const [warehouse, otherWarehouse] = await Warehouse.create([
-    { userId: whUser._id, nameAr: 'م', nameEn: 'Warehouse', address: 'r', city: 'Latakia', phone: '0942000601', deliveryType: 'self', isActive: true, discountRate: 0, commissionRate: 0 },
-    { userId: otherWhUser._id, nameAr: 'م2', nameEn: 'Warehouse 2', address: 'r', city: 'Latakia', phone: '0942000602', deliveryType: 'self', isActive: true, discountRate: 0, commissionRate: 0 },
+    { userId: whUser._id, nameAr: 'م', nameEn: 'Warehouse', address: 'r', city: 'Latakia', phone: '0942000601', deliveryType: 'self', requireDeliverySealPhoto: false, isActive: true, discountRate: 0, commissionRate: 0 },
+    { userId: otherWhUser._id, nameAr: 'م2', nameEn: 'Warehouse 2', address: 'r', city: 'Latakia', phone: '0942000602', deliveryType: 'self', requireDeliverySealPhoto: false, isActive: true, discountRate: 0, commissionRate: 0 },
   ]);
   ids.warehouse = warehouse._id;
   ids.otherWarehouse = otherWarehouse._id;

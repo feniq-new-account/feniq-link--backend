@@ -673,6 +673,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Something about this request wasn\'t valid. Please try again.';
 
   @override
+  String get errorQuantityTooLarge =>
+      'A single item can\'t exceed 10,000 units per order. Please lower the quantity.';
+
+  @override
   String get errorInvalidCredentials =>
       'The phone number or password is incorrect.';
 

@@ -56,7 +56,7 @@ test.before(async () => {
 
   const warehouse = await Warehouse.create({
     userId: whUser._id, nameAr: 'م', nameEn: 'Warehouse', address: 'r', city: 'Latakia',
-    phone: '0942500001', deliveryType: 'self', isActive: true, discountRate: 0, commissionRate: 0,
+    phone: '0942500001', deliveryType: 'self', requireDeliverySealPhoto: false, isActive: true, discountRate: 0, commissionRate: 0,
   });
   ids.warehouse = warehouse._id;
 

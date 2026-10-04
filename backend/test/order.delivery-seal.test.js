@@ -141,6 +141,35 @@ test('the warehouse default is still toggleable through its own settings service
   assert.strictEqual(updated.requireDeliverySealPhoto, true);
 });
 
+// --- Required by default (product decision 2026-10-04) -------------------
+
+test('Warehouse.requireDeliverySealPhoto defaults to TRUE: a new warehouse requires the seal photo', () => {
+  assert.strictEqual(Warehouse.schema.path('requireDeliverySealPhoto').defaultValue, true);
+  const fresh = new Warehouse({});
+  assert.strictEqual(fresh.requireDeliverySealPhoto, true);
+});
+
+test('a warehouse document that predates the field seeds orders as requiring the photo', async () => {
+  await Warehouse.collection.updateOne({ _id: ids.warehouse }, { $unset: { requireDeliverySealPhoto: '' } });
+  const order = await createRealOrder();
+  assert.strictEqual(order.requiresDeliverySealPhoto, true);
+});
+
+test('end to end with defaults: delivering a fresh order with no seal photo is refused', async () => {
+  await Warehouse.collection.updateOne({ _id: ids.warehouse }, { $unset: { requireDeliverySealPhoto: '' } });
+  const created = await createRealOrder();
+  for (let i = 0; i < 3; i += 1) {
+    await warehouseOrderService.advanceOrderStatus(created._id.toString(), ids.warehouse, ids.warehouseUser);
+  }
+  assert.strictEqual((await Order.findById(created._id)).status, 'out_for_delivery');
+
+  await assert.rejects(
+    () => warehouseOrderService.advanceOrderStatus(created._id.toString(), ids.warehouse, ids.warehouseUser),
+    withCode('DELIVERY_SEAL_PHOTO_REQUIRED')
+  );
+  assert.strictEqual((await Order.findById(created._id)).status, 'out_for_delivery');
+});
+
 // --- Seeding at order creation -----------------------------------------
 
 test('a new order inherits requiresDeliverySealPhoto=true when the warehouse default is on', async () => {

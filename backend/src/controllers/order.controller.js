@@ -13,6 +13,13 @@ const { parseCursorQuery, parseNumericCursor, paginationMeta } = require('../uti
 
 const ORDERS_DEFAULT_LIMIT = 15;
 
+// Upper bound on one cart line. No pharmacy orders more than this of a single
+// item in one go; anything above it is a typo (an extra zero) or a crafted
+// request, and an absurd quantity would otherwise flow straight into stock
+// checks, bonus arithmetic and the ledger. The message is Arabic because it
+// is shown as-is by any client that does not map QUANTITY_TOO_LARGE itself.
+const MAX_ITEM_QUANTITY = 10000;
+
 async function loadPharmacyOrThrow(userId) {
   // Runs on every order/return/review/debt request and only ever yields
   // `pharmacy._id` to its callers, so neither the rest of the document nor
@@ -40,6 +47,13 @@ function validateItems(items) {
     const quantity = Number(item.quantity);
     if (!Number.isInteger(quantity) || quantity <= 0) {
       throw ApiError.badRequest('Invalid quantity in cart.', undefined, 'INVALID_QUANTITY');
+    }
+    if (quantity > MAX_ITEM_QUANTITY) {
+      throw ApiError.badRequest(
+        `الكمية المطلوبة (${quantity}) أكبر من الحد المسموح. الحد الأقصى ${MAX_ITEM_QUANTITY} قطعة للصنف الواحد في الطلب.`,
+        { productId: item.productId, quantity, max: MAX_ITEM_QUANTITY },
+        'QUANTITY_TOO_LARGE'
+      );
     }
 
     // The unit price the cart was SHOWING when the pharmacist submitted -

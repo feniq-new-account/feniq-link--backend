@@ -337,6 +337,7 @@
   "noNotificationsYetHint": "ستظهر هنا تحديثات الطلبات والعروض.",
   "markAllAsRead": "تعليم الكل كمقروء",
   "errorInvalidRequest": "هناك خطأ في هذا الطلب. يرجى المحاولة مرة أخرى.",
+  "errorQuantityTooLarge": "لا يمكن أن تتجاوز كمية الصنف الواحد 10,000 قطعة في الطلب. يرجى تقليل الكمية.",
   "errorInvalidCredentials": "رقم الهاتف أو كلمة المرور غير صحيحة.",
   "errorAccountBlocked": "تم حظر هذا الحساب. يرجى التواصل مع الدعم.",
   "errorAccountNotFound": "لا يوجد حساب مرتبط بهذا الرقم. يرجى إنشاء حساب أولاً.",

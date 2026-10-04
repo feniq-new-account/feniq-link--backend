@@ -65,6 +65,10 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
     case 'INVALID_QUANTITY':
     case 'INVALID_WAREHOUSE':
       return l10n.errorInvalidRequest;
+    // A cart line above the server's per-item ceiling (order.controller.js
+    // MAX_ITEM_QUANTITY) - almost always an extra zero typed by mistake.
+    case 'QUANTITY_TOO_LARGE':
+      return l10n.errorQuantityTooLarge;
     case 'PHARMACY_NOT_FOUND':
       return l10n.errorPharmacyNotFound;
     case 'WAREHOUSE_NOT_FOUND':

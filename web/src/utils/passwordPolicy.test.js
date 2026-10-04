@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   MIN_PASSWORD_LENGTH_BY_ROLE,
+  TEMP_PASSWORD_LENGTH,
   canAdminResetPassword,
+  generateTemporaryPassword,
   minPasswordLengthFor,
   passwordPolicyError,
 } from './passwordPolicy';
@@ -82,5 +84,38 @@ describe('password policy (mirror of the server table)', () => {
       expect(canAdminResetPassword(null)).toBe(false);
       expect(canAdminResetPassword('')).toBe(false);
     });
+  });
+});
+
+describe('generateTemporaryPassword (admin "forgot password" recovery)', () => {
+  it('passes the server policy for every resettable role', () => {
+    for (const role of ['pharmacy', 'warehouse']) {
+      const password = generateTemporaryPassword(role);
+      expect(password.length).toBeGreaterThanOrEqual(TEMP_PASSWORD_LENGTH);
+      expect(passwordPolicyError(password, role)).toBeNull();
+    }
+  });
+
+  it('uses only unambiguous lowercase letters and digits', () => {
+    for (let i = 0; i < 50; i += 1) {
+      expect(generateTemporaryPassword('pharmacy')).toMatch(/^[a-hjkmnp-z2-9]+$/);
+    }
+  });
+
+  it('is different every time', () => {
+    const seen = new Set(Array.from({ length: 100 }, () => generateTemporaryPassword('pharmacy')));
+    expect(seen.size).toBe(100);
+  });
+
+  it('discards biased bytes instead of folding them in with a modulo', () => {
+    // 255 is above the largest multiple of the 31-symbol alphabet (248), so a
+    // source that only ever yields 255 then 0 must produce only alphabet[0].
+    let call = 0;
+    const source = (array) => {
+      call += 1;
+      array.fill(call === 1 ? 255 : 0);
+      return array;
+    };
+    expect(generateTemporaryPassword('pharmacy', source)).toBe('a'.repeat(TEMP_PASSWORD_LENGTH));
   });
 });

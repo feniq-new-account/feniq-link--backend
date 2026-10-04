@@ -263,3 +263,34 @@ test('POST /orders: a rate sent as a string (JSON from an older client) still ch
   assert.strictEqual(response.status, 409);
   assert.strictEqual(response.body.code, 'RATE_CHANGED');
 });
+
+// --- Per-line quantity ceiling (order.controller.js MAX_ITEM_QUANTITY) -----
+
+test('POST /orders: a line of 10001 is refused with QUANTITY_TOO_LARGE and an Arabic message', async () => {
+  const response = await call('POST', '/orders', {
+    warehouseId: String(ids.warehouse),
+    items: [{ productId: String(ids.product), quantity: 10001, displayedUnitPriceUsd: 100 }],
+    rateUsed: RATE,
+  });
+
+  assert.strictEqual(response.status, 400);
+  assert.strictEqual(response.body.code, 'QUANTITY_TOO_LARGE');
+  assert.match(response.body.message, /10000/);
+  assert.match(response.body.message, /الحد الأقصى/);
+  assert.strictEqual(await orderCount(), 0, 'nothing may be written for a refused cart');
+});
+
+test('POST /orders: exactly 10000 is still accepted', async () => {
+  await Product.updateOne({ _id: ids.product }, { $set: { price: 1 } });
+  try {
+    const response = await call('POST', '/orders', {
+      warehouseId: String(ids.warehouse),
+      items: [{ productId: String(ids.product), quantity: 10000, displayedUnitPriceUsd: 1 }],
+      rateUsed: RATE,
+    });
+    assert.strictEqual(response.status, 201, JSON.stringify(response.body));
+    assert.strictEqual(await orderCount(), 1);
+  } finally {
+    await Product.updateOne({ _id: ids.product }, { $set: { price: 100 } });
+  }
+});

@@ -8,6 +8,7 @@
 const crypto = require('crypto');
 const { ApiError } = require('../utils/ApiError');
 const Otp = require('../models/otp.model');
+const env = require('../config/env');
 const { getSmsProvider } = require('./sms');
 
 const CODE_LENGTH = 6;
@@ -30,13 +31,34 @@ function generateCode() {
     .padStart(CODE_LENGTH, '0');
 }
 
-// Constant-time comparison so the number of leading digits a guess got right
-// is not readable from how long the request took. Both values are fixed-length
-// ASCII digit strings, so a plain length guard before timingSafeEqual is safe
-// (it reveals only what the caller already knows: the code is 6 digits).
-function codesMatch(expected, supplied) {
-  if (typeof supplied !== 'string' || supplied.length !== expected.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(expected, 'utf8'), Buffer.from(supplied, 'utf8'));
+// Codes are stored hashed, never in plain text: a database dump, a backup
+// file or a read-only leak must not hand out live password-reset codes.
+//
+// HMAC-SHA256 keyed with JWT_SECRET rather than bcrypt: a 6-digit code has
+// only 10^6 values, so a slow hash would not stop an offline search anyway -
+// the server-side key does. Without JWT_SECRET (which never sits in the
+// database or its backups) a stolen hash cannot be brute-forced at all. The
+// phone and purpose are mixed in so the same digits never produce the same
+// stored value for two numbers or two flows.
+const HASH_PREFIX = 'hmac-sha256:';
+
+function hashCode(phone, purpose, code) {
+  const digest = crypto
+    .createHmac('sha256', env.jwtSecret)
+    .update(`otp:${purpose}:${phone}:${code}`)
+    .digest('hex');
+  return `${HASH_PREFIX}${digest}`;
+}
+
+// Constant-time comparison of the stored hash against the hash of what was
+// supplied, so the response time reveals nothing about how close a guess was.
+// Both sides are fixed-length hex digests of the same algorithm.
+function codesMatch(otp, supplied) {
+  if (typeof supplied !== 'string' || !/^[0-9]+$/.test(supplied)) return false;
+  const expected = Buffer.from(otp.code, 'utf8');
+  const actual = Buffer.from(hashCode(otp.phone, otp.purpose, supplied), 'utf8');
+  if (expected.length !== actual.length) return false;
+  return crypto.timingSafeEqual(expected, actual);
 }
 
 // Sends the code over whichever transport SMS_PROVIDER selects. The transport
@@ -69,7 +91,9 @@ async function sendOtp(phone, purpose = 'login') {
   const code = generateCode();
   const expiresAt = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000);
 
-  await Otp.create({ phone, purpose, code, expiresAt });
+  // Only the hash is persisted; the plain code exists in memory just long
+  // enough to be handed to the SMS transport.
+  await Otp.create({ phone, purpose, code: hashCode(phone, purpose, code), expiresAt });
   await deliverSms(phone, code);
 
   return { expiresAt };
@@ -106,7 +130,7 @@ async function verifyOtp(phone, code, purpose = 'login') {
     throw invalid();
   }
 
-  if (!codesMatch(otp.code, code)) {
+  if (!codesMatch(otp, code)) {
     otp.attempts += 1;
     // Burn the code rather than merely counting: leaving it live would let the
     // attacker keep guessing and just eat the error.
@@ -124,5 +148,6 @@ async function verifyOtp(phone, code, purpose = 'login') {
 module.exports = {
   sendOtp,
   verifyOtp,
+  _hashCode: hashCode,
   _limits: { CODE_LENGTH, EXPIRY_MINUTES, MAX_ATTEMPTS_PER_WINDOW, WINDOW_MINUTES, MAX_VERIFY_ATTEMPTS },
 };

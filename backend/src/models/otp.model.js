@@ -10,6 +10,7 @@ const OTP_PURPOSES = ['login', 'password_reset'];
 const otpSchema = new Schema(
   {
     phone: { type: String, required: true },
+    // HMAC of the code (otp.service.js hashCode), never the digits themselves.
     code: { type: String, required: true },
     purpose: { type: String, enum: OTP_PURPOSES, default: 'login', required: true },
     expiresAt: { type: Date, required: true },
