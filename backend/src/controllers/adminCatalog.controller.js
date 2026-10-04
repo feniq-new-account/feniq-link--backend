@@ -20,6 +20,7 @@ const list = asyncHandler(async (req, res) => {
     search: req.query.search,
     categoryId: typeof req.query.categoryId === 'string' ? req.query.categoryId : undefined,
     manufacturer: typeof req.query.manufacturer === 'string' ? req.query.manufacturer : undefined,
+    image: req.query.image,
     limit,
     after: cursor,
   });
@@ -28,6 +29,10 @@ const list = asyncHandler(async (req, res) => {
     ...catalogViewModel.toCatalogListResponse(items),
     pagination: paginationMeta(hasMore, nextCursor),
   });
+});
+
+const imageStats = asyncHandler(async (req, res) => {
+  res.json({ success: true, ...(await catalogService.imageStats()) });
 });
 
 const searchManufacturers = asyncHandler(async (req, res) => {
@@ -184,6 +189,7 @@ const clearImage = asyncHandler(async (req, res) => {
 
 module.exports = {
   list,
+  imageStats,
   searchManufacturers,
   downloadTemplate,
   importExcel,

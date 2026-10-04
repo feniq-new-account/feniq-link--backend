@@ -36,6 +36,22 @@ app.use(
     credentials: true,
   })
 );
+// Mounted before the API's rate limiter and body parsers: a screen of products is
+// dozens of image requests that must not count against the per-IP API budget.
+// Pictures kept on this server's own disk (config MEDIA_DIR / MEDIA_PUBLIC_URL).
+// Files are named after their content, so they never change: cached for a year,
+// and embeddable from the web panel's different origin.
+if (env.media.dir) {
+  app.use(
+    '/media',
+    (req, res, next) => {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      next();
+    },
+    express.static(env.media.dir, { maxAge: '365d', immutable: true, index: false, dotfiles: 'ignore', fallthrough: false })
+  );
+}
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(mongoSanitize());

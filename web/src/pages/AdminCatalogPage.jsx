@@ -312,6 +312,8 @@ export function AdminCatalogPage() {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [manufacturerFilter, setManufacturerFilter] = useState('');
+  const [imageFilter, setImageFilter] = useState('');
+  const [imageStats, setImageStats] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [actionError, setActionError] = useState(null);
   // Separate from actionError: disabling an entry that took warehouse
@@ -332,6 +334,14 @@ export function AdminCatalogPage() {
     api.categories().then((data) => setCategories(data.categories));
   }, []);
 
+  // Where the pictures stand, refreshed whenever one is added or removed.
+  const refreshImageStats = useCallback(() => {
+    api.adminCatalogImageStats().then(setImageStats).catch(() => setImageStats(null));
+  }, []);
+  useEffect(() => {
+    refreshImageStats();
+  }, [refreshImageStats]);
+
   const fetchPage = useCallback(
     (cursor) =>
       api
@@ -339,6 +349,7 @@ export function AdminCatalogPage() {
           search,
           categoryId: categoryFilter || undefined,
           manufacturer: manufacturerFilter || undefined,
+          image: imageFilter || undefined,
           limit: PAGE_SIZE,
           after: cursor,
         })
@@ -347,7 +358,7 @@ export function AdminCatalogPage() {
           hasMore: data.pagination.hasMore,
           nextCursor: data.pagination.nextCursor,
         })),
-    [search, categoryFilter, manufacturerFilter]
+    [search, categoryFilter, manufacturerFilter, imageFilter]
   );
 
   const fetchManufacturerOptions = useCallback(
@@ -364,7 +375,7 @@ export function AdminCatalogPage() {
   useEffect(() => {
     reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryFilter, manufacturerFilter]);
+  }, [categoryFilter, manufacturerFilter, imageFilter]);
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -425,6 +436,7 @@ export function AdminCatalogPage() {
     try {
       await api.uploadCatalogImage(item.id, file);
       reset();
+      refreshImageStats();
     } catch (err) {
       setActionError(err.message);
     } finally {
@@ -438,6 +450,7 @@ export function AdminCatalogPage() {
     try {
       await api.clearCatalogImage(item.id);
       reset();
+      refreshImageStats();
     } catch (err) {
       setActionError(err.message);
     } finally {
@@ -539,6 +552,12 @@ export function AdminCatalogPage() {
             </option>
           ))}
         </select>
+        <select className="adm-filter-select" value={imageFilter} onChange={(e) => setImageFilter(e.target.value)}>
+          <option value="">{t('admin.catalog.imageFilterAll')}</option>
+          <option value="missing">{t('admin.catalog.imageFilterMissing')}</option>
+          <option value="approx">{t('admin.catalog.imageFilterApprox')}</option>
+          <option value="present">{t('admin.catalog.imageFilterPresent')}</option>
+        </select>
         <SearchableSelect
           value={manufacturerFilter}
           onChange={setManufacturerFilter}
@@ -549,6 +568,34 @@ export function AdminCatalogPage() {
           noMatchesLabel={t('common.noMatches')}
         />
       </form>
+
+      {imageStats && imageStats.total > 0 && (
+        <div className="adm-card" style={{ marginBottom: 12 }}>
+          <p>
+            {t('admin.catalog.imageStatsLine', {
+              withImage: imageStats.withImage,
+              total: imageStats.total,
+              missing: imageStats.withoutImage,
+            })}
+          </p>
+          <p className="hint">
+            {t('admin.catalog.imageStatsBreakdown', {
+              exact: imageStats.byMatch.exact,
+              approx: imageStats.byMatch.brand + imageStats.byMatch.fuzzy,
+              uploaded: imageStats.byMatch.uploaded,
+            })}
+          </p>
+          {imageStats.topMissingCompanies.length > 0 && (
+            <p className="hint">
+              {t('admin.catalog.imageStatsTopCompanies')}{' '}
+              {imageStats.topMissingCompanies
+                .slice(0, 8)
+                .map((row) => `${row.manufacturerAr} (${row.missing})`)
+                .join('، ')}
+            </p>
+          )}
+        </div>
+      )}
 
       {(error || actionError) && <p className="error-text">{error || actionError}</p>}
       {actionNotice && <p className="hint">{actionNotice}</p>}
@@ -580,6 +627,10 @@ export function AdminCatalogPage() {
                         <img src={item.imageUrl} alt="" width="32" height="32" style={{ objectFit: 'contain', marginInlineEnd: 8 }} />
                       )}
                       {item.nameAr}
+                      {/* A picture linked in bulk from a company's site, matched by brand or by spelling rather than by name and strength. */}
+                      {item.imageUrl && (item.imageMatch === 'brand' || item.imageMatch === 'fuzzy') && (
+                        <div className="hint">{t('admin.catalog.imageApprox')}</div>
+                      )}
                       {item.activeIngredient && (
                         <div className="hint" dir="ltr" style={{ textAlign: 'start' }}>
                           {item.activeIngredient}

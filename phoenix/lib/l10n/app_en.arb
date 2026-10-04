@@ -174,6 +174,14 @@
   "searchWarehouseProductsHint": "Search all of this warehouse's products",
   "addToCartButton": "Add",
   "unavailableLabel": "Unavailable",
+  "offlineBannerMessage": "No connection - showing the copy saved on your phone from {time}. Prices and availability may have changed, and sending an order needs a connection.",
+  "@offlineBannerMessage": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "alternativesLink": "Alternatives",
   "alternativesTitle": "Alternatives",
   "alternativesSubtitle": "Same active ingredient, strength and form, from this warehouse",

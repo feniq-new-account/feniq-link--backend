@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:feniq/core/network/api_client.dart';
+import 'package:feniq/core/offline/offline_store.dart';
 import 'package:feniq/core/services/app_update_service.dart';
 import 'package:feniq/core/services/fcm_service.dart';
 import 'package:feniq/core/services/remote_config_service.dart';
@@ -15,6 +16,7 @@ import 'package:feniq/core/session/session_scope.dart';
 import 'package:feniq/features/app_update/presentation/app_update_gate.dart';
 import 'package:feniq/firebase_options.dart';
 import 'package:feniq/core/theme/dark_theme.dart';
+import 'package:feniq/core/widgets/offline_banner.dart';
 import 'package:feniq/core/theme/light_theme.dart';
 import 'package:feniq/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
@@ -92,8 +94,15 @@ Future<void> main() async {
     notificationRepository: notificationRepository,
     sessionScope: sessionScope,
   );
-  final warehouseRepository = WarehouseRepositoryImpl(apiClient: apiClient);
-  final catalogRepository = CatalogRepositoryImpl(apiClient: apiClient, sessionScope: sessionScope);
+  // The phone's saved copy of the warehouses and their catalogs, so the
+  // pharmacist can still browse and search medicines with no connection.
+  final offlineStore = OfflineStore();
+  final warehouseRepository = WarehouseRepositoryImpl(apiClient: apiClient, offlineStore: offlineStore);
+  final catalogRepository = CatalogRepositoryImpl(
+    apiClient: apiClient,
+    sessionScope: sessionScope,
+    offlineStore: offlineStore,
+  );
   final exchangeRateRepository = ExchangeRateRepositoryImpl(
     apiClient: apiClient,
   );
@@ -340,6 +349,11 @@ class MyApp extends StatelessWidget {
                       GlobalCupertinoLocalizations.delegate,
                     ],
                     supportedLocales: AppLocalizations.supportedLocales,
+                    // A strip above every screen while what is shown is the
+                    // phone's saved copy (OfflineBanner). The child keeps one
+                    // fixed place in the tree, so the navigator never rebuilds
+                    // when the strip appears or goes.
+                    builder: (context, child) => OfflineBannerFrame(child: child ?? const SizedBox.shrink()),
                   );
                 },
               ),

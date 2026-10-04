@@ -80,4 +80,12 @@ module.exports = {
     apiSecret: process.env.CLOUDINARY_API_SECRET || '',
   },
   imageApiKey: process.env.IMAGE_API_KEY || '',
+  // Images kept on this server's own disk instead of Cloudinary - for a
+  // deployment that must stay inside the country (services/mediaStorage.service.js).
+  // Both must be set: MEDIA_DIR is the folder (a mounted volume), MEDIA_PUBLIC_URL
+  // the address that folder is served at, e.g. https://api.example.sy/media.
+  media: {
+    dir: process.env.MEDIA_DIR || '',
+    publicUrl: (process.env.MEDIA_PUBLIC_URL || '').replace(/\/+$/, ''),
+  },
 };

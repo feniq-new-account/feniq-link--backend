@@ -404,13 +404,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get unavailableLabel => 'غير متوفر';
 
   @override
+  String offlineBannerMessage(String time) {
+    return 'لا يوجد اتصال - تُعرض النسخة المحفوظة على هاتفك من $time. قد تكون الأسعار والتوفر تغيّرت، وإرسال الطلب يحتاج اتصالاً.';
+  }
+
+  @override
   String get alternativesLink => 'البدائل';
 
   @override
   String get alternativesTitle => 'البدائل';
 
   @override
-  String get alternativesSubtitle => 'نفس المادة الفعالة والعيار والشكل، من هذا المستودع';
+  String get alternativesSubtitle =>
+      'نفس المادة الفعالة والعيار والشكل، من هذا المستودع';
 
   @override
   String get alternativesEmpty => 'لا توجد بدائل في هذا المستودع.';
