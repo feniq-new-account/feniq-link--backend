@@ -22,6 +22,7 @@ def skel(s):
     return re.sub(r'(.)\1+',r'\1',out)
 
 FORM_WORDS=set('tab tabs tablet tablets ctd cap caps capsule capsules amp amps ampoule vial vials susp suspension syrup syr sol soln solution drops drop oint ointment cream gel lotion supp suppository eff effervescent chew chewable f s mr sr ml g mg mcg iu pack bottle sachet sachets spray ovule ovules powder inj injection film coated dry for oral eye ear nasal nose vaginal topical per'.split())
+AR_STOP=set('اقراص أقراص ملبسة ملبس مضغوطات مضغوطة كبسول كبسولات محافظ شراب معلق فيال فيالات امبول أمبول امبولة أمبولة حقن تحاميل قطرة قطرات مرهم كريم جل مل غ غرام ملغ ملغم بالفيلم للحقن فموي شفا وحدة وحدات'.split())
 def tokens(name):
     n=name.translate(AR_DIG)
     n=re.sub(r'\([^)]*\)','',n) if False else n
@@ -38,13 +39,13 @@ def split_name(name):
         m=re.fullmatch(r'([a-z؀-ۿ]+)(\d+)',w)
         if m: words2.append(m.group(1)); nums.append(m.group(2))
         else: words2.append(w)
-    words=[w for w in words2 if w not in FORM_WORDS and len(w)>0]
+    words=[w for w in words2 if w not in FORM_WORDS and w not in AR_STOP and len(w)>0]
     return words,sorted(nums)
 
 # ---------- form classes
 FORM_RULES=[('inj',r'amp|vial|inj|حقن|أمبول|امبول|فيال|vials|syringe|سيرنغ'),('supp',r'supp|suppos|تحاميل|تحميل'),('ovule',r'ovule|بيوض|vaginal tab|مهبل'),
  ('oral_liquid',r'syrup|susp|suspension|elixir|شراب|معلق|نقط فموي|oral drops|oral solution|oral vial|فيال فموي|دراي|dry|الكسير'),
- ('topical',r'cream|oint|gel|lotion|كريم|مرهم|جل|مستحلب|شامبو|shampoo|spray|بخاخ|بخة|topical|dermal|رذاذ'),
+ ('topical',r'cream|oint|\bgel\b|lotion|كريم|مرهم|جل|مستحلب|شامبو|shampoo|spray|بخاخ|بخة|topical|dermal|رذاذ'),
  ('drops',r'eye|ear|nasal|nose|قطرة|drop'),('sachet',r'sachet|ظروف|powder|بودرة'),
  ('capsule',r'cap|capsule|كبسول|محافظ'),('tablet',r'tab|tablet|أقراص|اقراص|مضغوط|قرص|caplet|lozenge|أقراص'),('liquid',r'\bml\b|\d\s*مل')]
 def form_class(*texts):
@@ -72,6 +73,14 @@ def compatible(a,b):
         other=b if a=='liquid' else a
         return other in {'oral_liquid','inj','drops'}
     return False
+GROUP={'tablet':'solid','capsule':'solid','oral_liquid':'oral_liquid','inj':'inj','topical':'topical','drops':'drops','supp':'supp','ovule':'ovule','sachet':'sachet'}
+def site_multi_form(r):
+    # a page that names several different forms in its 'Dosage Form' line (one picture for the whole brand)
+    t=(r.get('short') or '')
+    m=re.split(r'composition',t,flags=re.I)[0].lower() if t else ''
+    if not m: return False
+    groups={GROUP[c] for c,rx in FORM_RULES if c in GROUP and re.search(rx,m)}
+    return len(groups)>1
 def site_form(r):
     return form_class(r.get('form'), r.get('name'), (r.get('detail') or r.get('short') or r.get('desc') or '')[:140], r.get('class'),' '.join(r.get('cats',[]) if isinstance(r.get('cats'),list) else []))
 
@@ -119,7 +128,7 @@ def run():
                 if numsame:
                     # exact numbers: also require the form to be known, or unambiguous on the ministry side
                     if (rf is None or fm is None) and ambiguous_form(m): continue
-                    matches.append((i,r,'A-exact',1.0))
+                    matches.append((i,r,'B-exact' if site_multi_form(r) else 'A-exact',1.0))
                 elif not n and (rf is not None and fm is not None or not ambiguous_form(m)) and site_brand_count[(r['company'],rk)]==1:
                     matches.append((i,r,'B-exact',1.0))
                 continue
