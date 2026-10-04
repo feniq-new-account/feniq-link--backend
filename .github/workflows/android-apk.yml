@@ -107,7 +107,16 @@ jobs:
           apk=build/app/outputs/flutter-apk/app-release.apk
           tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           app_id=$("$tools/aapt2" dump packagename "$apk")
-          cert=$("$tools/apksigner" verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')
+          # The signer line's label varies by apksigner version and signature
+          # scheme ("Signer #1 ...", "Signer (minSdkVersion=...) ..."), so match
+          # on the digest label alone and take the first.
+          certs=$("$tools/apksigner" verify --print-certs "$apk")
+          cert=$(echo "$certs" | sed -n 's/^.*certificate SHA-256 digest: //p' | head -1 | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')
+          if [ -z "$cert" ]; then
+            echo "$certs"
+            echo "::error::Could not read the signing certificate fingerprint from apksigner."
+            exit 1
+          fi
           {
             echo "### APK"
             echo "- artifact: \`$ARTIFACT\`"
