@@ -39,6 +39,9 @@ import 'package:feniq/features/debts/data/repositories/debt_repository_impl.dart
 import 'package:feniq/features/exchange_rate/data/repositories/exchange_rate_repository.dart';
 import 'package:feniq/features/exchange_rate/data/repositories/exchange_rate_repository_impl.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/features/data_preparation/presentation/managers/data_preparation_cubit.dart';
+import 'package:feniq/features/medicine_directory/data/repositories/medicine_directory_repository.dart';
+import 'package:feniq/features/medicine_directory/data/repositories/medicine_directory_repository_impl.dart';
 import 'package:feniq/features/notifications/data/repositories/notification_repository.dart';
 import 'package:feniq/features/offers/data/repositories/offers_repository.dart';
 import 'package:feniq/features/offers/data/repositories/offers_repository_impl.dart';
@@ -103,6 +106,12 @@ Future<void> main() async {
     sessionScope: sessionScope,
     offlineStore: offlineStore,
   );
+  // The whole medicine list, kept on the phone for browsing with no connection.
+  final medicineDirectoryRepository = MedicineDirectoryRepositoryImpl(
+    apiClient: apiClient,
+    offlineStore: offlineStore,
+    sessionScope: sessionScope,
+  );
   final exchangeRateRepository = ExchangeRateRepositoryImpl(
     apiClient: apiClient,
   );
@@ -125,6 +134,7 @@ Future<void> main() async {
       authRepository: authRepository,
       warehouseRepository: warehouseRepository,
       catalogRepository: catalogRepository,
+      medicineDirectoryRepository: medicineDirectoryRepository,
       exchangeRateRepository: exchangeRateRepository,
       orderRepository: orderRepository,
       savingsRepository: savingsRepository,
@@ -193,6 +203,7 @@ class MyApp extends StatelessWidget {
     required this.authRepository,
     required this.warehouseRepository,
     required this.catalogRepository,
+    required this.medicineDirectoryRepository,
     required this.exchangeRateRepository,
     required this.orderRepository,
     required this.savingsRepository,
@@ -217,6 +228,7 @@ class MyApp extends StatelessWidget {
   final AuthRepositoryImpl authRepository;
   final WarehouseRepository warehouseRepository;
   final CatalogRepositoryImpl catalogRepository;
+  final MedicineDirectoryRepository medicineDirectoryRepository;
   final ExchangeRateRepository exchangeRateRepository;
   final OrderRepositoryImpl orderRepository;
   final SavingsRepositoryImpl savingsRepository;
@@ -236,6 +248,7 @@ class MyApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<CatalogRepository>.value(value: catalogRepository),
+        RepositoryProvider<MedicineDirectoryRepository>.value(value: medicineDirectoryRepository),
         RepositoryProvider<OrderRepository>.value(value: orderRepository),
         RepositoryProvider<SavingsRepository>.value(value: savingsRepository),
         RepositoryProvider<ReturnRepository>.value(value: returnRepository),
@@ -279,6 +292,18 @@ class MyApp extends StatelessWidget {
           BlocProvider(
             create: (context) => WarehouseSelectionCubit(
               warehouseRepository: warehouseRepository,
+              sessionScope: sessionScope,
+            ),
+          ),
+          // Gets the phone ready to work offline (medicine directory + the
+          // warehouse catalogs); the first time it covers the app with a
+          // "please wait" page, afterwards it works quietly in the background.
+          BlocProvider(
+            create: (context) => DataPreparationCubit(
+              directoryRepository: medicineDirectoryRepository,
+              warehouseRepository: warehouseRepository,
+              catalogRepository: catalogRepository,
+              storageService: storageService,
               sessionScope: sessionScope,
             ),
           ),
@@ -432,6 +457,9 @@ class _SessionLifecycleObserverState extends State<_SessionLifecycleObserver>
     // app was away, so the badge is right the moment the user is back.
     context.read<NotificationCubit>().refresh();
     context.read<ExchangeRateCubit>().refreshIfStale();
+    // Bring the saved medicine data up to date if it has gone stale (the cubit
+    // skips this when it ran a moment ago).
+    context.read<DataPreparationCubit>().start();
     // Same idea for the cart's order-size limits, if a cart happens to be
     // open (CartCubit.refreshLimitsIfStale is itself a no-op with no
     // warehouse bound, so this is safe to call unconditionally too).

@@ -1777,4 +1777,121 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cartQuoteUnavailable => 'تعذّر حساب الإجمالي.';
+
+  @override
+  String get directoryEntryTitle => 'دليل الأدوية';
+
+  @override
+  String directoryEntrySubtitle(String count) {
+    return '$count صنف - ابحث فيهم حتى بدون إنترنت';
+  }
+
+  @override
+  String get directoryEntrySubtitleEmpty =>
+      'كل الأدوية، وبتبحث فيها حتى بدون إنترنت';
+
+  @override
+  String get directorySearchHint => 'اسم الدواء أو الشركة أو المادة الفعالة';
+
+  @override
+  String directoryResultsCount(String shown, String total) {
+    return '$shown من $total';
+  }
+
+  @override
+  String get directoryNothingFound => 'ما في دواء مطابق للبحث.';
+
+  @override
+  String get directoryNotDownloadedTitle => 'الدليل مو محمّل على هاتفك لسا';
+
+  @override
+  String get directoryNotDownloadedBody =>
+      'اتصل بالإنترنت مرة وحدة لتنزيل كل الأدوية، وبعدها بيشتغل بدون إنترنت.';
+
+  @override
+  String get directoryDownloadButton => 'حمّل هلأ';
+
+  @override
+  String directoryUpdatedAt(String time) {
+    return 'آخر تحديث $time';
+  }
+
+  @override
+  String get directoryRefreshTooltip => 'حدّث الدليل';
+
+  @override
+  String directoryDownloading(String loaded, String total) {
+    return 'عم نحمّل... $loaded من $total';
+  }
+
+  @override
+  String get directoryUpdateFailed =>
+      'ما قدرنا نحدّث هلأ - عم نعرض النسخة المحفوظة على هاتفك.';
+
+  @override
+  String get directoryUpToDate => 'الدليل محدّث.';
+
+  @override
+  String get directoryAlternativesTitle => 'نفس المادة الفعالة';
+
+  @override
+  String get directoryAlternativesSubtitle =>
+      'نفس المادة الفعالة والعيار والشكل';
+
+  @override
+  String get directoryNoAlternatives =>
+      'ما في دواء ثاني بنفس المادة والعيار والشكل.';
+
+  @override
+  String get directoryCompanyLabel => 'الشركة';
+
+  @override
+  String get directoryIngredientLabel => 'المادة الفعالة';
+
+  @override
+  String get directoryStrengthLabel => 'العيار';
+
+  @override
+  String get directoryFormLabel => 'الشكل الدوائي';
+
+  @override
+  String get preparationTitle => 'عم نجهّز تطبيقك';
+
+  @override
+  String get preparationPatience =>
+      'طوّل بالك دقيقتين... عم نحفظ كل الأدوية وأصناف المستودعات على هاتفك. هالشي بيصير مرة وحدة بس، وبعدها التطبيق بيفتح فوراً وبيشتغل حتى بدون إنترنت.';
+
+  @override
+  String preparationStepDirectory(String loaded, String total) {
+    return 'دليل الأدوية: $loaded من $total';
+  }
+
+  @override
+  String get preparationStepDirectoryStarting => 'دليل الأدوية: عم نبدأ...';
+
+  @override
+  String preparationStepWarehouse(
+    String name,
+    String index,
+    String count,
+    String loaded,
+  ) {
+    return 'مستودع $name ($index من $count): $loaded صنف لهلأ';
+  }
+
+  @override
+  String get preparationDone => 'تمام! كل شي صار محفوظ على هاتفك.';
+
+  @override
+  String get preparationFailedTitle => 'ما قدرنا نكمّل التحميل';
+
+  @override
+  String get preparationFailedNoConnection =>
+      'ما في إنترنت. اتصل مرة وحدة لنحفظ الأدوية على هاتفك.';
+
+  @override
+  String get preparationRetry => 'جرّب مرة ثانية';
+
+  @override
+  String get preparationSkip => 'كمّل بدون';
 }

@@ -12,7 +12,9 @@ import 'package:feniq/features/banners/data/repositories/banners_repository.dart
 import 'package:feniq/features/banners/presentation/managers/banners_cubit.dart';
 import 'package:feniq/features/cart/data/repositories/order_repository.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
+import 'package:feniq/features/data_preparation/presentation/managers/data_preparation_cubit.dart';
 import 'package:feniq/features/exchange_rate/data/models/exchange_rate_model.dart';
+import 'package:feniq/features/medicine_directory/data/repositories/medicine_directory_repository.dart';
 import 'package:feniq/features/exchange_rate/data/repositories/exchange_rate_repository.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/features/notifications/data/models/notification_model.dart';
@@ -27,6 +29,7 @@ import 'package:feniq/features/warehouse_selection/presentation/widgets/warehous
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_city_scope_bar.dart';
 import 'package:feniq/generated/app_localizations.dart';
 import 'package:feniq/routes/route_names.dart';
+import '../../helpers/offline_prep_stubs.dart';
 
 class _MockWarehouseRepository extends Mock implements WarehouseRepository {}
 
@@ -174,8 +177,11 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MultiBlocProvider(
+      RepositoryProvider<MedicineDirectoryRepository>.value(
+        value: EmptyDirectoryRepository(),
+        child: MultiBlocProvider(
         providers: [
+          BlocProvider<DataPreparationCubit>.value(value: IdleDataPreparationCubit()),
           BlocProvider<AuthCubit>.value(value: authCubit),
           BlocProvider<WarehouseSelectionCubit>.value(value: warehouseCubit),
           BlocProvider<ExchangeRateCubit>.value(value: exchangeRateCubit),
@@ -188,6 +194,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
+        ),
         ),
       ),
     );

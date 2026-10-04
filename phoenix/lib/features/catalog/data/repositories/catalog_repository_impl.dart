@@ -200,13 +200,13 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
   }
 
   @override
-  Future<void> syncForOffline(String warehouseId, {bool force = false}) async {
+  Future<bool> syncForOffline(String warehouseId, {bool force = false, void Function(int loaded)? onProgress}) async {
     final store = _store;
-    if (store == null || _syncing.contains(warehouseId)) return;
+    if (store == null || _syncing.contains(warehouseId)) return false;
     _syncing.add(warehouseId);
     try {
       final existing = await _snapshotFor(warehouseId);
-      if (!force && existing != null && DateTime.now().difference(existing.savedAt) < snapshotFreshness) return;
+      if (!force && existing != null && DateTime.now().difference(existing.savedAt) < snapshotFreshness) return true;
 
       final products = <Map<String, dynamic>>[];
       String? after;
@@ -217,6 +217,7 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
         );
         final data = response.data as Map<String, dynamic>;
         products.addAll((data['products'] as List).whereType<Map<String, dynamic>>());
+        onProgress?.call(products.length);
         final pagination = data['pagination'] as Map<String, dynamic>?;
         final next = pagination?['nextCursor'] as String?;
         if (pagination?['hasMore'] != true || next == null) break;
@@ -232,10 +233,12 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
         manufacturers: manufacturers,
       );
       _snapshots[warehouseId] = snapshot;
-      await store.write(_snapshotName(warehouseId), snapshot.toJson(), savedAt: snapshot.savedAt);
+      await store.write(_snapshotName(warehouseId), snapshot.toJson(), savedAt: snapshot.savedAt, offThread: true);
+      return true;
     } catch (_) {
       // A download that fails half way keeps the previous copy and is simply
       // tried again the next time a warehouse is opened.
+      return false;
     } finally {
       _syncing.remove(warehouseId);
     }

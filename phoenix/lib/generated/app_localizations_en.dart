@@ -1779,4 +1779,123 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cartQuoteUnavailable => 'Couldn\'t work out the total.';
+
+  @override
+  String get directoryEntryTitle => 'Medicine directory';
+
+  @override
+  String directoryEntrySubtitle(String count) {
+    return '$count medicines - search them even with no internet';
+  }
+
+  @override
+  String get directoryEntrySubtitleEmpty =>
+      'Every medicine, searchable with no internet';
+
+  @override
+  String get directorySearchHint => 'Name, company or active ingredient';
+
+  @override
+  String directoryResultsCount(String shown, String total) {
+    return '$shown of $total';
+  }
+
+  @override
+  String get directoryNothingFound => 'No medicine matches your search.';
+
+  @override
+  String get directoryNotDownloadedTitle =>
+      'The directory is not on your phone yet';
+
+  @override
+  String get directoryNotDownloadedBody =>
+      'Connect to the internet once to download every medicine - after that it works with no connection.';
+
+  @override
+  String get directoryDownloadButton => 'Download now';
+
+  @override
+  String directoryUpdatedAt(String time) {
+    return 'Updated $time';
+  }
+
+  @override
+  String get directoryRefreshTooltip => 'Update the directory';
+
+  @override
+  String directoryDownloading(String loaded, String total) {
+    return 'Downloading... $loaded of $total';
+  }
+
+  @override
+  String get directoryUpdateFailed =>
+      'Could not update right now - showing the copy on your phone.';
+
+  @override
+  String get directoryUpToDate => 'The directory is up to date.';
+
+  @override
+  String get directoryAlternativesTitle => 'Same active ingredient';
+
+  @override
+  String get directoryAlternativesSubtitle =>
+      'Same active ingredient, strength and form';
+
+  @override
+  String get directoryNoAlternatives =>
+      'No other medicine with the same ingredient, strength and form.';
+
+  @override
+  String get directoryCompanyLabel => 'Company';
+
+  @override
+  String get directoryIngredientLabel => 'Active ingredient';
+
+  @override
+  String get directoryStrengthLabel => 'Strength';
+
+  @override
+  String get directoryFormLabel => 'Form';
+
+  @override
+  String get preparationTitle => 'Getting your pharmacy ready';
+
+  @override
+  String get preparationPatience =>
+      'Please bear with us for about two minutes. We are saving every medicine and the warehouse catalogs on your phone. This happens only once - after that the app opens at once and works even with no internet.';
+
+  @override
+  String preparationStepDirectory(String loaded, String total) {
+    return 'Medicine directory: $loaded of $total';
+  }
+
+  @override
+  String get preparationStepDirectoryStarting =>
+      'Medicine directory: starting...';
+
+  @override
+  String preparationStepWarehouse(
+    String name,
+    String index,
+    String count,
+    String loaded,
+  ) {
+    return 'Warehouse $name ($index of $count): $loaded items so far';
+  }
+
+  @override
+  String get preparationDone => 'All set! Everything is saved on your phone.';
+
+  @override
+  String get preparationFailedTitle => 'We could not finish downloading';
+
+  @override
+  String get preparationFailedNoConnection =>
+      'There is no internet connection. Connect once so we can save the medicines on your phone.';
+
+  @override
+  String get preparationRetry => 'Try again';
+
+  @override
+  String get preparationSkip => 'Continue without it';
 }

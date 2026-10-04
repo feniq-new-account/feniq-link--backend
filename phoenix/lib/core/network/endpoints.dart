@@ -22,6 +22,10 @@ class Endpoints {
   static const String warehouses = '/warehouses';
   static const String categories = '/categories';
 
+  /// Every medicine in the central catalog, light, in pages - what the phone
+  /// downloads once to browse and search with no connection.
+  static const String catalogDirectory = '/catalog/directory';
+
   static String warehouseProducts(String warehouseId) => '/warehouses/$warehouseId/products';
   static String productAlternatives(String warehouseId, String productId) =>
       '/warehouses/$warehouseId/products/$productId/alternatives';

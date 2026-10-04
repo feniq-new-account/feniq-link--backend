@@ -19,6 +19,7 @@ import 'package:feniq/features/banners/presentation/widgets/banner_slider.dart';
 import 'package:feniq/features/cart/presentation/widgets/cart_button.dart';
 import 'package:feniq/features/catalog/data/models/manufacturers_route_args.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/features/medicine_directory/presentation/widgets/directory_entry_card.dart';
 import 'package:feniq/features/notifications/presentation/widgets/notification_button.dart';
 import 'package:feniq/features/warehouse_selection/data/models/warehouse_model.dart';
 import 'package:feniq/features/warehouse_selection/presentation/managers/warehouse_selection_cubit.dart';
@@ -240,6 +241,9 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
             SliverToBoxAdapter(
               child: BannerSlider(onBannerTap: _handleBannerTap),
             ),
+            // The medicine directory: every medicine, searchable with no
+            // internet (saved on the phone by the data preparation).
+            const SliverToBoxAdapter(child: DirectoryEntryCard()),
             // The city scope switch, in the open directly above the grid it
             // controls. Only rendered once the server has confirmed it can
             // actually narrow this pharmacy's list (cityScopeAvailable) - see

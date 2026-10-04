@@ -363,12 +363,33 @@
   "errorPriceChangedGeneric": "تغيّرت بعض الأسعار في سلتك.",
   "errorBonusChangedGeneric": "تغيّر البونص على بعض الأصناف في سلتك.",
   "bonusValue": "بونص {tiers}",
-  "@bonusValue": { "placeholders": { "tiers": { "type": "String" } } },
+  "@bonusValue": {
+    "placeholders": {
+      "tiers": {
+        "type": "String"
+      }
+    }
+  },
   "freeUnits": "+{count} مجاناً",
-  "@freeUnits": { "placeholders": { "count": { "type": "int" } } },
+  "@freeUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noBonus": "بدون بونص",
   "bonusChangedLine": "{name}: {bonus}",
-  "@bonusChangedLine": { "placeholders": { "name": { "type": "String" }, "bonus": { "type": "String" } } },
+  "@bonusChangedLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "bonus": {
+        "type": "String"
+      }
+    }
+  },
   "errorPriceChanged": "{name} أصبح بـ {newPrice} (كان {oldPrice}).",
   "@errorPriceChanged": {
     "placeholders": {
@@ -842,5 +863,96 @@
   "errorDiscountCodePendingApproval": "كود الخصم بانتظار موافقة الإدارة.",
   "errorDiscountCodeStopped": "تم إيقاف كود الخصم.",
   "errorDiscountCodeEdited": "تغيّرت قيمة كود الخصم.",
-  "cartQuoteUnavailable": "تعذّر حساب الإجمالي."
+  "cartQuoteUnavailable": "تعذّر حساب الإجمالي.",
+  "directoryEntryTitle": "دليل الأدوية",
+  "directoryEntrySubtitle": "{count} صنف - ابحث فيهم حتى بدون إنترنت",
+  "@directoryEntrySubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "directoryEntrySubtitleEmpty": "كل الأدوية، وبتبحث فيها حتى بدون إنترنت",
+  "directorySearchHint": "اسم الدواء أو الشركة أو المادة الفعالة",
+  "directoryResultsCount": "{shown} من {total}",
+  "@directoryResultsCount": {
+    "placeholders": {
+      "shown": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "directoryNothingFound": "ما في دواء مطابق للبحث.",
+  "directoryNotDownloadedTitle": "الدليل مو محمّل على هاتفك لسا",
+  "directoryNotDownloadedBody": "اتصل بالإنترنت مرة وحدة لتنزيل كل الأدوية، وبعدها بيشتغل بدون إنترنت.",
+  "directoryDownloadButton": "حمّل هلأ",
+  "directoryUpdatedAt": "آخر تحديث {time}",
+  "@directoryUpdatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "directoryRefreshTooltip": "حدّث الدليل",
+  "directoryDownloading": "عم نحمّل... {loaded} من {total}",
+  "@directoryDownloading": {
+    "placeholders": {
+      "loaded": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "directoryUpdateFailed": "ما قدرنا نحدّث هلأ - عم نعرض النسخة المحفوظة على هاتفك.",
+  "directoryUpToDate": "الدليل محدّث.",
+  "directoryAlternativesTitle": "نفس المادة الفعالة",
+  "directoryAlternativesSubtitle": "نفس المادة الفعالة والعيار والشكل",
+  "directoryNoAlternatives": "ما في دواء ثاني بنفس المادة والعيار والشكل.",
+  "directoryCompanyLabel": "الشركة",
+  "directoryIngredientLabel": "المادة الفعالة",
+  "directoryStrengthLabel": "العيار",
+  "directoryFormLabel": "الشكل الدوائي",
+  "preparationTitle": "عم نجهّز تطبيقك",
+  "preparationPatience": "طوّل بالك دقيقتين... عم نحفظ كل الأدوية وأصناف المستودعات على هاتفك. هالشي بيصير مرة وحدة بس، وبعدها التطبيق بيفتح فوراً وبيشتغل حتى بدون إنترنت.",
+  "preparationStepDirectory": "دليل الأدوية: {loaded} من {total}",
+  "@preparationStepDirectory": {
+    "placeholders": {
+      "loaded": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "preparationStepDirectoryStarting": "دليل الأدوية: عم نبدأ...",
+  "preparationStepWarehouse": "مستودع {name} ({index} من {count}): {loaded} صنف لهلأ",
+  "@preparationStepWarehouse": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "index": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      },
+      "loaded": {
+        "type": "String"
+      }
+    }
+  },
+  "preparationDone": "تمام! كل شي صار محفوظ على هاتفك.",
+  "preparationFailedTitle": "ما قدرنا نكمّل التحميل",
+  "preparationFailedNoConnection": "ما في إنترنت. اتصل مرة وحدة لنحفظ الأدوية على هاتفك.",
+  "preparationRetry": "جرّب مرة ثانية",
+  "preparationSkip": "كمّل بدون"
 }

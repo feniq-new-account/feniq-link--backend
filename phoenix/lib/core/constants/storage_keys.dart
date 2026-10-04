@@ -8,4 +8,8 @@ class StorageKeys {
   /// an app updating from a build that predates refresh tokens keeps its
   /// session instead of being signed out.
   static const String refreshToken = 'auth.refreshToken';
+
+  /// When this phone finished its first full download of the medicine data
+  /// (ISO date). Absent = the "getting your pharmacy ready" screen is due.
+  static const String dataPreparedAt = 'offline.prepared_at';
 }

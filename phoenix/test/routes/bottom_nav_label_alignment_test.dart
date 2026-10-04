@@ -2,11 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/theme/dark_theme.dart';
 import 'package:feniq/core/theme/light_theme.dart';
+import 'package:feniq/features/data_preparation/presentation/managers/data_preparation_cubit.dart';
 import 'package:feniq/generated/app_localizations.dart';
+import '../helpers/offline_prep_stubs.dart';
 import 'package:feniq/routes/scaffold_with_bottom_nav.dart';
 
 // "سجل الحسابات" used to sit lower than the icons beside it. The cause is in
@@ -62,6 +65,8 @@ Future<void> _pump(WidgetTester tester, {required Locale locale, required ThemeD
   await tester.pumpWidget(
     MaterialApp.router(
       routerConfig: _shellRouter(),
+      // The shell starts the offline preparation; these tests are about the bar.
+      builder: (context, child) => BlocProvider<DataPreparationCubit>.value(value: IdleDataPreparationCubit(), child: child),
       theme: theme,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,

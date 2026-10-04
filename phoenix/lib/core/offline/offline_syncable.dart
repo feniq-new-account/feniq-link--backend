@@ -7,5 +7,8 @@ abstract interface class OfflineSyncable {
   /// Downloads [warehouseId]'s catalog unless a recent copy is already saved
   /// ([force] re-downloads it anyway). Never throws: a failed download leaves
   /// the previous copy in place and is retried the next time.
-  Future<void> syncForOffline(String warehouseId, {bool force = false});
+  ///
+  /// [onProgress] hears how many products have arrived so far. Returns whether
+  /// the phone now holds a recent copy of that warehouse.
+  Future<bool> syncForOffline(String warehouseId, {bool force = false, void Function(int loaded)? onProgress});
 }

@@ -190,9 +190,17 @@ void main() {
     );
   });
 
-  test('a failed download leaves no copy and does not throw', () async {
+  test('a failed download leaves no copy, does not throw, and says it did not work', () async {
     goOffline();
-    await repository.syncForOffline('w1');
+    expect(await repository.syncForOffline('w1'), isFalse);
     expect(await store.read('catalog_w1'), isNull);
+  });
+
+  test('a download reports how many products have arrived and that it worked', () async {
+    serveCatalog();
+    final loaded = <int>[];
+    expect(await repository.syncForOffline('w1', onProgress: loaded.add), isTrue);
+    expect(loaded, [2, 3], reason: 'after each page: two products, then the third');
+    expect(await repository.syncForOffline('w1'), isTrue, reason: 'a recent copy counts as ready');
   });
 }

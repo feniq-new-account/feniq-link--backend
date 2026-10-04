@@ -53,10 +53,13 @@ class OfflineStore {
     }
   }
 
-  Future<void> write(String name, Object? data, {DateTime? savedAt}) async {
+  /// [offThread]: encode on another isolate - for the megabytes of a whole
+  /// catalog, so the screen does not stutter while it is being saved.
+  Future<void> write(String name, Object? data, {DateTime? savedAt, bool offThread = false}) async {
     try {
       final file = await _file(name);
-      final text = jsonEncode({'savedAt': (savedAt ?? DateTime.now()).toIso8601String(), 'data': data});
+      final stamp = (savedAt ?? DateTime.now()).toIso8601String();
+      final text = offThread ? await compute(_encodeEntry, (stamp, data)) : _encodeEntry((stamp, data));
       // Written under another name and renamed, so a reader (or a crash in the
       // middle of the write) never meets half a file.
       final temporary = File('${file.path}.tmp');
@@ -80,3 +83,5 @@ class OfflineStore {
 }
 
 Object? _decodeJson(String text) => jsonDecode(text);
+
+String _encodeEntry((String, Object?) entry) => jsonEncode({'savedAt': entry.$1, 'data': entry.$2});

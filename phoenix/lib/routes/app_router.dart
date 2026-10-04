@@ -38,6 +38,9 @@ import 'package:feniq/features/debts/presentation/views/my_debts_view.dart';
 import 'package:feniq/features/my_orders/presentation/managers/my_orders_cubit.dart';
 import 'package:feniq/features/my_orders/presentation/views/my_orders_view.dart';
 import 'package:feniq/features/notifications/presentation/views/notification_center_view.dart';
+import 'package:feniq/features/medicine_directory/data/repositories/medicine_directory_repository.dart';
+import 'package:feniq/features/medicine_directory/presentation/managers/directory_cubit.dart';
+import 'package:feniq/features/medicine_directory/presentation/views/medicine_directory_view.dart';
 import 'package:feniq/features/offers/data/repositories/offers_repository.dart';
 import 'package:feniq/features/order_tracking/presentation/managers/order_tracking_cubit.dart';
 import 'package:feniq/features/order_tracking/presentation/views/order_tracking_view.dart';
@@ -138,6 +141,21 @@ class AppRouter {
             ),
           );
         },
+      ),
+      // Every medicine of the central catalog, searched on the phone - works
+      // with no connection (the copy saved by the data preparation).
+      GoRoute(
+        name: RouteNames.medicineDirectory,
+        path: RoutePaths.medicineDirectory,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: BlocProvider(
+            create: (context) => DirectoryCubit(
+              repository: context.read<MedicineDirectoryRepository>(),
+            )..load(),
+            child: const MedicineDirectoryView(),
+          ),
+        ),
       ),
       GoRoute(
         name: RouteNames.manufacturers,

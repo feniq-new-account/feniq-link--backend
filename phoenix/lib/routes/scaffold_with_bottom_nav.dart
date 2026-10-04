@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
+import 'package:feniq/features/data_preparation/presentation/widgets/data_preparation_gate.dart';
 import 'package:feniq/generated/app_localizations.dart';
 
 // Section 6: the five top-level tabs (warehouses / offers & ads / my orders /
@@ -33,44 +34,48 @@ class ScaffoldWithBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Scaffold(
-      body: navigationShell,
-      // A soft shadow cast upward onto the body content above the bar
-      // (Section 1 of the visual-polish pass) - NavigationBar itself has no
-      // "shadow above" concept, so this wraps it in a plain decorated box.
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: NavigationBar(
-          selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: (index) {
-            navigationShell.goBranch(
-              index,
-              initialLocation: index == navigationShell.currentIndex,
-            );
-          },
-          // Each destination is wrapped so its label can never wrap to a
-          // second line: NavigationBar's own Material resets DefaultTextStyle,
-          // so this has to sit *inside* the bar, around each destination,
-          // rather than around the bar itself. With every label a uniform one
-          // line tall, all five icons resolve to the same offset. The ellipsis
-          // is only a floor for very narrow screens or a large system text
-          // scale - at the theme's label size the longest label fits whole.
-          destinations: [
-            for (final destination in _destinations(context, l10n))
-              DefaultTextStyle.merge(
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                child: destination,
+    // The gate starts the phone's offline preparation and, the first time on a
+    // phone, covers the app with its progress page until it is done.
+    return DataPreparationGate(
+      child: Scaffold(
+        body: navigationShell,
+        // A soft shadow cast upward onto the body content above the bar
+        // (Section 1 of the visual-polish pass) - NavigationBar itself has no
+        // "shadow above" concept, so this wraps it in a plain decorated box.
+        bottomNavigationBar: DecoratedBox(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
               ),
-          ],
+            ],
+          ),
+          child: NavigationBar(
+            selectedIndex: navigationShell.currentIndex,
+            onDestinationSelected: (index) {
+              navigationShell.goBranch(
+                index,
+                initialLocation: index == navigationShell.currentIndex,
+              );
+            },
+            // Each destination is wrapped so its label can never wrap to a
+            // second line: NavigationBar's own Material resets DefaultTextStyle,
+            // so this has to sit *inside* the bar, around each destination,
+            // rather than around the bar itself. With every label a uniform one
+            // line tall, all five icons resolve to the same offset. The ellipsis
+            // is only a floor for very narrow screens or a large system text
+            // scale - at the theme's label size the longest label fits whole.
+            destinations: [
+              for (final destination in _destinations(context, l10n))
+                DefaultTextStyle.merge(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  child: destination,
+                ),
+            ],
+          ),
         ),
       ),
     );

@@ -8,6 +8,7 @@ class RoutePaths {
   static const String approvalPending = '/approval-pending';
   static const String warehouseSelection = '/warehouse-selection';
   static const String promotions = '/offers-and-ads';
+  static const String medicineDirectory = '/medicine-directory';
   static const String warehouseProfile = '/warehouses/:warehouseId/profile';
   static const String warehouseOffers = '/warehouses/:warehouseId/offers';
   static const String manufacturers = '/manufacturers/:warehouseId';

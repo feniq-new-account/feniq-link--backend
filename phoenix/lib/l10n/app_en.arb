@@ -364,12 +364,33 @@
   "errorPriceChangedGeneric": "Some prices in your cart have changed.",
   "errorBonusChangedGeneric": "The bonus changed on some items in your cart.",
   "bonusValue": "Bonus {tiers}",
-  "@bonusValue": { "placeholders": { "tiers": { "type": "String" } } },
+  "@bonusValue": {
+    "placeholders": {
+      "tiers": {
+        "type": "String"
+      }
+    }
+  },
   "freeUnits": "+{count} free",
-  "@freeUnits": { "placeholders": { "count": { "type": "int" } } },
+  "@freeUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noBonus": "No bonus",
   "bonusChangedLine": "{name}: {bonus}",
-  "@bonusChangedLine": { "placeholders": { "name": { "type": "String" }, "bonus": { "type": "String" } } },
+  "@bonusChangedLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "bonus": {
+        "type": "String"
+      }
+    }
+  },
   "errorPriceChanged": "{name} is now {newPrice} (was {oldPrice}).",
   "@errorPriceChanged": {
     "placeholders": {
@@ -977,5 +998,96 @@
   "errorDiscountCodePendingApproval": "This discount code is still waiting for approval.",
   "errorDiscountCodeStopped": "This discount code has been stopped.",
   "errorDiscountCodeEdited": "The terms of this discount code changed.",
-  "cartQuoteUnavailable": "Couldn't work out the total."
+  "cartQuoteUnavailable": "Couldn't work out the total.",
+  "directoryEntryTitle": "Medicine directory",
+  "directoryEntrySubtitle": "{count} medicines - search them even with no internet",
+  "@directoryEntrySubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "directoryEntrySubtitleEmpty": "Every medicine, searchable with no internet",
+  "directorySearchHint": "Name, company or active ingredient",
+  "directoryResultsCount": "{shown} of {total}",
+  "@directoryResultsCount": {
+    "placeholders": {
+      "shown": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "directoryNothingFound": "No medicine matches your search.",
+  "directoryNotDownloadedTitle": "The directory is not on your phone yet",
+  "directoryNotDownloadedBody": "Connect to the internet once to download every medicine - after that it works with no connection.",
+  "directoryDownloadButton": "Download now",
+  "directoryUpdatedAt": "Updated {time}",
+  "@directoryUpdatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "directoryRefreshTooltip": "Update the directory",
+  "directoryDownloading": "Downloading... {loaded} of {total}",
+  "@directoryDownloading": {
+    "placeholders": {
+      "loaded": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "directoryUpdateFailed": "Could not update right now - showing the copy on your phone.",
+  "directoryUpToDate": "The directory is up to date.",
+  "directoryAlternativesTitle": "Same active ingredient",
+  "directoryAlternativesSubtitle": "Same active ingredient, strength and form",
+  "directoryNoAlternatives": "No other medicine with the same ingredient, strength and form.",
+  "directoryCompanyLabel": "Company",
+  "directoryIngredientLabel": "Active ingredient",
+  "directoryStrengthLabel": "Strength",
+  "directoryFormLabel": "Form",
+  "preparationTitle": "Getting your pharmacy ready",
+  "preparationPatience": "Please bear with us for about two minutes. We are saving every medicine and the warehouse catalogs on your phone. This happens only once - after that the app opens at once and works even with no internet.",
+  "preparationStepDirectory": "Medicine directory: {loaded} of {total}",
+  "@preparationStepDirectory": {
+    "placeholders": {
+      "loaded": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "preparationStepDirectoryStarting": "Medicine directory: starting...",
+  "preparationStepWarehouse": "Warehouse {name} ({index} of {count}): {loaded} items so far",
+  "@preparationStepWarehouse": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "index": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      },
+      "loaded": {
+        "type": "String"
+      }
+    }
+  },
+  "preparationDone": "All set! Everything is saved on your phone.",
+  "preparationFailedTitle": "We could not finish downloading",
+  "preparationFailedNoConnection": "There is no internet connection. Connect once so we can save the medicines on your phone.",
+  "preparationRetry": "Try again",
+  "preparationSkip": "Continue without it"
 }

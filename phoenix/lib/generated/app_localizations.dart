@@ -3037,6 +3037,197 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t work out the total.'**
   String get cartQuoteUnavailable;
+
+  /// No description provided for @directoryEntryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine directory'**
+  String get directoryEntryTitle;
+
+  /// No description provided for @directoryEntrySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} medicines - search them even with no internet'**
+  String directoryEntrySubtitle(String count);
+
+  /// No description provided for @directoryEntrySubtitleEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Every medicine, searchable with no internet'**
+  String get directoryEntrySubtitleEmpty;
+
+  /// No description provided for @directorySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, company or active ingredient'**
+  String get directorySearchHint;
+
+  /// No description provided for @directoryResultsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{shown} of {total}'**
+  String directoryResultsCount(String shown, String total);
+
+  /// No description provided for @directoryNothingFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No medicine matches your search.'**
+  String get directoryNothingFound;
+
+  /// No description provided for @directoryNotDownloadedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The directory is not on your phone yet'**
+  String get directoryNotDownloadedTitle;
+
+  /// No description provided for @directoryNotDownloadedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet once to download every medicine - after that it works with no connection.'**
+  String get directoryNotDownloadedBody;
+
+  /// No description provided for @directoryDownloadButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Download now'**
+  String get directoryDownloadButton;
+
+  /// No description provided for @directoryUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {time}'**
+  String directoryUpdatedAt(String time);
+
+  /// No description provided for @directoryRefreshTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the directory'**
+  String get directoryRefreshTooltip;
+
+  /// No description provided for @directoryDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading... {loaded} of {total}'**
+  String directoryDownloading(String loaded, String total);
+
+  /// No description provided for @directoryUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update right now - showing the copy on your phone.'**
+  String get directoryUpdateFailed;
+
+  /// No description provided for @directoryUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'The directory is up to date.'**
+  String get directoryUpToDate;
+
+  /// No description provided for @directoryAlternativesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Same active ingredient'**
+  String get directoryAlternativesTitle;
+
+  /// No description provided for @directoryAlternativesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Same active ingredient, strength and form'**
+  String get directoryAlternativesSubtitle;
+
+  /// No description provided for @directoryNoAlternatives.
+  ///
+  /// In en, this message translates to:
+  /// **'No other medicine with the same ingredient, strength and form.'**
+  String get directoryNoAlternatives;
+
+  /// No description provided for @directoryCompanyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Company'**
+  String get directoryCompanyLabel;
+
+  /// No description provided for @directoryIngredientLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Active ingredient'**
+  String get directoryIngredientLabel;
+
+  /// No description provided for @directoryStrengthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Strength'**
+  String get directoryStrengthLabel;
+
+  /// No description provided for @directoryFormLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Form'**
+  String get directoryFormLabel;
+
+  /// No description provided for @preparationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting your pharmacy ready'**
+  String get preparationTitle;
+
+  /// No description provided for @preparationPatience.
+  ///
+  /// In en, this message translates to:
+  /// **'Please bear with us for about two minutes. We are saving every medicine and the warehouse catalogs on your phone. This happens only once - after that the app opens at once and works even with no internet.'**
+  String get preparationPatience;
+
+  /// No description provided for @preparationStepDirectory.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine directory: {loaded} of {total}'**
+  String preparationStepDirectory(String loaded, String total);
+
+  /// No description provided for @preparationStepDirectoryStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine directory: starting...'**
+  String get preparationStepDirectoryStarting;
+
+  /// No description provided for @preparationStepWarehouse.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse {name} ({index} of {count}): {loaded} items so far'**
+  String preparationStepWarehouse(
+    String name,
+    String index,
+    String count,
+    String loaded,
+  );
+
+  /// No description provided for @preparationDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All set! Everything is saved on your phone.'**
+  String get preparationDone;
+
+  /// No description provided for @preparationFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not finish downloading'**
+  String get preparationFailedTitle;
+
+  /// No description provided for @preparationFailedNoConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no internet connection. Connect once so we can save the medicines on your phone.'**
+  String get preparationFailedNoConnection;
+
+  /// No description provided for @preparationRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get preparationRetry;
+
+  /// No description provided for @preparationSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without it'**
+  String get preparationSkip;
 }
 
 class _AppLocalizationsDelegate

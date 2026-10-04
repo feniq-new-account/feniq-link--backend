@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:feniq/core/network/api_client.dart';
+import 'package:feniq/core/offline/offline_store.dart';
 import 'package:feniq/core/services/app_update_service.dart';
 import 'package:feniq/core/services/fcm_service.dart';
 import 'package:feniq/core/services/remote_config_service.dart';
@@ -26,6 +27,7 @@ import 'package:feniq/features/debts/data/repositories/debt_repository_impl.dart
 import 'package:feniq/features/exchange_rate/data/models/exchange_rate_model.dart';
 import 'package:feniq/features/exchange_rate/data/repositories/exchange_rate_repository.dart';
 import 'package:feniq/features/exchange_rate/data/repositories/exchange_rate_repository_impl.dart';
+import 'package:feniq/features/medicine_directory/data/repositories/medicine_directory_repository_impl.dart';
 import 'package:feniq/features/notifications/data/repositories/notification_repository.dart';
 import 'package:feniq/features/offers/data/repositories/offers_repository_impl.dart';
 import 'package:feniq/features/returns/data/repositories/return_repository_impl.dart';
@@ -92,6 +94,7 @@ Future<AppRouter> _pumpApp(
       authRepository: authRepository,
       warehouseRepository: resolvedWarehouseRepository,
       catalogRepository: catalogRepository,
+      medicineDirectoryRepository: MedicineDirectoryRepositoryImpl(apiClient: apiClient, offlineStore: OfflineStore()),
       exchangeRateRepository: resolvedExchangeRateRepository,
       orderRepository: orderRepository,
       savingsRepository: savingsRepository,
