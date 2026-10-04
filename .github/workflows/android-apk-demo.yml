@@ -1,0 +1,55 @@
+# يبني APK تجريبي بلا سيرفر (--dart-define=DEMO_MODE=true): التطبيق يجيب
+# بنفسه على كل طلب ببيانات وهمية (phoenix/lib/demo/)، فيقدر أي حدا يجرّبه
+# بإيده قبل ما يكون السيرفر منشوراً. شريط أحمر بأعلى كل شاشة يقول إنها تجريبية.
+#
+# يعمل تلقائياً مع كل تعديل على phoenix/ في أي فرع، أو يدوياً من Actions.
+# الملف الناتج: صفحة التشغيل ← Artifacts ← feniq-demo-apk.
+# لا يُنشر على الموقع ولا يحلّ محل feniq-apk.
+name: Build demo APK
+
+on:
+  push:
+    paths:
+      - 'phoenix/**'
+      - '.github/workflows/android-apk-demo.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: android-apk-demo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: phoenix
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.35.x
+          cache: true
+
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - run: flutter pub get
+
+      # Debug-key signed: for trying out only, never to be updated over.
+      - name: Build demo APK
+        run: flutter build apk --release --dart-define=DEMO_MODE=true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: feniq-demo-apk
+          path: phoenix/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30

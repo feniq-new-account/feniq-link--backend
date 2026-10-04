@@ -2,10 +2,14 @@ import 'package:dio/dio.dart';
 import 'package:feniq/config/app_config.dart';
 import 'package:feniq/core/network/interceptors/auth_interceptor.dart';
 import 'package:feniq/core/services/secure_storage_service.dart';
+import 'package:feniq/demo/demo_backend.dart';
+import 'package:feniq/demo/demo_mode.dart';
 
 class ApiClient {
   ApiClient({required SecureStorageService secureStorage})
     : _dio = Dio(_baseOptions()) {
+    // Answers every request in-app - see demo/demo_mode.dart.
+    if (kDemoMode) _dio.interceptors.add(DemoBackendInterceptor());
     _dio.interceptors.add(
       AuthInterceptor(
         secureStorage: secureStorage,

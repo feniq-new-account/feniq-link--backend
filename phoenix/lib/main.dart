@@ -17,6 +17,8 @@ import 'package:feniq/features/app_update/presentation/app_update_gate.dart';
 import 'package:feniq/firebase_options.dart';
 import 'package:feniq/core/theme/dark_theme.dart';
 import 'package:feniq/core/widgets/offline_banner.dart';
+import 'package:feniq/demo/demo_banner.dart';
+import 'package:feniq/demo/demo_mode.dart';
 import 'package:feniq/core/theme/light_theme.dart';
 import 'package:feniq/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
@@ -58,12 +60,15 @@ import 'package:feniq/routes/route_paths.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // TEMP DIAGNOSTIC LOG (see FCM_DEBUG task).
-  debugPrint('FCM_DEBUG: Firebase.initializeApp() succeeded');
-  // Must be registered before any background/terminated message can be
-  // received at all - see the handler's own doc comment in fcm_service.dart.
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  // The demo build has no Firebase project (and no push) - see demo_mode.dart.
+  if (!kDemoMode) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    // TEMP DIAGNOSTIC LOG (see FCM_DEBUG task).
+    debugPrint('FCM_DEBUG: Firebase.initializeApp() succeeded');
+    // Must be registered before any background/terminated message can be
+    // received at all - see the handler's own doc comment in fcm_service.dart.
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
 
   final prefs = await SharedPreferences.getInstance();
   final storageService = StorageService(prefs);
@@ -179,7 +184,8 @@ Future<SettingsState> _loadInitialSettings(
 
   final locale = storedLocale != null && storedLocale.isNotEmpty
       ? Locale(storedLocale)
-      : null;
+      // The demo opens in Arabic whatever the browser's language.
+      : (kDemoMode ? const Locale('ar') : null);
 
   return SettingsState(themeMode: themeMode, locale: locale);
 }
@@ -353,7 +359,10 @@ class MyApp extends StatelessWidget {
                     // phone's saved copy (OfflineBanner). The child keeps one
                     // fixed place in the tree, so the navigator never rebuilds
                     // when the strip appears or goes.
-                    builder: (context, child) => OfflineBannerFrame(child: child ?? const SizedBox.shrink()),
+                    builder: (context, child) {
+                      final framed = OfflineBannerFrame(child: child ?? const SizedBox.shrink());
+                      return kDemoMode ? DemoBannerFrame(child: framed) : framed;
+                    },
                   );
                 },
               ),

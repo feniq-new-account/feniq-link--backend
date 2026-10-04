@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:feniq/demo/demo_mode.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
@@ -141,6 +142,7 @@ class FcmService implements SessionScoped {
   }
 
   Future<void> initialize() async {
+    if (kDemoMode) return; // no Firebase in the demo build
     try {
       // TEMP DIAGNOSTIC LOGS (see FCM_DEBUG task).
       _logger.info('FCM_DEBUG: requesting notification permission');
@@ -181,6 +183,7 @@ class FcmService implements SessionScoped {
   /// server row is then left behind, but registerDeviceToken already pulls
   /// a token away from any previous owner when someone next signs in here.
   Future<void> unregisterDevice() async {
+    if (kDemoMode) return;
     try {
       final token = await _messaging.getToken();
       if (token != null && token.isNotEmpty) {
