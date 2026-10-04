@@ -236,10 +236,13 @@ const DEFAULT_CATALOG_LIMIT = 30;
 // Cursor pagination: sorted by `_id` ascending (replacing the previous
 // manufacturerAr/nameAr sort - a stable, unique cursor field is required for
 // pagination to work correctly, see pagination.js).
+const IMAGE_FILTERS = new Set(['missing', 'present', 'approx']);
+
 async function listCatalog({
   search,
   categoryId,
   manufacturer,
+  image,
   limit = DEFAULT_CATALOG_LIMIT,
   after = null,
 } = {}) {
@@ -256,6 +259,17 @@ async function listCatalog({
   const manufacturerKey = normalizeText(optionalString(manufacturer, 'manufacturer'));
   if (manufacturerKey) {
     filter.manufacturerKey = manufacturerKey;
+  }
+  // The admin's picture work list: items with no picture, with one, or with one
+  // that was only matched approximately (by brand or by spelling).
+  const imageFilter = optionalString(image, 'image');
+  if (imageFilter) {
+    if (!IMAGE_FILTERS.has(imageFilter)) {
+      throw ApiError.badRequest('Invalid image filter.', undefined, INVALID_QUERY_CODE);
+    }
+    if (imageFilter === 'missing') filter.imageUrl = null;
+    if (imageFilter === 'present') filter.imageUrl = { $ne: null };
+    if (imageFilter === 'approx') filter.imageMatch = { $in: ['brand', 'fuzzy'] };
   }
   const searchClause = productSearchClause(search);
   if (searchClause) {
@@ -275,6 +289,54 @@ async function listCatalog({
   const nextCursor = page.length > 0 ? page[page.length - 1]._id.toString() : null;
 
   return { items: page, hasMore, nextCursor };
+}
+
+// How far the catalog's pictures have got: the totals, how sure the bulk-linked
+// ones are, and which companies have the most items still without one - the
+// list the admin chases (company representatives, a photo session).
+async function imageStats({ topCompanies = 25 } = {}) {
+  const [totals] = await ProductCatalog.aggregate([
+    { $match: { isActive: true } },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: 1 },
+        withImage: { $sum: { $cond: [{ $ne: [{ $ifNull: ['$imageUrl', null] }, null] }, 1, 0] } },
+        exact: { $sum: { $cond: [{ $eq: ['$imageMatch', 'exact'] }, 1, 0] } },
+        brand: { $sum: { $cond: [{ $eq: ['$imageMatch', 'brand'] }, 1, 0] } },
+        fuzzy: { $sum: { $cond: [{ $eq: ['$imageMatch', 'fuzzy'] }, 1, 0] } },
+      },
+    },
+  ]);
+  const total = totals?.total ?? 0;
+  const withImage = totals?.withImage ?? 0;
+  const linked = (totals?.exact ?? 0) + (totals?.brand ?? 0) + (totals?.fuzzy ?? 0);
+  const companies = await ProductCatalog.aggregate([
+    { $match: { isActive: true } },
+    {
+      $group: {
+        _id: '$manufacturerAr',
+        total: { $sum: 1 },
+        missing: { $sum: { $cond: [{ $eq: [{ $ifNull: ['$imageUrl', null] }, null] }, 1, 0] } },
+      },
+    },
+    { $match: { missing: { $gt: 0 } } },
+    { $sort: { missing: -1, _id: 1 } },
+    { $limit: Math.min(Math.max(Number(topCompanies) || 25, 1), 100) },
+  ]);
+  return {
+    total,
+    withImage,
+    withoutImage: total - withImage,
+    byMatch: {
+      exact: totals?.exact ?? 0,
+      brand: totals?.brand ?? 0,
+      fuzzy: totals?.fuzzy ?? 0,
+      // Uploaded by an admin or a warehouse's own pictures, not bulk-linked.
+      uploaded: Math.max(withImage - linked, 0),
+    },
+    topMissingCompanies: companies.map((row) => ({ manufacturerAr: row._id, total: row.total, missing: row.missing })),
+  };
 }
 
 // The warehouse's "pick a medicine from the central list" type-ahead (the Add
@@ -1156,6 +1218,7 @@ module.exports = {
   catalogIdsMatchingIngredient,
   PRODUCT_IDENTITY_POPULATE,
   listCatalog,
+  imageStats,
   searchActiveForWarehouse,
   searchManufacturers,
   updateCatalogItem,

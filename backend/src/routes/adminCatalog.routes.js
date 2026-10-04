@@ -12,6 +12,9 @@ router.param('id', objectIdParam);
 
 // Static paths first, then the /:id-shaped ones.
 router.get('/template', controller.downloadTemplate);
+// How many items have a picture, how sure the bulk-linked ones are, and which
+// companies have the most still without.
+router.get('/image-stats', controller.imageStats);
 // Backs the Searchable Dropdown manufacturer filter on both this page and
 // Admin Products.
 router.get('/manufacturers', controller.searchManufacturers);

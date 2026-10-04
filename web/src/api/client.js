@@ -737,16 +737,20 @@ export const api = {
     const qs = params.toString();
     return request(`/admin/exchange-rate/history${qs ? `?${qs}` : ''}`);
   },
-  adminCatalog: ({ search, categoryId, manufacturer, limit, after } = {}) => {
+  adminCatalog: ({ search, categoryId, manufacturer, image, limit, after } = {}) => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (categoryId) params.set('categoryId', categoryId);
     if (manufacturer) params.set('manufacturer', manufacturer);
+    // 'missing' | 'present' | 'approx' - the picture work list.
+    if (image) params.set('image', image);
     if (limit) params.set('limit', limit);
     if (after) params.set('after', after);
     const qs = params.toString();
     return request(`/admin/catalog${qs ? `?${qs}` : ''}`);
   },
+  // Totals of the catalog's pictures and the companies with the most items still without one.
+  adminCatalogImageStats: () => request('/admin/catalog/image-stats'),
   // Backs the Searchable Dropdown manufacturer filter on both Admin Products
   // and Admin Catalog - a type-ahead over the central catalog's distinct
   // manufacturer names, capped server-side (adminCatalog.service.js).
