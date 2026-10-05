@@ -31,15 +31,21 @@ class BonusTier {
   /// "10+1، 20+3".
   static String format(List<BonusTier> tiers) => tiers.map((t) => '${t.buy}+${t.free}').join('، ');
 
-  /// The same free-quantity rule the server applies (so the cart can show it
-  /// before ordering): the highest tier whose `buy` <= [quantity], then
-  /// floor(quantity / buy) * free.
+  /// The same free-quantity rule the server applies (utils/bonus.js
+  /// freeQuantityFor), so the cart shows exactly what the order will give:
+  /// proportional to the quantity - 10+4 on 5 units is 2 free. The tier is the
+  /// highest one whose `buy` <= [quantity], or the smallest when the quantity
+  /// is below all of them; then quantity * free / buy rounded to the nearest
+  /// whole unit (halves up), in integer arithmetic like the server.
   static int freeQuantity(List<BonusTier> tiers, int quantity) {
+    if (tiers.isEmpty || quantity <= 0) return 0;
     BonusTier? best;
+    BonusTier? smallest;
     for (final tier in tiers) {
       if (tier.buy <= quantity && (best == null || tier.buy > best.buy)) best = tier;
+      if (smallest == null || tier.buy < smallest.buy) smallest = tier;
     }
-    if (best == null) return 0;
-    return (quantity ~/ best.buy) * best.free;
+    final used = best ?? smallest!;
+    return (2 * quantity * used.free + used.buy) ~/ (2 * used.buy);
   }
 }

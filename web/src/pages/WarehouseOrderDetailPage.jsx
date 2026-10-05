@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { ProductPicker } from '../components/CatalogPickers';
+import { RatePharmacyModal } from '../components/RatePharmacyModal';
 import { displayName } from '../utils/displayName';
 import { useExchangeRate } from '../context/ExchangeRateContext';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
@@ -547,6 +548,7 @@ export function WarehouseOrderDetailPage() {
   // need the live rate to show in SYP.
   const usdToSyp = useExchangeRate();
   const [order, setOrder] = useState(null);
+  const [isRating, setIsRating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAdvancing, setIsAdvancing] = useState(false);
@@ -755,6 +757,16 @@ export function WarehouseOrderDetailPage() {
                 )}
               </div>
               <div className="wh-detail-timestamp wh-num">{new Date(order.createdAt).toLocaleString()}</div>
+              {/* Rating the pharmacy, once the order is delivered - here on the
+                  order page rather than in the orders list. */}
+              {order.status === 'delivered' &&
+                (order.hasReviewed ? (
+                  <p className="hint">{t('orders.youRatedPharmacy')}</p>
+                ) : (
+                  <button className="btn-secondary" onClick={() => setIsRating(true)}>
+                    {t('orders.ratePharmacy')}
+                  </button>
+                ))}
             </div>
 
             <div className="wh-detail-card wh-pharmacy-card">
@@ -1009,6 +1021,16 @@ export function WarehouseOrderDetailPage() {
           pharmacyId={order.pharmacy.id}
           onClose={() => setShowPaymentModal(false)}
           onRecorded={handlePaymentRecorded}
+        />
+      )}
+      {isRating && order && (
+        <RatePharmacyModal
+          order={order}
+          onClose={() => setIsRating(false)}
+          onRated={() => {
+            setIsRating(false);
+            load({ silent: true });
+          }}
         />
       )}
     </div>

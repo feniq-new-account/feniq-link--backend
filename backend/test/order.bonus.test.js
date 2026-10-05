@@ -79,22 +79,22 @@ test.after(async () => {
   await stopMemoryMongo();
 });
 
-test('10+1 and 25 units -> 2 free, and the free units are not charged', async () => {
+test('10+1 and 25 units -> 3 free (2.5 rounded), and the free units are not charged', async () => {
   const p = await product([{ buy: 10, free: 1 }]);
   const orderId = await order([{ productId: String(p._id), quantity: 25 }]);
   const line = await OrderItem.findOne({ orderId }).lean();
   assert.strictEqual(line.quantity, 25);
-  assert.strictEqual(line.freeQuantity, 2);
+  assert.strictEqual(line.freeQuantity, 3);
   assert.deepStrictEqual(line.bonusApplied, { buy: 10, free: 1 });
   const stored = await Order.findById(orderId).lean();
   assert.strictEqual(stored.totalPrice, 25 * 200);
 });
 
-test('10+1 and 20+3 with 45 units -> the 20+3 tier -> 6 free', async () => {
+test('10+1 and 20+3 with 45 units -> the 20+3 tier -> 7 free (6.75 rounded)', async () => {
   const p = await product([{ buy: 10, free: 1 }, { buy: 20, free: 3 }]);
   const orderId = await order([{ productId: String(p._id), quantity: 45 }]);
   const line = await OrderItem.findOne({ orderId }).lean();
-  assert.strictEqual(line.freeQuantity, 6);
+  assert.strictEqual(line.freeQuantity, 7);
   assert.deepStrictEqual(line.bonusApplied, { buy: 20, free: 3 });
 });
 
