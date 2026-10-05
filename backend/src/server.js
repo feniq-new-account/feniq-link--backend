@@ -10,6 +10,7 @@ const { ensureDiscountCodeIndexes } = require('./services/discountCode.service')
 const { initRealtime } = require('./realtime');
 const User = require('./models/user.model');
 const { seedDemoDataIfEmpty, seedDemoOrders } = require('./services/demoSeed.service');
+const { seedDemoCatalogImages } = require('./services/demoCatalogImages.service');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
 // not 'production':
@@ -99,6 +100,11 @@ async function start() {
       if (seeded) {
         // eslint-disable-next-line no-console
         console.log(`Seeded demo data: ${seeded.warehouses} warehouses, ${seeded.products} products.`);
+      }
+      const pictured = await seedDemoCatalogImages();
+      if (pictured && (pictured.uploaded || pictured.stocked)) {
+        // eslint-disable-next-line no-console
+        console.log(`Demo medicines with pictures: ${pictured.uploaded} uploaded, ${pictured.stocked} stocked.`);
       }
       const seededOrders = await seedDemoOrders();
       if (seededOrders && seededOrders.orders) {
