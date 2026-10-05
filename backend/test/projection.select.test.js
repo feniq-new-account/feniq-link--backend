@@ -452,7 +452,9 @@ test('warehouse offers list keeps offer + product-name fields', async () => {
     Object.keys(o).sort(),
     ['id', 'productId', 'productNameAr', 'productNameEn', 'titleAr', 'titleEn',
       'discountPercentage', 'startDate', 'endDate', 'isPermanent', 'status', 'pendingUpdate',
-      'createdAt'].sort()
+      'createdAt',
+      // Additive (bonus offers).
+      'offerType', 'bonuses'].sort()
   );
   assert.strictEqual(o.titleEn, 'Sale');
   assert.strictEqual(o.discountPercentage, 10);

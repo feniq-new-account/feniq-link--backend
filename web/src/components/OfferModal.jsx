@@ -16,7 +16,7 @@ import { displayName } from '../utils/displayName';
 //   an existing offer's discount / dates / names, not which product it is on).
 //
 // `onSubmit(payload)` does the actual API call; the payload is
-// { productId, titleAr, titleEn, discountPercentage, startDate, isPermanent }
+// { productId, titleAr, titleEn, offerType, discountPercentage | bonuses, startDate, isPermanent }
 // plus `endDate` only when it is not a permanent offer.
 
 function toDateInputValue(value) {
@@ -26,7 +26,7 @@ function toDateInputValue(value) {
 
 function initialForm(offer) {
   if (!offer) {
-    return { product: null, productId: '', titleAr: '', titleEn: '', discountPercentage: '', startDate: '', endDate: '', isPermanent: false };
+    return { product: null, productId: '', titleAr: '', titleEn: '', offerType: 'discount', discountPercentage: '', bonus: '', startDate: '', endDate: '', isPermanent: false };
   }
   return {
     product: offer.productId
@@ -35,7 +35,9 @@ function initialForm(offer) {
     productId: offer.productId ?? '',
     titleAr: offer.titleAr ?? '',
     titleEn: offer.titleEn ?? '',
-    discountPercentage: String(offer.discountPercentage ?? ''),
+    offerType: offer.offerType || 'discount',
+    discountPercentage: offer.offerType === 'bonus' ? '' : String(offer.discountPercentage ?? ''),
+    bonus: (offer.bonuses ?? []).map((tier) => `${tier.buy}+${tier.free}`).join('، '),
     startDate: toDateInputValue(offer.startDate),
     endDate: toDateInputValue(offer.endDate),
     isPermanent: Boolean(offer.isPermanent),
@@ -66,9 +68,14 @@ export function OfferModal({ mode, offer, searchProducts, usdToSyp, onClose, onS
       setError(t('common.requiredFields'));
       return;
     }
+    const isBonus = form.offerType === 'bonus';
     const discountPercentage = Number(form.discountPercentage);
-    if (!Number.isFinite(discountPercentage) || discountPercentage <= 0 || discountPercentage > 100) {
+    if (!isBonus && (!Number.isFinite(discountPercentage) || discountPercentage <= 0 || discountPercentage > 100)) {
       setError(t('offers.warehouse.discountRange'));
+      return;
+    }
+    if (isBonus && !form.bonus.trim()) {
+      setError(t('offers.warehouse.bonusRequired'));
       return;
     }
     if (!form.isPermanent) {
@@ -86,7 +93,8 @@ export function OfferModal({ mode, offer, searchProducts, usdToSyp, onClose, onS
       productId: form.productId,
       titleAr: form.titleAr.trim(),
       titleEn: form.titleEn.trim(),
-      discountPercentage,
+      offerType: form.offerType,
+      ...(isBonus ? { bonuses: form.bonus.trim() } : { discountPercentage }),
       startDate: form.startDate,
       isPermanent: form.isPermanent,
     };
@@ -144,17 +152,48 @@ export function OfferModal({ mode, offer, searchProducts, usdToSyp, onClose, onS
             </label>
           </div>
 
-          <label>
-            {t('offers.warehouse.discountPercentage')}
-            <input
-              type="number"
-              min="1"
-              max="100"
-              value={form.discountPercentage}
-              onChange={(e) => setField('discountPercentage', e.target.value)}
-              required
-            />
-          </label>
+          {/* What the offer gives: a discount off the price, or a better bonus
+              at the same price (the product's usual 10+2 becomes 10+3). */}
+          <div className="offer-type-choice" role="radiogroup" aria-label={t('offers.warehouse.offerType')}>
+            {['discount', 'bonus'].map((type) => (
+              <label key={type} className={`offer-type-option${form.offerType === type ? ' active' : ''}`}>
+                <input
+                  type="radio"
+                  name="offerType"
+                  value={type}
+                  checked={form.offerType === type}
+                  onChange={() => setField('offerType', type)}
+                />
+                {t(type === 'bonus' ? 'offers.warehouse.typeBonus' : 'offers.warehouse.typeDiscount')}
+              </label>
+            ))}
+          </div>
+
+          {form.offerType === 'bonus' ? (
+            <label>
+              {t('offers.warehouse.offerBonus')}
+              <input
+                value={form.bonus}
+                onChange={(e) => setField('bonus', e.target.value)}
+                placeholder="10+3"
+                dir="ltr"
+                required
+              />
+              <span className="hint">{t('offers.warehouse.offerBonusHint')}</span>
+            </label>
+          ) : (
+            <label>
+              {t('offers.warehouse.discountPercentage')}
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={form.discountPercentage}
+                onChange={(e) => setField('discountPercentage', e.target.value)}
+                required
+              />
+            </label>
+          )}
 
           <label className="checkbox-row">
             <input

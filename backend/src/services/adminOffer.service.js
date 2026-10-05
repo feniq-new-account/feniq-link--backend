@@ -146,7 +146,9 @@ function applyPendingUpdate(offer) {
   offer.productId = u.productId;
   offer.titleAr = u.titleAr;
   offer.titleEn = u.titleEn;
+  offer.offerType = u.offerType || 'discount';
   offer.discountPercentage = u.discountPercentage;
+  offer.bonuses = u.bonuses ?? [];
   offer.startDate = u.startDate;
   offer.endDate = u.isPermanent ? null : u.endDate;
   offer.isPermanent = u.isPermanent;

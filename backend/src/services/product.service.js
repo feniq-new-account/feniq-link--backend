@@ -81,7 +81,7 @@ async function attachOffersAndDiscounts(warehouseId, products) {
       // stays live from its start date on.
       ...activeOfferFilter(now),
       productId: { $in: products.map((p) => p._id) },
-    }).select('productId discountPercentage titleAr titleEn approvedAt'),
+    }).select('productId offerType discountPercentage bonuses titleAr titleEn approvedAt'),
     getDiscountMapForWarehouse(warehouseId),
   ]);
   // The one deterministic "offer for this product" (offer.service.js) - never

@@ -836,6 +836,12 @@ abstract class AppLocalizations {
   /// **'Exp. {date}'**
   String expiryDateShort(String date);
 
+  /// No description provided for @bonusInsteadOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonus {tiers} instead of {regular}'**
+  String bonusInsteadOf(String tiers, String regular);
+
   /// No description provided for @alternativesLink.
   ///
   /// In en, this message translates to:
@@ -2855,7 +2861,7 @@ abstract class AppLocalizations {
   /// No description provided for @offersAndAdsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Offers & Ads'**
+  /// **'Exceptional offers & ads'**
   String get offersAndAdsTitle;
 
   /// No description provided for @promotionsCountSubtitle.
@@ -2867,7 +2873,7 @@ abstract class AppLocalizations {
   /// No description provided for @promotionsAllTitle.
   ///
   /// In en, this message translates to:
-  /// **'All offers & packages'**
+  /// **'All exceptional offers & packages'**
   String get promotionsAllTitle;
 
   /// No description provided for @promotionsFilterAllTypes.
@@ -2879,7 +2885,7 @@ abstract class AppLocalizations {
   /// No description provided for @promotionsFilterOffers.
   ///
   /// In en, this message translates to:
-  /// **'Offers'**
+  /// **'Exceptional offers'**
   String get promotionsFilterOffers;
 
   /// No description provided for @promotionsFilterPackages.
@@ -2909,7 +2915,7 @@ abstract class AppLocalizations {
   /// No description provided for @promotionsEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Nothing on offer right now'**
+  /// **'No exceptional offers right now'**
   String get promotionsEmptyTitle;
 
   /// No description provided for @promotionsEmptyMessage.
@@ -2963,7 +2969,7 @@ abstract class AppLocalizations {
   /// Title of the screen a tapped Offer card on the Offers & Ads tab opens: the offers of that offer's own warehouse.
   ///
   /// In en, this message translates to:
-  /// **'Warehouse offers'**
+  /// **'Warehouse\'s exceptional offers'**
   String get warehouseOffersTitle;
 
   /// No description provided for @discountCodeFieldLabel.

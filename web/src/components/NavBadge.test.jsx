@@ -102,11 +102,11 @@ describe('badges on the sub-nav pills', () => {
     const html = renderAt('/warehouse/offers', <WarehouseGroupSubNav />);
 
     expect(badgeIn(html, 'الإعلانات')).toBe('2');
-    expect(badgeIn(html, 'العروض')).toBeNull();
+    expect(badgeIn(html, 'العروض الاستثنائية')).toBeNull();
     expect(badgeIn(html, 'الحسومات')).toBeNull();
     // The active-pill contract WarehouseGroupSubNav.test.jsx pins still holds:
     // the label stays the first thing inside the pill.
-    expect(html).toMatch(/wh-pill active[^>]*>العروض/);
+    expect(html).toMatch(/wh-pill active[^>]*>العروض الاستثنائية/);
   });
 
   it('General and Packages each show their own half', () => {
@@ -127,7 +127,7 @@ describe('badges in the admin sidebar', () => {
     badges.counts = { '/admin/offers': 4, '/admin/accounts': 2, '/admin/complaints': 150 };
     const html = renderAt('/admin/notifications', <AdminPanel />, EN);
 
-    expect(badgeIn(html, 'Offers')).toBe('4');
+    expect(badgeIn(html, 'Exceptional offers')).toBe('4');
     expect(badgeIn(html, 'Accounts')).toBe('2');
     expect(badgeIn(html, 'Complaints')).toBe('99+');
     for (const label of ['Dashboard', 'Products', 'Central Catalog', 'Exchange rate', 'Notifications']) {
