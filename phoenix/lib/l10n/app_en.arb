@@ -24,6 +24,10 @@
   "pharmacyNameHint": "e.g. Al-Noor Pharmacy",
   "phoneLabel": "Phone number",
   "addressLabel": "Address",
+  "confirmLocationButton": "Choose this location",
+  "locationConfirmedText": "Location chosen",
+  "changeLocationButton": "Change location",
+  "confirmLocationRequiredError": "Tap \"Choose this location\" to confirm the pharmacy's location",
   "pickLocationHint": "Move the map to fine-tune the pin's position",
   "resolvingAddressText": "Resolving address...",
   "locationPermissionDeniedMessage": "Couldn't access your location - you can still drag the map manually.",
@@ -178,6 +182,30 @@
   "@offlineBannerMessage": {
     "placeholders": {
       "time": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineToastMessage": "No connection - showing the saved copy ({time})",
+  "@offlineToastMessage": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "productionDateShort": "Made {date}",
+  "@productionDateShort": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "expiryDateShort": "Exp. {date}",
+  "@expiryDateShort": {
+    "placeholders": {
+      "date": {
         "type": "String"
       }
     }

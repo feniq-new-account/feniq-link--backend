@@ -102,9 +102,9 @@ async function start() {
         console.log(`Seeded demo data: ${seeded.warehouses} warehouses, ${seeded.products} products.`);
       }
       const pictured = await seedDemoCatalogImages();
-      if (pictured && (pictured.uploaded || pictured.stocked)) {
+      if (pictured && (pictured.uploaded || pictured.stocked || pictured.dated)) {
         // eslint-disable-next-line no-console
-        console.log(`Demo medicines with pictures: ${pictured.uploaded} uploaded, ${pictured.stocked} stocked.`);
+        console.log(`Demo medicines with pictures: ${pictured.uploaded} uploaded, ${pictured.stocked} stocked, ${pictured.dated} dated.`);
       }
       const seededOrders = await seedDemoOrders();
       if (seededOrders && seededOrders.orders) {

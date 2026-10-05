@@ -24,6 +24,8 @@ function serializeProduct(product) {
     unitEn: product.unitEn,
     // Additive (catalog overhaul): the fixed unit code and the bonus tiers.
     unit: product.unit ?? null,
+    productionDate: product.productionDate ? new Date(product.productionDate).toISOString().slice(0, 10) : null,
+    expiryDate: product.expiryDate ? new Date(product.expiryDate).toISOString().slice(0, 10) : null,
     bonuses: (product.bonuses || []).map((tier) => ({ buy: tier.buy, free: tier.free })),
     priceUsd: product.price,
     isAvailable: product.isAvailable,

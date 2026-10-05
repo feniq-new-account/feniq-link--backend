@@ -56,7 +56,7 @@ test('uploads every picture once and stocks the demo warehouses', async () => {
   assert.ok(items.every((i) => i.imageUrl.startsWith('https://media.test/media/')));
 
   const again = await seedDemoCatalogImages();
-  assert.deepStrictEqual(again, { uploaded: 0, stocked: 0 });
+  assert.deepStrictEqual(again, { uploaded: 0, stocked: 0, dated: 0 });
 });
 
 test('the pharmacy sees the pictured medicines with image, strength and form', async () => {
@@ -75,7 +75,36 @@ test('the pharmacy sees the pictured medicines with image, strength and form', a
   assert.ok(glucomet.image && glucomet.image.startsWith('https://media.test/media/'));
   assert.strictEqual(glucomet.strength, '500 MG');
   assert.strictEqual(glucomet.dosageForm, 'أقراص');
+  assert.match(glucomet.productionDate, /^\d{4}-\d{2}-\d{2}$/);
+  assert.ok(glucomet.expiryDate > glucomet.productionDate);
 
   const manufacturers = await call('GET', `/warehouses/${warehouseId}/manufacturers`, { token });
   assert.ok(JSON.stringify(manufacturers.body).includes('السعد'));
+});
+
+test('a warehouse sets, changes and clears the batch dates on its product', async () => {
+  const { DEMO_WAREHOUSE_PASSWORD, WAREHOUSES } = require('../src/services/demoSeed.service');
+  const login = await call('POST', '/auth/login-password', {
+    body: { phone: WAREHOUSES[0].phone, password: DEMO_WAREHOUSE_PASSWORD },
+  });
+  const token = login.body.token;
+  const list = await call('GET', '/warehouse/products/search?search=GLUCOMET', { token });
+  assert.strictEqual(list.status, 200, JSON.stringify(list.body));
+  const id = list.body.products[0].id;
+
+  const set = await call('PATCH', `/warehouse/products/${id}`, {
+    token,
+    body: { productionDate: '2026-01-15', expiryDate: '2028-01-15' },
+  });
+  assert.strictEqual(set.status, 200, JSON.stringify(set.body));
+  assert.strictEqual(set.body.product.productionDate, '2026-01-15');
+  assert.strictEqual(set.body.product.expiryDate, '2028-01-15');
+
+  const bad = await call('PATCH', `/warehouse/products/${id}`, { token, body: { expiryDate: 'soon' } });
+  assert.strictEqual(bad.status, 400);
+  assert.strictEqual(bad.body.code, 'INVALID_DATE');
+
+  const cleared = await call('PATCH', `/warehouse/products/${id}`, { token, body: { productionDate: null } });
+  assert.strictEqual(cleared.body.product.productionDate, null);
+  assert.strictEqual(cleared.body.product.expiryDate, '2028-01-15');
 });

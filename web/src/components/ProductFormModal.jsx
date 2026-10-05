@@ -28,6 +28,9 @@ export const EMPTY_PRODUCT_FORM = {
   price: '',
   priceUsd: null,
   description: '',
+  // The batch on sale now, as yyyy-mm-dd (the date inputs' own format); '' = none.
+  productionDate: '',
+  expiryDate: '',
   // Images are uploaded, never typed (catalog overhaul Phase 9): the
   // warehouse's current override, the catalog's central image it falls back
   // to, a picked file waiting to upload, and whether the override was removed.
@@ -61,6 +64,8 @@ export function productFormFromProduct(product, usdToSyp) {
     price: priceSyp != null ? String(priceSyp) : '',
     priceUsd: product.priceUsd,
     description: product.description ?? '',
+    productionDate: product.productionDate ?? '',
+    expiryDate: product.expiryDate ?? '',
     // An older server sends only `image`, which was the override itself.
     imageOverride: ('imageOverride' in product ? product.imageOverride : product.image) ?? '',
     catalogImageUrl: product.catalogImageUrl ?? null,
@@ -382,6 +387,9 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
         // there is nothing to clear.
         bonus: mode === 'edit' || form.bonus.trim() ? form.bonus.trim() : undefined,
         priceUsd,
+        // An emptied date on an edit clears it; on a create there is nothing to clear.
+        productionDate: form.productionDate || (mode === 'edit' ? null : undefined),
+        expiryDate: form.expiryDate || (mode === 'edit' ? null : undefined),
         ...descriptionAndImageFields({ mode, form, initial, imagesEnabled: Boolean(onUploadImage) }),
         manuallyDisabled: form.manuallyDisabled,
       },
@@ -492,6 +500,25 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
           {usdToSyp == null && (
             <p className="hint">{t('productForm.rateRequired')}</p>
           )}
+          <div className="form-row">
+            <label>
+              {t('productForm.productionDate')}
+              <input
+                type="date"
+                value={form.productionDate}
+                onChange={(e) => setField('productionDate', e.target.value)}
+              />
+            </label>
+            <label>
+              {t('productForm.expiryDate')}
+              <input
+                type="date"
+                value={form.expiryDate}
+                min={form.productionDate || undefined}
+                onChange={(e) => setField('expiryDate', e.target.value)}
+              />
+            </label>
+          </div>
           <label>
             {t('productForm.descriptionOptional')}
             <textarea

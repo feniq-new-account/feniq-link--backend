@@ -32,7 +32,8 @@ Future<bool> ensureLocationPermission() async {
   if (permission == LocationPermission.denied) {
     permission = await Geolocator.requestPermission();
   }
-  return permission == LocationPermission.always || permission == LocationPermission.whileInUse;
+  return permission == LocationPermission.always ||
+      permission == LocationPermission.whileInUse;
 }
 
 Future<String?> _reverseGeocode(LatLng point, String languageCode) async {
@@ -56,13 +57,22 @@ Future<String?> _reverseGeocode(LatLng point, String languageCode) async {
 }
 
 class LocationMapField extends StatefulWidget {
-  const LocationMapField({super.key, required this.label, required this.onChanged});
+  const LocationMapField({
+    super.key,
+    required this.label,
+    required this.onChanged,
+    required this.onCleared,
+  });
 
   final String label;
-  // Called whenever the pin settles on a new point: immediately with the
-  // last-known address (possibly still null/stale), then again once
-  // Nominatim resolves a fresh one for that exact point.
-  final void Function(double latitude, double longitude, String? address) onChanged;
+  // Called only once the pharmacist taps "choose this location": with the
+  // pin's point and its address, and again if the address for that same
+  // point resolves after the tap. Panning the map alone never reports - a
+  // stray swipe used to silently move the submitted location.
+  final void Function(double latitude, double longitude, String? address)
+  onChanged;
+  // Called when a confirmed location is reopened for editing.
+  final VoidCallback onCleared;
 
   @override
   State<LocationMapField> createState() => _LocationMapFieldState();
@@ -73,6 +83,9 @@ class _LocationMapFieldState extends State<LocationMapField> {
   LatLng _center = _defaultCenter;
   String? _resolvedAddress;
   bool _isResolving = true;
+  // True once "choose this location" is tapped: the map is locked and the
+  // point is what gets submitted, until "change location" reopens it.
+  bool _confirmed = false;
   Timer? _debounce;
 
   @override
@@ -123,15 +136,14 @@ class _LocationMapFieldState extends State<LocationMapField> {
       _resolvedAddress = address;
       _isResolving = false;
     });
-    widget.onChanged(_center.latitude, _center.longitude, address);
+    if (_confirmed) {
+      widget.onChanged(_center.latitude, _center.longitude, address);
+    }
   }
 
   void _onCenterSettled(LatLng center) {
+    if (_confirmed) return;
     _center = center;
-    // Reports the new coordinates right away (so submit always matches
-    // where the pin visually sits), with whatever address is still on
-    // screen until the debounced lookup below catches up.
-    widget.onChanged(center.latitude, center.longitude, _resolvedAddress);
     setState(() => _isResolving = true);
     _debounce?.cancel();
     // At most one Nominatim request per second, and never mid-drag - only
@@ -162,6 +174,22 @@ class _LocationMapFieldState extends State<LocationMapField> {
     }
   }
 
+  void _confirmLocation() {
+    setState(() => _confirmed = true);
+    // An address still resolving is reported again by _resolveAddress once
+    // it lands; until then the pin's coordinates are already final.
+    widget.onChanged(
+      _center.latitude,
+      _center.longitude,
+      _isResolving ? null : _resolvedAddress,
+    );
+  }
+
+  void _changeLocation() {
+    setState(() => _confirmed = false);
+    widget.onCleared();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -190,29 +218,42 @@ class _LocationMapFieldState extends State<LocationMapField> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: _center,
-                    initialZoom: 15,
-                    onPositionChanged: (position, hasGesture) {
-                      if (hasGesture && position.center != null) {
-                        _onCenterSettled(position.center!);
-                      }
-                    },
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.feniq.pharmacy',
+                // Locked once confirmed, so a scroll that brushes the map
+                // can't drag the chosen point away.
+                AbsorbPointer(
+                  absorbing: _confirmed,
+                  child: FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _center,
+                      initialZoom: 15,
+                      onPositionChanged: (position, hasGesture) {
+                        if (hasGesture && position.center != null) {
+                          _onCenterSettled(position.center!);
+                        }
+                      },
                     ),
-                  ],
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.feniq.pharmacy',
+                      ),
+                    ],
+                  ),
                 ),
                 // The marker stays fixed at screen-center; the map pans
                 // underneath it - reads as "drag to place the pin" without
-                // needing a separate draggable-marker plugin.
+                // needing a separate draggable-marker plugin. Green once the
+                // location is confirmed.
                 IgnorePointer(
-                  child: Icon(Icons.location_pin, size: 40, color: AppColors.errorOf(context)),
+                  child: Icon(
+                    Icons.location_pin,
+                    size: 40,
+                    color: _confirmed
+                        ? AppColors.secondaryOf(context)
+                        : AppColors.errorOf(context),
+                  ),
                 ),
               ],
             ),
@@ -222,11 +263,17 @@ class _LocationMapFieldState extends State<LocationMapField> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(Icons.place_outlined, size: 16, color: AppColors.textSecondaryOf(context)),
+            Icon(
+              Icons.place_outlined,
+              size: 16,
+              color: AppColors.textSecondaryOf(context),
+            ),
             const SizedBox(width: AppSizes.spacingXSmall),
             Expanded(
               child: Text(
-                _isResolving ? l10n.resolvingAddressText : (_resolvedAddress ?? l10n.pickLocationHint),
+                _isResolving
+                    ? l10n.resolvingAddressText
+                    : (_resolvedAddress ?? l10n.pickLocationHint),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: context.textTheme.bodySmall?.copyWith(
@@ -236,17 +283,57 @@ class _LocationMapFieldState extends State<LocationMapField> {
             ),
             const SizedBox(width: AppSizes.spacingSmall),
             TextButton.icon(
-              onPressed: _useCurrentLocation,
+              onPressed: _confirmed ? null : _useCurrentLocation,
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingSmall),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.spacingSmall,
+                ),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               icon: const Icon(Icons.my_location, size: 16),
-              label: Text(l10n.useCurrentLocationTooltip, style: const TextStyle(fontSize: 12.5)),
+              label: Text(
+                l10n.useCurrentLocationTooltip,
+                style: const TextStyle(fontSize: 12.5),
+              ),
             ),
           ],
         ),
+        const SizedBox(height: AppSizes.spacingSmall),
+        if (_confirmed)
+          Row(
+            children: [
+              Icon(
+                Icons.check_circle,
+                size: 18,
+                color: AppColors.secondaryOf(context),
+              ),
+              const SizedBox(width: AppSizes.spacingXSmall),
+              Expanded(
+                child: Text(
+                  l10n.locationConfirmedText,
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.secondaryOf(context),
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _changeLocation,
+                icon: const Icon(Icons.edit_location_alt_outlined, size: 18),
+                label: Text(l10n.changeLocationButton),
+              ),
+            ],
+          )
+        else
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _confirmLocation,
+              icon: const Icon(Icons.check),
+              label: Text(l10n.confirmLocationButton),
+            ),
+          ),
       ],
     );
   }

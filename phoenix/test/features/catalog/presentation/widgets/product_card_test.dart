@@ -46,6 +46,8 @@ void main() {
     int cartQuantity = 0,
     bool isGrid = true,
     Locale? locale,
+    ProductModel product = _product,
+    double gridHeight = 316,
     ValueChanged<int>? onAdd,
     ValueChanged<int>? onCartQuantityChanged,
     VoidCallback? onCartRemove,
@@ -63,9 +65,9 @@ void main() {
               // as a 360pt phone leaves it (minus the screen's side padding).
               child: SizedBox(
                 width: isGrid ? 160 : 328,
-                height: isGrid ? 316 : null,
+                height: isGrid ? gridHeight : null,
                 child: ProductCard(
-                  product: _product,
+                  product: product,
                   isGrid: isGrid,
                   cartQuantity: cartQuantity,
                   onAdd: onAdd ?? (_) {},
@@ -174,5 +176,43 @@ void main() {
       expect(find.text('ش'), findsOneWidget, reason: grid ? 'grid' : 'list');
       expect(tester.takeException(), isNull);
     }
+  });
+
+  group('strength, dosage form and batch dates', () {
+    final full = ProductModel(
+      id: 'p2',
+      nameAr: 'METFORMIN-ELSAAD 1000 F.CTD TAB. WITH A LONG NAME',
+      manufacturerAr: 'السعد',
+      activeIngredient: 'METFORMIN',
+      strength: '1000 MG',
+      dosageForm: 'أقراص ملبسة',
+      productionDate: DateTime(2026, 3, 1),
+      expiryDate: DateTime(2028, 3, 1),
+      priceUsd: 5,
+      discountPriceUsd: 4,
+      isAvailable: true,
+      hasActiveOffer: true,
+    );
+
+    for (final isGrid in [true, false]) {
+      testWidgets('${isGrid ? 'grid' : 'list'}: each shown on its own, nothing overflows', (tester) async {
+        await loadRate(13800);
+        // The catalog grid's real cell (catalog_product_list.dart: mainAxisExtent 344).
+        await pumpCard(tester, product: full, isGrid: isGrid, gridHeight: 344, locale: const Locale('ar'));
+        expect(tester.takeException(), isNull);
+        expect(find.text('1000 MG'), findsOneWidget);
+        expect(find.text('أقراص ملبسة'), findsOneWidget);
+        expect(find.text('METFORMIN'), findsOneWidget, reason: 'the strength is no longer folded into the ingredient');
+        expect(find.textContaining('إنتاج 03/2026'), findsOneWidget);
+        expect(find.textContaining('انتهاء 03/2028'), findsOneWidget);
+      });
+    }
+
+    testWidgets('a product without them shows none of it', (tester) async {
+      await loadRate(13800);
+      await pumpCard(tester, locale: const Locale('ar'));
+      expect(find.textContaining('إنتاج'), findsNothing);
+      expect(find.textContaining('انتهاء'), findsNothing);
+    });
   });
 }

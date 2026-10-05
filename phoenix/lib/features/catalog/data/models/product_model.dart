@@ -13,6 +13,9 @@ class ProductModel {
     this.image,
     this.activeIngredient,
     this.strength,
+    this.dosageForm,
+    this.productionDate,
+    this.expiryDate,
     this.unitAr,
     this.unitEn,
     required this.priceUsd,
@@ -46,6 +49,11 @@ class ProductModel {
   // Null when the catalog item has none - then there are no alternatives to offer either.
   final String? activeIngredient;
   final String? strength;
+  // "أقراص", "محافظ", "أمبولات"... - the catalog's dosage form, as written.
+  final String? dosageForm;
+  // The batch the warehouse is selling now; null when the warehouse left it out.
+  final DateTime? productionDate;
+  final DateTime? expiryDate;
   final String? unitAr;
   final String? unitEn;
   // USD, not SYP - see backend/src/models/product.model.js. SYP is what the
@@ -122,6 +130,9 @@ class ProductModel {
       image: json['image'] as String?,
       activeIngredient: json['activeIngredient'] as String?,
       strength: json['strength'] as String?,
+      dosageForm: json['dosageForm'] as String?,
+      productionDate: DateTime.tryParse((json['productionDate'] as String?) ?? ''),
+      expiryDate: DateTime.tryParse((json['expiryDate'] as String?) ?? ''),
       unitAr: json['unitAr'] as String?,
       unitEn: json['unitEn'] as String?,
       priceUsd: json['priceUsd'] as num,

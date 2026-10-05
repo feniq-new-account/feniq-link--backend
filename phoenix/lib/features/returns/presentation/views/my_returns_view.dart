@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -167,7 +168,7 @@ class _MyReturnsViewState extends State<MyReturnsView> with SingleTickerProvider
   // tab.
   Widget _buildMyReturnsTab(BuildContext context, MyReturnsState state) {
     if (state.returns.isEmpty) {
-      return RefreshIndicator(
+      return AppRefreshIndicator(
         onRefresh: () => context.read<MyReturnsCubit>().load(),
         child: _EmptyReturns(onRequest: () => _startReturnFromFab(context)),
       );
@@ -183,7 +184,7 @@ class _MyReturnsViewState extends State<MyReturnsView> with SingleTickerProvider
       _PaginationFooter(hasMore: state.hasMore, isLoadingMore: state.isLoadingMore),
     ];
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () => context.read<MyReturnsCubit>().load(),
       child: ListView.separated(
         controller: _scrollController,
@@ -208,13 +209,13 @@ class _MyReturnsViewState extends State<MyReturnsView> with SingleTickerProvider
     final l10n = context.l10n;
 
     if (state.returnableOrders.isEmpty) {
-      return RefreshIndicator(
+      return AppRefreshIndicator(
         onRefresh: () => context.read<MyReturnsCubit>().load(),
         child: const _ReturnableEmpty(),
       );
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () => context.read<MyReturnsCubit>().load(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),

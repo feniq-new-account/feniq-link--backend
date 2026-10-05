@@ -25,7 +25,7 @@ const { activeOfferFilter, offerMapFor } = require('./offer.service');
 // key. Dropped: description, manuallyDisabled, lastPriceUpdate, the unbounded
 // priceHistory array, warehouseId/isActive (the filter), timestamps.
 const CATALOG_PRODUCT_SELECT =
-  'categoryId nameAr nameEn manufacturerAr manufacturerEn manufacturerId manufacturerKey image unitAr unitEn unit bonuses price isAvailable masterProductId';
+  'categoryId nameAr nameEn manufacturerAr manufacturerEn manufacturerId manufacturerKey image unitAr unitEn unit bonuses price isAvailable masterProductId productionDate expiryDate';
 
 const DEFAULT_PRODUCTS_LIMIT = 20;
 

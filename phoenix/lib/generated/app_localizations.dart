@@ -242,6 +242,30 @@ abstract class AppLocalizations {
   /// **'Address'**
   String get addressLabel;
 
+  /// No description provided for @confirmLocationButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose this location'**
+  String get confirmLocationButton;
+
+  /// No description provided for @locationConfirmedText.
+  ///
+  /// In en, this message translates to:
+  /// **'Location chosen'**
+  String get locationConfirmedText;
+
+  /// No description provided for @changeLocationButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Change location'**
+  String get changeLocationButton;
+
+  /// No description provided for @confirmLocationRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap \"Choose this location\" to confirm the pharmacy\'s location'**
+  String get confirmLocationRequiredError;
+
   /// No description provided for @pickLocationHint.
   ///
   /// In en, this message translates to:
@@ -787,6 +811,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No connection - showing the copy saved on your phone from {time}. Prices and availability may have changed, and sending an order needs a connection.'**
   String offlineBannerMessage(String time);
+
+  /// No description provided for @offlineToastMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection - showing the saved copy ({time})'**
+  String offlineToastMessage(String time);
+
+  /// No description provided for @productionDateShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Made {date}'**
+  String productionDateShort(String date);
+
+  /// No description provided for @expiryDateShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Exp. {date}'**
+  String expiryDateShort(String date);
 
   /// No description provided for @alternativesLink.
   ///

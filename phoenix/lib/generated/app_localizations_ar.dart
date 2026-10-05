@@ -82,6 +82,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addressLabel => 'العنوان';
 
   @override
+  String get confirmLocationButton => 'اختيار هذا الموقع';
+
+  @override
+  String get locationConfirmedText => 'تم اختيار الموقع';
+
+  @override
+  String get changeLocationButton => 'تغيير الموقع';
+
+  @override
+  String get confirmLocationRequiredError =>
+      'اضغط على «اختيار هذا الموقع» لتأكيد موقع الصيدلية';
+
+  @override
   String get pickLocationHint => 'حرّك الخريطة لضبط موضع المؤشر بدقة';
 
   @override
@@ -406,6 +419,21 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String offlineBannerMessage(String time) {
     return 'لا يوجد اتصال - تُعرض النسخة المحفوظة على هاتفك من $time. قد تكون الأسعار والتوفر تغيّرت، وإرسال الطلب يحتاج اتصالاً.';
+  }
+
+  @override
+  String offlineToastMessage(String time) {
+    return 'لا يوجد اتصال - تُعرض النسخة المحفوظة ($time)';
+  }
+
+  @override
+  String productionDateShort(String date) {
+    return 'إنتاج $date';
+  }
+
+  @override
+  String expiryDateShort(String date) {
+    return 'انتهاء $date';
   }
 
   @override

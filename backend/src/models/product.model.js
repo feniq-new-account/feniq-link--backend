@@ -107,6 +107,10 @@ const productSchema = new Schema(
     unit: { type: String, enum: [...UNIT_CODES, null], default: null },
     // Bonus tiers (e.g. [{buy:10, free:1}, {buy:20, free:3}]) - see bonusTierSchema.
     bonuses: { type: [bonusTierSchema], default: [] },
+    // The batch the warehouse is selling now: when it was made and when it
+    // expires. Optional, set by the warehouse; shown on the pharmacist's card.
+    productionDate: { type: Date, default: null },
+    expiryDate: { type: Date, default: null },
     isActive: { type: Boolean, default: true },
     // Why isActive is false - see DEACTIVATED_BY above. Null while active.
     deactivatedBy: { type: String, enum: [...DEACTIVATED_BY, null], default: null },

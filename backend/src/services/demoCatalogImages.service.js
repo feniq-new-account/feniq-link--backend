@@ -103,7 +103,29 @@ async function seedDemoCatalogImages() {
       stocked += 1;
     }
   }
-  return { uploaded, stocked };
+  const dated = await dateDemoProducts(warehouses.map((w) => w._id));
+  return { uploaded, stocked, dated };
+}
+
+const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+
+// A production and expiry date on every demo product that has none, varied
+// per product so the cards don't all read the same.
+async function dateDemoProducts(warehouseIds) {
+  const products = await Product.find({ warehouseId: { $in: warehouseIds }, expiryDate: null }).select('_id').lean();
+  const now = Date.now();
+  const operations = products.map((product, i) => {
+    const produced = new Date(now - (2 + (i % 11)) * MONTH_MS);
+    const expires = new Date(produced.getTime() + (18 + (i % 4) * 6) * MONTH_MS);
+    return {
+      updateOne: {
+        filter: { _id: product._id },
+        update: { $set: { productionDate: produced, expiryDate: expires } },
+      },
+    };
+  });
+  if (operations.length) await Product.bulkWrite(operations);
+  return operations.length;
 }
 
 module.exports = { seedDemoCatalogImages, ITEMS };

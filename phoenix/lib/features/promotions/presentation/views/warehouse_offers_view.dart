@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
 import 'package:feniq/core/error/error_translator.dart';
@@ -223,7 +224,7 @@ class WarehouseOffersView extends StatelessWidget {
               // the tab shows, never an error and never another warehouse's
               // offers in their place.
               if (state.promotions.isEmpty) {
-                return RefreshIndicator(
+                return AppRefreshIndicator(
                   onRefresh: cubit.load,
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -237,7 +238,7 @@ class WarehouseOffersView extends StatelessWidget {
                   ),
                 );
               }
-              return RefreshIndicator(
+              return AppRefreshIndicator(
                 onRefresh: cubit.load,
                 child: ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
