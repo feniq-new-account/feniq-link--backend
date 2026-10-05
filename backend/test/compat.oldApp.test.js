@@ -301,7 +301,7 @@ test('an order in the old request shape goes through, priced as the new app woul
   // The bonus the old app never showed is still granted, and never charged.
   const orderId = created.body.order.id;
   const panadolLine = await OrderItem.findOne({ orderId, productId: IDS.panadol }).lean();
-  assert.strictEqual(panadolLine.freeQuantity, 2);
+  assert.strictEqual(panadolLine.freeQuantity, 3); // 25 x 1/10 = 2.5, rounded
   assert.deepStrictEqual(panadolLine.bonusApplied, { buy: 10, free: 1 });
 
   // A retry with the same key replays the same order.

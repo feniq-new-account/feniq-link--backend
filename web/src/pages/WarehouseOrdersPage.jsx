@@ -1,14 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
-import { StarRating } from '../components/StarRating';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
 import { formatSyp } from '../utils/currency';
-import { mergeAdvancedOrders, rememberAdvanced, syncAdvancedWithRows } from './warehouseOrdersList';
+import { mergeAdvancedOrders, nextStatusOf, rememberAdvanced, syncAdvancedWithRows } from './warehouseOrdersList';
 
 const PAGE_SIZE = 20;
 const STATUS_VALUES = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
@@ -19,72 +18,11 @@ const ADVANCE_KEYS = {
   out_for_delivery: 'orders.advanceOutForDelivery',
 };
 
-// Section 13b/13c: rating the pharmacy is a one-time action per delivered
-// order (the unique {orderId, reviewerType} index backs this up server-side
-// too) - shown immediately once submitted, unlike the reverse direction.
-function RatePharmacyModal({ order, onClose, onRated }) {
-  const { t } = useTranslation();
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState(null);
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setError(null);
-    if (rating < 1) {
-      setError(t('orders.pleaseSelectRating'));
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await api.ratePharmacy(order.id, rating, comment.trim() || undefined);
-      onRated();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
-        <h2>{t('orders.rateModalTitle', { name: order.pharmacy?.nameEn })}</h2>
-        <form onSubmit={handleSubmit} className="product-form">
-          <label>
-            {t('orders.rating')}
-            <StarRating value={rating} onChange={setRating} size={28} />
-          </label>
-          <label>
-            {t('orders.commentOptional')}
-            <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} />
-          </label>
-
-          {error && <p className="error-text">{error}</p>}
-
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
-              {t('common.cancel')}
-            </button>
-            <button type="submit" className="btn-primary" disabled={isSaving}>
-              {isSaving ? t('orders.submitting') : t('orders.submitRating')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 export function WarehouseOrdersPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState('pending');
-  const [busyId, setBusyId] = useState(null);
   const [actionError, setActionError] = useState(null);
-  const [rateModalOrder, setRateModalOrder] = useState(null);
   // Orders that arrived over the socket since the operator last acknowledged
   // them - the list itself is always refreshed, this is just the "look here"
   // cue so an arrival isn't missed while working another tab.
@@ -154,24 +92,27 @@ export function WarehouseOrdersPage() {
     }
   );
 
-  const handleAdvance = async (order) => {
-    setBusyId(order.id);
+  // Each click moves the order on at once on screen (the next stage's button
+  // is right there), and the request follows in the background. Clicks on
+  // the same order are sent one after another, so a fast double click is two
+  // stages, in order. A refused step puts the order back where the server
+  // says it is.
+  const pendingByOrder = useRef(new Map());
+  const handleAdvance = (order, currentStatus) => {
+    const next = nextStatusOf(currentStatus);
+    if (!next) return;
     setActionError(null);
-    try {
-      const result = await api.advanceOrderStatus(order.id);
-      // Updated in place, not reloaded: the order stays in this list (even if
-      // its new status is outside the tab) so the next click is right there.
-      setAdvanced((current) => rememberAdvanced(current, order, result?.order?.status ?? order.status));
-    } catch (err) {
-      setActionError(err.message);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const handleRated = () => {
-    setRateModalOrder(null);
-    reset();
+    setAdvanced((current) => rememberAdvanced(current, order, next));
+    const previous = pendingByOrder.current.get(order.id) ?? Promise.resolve();
+    const request = previous
+      .then(() => api.advanceOrderStatus(order.id))
+      .catch((err) => {
+        setActionError(err.message);
+        setAdvanced((current) => rememberAdvanced(current, order, currentStatus));
+        reset();
+        throw err;
+      });
+    pendingByOrder.current.set(order.id, request.catch(() => {}));
   };
 
   const statusTabs = [{ value: '', label: t('orders.tabAll') }, ...STATUS_VALUES.map((value) => ({
@@ -256,30 +197,15 @@ export function WarehouseOrdersPage() {
                     <td>
                       {ADVANCE_KEYS[order.status] && (
                         <button
-                          className="wh-row-action"
-                          disabled={busyId === order.id}
+                          className={`wh-row-action wh-advance-to-${nextStatusOf(order.status)}`}
                           onClick={(event) => {
                             event.stopPropagation();
-                            handleAdvance(order);
+                            handleAdvance(order, order.status);
                           }}
                         >
-                          {busyId === order.id ? t('orders.updating') : t(ADVANCE_KEYS[order.status])}
+                          {t(ADVANCE_KEYS[order.status])}
                         </button>
                       )}
-                      {order.status === 'delivered' &&
-                        (order.hasReviewed ? (
-                          <span className="hint">{t('orders.youRatedPharmacy')}</span>
-                        ) : (
-                          <button
-                            className="wh-row-action"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setRateModalOrder(order);
-                            }}
-                          >
-                            {t('orders.ratePharmacy')}
-                          </button>
-                        ))}
                     </td>
                   </tr>
                 ))}
@@ -294,14 +220,6 @@ export function WarehouseOrdersPage() {
             pageSize={PAGE_SIZE}
           />
         </>
-      )}
-
-      {rateModalOrder && (
-        <RatePharmacyModal
-          order={rateModalOrder}
-          onClose={() => setRateModalOrder(null)}
-          onRated={handleRated}
-        />
       )}
     </div>
   );

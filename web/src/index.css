@@ -4547,3 +4547,30 @@ a.adm-pill {
   flex: 1;
   min-width: 0;
 }
+
+/* One colour per order stage, so where an order stands reads at a glance
+   without reading the label: pending amber, confirmed blue, preparing
+   purple, on the way teal, delivered green, cancelled red. The advance
+   button takes the colour of the stage it moves the order to. */
+.status-badge.status-confirmed,
+.warehouse-shell .status-badge.status-confirmed,
+.admin-shell .status-badge.status-confirmed {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+.status-badge.status-preparing,
+.warehouse-shell .status-badge.status-preparing,
+.admin-shell .status-badge.status-preparing {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+.status-badge.status-out_for_delivery,
+.warehouse-shell .status-badge.status-out_for_delivery,
+.admin-shell .status-badge.status-out_for_delivery {
+  background: #e0f7fa;
+  color: #00838f;
+}
+.wh-row-action.wh-advance-to-confirmed { background: #1565c0; }
+.wh-row-action.wh-advance-to-preparing { background: #7b1fa2; }
+.wh-row-action.wh-advance-to-out_for_delivery { background: #00838f; }
+.wh-row-action.wh-advance-to-delivered { background: #2e7d32; }
