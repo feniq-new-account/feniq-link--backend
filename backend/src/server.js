@@ -11,6 +11,7 @@ const { initRealtime } = require('./realtime');
 const User = require('./models/user.model');
 const { seedDemoBonuses, turnOffDemoSealPhoto, seedDemoAdminIfNone, seedDemoDataIfEmpty, seedDemoOrders } = require('./services/demoSeed.service');
 const { seedDemoCatalogImages } = require('./services/demoCatalogImages.service');
+const { seedDemoFeatures } = require('./services/demoFeatures.service');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
 // not 'production':
@@ -113,6 +114,11 @@ async function start() {
       }
       const seededOrders = await seedDemoOrders();
       await turnOffDemoSealPhoto();
+      const features = await seedDemoFeatures();
+      if (features) {
+        // eslint-disable-next-line no-console
+        console.log(`Demo features: ${JSON.stringify(features)}`);
+      }
       const bonuses = await seedDemoBonuses();
       if (bonuses) {
         // eslint-disable-next-line no-console
