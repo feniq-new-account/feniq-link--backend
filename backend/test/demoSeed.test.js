@@ -17,6 +17,7 @@ const {
   seedDemoOrders,
   seedDemoAdminIfNone,
   turnOffDemoSealPhoto,
+  seedDemoBonuses,
   DEMO_ADMIN,
   DEMO_WAREHOUSE_PASSWORD,
   WAREHOUSES,
@@ -150,4 +151,20 @@ test('the seal photo is turned off on the demo warehouses and their open orders'
   assert.ok(changed > 0);
   assert.strictEqual(await Warehouse.countDocuments({ requireDeliverySealPhoto: true }), 0);
   assert.strictEqual(await Order.countDocuments({ requiresDeliverySealPhoto: true, status: { $nin: ['delivered', 'cancelled'] } }), 0);
+});
+
+test('demo bonus offers: 10+5, 10+3, 10+2 and 1+1 spread over the products, applied once', async () => {
+  const count = await seedDemoBonuses();
+  assert.ok(count > 0);
+  const kinds = new Set(
+    (await Product.find({ 'bonuses.0': { $exists: true } }).lean()).map((p) => p.bonuses.map((t) => `${t.buy}+${t.free}`).join(','))
+  );
+  assert.deepStrictEqual([...kinds].sort(), ['1+1', '10+2', '10+3', '10+5']);
+  assert.strictEqual(await seedDemoBonuses(), 0, 'never overwrites once bonuses exist');
+
+  // The pharmacy gets them with the product.
+  const login = await call('POST', '/auth/login-password', { body: { phone: '0931234567', password: 'pharmacy-pass-1' } });
+  const { body } = await call('GET', '/warehouses', { token: login.body.token });
+  const products = await call('GET', `/warehouses/${body.warehouses[0].id}/products?limit=50`, { token: login.body.token });
+  assert.ok(products.body.products.some((p) => p.bonuses.length > 0));
 });

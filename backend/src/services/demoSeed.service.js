@@ -254,6 +254,33 @@ async function turnOffDemoSealPhoto() {
   return modifiedCount;
 }
 
+// Bonus offers ("buy 10, get 5 free", "one free with every one") on the demo
+// medicines, spread across the kinds the warehouses actually run, so the
+// cards, cart and orders show them. Done once: skipped as soon as any demo
+// product carries a bonus, so a warehouse's own edits are never overwritten.
+const DEMO_BONUSES = [
+  [{ buy: 10, free: 5 }],
+  [{ buy: 10, free: 3 }],
+  [{ buy: 10, free: 2 }],
+  [{ buy: 1, free: 1 }],
+  [],
+];
+
+async function seedDemoBonuses() {
+  const users = await User.find({ phone: { $in: WAREHOUSES.map((w) => w.phone) }, role: 'warehouse' }).select('_id').lean();
+  const warehouses = await Warehouse.find({ userId: { $in: users.map((u) => u._id) } }).select('_id').lean();
+  const ids = warehouses.map((w) => w._id);
+  if (ids.length === 0) return 0;
+  if (await Product.exists({ warehouseId: { $in: ids }, 'bonuses.0': { $exists: true } })) return 0;
+  const products = await Product.find({ warehouseId: { $in: ids } }).select('_id').sort({ _id: 1 }).lean();
+  const operations = products
+    .map((product, i) => ({ id: product._id, bonuses: DEMO_BONUSES[i % DEMO_BONUSES.length] }))
+    .filter((row) => row.bonuses.length > 0)
+    .map((row) => ({ updateOne: { filter: { _id: row.id }, update: { $set: { bonuses: row.bonuses } } } }));
+  if (operations.length) await Product.bulkWrite(operations);
+  return operations.length;
+}
+
 async function seedDemoAdminIfNone() {
   if (await User.exists({ role: 'admin' })) return null;
   if (await User.exists({ phone: DEMO_ADMIN.phone })) return null;
@@ -267,4 +294,4 @@ async function seedDemoAdminIfNone() {
   return { phone: DEMO_ADMIN.phone };
 }
 
-module.exports = { turnOffDemoSealPhoto, seedDemoAdminIfNone, DEMO_ADMIN, seedDemoDataIfEmpty, seedDemoOrders, DEMO_WAREHOUSE_PASSWORD, WAREHOUSES, DEMO_ORDERS };
+module.exports = { seedDemoBonuses, turnOffDemoSealPhoto, seedDemoAdminIfNone, DEMO_ADMIN, seedDemoDataIfEmpty, seedDemoOrders, DEMO_WAREHOUSE_PASSWORD, WAREHOUSES, DEMO_ORDERS };
