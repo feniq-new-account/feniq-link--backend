@@ -12,7 +12,14 @@ const { startMemoryMongo, stopMemoryMongo } = require('./helpers/mongo');
 const app = require('../src/app');
 const Warehouse = require('../src/models/warehouse.model');
 const Product = require('../src/models/product.model');
-const { seedDemoDataIfEmpty, DEMO_WAREHOUSE_PASSWORD, WAREHOUSES } = require('../src/services/demoSeed.service');
+const {
+  seedDemoDataIfEmpty,
+  seedDemoOrders,
+  DEMO_WAREHOUSE_PASSWORD,
+  WAREHOUSES,
+  DEMO_ORDERS,
+} = require('../src/services/demoSeed.service');
+const { setManualRate } = require('../src/services/exchangeRate.service');
 
 let server;
 let baseUrl;
@@ -85,6 +92,31 @@ test('a newly registered pharmacy can browse the seeded catalog', async () => {
   const offers = await call('GET', '/offers/active', { token });
   assert.strictEqual(offers.status, 200, JSON.stringify(offers.body));
   assert.ok(JSON.stringify(offers.body).includes('Launch offer'), JSON.stringify(offers.body).slice(0, 600));
+});
+
+test('demo orders: one per stage for each pharmacy, visible to both sides, seeded once', async () => {
+  await setManualRate(13800);
+  const first = await seedDemoOrders();
+  assert.strictEqual(first.orders, DEMO_ORDERS.length);
+
+  const login = await call('POST', '/auth/login-password', {
+    body: { phone: '0931234567', password: 'pharmacy-pass-1' },
+  });
+  const mine = await call('GET', '/orders', { token: login.body.token });
+  assert.strictEqual(mine.status, 200, JSON.stringify(mine.body));
+  const statuses = mine.body.orders.map((o) => o.status).sort();
+  assert.deepStrictEqual(statuses, DEMO_ORDERS.map(([, status]) => status).sort());
+
+  const warehouse = await call('POST', '/auth/login-password', {
+    body: { phone: WAREHOUSES[0].phone, password: DEMO_WAREHOUSE_PASSWORD },
+  });
+  const queue = await call('GET', '/warehouse/orders', { token: warehouse.body.token });
+  assert.strictEqual(queue.status, 200, JSON.stringify(queue.body));
+  const expected = DEMO_ORDERS.filter(([index]) => index === 0).length;
+  assert.strictEqual(queue.body.orders.length, expected);
+
+  // A pharmacy that already has orders is left alone.
+  assert.strictEqual((await seedDemoOrders()).orders, 0);
 });
 
 test('a demo warehouse can log in with the demo password', async () => {
