@@ -287,16 +287,6 @@
   "clearCartButton": "Clear cart",
   "clearCartTitle": "Clear cart?",
   "clearCartConfirmation": "Are you sure you want to clear all the contents of your cart?",
-  "cartConflictTitle": "Start a new cart?",
-  "cartConflictMessage": "Your cart has items from {name}. Adding this item will clear it and start a new order.",
-  "@cartConflictMessage": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "cartConflictConfirmButton": "Start new cart",
   "cartIconTooltip": "Cart",
   "reorderButton": "Reorder",
   "addProductButton": "Add product",
@@ -405,12 +395,33 @@
   "errorPriceChangedGeneric": "Some prices in your cart have changed.",
   "errorBonusChangedGeneric": "The bonus changed on some items in your cart.",
   "bonusValue": "Bonus {tiers}",
-  "@bonusValue": { "placeholders": { "tiers": { "type": "String" } } },
+  "@bonusValue": {
+    "placeholders": {
+      "tiers": {
+        "type": "String"
+      }
+    }
+  },
   "freeUnits": "+{count} free",
-  "@freeUnits": { "placeholders": { "count": { "type": "int" } } },
+  "@freeUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noBonus": "No bonus",
   "bonusChangedLine": "{name}: {bonus}",
-  "@bonusChangedLine": { "placeholders": { "name": { "type": "String" }, "bonus": { "type": "String" } } },
+  "@bonusChangedLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "bonus": {
+        "type": "String"
+      }
+    }
+  },
   "errorPriceChanged": "{name} is now {newPrice} (was {oldPrice}).",
   "@errorPriceChanged": {
     "placeholders": {
@@ -1031,5 +1042,43 @@
   "newPasswordSameAsCurrent": "The new password must be different from the current one.",
   "errorPasswordUnchanged": "The new password must be different from the current one.",
   "errorPasswordMismatch": "Passwords do not match.",
-  "errorInvalidPassword": "This password does not meet the requirements."
+  "errorInvalidPassword": "This password does not meet the requirements.",
+  "cartOtherWarehousesHint": "You have a cart at each of these warehouses. Each one is sent as its own order, with its own invoice:",
+  "submitAllButton": "Send all orders ({count})",
+  "@submitAllButton": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "submitAllTitle": "Send all orders?",
+  "submitAllConfirmation": "Each warehouse gets its own order, with its own invoice:\n{names}",
+  "@submitAllConfirmation": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "submitAllDone": "All orders sent ({count}).",
+  "@submitAllDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "submitAllPartial": "Sent {sent} of {total}. The orders not sent stay in the cart with the reason.",
+  "@submitAllPartial": {
+    "placeholders": {
+      "sent": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "submitThisWarehouseOnly": "Send only this warehouse's order"
 }

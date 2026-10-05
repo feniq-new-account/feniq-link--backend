@@ -1022,24 +1022,6 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to clear all the contents of your cart?'**
   String get clearCartConfirmation;
 
-  /// No description provided for @cartConflictTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Start a new cart?'**
-  String get cartConflictTitle;
-
-  /// No description provided for @cartConflictMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Your cart has items from {name}. Adding this item will clear it and start a new order.'**
-  String cartConflictMessage(String name);
-
-  /// No description provided for @cartConflictConfirmButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Start new cart'**
-  String get cartConflictConfirmButton;
-
   /// No description provided for @cartIconTooltip.
   ///
   /// In en, this message translates to:
@@ -3175,6 +3157,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This password does not meet the requirements.'**
   String get errorInvalidPassword;
+
+  /// No description provided for @cartOtherWarehousesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You have a cart at each of these warehouses. Each one is sent as its own order, with its own invoice:'**
+  String get cartOtherWarehousesHint;
+
+  /// No description provided for @submitAllButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send all orders ({count})'**
+  String submitAllButton(int count);
+
+  /// No description provided for @submitAllTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send all orders?'**
+  String get submitAllTitle;
+
+  /// No description provided for @submitAllConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Each warehouse gets its own order, with its own invoice:\n{names}'**
+  String submitAllConfirmation(String names);
+
+  /// No description provided for @submitAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All orders sent ({count}).'**
+  String submitAllDone(int count);
+
+  /// No description provided for @submitAllPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent {sent} of {total}. The orders not sent stay in the cart with the reason.'**
+  String submitAllPartial(int sent, int total);
+
+  /// No description provided for @submitThisWarehouseOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Send only this warehouse\'s order'**
+  String get submitThisWarehouseOnly;
 }
 
 class _AppLocalizationsDelegate

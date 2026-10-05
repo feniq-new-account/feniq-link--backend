@@ -286,16 +286,6 @@
   "clearCartButton": "مسح السلة",
   "clearCartTitle": "مسح السلة؟",
   "clearCartConfirmation": "هل أنت متأكد من مسح جميع محتويات السلة؟",
-  "cartConflictTitle": "بدء سلة جديدة؟",
-  "cartConflictMessage": "سلتك تحتوي على عناصر من {name}. إضافة هذا العنصر ستفرغ السلة وتبدأ طلباً جديداً.",
-  "@cartConflictMessage": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "cartConflictConfirmButton": "بدء سلة جديدة",
   "cartIconTooltip": "السلة",
   "reorderButton": "إعادة الطلب",
   "addProductButton": "إضافة منتج",
@@ -404,12 +394,33 @@
   "errorPriceChangedGeneric": "تغيّرت بعض الأسعار في سلتك.",
   "errorBonusChangedGeneric": "تغيّر البونص على بعض الأصناف في سلتك.",
   "bonusValue": "بونص {tiers}",
-  "@bonusValue": { "placeholders": { "tiers": { "type": "String" } } },
+  "@bonusValue": {
+    "placeholders": {
+      "tiers": {
+        "type": "String"
+      }
+    }
+  },
   "freeUnits": "+{count} مجاناً",
-  "@freeUnits": { "placeholders": { "count": { "type": "int" } } },
+  "@freeUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noBonus": "بدون بونص",
   "bonusChangedLine": "{name}: {bonus}",
-  "@bonusChangedLine": { "placeholders": { "name": { "type": "String" }, "bonus": { "type": "String" } } },
+  "@bonusChangedLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "bonus": {
+        "type": "String"
+      }
+    }
+  },
   "errorPriceChanged": "{name} أصبح بـ {newPrice} (كان {oldPrice}).",
   "@errorPriceChanged": {
     "placeholders": {
@@ -896,5 +907,12 @@
   "newPasswordSameAsCurrent": "يجب أن تختلف كلمة السر الجديدة عن الحالية.",
   "errorPasswordUnchanged": "يجب أن تختلف كلمة السر الجديدة عن الحالية.",
   "errorPasswordMismatch": "كلمتا المرور غير متطابقتين.",
-  "errorInvalidPassword": "كلمة السر لا تحقق الشروط المطلوبة."
+  "errorInvalidPassword": "كلمة السر لا تحقق الشروط المطلوبة.",
+  "cartOtherWarehousesHint": "عندك سلّة عند كل مستودع من هدول، وكل سلّة بتنبعت كطلب منفصل بفاتورته:",
+  "submitAllButton": "إرسال كل الطلبات ({count})",
+  "submitAllTitle": "إرسال كل الطلبات؟",
+  "submitAllConfirmation": "رح ينبعت طلب منفصل لكل مستودع، ولكل طلب فاتورته:\n{names}",
+  "submitAllDone": "انبعتت كل الطلبات ({count}).",
+  "submitAllPartial": "انبعت {sent} من {total}. الطلبات اللي ما انبعتت ضلّت بالسلّة مع السبب.",
+  "submitThisWarehouseOnly": "إرسال طلب هالمستودع بس"
 }

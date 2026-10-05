@@ -79,13 +79,7 @@ class _AlternativesSheetState extends State<_AlternativesSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final cartState = context.watch<CartCubit>().state;
-    int cartQuantityFor(String productId) {
-      if (cartState.warehouseId != widget.warehouseId) return 0;
-      for (final item in cartState.items) {
-        if (item.productId == productId) return item.quantity;
-      }
-      return 0;
-    }
+    int cartQuantityFor(String productId) => cartState.quantityAt(widget.warehouseId, productId);
 
     return DraggableScrollableSheet(
       expand: false,
@@ -156,8 +150,8 @@ class _AlternativesSheetState extends State<_AlternativesSheet> {
                         widget.onAdd(product, quantity);
                       },
                       onCartQuantityChanged: (quantity) =>
-                          context.read<CartCubit>().updateQuantity(product.id, quantity),
-                      onCartRemove: () => context.read<CartCubit>().removeItem(product.id),
+                          context.read<CartCubit>().updateQuantityAt(widget.warehouseId, product.id, quantity),
+                      onCartRemove: () => context.read<CartCubit>().removeItemAt(widget.warehouseId, product.id),
                     );
                   },
                 );

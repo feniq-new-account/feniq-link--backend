@@ -184,7 +184,7 @@ void main() {
     test('a new cart on a screen already showing is quoted at once', () async {
       await openCartScreen();
       quotedCodes.clear();
-      cubit.replaceWithProduct(_product('p9'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+      cubit.addProduct(_product('p9'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
       await Future<void>.delayed(Duration.zero);
       expect(quotedCodes, [null]);
     });
@@ -250,7 +250,7 @@ void main() {
       ).thenAnswer((invocation) => invocation.namedArguments[#code] == null ? Future.value(_plainQuote) : slow.future);
 
       final pending = cubit.applyDiscountCode('ABCD2345');
-      cubit.replaceWithProduct(_product('p9'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+      cubit.addProduct(_product('p9'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
       slow.complete(_codeQuote());
       await pending;
       expect(cubit.state.discountCode, isNull);
@@ -301,11 +301,12 @@ void main() {
       expect(cubit.state.isReadyToSubmit, isTrue);
     });
 
-    test('a new cart for another warehouse takes the code with the old one', () async {
-      cubit.replaceWithProduct(_product('p9'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+    test('a cart at another warehouse has no code; the code stays with its own cart', () async {
+      cubit.addProduct(_product('p9'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
       await _settle();
       expect(cubit.state.discountCode, isNull);
       expect(quotedCodes.where((c) => c != null), isEmpty);
+      expect(cubit.state.otherCarts['A']!.discountCode, 'ABCD2345');
     });
   });
 

@@ -14,7 +14,7 @@ import 'package:feniq/core/constants/app_colors.dart';
 ///
 /// Reads the single app-wide [CartCubit] provided at the top of the tree in
 /// main.dart via the ambient BlocProvider - it never creates its own - and
-/// only rebuilds when [CartState.itemCount] changes, so add/remove/quantity
+/// only rebuilds when [CartState.totalItemCount] (every warehouse's cart) changes, so add/remove/quantity
 /// edits move the badge immediately. An empty cart shows the bare icon with
 /// no badge. Tapping it pushes the existing cart route through GoRouter.
 class CartButton extends StatelessWidget {
@@ -25,14 +25,14 @@ class CartButton extends StatelessWidget {
     final l10n = context.l10n;
 
     return BlocBuilder<CartCubit, CartState>(
-      buildWhen: (previous, current) => previous.itemCount != current.itemCount,
+      buildWhen: (previous, current) => previous.totalItemCount != current.totalItemCount,
       builder: (context, state) {
         return IconButton(
           tooltip: l10n.cartIconTooltip,
           onPressed: () => context.pushNamed(RouteNames.cart),
           icon: Badge(
-            label: Text('${state.itemCount}'),
-            isLabelVisible: state.itemCount > 0,
+            label: Text('${state.totalItemCount}'),
+            isLabelVisible: state.totalItemCount > 0,
             child: Icon(
               Icons.shopping_cart_outlined,
               color: AppColors.lightPrimary,

@@ -22,6 +22,8 @@ class CartState {
     this.isQuoteStale = false,
     this.quoteErrorCode,
     this.discountCodeErrorCode,
+    this.otherCarts = const {},
+    this.isSubmittingAll = false,
   });
 
   final String? warehouseId;
@@ -97,6 +99,42 @@ class CartState {
   final String? discountCodeErrorCode;
 
   bool get hasDiscountCode => discountCode != null;
+
+  // The carts the pharmacist started at OTHER warehouses, by warehouseId. The
+  // fields above are always the cart in front (the one the cart screen shows
+  // and the one every edit applies to); each of these is a whole cart of its
+  // own, set aside with its lines, notes, discount code and limits, and
+  // brought back to the front by CartCubit.switchToWarehouse. Every order
+  // still belongs to exactly one warehouse: submitting sends one order per
+  // cart. Never holds the front cart's own warehouse, and never an empty cart.
+  final Map<String, CartState> otherCarts;
+
+  // "Send all orders" is going through the carts one by one
+  // (CartCubit.submitAll). The cart screen holds its error dialogs until it
+  // ends, then shows the first cart that was refused.
+  final bool isSubmittingAll;
+
+  bool get hasOtherCarts => otherCarts.isNotEmpty;
+
+  /// How many warehouses have a cart, the one in front included.
+  int get cartCount => (isEmpty ? 0 : 1) + otherCarts.length;
+
+  /// The cart for [warehouseId] - the one in front or one set aside - or null.
+  CartState? cartFor(String warehouseId) => warehouseId == this.warehouseId ? this : otherCarts[warehouseId];
+
+  /// How much of [productId] the cart at [warehouseId] holds - 0 when that
+  /// warehouse has no cart or the product is not in it.
+  int quantityAt(String warehouseId, String productId) {
+    final cart = cartFor(warehouseId);
+    if (cart == null) return 0;
+    for (final item in cart.items) {
+      if (item.productId == productId) return item.quantity;
+    }
+    return 0;
+  }
+
+  /// The cart badge across every warehouse's cart.
+  int get totalItemCount => otherCarts.values.fold(itemCount, (sum, cart) => sum + cart.itemCount);
 
   /// Whether the figures on screen are the server's figures for this exact
   /// cart.
@@ -210,6 +248,8 @@ class CartState {
     bool clearDiscountCode = false,
     String? discountCodeErrorCode,
     bool clearDiscountCodeError = false,
+    Map<String, CartState>? otherCarts,
+    bool? isSubmittingAll,
   }) {
     return CartState(
       warehouseId: warehouseId ?? this.warehouseId,
@@ -235,6 +275,8 @@ class CartState {
       discountCodeErrorCode: clearDiscountCodeError
           ? null
           : (discountCodeErrorCode ?? this.discountCodeErrorCode),
+      otherCarts: otherCarts ?? this.otherCarts,
+      isSubmittingAll: isSubmittingAll ?? this.isSubmittingAll,
     );
   }
 }

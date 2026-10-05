@@ -5,7 +5,6 @@ import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
 import 'package:feniq/core/error/error_translator.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
-import 'package:feniq/core/widgets/app_dialog.dart';
 import 'package:feniq/core/widgets/app_skeleton.dart';
 import 'package:feniq/core/widgets/app_snackbar.dart';
 import 'package:feniq/core/widgets/empty_view.dart';
@@ -67,32 +66,9 @@ class _CatalogProductListState extends State<CatalogProductList> {
     final name = product.nameAr;
     final cartCubit = context.read<CartCubit>();
 
-    // Section 6.6: every order belongs to exactly one warehouse, so a cart
-    // that already has items from a different warehouse needs confirmation
-    // before it gets cleared and restarted here.
-    if (cartCubit.hasConflictingWarehouse(widget.warehouseId)) {
-      AppDialog.show(
-        context: context,
-        title: l10n.cartConflictTitle,
-        content: l10n.cartConflictMessage(cartCubit.state.warehouseName ?? ''),
-        actionLabel: l10n.cartConflictConfirmButton,
-        // AppDialog's own action button already pops this confirmation
-        // dialog - an extra Navigator.pop(context) here has nothing left of
-        // its own to pop and throws, silently aborting this callback before
-        // replaceWithProduct() ever runs.
-        onAction: () {
-          cartCubit.replaceWithProduct(
-            product,
-            warehouseId: widget.warehouseId,
-            warehouseName: widget.warehouseName,
-            quantity: quantity,
-          );
-          AppSnackbar.show(context, l10n.addedToCartMessage(name));
-        },
-      );
-      return;
-    }
-
+    // Section 6.6: a product from another warehouse goes to that warehouse's
+    // own cart - the pharmacist can fill carts at several warehouses, and each
+    // is sent as its own order.
     cartCubit.addProduct(
       product,
       warehouseId: widget.warehouseId,
@@ -106,15 +82,14 @@ class _CatalogProductListState extends State<CatalogProductList> {
   // CartCubit instead of the "Add" button - so a typed or stepped value goes
   // through updateQuantity and the number on the card is always
   // CartItem.quantity, never a copy. Taking it below 1 removes the line.
-  // Scoped to this warehouse: a cart bound to a different warehouse leaves
-  // every card here on the "Add" button (which then runs the usual
-  // conflicting-warehouse confirmation).
+  // Scoped to this warehouse: the number is this warehouse's cart, and the
+  // stepper edits that cart (bringing it to the front).
   void _setCartQuantity(ProductModel product, int quantity) {
-    context.read<CartCubit>().updateQuantity(product.id, quantity);
+    context.read<CartCubit>().updateQuantityAt(widget.warehouseId, product.id, quantity);
   }
 
   void _removeFromCart(ProductModel product) {
-    context.read<CartCubit>().removeItem(product.id);
+    context.read<CartCubit>().removeItemAt(widget.warehouseId, product.id);
   }
 
   @override
@@ -123,14 +98,7 @@ class _CatalogProductListState extends State<CatalogProductList> {
     final isGrid = widget.isGrid;
 
     final cartState = context.watch<CartCubit>().state;
-    final cartBoundToThisWarehouse = cartState.warehouseId == widget.warehouseId;
-    int cartQuantityFor(String productId) {
-      if (!cartBoundToThisWarehouse) return 0;
-      for (final item in cartState.items) {
-        if (item.productId == productId) return item.quantity;
-      }
-      return 0;
-    }
+    int cartQuantityFor(String productId) => cartState.quantityAt(widget.warehouseId, productId);
 
     return BlocConsumer<CatalogCubit, CatalogState>(
       listenWhen: (previous, current) =>

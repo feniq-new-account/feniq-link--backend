@@ -304,7 +304,7 @@ void main() {
       expect(cartCubit.state.items.single.quantity, 2);
     });
 
-    testWidgets('a cart from another warehouse runs the existing conflict confirmation', (
+    testWidgets('an offer from another warehouse goes to that warehouse\'s cart, no question asked', (
       tester,
     ) async {
       stubOffers([offer(id: 'o1', warehouseId: 'W1')]);
@@ -330,17 +330,10 @@ void main() {
       await tester.tap(find.text('Add'));
       await tester.pumpAndSettle();
 
-      // The project's own cross-warehouse copy (CatalogView), not a new dialog.
-      expect(find.text('Start a new cart?'), findsOneWidget);
-      expect(find.textContaining('Warehouse Two'), findsOneWidget);
-      // Nothing is touched until it is confirmed.
-      expect(cartCubit.state.warehouseId, 'W2');
-
-      await tester.tap(find.text('Start new cart'));
-      await tester.pumpAndSettle();
-
       expect(cartCubit.state.warehouseId, 'W1');
       expect(cartCubit.state.items.single.productId, 'p-o1');
+      // The other warehouse's cart is kept as it was.
+      expect(cartCubit.state.otherCarts['W2']!.items.single.productId, 'p-other');
     });
 
     testWidgets('an unavailable offer is listed, faded, and cannot be added', (tester) async {
