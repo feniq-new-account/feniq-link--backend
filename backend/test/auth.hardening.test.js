@@ -331,6 +331,34 @@ test('H-3c: a reset code is burned after 5 wrong guesses', async () => {
   assert.strictEqual(withReal.body.code, 'INVALID_OTP');
 });
 
+test('OTP: the reset code is stored hashed, never as the plain digits', async () => {
+  const account = await freshAccount();
+  await call('POST', '/auth/forgot-password', { body: { phone: account.phone } });
+  const realCode = lastCodeFor(account.phone);
+
+  const stored = await Otp.findOne({ phone: account.phone, purpose: 'password_reset' })
+    .sort({ createdAt: -1 })
+    .lean();
+  assert.ok(stored, 'a reset code should have been persisted');
+  assert.notStrictEqual(stored.code, realCode, 'the plain code must not be in the database');
+  assert.ok(!stored.code.includes(realCode), 'the plain digits must not appear inside the stored value');
+  assert.match(stored.code, /^hmac-sha256:[0-9a-f]{64}$/);
+
+  // Feeding the stored hash back as the "code" must not work either - the
+  // database value is not itself a usable secret.
+  const withHash = await call('POST', '/auth/reset-password', {
+    body: { phone: account.phone, otpCode: stored.code, password: 'via-hash-pass', confirmPassword: 'via-hash-pass' },
+  });
+  assert.strictEqual(withHash.status, 400);
+  assert.strictEqual(withHash.body.code, 'INVALID_OTP');
+
+  // ...while the real code, compared against the hash, still does.
+  const ok = await call('POST', '/auth/reset-password', {
+    body: { phone: account.phone, otpCode: realCode, password: 'via-real-pass', confirmPassword: 'via-real-pass' },
+  });
+  assert.strictEqual(ok.status, 200, JSON.stringify(ok.body));
+});
+
 test('H-3: change-password requires the current password', async () => {
   const account = await freshAccount();
   const login = await call('POST', '/auth/login-password', {

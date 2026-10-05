@@ -139,11 +139,11 @@ test.before(async () => {
   const [warehouseA, warehouseB] = await Warehouse.create([
     {
       userId: whAUser._id, nameAr: 'أ', nameEn: 'Warehouse A', address: 'r', city: 'Latakia',
-      phone: '0942003001', deliveryType: 'self', isActive: true, discountRate: 0, commissionRate: 1,
+      phone: '0942003001', deliveryType: 'self', requireDeliverySealPhoto: false, isActive: true, discountRate: 0, commissionRate: 1,
     },
     {
       userId: whBUser._id, nameAr: 'ب', nameEn: 'Warehouse B', address: 'r', city: 'Latakia',
-      phone: '0942003002', deliveryType: 'self', isActive: true, discountRate: 0, commissionRate: 1,
+      phone: '0942003002', deliveryType: 'self', requireDeliverySealPhoto: false, isActive: true, discountRate: 0, commissionRate: 1,
     },
   ]);
   ids.warehouseA = warehouseA._id;

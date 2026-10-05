@@ -49,4 +49,13 @@ abstract class AuthRepository {
   // current token stops working the moment this returns - AuthCubit clears the
   // local session immediately after.
   Future<void> deleteAccount({required String password});
+
+  // Changes the signed-in user's own password. The server revokes every
+  // session including this one and returns a fresh pair, which the caller
+  // must store in place of the old tokens. Also how a forced change after an
+  // admin reset is completed (the response carries mustChangePassword false).
+  Future<AuthResponse> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
 }

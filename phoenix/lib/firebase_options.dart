@@ -24,7 +24,12 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return android;
+        // Not used: Android reads android/app/google-services.json natively
+        // (main.dart _initializeFirebase). Replace that file - not this one -
+        // when the Firebase project changes. See android/README.md.
+        throw UnsupportedError(
+          'Android Firebase config comes from android/app/google-services.json.',
+        );
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
@@ -49,14 +54,9 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDULM5yzVLSw0Ke0R13hdrF927I6CuJso8',
-    appId: '1:53939034042:android:c7d233eaa772e3e12aef83',
-    messagingSenderId: '53939034042',
-    projectId: 'phoenix-pharmacy-e54d2',
-    storageBucket: 'phoenix-pharmacy-e54d2.firebasestorage.app',
-  );
-
+  // iOS is not shipped yet and still points at the previous developer's
+  // project (phoenix-pharmacy-e54d2). Regenerate this file with
+  // `flutterfire configure` against the owner's project before any iOS build.
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDQJsfXfJ-e3zDRs1EP1unlOMlt8owEnCs',
     appId: '1:53939034042:ios:064ff7bfded4eace2aef83',

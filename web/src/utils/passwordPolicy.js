@@ -46,3 +46,35 @@ export function passwordPolicyError(password, role) {
 export function canAdminResetPassword(role) {
   return role === 'pharmacy' || role === 'warehouse';
 }
+
+// A temporary password the admin hands to a pharmacist who forgot theirs
+// (the recovery path until an SMS gateway exists). Generated here, in the
+// admin's browser, so the server never has to echo a password back.
+//
+// The alphabet drops look-alikes (0/O, 1/l/I) because the admin reads it out
+// over the phone or types it into WhatsApp. 31 symbols x 12 characters is ~59
+// bits - far beyond what the login throttle lets anyone guess - and 12 also
+// clears every role's minimum, so the server never rejects it.
+const TEMP_PASSWORD_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+export const TEMP_PASSWORD_LENGTH = 12;
+
+export function generateTemporaryPassword(
+  role,
+  randomValues = (array) => globalThis.crypto.getRandomValues(array)
+) {
+  const length = Math.max(TEMP_PASSWORD_LENGTH, minPasswordLengthFor(role));
+  const alphabetSize = TEMP_PASSWORD_ALPHABET.length;
+  // Rejection sampling: only bytes below the largest multiple of the alphabet
+  // size are used, so every character is equally likely (no modulo bias).
+  const limit = 256 - (256 % alphabetSize);
+  let result = '';
+  while (result.length < length) {
+    const bytes = randomValues(new Uint8Array(length * 2));
+    for (const byte of bytes) {
+      if (byte < limit && result.length < length) {
+        result += TEMP_PASSWORD_ALPHABET[byte % alphabetSize];
+      }
+    }
+  }
+  return result;
+}

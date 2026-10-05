@@ -29,7 +29,8 @@ services:
       # رابط لوحة الويب — بدونه يرفض المتصفح طلباتها (CORS).
       - key: CORS_ORIGINS
         value: https://feniq-connect-web.onrender.com
-      # console = رمز التحقق يظهر في سجلات Render بدل إرساله SMS.
+      # console = لا يوجد مزوّد SMS بعد. بالإنتاج الرمز لا يُكتب في السجلات؛
+      # استرجاع كلمة السر من لوحة الأدمن (الحسابات ← إعادة تعيين كلمة السر).
       - key: SMS_PROVIDER
         value: console
       # الإشعارات (اختياري — بدونها تتعطّل الإشعارات فقط).

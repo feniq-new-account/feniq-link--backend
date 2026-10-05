@@ -1,0 +1,72 @@
+# النسخ الاحتياطي لقاعدة البيانات
+
+Atlas المجاني (M0) لا يأخذ نسخاً احتياطية. هذا ما يعوّضه:
+
+| الملف | ماذا يفعل |
+|---|---|
+| `.github/workflows/db-backup.yml` | كل يوم 03:23 بتوقيت دمشق: نسخة مشفّرة + تجربة استرجاع فعلية + حفظ 90 يوماً |
+| `backup.sh` | `mongodump` ← ضغط ← تشفير GPG/AES-256. لا يكتب نسخة غير مشفّرة على القرص |
+| `restore.sh` | فك التشفير ← `mongorestore` إلى أي قاعدة (تجريبية أو الإنتاج) |
+| `verify-restore.js` | يعدّ وثائق كل مجموعة بعد الاسترجاع ويقارنها بالأصل |
+
+الأدوات: `mongodump`/`mongorestore` المثبّتة إن وُجدت، وإلا صورة Docker الرسمية `mongo:8.0` تلقائياً.
+
+## الإعداد (مرة واحدة)
+
+أسرار GitHub (الريبو ← **Settings ← Secrets and variables ← Actions**):
+
+| السر | القيمة |
+|---|---|
+| `MONGODB_URI` | نفس رابط Atlas الموضوع في Render (موجود إن أنشأت الأدمن عبر Actions) |
+| `BACKUP_ENCRYPTION_KEY` | كلمة سر طويلة: `openssl rand -base64 32` (أو أي مولّد كلمات سر، 32 حرفاً فأكثر) |
+
+**احفظ `BACKUP_ENCRYPTION_KEY` في مكانين خارج GitHub** (مدير كلمات سر + نسخة ورقية/فلاشة).
+GitHub لا يُظهر السر بعد حفظه، وبدونه لا يمكن فتح أي نسخة.
+
+اختياري: متغيّر المستودع `BACKUP_RETENTION_DAYS` (الافتراضي 90).
+تنبيه: الحساب المجاني لـ GitHub على ريبو خاص يعطي 500 ميغا لتخزين الـArtifacts. صفحة كل تشغيل تعرض حجم
+النسخة؛ إذا صار الحجم × 90 يقارب الحد، خفّض `BACKUP_RETENTION_DAYS` (مثلاً 30).
+
+للتشغيل الأول فوراً: **Actions ← Database backup ← Run workflow**.
+
+## التحقق اليومي
+
+كل تشغيل ناجح = نسخة **تم استرجاعها فعلاً** في قاعدة مؤقتة ومقارنتها بالأصل (الجدول في صفحة Summary).
+إذا فشل أي شيء يفشل التشغيل ويرسل GitHub إيميلاً لصاحب الريبو.
+
+## الاسترجاع
+
+1. **Actions ← Database backup** ← اختر تشغيلاً بتاريخ اليوم المطلوب ← **Artifacts** ← نزّل `feniq-db-...`
+   وفك الـzip: فيه `feniq-db-....archive.gz.gpg` و `.sha256`.
+2. على جهاز Linux/macOS (أو WSL على ويندوز) عليه `gpg` و Docker (أو MongoDB Database Tools)، داخل الريبو:
+
+```bash
+export BACKUP_ENCRYPTION_KEY='...'   # من مدير كلمات السر
+
+# أ) تجربة آمنة أولاً: إلى قاعدة محلية/جانبية، لا تلمس الأصل
+backend/scripts/backup/restore.sh feniq-db-2026-10-04T0023Z.archive.gz.gpg \
+  mongodb://127.0.0.1:27017 --to-db feniq_restore_test
+
+# ب) كارثة حقيقية: استرجاع كامل فوق قاعدة الإنتاج (يحذف كل مجموعة ثم يعيدها)
+backend/scripts/backup/restore.sh feniq-db-2026-10-04T0023Z.archive.gz.gpg \
+  'mongodb+srv://feniq:PASSWORD@cluster0.xxxxx.mongodb.net' --drop
+```
+
+السكريبت يتحقق من الـchecksum، ويطلب كتابة اسم القاعدة الهدف للتأكيد (إلا مع `--yes`).
+بعد الاسترجاع:
+
+```bash
+cd backend && npm ci
+node scripts/backup/verify-restore.js --target '<نفس الرابط>' --db feniq
+```
+
+ثم أعد تشغيل خدمة `feniq-connect-api` على Render (Manual Deploy ← Restart) ليبدأ بحالة نظيفة.
+
+ملاحظة: رابط الإنتاج يكتب في الطرفية فقط، لا في أي محادثة أو ملف.
+
+## تجربة استرجاع محلية تمت
+
+2026-10-04: قاعدة تجريبية (3 مجموعات، 503 وثيقة، فهرس unique) ← `backup.sh` ← الملف لا يحوي أي نص
+مقروء من البيانات ← `restore.sh --to-db` ← `verify-restore.js`: كل المجموعات والأعداد مطابقة.
+كذلك: كلمة سر خاطئة تفشل بوضوح، و`--drop` فوق قاعدة "تالفة" يعيدها كما كانت تماماً، والمسار عبر Docker
+(بدون أدوات MongoDB مثبّتة) يعمل.

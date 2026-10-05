@@ -105,7 +105,7 @@ test.before(async () => {
   // Rates zeroed so the statement arithmetic under test is the ledger's.
   const warehouse = await Warehouse.create({
     userId: whUser._id, nameAr: 'م', nameEn: 'Warehouse', address: 'r', city: 'Latakia',
-    phone: '0942000901', deliveryType: 'self', isActive: true, discountRate: 0, commissionRate: 0,
+    phone: '0942000901', deliveryType: 'self', requireDeliverySealPhoto: false, isActive: true, discountRate: 0, commissionRate: 0,
   });
   ids.warehouse = warehouse._id;
 
@@ -306,7 +306,7 @@ test('the pharmacy summary reports debt, credit and net separately', async () =>
   });
   const otherWarehouse = await Warehouse.create({
     userId: otherWhUser._id, nameAr: 'م2', nameEn: 'Warehouse 2', address: 'r', city: 'Latakia',
-    phone: '0942000902', deliveryType: 'self', isActive: true, discountRate: 0, commissionRate: 0,
+    phone: '0942000902', deliveryType: 'self', requireDeliverySealPhoto: false, isActive: true, discountRate: 0, commissionRate: 0,
   });
   const otherAccount = await ledger.resolveAccount(ids.pharmacy, otherWarehouse._id);
   const { runInTransaction } = require('../src/utils/transaction');

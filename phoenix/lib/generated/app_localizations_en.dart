@@ -673,6 +673,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Something about this request wasn\'t valid. Please try again.';
 
   @override
+  String get errorQuantityTooLarge =>
+      'A single item can\'t exceed 10,000 units per order. Please lower the quantity.';
+
+  @override
   String get errorInvalidCredentials =>
       'The phone number or password is incorrect.';
 
@@ -1779,4 +1783,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cartQuoteUnavailable => 'Couldn\'t work out the total.';
+
+  @override
+  String get changePasswordTitle => 'Change password';
+
+  @override
+  String get changePasswordSubtitle => 'Choose a new password only you know.';
+
+  @override
+  String get changePasswordForcedMessage =>
+      'Your password was reset by support. Please choose a new password to continue.';
+
+  @override
+  String get currentPasswordLabel => 'Current password';
+
+  @override
+  String get currentPasswordForcedLabel => 'Temporary password';
+
+  @override
+  String get newPasswordLabel => 'New password';
+
+  @override
+  String get confirmNewPasswordLabel => 'Confirm new password';
+
+  @override
+  String get changePasswordAction => 'Save new password';
+
+  @override
+  String get changePasswordSuccess =>
+      'Password changed. Other devices have been signed out.';
+
+  @override
+  String get newPasswordSameAsCurrent =>
+      'The new password must be different from the current one.';
+
+  @override
+  String get errorPasswordUnchanged =>
+      'The new password must be different from the current one.';
+
+  @override
+  String get errorPasswordMismatch => 'Passwords do not match.';
+
+  @override
+  String get errorInvalidPassword =>
+      'This password does not meet the requirements.';
 }

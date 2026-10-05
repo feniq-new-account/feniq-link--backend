@@ -27,6 +27,9 @@ import 'package:feniq/routes/route_names.dart';
 // list itself; the debts section was removed entirely - debts live on the
 // Account History tab now. ProfileView holds no cubit of its own beyond the
 // app-wide Auth/Settings ones.
+// The Settings row that opens ChangePasswordView - keyed for the widget test.
+const Key profileChangePasswordKey = ValueKey('profileChangePassword');
+
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
 
@@ -203,6 +206,26 @@ class ProfileView extends StatelessWidget {
                         ),
                       );
                     },
+                  ),
+
+                  const SizedBox(height: AppSizes.spacingMedium),
+                  CustomCard(
+                    key: profileChangePasswordKey,
+                    onTap: () => context.pushNamed(RouteNames.changePassword),
+                    child: Row(
+                      children: [
+                        Icon(Icons.lock_outline, size: 22, color: AppColors.textOf(context)),
+                        const SizedBox(width: AppSizes.spacingMedium),
+                        Expanded(
+                          child: Text(l10n.changePasswordTitle, style: context.textTheme.titleSmall),
+                        ),
+                        Icon(
+                          Icons.chevron_right,
+                          size: AppSizes.iconSizeSmall,
+                          color: AppColors.textSecondaryOf(context),
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: AppSizes.spacingMedium),

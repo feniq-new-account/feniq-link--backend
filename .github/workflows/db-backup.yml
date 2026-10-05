@@ -1,0 +1,103 @@
+# نسخة احتياطية يومية لقاعدة البيانات (Atlas المجاني بلا نسخ احتياطية).
+#
+# كل يوم 03:23 بتوقيت دمشق (00:23 UTC)، أو يدوياً: Actions ← Database backup ← Run workflow.
+#   1. mongodump لقاعدة الإنتاج (سر MONGODB_URI) ← مضغوط ← مشفّر بـ GPG/AES-256
+#      بكلمة السر BACKUP_ENCRYPTION_KEY. لا تُكتب نسخة غير مشفّرة على القرص.
+#   2. تجربة استرجاع فعلية: تُفك النسخة وتُسترجع في MongoDB مؤقت داخل التشغيل،
+#      وتُقارن المجموعات بالأصل. إذا فشل الاسترجاع يفشل التشغيل (وتصل رسالة من GitHub).
+#   3. تُحفظ كـ Artifact باسم feniq-db-<التاريخ> لمدة 90 يوماً
+#      (أو BACKUP_RETENTION_DAYS من متغيرات المستودع).
+#
+# الأسرار (Settings ← Secrets and variables ← Actions):
+#   MONGODB_URI            نفس رابط Render (موجود من خطوة "أول أدمن").
+#   BACKUP_ENCRYPTION_KEY  كلمة سر التشفير (openssl rand -base64 32). احفظها في
+#                          مكانين خارج GitHub: بدونها النسخ لا تُفتح أبداً.
+#
+# الاسترجاع: backend/scripts/backup/README.md.
+name: Database backup
+
+on:
+  schedule:
+    - cron: '23 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # The restore drill's throwaway database. Never the production one.
+    services:
+      mongo:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check secrets
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          missing=0
+          [ -n "$MONGODB_URI" ] || { echo "::error::Repository secret MONGODB_URI is not set."; missing=1; }
+          [ -n "$BACKUP_ENCRYPTION_KEY" ] || { echo "::error::Repository secret BACKUP_ENCRYPTION_KEY is not set (openssl rand -base64 32)."; missing=1; }
+          exit $missing
+
+      - name: Dump and encrypt
+        id: dump
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          backend/scripts/backup/backup.sh backups
+          file=$(ls backups/*.gpg)
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$file" .archive.gz.gpg)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install verifier dependencies
+        working-directory: backend
+        run: npm ci --omit=dev --ignore-scripts
+
+      - name: Restore drill (into the throwaway database)
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          # The production database name is the path of MONGODB_URI (feniq).
+          source_db=$(node -e 'try{const u=new URL(process.argv[1].replace(/^mongodb(\+srv)?:/,"http:"));console.log(u.pathname.replace(/^\//,"")||"test")}catch{console.log("feniq")}' "$MONGODB_URI")
+          backend/scripts/backup/restore.sh "${{ steps.dump.outputs.file }}" mongodb://127.0.0.1:27017 \
+            --from-db "$source_db" --to-db restore_drill --yes > restore.log 2>&1 || { tail -20 restore.log; exit 1; }
+          tail -1 restore.log
+          node backend/scripts/backup/verify-restore.js \
+            --target mongodb://127.0.0.1:27017 --db restore_drill \
+            --source "$MONGODB_URI" --source-db "$source_db" | tee verify.txt
+          {
+            echo "### Backup ${{ steps.dump.outputs.name }}"
+            echo "Size: $(wc -c < "${{ steps.dump.outputs.file }}") bytes (encrypted). Restore drill: OK."
+            echo '```'
+            cat verify.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.dump.outputs.name }}
+          path: backups/
+          retention-days: ${{ vars.BACKUP_RETENTION_DAYS || 90 }}
+          if-no-files-found: error
+          # Already compressed and encrypted - zipping it again gains nothing.
+          compression-level: 0

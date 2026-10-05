@@ -17,9 +17,9 @@ function toWarehouseSettingsResponse(warehouse) {
       commissionRate: warehouse.commissionRate,
       minOrderAmountUsd: warehouse.minOrderAmountUsd,
       maxOrderAmountUsd: warehouse.maxOrderAmountUsd,
-      // Opt-in proof-of-delivery toggle (warehouse.model.js). `?? false` for
-      // documents that predate the field.
-      requireDeliverySealPhoto: warehouse.requireDeliverySealPhoto ?? false,
+      // Proof-of-delivery toggle (warehouse.model.js), on by default. `?? true`
+      // for documents that predate the field, matching order.service.js.
+      requireDeliverySealPhoto: warehouse.requireDeliverySealPhoto ?? true,
     },
   };
 }

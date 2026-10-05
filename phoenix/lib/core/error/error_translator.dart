@@ -48,6 +48,15 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
     // the user is already authenticated, so there is nothing to enumerate.
     case 'INVALID_CURRENT_PASSWORD':
       return l10n.errorInvalidCurrentPassword;
+    // The rest of change-password's refusals (auth.controller.js /
+    // auth.service.js). ChangePasswordView validates the same things in the
+    // form first, so these only surface if the two ever disagree.
+    case 'PASSWORD_UNCHANGED':
+      return l10n.errorPasswordUnchanged;
+    case 'PASSWORD_MISMATCH':
+      return l10n.errorPasswordMismatch;
+    case 'INVALID_PASSWORD':
+      return l10n.errorInvalidPassword;
 
     // --- Backend domain codes.
     // Auth. Before F-01/F-02 the backend sent no `code` on any auth error,
@@ -65,6 +74,10 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
     case 'INVALID_QUANTITY':
     case 'INVALID_WAREHOUSE':
       return l10n.errorInvalidRequest;
+    // A cart line above the server's per-item ceiling (order.controller.js
+    // MAX_ITEM_QUANTITY) - almost always an extra zero typed by mistake.
+    case 'QUANTITY_TOO_LARGE':
+      return l10n.errorQuantityTooLarge;
     case 'PHARMACY_NOT_FOUND':
       return l10n.errorPharmacyNotFound;
     case 'WAREHOUSE_NOT_FOUND':

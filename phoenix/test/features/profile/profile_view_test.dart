@@ -55,6 +55,11 @@ void main() {
           builder: (_, __) => const Scaffold(body: Text('COMPLAINTS PAGE')),
         ),
         GoRoute(
+          path: '/change-password',
+          name: RouteNames.changePassword,
+          builder: (_, __) => const Scaffold(body: Text('CHANGE PASSWORD PAGE')),
+        ),
+        GoRoute(
           path: '/privacy-policy',
           name: RouteNames.privacyPolicy,
           builder: (_, __) => const Scaffold(body: Text('PRIVACY PAGE')),
@@ -120,5 +125,31 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(ProfileView), findsOneWidget);
     expect(find.text('View Ratings'), findsOneWidget);
+  });
+
+  testWidgets('Test 8: Settings has a Change password entry that opens the screen', (tester) async {
+    await pump(tester);
+
+    await tester.scrollUntilVisible(
+      find.byKey(profileChangePasswordKey),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Change password'), findsOneWidget);
+    await tester.tap(find.byKey(profileChangePasswordKey));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CHANGE PASSWORD PAGE'), findsOneWidget);
+  });
+
+  testWidgets('Test 9: the Change password entry is translated', (tester) async {
+    await pump(tester, locale: const Locale('ar'));
+
+    await tester.scrollUntilVisible(
+      find.byKey(profileChangePasswordKey),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('تغيير كلمة السر'), findsOneWidget);
   });
 }

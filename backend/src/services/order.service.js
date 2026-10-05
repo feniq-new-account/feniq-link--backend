@@ -1026,7 +1026,8 @@ async function createOrder({
           // default; from here on the order owns this flag (the warehouse can
           // still flip it per order, but changing the warehouse default won't).
           // The client never sends this - it's read straight from the warehouse.
-          requiresDeliverySealPhoto: warehouse.requireDeliverySealPhoto ?? false,
+          // Required unless the warehouse explicitly turned it off.
+          requiresDeliverySealPhoto: warehouse.requireDeliverySealPhoto ?? true,
           statusHistory: [{ status: 'pending', changedBy: userId, changedAt: now }],
         },
       ],

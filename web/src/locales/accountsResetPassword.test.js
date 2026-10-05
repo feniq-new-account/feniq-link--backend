@@ -26,6 +26,10 @@ const KEYS = [
   'errorDeleted',
   'errorForbidden',
   'errorRateLimited',
+  'generate',
+  'tempPasswordLabel',
+  'tempPasswordHint',
+  'copy',
 ];
 
 function nonEmptyString(value) {

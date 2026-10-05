@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart'; // TEMP DIAGNOSTIC (router-lifecycle) - for debugPrint
+import 'package:flutter/widgets.dart'; // BuildContext for the redirect; also debugPrint (TEMP DIAGNOSTIC router-lifecycle)
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/services/navigation_service.dart';
@@ -7,6 +7,9 @@ import 'package:feniq/features/account_history/presentation/managers/savings_cub
 import 'package:feniq/features/account_history/presentation/views/account_history_view.dart';
 import 'package:feniq/features/advertisements/data/repositories/advertisements_repository.dart';
 import 'package:feniq/features/auth/data/models/registration_draft.dart';
+import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
+import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
+import 'package:feniq/features/auth/presentation/views/change_password_view.dart';
 import 'package:feniq/features/auth/presentation/views/approval_pending_view.dart';
 import 'package:feniq/features/auth/presentation/views/otp_verification_view.dart';
 import 'package:feniq/features/auth/presentation/views/password_login_view.dart';
@@ -77,6 +80,7 @@ class AppRouter {
   late final GoRouter router = GoRouter(
     navigatorKey: NavigationService.instance.navigatorKey,
     initialLocation: RoutePaths.splash,
+    redirect: forcePasswordChangeRedirect,
     routes: <RouteBase>[
       GoRoute(
         name: RouteNames.splash,
@@ -94,6 +98,15 @@ class AppRouter {
         path: RoutePaths.login,
         pageBuilder: (context, state) =>
             buildPageTransition(state: state, child: const PasswordLoginView()),
+      ),
+      // Outside the shell: from Settings it pushes full-screen over the nav
+      // bar, and as the forced change after an admin reset it is the only
+      // screen there is (see forcePasswordChangeRedirect).
+      GoRoute(
+        name: RouteNames.changePassword,
+        path: RoutePaths.changePassword,
+        pageBuilder: (context, state) =>
+            buildPageTransition(state: state, child: const ChangePasswordView()),
       ),
       GoRoute(
         name: RouteNames.otp,
@@ -472,4 +485,26 @@ class AppRouter {
       ),
     ],
   );
+}
+
+// After an admin reset the account is signed in with a temporary password the
+// admin has seen (SessionStatus.passwordChangeRequired). Every navigation -
+// a tab, a notification deep link, a stray go() from an older screen - is sent
+// to the change-password screen until the user has picked their own. Signing
+// out still works: it leaves the status `unauthenticated`, which this lets
+// through.
+//
+// Reads AuthCubit from the router's context (the router sits inside main.dart's
+// MultiBlocProvider); a context without one - a test that builds the router
+// bare - is left alone.
+String? forcePasswordChangeRedirect(BuildContext context, GoRouterState state) {
+  final SessionStatus status;
+  try {
+    status = context.read<AuthCubit>().state.sessionStatus;
+  } catch (_) {
+    return null;
+  }
+  if (status != SessionStatus.passwordChangeRequired) return null;
+  if (state.matchedLocation == RoutePaths.changePassword) return null;
+  return RoutePaths.changePassword;
 }

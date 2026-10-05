@@ -9,7 +9,20 @@ import 'package:feniq/features/auth/data/models/user_model.dart';
 // carries on into the app exactly as it does for `active`, and the screens
 // that actually need the network surface their own retry. See
 // AuthCubit.checkSession and SplashView._routeFor.
-enum SessionStatus { unknown, unauthenticated, offline, pendingApproval, blocked, active }
+//
+// `passwordChangeRequired` is an approved account signed in with a temporary
+// password an admin set: the only screen it may reach is ChangePasswordView
+// (AppRouter's redirect enforces that), and a successful change makes it
+// `active`.
+enum SessionStatus {
+  unknown,
+  unauthenticated,
+  offline,
+  pendingApproval,
+  blocked,
+  passwordChangeRequired,
+  active,
+}
 
 class AuthState {
   const AuthState({

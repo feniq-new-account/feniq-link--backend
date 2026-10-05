@@ -338,6 +338,7 @@
   "noNotificationsYetHint": "Order updates and offers will show up here.",
   "markAllAsRead": "Mark all as read",
   "errorInvalidRequest": "Something about this request wasn't valid. Please try again.",
+  "errorQuantityTooLarge": "A single item can't exceed 10,000 units per order. Please lower the quantity.",
   "errorInvalidCredentials": "The phone number or password is incorrect.",
   "errorAccountBlocked": "This account has been blocked. Please contact support.",
   "errorAccountNotFound": "No account found for this phone number. Please create one first.",
@@ -977,5 +978,18 @@
   "errorDiscountCodePendingApproval": "This discount code is still waiting for approval.",
   "errorDiscountCodeStopped": "This discount code has been stopped.",
   "errorDiscountCodeEdited": "The terms of this discount code changed.",
-  "cartQuoteUnavailable": "Couldn't work out the total."
+  "cartQuoteUnavailable": "Couldn't work out the total.",
+  "changePasswordTitle": "Change password",
+  "changePasswordSubtitle": "Choose a new password only you know.",
+  "changePasswordForcedMessage": "Your password was reset by support. Please choose a new password to continue.",
+  "currentPasswordLabel": "Current password",
+  "currentPasswordForcedLabel": "Temporary password",
+  "newPasswordLabel": "New password",
+  "confirmNewPasswordLabel": "Confirm new password",
+  "changePasswordAction": "Save new password",
+  "changePasswordSuccess": "Password changed. Other devices have been signed out.",
+  "newPasswordSameAsCurrent": "The new password must be different from the current one.",
+  "errorPasswordUnchanged": "The new password must be different from the current one.",
+  "errorPasswordMismatch": "Passwords do not match.",
+  "errorInvalidPassword": "This password does not meet the requirements."
 }

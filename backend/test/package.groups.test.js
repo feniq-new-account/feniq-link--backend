@@ -93,7 +93,7 @@ test.before(async () => {
 
   const warehouse = await Warehouse.create({
     userId: whUser._id, nameAr: 'م', nameEn: 'Warehouse', address: 'r', city: 'Latakia',
-    phone: '0942000801', deliveryType: 'self', isActive: true, discountRate: 4, commissionRate: 1,
+    phone: '0942000801', deliveryType: 'self', requireDeliverySealPhoto: false, isActive: true, discountRate: 4, commissionRate: 1,
   });
   ids.warehouse = warehouse._id;
 
@@ -289,7 +289,7 @@ test('a package from another warehouse is refused', async () => {
   ]);
   const other = await Warehouse.create({
     userId: otherUser._id, nameAr: 'م2', nameEn: 'W2', address: 'r', city: 'Latakia',
-    phone: '0942000802', deliveryType: 'self', isActive: true,
+    phone: '0942000802', deliveryType: 'self', requireDeliverySealPhoto: false, isActive: true,
   });
   const pkg = await makePackage({ warehouseId: other._id });
 
