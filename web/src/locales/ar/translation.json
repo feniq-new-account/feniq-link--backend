@@ -49,7 +49,7 @@
     "dashboard": "لوحة التحكم",
     "accounts": "الحسابات",
     "pendingAccounts": "الحسابات المعلّقة",
-    "offers": "العروض",
+    "offers": "العروض الاستثنائية",
     "products": "المنتجات",
     "catalog": "الكتالوج",
     "centralCatalog": "الكتالوج المركزي",
@@ -503,6 +503,13 @@
       "titleEn": "العنوان (إنجليزي)",
       "titleAr": "العنوان (عربي)",
       "discountPercentage": "نسبة الحسم",
+      "offerType": "نوع العرض",
+      "typeDiscount": "خصم على السعر",
+      "typeBonus": "زيادة البونص بنفس السعر",
+      "offerBonus": "بونص العرض",
+      "offerBonusHint": "البونص اللي بيحل محل بونص المادة العادي طول فترة العرض، مثلاً 10+3 بدل 10+2.",
+      "bonusRequired": "اكتب بونص العرض، مثلاً 10+3.",
+      "bonusValue": "بونص {{bonus}}",
       "permanentOffer": "عرض دائم",
       "permanentOfferHint": "بدون تاريخ انتهاء — يبقى العرض فعّالاً حتى تحذفه.",
       "permanentLabel": "دائم",
@@ -604,7 +611,7 @@
   "dashboard": {
     "viewAll": "عرض الكل",
     "recentAccountsTitle": "أحدث الحسابات المعلّقة",
-    "recentOffersTitle": "أحدث العروض المعلّقة"
+    "recentOffersTitle": "أحدث العروض الاستثنائية المعلّقة"
   },
   "admin": {
     "accounts": {

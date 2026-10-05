@@ -440,6 +440,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String bonusInsteadOf(String tiers, String regular) {
+    return 'بونص $tiers بدل $regular';
+  }
+
+  @override
   String get alternativesLink => 'البدائل';
 
   @override
@@ -1665,7 +1670,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navOffers => 'العروض';
 
   @override
-  String get offersAndAdsTitle => 'العروض والإعلانات';
+  String get offersAndAdsTitle => 'العروض الاستثنائية والإعلانات';
 
   @override
   String promotionsCountSubtitle(int count) {
@@ -1683,13 +1688,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get promotionsAllTitle => 'كل العروض والباقات';
+  String get promotionsAllTitle => 'كل العروض الاستثنائية والباقات';
 
   @override
   String get promotionsFilterAllTypes => 'الكل';
 
   @override
-  String get promotionsFilterOffers => 'العروض';
+  String get promotionsFilterOffers => 'عروض استثنائية';
 
   @override
   String get promotionsFilterPackages => 'الباقات';
@@ -1704,7 +1709,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get promotionsPackageBadge => 'باقة';
 
   @override
-  String get promotionsEmptyTitle => 'لا توجد عروض حالياً';
+  String get promotionsEmptyTitle => 'لا توجد عروض استثنائية حالياً';
 
   @override
   String get promotionsEmptyMessage =>
@@ -1736,7 +1741,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addToCartFullButton => 'إضافة إلى السلة';
 
   @override
-  String get warehouseOffersTitle => 'عروض المستودع';
+  String get warehouseOffersTitle => 'العروض الاستثنائية للمستودع';
 
   @override
   String get discountCodeFieldLabel => 'كود الخصم';

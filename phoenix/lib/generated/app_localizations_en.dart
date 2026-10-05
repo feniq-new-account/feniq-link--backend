@@ -439,6 +439,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String bonusInsteadOf(String tiers, String regular) {
+    return 'Bonus $tiers instead of $regular';
+  }
+
+  @override
   String get alternativesLink => 'Alternatives';
 
   @override
@@ -1667,7 +1672,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navOffers => 'Offers';
 
   @override
-  String get offersAndAdsTitle => 'Offers & Ads';
+  String get offersAndAdsTitle => 'Exceptional offers & ads';
 
   @override
   String promotionsCountSubtitle(int count) {
@@ -1682,13 +1687,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get promotionsAllTitle => 'All offers & packages';
+  String get promotionsAllTitle => 'All exceptional offers & packages';
 
   @override
   String get promotionsFilterAllTypes => 'All';
 
   @override
-  String get promotionsFilterOffers => 'Offers';
+  String get promotionsFilterOffers => 'Exceptional offers';
 
   @override
   String get promotionsFilterPackages => 'Packages';
@@ -1703,7 +1708,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get promotionsPackageBadge => 'Package';
 
   @override
-  String get promotionsEmptyTitle => 'Nothing on offer right now';
+  String get promotionsEmptyTitle => 'No exceptional offers right now';
 
   @override
   String get promotionsEmptyMessage =>
@@ -1735,7 +1740,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addToCartFullButton => 'Add to cart';
 
   @override
-  String get warehouseOffersTitle => 'Warehouse offers';
+  String get warehouseOffersTitle => 'Warehouse\'s exceptional offers';
 
   @override
   String get discountCodeFieldLabel => 'Discount code';

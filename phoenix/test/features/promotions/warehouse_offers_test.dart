@@ -208,7 +208,7 @@ void main() {
 
       await pumpView(tester);
 
-      expect(find.text('Warehouse offers'), findsOneWidget);
+      expect(find.text("Warehouse's exceptional offers"), findsOneWidget);
       expect(find.text('Alpha · 1 running now'), findsOneWidget);
       expect(find.text('Offer One'), findsOneWidget);
       expect(find.text('Offer Two'), findsNothing);
@@ -365,7 +365,7 @@ void main() {
       await pumpView(tester);
 
       expect(find.byType(EmptyView), findsOneWidget);
-      expect(find.text('Nothing on offer right now'), findsOneWidget);
+      expect(find.text('No exceptional offers right now'), findsOneWidget);
       expect(find.text('Offer Two'), findsNothing);
     });
 
@@ -387,7 +387,7 @@ void main() {
 
         await pumpView(tester, themeMode: themeMode, locale: const Locale('ar'));
 
-        expect(find.text('عروض المستودع'), findsOneWidget);
+        expect(find.text('العروض الاستثنائية للمستودع'), findsOneWidget);
         expect(find.byType(PromotionListCard), findsNWidgets(2));
         expect(tester.takeException(), isNull);
       });
@@ -464,7 +464,7 @@ void main() {
       stubOffers([offer(id: 'o1', warehouseId: 'W1', titleEn: 'Offer One')]);
 
       await pumpTab(tester);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Offers'));
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Exceptional offers'));
       await tester.pumpAndSettle();
 
       expect(promotionsCubit.state.kindFilter, PromotionKind.offer);

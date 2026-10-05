@@ -5,12 +5,22 @@ const { Schema, model } = require('mongoose');
 // pharmacies currently see never changes mid-review (see warehouseOffer.service
 // updateOffer / adminOffer.service approveOffer|rejectOffer). Same field shape
 // as the offer itself; `endDate` is null when `isPermanent` is true.
+// An exceptional offer is either a discount on the price, or a better bonus at
+// the same price (e.g. the product's usual 10+2 becomes 10+3 while it runs).
+const { OFFER_TYPES } = require('../config/offerTypes');
+const offerBonusTierSchema = new Schema(
+  { buy: { type: Number, required: true, min: 1 }, free: { type: Number, required: true, min: 1 } },
+  { _id: false }
+);
+
 const offerUpdateSchema = new Schema(
   {
     productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     titleAr: { type: String, required: true },
     titleEn: { type: String, required: true },
-    discountPercentage: { type: Number, required: true, min: 0, max: 100 },
+    offerType: { type: String, enum: OFFER_TYPES, default: 'discount' },
+    discountPercentage: { type: Number, required: true, min: 0, max: 100, default: 0 },
+    bonuses: { type: [offerBonusTierSchema], default: [] },
     startDate: { type: Date, required: true },
     endDate: { type: Date, default: null },
     isPermanent: { type: Boolean, default: false },
@@ -25,7 +35,12 @@ const offerSchema = new Schema(
     productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     titleAr: { type: String, required: true },
     titleEn: { type: String, required: true },
-    discountPercentage: { type: Number, required: true, min: 0, max: 100 },
+    // 'discount': discountPercentage off the price. 'bonus': the price is
+    // unchanged (discountPercentage 0) and `bonuses` replaces the product's
+    // own bonus while the offer runs (utils/bonus.js effectiveBonuses).
+    offerType: { type: String, enum: OFFER_TYPES, default: 'discount' },
+    discountPercentage: { type: Number, required: true, min: 0, max: 100, default: 0 },
+    bonuses: { type: [offerBonusTierSchema], default: [] },
     startDate: { type: Date, required: true },
     // null = a permanent offer (no expiry). `isPermanent` is kept in lockstep
     // with this by the service and is what every query/UI checks, so neither

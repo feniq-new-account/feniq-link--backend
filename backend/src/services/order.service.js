@@ -3,7 +3,7 @@ const { ApiError } = require('../utils/ApiError');
 const Product = require('../models/product.model');
 const Offer = require('../models/offer.model');
 const { offerMapFor } = require('./offer.service');
-const { freeQuantityFor, sameBonus } = require('../utils/bonus');
+const { freeQuantityFor, sameBonus, effectiveBonuses } = require('../utils/bonus');
 const Order = require('../models/order.model');
 const OrderItem = require('../models/orderItem.model');
 const Warehouse = require('../models/warehouse.model');
@@ -530,7 +530,7 @@ function priceOrderLines({
       // Phase 8: the free units this quantity earns under the product's bonus
       // (on top of - never taken off - the discounts above), and the terms,
       // frozen. `quantity` stays the charged quantity.
-      ...bonusSnapshotFor(product.bonuses, item.quantity),
+      ...bonusSnapshotFor(effectiveBonuses(product, offer), item.quantity),
     };
   });
 
@@ -888,7 +888,8 @@ async function createOrder({
   for (const item of merged) {
     if (item.displayedBonuses === null || item.displayedBonuses === undefined) continue;
     const product = productById.get(item.productId);
-    const currentBonuses = (product.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free }));
+    // A running bonus offer's tiers are the ones in force (effectiveBonuses).
+    const currentBonuses = effectiveBonuses(product, offerByProductId.get(item.productId));
     if (!sameBonus(item.displayedBonuses, currentBonuses)) {
       bonusProblems.push({ code: 'BONUS_CHANGED', productId: item.productId, currentBonuses });
     }
@@ -1610,7 +1611,7 @@ async function prepareReorder(orderId, pharmacyId) {
           // and stays live from its start date on.
           $or: [{ isPermanent: true }, { endDate: { $gte: now } }],
           productId: { $in: products.map((p) => p._id) },
-        }).select('productId discountPercentage titleAr titleEn approvedAt')
+        }).select('productId offerType discountPercentage bonuses titleAr titleEn approvedAt')
       : [],
     getDiscountMapForWarehouse(order.warehouseId),
     Warehouse.findById(order.warehouseId).select('nameAr nameEn').lean(),

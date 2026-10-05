@@ -1,5 +1,6 @@
 const { effectiveImage } = require('../utils/productImage');
 const { computeFinalPrice } = require('../services/manufacturerDiscount.service');
+const { effectiveBonuses } = require('../utils/bonus');
 
 // Section 15: `discountPriceUsd` is the one number the Flutter catalog
 // renders - it already has the manufacturer discount (if any) stacked with an
@@ -50,13 +51,19 @@ function serializeProductWithOffer({ product, offer, manufacturerDiscountPercent
     unit: product.unit ?? null,
     productionDate: product.productionDate ? new Date(product.productionDate).toISOString().slice(0, 10) : null,
     expiryDate: product.expiryDate ? new Date(product.expiryDate).toISOString().slice(0, 10) : null,
-    bonuses: (product.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free })),
+    // The bonus in force: a running bonus offer's tiers, else the product's
+    // own. `regularBonuses` is the product's own, so a card can show
+    // "10+3 instead of 10+2" while a bonus offer runs.
+    bonuses: effectiveBonuses(product, offer),
+    regularBonuses: (product.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free })),
   };
 
   if (offer) {
     base.offer = {
       titleAr: offer.titleAr,
       titleEn: offer.titleEn,
+      offerType: offer.offerType || 'discount',
+      bonuses: (offer.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free })),
       discountPercentage: offer.discountPercentage,
       discountPriceUsd: Math.round(product.price * (1 - offer.discountPercentage / 100) * 100) / 100,
     };

@@ -98,7 +98,7 @@ async function assertNoRunningOffer(productId, { excludeOfferId = null, session 
 // ownership check below) and masterProductId (the populate key for the
 // resolved identity - Section 14 Part 2).
 const OFFER_PRODUCT_SELECT =
-  'warehouseId nameAr nameEn manufacturerAr manufacturerEn manufacturerId image unitAr unitEn price isAvailable masterProductId';
+  'warehouseId nameAr nameEn manufacturerAr manufacturerEn manufacturerId image unitAr unitEn price isAvailable masterProductId bonuses';
 const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl';
 
 // Every offer a pharmacy may currently see, across every warehouse. Pending,
@@ -123,7 +123,7 @@ async function listActiveOffers({ limit = ACTIVE_OFFERS_DEFAULT_LIMIT, after = n
   if (after) filter._id = { $lt: after };
   // .lean(): read-only, straight into offer.viewmodel.js.
   const fetched = await Offer.find(filter)
-    .select('titleAr titleEn discountPercentage startDate endDate isPermanent warehouseId productId approvedAt')
+    .select('titleAr titleEn offerType discountPercentage bonuses startDate endDate isPermanent warehouseId productId approvedAt')
     .sort({ _id: -1 })
     .limit(limit + 1)
     .lean();
@@ -134,7 +134,7 @@ async function listActiveOffers({ limit = ACTIVE_OFFERS_DEFAULT_LIMIT, after = n
 
   // The chosen offer per product, across every live offer of these products.
   const siblings = await Offer.find({ ...activeOfferFilter(now), productId: { $in: pageOffers.map((o) => o.productId) } })
-    .select('productId discountPercentage approvedAt')
+    .select('productId offerType discountPercentage bonuses approvedAt')
     .lean();
   const chosen = offerMapFor(siblings);
   const offers = pageOffers.filter((offer) => String(chosen.get(String(offer.productId))?._id) === String(offer._id));

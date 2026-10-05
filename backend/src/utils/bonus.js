@@ -88,6 +88,15 @@ function freeQuantityFor(tiers, quantity) {
   return { freeQuantity, tier: { buy: used.buy, free: used.free } };
 }
 
+// The bonus a product earns right now: a running bonus offer's tiers replace
+// the product's own (the price stays as it is); otherwise the product's.
+function effectiveBonuses(product, offer) {
+  if (offer && offer.offerType === 'bonus' && Array.isArray(offer.bonuses) && offer.bonuses.length > 0) {
+    return offer.bonuses.map((tier) => ({ buy: tier.buy, free: tier.free }));
+  }
+  return (product?.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free }));
+}
+
 // "بونص 10+1، 20+3" - how a bonus is displayed.
 function formatBonus(tiers) {
   if (!Array.isArray(tiers) || tiers.length === 0) return '';
@@ -102,4 +111,5 @@ function sameBonus(a, b) {
   return key(left) === key(right);
 }
 
-module.exports = { parseBonus, normalizeBonusTiers, freeQuantityFor, formatBonus, sameBonus };
+module.exports = {
+  effectiveBonuses, parseBonus, normalizeBonusTiers, freeQuantityFor, formatBonus, sameBonus };

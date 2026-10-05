@@ -8,7 +8,9 @@ function serializePendingUpdate(pendingUpdate, product) {
     productNameEn: product ? product.nameEn : null,
     titleAr: pendingUpdate.titleAr,
     titleEn: pendingUpdate.titleEn,
+    offerType: pendingUpdate.offerType || 'discount',
     discountPercentage: pendingUpdate.discountPercentage,
+    bonuses: (pendingUpdate.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free })),
     startDate: pendingUpdate.startDate,
     endDate: pendingUpdate.endDate,
     isPermanent: pendingUpdate.isPermanent,
@@ -24,7 +26,9 @@ function serializeOffer(offer, product, pendingUpdateProduct) {
     productNameEn: product ? product.nameEn : null,
     titleAr: offer.titleAr,
     titleEn: offer.titleEn,
+    offerType: offer.offerType || 'discount',
     discountPercentage: offer.discountPercentage,
+    bonuses: (offer.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free })),
     startDate: offer.startDate,
     // null for a permanent offer - the client shows "permanent" instead of a
     // date range when isPermanent is true.

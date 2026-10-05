@@ -325,7 +325,9 @@ test('the catalog list viewmodel is unchanged by the product projection', async 
         // Additive (active ingredient / alternatives).
         'activeIngredient', 'strength', 'dosageForm',
         // Additive (the batch on sale).
-        'productionDate', 'expiryDate'].sort()
+        'productionDate', 'expiryDate',
+        // Additive (bonus offers): the product's own bonus beside the one in force.
+        'regularBonuses'].sort()
     );
     assert.strictEqual(typeof row.priceUsd, 'number', 'priceUsd must be a real number, not undefined');
     assert.strictEqual(typeof row.discountPriceUsd, 'number');

@@ -7,6 +7,7 @@ import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
 import { OFFER_FILTERS, isInReview } from './offersFilters';
+import { offerValueLabel } from '../utils/offerValue';
 
 const PAGE_SIZE = 20;
 const FILTER_DEBOUNCE_MS = 300;
@@ -225,10 +226,10 @@ export function AdminOffersPage() {
                           )}
                         </td>
                         <td className="adm-num adm-offer-discount">
-                          {offer.discountPercentage}%
+                          {offerValueLabel(offer, t)}
                           {u && (
                             <div className="adm-offer-proposed">
-                              {t('offers.admin.proposedLabel')}: <strong>{u.discountPercentage}%</strong>
+                              {t('offers.admin.proposedLabel')}: <strong>{offerValueLabel(u, t)}</strong>
                             </div>
                           )}
                         </td>
