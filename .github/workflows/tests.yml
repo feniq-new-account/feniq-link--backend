@@ -1,0 +1,98 @@
+# يشغّل اختبارات السيرفر (backend) ولوحة الويب (web) على كل PR وعلى كل دفع لـ main.
+# النتيجة تظهر كعلامة ✅/❌ على الـPR. اختبارات تطبيق الموبايل (flutter test)
+# تشتغل ضمن android-apk.yml.
+#
+# MongoDB: اختبارات السيرفر تشغّل replica set مؤقتة بالذاكرة (mongodb-memory-server).
+# بدل ما تنزّل المكتبة MongoDB من fastdl.mongodb.org (بيفشل أحياناً)، ناخد
+# mongod من صورة Docker الرسمية ونعطيها للمكتبة بـ MONGOMS_SYSTEM_BINARY.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (npm test)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Same image the binary is copied from; 8.0 is what Atlas runs.
+      MONGO_IMAGE: mongo:8.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: MongoDB binary (from the official Docker image)
+        run: |
+          for attempt in 1 2 3; do
+            docker pull --quiet "$MONGO_IMAGE" && break
+            [ "$attempt" = 3 ] && exit 1
+            echo "docker pull failed, retrying in $((attempt * 10))s"
+            sleep $((attempt * 10))
+          done
+          dir="$RUNNER_TEMP/mongodb"
+          mkdir -p "$dir"
+          cid=$(docker create "$MONGO_IMAGE")
+          docker cp "$cid:/usr/bin/mongod" "$dir/mongod"
+          docker rm "$cid" > /dev/null
+          version=$("$dir/mongod" --version | sed -n 's/^db version v//p')
+          if [ -z "$version" ]; then
+            "$dir/mongod" --version
+            echo "::error::Could not run the mongod copied from $MONGO_IMAGE."
+            exit 1
+          fi
+          echo "mongod $version"
+          echo "MONGOMS_SYSTEM_BINARY=$dir/mongod" >> "$GITHUB_ENV"
+          echo "MONGOMS_VERSION=$version" >> "$GITHUB_ENV"
+
+      - run: npm ci --no-audit --no-fund
+
+      # The config module insists on both variables; the tests use their own
+      # in-memory database, and the secret is random per run (never stored).
+      - name: npm test
+        run: |
+          export JWT_SECRET="$(openssl rand -hex 32)"
+          npm test
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/unused
+
+  web:
+    name: Web (vitest)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci --no-audit --no-fund
+
+      - run: npx vitest run
+
+      # Catches an import or JSX error that the unit tests happen not to load.
+      - run: npx vite build
