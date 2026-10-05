@@ -4536,3 +4536,26 @@ a.adm-pill {
 .password-input .password-toggle[aria-pressed='true'] {
   opacity: 1;
 }
+
+/* Offer type: discount or better bonus (components/OfferModal.jsx). */
+.offer-type-choice {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.offer-type-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--wh-border, #e3e6eb);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.offer-type-option.active {
+  border-color: var(--wh-orange, #f2760a);
+  background: rgb(242 118 10 / 0.08);
+}
+.offer-type-option input {
+  margin: 0;
+}

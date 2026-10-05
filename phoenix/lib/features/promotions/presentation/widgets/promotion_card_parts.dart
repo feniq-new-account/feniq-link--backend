@@ -1,3 +1,4 @@
+import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/constants/app_colors.dart';
@@ -49,6 +50,10 @@ class PromotionSavingBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    // A bonus offer: the same price, a better bonus - "بونص 10+3".
+    if (promotion case OfferPromotion(:final offer) when offer.isBonusOffer && offer.bonuses.isNotEmpty) {
+      return StatusBadge(label: l10n.bonusValue(BonusTier.format(offer.bonuses)), tone: StatusBadgeTone.success);
+    }
     if (promotion.savingPercentage <= 0) return const SizedBox.shrink();
     return StatusBadge(
       label: switch (promotion) {

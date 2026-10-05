@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
+import { offerValueLabel } from '../utils/offerValue';
 
 function accountName(account) {
   return account.pharmacy?.nameEn || account.warehouse?.nameEn || account.user.name;
@@ -162,7 +163,7 @@ export function AdminDashboardPage() {
                       <div className="adm-list-row-sub">{offer.warehouseNameEn}</div>
                     </div>
                     <div className="adm-list-row-end adm-num">
-                      {t('offers.percentOff', { percent: offer.discountPercentage })}
+                      {offer.offerType === 'bonus' ? offerValueLabel(offer, t) : t('offers.percentOff', { percent: offer.discountPercentage })}
                     </div>
                   </div>
                 ))

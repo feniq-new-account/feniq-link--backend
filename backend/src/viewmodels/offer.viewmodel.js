@@ -27,7 +27,12 @@ function serializeActiveOffer({ offer, product, warehouse, manufacturerDiscountP
     id: offer._id,
     titleAr: offer.titleAr,
     titleEn: offer.titleEn,
+    // 'bonus': same price, a better bonus - `bonuses` is the offer's, and
+    // `regularBonuses` the product's usual one it improves on.
+    offerType: offer.offerType || 'discount',
     discountPercentage: offer.discountPercentage,
+    bonuses: (offer.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free })),
+    regularBonuses: (product.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free })),
     startDate: offer.startDate,
     // null on a permanent offer - `isPermanent` is what the client checks, so
     // it never has to infer "no expiry" from a missing date.

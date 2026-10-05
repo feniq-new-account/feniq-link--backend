@@ -368,7 +368,9 @@ class _PriceDisplay extends StatelessWidget {
         price,
         const SizedBox(height: 2),
         Text(
-          context.l10n.bonusValue(BonusTier.format(product.bonuses)),
+          _bonusOnOffer(product)
+              ? context.l10n.bonusInsteadOf(BonusTier.format(product.bonuses), BonusTier.format(product.regularBonuses))
+              : context.l10n.bonusValue(BonusTier.format(product.bonuses)),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: context.textTheme.bodySmall?.copyWith(
@@ -591,3 +593,7 @@ class _BatchDates extends StatelessWidget {
     );
   }
 }
+
+// A bonus offer is running: the bonus in force is not the product's usual one.
+bool _bonusOnOffer(ProductModel product) =>
+    product.regularBonuses.isNotEmpty && BonusTier.format(product.regularBonuses) != BonusTier.format(product.bonuses);

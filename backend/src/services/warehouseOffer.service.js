@@ -12,6 +12,8 @@ const {
 } = require('./offer.service');
 const { runInTransaction } = require('../utils/transaction');
 const { emitToAdmins, EVENTS } = require('../realtime');
+const { normalizeBonusTiers, sameBonus } = require('../utils/bonus');
+const { OFFER_TYPES } = require('../config/offerTypes');
 
 function validateTitle(value, field) {
   if (typeof value !== 'string' || !value.trim()) {
@@ -27,6 +29,33 @@ function validateDiscountPercentage(value) {
       'INVALID_DISCOUNT_PERCENTAGE'
     );
   }
+}
+
+// What the offer gives: a discount off the price, or (offerType 'bonus') a
+// better bonus at the same price - e.g. the product's usual 10+2 becomes 10+3
+// while the offer runs. A bonus offer must actually improve on the product's
+// own bonus, or it would be an offer that offers nothing.
+function offerTermsFrom(data, product) {
+  const offerType = data.offerType === undefined ? 'discount' : data.offerType;
+  if (!OFFER_TYPES.includes(offerType)) {
+    throw ApiError.badRequest('Invalid offer type.', undefined, 'INVALID_OFFER_TYPE');
+  }
+  if (offerType === 'discount') {
+    validateDiscountPercentage(data.discountPercentage);
+    return { offerType, discountPercentage: data.discountPercentage, bonuses: [] };
+  }
+  const parsed = normalizeBonusTiers(data.bonuses !== undefined ? data.bonuses : data.bonus);
+  if (!parsed.ok || !parsed.tiers || parsed.tiers.length === 0) {
+    throw ApiError.badRequest('A bonus offer needs a bonus, e.g. 10+3.', undefined, 'INVALID_OFFER_BONUS');
+  }
+  if (sameBonus(parsed.tiers, product.bonuses ?? [])) {
+    throw ApiError.badRequest(
+      'The offer bonus is the same as the product\'s usual bonus.',
+      undefined,
+      'OFFER_BONUS_UNCHANGED'
+    );
+  }
+  return { offerType, discountPercentage: 0, bonuses: parsed.tiers };
 }
 
 function parseDate(value) {
@@ -48,7 +77,7 @@ async function buildOfferFields(warehouseId, data) {
 
   validateTitle(data.titleAr, 'titleAr');
   validateTitle(data.titleEn, 'titleEn');
-  validateDiscountPercentage(data.discountPercentage);
+  const { offerType, discountPercentage, bonuses } = offerTermsFrom(data, product);
 
   const isPermanent = data.isPermanent === true;
   const startDate = parseDate(data.startDate);
@@ -69,7 +98,9 @@ async function buildOfferFields(warehouseId, data) {
       productId: product._id,
       titleAr: data.titleAr.trim(),
       titleEn: data.titleEn.trim(),
-      discountPercentage: data.discountPercentage,
+      offerType,
+      discountPercentage,
+      bonuses,
       startDate,
       endDate,
       isPermanent,

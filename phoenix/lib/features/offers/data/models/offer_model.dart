@@ -1,3 +1,4 @@
+import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
 
 /// One currently-running product offer, as GET /offers/active returns it.
@@ -31,6 +32,9 @@ class OfferModel {
     required this.priceUsd,
     required this.discountPriceUsd,
     required this.isAvailable,
+    this.isBonusOffer = false,
+    this.bonuses = const [],
+    this.regularBonuses = const [],
   });
 
   final String id;
@@ -65,6 +69,12 @@ class OfferModel {
   // it is the same figure the catalog card shows for the same product.
   final num discountPriceUsd;
   final bool isAvailable;
+
+  /// A better bonus at the same price instead of a discount: [bonuses] is the
+  /// offer's (e.g. 10+3), [regularBonuses] the product's usual one (10+2).
+  final bool isBonusOffer;
+  final List<BonusTier> bonuses;
+  final List<BonusTier> regularBonuses;
 
   /// What the offer saves against the list price. Clamped at zero - a
   /// discounted price at or above the list price just means "no saving".
@@ -103,6 +113,8 @@ class OfferModel {
     isAvailable: isAvailable,
     // It is an offer, by construction.
     hasActiveOffer: true,
+    // The bonus in force, so the cart and the order agree with the server.
+    bonuses: bonuses,
   );
 
   factory OfferModel.fromJson(Map<String, dynamic> json) => OfferModel(
@@ -110,6 +122,9 @@ class OfferModel {
     titleAr: (json['titleAr'] as String?) ?? '',
     titleEn: json['titleEn'] as String?,
     discountPercentage: (json['discountPercentage'] as num?)?.round() ?? 0,
+    isBonusOffer: json['offerType'] == 'bonus',
+    bonuses: BonusTier.listFromJson(json['bonuses']),
+    regularBonuses: BonusTier.listFromJson(json['regularBonuses']),
     endDate: json['endDate'] == null ? null : DateTime.tryParse(json['endDate'] as String),
     isPermanent: (json['isPermanent'] as bool?) ?? false,
     warehouseId: json['warehouseId'] as String,

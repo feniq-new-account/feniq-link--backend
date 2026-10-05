@@ -29,6 +29,7 @@ class ProductModel {
     this.hasDiscountInputs = false,
     this.unit,
     this.bonuses = const [],
+    this.regularBonuses = const [],
   });
 
   final String id;
@@ -85,6 +86,9 @@ class ProductModel {
   // warehouse's bonus tiers ("بونص 10+1").
   final String? unit;
   final List<BonusTier> bonuses;
+  // The product's own bonus. Differs from [bonuses] only while a bonus offer
+  // runs ("10+3 instead of 10+2").
+  final List<BonusTier> regularBonuses;
 
   /// The lira price of one unit at [usdToSyp] - see core/utils/pricing.dart.
   int? finalSypAt(double? usdToSyp) => displayedPriceSyp(
@@ -146,6 +150,7 @@ class ProductModel {
       hasDiscountInputs: json.containsKey('offerDiscountPercentage') && json.containsKey('manufacturerDiscountPercentage'),
       unit: json['unit'] as String?,
       bonuses: BonusTier.listFromJson(json['bonuses']),
+      regularBonuses: BonusTier.listFromJson(json['regularBonuses']),
     );
   }
 }

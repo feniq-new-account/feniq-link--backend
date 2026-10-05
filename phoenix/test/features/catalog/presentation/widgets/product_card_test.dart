@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/core/widgets/quantity_stepper.dart';
+import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/catalog/presentation/widgets/product_card.dart';
 import 'package:feniq/features/exchange_rate/data/models/exchange_rate_model.dart';
@@ -214,5 +215,22 @@ void main() {
       expect(find.textContaining('إنتاج'), findsNothing);
       expect(find.textContaining('انتهاء'), findsNothing);
     });
+  });
+
+  testWidgets('a bonus offer shows the better bonus and the usual one it replaces', (tester) async {
+    await loadRate(13800);
+    const onOffer = ProductModel(
+      id: 'p3',
+      nameAr: 'دواء',
+      manufacturerAr: 'شركة',
+      priceUsd: 5,
+      discountPriceUsd: 5,
+      isAvailable: true,
+      hasActiveOffer: true,
+      bonuses: [BonusTier(buy: 10, free: 3)],
+      regularBonuses: [BonusTier(buy: 10, free: 2)],
+    );
+    await pumpCard(tester, product: onOffer, isGrid: false, locale: const Locale('ar'));
+    expect(find.text('بونص 10+3 بدل 10+2'), findsOneWidget);
   });
 }

@@ -210,6 +210,17 @@
       }
     }
   },
+  "bonusInsteadOf": "بونص {tiers} بدل {regular}",
+  "@bonusInsteadOf": {
+    "placeholders": {
+      "tiers": {
+        "type": "String"
+      },
+      "regular": {
+        "type": "String"
+      }
+    }
+  },
   "alternativesLink": "البدائل",
   "alternativesTitle": "البدائل",
   "alternativesSubtitle": "نفس المادة الفعالة والعيار والشكل، من هذا المستودع",
@@ -799,16 +810,16 @@
   "statementPaymentRef": "دفعة PAY-{number}",
   "creditBalanceShort": "رصيد لك: {amount}",
   "navOffers": "العروض",
-  "offersAndAdsTitle": "العروض والإعلانات",
+  "offersAndAdsTitle": "العروض الاستثنائية والإعلانات",
   "promotionsCountSubtitle": "{count, plural, zero{لا يوجد شيء حالياً} one{عرض واحد حالياً} two{عرضان حالياً} few{{count} عروض حالياً} many{{count} عرضاً حالياً} other{{count} عرض حالياً}}",
-  "promotionsAllTitle": "كل العروض والباقات",
+  "promotionsAllTitle": "كل العروض الاستثنائية والباقات",
   "promotionsFilterAllTypes": "الكل",
-  "promotionsFilterOffers": "العروض",
+  "promotionsFilterOffers": "عروض استثنائية",
   "promotionsFilterPackages": "الباقات",
   "promotionsAllWarehouses": "كل المستودعات",
   "promotionsWarehouseFilterTitle": "تصفية حسب المستودع",
   "promotionsPackageBadge": "باقة",
-  "promotionsEmptyTitle": "لا توجد عروض حالياً",
+  "promotionsEmptyTitle": "لا توجد عروض استثنائية حالياً",
   "promotionsEmptyMessage": "ستظهر هنا العروض والباقات من المستودعات.",
   "promotionsNoFilterResults": "لا يوجد شيء يطابق هذه التصفية.",
   "promotionsClearFilters": "إزالة التصفية",
@@ -817,7 +828,7 @@
   "offerEndsOn": "حتى {date}",
   "offerPermanent": "عرض دائم",
   "addToCartFullButton": "إضافة إلى السلة",
-  "warehouseOffersTitle": "عروض المستودع",
+  "warehouseOffersTitle": "العروض الاستثنائية للمستودع",
   "discountCodeFieldLabel": "كود الخصم",
   "discountCodeHint": "أدخل كود الخصم",
   "discountCodeApply": "تطبيق",

@@ -313,7 +313,7 @@ void main() {
       await pumpView(tester);
 
       expect(find.byType(EmptyView), findsOneWidget);
-      expect(find.text('Nothing on offer right now'), findsOneWidget);
+      expect(find.text('No exceptional offers right now'), findsOneWidget);
       expect(
         find.text('Offers and packages from your warehouses will show up here.'),
         findsOneWidget,
@@ -326,7 +326,7 @@ void main() {
 
       await pumpView(tester);
 
-      expect(find.text('Offers & Ads'), findsOneWidget);
+      expect(find.text('Exceptional offers & ads'), findsOneWidget);
       expect(find.text('2 running now'), findsOneWidget);
     });
   });
@@ -449,7 +449,7 @@ void main() {
 
         await pumpView(tester, themeMode: themeMode, locale: const Locale('ar'));
 
-        expect(find.text('العروض والإعلانات'), findsOneWidget);
+        expect(find.text('العروض الاستثنائية والإعلانات'), findsOneWidget);
         expect(find.byType(PromotionHeroCard), findsWidgets);
         expect(tester.takeException(), isNull);
       });
