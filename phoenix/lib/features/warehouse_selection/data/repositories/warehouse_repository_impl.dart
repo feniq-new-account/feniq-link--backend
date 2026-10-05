@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/core/network/api_client.dart';
 import 'package:feniq/core/network/endpoints.dart';
+import 'package:feniq/core/offline/daily_refresh.dart';
 import 'package:feniq/core/offline/offline_status.dart';
 import 'package:feniq/core/offline/offline_store.dart';
 import 'package:feniq/features/warehouse_selection/data/models/warehouse_list_result.dart';
@@ -28,6 +29,13 @@ class WarehouseRepositoryImpl implements WarehouseRepository {
 
   @override
   Future<WarehouseListResult> getWarehouses({required bool onlyMyCity}) async {
+    // Today's list (DailyRefresh) is read from the phone: new warehouses
+    // appear with the next day's refresh.
+    final saved = await _store?.read(_listName(onlyMyCity));
+    final savedData = saved?.data;
+    if (saved != null && savedData is Map<String, dynamic> && DailyRefresh.isCurrent(saved.savedAt)) {
+      return WarehouseListResult.fromJson(savedData);
+    }
     try {
       final response = await _apiClient.dio.get(
         Endpoints.warehouses,
@@ -55,6 +63,11 @@ class WarehouseRepositoryImpl implements WarehouseRepository {
 
   @override
   Future<WarehouseProfileModel> getWarehouseProfile(String warehouseId) async {
+    final saved = await _store?.read(_profileName(warehouseId));
+    final savedData = saved?.data;
+    if (saved != null && savedData is Map<String, dynamic> && DailyRefresh.isCurrent(saved.savedAt)) {
+      return WarehouseProfileModel.fromJson(savedData);
+    }
     try {
       final response = await _apiClient.dio.get(Endpoints.warehouseProfile(warehouseId));
       final data = response.data as Map<String, dynamic>;
