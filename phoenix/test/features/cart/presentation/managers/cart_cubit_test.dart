@@ -1351,7 +1351,7 @@ void main() {
       final line = cubit.state.items.single;
       expect(line.bonuses, const [BonusTier(buy: 10, free: 1)]);
       expect(line.hasUnconfirmedBonusChange, isTrue);
-      expect(line.freeQuantity, 2);
+      expect(line.freeQuantity, 3); // 25 x 1/10 = 2.5, rounded
 
       // Not resent without confirmation.
       expect(await cubit.submitOrder(), isNull);

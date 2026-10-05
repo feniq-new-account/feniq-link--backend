@@ -28,6 +28,12 @@ export function mergeAdvancedOrders(rows, advanced) {
 // along than the one remembered wins.
 const STAGE = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered'];
 
+// The stage a click moves an order to; null past the last one (or cancelled).
+export function nextStatusOf(status) {
+  const index = STAGE.indexOf(status);
+  return index === -1 || index === STAGE.length - 1 ? null : STAGE[index + 1];
+}
+
 export function rememberAdvanced(advanced, order, status) {
   const next = new Map(advanced);
   next.set(order.id, { order, status });

@@ -64,20 +64,28 @@ function normalizeBonusTiers(input) {
   return { ok: true, tiers: [...byBuy.values()].sort((x, y) => x.buy - y.buy) };
 }
 
-// The free quantity an order line earns (catalog overhaul §8.3): the highest
-// tier whose `buy` is <= the ordered quantity, then
-// floor(quantity / tier.buy) * tier.free.
-//   [10+1], qty 25          -> 2 free
-//   [10+1, 20+3], qty 45    -> tier 20+3 -> floor(45/20)=2 -> 6 free
-// Returns { freeQuantity, tier } (tier null when none applies).
+// The free quantity an order line earns, in proportion to what was ordered
+// (owner's rule, 2026-10-05): the bonus is a rate, not a threshold, so 10+4
+// on 5 units earns 2 - not nothing. The tier used is the highest one whose
+// `buy` is <= the quantity, or the smallest tier when the quantity is below
+// all of them; then quantity * free / buy, rounded to the nearest whole unit
+// (halves up).
+//   [10+4], qty 5           -> 2 free
+//   [10+1], qty 25          -> 2.5 -> 3 free
+//   [10+1, 20+3], qty 45    -> tier 20+3 -> 6.75 -> 7 free
+// Integer arithmetic only, so the app (BonusTier.freeQuantity) computes the
+// exact same number. Returns { freeQuantity, tier } (tier null when no bonus).
 function freeQuantityFor(tiers, quantity) {
   if (!Array.isArray(tiers) || tiers.length === 0 || !(quantity > 0)) return { freeQuantity: 0, tier: null };
   let best = null;
+  let smallest = null;
   for (const tier of tiers) {
     if (tier.buy <= quantity && (!best || tier.buy > best.buy)) best = tier;
+    if (!smallest || tier.buy < smallest.buy) smallest = tier;
   }
-  if (!best) return { freeQuantity: 0, tier: null };
-  return { freeQuantity: Math.floor(quantity / best.buy) * best.free, tier: { buy: best.buy, free: best.free } };
+  const used = best || smallest;
+  const freeQuantity = Math.floor((2 * quantity * used.free + used.buy) / (2 * used.buy));
+  return { freeQuantity, tier: { buy: used.buy, free: used.free } };
 }
 
 // The bonus a product earns right now: a running bonus offer's tiers replace

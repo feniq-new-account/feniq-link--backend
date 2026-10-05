@@ -35,12 +35,18 @@ test('bonus: garbage is invalid, never guessed', () => {
   }
 });
 
-test('bonus: free quantity - the highest reachable tier, floor(qty / buy) * free', () => {
-  assert.strictEqual(freeQuantityFor([{ buy: 10, free: 1 }], 25).freeQuantity, 2);
+test('bonus: free quantity is proportional to the quantity, rounded to whole units', () => {
+  // The owner's example: 10+4 on 5 units is 2 free, not nothing.
+  assert.strictEqual(freeQuantityFor([{ buy: 10, free: 4 }], 5).freeQuantity, 2);
+  assert.strictEqual(freeQuantityFor([{ buy: 10, free: 4 }], 10).freeQuantity, 4);
+  assert.strictEqual(freeQuantityFor([{ buy: 10, free: 4 }], 1).freeQuantity, 0);
+  assert.strictEqual(freeQuantityFor([{ buy: 10, free: 4 }], 2).freeQuantity, 1);
+  assert.strictEqual(freeQuantityFor([{ buy: 10, free: 1 }], 25).freeQuantity, 3, 'halves round up');
+  assert.deepStrictEqual(freeQuantityFor([{ buy: 1, free: 1 }], 7), { freeQuantity: 7, tier: { buy: 1, free: 1 } });
   const two = [{ buy: 10, free: 1 }, { buy: 20, free: 3 }];
-  assert.deepStrictEqual(freeQuantityFor(two, 45), { freeQuantity: 6, tier: { buy: 20, free: 3 } });
-  assert.strictEqual(freeQuantityFor(two, 19).freeQuantity, 1);
-  assert.strictEqual(freeQuantityFor(two, 9).freeQuantity, 0);
+  assert.deepStrictEqual(freeQuantityFor(two, 45), { freeQuantity: 7, tier: { buy: 20, free: 3 } });
+  assert.strictEqual(freeQuantityFor(two, 19).freeQuantity, 2);
+  assert.deepStrictEqual(freeQuantityFor(two, 9), { freeQuantity: 1, tier: { buy: 10, free: 1 } }, 'below every tier: the smallest');
   assert.strictEqual(freeQuantityFor([], 100).freeQuantity, 0);
 });
 

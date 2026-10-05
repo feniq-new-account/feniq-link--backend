@@ -83,7 +83,7 @@ void main() {
     expect(product.finalSypAt(13130), 14908);
     final line = CartItem.fromProduct(product, quantity: 25);
     expect(line.lineTotalSypAt(13130), 14908 * 25);
-    expect(line.freeQuantity, 2);
+    expect(line.freeQuantity, 3); // 25 x 1/10 = 2.5, rounded like the server
     expect(line.bonuses, const [BonusTier(buy: 10, free: 1)]);
   });
 
