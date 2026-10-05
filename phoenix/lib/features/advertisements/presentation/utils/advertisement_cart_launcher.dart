@@ -17,39 +17,11 @@ import 'package:feniq/routes/route_names.dart';
 // Extracted verbatim from AdvertisementCard so a second entry point could not
 // grow a second, subtly different version of the re-fetch / incomplete-package
 // / cart-conflict rules. Behaviour is unchanged: the package is re-fetched on
-// tap, an incomplete one is refused outright, a non-empty cart is replaced
-// only after confirmation, and the existing cart is what receives it - there
-// is no separate advertisement cart and no intermediate screen.
+// tap, an incomplete one is refused outright, and its warehouse's cart is what
+// receives it - there is no separate advertisement cart and no intermediate
+// screen.
 //
 // Callers own their own double-tap guard (the awaited work is a network call).
-
-// Same confirm shape ReorderButton uses - the project's existing conflict copy
-// for a cross-warehouse cart, a plainer "replace" prompt otherwise.
-Future<bool> _confirm(
-  BuildContext context, {
-  required String title,
-  required String content,
-  required String actionLabel,
-}) async {
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(title),
-      content: Text(content),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext, rootNavigator: true).pop(false),
-          child: Text(dialogContext.l10n.cancel),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext, rootNavigator: true).pop(true),
-          child: Text(actionLabel),
-        ),
-      ],
-    ),
-  );
-  return result ?? false;
-}
 
 /// Loads [advertisementId] into the existing cart and opens the cart screen.
 ///
@@ -121,34 +93,18 @@ Future<void> launchAdvertisementCart(BuildContext context, String advertisementI
 
   // A package is now an ordinary cart line, so it simply joins the cart the
   // way a product does - no replacing, and adding the same package again just
-  // bumps its copies. Only the one-warehouse-per-cart rule still needs a
-  // decision from the pharmacist, and it reuses the project's existing
-  // cross-warehouse conflict copy.
+  // bumps its copies.
   final line = preparation.toCartLine(isArabic: isArabic);
   final warehouseName = isArabic
       ? preparation.warehouseNameAr
       : (preparation.warehouseNameEn ?? preparation.warehouseNameAr);
 
-  if (cartCubit.hasConflictingWarehouse(preparation.warehouseId)) {
-    final confirmed = await _confirm(
-      context,
-      title: l10n.cartConflictTitle,
-      content: l10n.cartConflictMessage(cartCubit.state.warehouseName ?? ''),
-      actionLabel: l10n.cartConflictConfirmButton,
-    );
-    if (!confirmed || !context.mounted) return;
-    cartCubit.replaceWithPackage(
-      line,
-      warehouseId: preparation.warehouseId,
-      warehouseName: warehouseName,
-    );
-  } else {
-    cartCubit.addPackage(
-      line,
-      warehouseId: preparation.warehouseId,
-      warehouseName: warehouseName,
-    );
-  }
+  // A package from another warehouse goes to that warehouse's own cart.
+  cartCubit.addPackage(
+    line,
+    warehouseId: preparation.warehouseId,
+    warehouseName: warehouseName,
+  );
 
   context.pushNamed(RouteNames.cart);
 }

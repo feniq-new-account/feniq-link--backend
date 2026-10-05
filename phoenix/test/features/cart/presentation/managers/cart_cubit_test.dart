@@ -49,7 +49,7 @@ void main() {
   setUp(() {
     orderRepo = MockOrderRepository();
     warehouseRepo = MockWarehouseRepository();
-    // addProduct/replaceWithProduct kick off a fire-and-forget order-limits
+    // addProduct/loadReorder kick off a fire-and-forget order-limits
     // fetch. The cubit swallows its failures by design, so a throwing stub
     // keeps these tests focused on the one-warehouse rule.
     when(
@@ -85,59 +85,63 @@ void main() {
       expect(cubit.state.itemCount, 2, reason: 'two lines');
     });
 
-    test(
-      'Test 3: a product from a different warehouse is flagged as a conflict and NOT added',
-      () {
-        cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
-
-        // This is exactly the check CatalogView runs before showing the
-        // "start a new cart?" confirmation dialog.
-        expect(cubit.hasConflictingWarehouse('B'), isTrue);
-
-        cubit.addProduct(_product('p3'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
-
-        // Guard held: cart untouched - still Warehouse A with only p1.
-        expect(cubit.state.warehouseId, 'A');
-        expect(cubit.state.warehouseName, 'Warehouse A');
-        expect(cubit.state.items.map((i) => i.productId).toList(), ['p1']);
-        expect(cubit.state.itemCount, 1);
-      },
-    );
-
-    test('Test 4: "Cancel" - the cart is left exactly as it was', () {
+    test('Test 3: a product from another warehouse goes to that warehouse\'s own cart', () {
       cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
-      cubit.addProduct(_product('p2'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 2);
-      final itemsBefore = cubit.state.items;
+      cubit.addProduct(_product('p3'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
 
-      // Cancelling the dialog == the UI simply does not call
-      // replaceWithProduct. Nothing mutates.
-      expect(cubit.hasConflictingWarehouse('B'), isTrue);
-
-      expect(cubit.state.warehouseId, 'A');
-      expect(cubit.state.items, same(itemsBefore));
-      expect(cubit.state.itemCount, 2, reason: 'two lines');
-    });
-
-    test('Test 5: "Clear Cart & Add" - replaceWithProduct rebinds the cart to Warehouse B', () {
-      cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
-      cubit.addProduct(_product('p2'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
-
-      cubit.replaceWithProduct(
-        _product('p3'),
-        warehouseId: 'B',
-        warehouseName: 'Warehouse B',
-        quantity: 5,
-      );
-
+      // B's cart is in front; A's waits, untouched.
       expect(cubit.state.warehouseId, 'B');
       expect(cubit.state.warehouseName, 'Warehouse B');
-      expect(cubit.state.items.single.productId, 'p3');
-      expect(cubit.state.items.single.quantity, 5);
-      expect(cubit.state.itemCount, 1);
-      expect(cubit.hasConflictingWarehouse('B'), isFalse);
-      // ...and now a product from B can be added on top.
-      cubit.addProduct(_product('p4'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
-      expect(cubit.state.items.map((i) => i.productId).toList(), ['p3', 'p4']);
+      expect(cubit.state.items.map((i) => i.productId).toList(), ['p3']);
+      expect(cubit.state.otherCarts.keys, ['A']);
+      expect(cubit.state.otherCarts['A']!.items.map((i) => i.productId).toList(), ['p1']);
+      expect(cubit.state.cartCount, 2);
+      expect(cubit.state.totalItemCount, 2);
+      expect(cubit.state.quantityAt('A', 'p1'), 1);
+      expect(cubit.state.quantityAt('B', 'p1'), 0);
+    });
+
+    test('Test 4: switching back brings a warehouse\'s cart forward exactly as it was', () {
+      cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+      cubit.addProduct(_product('p2'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 2);
+      cubit.updateNotes('بعد الظهر');
+      cubit.addProduct(_product('p3'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 5);
+
+      cubit.switchToWarehouse('A');
+
+      expect(cubit.state.warehouseId, 'A');
+      expect(cubit.state.items.map((i) => [i.productId, i.quantity]).toList(), [
+        ['p1', 1],
+        ['p2', 2],
+      ]);
+      expect(cubit.state.notes, 'بعد الظهر');
+      expect(cubit.state.otherCarts.keys, ['B']);
+      // A warehouse with no cart is not started by a bare switch.
+      cubit.switchToWarehouse('C');
+      expect(cubit.state.warehouseId, 'A');
+    });
+
+    test('Test 5: emptying the cart in front brings the next warehouse\'s cart forward', () {
+      cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+      cubit.addProduct(_product('p3'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+
+      cubit.removeItem('p3');
+      expect(cubit.state.warehouseId, 'A');
+      expect(cubit.state.hasOtherCarts, isFalse);
+
+      cubit.clearCart();
+      expect(cubit.state.isEmpty, isTrue);
+      expect(cubit.state.warehouseId, isNull);
+    });
+
+    test('a stepper on a warehouse\'s card edits that warehouse\'s cart', () {
+      cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+      cubit.addProduct(_product('p3'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+
+      cubit.updateQuantityAt('A', 'p1', 7);
+      expect(cubit.state.warehouseId, 'A');
+      expect(cubit.state.quantityAt('A', 'p1'), 7);
+      expect(cubit.state.quantityAt('B', 'p3'), 1);
     });
 
     test('Test 6: submitOrder posts a single warehouseId for the whole cart', () async {
@@ -246,20 +250,27 @@ void main() {
       cubit.removeItem('p2');
       expect(cubit.state.items.map((i) => i.productId).toList(), ['p1']);
 
-      // "Add Product" from the same warehouse -> added on top, no conflict.
-      expect(cubit.hasConflictingWarehouse('A'), isFalse);
+      // "Add Product" from the same warehouse -> added on top.
       cubit.addProduct(_product('p9'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 2);
       expect(cubit.state.items.map((i) => i.productId).toList(), ['p1', 'p9']);
     });
 
-    test('the reordered cart keeps the one-warehouse rule for a foreign "Add Product"', () {
+    test('a foreign "Add Product" starts that warehouse\'s cart and keeps the reordered one', () {
       cubit.loadReorder(warehouseId: 'A', warehouseName: 'Warehouse A', items: reorderLines());
 
-      // A product from another warehouse is still a conflict and is not added.
-      expect(cubit.hasConflictingWarehouse('B'), isTrue);
       cubit.addProduct(_product('pB'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+      expect(cubit.state.warehouseId, 'B');
+      expect(cubit.state.otherCarts['A']!.items.map((i) => i.productId).toList(), ['p1', 'p2']);
+    });
+
+    test('a reorder replaces only its own warehouse\'s cart', () {
+      cubit.addProduct(_product('pB'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+      cubit.addProduct(_product('old'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+
+      cubit.loadReorder(warehouseId: 'A', warehouseName: 'Warehouse A', items: reorderLines());
       expect(cubit.state.warehouseId, 'A');
       expect(cubit.state.items.map((i) => i.productId).toList(), ['p1', 'p2']);
+      expect(cubit.state.otherCarts['B']!.items.map((i) => i.productId).toList(), ['pB']);
     });
 
     test('removing every reordered line falls back to the normal empty-cart state', () {
@@ -328,9 +339,7 @@ void main() {
       cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
       cubit.clearCart();
 
-      // With the binding gone, ANY warehouse is fair game again - the
-      // one-warehouse rule no longer has a cart to conflict with.
-      expect(cubit.hasConflictingWarehouse('B'), isFalse);
+      // With the binding gone, any warehouse starts a fresh cart.
       cubit.addProduct(_product('p2'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
       expect(cubit.state.warehouseId, 'B');
       expect(cubit.state.items.map((i) => i.productId).toList(), ['p2']);
@@ -1361,6 +1370,131 @@ void main() {
       // Confirmed: sent with the new bonus.
       expect(await cubit.submitOrder(acceptPriceChanges: true), isNotNull);
       expect(sentItems.last.single.bonuses, const [BonusTier(buy: 10, free: 1)]);
+    });
+  });
+
+  group('Send all orders', () {
+    void stubQuoteUnavailable() {
+      when(
+        () => orderRepo.quoteCart(
+          warehouseId: any(named: 'warehouseId'),
+          items: any(named: 'items'),
+          code: any(named: 'code'),
+        ),
+      ).thenAnswer((_) async => throw ServerFailure('offline', code: FailureCode.network));
+    }
+
+    test('sends one order per warehouse and empties the cart', () async {
+      stubQuoteUnavailable();
+      final sentFor = <String>[];
+      when(
+        () => orderRepo.submitOrder(
+          warehouseId: any(named: 'warehouseId'),
+          items: any(named: 'items'),
+          notes: any(named: 'notes'),
+          idempotencyKey: any(named: 'idempotencyKey'),
+          rateUsed: any(named: 'rateUsed'),
+        ),
+      ).thenAnswer((invocation) async {
+        sentFor.add(invocation.namedArguments[#warehouseId] as String);
+        return _fakeOrder;
+      });
+      cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+      cubit.addProduct(_product('p2'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+      cubit.addProduct(_product('p3'), warehouseId: 'C', warehouseName: 'Warehouse C', quantity: 1);
+
+      final result = await cubit.submitAll(fallbackRate: 138);
+
+      expect(result.orders.length, 3);
+      expect(result.refused, 0);
+      expect(sentFor, ['C', 'A', 'B'], reason: 'the cart in front first');
+      expect(cubit.state.isEmpty, isTrue);
+      expect(cubit.state.hasOtherCarts, isFalse);
+      expect(cubit.state.isSubmittingAll, isFalse);
+    });
+
+    test('a refused cart stays, in front with its reason; the others are still sent', () async {
+      stubQuoteUnavailable();
+      when(
+        () => orderRepo.submitOrder(
+          warehouseId: any(named: 'warehouseId'),
+          items: any(named: 'items'),
+          notes: any(named: 'notes'),
+          idempotencyKey: any(named: 'idempotencyKey'),
+          rateUsed: any(named: 'rateUsed'),
+        ),
+      ).thenAnswer((invocation) async {
+        if (invocation.namedArguments[#warehouseId] == 'A') {
+          throw ServerFailure('Out of stock', code: 'STOCK_CHECK_FAILED');
+        }
+        return _fakeOrder;
+      });
+      cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+      cubit.addProduct(_product('p2'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+
+      final states = <CartState>[];
+      final sub = cubit.stream.listen(states.add);
+      final result = await cubit.submitAll(fallbackRate: 138);
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+
+      expect(result.orders.length, 1);
+      expect(result.refused, 1);
+      expect(cubit.state.warehouseId, 'A');
+      expect(cubit.state.items.single.productId, 'p1');
+      expect(cubit.state.hasOtherCarts, isFalse);
+      expect(cubit.state.errorCode, 'STOCK_CHECK_FAILED');
+      expect(cubit.state.isSubmittingAll, isFalse);
+      // The reason reaches the screen only once the run is over.
+      final firstShown = states.indexWhere((s) => s.errorMessage != null && !s.isSubmittingAll);
+      expect(firstShown, states.length - 1);
+    });
+
+    test('a cart below its warehouse\'s minimum is not sent', () async {
+      stubQuoteUnavailable();
+      when(() => warehouseRepo.getWarehouseProfile('A')).thenAnswer(
+        (_) async => const WarehouseProfileModel(
+          id: 'A',
+          nameAr: 'A',
+          nameEn: 'A',
+          address: 'a',
+          city: 'c',
+          phone: '0940000000',
+          deliveryType: 'self',
+          minOrderAmountUsd: 1000,
+          averageRating: 0,
+          reviewsCount: 0,
+          recentReviews: [],
+        ),
+      );
+      when(
+        () => orderRepo.submitOrder(
+          warehouseId: any(named: 'warehouseId'),
+          items: any(named: 'items'),
+          notes: any(named: 'notes'),
+          idempotencyKey: any(named: 'idempotencyKey'),
+          rateUsed: any(named: 'rateUsed'),
+        ),
+      ).thenAnswer((_) async => _fakeOrder);
+      cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+      await Future<void>.delayed(Duration.zero);
+      cubit.addProduct(_product('p2'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+
+      final result = await cubit.submitAll(fallbackRate: 138);
+
+      expect(result.orders.length, 1);
+      expect(result.refused, 1);
+      expect(cubit.state.warehouseId, 'A');
+      expect(cubit.state.errorCode, 'ORDER_BELOW_MINIMUM');
+      verifyNever(
+        () => orderRepo.submitOrder(
+          warehouseId: 'A',
+          items: any(named: 'items'),
+          notes: any(named: 'notes'),
+          idempotencyKey: any(named: 'idempotencyKey'),
+          rateUsed: any(named: 'rateUsed'),
+        ),
+      );
     });
   });
 }

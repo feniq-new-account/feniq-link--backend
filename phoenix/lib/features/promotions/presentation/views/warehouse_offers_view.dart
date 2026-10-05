@@ -6,7 +6,6 @@ import 'package:feniq/core/constants/app_sizes.dart';
 import 'package:feniq/core/error/error_translator.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/widgets/add_to_cart_button.dart';
-import 'package:feniq/core/widgets/app_dialog.dart';
 import 'package:feniq/core/widgets/app_skeleton.dart';
 import 'package:feniq/core/widgets/app_snackbar.dart';
 import 'package:feniq/core/widgets/empty_view.dart';
@@ -28,8 +27,8 @@ import 'package:feniq/features/promotions/presentation/widgets/promotion_hero_ca
 ///
 /// This is where an offer is bought, not just read about: a tapped offer goes
 /// straight into the cart through the catalog's own add path - the pre-add
-/// quantity sheet, then CartCubit.addProduct with the catalog's
-/// conflicting-warehouse confirmation - instead of handing off to the
+/// quantity sheet, then CartCubit.addProduct into that warehouse's own cart -
+/// instead of handing off to the
 /// warehouse -> manufacturer -> catalog flow to find the same product again.
 /// Nothing about pricing is decided here either way: the line is built from
 /// the server-computed offer price the card already shows
@@ -53,17 +52,10 @@ class WarehouseOffersView extends StatelessWidget {
     AppSizes.spacingLarge,
   );
 
-  // How much of this offer's product is in the cart right now - the same rule
-  // CatalogView.cartQuantityFor applies: a cart bound to another warehouse
-  // counts as zero here, so every card stays on its "add" button and a tap
-  // runs the usual conflicting-warehouse confirmation.
-  int _cartQuantityFor(CartState cartState, OfferModel offer) {
-    if (cartState.warehouseId != offer.warehouseId) return 0;
-    for (final item in cartState.items) {
-      if (item.productId == offer.productId) return item.quantity;
-    }
-    return 0;
-  }
+  // How much of this offer's product is in its warehouse's cart right now -
+  // the same rule CatalogView.cartQuantityFor applies.
+  int _cartQuantityFor(CartState cartState, OfferModel offer) =>
+      cartState.quantityAt(offer.warehouseId, offer.productId);
 
   // ProductCard._handleAddTap: the quantity is chosen up front, in the app's
   // existing pre-add sheet, and nothing is added if the sheet is dismissed.
@@ -87,27 +79,6 @@ class WarehouseOffersView extends StatelessWidget {
     // The offer's own warehouse name, localized - `warehouseName` above is the
     // app bar's copy and can be empty on a deep link.
     final warehouseName = promotion.warehouseName(isArabic);
-
-    if (cartCubit.hasConflictingWarehouse(warehouseId)) {
-      AppDialog.show(
-        context: context,
-        title: l10n.cartConflictTitle,
-        content: l10n.cartConflictMessage(cartCubit.state.warehouseName ?? ''),
-        actionLabel: l10n.cartConflictConfirmButton,
-        // AppDialog's own action button already pops this confirmation dialog
-        // - see CatalogView, where an extra pop here silently aborted the add.
-        onAction: () {
-          cartCubit.replaceWithProduct(
-            product,
-            warehouseId: warehouseId,
-            warehouseName: warehouseName,
-            quantity: quantity,
-          );
-          AppSnackbar.show(context, l10n.addedToCartMessage(name));
-        },
-      );
-      return;
-    }
 
     cartCubit.addProduct(
       product,
@@ -143,8 +114,8 @@ class WarehouseOffersView extends StatelessWidget {
           compact: true,
           decrementTooltip: l10n.decreaseQuantityLabel,
           incrementTooltip: l10n.increaseQuantityLabel,
-          onChanged: (quantity) => cartCubit.updateQuantity(offer.productId, quantity),
-          onBelowMin: () => cartCubit.removeItem(offer.productId),
+          onChanged: (quantity) => cartCubit.updateQuantityAt(offer.warehouseId, offer.productId, quantity),
+          onBelowMin: () => cartCubit.removeItemAt(offer.warehouseId, offer.productId),
         ),
       );
     }

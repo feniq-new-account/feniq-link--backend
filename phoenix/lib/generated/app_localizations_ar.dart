@@ -556,17 +556,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clearCartConfirmation => 'هل أنت متأكد من مسح جميع محتويات السلة؟';
 
   @override
-  String get cartConflictTitle => 'بدء سلة جديدة؟';
-
-  @override
-  String cartConflictMessage(String name) {
-    return 'سلتك تحتوي على عناصر من $name. إضافة هذا العنصر ستفرغ السلة وتبدأ طلباً جديداً.';
-  }
-
-  @override
-  String get cartConflictConfirmButton => 'بدء سلة جديدة';
-
-  @override
   String get cartIconTooltip => 'السلة';
 
   @override
@@ -1860,4 +1849,34 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorInvalidPassword => 'كلمة السر لا تحقق الشروط المطلوبة.';
+
+  @override
+  String get cartOtherWarehousesHint =>
+      'عندك سلّة عند كل مستودع من هدول، وكل سلّة بتنبعت كطلب منفصل بفاتورته:';
+
+  @override
+  String submitAllButton(int count) {
+    return 'إرسال كل الطلبات ($count)';
+  }
+
+  @override
+  String get submitAllTitle => 'إرسال كل الطلبات؟';
+
+  @override
+  String submitAllConfirmation(String names) {
+    return 'رح ينبعت طلب منفصل لكل مستودع، ولكل طلب فاتورته:\n$names';
+  }
+
+  @override
+  String submitAllDone(int count) {
+    return 'انبعتت كل الطلبات ($count).';
+  }
+
+  @override
+  String submitAllPartial(int sent, int total) {
+    return 'انبعت $sent من $total. الطلبات اللي ما انبعتت ضلّت بالسلّة مع السبب.';
+  }
+
+  @override
+  String get submitThisWarehouseOnly => 'إرسال طلب هالمستودع بس';
 }

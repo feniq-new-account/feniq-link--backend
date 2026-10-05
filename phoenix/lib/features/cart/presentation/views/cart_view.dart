@@ -12,6 +12,7 @@ import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/theme/app_text_theme.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/core/widgets/app_dialog.dart';
+import 'package:feniq/core/widgets/app_snackbar.dart';
 import 'package:feniq/core/widgets/app_text_field.dart';
 import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
@@ -302,6 +303,45 @@ class _CartViewState extends State<CartView> {
     );
   }
 
+  // Every warehouse's cart, each named with its line count - the one in
+  // front first, as "Send all" goes through them.
+  String _cartNames(CartState state) {
+    final l10n = context.l10n;
+    return [
+      for (final cart in [state, ...state.otherCarts.values])
+        '• ${cart.warehouseName ?? ''} (${l10n.catalogItemsCountSubtitle(cart.itemCount)})',
+    ].join('\n');
+  }
+
+  Future<void> _confirmSubmitAll() async {
+    final l10n = context.l10n;
+    final cubit = context.read<CartCubit>();
+    await AppDialog.show(
+      context: context,
+      title: l10n.submitAllTitle,
+      content: l10n.submitAllConfirmation(_cartNames(cubit.state)),
+      actionLabel: l10n.submitAllButton(cubit.state.cartCount),
+      onAction: () => _submitAll(cubit),
+    );
+  }
+
+  // One order per warehouse. All sent: to the orders list, where they all
+  // are. Some refused: those carts stay, the first of them in front with its
+  // reason (the listener shows it), and a line says how many went.
+  Future<void> _submitAll(CartCubit cubit) async {
+    final l10n = context.l10n;
+    final total = cubit.state.cartCount;
+    final result = await cubit.submitAll(fallbackRate: context.read<ExchangeRateCubit>().state.usdToSyp);
+    if (!mounted) return;
+    if (result.orders.isEmpty) return;
+    if (result.refused == 0) {
+      AppSnackbar.show(context, l10n.submitAllDone(result.orders.length));
+      context.goNamed(RouteNames.myOrders);
+      return;
+    }
+    AppSnackbar.show(context, l10n.submitAllPartial(result.orders.length, total));
+  }
+
   Future<void> _submit(
     CartCubit cubit, {
     bool acceptPriceChanges = false,
@@ -365,10 +405,19 @@ class _CartViewState extends State<CartView> {
           },
         ),
       ),
-      body: BlocConsumer<CartCubit, CartState>(
+      body: BlocListener<CartCubit, CartState>(
+        // Another warehouse's cart came to the front: the notes field shows
+        // that cart's notes (the controller is only seeded once otherwise).
+        listenWhen: (previous, current) => previous.warehouseId != current.warehouseId,
+        listener: (context, state) {
+          if (_notesController.text != state.notes) _notesController.text = state.notes;
+        },
+        child: BlocConsumer<CartCubit, CartState>(
         listenWhen: (previous, current) =>
             current.errorMessage != null &&
-            previous.errorMessage != current.errorMessage,
+            previous.errorMessage != current.errorMessage &&
+            // "Send all" shows the refused cart once it has been through them.
+            !current.isSubmittingAll,
         listener: (context, state) {
           // Repriced lines get the dialog that can accept the new prices,
           // rather than an error with no way forward.
@@ -436,6 +485,10 @@ class _CartViewState extends State<CartView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (state.hasOtherCarts) ...[
+                        _WarehouseCartsStrip(state: state),
+                        const SizedBox(height: AppSizes.spacingMedium),
+                      ],
                       for (final item in state.items) ...[
                         CartItemTile(
                           item: item,
@@ -605,16 +658,32 @@ class _CartViewState extends State<CartView> {
                         ),
                       ],
                       const SizedBox(height: AppSizes.spacingMedium),
-                      PrimaryButton(
-                        label: l10n.submitOrderButton,
-                        isLoading: state.isSubmitting,
-                        // Blocked locally so the pharmacist sees why before
-                        // spending a round trip; order.service.js enforces
-                        // the same rule regardless (double validation).
-                        // ...and only once the server's figures for this
-                        // exact cart are on screen (CartState.isReadyToSubmit).
-                        onPressed: state.isReadyToSubmit ? _confirmSubmit : null,
-                      ),
+                      if (state.hasOtherCarts) ...[
+                        // Carts at several warehouses: one tap sends each as
+                        // its own order. Each cart is quoted and checked
+                        // against its own limits as it goes (CartCubit.submitAll).
+                        PrimaryButton(
+                          label: l10n.submitAllButton(state.cartCount),
+                          isLoading: state.isSubmittingAll,
+                          onPressed: state.isSubmitting || state.isSubmittingAll || state.isQuoting
+                              ? null
+                              : _confirmSubmitAll,
+                        ),
+                        TextButton(
+                          onPressed: state.isReadyToSubmit && !state.isSubmittingAll ? _confirmSubmit : null,
+                          child: Text(l10n.submitThisWarehouseOnly),
+                        ),
+                      ] else
+                        PrimaryButton(
+                          label: l10n.submitOrderButton,
+                          isLoading: state.isSubmitting,
+                          // Blocked locally so the pharmacist sees why before
+                          // spending a round trip; order.service.js enforces
+                          // the same rule regardless (double validation).
+                          // ...and only once the server's figures for this
+                          // exact cart are on screen (CartState.isReadyToSubmit).
+                          onPressed: state.isReadyToSubmit ? _confirmSubmit : null,
+                        ),
                     ],
                   ),
                 ),
@@ -622,6 +691,7 @@ class _CartViewState extends State<CartView> {
             ],
           );
         },
+        ),
       ),
     );
   }
@@ -784,6 +854,48 @@ class _EmptyCart extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// The carts at the other warehouses, above the lines of the one in front: a
+// chip per warehouse with its line count. Tapping one brings that cart to the
+// front - the lines, code, notes and summary below are then that warehouse's.
+class _WarehouseCartsStrip extends StatelessWidget {
+  const _WarehouseCartsStrip({required this.state});
+
+  final CartState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final carts = [state, ...state.otherCarts.values];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.cartOtherWarehousesHint,
+          style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
+        ),
+        const SizedBox(height: AppSizes.spacingSmall),
+        Wrap(
+          spacing: AppSizes.spacingSmall,
+          runSpacing: AppSizes.spacingSmall,
+          children: [
+            for (final cart in carts)
+              ChoiceChip(
+                selected: cart.warehouseId == state.warehouseId,
+                label: Text('${cart.warehouseName ?? ''} · ${cart.itemCount}'),
+                avatar: cart.errorCode != null && cart.warehouseId != state.warehouseId
+                    ? Icon(Icons.error_outline, size: 18, color: AppColors.errorOf(context))
+                    : null,
+                onSelected: state.isSubmittingAll || cart.warehouseId == null
+                    ? null
+                    : (_) => context.read<CartCubit>().switchToWarehouse(cart.warehouseId!),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

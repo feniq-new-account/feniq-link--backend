@@ -102,17 +102,15 @@ class _ReorderButtonState extends State<ReorderButton> {
       return;
     }
 
-    // Section 7: any cart that already has items is replaced (never silently
-    // merged). A cross-warehouse cart reuses the project's existing conflict
-    // copy; a same-warehouse cart gets the plainer "replace" prompt.
-    if (cartCubit.state.items.isNotEmpty) {
-      final crossWarehouse = cartCubit.state.warehouseId != preparation.warehouseId;
+    // Section 7: a cart already started at this order's warehouse is replaced
+    // (never silently merged), after the plain "replace" prompt. Carts at
+    // other warehouses are kept as they are.
+    final existing = cartCubit.state.cartFor(preparation.warehouseId);
+    if (existing != null && existing.items.isNotEmpty) {
       final confirmed = await _confirm(
-        title: crossWarehouse ? l10n.cartConflictTitle : l10n.reorderReplaceCartTitle,
-        content: crossWarehouse
-            ? l10n.cartConflictMessage(cartCubit.state.warehouseName ?? '')
-            : l10n.reorderReplaceCartMessage,
-        actionLabel: crossWarehouse ? l10n.cartConflictConfirmButton : l10n.reorderReplaceCartConfirm,
+        title: l10n.reorderReplaceCartTitle,
+        content: l10n.reorderReplaceCartMessage,
+        actionLabel: l10n.reorderReplaceCartConfirm,
       );
       if (!confirmed) {
         if (mounted) setState(() => _busy = false);

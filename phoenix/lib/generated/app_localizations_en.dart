@@ -554,17 +554,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you sure you want to clear all the contents of your cart?';
 
   @override
-  String get cartConflictTitle => 'Start a new cart?';
-
-  @override
-  String cartConflictMessage(String name) {
-    return 'Your cart has items from $name. Adding this item will clear it and start a new order.';
-  }
-
-  @override
-  String get cartConflictConfirmButton => 'Start new cart';
-
-  @override
   String get cartIconTooltip => 'Cart';
 
   @override
@@ -1863,4 +1852,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorInvalidPassword =>
       'This password does not meet the requirements.';
+
+  @override
+  String get cartOtherWarehousesHint =>
+      'You have a cart at each of these warehouses. Each one is sent as its own order, with its own invoice:';
+
+  @override
+  String submitAllButton(int count) {
+    return 'Send all orders ($count)';
+  }
+
+  @override
+  String get submitAllTitle => 'Send all orders?';
+
+  @override
+  String submitAllConfirmation(String names) {
+    return 'Each warehouse gets its own order, with its own invoice:\n$names';
+  }
+
+  @override
+  String submitAllDone(int count) {
+    return 'All orders sent ($count).';
+  }
+
+  @override
+  String submitAllPartial(int sent, int total) {
+    return 'Sent $sent of $total. The orders not sent stay in the cart with the reason.';
+  }
+
+  @override
+  String get submitThisWarehouseOnly => 'Send only this warehouse\'s order';
 }

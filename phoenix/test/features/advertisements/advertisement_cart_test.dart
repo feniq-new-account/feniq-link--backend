@@ -214,26 +214,19 @@ void main() {
       expect(cubit.state.subtotalUsd, 75);
     });
 
-    test('hasConflictingWarehouse still reports a cross-warehouse package cart', () {
-      addPackage();
-
-      expect(cubit.hasConflictingWarehouse('B'), isTrue);
-      expect(cubit.hasConflictingWarehouse('A'), isFalse);
-    });
-
-    test('replaceWithPackage clears a cart from another warehouse', () {
+    test('a package from another warehouse goes to that warehouse\'s cart', () {
       cubit.addProduct(_product('other'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
       final preparation = AdvertisementCartPreparation.fromJson(_cartJson());
 
-      cubit.replaceWithPackage(
+      cubit.addPackage(
         preparation.toCartLine(isArabic: false),
         warehouseId: 'A',
         warehouseName: 'Warehouse A',
       );
 
       expect(cubit.state.warehouseId, 'A');
-      expect(cubit.state.items.length, 1);
       expect(cubit.state.items.single.packageId, 'ad1');
+      expect(cubit.state.otherCarts['B']!.items.single.productId, 'other');
     });
   });
 
