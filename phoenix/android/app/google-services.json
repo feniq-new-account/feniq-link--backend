@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "53939034042",
-    "project_id": "phoenix-pharmacy-e54d2",
-    "storage_bucket": "phoenix-pharmacy-e54d2.firebasestorage.app"
+    "project_number": "79724749557",
+    "project_id": "feniq-link",
+    "storage_bucket": "feniq-link.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:53939034042:android:c7d233eaa772e3e12aef83",
+        "mobilesdk_app_id": "1:79724749557:android:c385d0425e36259e0ddbbc",
         "android_client_info": {
           "package_name": "com.example.phoenix"
         }
@@ -15,7 +15,26 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDULM5yzVLSw0Ke0R13hdrF927I6CuJso8"
+          "current_key": "AIzaSyAil1ufVTR5ahQse2Mnu7z5Fw3hFcsf1E0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:79724749557:android:8c8c8ff7f90566960ddbbc",
+        "android_client_info": {
+          "package_name": "com.feniq.link"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAil1ufVTR5ahQse2Mnu7z5Fw3hFcsf1E0"
         }
       ],
       "services": {
