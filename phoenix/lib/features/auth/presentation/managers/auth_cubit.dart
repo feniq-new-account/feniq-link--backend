@@ -162,7 +162,8 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> revalidateOnResume() async {
     final status = state.sessionStatus;
     if (status != SessionStatus.active &&
-        status != SessionStatus.pendingApproval) {
+        status != SessionStatus.pendingApproval &&
+        status != SessionStatus.passwordChangeRequired) {
       return;
     }
     final last = _lastValidatedAt;
@@ -305,6 +306,64 @@ class AuthCubit extends Cubit<AuthState> {
       // A response we cannot read is still a failed login and has to land on
       // the state like any other.
       _log('[AUTH] Unexpected error during password login ($e)');
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorCode: 'UNEXPECTED_ERROR',
+          errorMessage: e.toString(),
+        ),
+      );
+      return false;
+    }
+  }
+
+  // Changes the signed-in user's password - from Settings, or the forced
+  // change after an admin reset (SessionStatus.passwordChangeRequired). The
+  // server revokes every session including this one and hands back a fresh
+  // pair, which replaces the stored tokens; the returned user no longer
+  // carries mustChangePassword, so a forced session becomes `active` here.
+  //
+  // Returns true on success; on failure the error is published on the state
+  // (e.g. 'INVALID_CURRENT_PASSWORD') and the session is left untouched.
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+    try {
+      final result = await _authRepository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      await _persistSession(result);
+      _onAuthenticated();
+      final wasForced =
+          state.sessionStatus == SessionStatus.passwordChangeRequired;
+      final sessionStatus = _sessionStatusFor(result.user);
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          sessionStatus: sessionStatus,
+          user: result.user,
+          pharmacy: result.pharmacy,
+        ),
+      );
+      // A forced session never registered for push (it was not `active`).
+      if (wasForced) _registerForPushIfActive(sessionStatus);
+      return true;
+    } on Failure catch (f) {
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: f.errMessage,
+          errorCode: f.code,
+        ),
+      );
+      return false;
+    } catch (e) {
+      // Same reasoning as loginWithPassword: an unreadable response must not
+      // leave the button spinning forever.
+      _log('[AUTH] Unexpected error during password change ($e)');
       emit(
         state.copyWith(
           isSubmitting: false,
@@ -475,9 +534,12 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  // Blocked and pending come first: neither can use the app at all, so a
+  // forced password change only matters once the account is otherwise active.
   SessionStatus _sessionStatusFor(UserModel user) {
     if (user.isBlocked) return SessionStatus.blocked;
     if (user.isPending) return SessionStatus.pendingApproval;
+    if (user.mustChangePassword) return SessionStatus.passwordChangeRequired;
     return SessionStatus.active;
   }
 

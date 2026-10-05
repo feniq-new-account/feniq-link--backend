@@ -3043,6 +3043,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t work out the total.'**
   String get cartQuoteUnavailable;
+
+  /// No description provided for @changePasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get changePasswordTitle;
+
+  /// No description provided for @changePasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a new password only you know.'**
+  String get changePasswordSubtitle;
+
+  /// No description provided for @changePasswordForcedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password was reset by support. Please choose a new password to continue.'**
+  String get changePasswordForcedMessage;
+
+  /// No description provided for @currentPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get currentPasswordLabel;
+
+  /// No description provided for @currentPasswordForcedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary password'**
+  String get currentPasswordForcedLabel;
+
+  /// No description provided for @newPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get newPasswordLabel;
+
+  /// No description provided for @confirmNewPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm new password'**
+  String get confirmNewPasswordLabel;
+
+  /// No description provided for @changePasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save new password'**
+  String get changePasswordAction;
+
+  /// No description provided for @changePasswordSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed. Other devices have been signed out.'**
+  String get changePasswordSuccess;
+
+  /// No description provided for @newPasswordSameAsCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'The new password must be different from the current one.'**
+  String get newPasswordSameAsCurrent;
+
+  /// No description provided for @errorPasswordUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The new password must be different from the current one.'**
+  String get errorPasswordUnchanged;
+
+  /// No description provided for @errorPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match.'**
+  String get errorPasswordMismatch;
+
+  /// No description provided for @errorInvalidPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'This password does not meet the requirements.'**
+  String get errorInvalidPassword;
 }
 
 class _AppLocalizationsDelegate

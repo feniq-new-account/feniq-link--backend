@@ -98,6 +98,8 @@ class _RegistrationViewState extends State<RegistrationView> {
       case SessionStatus.pendingApproval:
       case SessionStatus.blocked:
         context.goNamed(RouteNames.approvalPending);
+      case SessionStatus.passwordChangeRequired:
+        context.goNamed(RouteNames.changePassword);
       case SessionStatus.active:
         context.goNamed(RouteNames.warehouseSelection);
       case SessionStatus.unknown:

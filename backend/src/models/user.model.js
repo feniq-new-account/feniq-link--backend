@@ -47,6 +47,14 @@ const userSchema = new Schema(
     // password is correct.
     lockedUntil: { type: Date, default: null },
 
+    // Set when an admin resets the password (the admin chose a temporary one
+    // and read it out to the user); cleared by any password the user sets
+    // themselves (change-password, or the OTP reset). The pharmacy app reads it
+    // from the auth response and shows nothing but the change-password screen
+    // until it is cleared. Accounts that predate the field have no value and
+    // read as false, so deploying it forces nobody.
+    mustChangePassword: { type: Boolean, default: false },
+
     // Set by deleteAccount alongside status: 'deleted'. Kept separate from
     // `updatedAt` so a later retention/purge job can find accounts by when the
     // user actually asked to leave.

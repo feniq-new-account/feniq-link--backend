@@ -1781,4 +1781,47 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cartQuoteUnavailable => 'تعذّر حساب الإجمالي.';
+
+  @override
+  String get changePasswordTitle => 'تغيير كلمة السر';
+
+  @override
+  String get changePasswordSubtitle => 'اختر كلمة سر جديدة لا يعرفها أحد غيرك.';
+
+  @override
+  String get changePasswordForcedMessage =>
+      'تمت إعادة تعيين كلمة السر من قبل الدعم. اختر كلمة سر جديدة للمتابعة.';
+
+  @override
+  String get currentPasswordLabel => 'كلمة السر الحالية';
+
+  @override
+  String get currentPasswordForcedLabel => 'كلمة السر المؤقتة';
+
+  @override
+  String get newPasswordLabel => 'كلمة السر الجديدة';
+
+  @override
+  String get confirmNewPasswordLabel => 'تأكيد كلمة السر الجديدة';
+
+  @override
+  String get changePasswordAction => 'حفظ كلمة السر الجديدة';
+
+  @override
+  String get changePasswordSuccess =>
+      'تم تغيير كلمة السر، وتم تسجيل الخروج من الأجهزة الأخرى.';
+
+  @override
+  String get newPasswordSameAsCurrent =>
+      'يجب أن تختلف كلمة السر الجديدة عن الحالية.';
+
+  @override
+  String get errorPasswordUnchanged =>
+      'يجب أن تختلف كلمة السر الجديدة عن الحالية.';
+
+  @override
+  String get errorPasswordMismatch => 'كلمتا المرور غير متطابقتين.';
+
+  @override
+  String get errorInvalidPassword => 'كلمة السر لا تحقق الشروط المطلوبة.';
 }

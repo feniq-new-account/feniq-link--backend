@@ -61,8 +61,8 @@ const invalidCredentials = () =>
 // blocked-account guard only needs status - all still present here.
 // tokenVersion is here so issueToken can stamp the current value into every
 // token it mints; serializeUser does not read it and it never reaches a
-// response.
-const AUTH_USER_FIELDS = 'name phone role status lang tokenVersion';
+// response. mustChangePassword is read by toAuthResponse / toMeResponse only.
+const AUTH_USER_FIELDS = 'name phone role status lang tokenVersion mustChangePassword';
 
 // What the password-login path needs on top of AUTH_USER_FIELDS: the stored
 // hash plus the two throttling counters. Kept as its own constant rather than
@@ -475,6 +475,9 @@ async function changePassword(userId, { currentPassword, newPassword }) {
 
   user.password = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
   user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+  // The user now holds a password only they know - the admin's temporary one
+  // is gone, so the forced change is done.
+  user.mustChangePassword = false;
   // Setting a new password is proof enough of ownership to lift any lockout the
   // attacker's guessing produced (audit H-2).
   user.failedLoginAttempts = 0;
@@ -541,6 +544,9 @@ async function adminResetPassword(userId, newPassword, { actorId = null, reason 
 
   user.password = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
   user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+  // The admin knows this password (they generated it and read it out), so the
+  // user is made to replace it on their next sign-in.
+  user.mustChangePassword = true;
   // An admin-verified reset is proof enough of ownership to lift the lockout;
   // leaving it would hand the user a working password they still cannot use
   // (loginWithPassword refuses while locked).
@@ -565,7 +571,7 @@ async function adminResetPassword(userId, newPassword, { actorId = null, reason 
     entityType: 'User',
     entityId: user._id,
     before: { lockedUntil: lockedUntilBefore, failedLoginAttempts: failedAttemptsBefore },
-    after: { passwordReset: true, lockedUntil: null, failedLoginAttempts: 0 },
+    after: { passwordReset: true, mustChangePassword: true, lockedUntil: null, failedLoginAttempts: 0 },
     reason,
   });
 
@@ -620,6 +626,9 @@ async function resetPassword({ phone, otpCode, password }) {
   assertPasswordPolicy(password, { role: user.role, code: 'INVALID_PASSWORD' });
 
   user.password = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+  // The user chose this password themselves, so an outstanding forced change
+  // from an earlier admin reset is satisfied too.
+  user.mustChangePassword = false;
   // A completed reset is proof of phone ownership, so it also lifts any
   // lockout - otherwise the legitimate owner recovers their password and is
   // still locked out by the attacker's failures.

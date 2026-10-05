@@ -50,6 +50,15 @@ function serializeWarehouse(warehouse) {
   };
 }
 
+// The signed-in user's own view: serializeUser plus mustChangePassword, which
+// the pharmacy app uses to force the change-password screen after an admin
+// reset. Kept out of serializeUser itself because the admin account lists
+// share that one and have no use for it. Strictly boolean - a row that predates
+// the field reads as false.
+function serializeSelf(user) {
+  return { ...serializeUser(user), mustChangePassword: user.mustChangePassword === true };
+}
+
 // `refreshToken` is only present on responses that actually start or renew
 // a session (register / login / refresh); getMe has none to give, which is
 // why toMeResponse is a separate shape rather than a flag on this one.
@@ -57,7 +66,7 @@ function toAuthResponse({ user, pharmacy, warehouse, token, refreshToken }) {
   return {
     token,
     refreshToken,
-    user: serializeUser(user),
+    user: serializeSelf(user),
     pharmacy: serializePharmacy(pharmacy),
     warehouse: serializeWarehouse(warehouse),
   };
@@ -65,7 +74,7 @@ function toAuthResponse({ user, pharmacy, warehouse, token, refreshToken }) {
 
 function toMeResponse({ user, pharmacy, warehouse }) {
   return {
-    user: serializeUser(user),
+    user: serializeSelf(user),
     pharmacy: serializePharmacy(pharmacy),
     warehouse: serializeWarehouse(warehouse),
   };

@@ -110,4 +110,24 @@ class AuthRepositoryImpl implements AuthRepository {
       throw ServerFailure.fromDioError(e);
     }
   }
+
+  @override
+  Future<AuthResponse> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        Endpoints.changePassword,
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+          'confirmPassword': newPassword,
+        },
+      );
+      return AuthResponse.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ServerFailure.fromDioError(e);
+    }
+  }
 }

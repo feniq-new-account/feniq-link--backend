@@ -127,4 +127,26 @@ void main() {
       });
     });
   });
+
+  group('UserModel.mustChangePassword', () {
+    Map<String, dynamic> json([Map<String, dynamic> extra = const {}]) => {
+      'id': 'user123',
+      'name': 'John Doe',
+      'phone': '+96393123456',
+      'role': 'pharmacy',
+      'status': 'active',
+      'lang': 'ar',
+      ...extra,
+    };
+
+    test('is read from the server response', () {
+      expect(UserModel.fromJson(json({'mustChangePassword': true})).mustChangePassword, isTrue);
+      expect(UserModel.fromJson(json({'mustChangePassword': false})).mustChangePassword, isFalse);
+    });
+
+    test('a server that predates the field reads as false', () {
+      expect(UserModel.fromJson(json()).mustChangePassword, isFalse);
+      expect(UserModel.fromJson(json({'mustChangePassword': null})).mustChangePassword, isFalse);
+    });
+  });
 }

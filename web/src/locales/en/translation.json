@@ -642,7 +642,7 @@
         "errorRateLimited": "Too many requests. Wait a moment and try again.",
         "generate": "Generate new",
         "tempPasswordLabel": "Temporary password",
-        "tempPasswordHint": "Pass this on to the account owner yourself (call, WhatsApp or in person). It is not shown again - copy it now.",
+        "tempPasswordHint": "Pass this on to the account owner yourself (call, WhatsApp or in person). It is not shown again - copy it now. The pharmacy app will ask them to change it when they next sign in.",
         "copy": "Copy"
       }
     },

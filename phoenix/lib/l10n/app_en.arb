@@ -978,5 +978,18 @@
   "errorDiscountCodePendingApproval": "This discount code is still waiting for approval.",
   "errorDiscountCodeStopped": "This discount code has been stopped.",
   "errorDiscountCodeEdited": "The terms of this discount code changed.",
-  "cartQuoteUnavailable": "Couldn't work out the total."
+  "cartQuoteUnavailable": "Couldn't work out the total.",
+  "changePasswordTitle": "Change password",
+  "changePasswordSubtitle": "Choose a new password only you know.",
+  "changePasswordForcedMessage": "Your password was reset by support. Please choose a new password to continue.",
+  "currentPasswordLabel": "Current password",
+  "currentPasswordForcedLabel": "Temporary password",
+  "newPasswordLabel": "New password",
+  "confirmNewPasswordLabel": "Confirm new password",
+  "changePasswordAction": "Save new password",
+  "changePasswordSuccess": "Password changed. Other devices have been signed out.",
+  "newPasswordSameAsCurrent": "The new password must be different from the current one.",
+  "errorPasswordUnchanged": "The new password must be different from the current one.",
+  "errorPasswordMismatch": "Passwords do not match.",
+  "errorInvalidPassword": "This password does not meet the requirements."
 }

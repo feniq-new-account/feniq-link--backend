@@ -75,8 +75,15 @@ class _ApprovalPendingViewState extends State<ApprovalPendingView>
 
     return BlocListener<AuthCubit, AuthState>(
       listenWhen: (previous, current) =>
-          current.sessionStatus == SessionStatus.active,
-      listener: (context, state) => context.goNamed(RouteNames.warehouseSelection),
+          current.sessionStatus == SessionStatus.active ||
+          current.sessionStatus == SessionStatus.passwordChangeRequired,
+      // Approved since the last check. An account an admin also reset in the
+      // meantime has to pick its own password first.
+      listener: (context, state) => context.goNamed(
+        state.sessionStatus == SessionStatus.passwordChangeRequired
+            ? RouteNames.changePassword
+            : RouteNames.warehouseSelection,
+      ),
       child: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final isBlocked = state.sessionStatus == SessionStatus.blocked;

@@ -18,6 +18,9 @@ class Endpoints {
   // immediately, but order and financial history stays attributable (see
   // deleteAccount in backend/src/services/auth.service.js).
   static const String deleteAccount = '/auth/account';
+  // Requires the current password; returns a fresh token pair (the old one is
+  // revoked along with every other session) and clears mustChangePassword.
+  static const String changePassword = '/auth/change-password';
 
   static const String warehouses = '/warehouses';
   static const String categories = '/categories';

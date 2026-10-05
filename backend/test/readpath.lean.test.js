@@ -176,7 +176,7 @@ test('GET /auth/me payload is unchanged for a pharmacy user', async () => {
   const payload = authViewModel.toMeResponse(result);
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'name', 'phone', 'role', 'status'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
   );
   assert.strictEqual(payload.user.role, 'pharmacy');
   assert.strictEqual(payload.user.status, 'active');
@@ -193,7 +193,7 @@ test('GET /auth/me payload is unchanged for a warehouse user', async () => {
   const payload = authViewModel.toMeResponse(result);
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'name', 'phone', 'role', 'status'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
   );
   assert.strictEqual(payload.user.role, 'warehouse');
   assert.strictEqual(payload.pharmacy, null);
@@ -216,7 +216,7 @@ test('loginWithPassword is unaffected by the +password projection', async () => 
   const payload = authViewModel.toAuthResponse(result);
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'name', 'phone', 'role', 'status'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
   );
   assert.strictEqual(payload.user.phone, PASSWORD_USER_PHONE);
   assert.ok(!('password' in payload.user), 'password must never be serialised');
@@ -263,7 +263,7 @@ test('loginWithPassword returns the full auth shape for an existing user', async
 
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'name', 'phone', 'role', 'status'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
   );
   assert.strictEqual(payload.user.name, 'Pw Pharm');
   assert.strictEqual(payload.pharmacy.ownerName, 'Pw Owner');
@@ -288,7 +288,7 @@ test('register creates a pending pharmacy and returns the documented auth shape'
 
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'name', 'phone', 'role', 'status'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
   );
   assert.strictEqual(payload.user.role, 'pharmacy');
   assert.strictEqual(payload.user.status, 'pending', 'new accounts await admin approval');

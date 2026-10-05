@@ -843,5 +843,18 @@
   "errorDiscountCodePendingApproval": "كود الخصم بانتظار موافقة الإدارة.",
   "errorDiscountCodeStopped": "تم إيقاف كود الخصم.",
   "errorDiscountCodeEdited": "تغيّرت قيمة كود الخصم.",
-  "cartQuoteUnavailable": "تعذّر حساب الإجمالي."
+  "cartQuoteUnavailable": "تعذّر حساب الإجمالي.",
+  "changePasswordTitle": "تغيير كلمة السر",
+  "changePasswordSubtitle": "اختر كلمة سر جديدة لا يعرفها أحد غيرك.",
+  "changePasswordForcedMessage": "تمت إعادة تعيين كلمة السر من قبل الدعم. اختر كلمة سر جديدة للمتابعة.",
+  "currentPasswordLabel": "كلمة السر الحالية",
+  "currentPasswordForcedLabel": "كلمة السر المؤقتة",
+  "newPasswordLabel": "كلمة السر الجديدة",
+  "confirmNewPasswordLabel": "تأكيد كلمة السر الجديدة",
+  "changePasswordAction": "حفظ كلمة السر الجديدة",
+  "changePasswordSuccess": "تم تغيير كلمة السر، وتم تسجيل الخروج من الأجهزة الأخرى.",
+  "newPasswordSameAsCurrent": "يجب أن تختلف كلمة السر الجديدة عن الحالية.",
+  "errorPasswordUnchanged": "يجب أن تختلف كلمة السر الجديدة عن الحالية.",
+  "errorPasswordMismatch": "كلمتا المرور غير متطابقتين.",
+  "errorInvalidPassword": "كلمة السر لا تحقق الشروط المطلوبة."
 }
