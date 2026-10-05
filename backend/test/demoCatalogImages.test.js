@@ -135,3 +135,11 @@ test('every demo medicine card has its six facts: name, ingredient, price, form,
   assert.ok(all.some((p) => p.discountPriceUsd < p.priceUsd), 'some show a price before and after a discount');
   assert.ok(all.filter((p) => p.image).length >= 90, 'most have a picture');
 });
+
+test('a catalog item seeded before its strength was known gets it on the next start', async () => {
+  const row = ITEMS.find((i) => i.name === 'TOLIDON CTD TAB.');
+  await ProductCatalog.updateOne({ nameAr: row.name, manufacturerAr: row.manufacturer }, { $set: { strength: null } });
+  await seedDemoCatalogImages();
+  const item = await ProductCatalog.findOne({ nameAr: row.name, manufacturerAr: row.manufacturer }).lean();
+  assert.strictEqual(item.strength, '10 MG');
+});

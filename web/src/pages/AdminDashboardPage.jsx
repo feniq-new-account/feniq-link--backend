@@ -2,12 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import { accountName } from '../utils/accountName';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { offerValueLabel } from '../utils/offerValue';
 
-function accountName(account) {
-  return account.pharmacy?.nameEn || account.warehouse?.nameEn || account.user.name;
-}
 
 function accountCity(account) {
   const profile = account.pharmacy || account.warehouse;

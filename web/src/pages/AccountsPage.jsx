@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { accountName } from '../utils/accountName';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
@@ -26,9 +27,6 @@ const EMPTY_WAREHOUSE_FORM = {
   deliveryType: 'self',
 };
 
-function accountName(account) {
-  return account.pharmacy?.nameEn || account.warehouse?.nameEn || account.user.name;
-}
 
 // active -> the green "delivered" tone, pending -> amber, blocked -> the red
 // "cancelled" tone. The admin shell only ships these three status-badge tones

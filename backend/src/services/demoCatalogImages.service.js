@@ -34,12 +34,16 @@ async function findOrCreateCatalogItem(row) {
       unitAr: null,
       imageMatch: 'exact',
     });
-  } else if (!item.activeIngredient && row.activeIngredient) {
-    // Items seeded before the ingredient was part of the demo data.
-    item.activeIngredient = row.activeIngredient;
-    if (!item.strength && row.strength) item.strength = row.strength;
-    if (!item.dosageForm && row.dosageForm) item.dosageForm = row.dosageForm;
-    await item.save();
+  } else {
+    // Items seeded before a fact was part of the demo data get it filled in.
+    let changed = false;
+    for (const key of ['activeIngredient', 'strength', 'dosageForm']) {
+      if (!item[key] && row[key]) {
+        item[key] = row[key];
+        changed = true;
+      }
+    }
+    if (changed) await item.save();
   }
   if (!item.imageUrl) {
     const buffer = await fs.readFile(path.join(IMAGES_DIR, `${row.file}.webp`));
