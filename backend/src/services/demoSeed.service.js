@@ -142,4 +142,93 @@ async function seedDemoDataIfEmpty() {
   return { warehouses: WAREHOUSES.length, products: productCount };
 }
 
-module.exports = { seedDemoDataIfEmpty, DEMO_WAREHOUSE_PASSWORD, WAREHOUSES };
+// One order per stage of the warehouse's progression, so every screen on both
+// sides (pharmacy order history/tracking, warehouse queue) has something to
+// show. Each is advanced through the real advanceOrderStatus, so delivered
+// orders post to the ledger exactly as a real delivery would.
+// [warehouse index, target status, [product nameEn, quantity]...]
+const DEMO_ORDERS = [
+  [0, 'pending', [['Paracetamol 500mg', 20], ['Omeprazole 20mg', 10]]],
+  [1, 'confirmed', [['Amoxicillin 500mg', 15], ['Vitamin C 1000mg', 12]]],
+  [2, 'preparing', [['Vitamin D 50000 IU', 10], ['Metformin 850mg', 25]]],
+  [0, 'out_for_delivery', [['Ibuprofen 400mg', 30], ['Azithromycin 250mg', 8]]],
+  [1, 'delivered', [['Amlodipine 5mg', 20], ['Atorvastatin 20mg', 10], ['Sunscreen SPF 50', 5]]],
+];
+
+// Demo orders for every active pharmacy that has none yet - only while the
+// demo warehouses are still on the platform, so it stops for good once they
+// are removed. Required lazily: the order services pull in the whole money
+// stack, which seedDemoDataIfEmpty's callers don't otherwise need.
+async function seedDemoOrders() {
+  const Order = require('../models/order.model');
+  const Pharmacy = require('../models/pharmacy.model');
+  const orderService = require('./order.service');
+  const warehouseOrderService = require('./warehouseOrder.service');
+
+  const demoUsers = await User.find({ phone: { $in: WAREHOUSES.map((w) => w.phone) }, role: 'warehouse' })
+    .select('_id phone')
+    .lean();
+  const warehouses = [];
+  for (const w of WAREHOUSES) {
+    const user = demoUsers.find((u) => u.phone === w.phone);
+    const warehouse = user && (await Warehouse.findOne({ userId: user._id }).select('_id').lean());
+    if (!warehouse) return null;
+    warehouses.push({ warehouseId: warehouse._id, userId: user._id });
+  }
+
+  const activeUsers = await User.find({ role: 'pharmacy', status: 'active' }).select('_id').lean();
+  const pharmacies = await Pharmacy.find({ userId: { $in: activeUsers.map((u) => u._id) } })
+    .select('_id userId')
+    .lean();
+
+  let created = 0;
+  for (const pharmacy of pharmacies) {
+    if (await Order.exists({ pharmacyId: pharmacy._id })) continue;
+
+    for (const [index, target, lines] of DEMO_ORDERS) {
+      const { warehouseId, userId: warehouseUserId } = warehouses[index];
+      const products = await Product.find({
+        warehouseId,
+        nameEn: { $in: lines.map(([name]) => name) },
+      })
+        .select('_id nameEn')
+        .lean();
+      const items = lines
+        .map(([name, quantity]) => {
+          const product = products.find((p) => p.nameEn === name);
+          return product && { productId: product._id.toString(), quantity };
+        })
+        .filter(Boolean);
+      if (items.length === 0) continue;
+
+      try {
+        const order = await orderService.createOrder({
+          userId: pharmacy.userId,
+          pharmacyId: pharmacy._id,
+          warehouseId,
+          items,
+          notes: 'طلب تجريبي',
+        });
+        const orderId = (order._id || order.id).toString();
+        // Delivery is gated on a seal photo the pharmacy has to upload; the
+        // warehouse can waive it per order, which is what a demo needs.
+        if (target === 'delivered') {
+          await warehouseOrderService.setDeliverySealRequirement(orderId, warehouseId, false);
+        }
+        let status = 'pending';
+        while (status !== target) {
+          const advanced = await warehouseOrderService.advanceOrderStatus(orderId, warehouseId, warehouseUserId);
+          status = advanced.status;
+        }
+        created += 1;
+      } catch (err) {
+        // One failed demo order must not stop the rest, or the server boot.
+        // eslint-disable-next-line no-console
+        console.error(`Demo order (${target}) failed:`, err.message);
+      }
+    }
+  }
+  return { orders: created };
+}
+
+module.exports = { seedDemoDataIfEmpty, seedDemoOrders, DEMO_WAREHOUSE_PASSWORD, WAREHOUSES, DEMO_ORDERS };

@@ -9,7 +9,7 @@ const { ensureFinancialIndexes } = require('./services/ledger.service');
 const { ensureDiscountCodeIndexes } = require('./services/discountCode.service');
 const { initRealtime } = require('./realtime');
 const User = require('./models/user.model');
-const { seedDemoDataIfEmpty } = require('./services/demoSeed.service');
+const { seedDemoDataIfEmpty, seedDemoOrders } = require('./services/demoSeed.service');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
 // not 'production':
@@ -100,6 +100,11 @@ async function start() {
         // eslint-disable-next-line no-console
         console.log(`Seeded demo data: ${seeded.warehouses} warehouses, ${seeded.products} products.`);
       }
+      const seededOrders = await seedDemoOrders();
+      if (seededOrders && seededOrders.orders) {
+        // eslint-disable-next-line no-console
+        console.log(`Seeded ${seededOrders.orders} demo orders.`);
+      }
     }
 
     startScheduledRefresh();
@@ -121,6 +126,23 @@ async function start() {
     // eslint-disable-next-line no-console
     console.log(`Feniq API listening on port ${env.port} (${env.nodeEnv})`);
   });
+
+  startKeepAlive();
+}
+
+// Render's free plan puts the service to sleep after 15 minutes without
+// inbound traffic, and waking it takes longer than the app's request timeout -
+// so the first open after a quiet spell showed "no connection". Pinging our own
+// public URL counts as inbound traffic and keeps it awake. RENDER_EXTERNAL_URL
+// is set by Render itself, so this does nothing anywhere else.
+const KEEP_ALIVE_INTERVAL_MS = 10 * 60 * 1000;
+
+function startKeepAlive() {
+  const baseUrl = process.env.RENDER_EXTERNAL_URL;
+  if (!baseUrl || process.env.KEEP_ALIVE === 'false') return;
+  setInterval(() => {
+    fetch(`${baseUrl}/api/health`).catch(() => {});
+  }, KEEP_ALIVE_INTERVAL_MS).unref();
 }
 
 start();
