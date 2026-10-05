@@ -7,7 +7,7 @@ import '../constants/app_radius.dart';
 import '../constants/app_sizes.dart';
 import '../extensions/build_context_extensions.dart';
 
-// A fixed, non-editable "09" box beside a digits-only field, label above -
+// A fixed, non-editable "09" box to the left of a digits-only field, label above -
 // same visual language as AppTextField, just for the one field shaped
 // differently everywhere it appears (registration, login).
 //
@@ -47,7 +47,11 @@ class PhoneTextField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSizes.spacingXSmall),
+        // Laid out left-to-right in every language: a phone number reads
+        // "09 | 55 123 456", so the fixed prefix sits on the left and the
+        // digits continue straight after it, even on the Arabic screens.
         Row(
+          textDirection: TextDirection.ltr,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
@@ -76,7 +80,7 @@ class PhoneTextField extends StatelessWidget {
                 validator: validator,
                 onChanged: onChanged,
                 textDirection: TextDirection.ltr,
-                textAlign: TextAlign.right,
+                textAlign: TextAlign.left,
                 style: context.textTheme.bodyMedium,
                 decoration: InputDecoration(
                   hintText: '55 123 456',

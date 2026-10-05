@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/core/network/api_client.dart';
+import 'package:feniq/core/offline/daily_refresh.dart';
 import 'package:feniq/core/offline/offline_status.dart';
 import 'package:feniq/core/offline/offline_store.dart';
 import 'package:feniq/core/session/session_scope.dart';
@@ -80,6 +81,14 @@ void main() {
     when(() => dio.get(any())).thenAnswer(answer);
   }
 
+  // Makes the saved copy yesterday's (taken before today's cutoff), with a
+  // repository that has not read it yet - so calls go to the server again.
+  Future<void> ageSavedCopy() async {
+    final entry = (await store.read('catalog_w1'))!;
+    await store.write('catalog_w1', entry.data, savedAt: DailyRefresh.lastCutoff().subtract(const Duration(hours: 1)));
+    repository = CatalogRepositoryImpl(apiClient: apiClient, offlineStore: store);
+  }
+
   void goOffline([DioException? error]) {
     when(() => dio.get(any(), queryParameters: any(named: 'queryParameters'))).thenThrow(error ?? _offline());
     when(() => dio.get(any())).thenThrow(error ?? _offline());
@@ -115,6 +124,7 @@ void main() {
     });
 
     test('products are served from the saved copy when there is no connection', () async {
+      await ageSavedCopy();
       goOffline();
       final page = await repository.getProducts(warehouseId: 'w1', search: 'paracetamol');
       expect(page.items.map((p) => p.id), ['p1', 'p2']);
@@ -140,6 +150,7 @@ void main() {
     });
 
     test('a real answer from the server is not replaced by the saved copy', () async {
+      await ageSavedCopy();
       goOffline(_serverError());
       await expectLater(
         repository.getProducts(warehouseId: 'w1'),
@@ -149,12 +160,35 @@ void main() {
     });
 
     test('the next successful call from the server clears the offline notice', () async {
+      await ageSavedCopy();
       goOffline();
       await repository.getProducts(warehouseId: 'w1');
       expect(OfflineStatus.instance.cachedSince.value, isNotNull);
       serveCatalog();
       await repository.getProducts(warehouseId: 'w1');
       expect(OfflineStatus.instance.cachedSince.value, isNull);
+    });
+
+    test("today's copy is read from the phone: no request, no offline notice", () async {
+      clearInteractions(dio);
+      final fresh = CatalogRepositoryImpl(apiClient: apiClient, offlineStore: store);
+      final page = await fresh.getProducts(warehouseId: 'w1', search: 'paracetamol');
+      expect(page.items.map((p) => p.id), ['p1', 'p2']);
+      final manufacturers = await fresh.getManufacturers(warehouseId: 'w1');
+      expect(manufacturers.map((m) => m.name), ['ألفا']);
+      verifyNever(() => dio.get(any(), queryParameters: any(named: 'queryParameters')));
+      verifyNever(() => dio.get(any()));
+      expect(OfflineStatus.instance.cachedSince.value, isNull);
+    });
+
+    test("yesterday's copy goes back to the server, and is downloaded again", () async {
+      await ageSavedCopy();
+      clearInteractions(dio);
+      await repository.getProducts(warehouseId: 'w1');
+      verify(() => dio.get(any(), queryParameters: any(named: 'queryParameters'))).called(1);
+      await repository.syncForOffline('w1');
+      final entry = await store.read('catalog_w1');
+      expect(DailyRefresh.isCurrent(entry!.savedAt), isTrue);
     });
 
     test('a recent copy is not downloaded again', () async {
@@ -188,6 +222,15 @@ void main() {
       repository.getProducts(warehouseId: 'w1'),
       throwsA(isA<ServerFailure>().having((f) => f.code, 'code', FailureCode.network)),
     );
+  });
+
+  group('the daily cutoff', () {
+    test('is 05:00 today once it has passed, else 05:00 yesterday', () {
+      expect(DailyRefresh.lastCutoff(DateTime(2026, 10, 5, 9)), DateTime(2026, 10, 5, 5));
+      expect(DailyRefresh.lastCutoff(DateTime(2026, 10, 5, 4, 59)), DateTime(2026, 10, 4, 5));
+      expect(DailyRefresh.isCurrent(DateTime(2026, 10, 5, 5, 1), DateTime(2026, 10, 5, 23)), isTrue);
+      expect(DailyRefresh.isCurrent(DateTime(2026, 10, 5, 4), DateTime(2026, 10, 5, 23)), isFalse);
+    });
   });
 
   test('a failed download leaves no copy and does not throw', () async {

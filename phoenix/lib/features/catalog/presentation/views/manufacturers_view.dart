@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_radius.dart';
@@ -164,9 +163,9 @@ class _ManufacturersViewState extends State<ManufacturersView> {
             if (state.manufacturers.isEmpty) {
               return EmptyView(message: l10n.noManufacturersFound, icon: Icons.factory_outlined);
             }
-            return AppRefreshIndicator(
-              onRefresh: () => context.read<ManufacturersCubit>().loadManufacturers(),
-              child: GridView.builder(
+            // No pull-to-refresh: the companies come with the warehouse's
+            // catalog, which refreshes once a day (DailyRefresh).
+            return GridView.builder(
                 padding: AppPadding.screen,
                 // Fluid column count (as many as fit at up to ~160px each)
                 // rather than a fixed 1-vs-2 breakpoint - see
@@ -187,7 +186,6 @@ class _ManufacturersViewState extends State<ManufacturersView> {
                     onSelect: () => _handleSelect(context, manufacturer.name),
                   );
                 },
-              ),
             );
         }
       },

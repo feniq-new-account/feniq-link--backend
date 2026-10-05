@@ -176,6 +176,7 @@
   "searchProductsHint": "ابحث بالاسم أو الشركة المصنعة",
   "searchWarehouseProductsHint": "ابحث في كل أصناف المستودع",
   "addToCartButton": "إضافة",
+  "availableLabel": "متوفر",
   "unavailableLabel": "غير متوفر",
   "offlineBannerMessage": "لا يوجد اتصال - تُعرض النسخة المحفوظة على هاتفك من {time}. قد تكون الأسعار والتوفر تغيّرت، وإرسال الطلب يحتاج اتصالاً.",
   "@offlineBannerMessage": {

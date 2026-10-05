@@ -5,6 +5,7 @@ import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/core/models/paginated_result.dart';
 import 'package:feniq/core/network/api_client.dart';
 import 'package:feniq/core/network/endpoints.dart';
+import 'package:feniq/core/offline/daily_refresh.dart';
 import 'package:feniq/core/offline/offline_status.dart';
 import 'package:feniq/core/offline/offline_store.dart';
 import 'package:feniq/core/offline/offline_syncable.dart';
@@ -32,9 +33,12 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
   final Map<String, CatalogSnapshot> _snapshots = {};
   final Set<String> _syncing = {};
 
-  /// How long a saved copy counts as recent. Opening a warehouse downloads a
-  /// fresh one when the saved copy is older than this.
-  static const Duration snapshotFreshness = Duration(hours: 6);
+  // A warehouse's saved copy taken since today's cutoff (DailyRefresh): the
+  // catalog screens read it instead of asking the server.
+  Future<CatalogSnapshot?> _todaysSnapshot(String warehouseId) async {
+    final snapshot = await _snapshotFor(warehouseId);
+    return snapshot != null && DailyRefresh.isCurrent(snapshot.savedAt) ? snapshot : null;
+  }
 
   /// A safety stop: 100 products a page, so 300 pages is 30,000 products.
   static const int _maxSyncPages = 300;
@@ -126,6 +130,16 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
     int? limit,
     String? after,
   }) async {
+    final today = await _todaysSnapshot(warehouseId);
+    if (today != null) {
+      return today.query(
+        search: search,
+        categoryId: categoryId,
+        manufacturer: manufacturer,
+        limit: limit ?? 20,
+        after: after,
+      );
+    }
     try {
       final response = await _apiClient.dio.get(
         Endpoints.warehouseProducts(warehouseId),
@@ -161,6 +175,8 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
 
   @override
   Future<List<ProductModel>> getAlternatives({required String warehouseId, required String productId}) async {
+    final today = await _todaysSnapshot(warehouseId);
+    if (today != null) return today.alternativesOf(productId);
     try {
       final response = await _apiClient.dio.get(Endpoints.productAlternatives(warehouseId, productId));
       final data = response.data as Map<String, dynamic>;
@@ -181,6 +197,8 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
 
   @override
   Future<List<ManufacturerModel>> getManufacturers({required String warehouseId}) async {
+    final today = await _todaysSnapshot(warehouseId);
+    if (today != null) return today.listManufacturers();
     try {
       final response = await _apiClient.dio.get(Endpoints.warehouseManufacturers(warehouseId));
       final data = response.data as Map<String, dynamic>;
@@ -206,7 +224,7 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
     _syncing.add(warehouseId);
     try {
       final existing = await _snapshotFor(warehouseId);
-      if (!force && existing != null && DateTime.now().difference(existing.savedAt) < snapshotFreshness) return;
+      if (!force && existing != null && DailyRefresh.isCurrent(existing.savedAt)) return;
 
       final products = <Map<String, dynamic>>[];
       String? after;

@@ -4505,3 +4505,34 @@ a.adm-pill {
 .adm-logout-btn {
   white-space: nowrap;
 }
+
+/* Password box with a show/hide eye (components/PasswordInput.jsx). The eye
+   sits inside the box on its trailing edge; the box keeps its full width. */
+.password-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.password-input input {
+  width: 100%;
+  padding-inline-end: 2.5rem;
+}
+.password-input .password-toggle {
+  position: absolute;
+  inset-inline-end: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.password-input .password-toggle:hover,
+.password-input .password-toggle[aria-pressed='true'] {
+  opacity: 1;
+}

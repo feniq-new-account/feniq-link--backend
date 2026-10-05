@@ -413,6 +413,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addToCartButton => 'Add';
 
   @override
+  String get availableLabel => 'Available';
+
+  @override
   String get unavailableLabel => 'Unavailable';
 
   @override

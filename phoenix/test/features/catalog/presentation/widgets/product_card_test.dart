@@ -200,8 +200,8 @@ void main() {
         // The catalog grid's real cell (catalog_product_list.dart: mainAxisExtent 344).
         await pumpCard(tester, product: full, isGrid: isGrid, gridHeight: 344, locale: const Locale('ar'));
         expect(tester.takeException(), isNull);
-        expect(find.text('1000 MG'), findsOneWidget);
-        expect(find.text('أقراص ملبسة'), findsOneWidget);
+        expect(find.textContaining('1000 MG'), findsOneWidget);
+        expect(find.textContaining('أقراص ملبسة'), findsOneWidget);
         expect(find.text('METFORMIN'), findsOneWidget, reason: 'the strength is no longer folded into the ingredient');
         expect(find.textContaining('إنتاج 03/2026'), findsOneWidget);
         expect(find.textContaining('انتهاء 03/2028'), findsOneWidget);

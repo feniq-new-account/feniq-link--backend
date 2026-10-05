@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_radius.dart';
@@ -135,10 +134,9 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
     final l10n = context.l10n;
 
     return Scaffold(
-      body: AppRefreshIndicator(
-        onRefresh: () =>
-            context.read<WarehouseSelectionCubit>().loadWarehouses(),
-        child: CustomScrollView(
+      // No pull-to-refresh: the warehouse list refreshes once a day by
+      // itself (DailyRefresh).
+      body: CustomScrollView(
           slivers: [
             SliverAppBar(
               floating: true,
@@ -365,7 +363,6 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
             ),
           ],
         ),
-      ),
     );
   }
 }

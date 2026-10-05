@@ -9,7 +9,7 @@ const { ensureFinancialIndexes } = require('./services/ledger.service');
 const { ensureDiscountCodeIndexes } = require('./services/discountCode.service');
 const { initRealtime } = require('./realtime');
 const User = require('./models/user.model');
-const { seedDemoDataIfEmpty, seedDemoOrders } = require('./services/demoSeed.service');
+const { turnOffDemoSealPhoto, seedDemoAdminIfNone, seedDemoDataIfEmpty, seedDemoOrders } = require('./services/demoSeed.service');
 const { seedDemoCatalogImages } = require('./services/demoCatalogImages.service');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
@@ -96,6 +96,11 @@ async function start() {
     }
 
     if (process.env.SEED_DEMO_DATA !== 'false') {
+      const admin = await seedDemoAdminIfNone();
+      if (admin) {
+        // eslint-disable-next-line no-console
+        console.log(`Created the demo admin (${admin.phone}).`);
+      }
       const seeded = await seedDemoDataIfEmpty();
       if (seeded) {
         // eslint-disable-next-line no-console
@@ -107,6 +112,7 @@ async function start() {
         console.log(`Demo medicines with pictures: ${pictured.uploaded} uploaded, ${pictured.stocked} stocked, ${pictured.dated} dated.`);
       }
       const seededOrders = await seedDemoOrders();
+      await turnOffDemoSealPhoto();
       if (seededOrders && seededOrders.orders) {
         // eslint-disable-next-line no-console
         console.log(`Seeded ${seededOrders.orders} demo orders.`);

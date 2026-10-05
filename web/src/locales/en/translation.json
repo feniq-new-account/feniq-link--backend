@@ -82,6 +82,8 @@
   "auth": {
     "phoneLabel": "Phone number",
     "passwordLabel": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "logIn": "Log in",
     "loggingIn": "Logging in...",
     "connectionFailed": "Could not reach the server. Your session is still active - check your connection and try again."
