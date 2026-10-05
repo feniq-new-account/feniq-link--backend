@@ -236,6 +236,24 @@ async function seedDemoOrders() {
 // admin at all - the first real admin turns this off for good.
 const DEMO_ADMIN = { name: 'Feniq Admin', phone: '0930000100', password: 'Feniq@Admin2026' };
 
+// The seal-photo requirement used to default to on and was stored on every
+// warehouse and order created then. Turned off for the demo warehouses and
+// their undelivered orders, so delivery there is one click (owner's decision,
+// 2026-10-05).
+async function turnOffDemoSealPhoto() {
+  const Order = require('../models/order.model');
+  const users = await User.find({ phone: { $in: WAREHOUSES.map((w) => w.phone) }, role: 'warehouse' }).select('_id').lean();
+  const warehouses = await Warehouse.find({ userId: { $in: users.map((u) => u._id) } }).select('_id').lean();
+  const ids = warehouses.map((w) => w._id);
+  if (ids.length === 0) return 0;
+  await Warehouse.updateMany({ _id: { $in: ids }, requireDeliverySealPhoto: true }, { $set: { requireDeliverySealPhoto: false } });
+  const { modifiedCount } = await Order.updateMany(
+    { warehouseId: { $in: ids }, requiresDeliverySealPhoto: true, status: { $nin: ['delivered', 'cancelled'] } },
+    { $set: { requiresDeliverySealPhoto: false } }
+  );
+  return modifiedCount;
+}
+
 async function seedDemoAdminIfNone() {
   if (await User.exists({ role: 'admin' })) return null;
   if (await User.exists({ phone: DEMO_ADMIN.phone })) return null;
@@ -249,4 +267,4 @@ async function seedDemoAdminIfNone() {
   return { phone: DEMO_ADMIN.phone };
 }
 
-module.exports = { seedDemoAdminIfNone, DEMO_ADMIN, seedDemoDataIfEmpty, seedDemoOrders, DEMO_WAREHOUSE_PASSWORD, WAREHOUSES, DEMO_ORDERS };
+module.exports = { turnOffDemoSealPhoto, seedDemoAdminIfNone, DEMO_ADMIN, seedDemoDataIfEmpty, seedDemoOrders, DEMO_WAREHOUSE_PASSWORD, WAREHOUSES, DEMO_ORDERS };

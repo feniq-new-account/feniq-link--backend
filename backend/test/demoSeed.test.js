@@ -16,6 +16,7 @@ const {
   seedDemoDataIfEmpty,
   seedDemoOrders,
   seedDemoAdminIfNone,
+  turnOffDemoSealPhoto,
   DEMO_ADMIN,
   DEMO_WAREHOUSE_PASSWORD,
   WAREHOUSES,
@@ -139,4 +140,14 @@ test('a demo admin is created only while there is no admin, and can sign in', as
   });
   assert.strictEqual(res.status, 200, JSON.stringify(res.body));
   assert.strictEqual(res.body.user.role, 'admin');
+});
+
+test('the seal photo is turned off on the demo warehouses and their open orders', async () => {
+  const Order = require('../src/models/order.model');
+  await Warehouse.updateMany({}, { $set: { requireDeliverySealPhoto: true } });
+  await Order.updateMany({ status: { $ne: 'delivered' } }, { $set: { requiresDeliverySealPhoto: true } });
+  const changed = await turnOffDemoSealPhoto();
+  assert.ok(changed > 0);
+  assert.strictEqual(await Warehouse.countDocuments({ requireDeliverySealPhoto: true }), 0);
+  assert.strictEqual(await Order.countDocuments({ requiresDeliverySealPhoto: true, status: { $nin: ['delivered', 'cancelled'] } }), 0);
 });

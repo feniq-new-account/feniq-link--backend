@@ -19,7 +19,7 @@ function toWarehouseSettingsResponse(warehouse) {
       maxOrderAmountUsd: warehouse.maxOrderAmountUsd,
       // Proof-of-delivery toggle (warehouse.model.js), on by default. `?? true`
       // for documents that predate the field, matching order.service.js.
-      requireDeliverySealPhoto: warehouse.requireDeliverySealPhoto ?? true,
+      requireDeliverySealPhoto: warehouse.requireDeliverySealPhoto ?? false,
     },
   };
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
+import { PasswordInput } from '../components/PasswordInput';
 
 // Section 6-2/3: phone + password, no OTP (temporarily disabled - see
 // AuthContext.login). Single-step form, same shape as the pharmacy app's
@@ -47,12 +48,12 @@ export function LoginPage() {
             autoFocus
           />
           <label htmlFor="password">{t('auth.passwordLabel')}</label>
-          <input
+          <PasswordInput
             id="password"
-            type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
+            autoComplete="current-password"
           />
           {error && <p className="error-text">{error}</p>}
           <button type="submit" className="btn-primary" disabled={isSubmitting}>

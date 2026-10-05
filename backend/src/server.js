@@ -9,7 +9,7 @@ const { ensureFinancialIndexes } = require('./services/ledger.service');
 const { ensureDiscountCodeIndexes } = require('./services/discountCode.service');
 const { initRealtime } = require('./realtime');
 const User = require('./models/user.model');
-const { seedDemoAdminIfNone, seedDemoDataIfEmpty, seedDemoOrders } = require('./services/demoSeed.service');
+const { turnOffDemoSealPhoto, seedDemoAdminIfNone, seedDemoDataIfEmpty, seedDemoOrders } = require('./services/demoSeed.service');
 const { seedDemoCatalogImages } = require('./services/demoCatalogImages.service');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
@@ -112,6 +112,7 @@ async function start() {
         console.log(`Demo medicines with pictures: ${pictured.uploaded} uploaded, ${pictured.stocked} stocked, ${pictured.dated} dated.`);
       }
       const seededOrders = await seedDemoOrders();
+      await turnOffDemoSealPhoto();
       if (seededOrders && seededOrders.orders) {
         // eslint-disable-next-line no-console
         console.log(`Seeded ${seededOrders.orders} demo orders.`);

@@ -141,33 +141,27 @@ test('the warehouse default is still toggleable through its own settings service
   assert.strictEqual(updated.requireDeliverySealPhoto, true);
 });
 
-// --- Required by default (product decision 2026-10-04) -------------------
+// --- Off by default (owner's decision 2026-10-05): delivery is one click ---
 
-test('Warehouse.requireDeliverySealPhoto defaults to TRUE: a new warehouse requires the seal photo', () => {
-  assert.strictEqual(Warehouse.schema.path('requireDeliverySealPhoto').defaultValue, true);
+test('Warehouse.requireDeliverySealPhoto defaults to FALSE: a new warehouse does not require the seal photo', () => {
+  assert.strictEqual(Warehouse.schema.path('requireDeliverySealPhoto').defaultValue, false);
   const fresh = new Warehouse({});
-  assert.strictEqual(fresh.requireDeliverySealPhoto, true);
+  assert.strictEqual(fresh.requireDeliverySealPhoto, false);
 });
 
-test('a warehouse document that predates the field seeds orders as requiring the photo', async () => {
+test('a warehouse document that predates the field seeds orders as not requiring the photo', async () => {
   await Warehouse.collection.updateOne({ _id: ids.warehouse }, { $unset: { requireDeliverySealPhoto: '' } });
   const order = await createRealOrder();
-  assert.strictEqual(order.requiresDeliverySealPhoto, true);
+  assert.strictEqual(order.requiresDeliverySealPhoto, false);
 });
 
-test('end to end with defaults: delivering a fresh order with no seal photo is refused', async () => {
+test('end to end with defaults: a fresh order is delivered with no seal photo, one click per stage', async () => {
   await Warehouse.collection.updateOne({ _id: ids.warehouse }, { $unset: { requireDeliverySealPhoto: '' } });
   const created = await createRealOrder();
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < 4; i += 1) {
     await warehouseOrderService.advanceOrderStatus(created._id.toString(), ids.warehouse, ids.warehouseUser);
   }
-  assert.strictEqual((await Order.findById(created._id)).status, 'out_for_delivery');
-
-  await assert.rejects(
-    () => warehouseOrderService.advanceOrderStatus(created._id.toString(), ids.warehouse, ids.warehouseUser),
-    withCode('DELIVERY_SEAL_PHOTO_REQUIRED')
-  );
-  assert.strictEqual((await Order.findById(created._id)).status, 'out_for_delivery');
+  assert.strictEqual((await Order.findById(created._id)).status, 'delivered');
 });
 
 // --- Seeding at order creation -----------------------------------------
