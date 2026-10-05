@@ -20,6 +20,8 @@ const demo = require('../src/services/demoSeed.service');
 const { seedDemoCatalogImages } = require('../src/services/demoCatalogImages.service');
 const { seedDemoFeatures } = require('../src/services/demoFeatures.service');
 const { setManualRate } = require('../src/services/exchangeRate.service');
+const User = require('../src/models/user.model');
+const Warehouse = require('../src/models/warehouse.model');
 
 let server;
 let baseUrl;
@@ -75,6 +77,21 @@ test('every feature gets demo data, once, visible over the API', async () => {
   assert.ok(orders.body.orders.some((o) => o.status === 'cancelled'));
   assert.strictEqual((await call('GET', '/returns', { token: pharmacy })).status, 200);
   assert.strictEqual((await call('GET', '/complaints', { token: pharmacy })).status, 200);
+  // Every demo warehouse gets returns and complaints in its panel, not only
+  // the one the pharmacy happened to order from first.
+  const Return = require('../src/models/return.model');
+  const Complaint = require('../src/models/complaint.model');
+  const Order = require('../src/models/order.model');
+  for (const { phone } of demo.WAREHOUSES) {
+    const user = await User.findOne({ phone }).lean();
+    const warehouse = await Warehouse.findOne({ userId: user._id }).lean();
+    assert.ok(await Return.exists({ warehouseId: warehouse._id, status: 'pending' }), `pending return at ${phone}`);
+    assert.ok(await Complaint.exists({ warehouseId: warehouse._id }), `complaint at ${phone}`);
+    assert.ok(await Order.exists({ warehouseId: warehouse._id, status: 'pending' }), `waiting order at ${phone}`);
+  }
+  // Once a warehouse has moved every order on, the next start brings a new one.
+  await Order.updateMany({ status: 'pending' }, { $set: { status: 'confirmed' } });
+  assert.strictEqual((await seedDemoFeatures()).waitingOrders, demo.WAREHOUSES.length);
   const banners = await call('GET', '/banners/active', { token: pharmacy });
   assert.ok(banners.body.banners.length >= 3, 'a live banner per demo warehouse');
 });
