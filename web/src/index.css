@@ -4560,6 +4560,17 @@ a.adm-pill {
   margin: 0;
 }
 
+/* Month / year batch date (components/MonthYearInput.jsx). */
+.month-year-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.month-year-input select {
+  flex: 1;
+  min-width: 0;
+}
+
 /* One colour per order stage, so where an order stands reads at a glance
    without reading the label: pending amber, confirmed blue, preparing
    purple, on the way teal, delivered green, cancelled red. The advance
@@ -4586,3 +4597,13 @@ a.adm-pill {
 .wh-row-action.wh-advance-to-preparing { background: #7b1fa2; }
 .wh-row-action.wh-advance-to-out_for_delivery { background: #00838f; }
 .wh-row-action.wh-advance-to-delivered { background: #2e7d32; }
+
+/* A full date field in an RTL page lays its day / month / year segments out
+   right to left, so Chrome's Arabic placeholder (يوم/شهر/سنة) and the picked
+   date read scrambled. Dates are written left to right everywhere. */
+input[type='date'],
+input[type='datetime-local'],
+input[type='month'] {
+  direction: ltr;
+  text-align: left;
+}

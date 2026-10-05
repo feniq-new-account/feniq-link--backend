@@ -11,6 +11,7 @@ const { initRealtime } = require('./realtime');
 const User = require('./models/user.model');
 const { seedDemoBonuses, turnOffDemoSealPhoto, seedDemoAdminIfNone, seedDemoDataIfEmpty, seedDemoOrders } = require('./services/demoSeed.service');
 const { seedDemoCatalogImages } = require('./services/demoCatalogImages.service');
+const { seedDemoFeatures } = require('./services/demoFeatures.service');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
 // not 'production':
@@ -107,12 +108,17 @@ async function start() {
         console.log(`Seeded demo data: ${seeded.warehouses} warehouses, ${seeded.products} products.`);
       }
       const pictured = await seedDemoCatalogImages();
-      if (pictured && (pictured.uploaded || pictured.stocked || pictured.dated)) {
+      if (pictured) {
         // eslint-disable-next-line no-console
-        console.log(`Demo medicines with pictures: ${pictured.uploaded} uploaded, ${pictured.stocked} stocked, ${pictured.dated} dated.`);
+        console.log(`Demo catalog: ${JSON.stringify(pictured)}`);
       }
       const seededOrders = await seedDemoOrders();
       await turnOffDemoSealPhoto();
+      const features = await seedDemoFeatures();
+      if (features) {
+        // eslint-disable-next-line no-console
+        console.log(`Demo features: ${JSON.stringify(features)}`);
+      }
       const bonuses = await seedDemoBonuses();
       if (bonuses) {
         // eslint-disable-next-line no-console

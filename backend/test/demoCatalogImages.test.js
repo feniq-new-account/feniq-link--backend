@@ -49,6 +49,9 @@ test('uploads every picture once and stocks the demo warehouses', async () => {
   await seedDemoDataIfEmpty();
   const first = await seedDemoCatalogImages();
   assert.strictEqual(first.uploaded, ITEMS.length);
+  assert.strictEqual(first.linked, 18 * 3, 'every first demo medicine is linked to a catalog item');
+  assert.strictEqual(first.logos, 3);
+  assert.ok(first.discounts > 0);
   assert.ok(first.stocked > ITEMS.length);
 
   const items = await ProductCatalog.find({ imageUrl: { $ne: null } }).lean();
@@ -56,7 +59,7 @@ test('uploads every picture once and stocks the demo warehouses', async () => {
   assert.ok(items.every((i) => i.imageUrl.startsWith('https://media.test/media/')));
 
   const again = await seedDemoCatalogImages();
-  assert.deepStrictEqual(again, { uploaded: 0, stocked: 0, dated: 0 });
+  assert.deepStrictEqual(again, { uploaded: 0, stocked: 0, linked: 0, logos: 0, discounts: 0, dated: 0 });
 });
 
 test('the pharmacy sees the pictured medicines with image, strength and form', async () => {
@@ -107,4 +110,28 @@ test('a warehouse sets, changes and clears the batch dates on its product', asyn
   const cleared = await call('PATCH', `/warehouse/products/${id}`, { token, body: { productionDate: null } });
   assert.strictEqual(cleared.body.product.productionDate, null);
   assert.strictEqual(cleared.body.product.expiryDate, '2028-01-15');
+});
+
+test('every demo medicine card has its six facts: name, ingredient, price, form, expiry - and a picture or logo', async () => {
+  const login = await call('POST', '/auth/login-password', { body: { phone: '0931111111', password: 'pharmacy-pass-1' } });
+  const token = login.body.token;
+  const { body } = await call('GET', '/warehouses', { token });
+  assert.ok(body.warehouses.every((w) => w.logo && w.logo.startsWith('https://media.test/media/')), 'every warehouse has a logo');
+  let after = null;
+  const all = [];
+  do {
+    const page = await call('GET', `/warehouses/${body.warehouses[0].id}/products?limit=100${after ? `&after=${after}` : ''}`, { token });
+    all.push(...page.body.products);
+    after = page.body.pagination.hasMore ? page.body.pagination.nextCursor : null;
+  } while (after);
+  assert.ok(all.length > 100, `only ${all.length} products`);
+  for (const p of all) {
+    assert.ok(p.nameAr, 'name');
+    assert.ok(p.activeIngredient, `ingredient missing on ${p.nameAr}`);
+    assert.ok(p.dosageForm, `form missing on ${p.nameAr}`);
+    assert.ok(p.expiryDate, `expiry missing on ${p.nameAr}`);
+    assert.strictEqual(typeof p.priceUsd, 'number');
+  }
+  assert.ok(all.some((p) => p.discountPriceUsd < p.priceUsd), 'some show a price before and after a discount');
+  assert.ok(all.filter((p) => p.image).length >= 90, 'most have a picture');
 });
