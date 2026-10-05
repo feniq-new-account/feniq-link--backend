@@ -139,53 +139,64 @@ async function addReviews({ warehouses, pharmacies }) {
   return created;
 }
 
-// Two returns per pharmacy: one waiting for the warehouse, one it approved.
+// Two returns for each pharmacy at each demo warehouse: one waiting for the
+// warehouse, one it approved - so every demo warehouse has returns to try.
 async function addReturns({ warehouses, pharmacies }) {
   const returnService = require('./return.service');
   const warehouseReturnService = require('./warehouseReturn.service');
   let created = 0;
   for (const pharmacy of pharmacies) {
-    if (await Return.exists({ pharmacyId: pharmacy._id })) continue;
-    const delivered = await Order.find({ pharmacyId: pharmacy._id, status: 'delivered' }).select('_id warehouseId').sort({ _id: -1 }).limit(2).lean();
-    for (const [i, order] of delivered.entries()) {
-      const item = await OrderItem.findOne({ orderId: order._id }).select('_id').lean();
-      if (!item) continue;
-      const created_ = await returnService.createReturn({
-        pharmacyId: pharmacy._id,
-        orderId: order._id.toString(),
-        items: [{ orderItemId: item._id.toString(), quantity: 1, reasonType: i === 0 ? 'damaged' : 'wrong_item' }],
-        notes: i === 0 ? 'علبة مكسورة عند الاستلام' : 'وصل صنف غير المطلوب',
-        images: [],
-      });
-      created += 1;
-      if (i === 1) {
-        const warehouse = warehouses.find((w) => String(w.warehouseId) === String(order.warehouseId));
-        const returnRequest = created_.returnRequest || created_;
-        const returnId = (returnRequest._id || returnRequest.id).toString();
-        if (warehouse) await warehouseReturnService.approveReturn(returnId, warehouse.warehouseId, warehouse.userId);
+    for (const warehouse of warehouses) {
+      if (await Return.exists({ pharmacyId: pharmacy._id, warehouseId: warehouse.warehouseId })) continue;
+      const delivered = await Order.find({ pharmacyId: pharmacy._id, warehouseId: warehouse.warehouseId, status: 'delivered' })
+        .select('_id')
+        .sort({ _id: -1 })
+        .limit(2)
+        .lean();
+      for (const [i, order] of delivered.entries()) {
+        const item = await OrderItem.findOne({ orderId: order._id }).select('_id').lean();
+        if (!item) continue;
+        const created_ = await returnService.createReturn({
+          pharmacyId: pharmacy._id,
+          orderId: order._id.toString(),
+          items: [{ orderItemId: item._id.toString(), quantity: 1, reasonType: i === 0 ? 'damaged' : 'wrong_item' }],
+          notes: i === 0 ? 'علبة مكسورة عند الاستلام' : 'وصل صنف غير المطلوب',
+          images: [],
+        });
+        created += 1;
+        if (i === 1) {
+          const returnRequest = created_.returnRequest || created_;
+          const returnId = (returnRequest._id || returnRequest.id).toString();
+          await warehouseReturnService.approveReturn(returnId, warehouse.warehouseId, warehouse.userId);
+        }
       }
     }
   }
   return created;
 }
 
-// A complaint from each pharmacy, about one of its orders.
-async function addComplaints({ pharmacies }) {
+// A complaint from each pharmacy to each demo warehouse, about one of its
+// orders there.
+async function addComplaints({ warehouses, pharmacies }) {
   const complaintService = require('./complaint.service');
   let created = 0;
   for (const pharmacy of pharmacies) {
-    if (await Complaint.exists({ pharmacyId: pharmacy._id })) continue;
-    const order = await Order.findOne({ pharmacyId: pharmacy._id, status: 'delivered' }).select('_id warehouseId').lean();
-    if (!order) continue;
-    await complaintService.createComplaint({
-      pharmacyId: pharmacy._id,
-      pharmacyUserId: pharmacy.userId,
-      warehouseId: order.warehouseId,
-      relatedOrderId: order._id.toString(),
-      subject: 'تأخر في التوصيل',
-      description: 'الطلب وصل متأخراً يوماً كاملاً عن الموعد المتفق عليه.',
-    });
-    created += 1;
+    for (const warehouse of warehouses) {
+      if (await Complaint.exists({ pharmacyId: pharmacy._id, warehouseId: warehouse.warehouseId })) continue;
+      const order = await Order.findOne({ pharmacyId: pharmacy._id, warehouseId: warehouse.warehouseId, status: 'delivered' })
+        .select('_id warehouseId')
+        .lean();
+      if (!order) continue;
+      await complaintService.createComplaint({
+        pharmacyId: pharmacy._id,
+        pharmacyUserId: pharmacy.userId,
+        warehouseId: order.warehouseId,
+        relatedOrderId: order._id.toString(),
+        subject: 'تأخر في التوصيل',
+        description: 'الطلب وصل متأخراً يوماً كاملاً عن الموعد المتفق عليه.',
+      });
+      created += 1;
+    }
   }
   return created;
 }
@@ -301,6 +312,35 @@ async function addDiscountCodes({ warehouses, admin }) {
   return created;
 }
 
+// A fresh order waiting at each demo warehouse that has none, so the
+// one-click stages in the panel can always be tried again. Re-checked on every
+// start; a warehouse that advanced all its orders gets a new one.
+async function addWaitingOrders({ warehouses, pharmacies }) {
+  const orderService = require('./order.service');
+  const pharmacy = pharmacies[0];
+  if (!pharmacy) return 0;
+  let created = 0;
+  for (const [w, { warehouseId }] of warehouses.entries()) {
+    if (await Order.exists({ warehouseId, status: 'pending' })) continue;
+    const products = await Product.find({ warehouseId, isAvailable: true, masterProductId: { $ne: null } })
+      .select('_id')
+      .sort({ _id: 1 })
+      .skip(2 + w * 3)
+      .limit(3)
+      .lean();
+    if (products.length === 0) continue;
+    await orderService.createOrder({
+      userId: pharmacy.userId,
+      pharmacyId: pharmacy._id,
+      warehouseId,
+      items: products.map((p, i) => ({ productId: p._id.toString(), quantity: 10 + i * 5 })),
+      notes: 'طلب تجريبي جديد',
+    });
+    created += 1;
+  }
+  return created;
+}
+
 async function seedDemoFeatures() {
   const context = await demoContext();
   if (context.warehouses.length === 0) return null;
@@ -313,6 +353,7 @@ async function seedDemoFeatures() {
   await step('banners', () => addBanners(context), report);
   await step('packages', () => addPackages(context), report);
   await step('discountCodes', () => addDiscountCodes(context), report);
+  await step('waitingOrders', () => addWaitingOrders(context), report);
   return report;
 }
 
