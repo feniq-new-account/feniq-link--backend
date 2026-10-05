@@ -243,7 +243,7 @@ async function register({
       phone,
       password: hashedPassword,
       role: 'pharmacy',
-      status: 'pending',
+      status: env.requireAccountApproval ? 'pending' : 'active',
     });
   } catch (err) {
     // 11000 = duplicate key on the unique users.phone index: a second
@@ -281,11 +281,14 @@ async function register({
   // admin acts it cannot order at all - so the wait is the pharmacy's, not
   // just the admin's. Emitted only now, once both the User and its Pharmacy
   // profile are durable (a User with no profile would render as a broken row).
-  // Ids only; the panel re-reads GET /admin/pending-accounts.
-  emitToAdmins(EVENTS.ACCOUNT_PENDING, {
-    userId: user._id.toString(),
-    role: user.role,
-  });
+  // Ids only; the panel re-reads GET /admin/pending-accounts. Skipped when
+  // approval is off - the account is already active and nothing is queued.
+  if (user.status === 'pending') {
+    emitToAdmins(EVENTS.ACCOUNT_PENDING, {
+      userId: user._id.toString(),
+      role: user.role,
+    });
+  }
 
   return { user, pharmacy, warehouse: null, ...(await issueTokenPair(user)) };
 }

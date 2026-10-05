@@ -200,7 +200,7 @@ test('F-01: a genuinely new phone still registers and gets a token', async () =>
   assert.strictEqual(status, 201);
   assert.ok(body.token, 'real registrations still work');
   assert.strictEqual(body.user.role, 'pharmacy');
-  assert.strictEqual(body.user.status, 'pending', 'still waiting on admin approval');
+  assert.strictEqual(body.user.status, 'active', 'auto-approved by default');
 });
 
 // --- F-02: login failures must not reveal which accounts exist -------------

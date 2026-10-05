@@ -172,7 +172,7 @@ test('C-1: registering a genuinely new phone still works exactly as before', asy
   assert.strictEqual(status, 201);
   assert.ok(body.token);
   assert.strictEqual(body.user.role, 'pharmacy');
-  assert.strictEqual(body.user.status, 'pending');
+  assert.strictEqual(body.user.status, 'active');
   assert.strictEqual(body.pharmacy.areaType, 'city');
   assert.strictEqual(jwt.verify(body.token, process.env.JWT_SECRET).role, 'pharmacy');
 });
