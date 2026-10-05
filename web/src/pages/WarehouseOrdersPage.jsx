@@ -8,6 +8,7 @@ import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
 import { formatSyp } from '../utils/currency';
+import { mergeAdvancedOrders, rememberAdvanced, syncAdvancedWithRows } from './warehouseOrdersList';
 
 const PAGE_SIZE = 20;
 const STATUS_VALUES = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
@@ -88,6 +89,10 @@ export function WarehouseOrdersPage() {
   // them - the list itself is always refreshed, this is just the "look here"
   // cue so an arrival isn't missed while working another tab.
   const [newOrderCount, setNewOrderCount] = useState(0);
+  // Orders advanced from this tab: they stay listed, in place, with their new
+  // status and the next stage's button, until the tab changes
+  // (warehouseOrdersList.js).
+  const [advanced, setAdvanced] = useState(() => new Map());
 
   const statusLabel = useCallback((status) => t(`orders.status${statusKeySuffix(status)}`), [t]);
 
@@ -112,12 +117,15 @@ export function WarehouseOrdersPage() {
   // ascending - the codebase's chronological ordering). Every other status
   // tab flips that to newest-first. Applied to everything loaded so far, so it
   // stays correct as more pages come in via "Load more".
-  const orders =
-    statusFilter === 'pending' || statusFilter === ''
-      ? loadedOrders
-      : loadedOrders.slice().reverse();
+  useEffect(() => {
+    setAdvanced((current) => syncAdvancedWithRows(current, loadedOrders));
+  }, [loadedOrders]);
+
+  const listed = mergeAdvancedOrders(loadedOrders, advanced);
+  const orders = statusFilter === 'pending' || statusFilter === '' ? listed : listed.slice().reverse();
 
   useEffect(() => {
+    setAdvanced(new Map());
     reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
@@ -150,11 +158,10 @@ export function WarehouseOrdersPage() {
     setBusyId(order.id);
     setActionError(null);
     try {
-      await api.advanceOrderStatus(order.id);
-      // The current filter may no longer include this order's new status
-      // (e.g. advancing out of "Pending review") - simplest correct move is
-      // to just reset back to page one rather than patch it in place.
-      reset();
+      const result = await api.advanceOrderStatus(order.id);
+      // Updated in place, not reloaded: the order stays in this list (even if
+      // its new status is outside the tab) so the next click is right there.
+      setAdvanced((current) => rememberAdvanced(current, order, result?.order?.status ?? order.status));
     } catch (err) {
       setActionError(err.message);
     } finally {
