@@ -16,95 +16,179 @@ const { WAREHOUSES } = require('./demoSeed.service');
 
 const IMAGES_DIR = path.join(__dirname, '..', 'data', 'demo-images');
 
-// [file, name, manufacturer, strength, dosage form, unit, price USD]
-const ITEMS = [
-  ['e691583fcfe7bfbe', 'SPASMOLGIN CTD TAB.', 'آسيا', null, 'أقراص ملبسة', 'box', 3.2],
-  ['eb94b187107b853b', 'GLUCOMET-500 TAB.', 'آسيا', '500 MG', 'أقراص', 'box', 1.1],
-  ['7b018a8e512b849c', 'ROZIFAX-1000 VIAL', 'آسيا', '1000 MG', 'فيال', 'vial', 1.6],
-  ['2cc8ebca0ec971d2', 'HYDRODERM CREAM (30 G)', 'بحري', '1 %', 'كريم', 'tube', 1.4],
-  ['3cd5a53958012629', 'DEPAK SYRUP (200 ML)', 'بحري', '200 MG/5 ML', 'شراب', 'bottle', 2.9],
-  ['956de5e070bb2805', 'BURN-HEAL CREAM (50 G)', 'بحري', null, 'كريم', 'tube', 1.8],
-  ['e8fec5103296213a', 'COTAGIZEC CTD TAB.', 'شفا', null, 'أقراص ملبسة', 'box', 2.4],
-  ['6cbc47852ddaba4d', 'LIDO-2 % AMP.', 'شفا', '2 %', 'أمبولات', 'ampoule', 0.3],
-  ['4823bf9d2b16f600', 'ROCEF-2000 VIAL', 'شفا', '2000 MG', 'فيال', 'vial', 2.1],
-  ['ba298f0c6414eac0', 'TRAGLIPTIN TAB.', 'بركات', '5 MG', 'أقراص', 'box', 4.5],
-  ['d995ba0c4e7b3cd1', 'TOLIDON CTD TAB.', 'بركات', null, 'أقراص ملبسة', 'box', 2.2],
-  ['6aaf4d7c66c0e1ed', 'TRAMAL AMP.', 'ابن زهر', '100 MG/2 ML', 'أمبولات', 'ampoule', 0.9],
-  ['0ed1eb0b8d01d98e', 'TICALOR TAB.', 'ابن زهر', '90 MG', 'أقراص ملبسة', 'box', 9.5],
-  ['77b3f0beb4acbea6', 'BROMAZEPAM HUMAN-1.5 CAP.', 'هيومن فارما', '1.5 MG', 'محافظ', 'box', 1.3],
-  ['0db1427f08168bb4', 'COVIAN 160/12.5 TAB.', 'هيومن فارما', '160/12.5 MG', 'أقراص ملبسة', 'box', 3.6],
-  ['16f5e7bd71f8ec7c', 'NEOSTATINE SUSP. (60 ML)', 'الشهباء', '100000 IU/ML', 'معلق', 'bottle', 1.5],
-  ['d345cfcd1d0f6747', 'LOWVASC 20/5 TAB.', 'زين فارما', '20/5 MG', 'أقراص', 'box', 3.9],
-  ['54738238b310df04', 'VISITO-TROP 1% EYE DROPS', 'دومنا', '1 %', 'قطرة عينية', 'bottle', 1.7],
-  ['dc10e61f09240ddd', 'DE-HISTAMINE TAB.', 'السعد', '4 MG', 'أقراص', 'box', 0.8],
-  ['b7a0338347a630ef', 'GABALYR-150 CAP.', 'السعد', '150 MG', 'محافظ', 'box', 3.4],
-  ['c37a08caac383819', 'METFORMIN-ELSAAD 1000 F.CTD TAB.', 'السعد', '1000 MG', 'أقراص ملبسة', 'box', 1.6],
-  ['eb8b051374cec3a2', 'POVI TEARS EYE DROP (15 ML)', 'دياموند فارما', null, 'قطرة عينية', 'bottle', 2.3],
-  ['57823f5031c4349f', 'VERMORAM SUSP. (30 ML)', 'راما', '100 MG/5 ML', 'معلق', 'bottle', 1.2],
-  ['8e560f98b39ebbda', 'CARTE SYRUP (5 ML)', 'راما', null, 'شراب', 'bottle', 1.9],
-];
+// The demo medicines: name, company, strength, dosage form, active
+// ingredient, unit and price, each with its picture file in data/demo-images.
+const ITEMS = require('../data/demo-catalog.json');
+const LOGOS_DIR = path.join(__dirname, '..', 'data', 'demo-logos');
 
-async function findOrCreateCatalogItem([file, name, manufacturer, strength, dosageForm, unit]) {
-  let item = await ProductCatalog.findOne({ nameAr: name, manufacturerAr: manufacturer });
+async function findOrCreateCatalogItem(row) {
+  let item = await ProductCatalog.findOne({ nameAr: row.name, manufacturerAr: row.manufacturer });
   if (!item) {
     item = await ProductCatalog.create({
-      nameAr: name,
-      nameEn: name,
-      manufacturerAr: manufacturer,
-      strength,
-      dosageForm,
+      nameAr: row.name,
+      nameEn: row.name,
+      manufacturerAr: row.manufacturer,
+      strength: row.strength,
+      dosageForm: row.dosageForm,
+      activeIngredient: row.activeIngredient,
       unitAr: null,
       imageMatch: 'exact',
     });
+  } else if (!item.activeIngredient && row.activeIngredient) {
+    // Items seeded before the ingredient was part of the demo data.
+    item.activeIngredient = row.activeIngredient;
+    if (!item.strength && row.strength) item.strength = row.strength;
+    if (!item.dosageForm && row.dosageForm) item.dosageForm = row.dosageForm;
+    await item.save();
   }
   if (!item.imageUrl) {
-    const buffer = await fs.readFile(path.join(IMAGES_DIR, `${file}.webp`));
+    const buffer = await fs.readFile(path.join(IMAGES_DIR, `${row.file}.webp`));
     item.imageUrl = await uploadImage(buffer, 'catalog');
     await item.save();
   }
-  return { item, unit };
+  return item;
+}
+
+// The first demo medicines (demoSeed.service.js MEDICINES) were created as
+// standalone products with no catalog item, so they had no active
+// ingredient. Each gets a catalog item carrying its ingredient, strength and
+// form, and is linked to it.
+const LEGACY_FACTS = {
+  'Paracetamol 500mg': ['PARACETAMOL', '500 MG', 'أقراص'],
+  'Ibuprofen 400mg': ['IBUPROFEN', '400 MG', 'أقراص ملبسة'],
+  'Diclofenac 50mg': ['DICLOFENAC SODIUM', '50 MG', 'أقراص ملبسة'],
+  'Diclofenac 75mg': ['DICLOFENAC SODIUM', '75 MG/3 ML', 'أمبولات'],
+  'Amoxicillin 500mg': ['AMOXICILLIN', '500 MG', 'محافظ'],
+  'Amoxicillin/Clavulanate 1g': ['AMOXICILLIN + CLAVULANIC ACID', '875/125 MG', 'أقراص ملبسة'],
+  'Azithromycin 250mg': ['AZITHROMYCIN', '250 MG', 'محافظ'],
+  'Ceftriaxone 1g': ['CEFTRIAXONE', '1 G', 'فيال'],
+  'Vitamin D 50000 IU': ['CHOLECALCIFEROL', '50000 IU', 'محافظ'],
+  'Vitamin C 1000mg': ['ASCORBIC ACID', '1000 MG', 'أقراص فوارة'],
+  'Iron + Folic Acid': ['FERROUS SULFATE + FOLIC ACID', '150/0.5 MG', 'محافظ'],
+  'Metformin 850mg': ['METFORMIN', '850 MG', 'أقراص ملبسة'],
+  'Amlodipine 5mg': ['AMLODIPINE', '5 MG', 'أقراص'],
+  'Atorvastatin 20mg': ['ATORVASTATIN', '20 MG', 'أقراص ملبسة'],
+  'Omeprazole 20mg': ['OMEPRAZOLE', '20 MG', 'محافظ'],
+  'Domperidone 10mg': ['DOMPERIDONE', '10 MG', 'أقراص'],
+  'Moisturizing Cream': ['UREA + GLYCERIN', '10 %', 'كريم'],
+  'Sunscreen SPF 50': ['ZINC OXIDE + TITANIUM DIOXIDE', 'SPF 50', 'كريم'],
+};
+
+async function linkLegacyProducts(warehouseIds) {
+  const legacy = await Product.find({ warehouseId: { $in: warehouseIds }, masterProductId: null });
+  let linked = 0;
+  for (const product of legacy) {
+    const facts = LEGACY_FACTS[product.nameEn];
+    if (!facts) continue;
+    const [activeIngredient, strength, dosageForm] = facts;
+    let item = await ProductCatalog.findOne({ nameAr: product.nameAr, manufacturerAr: product.manufacturerAr });
+    if (!item) {
+      item = await ProductCatalog.create({
+        nameAr: product.nameAr,
+        nameEn: product.nameEn,
+        manufacturerAr: product.manufacturerAr,
+        manufacturerEn: product.manufacturerEn,
+        categoryId: product.categoryId,
+        activeIngredient,
+        strength,
+        dosageForm,
+      });
+    }
+    product.masterProductId = item._id;
+    await product.save();
+    linked += 1;
+  }
+  return linked;
+}
+
+// A logo for each demo warehouse (data/demo-logos/<phone>.png), uploaded once.
+async function addDemoLogos(users) {
+  let added = 0;
+  for (const user of users) {
+    const warehouse = await Warehouse.findOne({ userId: user._id, logo: null });
+    if (!warehouse) continue;
+    try {
+      const buffer = await fs.readFile(path.join(LOGOS_DIR, `${user.phone}.png`));
+      warehouse.logo = await uploadImage(buffer, 'warehouses');
+      await warehouse.save();
+      added += 1;
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(`Demo logo for ${user.phone} failed:`, err.message);
+    }
+  }
+  return added;
+}
+
+// Exceptional discount offers on about one demo product in six, so the cards
+// show a price before and after the discount. Only where no offer is running.
+async function addDemoDiscounts(warehouseIds) {
+  const Offer = require('../models/offer.model');
+  if ((await Offer.countDocuments({ warehouseId: { $in: warehouseIds } })) > 3) return 0;
+  const products = await Product.find({ warehouseId: { $in: warehouseIds } }).select('_id warehouseId').sort({ _id: 1 }).lean();
+  const busy = new Set((await Offer.find({ warehouseId: { $in: warehouseIds } }).select('productId').lean()).map((o) => o.productId.toString()));
+  const now = new Date();
+  const docs = products
+    .filter((p, i) => i % 6 === 2 && !busy.has(p._id.toString()))
+    .map((p, i) => ({
+      warehouseId: p.warehouseId,
+      productId: p._id,
+      titleAr: ['عرض الشهر', 'تصفية مخزون', 'عرض قرب انتهاء الصلاحية'][i % 3],
+      titleEn: ['Offer of the month', 'Stock clearance', 'Near-expiry offer'][i % 3],
+      discountPercentage: [10, 15, 20, 25][i % 4],
+      startDate: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+      endDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+      status: 'approved',
+      approvedAt: now,
+    }));
+  if (docs.length) await Offer.insertMany(docs);
+  return docs.length;
 }
 
 async function seedDemoCatalogImages() {
   const users = await User.find({ phone: { $in: WAREHOUSES.map((w) => w.phone) }, role: 'warehouse' })
-    .select('_id')
+    .select('_id phone')
     .lean();
   const warehouses = await Warehouse.find({ userId: { $in: users.map((u) => u._id) } })
     .select('_id')
     .lean();
   if (warehouses.length === 0) return null;
+  const warehouseIds = warehouses.map((w) => w._id);
 
   let uploaded = 0;
   let stocked = 0;
   for (const [index, row] of ITEMS.entries()) {
-    let catalog;
+    let item;
     try {
-      const hadImage = await ProductCatalog.exists({ nameAr: row[1], manufacturerAr: row[2], imageUrl: { $ne: null } });
-      catalog = await findOrCreateCatalogItem(row);
+      const hadImage = await ProductCatalog.exists({ nameAr: row.name, manufacturerAr: row.manufacturer, imageUrl: { $ne: null } });
+      item = await findOrCreateCatalogItem(row);
       if (!hadImage) uploaded += 1;
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error(`Demo image ${row[1]} failed:`, err.message);
+      console.error(`Demo image ${row.name} failed:`, err.message);
       continue;
     }
 
     for (const [w, warehouse] of warehouses.entries()) {
-      if (await Product.exists({ warehouseId: warehouse._id, masterProductId: catalog.item._id })) continue;
+      if (await Product.exists({ warehouseId: warehouse._id, masterProductId: item._id })) continue;
       // Each warehouse prices a little differently, and skips a few items, so
       // comparing warehouses shows something.
       if ((index + w) % 5 === 4) continue;
       await Product.create({
         warehouseId: warehouse._id,
-        masterProductId: catalog.item._id,
-        unit: catalog.unit,
-        price: Math.round(row[6] * (1 + w * 0.04) * 100) / 100,
+        masterProductId: item._id,
+        unit: row.unit,
+        price: Math.round(row.priceUsd * (1 + w * 0.04) * 100) / 100,
         isAvailable: true,
       });
       stocked += 1;
     }
   }
-  const dated = await dateDemoProducts(warehouses.map((w) => w._id));
-  return { uploaded, stocked, dated };
+  const linked = await linkLegacyProducts(warehouseIds);
+  const logos = await addDemoLogos(users);
+  const discounts = await addDemoDiscounts(warehouseIds);
+  const dated = await dateDemoProducts(warehouseIds);
+  return { uploaded, stocked, linked, logos, discounts, dated };
 }
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;

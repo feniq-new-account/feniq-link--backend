@@ -107,9 +107,9 @@ async function start() {
         console.log(`Seeded demo data: ${seeded.warehouses} warehouses, ${seeded.products} products.`);
       }
       const pictured = await seedDemoCatalogImages();
-      if (pictured && (pictured.uploaded || pictured.stocked || pictured.dated)) {
+      if (pictured) {
         // eslint-disable-next-line no-console
-        console.log(`Demo medicines with pictures: ${pictured.uploaded} uploaded, ${pictured.stocked} stocked, ${pictured.dated} dated.`);
+        console.log(`Demo catalog: ${JSON.stringify(pictured)}`);
       }
       const seededOrders = await seedDemoOrders();
       await turnOffDemoSealPhoto();

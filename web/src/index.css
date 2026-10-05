@@ -4537,6 +4537,17 @@ a.adm-pill {
   opacity: 1;
 }
 
+/* Month / year batch date (components/MonthYearInput.jsx). */
+.month-year-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.month-year-input select {
+  flex: 1;
+  min-width: 0;
+}
+
 /* One colour per order stage, so where an order stands reads at a glance
    without reading the label: pending amber, confirmed blue, preparing
    purple, on the way teal, delivered green, cancelled red. The advance
