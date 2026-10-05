@@ -2,6 +2,10 @@
 # أو يدوياً من تبويب Actions ← Build Android APK ← Run workflow.
 # الملف الناتج: صفحة التشغيل ← Artifacts ← feniq-apk.
 #
+# للتجربة من الموبايل: كل بناء على main يضع آخر نسخة على رابط ثابت (أسرع من
+# Artifacts، ملف APK مباشر بدون zip، وبنصف الحجم لأنه للمعالجات الحديثة فقط):
+# https://github.com/phoenixxx-dev/feniq-backend/releases/download/test-latest/feniq-test.apk
+#
 # التوقيع: من أسرار المستودع ANDROID_KEYSTORE_BASE64 و ANDROID_KEYSTORE_PASSWORD
 # و ANDROID_KEY_ALIAS و ANDROID_KEY_PASSWORD (المفتاح الدائم — انظر
 # phoenix/android/README.md). بدونها يُبنى APK تجريبي بمفتاح مؤقت باسم
@@ -31,6 +35,10 @@ on:
       api_base_url:
         description: 'رابط السيرفر (اتركه فارغاً للافتراضي)'
         required: false
+
+# contents: write - to put the main build on the fixed "test-latest" release.
+permissions:
+  contents: write
 
 concurrency:
   group: android-apk-${{ github.ref }}
@@ -140,3 +148,29 @@ jobs:
           name: ${{ steps.signing.outputs.artifact }}
           path: phoenix/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
+
+      # The fixed download link for trying the app on a phone: a release asset
+      # is served straight as an .apk (no zip) and downloads much faster than
+      # an artifact. Built for 64-bit ARM only (every current phone), which
+      # halves the size. main only - a PR never replaces it.
+      - name: Build phone APK (arm64)
+        if: github.event_name != 'pull_request'
+        run: >
+          flutter build apk --release
+          --target-platform android-arm64
+          --build-number=${{ github.run_number }}
+          --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
+
+      - name: Publish to the test-latest release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk feniq-test.apk
+          notes="آخر نسخة تجريبية من main (بناء رقم ${{ github.run_number }}، ${GITHUB_SHA::7}). احذف التطبيق القديم قبل التثبيت إذا كانت نسخة تجريبية."
+          if gh release view test-latest >/dev/null 2>&1; then
+            gh release upload test-latest feniq-test.apk --clobber
+            gh release edit test-latest --notes "$notes"
+          else
+            gh release create test-latest feniq-test.apk --prerelease --title "Feniq - آخر نسخة تجريبية" --notes "$notes" --target "$GITHUB_SHA"
+          fi
