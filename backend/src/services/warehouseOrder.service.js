@@ -277,8 +277,13 @@ async function getOrderDetailForWarehouse(orderId, warehouseId) {
       .select('nameAr nameEn ownerName address city phone verificationPhoto'),
     Return.findOne({ orderId: order._id }).select('_id'),
   ]);
+  // Whether this warehouse already rated the pharmacy on this order - the
+  // rating lives on the order page (not in the orders list).
+  const review = order.status === 'delivered'
+    ? await Review.exists({ orderId: order._id, reviewerType: 'warehouse' })
+    : null;
 
-  return { order, items, pharmacy, hasReturn: Boolean(returnRequest) };
+  return { order, items, pharmacy, hasReturn: Boolean(returnRequest), hasReviewed: Boolean(review) };
 }
 
 const ORDER_ITEMS_EDITED_NOTE = 'تم تعديل أصناف الطلب من قبل المستودع';

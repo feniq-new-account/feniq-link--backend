@@ -46,3 +46,15 @@ describe('syncAdvancedWithRows', () => {
     expect(syncAdvancedWithRows(advanced, [order('a', 1, 'confirmed')])).toBe(advanced);
   });
 });
+
+describe('nextStatusOf', () => {
+  it('walks the stages one at a time and stops at delivered or cancelled', () => {
+    const { nextStatusOf } = require('./warehouseOrdersList');
+    expect(nextStatusOf('pending')).toBe('confirmed');
+    expect(nextStatusOf('confirmed')).toBe('preparing');
+    expect(nextStatusOf('preparing')).toBe('out_for_delivery');
+    expect(nextStatusOf('out_for_delivery')).toBe('delivered');
+    expect(nextStatusOf('delivered')).toBeNull();
+    expect(nextStatusOf('cancelled')).toBeNull();
+  });
+});

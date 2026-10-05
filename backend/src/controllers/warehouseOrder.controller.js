@@ -35,13 +35,10 @@ const list = asyncHandler(async (req, res) => {
 
 const getDetail = asyncHandler(async (req, res) => {
   const warehouse = await loadWarehouseOrThrow(req.user._id);
-  const { order, items, pharmacy, hasReturn } = await warehouseOrderService.getOrderDetailForWarehouse(
-    req.params.id,
-    warehouse._id
-  );
+  const detail = await warehouseOrderService.getOrderDetailForWarehouse(req.params.id, warehouse._id);
   res.json({
     success: true,
-    ...warehouseOrderViewModel.toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn }),
+    ...warehouseOrderViewModel.toWarehouseOrderDetailResponse(detail),
   });
 });
 

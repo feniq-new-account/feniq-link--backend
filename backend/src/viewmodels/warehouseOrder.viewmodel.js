@@ -76,7 +76,7 @@ function toWarehouseOrdersResponse(rows) {
 // set of existing order fields, not the trimmed list-item shape above.
 // `hasReturn` is deliberately just a boolean (a badge, per the request) -
 // the return's own detail is that feature's own page, not this one's job.
-function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn }) {
+function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn, hasReviewed }) {
   return {
     order: {
       id: order._id,
@@ -100,6 +100,7 @@ function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn }) {
       discountCode: serializeOrderDiscountCode(order.discountCode, { forWarehouse: true }),
       platformCompensationSyp: platformCompensationOf(order),
       finalPrice: order.finalPrice,
+      hasReviewed: Boolean(hasReviewed),
       // Money-Flow V2: what the WAREHOUSE actually keeps on this order, once
       // the platform's commission comes off what the pharmacy pays. V1 stored
       // commissionAmount and showed it nowhere, so a warehouse could not see
