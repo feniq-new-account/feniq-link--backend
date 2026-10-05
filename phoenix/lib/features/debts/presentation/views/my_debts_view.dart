@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
@@ -23,7 +24,7 @@ class MyDebtsView extends StatelessWidget {
         foregroundColor: Colors.white,
         title: Text(l10n.debtsTitle),
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: () => context.read<DebtsCubit>().load(),
         child: ListView(
           padding: AppPadding.screen,

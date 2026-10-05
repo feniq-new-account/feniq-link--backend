@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -61,7 +62,7 @@ class PharmacyReviewsView extends StatelessWidget {
             );
           }
           if (state.reviews.isEmpty) {
-            return RefreshIndicator(
+            return AppRefreshIndicator(
               onRefresh: () => context.read<PharmacyReviewsCubit>().load(),
               child: LayoutBuilder(
                 builder: (context, constraints) => SingleChildScrollView(
@@ -75,7 +76,7 @@ class PharmacyReviewsView extends StatelessWidget {
             );
           }
 
-          return RefreshIndicator(
+          return AppRefreshIndicator(
             onRefresh: () => context.read<PharmacyReviewsCubit>().load(),
             child: ListView(
               padding: AppPadding.screen,

@@ -323,7 +323,9 @@ test('the catalog list viewmodel is unchanged by the product projection', async 
         // Additive (catalog overhaul Phases 7-8) - nothing was dropped.
         'finalPriceSyp', 'priceRate', 'offerDiscountPercentage', 'manufacturerDiscountPercentage', 'unit', 'bonuses',
         // Additive (active ingredient / alternatives).
-        'activeIngredient', 'strength', 'dosageForm'].sort()
+        'activeIngredient', 'strength', 'dosageForm',
+        // Additive (the batch on sale).
+        'productionDate', 'expiryDate'].sort()
     );
     assert.strictEqual(typeof row.priceUsd, 'number', 'priceUsd must be a real number, not undefined');
     assert.strictEqual(typeof row.discountPriceUsd, 'number');

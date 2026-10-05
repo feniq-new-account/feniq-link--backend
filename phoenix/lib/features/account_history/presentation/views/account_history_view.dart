@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_radius.dart';
@@ -45,7 +46,7 @@ class AccountHistoryView extends StatelessWidget {
         foregroundColor: Colors.white,
         title: Text(l10n.accountHistoryTitle),
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: () => _refreshAll(context),
         child: ListView(
           padding: AppPadding.screen,

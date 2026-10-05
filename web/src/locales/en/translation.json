@@ -576,6 +576,8 @@
     "errorChanged": "Someone else changed this product in the meantime - close the form and open it again.",
     "unit": "Unit",
     "bonus": "Bonus (e.g. 10+1)",
+    "productionDate": "Production date",
+    "expiryDate": "Expiry date",
     "legacyUnit": "current",
     "errorBonus": "The bonus could not be read - write it like 10+1 or 10+1، 20+3."
   },

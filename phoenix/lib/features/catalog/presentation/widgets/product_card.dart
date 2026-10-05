@@ -114,8 +114,22 @@ class _GridCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.vertical(top: AppRadius.large.topLeft),
-                child: _ProductImage(url: product.image, manufacturer: product.manufacturerAr, aspectRatio: 1.25),
+                child: _ProductImage(url: product.image, manufacturer: product.manufacturerAr, aspectRatio: 1.4),
               ),
+              // Strength and dosage form each in their own corner, never
+              // folded into the name.
+              if (_hasText(product.strength))
+                PositionedDirectional(
+                  bottom: AppSizes.spacingXSmall,
+                  start: AppSizes.spacingXSmall,
+                  child: _CornerChip(label: product.strength!, emphasized: true),
+                ),
+              if (_hasText(product.dosageForm))
+                PositionedDirectional(
+                  bottom: AppSizes.spacingXSmall,
+                  end: AppSizes.spacingXSmall,
+                  child: _CornerChip(label: product.dosageForm!),
+                ),
               if (!product.isAvailable)
                 PositionedDirectional(
                   top: AppSizes.spacingSmall,
@@ -135,20 +149,11 @@ class _GridCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: context.textTheme.titleSmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                _NameText(name: name),
                 const SizedBox(height: 2),
-                Text(
-                  manufacturer,
-                  style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                _ManufacturerText(manufacturer: manufacturer),
                 _IngredientLine(product: product),
+                _BatchDates(product: product),
                 const SizedBox(height: AppSizes.spacingXSmall),
                 _PriceDisplay(product: product),
                 _AlternativesLink(product: product, onTap: onShowAlternatives),
@@ -212,20 +217,23 @@ class _ListRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: context.textTheme.titleSmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                _NameText(name: name),
                 const SizedBox(height: 2),
-                Text(
-                  manufacturer,
-                  style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                _ManufacturerText(manufacturer: manufacturer),
                 _IngredientLine(product: product),
+                _BatchDates(product: product),
+                if (_hasText(product.strength) || _hasText(product.dosageForm))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: [
+                        if (_hasText(product.strength)) _CornerChip(label: product.strength!, emphasized: true),
+                        if (_hasText(product.dosageForm)) _CornerChip(label: product.dosageForm!),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: AppSizes.spacingXSmall),
                 _PriceDisplay(product: product),
                 _AlternativesLink(product: product, onTap: onShowAlternatives),
@@ -252,8 +260,8 @@ class _ListRow extends StatelessWidget {
   }
 }
 
-// "PARACETAMOL · 500 MG/TAB." under the company - what the medicine is made of
-// and how strong. Nothing when the catalog item has no ingredient.
+// "PARACETAMOL" under the company - what the medicine is made of (its
+// strength has its own chip). Nothing when the catalog item has no ingredient.
 class _IngredientLine extends StatelessWidget {
   const _IngredientLine({required this.product});
 
@@ -263,8 +271,7 @@ class _IngredientLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final ingredient = product.activeIngredient;
     if (ingredient == null || ingredient.isEmpty) return const SizedBox.shrink();
-    final strength = product.strength;
-    final text = strength == null || strength.isEmpty ? ingredient : '$ingredient · $strength';
+    final text = ingredient;
     return Padding(
       padding: const EdgeInsets.only(top: 2),
       child: Text(
@@ -355,7 +362,7 @@ class _PriceDisplay extends StatelessWidget {
         formatMoneySyp(product.finalSypAt(usdToSyp), l10n.currencySuffix),
         style: context.textTheme.titleSmall?.copyWith(
           color: AppColors.primaryOf(context),
-          fontSize: 15,
+          fontSize: 14,
         ),
       );
     }
@@ -378,7 +385,7 @@ class _PriceDisplay extends StatelessWidget {
           style: TextStyle(
             color: AppColors.secondaryOf(context),
             fontWeight: FontWeight.bold,
-            fontSize: 15,
+            fontSize: 14,
           ),
         ),
       ],
@@ -434,6 +441,115 @@ class _CompanyTile extends StatelessWidget {
       child: name.trim().isEmpty
           ? Icon(Icons.medication_outlined, color: AppColors.textSecondaryOf(context))
           : ManufacturerAvatar(name: name),
+    );
+  }
+}
+
+bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+
+// The medicine's name: kept compact so a card shows the name, company,
+// strength, form and dates without scrolling.
+class _NameText extends StatelessWidget {
+  const _NameText({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      name,
+      style: context.textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w700, height: 1.25),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+}
+
+class _ManufacturerText extends StatelessWidget {
+  const _ManufacturerText({required this.manufacturer});
+
+  final String manufacturer;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      manufacturer,
+      style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 11),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+}
+
+// A small label for the strength ("500 MG") or the dosage form ("أقراص").
+class _CornerChip extends StatelessWidget {
+  const _CornerChip({required this.label, this.emphasized = false});
+
+  final String label;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = emphasized ? AppColors.navyOf(context) : AppColors.surfaceElevatedOf(context);
+    final textColor = emphasized ? Colors.white : AppColors.textOf(context);
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 110),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(6),
+        border: emphasized ? null : Border.all(color: AppColors.borderOf(context)),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textDirection: _isLatin(label) ? TextDirection.ltr : null,
+        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: textColor, height: 1.2),
+      ),
+    );
+  }
+
+  static bool _isLatin(String text) => RegExp(r'^[\x00-\x7F]+$').hasMatch(text);
+}
+
+// "إنتاج 03/2026 · انتهاء 03/2028" - the batch on sale, when the warehouse
+// gave it. An expiry less than six months away is shown in the warning colour.
+class _BatchDates extends StatelessWidget {
+  const _BatchDates({required this.product});
+
+  final ProductModel product;
+
+  static String _format(DateTime date) => '${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+  @override
+  Widget build(BuildContext context) {
+    final produced = product.productionDate;
+    final expires = product.expiryDate;
+    if (produced == null && expires == null) return const SizedBox.shrink();
+    final l10n = context.l10n;
+    final base = context.textTheme.bodySmall?.copyWith(fontSize: 10.5, color: AppColors.textSecondaryOf(context));
+    final expiresSoon = expires != null && expires.isBefore(DateTime.now().add(const Duration(days: 183)));
+    return Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            if (produced != null) TextSpan(text: l10n.productionDateShort(_format(produced))),
+            if (produced != null && expires != null) const TextSpan(text: '  ·  '),
+            if (expires != null)
+              TextSpan(
+                text: l10n.expiryDateShort(_format(expires)),
+                style: expiresSoon
+                    ? TextStyle(color: AppColors.warningOf(context), fontWeight: FontWeight.w700)
+                    : null,
+              ),
+          ],
+        ),
+        style: base,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }

@@ -48,6 +48,8 @@ function serializeProductWithOffer({ product, offer, manufacturerDiscountPercent
     offerDiscountPercentage: offer ? offer.discountPercentage : null,
     manufacturerDiscountPercentage: manufacturerDiscountPercentage ?? null,
     unit: product.unit ?? null,
+    productionDate: product.productionDate ? new Date(product.productionDate).toISOString().slice(0, 10) : null,
+    expiryDate: product.expiryDate ? new Date(product.expiryDate).toISOString().slice(0, 10) : null,
     bonuses: (product.bonuses ?? []).map((tier) => ({ buy: tier.buy, free: tier.free })),
   };
 

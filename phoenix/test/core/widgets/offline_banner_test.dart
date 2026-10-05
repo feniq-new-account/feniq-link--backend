@@ -48,20 +48,40 @@ void main() {
 
   testWidgets('shows nothing while everything is live', (tester) async {
     await tester.pumpWidget(_app());
-    expect(find.byType(OfflineStrip), findsNothing);
+    expect(find.byType(OfflineToast), findsNothing);
     expect(find.text('screen'), findsOneWidget);
   });
 
-  testWidgets('shows the strip with the time of the saved copy, and removes it again', (tester) async {
+  testWidgets('flashes the notice with the time of the saved copy, then hides it by itself', (tester) async {
     await tester.pumpWidget(_app());
     OfflineStatus.instance.servedFromSavedCopy(DateTime(2026, 10, 4, 9, 5));
     await tester.pump();
-    expect(find.byType(OfflineStrip), findsOneWidget);
+    expect(find.byType(OfflineToast), findsOneWidget);
     expect(find.textContaining('4/10 09:05'), findsOneWidget);
 
+    await tester.pump(OfflineBannerFrame.visibleFor + const Duration(milliseconds: 100));
+    expect(find.byType(OfflineToast), findsNothing, reason: 'it does not stay pinned while still offline');
+  });
+
+  testWidgets('shows once per offline spell, and again after coming back online', (tester) async {
+    await tester.pumpWidget(_app());
+    OfflineStatus.instance.servedFromSavedCopy(DateTime(2026, 10, 4, 9, 5));
+    await tester.pump(OfflineBannerFrame.visibleFor + const Duration(milliseconds: 100));
+
+    // Another fallback while still offline: no second notice.
+    OfflineStatus.instance.servedFromSavedCopy(DateTime(2026, 10, 4, 9, 6));
+    await tester.pump();
+    expect(find.byType(OfflineToast), findsNothing);
+
+    // Back online hides it at once; the next offline spell shows it again.
     OfflineStatus.instance.live();
     await tester.pump();
-    expect(find.byType(OfflineStrip), findsNothing);
+    OfflineStatus.instance.servedFromSavedCopy(DateTime(2026, 10, 4, 9, 7));
+    await tester.pump();
+    expect(find.byType(OfflineToast), findsOneWidget);
+    OfflineStatus.instance.live();
+    await tester.pump();
+    expect(find.byType(OfflineToast), findsNothing);
   });
 
   testWidgets('the screen below is not rebuilt from scratch when the strip comes and goes', (tester) async {

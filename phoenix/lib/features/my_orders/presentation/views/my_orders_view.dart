@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_radius.dart';
@@ -106,7 +107,7 @@ class _MyOrdersViewState extends State<MyOrdersView> {
             );
           }
           if (state.orders.isEmpty) {
-            return RefreshIndicator(
+            return AppRefreshIndicator(
               onRefresh: () => context.read<MyOrdersCubit>().load(),
               child: _EmptyOrders(
                 onBrowse: () => context.goNamed(RouteNames.warehouseSelection),
@@ -114,7 +115,7 @@ class _MyOrdersViewState extends State<MyOrdersView> {
             );
           }
 
-          return RefreshIndicator(
+          return AppRefreshIndicator(
             onRefresh: () => context.read<MyOrdersCubit>().load(),
             child: ListView.separated(
               controller: _scrollController,

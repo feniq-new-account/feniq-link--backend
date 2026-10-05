@@ -155,6 +155,27 @@ function unitFieldsFrom(data) {
   return undefined;
 }
 
+// productionDate / expiryDate from the form: a date string, or null / '' to
+// clear; undefined when not sent.
+function dateFrom(value, field) {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  const date = typeof value === 'string' ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    throw ApiError.badRequest(`Invalid ${field}.`, undefined, 'INVALID_DATE');
+  }
+  return date;
+}
+
+function batchDatesFrom(data) {
+  const dates = {};
+  for (const field of ['productionDate', 'expiryDate']) {
+    const date = dateFrom(data[field], field);
+    if (date !== undefined) dates[field] = date;
+  }
+  return dates;
+}
+
 // Bonus tiers from the form - an array of { buy, free } or the text form
 // ("10+1، 20+3"); undefined when not sent, [] to clear (utils/bonus.js).
 function bonusesFrom(data) {
@@ -227,6 +248,7 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
   validatePrice(data.priceUsd);
   unitFieldsFrom(data);
   bonusesFrom(data);
+  batchDatesFrom(data);
   imageUrlInput(data.image);
   await assertRateUsedIsCurrent(data.rateUsed, { required: requireRateUsed });
 
@@ -257,6 +279,8 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
             description: data.description,
             image: data.image,
             priceUsd: data.priceUsd,
+            productionDate: data.productionDate,
+            expiryDate: data.expiryDate,
             manuallyDisabled,
           },
           { session, resolve: false }
@@ -273,6 +297,7 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
             categoryId: data.categoryId,
             ...unitFieldsFrom(data),
             bonuses: bonusesFrom(data) ?? [],
+            ...batchDatesFrom(data),
             description:
               typeof data.description === 'string' && data.description.trim() ? data.description.trim() : null,
             image: imageUrlInput(data.image) ?? null,
@@ -362,6 +387,8 @@ async function applyProductUpdate(
   if (bonuses !== undefined) {
     product.bonuses = bonuses;
   }
+
+  Object.assign(product, batchDatesFrom(changes));
 
   if (changes.categoryId !== undefined) {
     await validateCategoryId(changes.categoryId);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -155,7 +156,7 @@ class _LoadedBody extends StatelessWidget {
     // Nothing is running at all - a calm "come back later", the app's standard
     // empty state, never an error.
     if (state.promotions.isEmpty) {
-      return RefreshIndicator(
+      return AppRefreshIndicator(
         onRefresh: cubit.load,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -171,7 +172,7 @@ class _LoadedBody extends StatelessWidget {
       );
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: cubit.load,
       // Both listings are paginated server-side: nearing the end of the list
       // asks the cubit for the next page (a no-op while one is in flight or

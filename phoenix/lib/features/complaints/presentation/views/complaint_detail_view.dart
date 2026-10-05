@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_radius.dart';
@@ -80,7 +81,7 @@ class ComplaintDetailView extends StatelessWidget {
           }
 
           final complaint = state.complaint!;
-          return RefreshIndicator(
+          return AppRefreshIndicator(
             onRefresh: () => context.read<ComplaintDetailCubit>().load(),
             child: ListView(
               padding: AppPadding.screen,

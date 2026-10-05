@@ -43,6 +43,9 @@ class _RegistrationViewState extends State<RegistrationView> {
   // the map's own reverse-geocoded text, and it's what gets submitted as
   // `address` below.
   String? _resolvedAddress;
+  // Set by the map's "choose this location" button, cleared by "change
+  // location" - registration needs an explicitly chosen point.
+  bool _locationConfirmed = false;
   String? _addressError;
 
   @override
@@ -60,8 +63,13 @@ class _RegistrationViewState extends State<RegistrationView> {
       _latitude = latitude;
       _longitude = longitude;
       _resolvedAddress = address;
-      if (address != null && address.isNotEmpty) _addressError = null;
+      _locationConfirmed = true;
+      _addressError = null;
     });
+  }
+
+  void _handleLocationCleared() {
+    setState(() => _locationConfirmed = false);
   }
 
   // Section 6-2/3: registers and routes directly by the resulting
@@ -73,9 +81,11 @@ class _RegistrationViewState extends State<RegistrationView> {
     final address = _resolvedAddress?.trim() ?? '';
     setState(() {
       _termsError = _agreedToTerms ? null : l10n.termsAgreementRequiredError;
-      _addressError = address.isEmpty ? l10n.addressNotResolvedYetMessage : null;
+      _addressError = !_locationConfirmed
+          ? l10n.confirmLocationRequiredError
+          : (address.isEmpty ? l10n.addressNotResolvedYetMessage : null);
     });
-    if (!formValid || !_agreedToTerms || address.isEmpty) return;
+    if (!formValid || !_agreedToTerms || _addressError != null) return;
 
     final cubit = context.read<AuthCubit>();
     final registered = await cubit.register(
@@ -176,6 +186,7 @@ class _RegistrationViewState extends State<RegistrationView> {
                             LocationMapField(
                               label: l10n.addressLabel,
                               onChanged: _handleLocationChanged,
+                              onCleared: _handleLocationCleared,
                             ),
                             if (_addressError != null) ...[
                               const SizedBox(height: AppSizes.spacingXSmall),

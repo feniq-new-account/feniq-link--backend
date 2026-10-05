@@ -82,6 +82,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addressLabel => 'Address';
 
   @override
+  String get confirmLocationButton => 'Choose this location';
+
+  @override
+  String get locationConfirmedText => 'Location chosen';
+
+  @override
+  String get changeLocationButton => 'Change location';
+
+  @override
+  String get confirmLocationRequiredError =>
+      'Tap \"Choose this location\" to confirm the pharmacy\'s location';
+
+  @override
   String get pickLocationHint =>
       'Move the map to fine-tune the pin\'s position';
 
@@ -405,6 +418,21 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String offlineBannerMessage(String time) {
     return 'No connection - showing the copy saved on your phone from $time. Prices and availability may have changed, and sending an order needs a connection.';
+  }
+
+  @override
+  String offlineToastMessage(String time) {
+    return 'No connection - showing the saved copy ($time)';
+  }
+
+  @override
+  String productionDateShort(String date) {
+    return 'Made $date';
+  }
+
+  @override
+  String expiryDateShort(String date) {
+    return 'Exp. $date';
   }
 
   @override

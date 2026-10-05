@@ -24,6 +24,10 @@
   "pharmacyNameHint": "مثال: صيدلية النور",
   "phoneLabel": "رقم الهاتف",
   "addressLabel": "العنوان",
+  "confirmLocationButton": "اختيار هذا الموقع",
+  "locationConfirmedText": "تم اختيار الموقع",
+  "changeLocationButton": "تغيير الموقع",
+  "confirmLocationRequiredError": "اضغط على «اختيار هذا الموقع» لتأكيد موقع الصيدلية",
   "pickLocationHint": "حرّك الخريطة لضبط موضع المؤشر بدقة",
   "resolvingAddressText": "جارِ تحديد العنوان...",
   "locationPermissionDeniedMessage": "تعذّر الوصول لموقعك، يمكنك تحريك الخريطة يدوياً لتحديد الموقع.",
@@ -177,6 +181,30 @@
   "@offlineBannerMessage": {
     "placeholders": {
       "time": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineToastMessage": "لا يوجد اتصال - تُعرض النسخة المحفوظة ({time})",
+  "@offlineToastMessage": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "productionDateShort": "إنتاج {date}",
+  "@productionDateShort": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "expiryDateShort": "انتهاء {date}",
+  "@expiryDateShort": {
+    "placeholders": {
+      "date": {
         "type": "String"
       }
     }
