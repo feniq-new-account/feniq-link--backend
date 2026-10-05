@@ -79,6 +79,10 @@ module.exports = {
     apiKey: process.env.CLOUDINARY_API_KEY || '',
     apiSecret: process.env.CLOUDINARY_API_SECRET || '',
   },
+  // New pharmacy registrations are active immediately by default. Set
+  // REQUIRE_ACCOUNT_APPROVAL=true to send them to the admin approval queue
+  // (status 'pending') instead.
+  requireAccountApproval: process.env.REQUIRE_ACCOUNT_APPROVAL === 'true',
   imageApiKey: process.env.IMAGE_API_KEY || '',
   // Images kept on this server's own disk instead of Cloudinary - for a
   // deployment that must stay inside the country (services/mediaStorage.service.js).

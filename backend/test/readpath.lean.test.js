@@ -275,7 +275,7 @@ test('loginWithPassword returns the full auth shape for an existing user', async
 // pharmacy.model.js as of the package-availability merge - without it this
 // registration fails schema validation before it ever reaches the projection
 // this suite exists to guard, which is why this test was red on main.
-test('register creates a pending pharmacy and returns the documented auth shape', async () => {
+test('register creates an active pharmacy and returns the documented auth shape', async () => {
   const result = await authService.register({
     name: 'Fresh Owner',
     pharmacyName: 'Fresh Pharmacy',
@@ -291,7 +291,7 @@ test('register creates a pending pharmacy and returns the documented auth shape'
     ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
   );
   assert.strictEqual(payload.user.role, 'pharmacy');
-  assert.strictEqual(payload.user.status, 'pending', 'new accounts await admin approval');
+  assert.strictEqual(payload.user.status, 'active', 'new accounts are auto-approved by default');
   assert.strictEqual(payload.pharmacy.ownerName, 'Fresh Owner');
   assert.strictEqual(payload.warehouse, null);
   assert.ok(result.token);

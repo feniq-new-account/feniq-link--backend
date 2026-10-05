@@ -8,6 +8,7 @@ const { startLedgerVerifier } = require('./services/ledgerVerifier.service');
 const { ensureFinancialIndexes } = require('./services/ledger.service');
 const { ensureDiscountCodeIndexes } = require('./services/discountCode.service');
 const { initRealtime } = require('./realtime');
+const User = require('./models/user.model');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
 // not 'production':
@@ -77,6 +78,19 @@ async function start() {
           '',
         ].join('\n')
       );
+    }
+
+    // With approval turned off, pharmacies that registered while it was on
+    // would otherwise sit on the approval-pending screen forever.
+    if (!env.requireAccountApproval) {
+      const { modifiedCount } = await User.updateMany(
+        { role: 'pharmacy', status: 'pending' },
+        { $set: { status: 'active' } }
+      );
+      if (modifiedCount) {
+        // eslint-disable-next-line no-console
+        console.log(`Auto-approved ${modifiedCount} pending pharmacy account(s).`);
+      }
     }
 
     startScheduledRefresh();
