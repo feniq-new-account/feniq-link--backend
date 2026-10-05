@@ -1,0 +1,1242 @@
+[
+ {
+  "file": "e691583fcfe7bfbe",
+  "name": "SPASMOLGIN CTD TAB.",
+  "manufacturer": "آسيا",
+  "strength": null,
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "METAMIZOLE + PITOFENONE + FENPIVERINIUM",
+  "unit": "box",
+  "priceUsd": 3.2
+ },
+ {
+  "file": "eb94b187107b853b",
+  "name": "GLUCOMET-500 TAB.",
+  "manufacturer": "آسيا",
+  "strength": "500 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "METFORMIN",
+  "unit": "box",
+  "priceUsd": 1.1
+ },
+ {
+  "file": "7b018a8e512b849c",
+  "name": "ROZIFAX-1000 VIAL",
+  "manufacturer": "آسيا",
+  "strength": "1000 MG",
+  "dosageForm": "فيال",
+  "activeIngredient": "CEFTRIAXONE",
+  "unit": "vial",
+  "priceUsd": 1.6
+ },
+ {
+  "file": "2cc8ebca0ec971d2",
+  "name": "HYDRODERM CREAM (30 G)",
+  "manufacturer": "بحري",
+  "strength": "1 %",
+  "dosageForm": "كريم",
+  "activeIngredient": "HYDROCORTISONE",
+  "unit": "tube",
+  "priceUsd": 1.4
+ },
+ {
+  "file": "3cd5a53958012629",
+  "name": "DEPAK SYRUP (200 ML)",
+  "manufacturer": "بحري",
+  "strength": "200 MG/5 ML",
+  "dosageForm": "شراب",
+  "activeIngredient": "VALPROIC ACID",
+  "unit": "bottle",
+  "priceUsd": 2.9
+ },
+ {
+  "file": "956de5e070bb2805",
+  "name": "BURN-HEAL CREAM (50 G)",
+  "manufacturer": "بحري",
+  "strength": null,
+  "dosageForm": "كريم",
+  "activeIngredient": "SILVER SULFADIAZINE",
+  "unit": "tube",
+  "priceUsd": 1.8
+ },
+ {
+  "file": "e8fec5103296213a",
+  "name": "COTAGIZEC CTD TAB.",
+  "manufacturer": "شفا",
+  "strength": null,
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "SULFAMETHOXAZOLE + TRIMETHOPRIM",
+  "unit": "box",
+  "priceUsd": 2.4
+ },
+ {
+  "file": "6cbc47852ddaba4d",
+  "name": "LIDO-2 % AMP.",
+  "manufacturer": "شفا",
+  "strength": "2 %",
+  "dosageForm": "أمبولات",
+  "activeIngredient": "LIDOCAINE",
+  "unit": "ampoule",
+  "priceUsd": 0.3
+ },
+ {
+  "file": "4823bf9d2b16f600",
+  "name": "ROCEF-2000 VIAL",
+  "manufacturer": "شفا",
+  "strength": "2000 MG",
+  "dosageForm": "فيال",
+  "activeIngredient": "CEFTRIAXONE",
+  "unit": "vial",
+  "priceUsd": 2.1
+ },
+ {
+  "file": "ba298f0c6414eac0",
+  "name": "TRAGLIPTIN TAB.",
+  "manufacturer": "بركات",
+  "strength": "5 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "LINAGLIPTIN",
+  "unit": "box",
+  "priceUsd": 4.5
+ },
+ {
+  "file": "d995ba0c4e7b3cd1",
+  "name": "TOLIDON CTD TAB.",
+  "manufacturer": "بركات",
+  "strength": null,
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "DOMPERIDONE",
+  "unit": "box",
+  "priceUsd": 2.2
+ },
+ {
+  "file": "6aaf4d7c66c0e1ed",
+  "name": "TRAMAL AMP.",
+  "manufacturer": "ابن زهر",
+  "strength": "100 MG/2 ML",
+  "dosageForm": "أمبولات",
+  "activeIngredient": "TRAMADOL",
+  "unit": "ampoule",
+  "priceUsd": 0.9
+ },
+ {
+  "file": "0ed1eb0b8d01d98e",
+  "name": "TICALOR TAB.",
+  "manufacturer": "ابن زهر",
+  "strength": "90 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "TICAGRELOR",
+  "unit": "box",
+  "priceUsd": 9.5
+ },
+ {
+  "file": "77b3f0beb4acbea6",
+  "name": "BROMAZEPAM HUMAN-1.5 CAP.",
+  "manufacturer": "هيومن فارما",
+  "strength": "1.5 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "BROMAZEPAM",
+  "unit": "box",
+  "priceUsd": 1.3
+ },
+ {
+  "file": "0db1427f08168bb4",
+  "name": "COVIAN 160/12.5 TAB.",
+  "manufacturer": "هيومن فارما",
+  "strength": "160/12.5 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "VALSARTAN + HYDROCHLOROTHIAZIDE",
+  "unit": "box",
+  "priceUsd": 3.6
+ },
+ {
+  "file": "16f5e7bd71f8ec7c",
+  "name": "NEOSTATINE SUSP. (60 ML)",
+  "manufacturer": "الشهباء",
+  "strength": "100000 IU/ML",
+  "dosageForm": "معلق",
+  "activeIngredient": "NYSTATIN",
+  "unit": "bottle",
+  "priceUsd": 1.5
+ },
+ {
+  "file": "d345cfcd1d0f6747",
+  "name": "LOWVASC 20/5 TAB.",
+  "manufacturer": "زين فارما",
+  "strength": "20/5 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "OLMESARTAN + AMLODIPINE",
+  "unit": "box",
+  "priceUsd": 3.9
+ },
+ {
+  "file": "54738238b310df04",
+  "name": "VISITO-TROP 1% EYE DROPS",
+  "manufacturer": "دومنا",
+  "strength": "1 %",
+  "dosageForm": "قطرة عينية",
+  "activeIngredient": "TROPICAMIDE",
+  "unit": "bottle",
+  "priceUsd": 1.7
+ },
+ {
+  "file": "dc10e61f09240ddd",
+  "name": "DE-HISTAMINE TAB.",
+  "manufacturer": "السعد",
+  "strength": "4 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "CHLORPHENIRAMINE",
+  "unit": "box",
+  "priceUsd": 0.8
+ },
+ {
+  "file": "b7a0338347a630ef",
+  "name": "GABALYR-150 CAP.",
+  "manufacturer": "السعد",
+  "strength": "150 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "PREGABALIN",
+  "unit": "box",
+  "priceUsd": 3.4
+ },
+ {
+  "file": "c37a08caac383819",
+  "name": "METFORMIN-ELSAAD 1000 F.CTD TAB.",
+  "manufacturer": "السعد",
+  "strength": "1000 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "METFORMIN",
+  "unit": "box",
+  "priceUsd": 1.6
+ },
+ {
+  "file": "eb8b051374cec3a2",
+  "name": "POVI TEARS EYE DROP (15 ML)",
+  "manufacturer": "دياموند فارما",
+  "strength": null,
+  "dosageForm": "قطرة عينية",
+  "activeIngredient": "POVIDONE",
+  "unit": "bottle",
+  "priceUsd": 2.3
+ },
+ {
+  "file": "57823f5031c4349f",
+  "name": "VERMORAM SUSP. (30 ML)",
+  "manufacturer": "راما",
+  "strength": "100 MG/5 ML",
+  "dosageForm": "معلق",
+  "activeIngredient": "MEBENDAZOLE",
+  "unit": "bottle",
+  "priceUsd": 1.2
+ },
+ {
+  "file": "8e560f98b39ebbda",
+  "name": "CARTE SYRUP (5 ML)",
+  "manufacturer": "راما",
+  "strength": null,
+  "dosageForm": "شراب",
+  "activeIngredient": "LEVOCARNITINE",
+  "unit": "bottle",
+  "priceUsd": 1.9
+ },
+ {
+  "file": "9ecabcff6437cd86",
+  "name": "CLARITHRO-250 CTD TAB. (10 TAB)",
+  "manufacturer": "بحري",
+  "strength": "250 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "CLARITHROMYCIN",
+  "unit": "box",
+  "priceUsd": 3.63
+ },
+ {
+  "file": "9e673bdd25c0cd16",
+  "name": "PREGABALIN BAHRI-75 CAP. (30 CAP)",
+  "manufacturer": "بحري",
+  "strength": "75 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "PREGABALIN",
+  "unit": "box",
+  "priceUsd": 5.94
+ },
+ {
+  "file": "68e1d0f8766671d6",
+  "name": "CIPROXENE-500 CTD TAB. (10 TAB)",
+  "manufacturer": "بحري",
+  "strength": "500 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "CIPROFLOXACIN",
+  "unit": "box",
+  "priceUsd": 4.6
+ },
+ {
+  "file": "6b9163083660cb84",
+  "name": "LOSARDIPIN PLUS 160/10/12.5 F.CTD TAB. (30 TAB)",
+  "manufacturer": "الفارس",
+  "strength": null,
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "LOSARTAN",
+  "unit": "box",
+  "priceUsd": 1.47
+ },
+ {
+  "file": "423fe51b88bec75c",
+  "name": "PARACETAMOL BAHRI TAB. (20 TAB)",
+  "manufacturer": "بحري",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "PARACETAMOL",
+  "unit": "box",
+  "priceUsd": 3.79
+ },
+ {
+  "file": "4bae320b19b9f272",
+  "name": "NITROBID -SUSP. (100 ML)",
+  "manufacturer": "بحري",
+  "strength": null,
+  "dosageForm": "معلق",
+  "activeIngredient": "NITROGLYCERIN",
+  "unit": "bottle",
+  "priceUsd": 6.71
+ },
+ {
+  "file": "1aa92e13cbd95069",
+  "name": "GLUCOMET-1000 CTD TAB. (20 TAB)",
+  "manufacturer": "آسيا",
+  "strength": "1000 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "METFORMIN",
+  "unit": "box",
+  "priceUsd": 2.24
+ },
+ {
+  "file": "5b73cc67586cbac4",
+  "name": "NEW-LORATADINE SYRUP (100 ML)",
+  "manufacturer": "بركات",
+  "strength": null,
+  "dosageForm": "شراب",
+  "activeIngredient": "LORATADINE",
+  "unit": "bottle",
+  "priceUsd": 1.92
+ },
+ {
+  "file": "889445c9d95a1029",
+  "name": "BARAVIT CAP. (30 CAP)",
+  "manufacturer": "بركات",
+  "strength": null,
+  "dosageForm": "محافظ",
+  "activeIngredient": "ASCORBIC ACID",
+  "unit": "box",
+  "priceUsd": 2.68
+ },
+ {
+  "file": "c372930f0c3fb3db",
+  "name": "FELDEXAM 10 (20 CAP)",
+  "manufacturer": "يونيفارما",
+  "strength": "10 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "DEXAMETHASONE",
+  "unit": "box",
+  "priceUsd": 5.45
+ },
+ {
+  "file": "c1e00f890423be8c",
+  "name": "COVALSAR-320/25 CTD TAB. (20 TAB)",
+  "manufacturer": "بحري",
+  "strength": "320/25 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "VALSARTAN",
+  "unit": "box",
+  "priceUsd": 6.42
+ },
+ {
+  "file": "c03bab46768e5e4f",
+  "name": "CAPTOPRIL-50 TAB. (20 TAB)",
+  "manufacturer": "كيمي",
+  "strength": "50 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "CAPTOPRIL",
+  "unit": "box",
+  "priceUsd": 1.67
+ },
+ {
+  "file": "7e3781109869ce11",
+  "name": "ATORVASTATIN BAHRI-40 F.CTD TAB. (10 TAB)",
+  "manufacturer": "بحري",
+  "strength": "40 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "ATORVASTATIN",
+  "unit": "box",
+  "priceUsd": 1.68
+ },
+ {
+  "file": "8dbd1b516f069a7d",
+  "name": "PREDNIMAN -5 TAB. (20 TAB)",
+  "manufacturer": "هيومن فارما",
+  "strength": "5 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "PREDNISOLONE",
+  "unit": "box",
+  "priceUsd": 2.31
+ },
+ {
+  "file": "8e7db0ebb5a9129b",
+  "name": "CELECOXIB HUMAN-100 CAP. (20 CAP)",
+  "manufacturer": "هيومن فارما",
+  "strength": "100 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "CELECOXIB",
+  "unit": "box",
+  "priceUsd": 2.85
+ },
+ {
+  "file": "d6d5a3e9821a7452",
+  "name": "PARACETAMOL PLUS HUMAN TAB. (500 TAB)",
+  "manufacturer": "هيومن فارما",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "PARACETAMOL",
+  "unit": "box",
+  "priceUsd": 4.2
+ },
+ {
+  "file": "f77a1c7ccb6205e1",
+  "name": "ATORVAMOND-40 CTD TAB. (14 TAB)",
+  "manufacturer": "دياموند فارما",
+  "strength": "40 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "ATORVASTATIN",
+  "unit": "box",
+  "priceUsd": 1.71
+ },
+ {
+  "file": "81dd01374be72f8d",
+  "name": "NAPROX 500 TAB. (20 TAB)",
+  "manufacturer": "بحري",
+  "strength": "500 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "NAPROXEN",
+  "unit": "box",
+  "priceUsd": 2.86
+ },
+ {
+  "file": "6f8228aae28204a2",
+  "name": "AUGMENTA-312.5 DRY SYRUP (100 ML)",
+  "manufacturer": "آسيا",
+  "strength": "312.5 MG",
+  "dosageForm": "شراب",
+  "activeIngredient": "AMOXICILLIN + CLAVULANIC ACID",
+  "unit": "bottle",
+  "priceUsd": 1.91
+ },
+ {
+  "file": "d62a1b6c58242b2a",
+  "name": "NEW CETAMOL TAB. (24 TAB)",
+  "manufacturer": "السعد",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "PARACETAMOL",
+  "unit": "box",
+  "priceUsd": 7.33
+ },
+ {
+  "file": "394129eb99414fff",
+  "name": "VALSABITRIL-51/49 (20 TAB)",
+  "manufacturer": "حماة",
+  "strength": "51/49 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "VALSARTAN",
+  "unit": "box",
+  "priceUsd": 5.63
+ },
+ {
+  "file": "91cbcdc89fcf099a",
+  "name": "DICLOFENAC-75 AMP. (100 AMP)",
+  "manufacturer": "كيمي",
+  "strength": "75 MG",
+  "dosageForm": "أمبولات",
+  "activeIngredient": "DICLOFENAC",
+  "unit": "ampoule",
+  "priceUsd": 1.3
+ },
+ {
+  "file": "a16398657339146b",
+  "name": "KETOCONAZOL SUSP. (125 ML)",
+  "manufacturer": "شفا",
+  "strength": null,
+  "dosageForm": "معلق",
+  "activeIngredient": "KETOCONAZOLE",
+  "unit": "bottle",
+  "priceUsd": 7.24
+ },
+ {
+  "file": "07acde19b631719c",
+  "name": "DIAZEPAM DOMINA-10 AMP. (1 AMP)",
+  "manufacturer": "دومنا",
+  "strength": "10 MG",
+  "dosageForm": "أمبولات",
+  "activeIngredient": "DIAZEPAM",
+  "unit": "ampoule",
+  "priceUsd": 1.3
+ },
+ {
+  "file": "3714f2fc517ecbae",
+  "name": "NYSTADERM CREAM (20 G)",
+  "manufacturer": "بركات",
+  "strength": null,
+  "dosageForm": "كريم",
+  "activeIngredient": "NYSTATIN",
+  "unit": "tube",
+  "priceUsd": 3.25
+ },
+ {
+  "file": "29e980b18dd4593a",
+  "name": "VALSAMAK PLUS 80/12.5 CTD TAB. (30 TAB)",
+  "manufacturer": "السعد",
+  "strength": "80/12.5 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "VALSARTAN",
+  "unit": "box",
+  "priceUsd": 7.39
+ },
+ {
+  "file": "180037c4f10d1a76",
+  "name": "GENTALINA CREAM (30 G)",
+  "manufacturer": "دلتا",
+  "strength": null,
+  "dosageForm": "كريم",
+  "activeIngredient": "GENTAMICIN",
+  "unit": "tube",
+  "priceUsd": 6.08
+ },
+ {
+  "file": "586441d5127583bd",
+  "name": "LOSARDIPIN 160/10 CTD TAB. (30 TAB)",
+  "manufacturer": "الفارس",
+  "strength": "160/10 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "LOSARTAN",
+  "unit": "box",
+  "priceUsd": 5.66
+ },
+ {
+  "file": "a36c645e0757d6f3",
+  "name": "METRONIDAZOLE HAMA PHARMA-500 TAB. (20 TAB)",
+  "manufacturer": "حماة",
+  "strength": "500 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "METRONIDAZOLE",
+  "unit": "box",
+  "priceUsd": 3.6
+ },
+ {
+  "file": "44761bc5c5de824e",
+  "name": "ACYCLOVIR RAMA SUSP. (100 ML)",
+  "manufacturer": "راما",
+  "strength": null,
+  "dosageForm": "معلق",
+  "activeIngredient": "ACICLOVIR",
+  "unit": "bottle",
+  "priceUsd": 1.95
+ },
+ {
+  "file": "5537677bb521b164",
+  "name": "TRAMADOL DOMINA AMP. (5 AMP)",
+  "manufacturer": "دومنا",
+  "strength": null,
+  "dosageForm": "أمبولات",
+  "activeIngredient": "TRAMADOL",
+  "unit": "ampoule",
+  "priceUsd": 5.0
+ },
+ {
+  "file": "96e2346c004a4ce7",
+  "name": "AMOXICILLIN-500 VIAL (100 VIAL)",
+  "manufacturer": "شفا",
+  "strength": "500 MG",
+  "dosageForm": "فيال",
+  "activeIngredient": "AMOXICILLIN",
+  "unit": "vial",
+  "priceUsd": 1.34
+ },
+ {
+  "file": "1fe7030bcadb11fe",
+  "name": "LIDO-1 % AMP. (100 AMP)",
+  "manufacturer": "شفا",
+  "strength": null,
+  "dosageForm": "أمبولات",
+  "activeIngredient": "LIDOCAINE",
+  "unit": "ampoule",
+  "priceUsd": 2.02
+ },
+ {
+  "file": "64b1444288e8d02e",
+  "name": "VALPRORAMA SYRUP (200 ML)",
+  "manufacturer": "راما",
+  "strength": null,
+  "dosageForm": "شراب",
+  "activeIngredient": "VALPROIC ACID",
+  "unit": "bottle",
+  "priceUsd": 3.28
+ },
+ {
+  "file": "a460ed35cdd35284",
+  "name": "KETOPROFEN AMP. (5 AMP)",
+  "manufacturer": "شفا",
+  "strength": null,
+  "dosageForm": "أمبولات",
+  "activeIngredient": "KETOPROFEN",
+  "unit": "ampoule",
+  "priceUsd": 0.83
+ },
+ {
+  "file": "5b5ff7c4fabedbbd",
+  "name": "CLARITROCID-250 CTD TAB. (14 TAB)",
+  "manufacturer": "دومنا",
+  "strength": "250 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "CLARITHROMYCIN",
+  "unit": "box",
+  "priceUsd": 3.35
+ },
+ {
+  "file": "053780d98a7d469e",
+  "name": "IBUPROFEN AVENZOR-100 SUSP. (100 ML)",
+  "manufacturer": "ابن زهر",
+  "strength": null,
+  "dosageForm": "معلق",
+  "activeIngredient": "IBUPROFEN",
+  "unit": "bottle",
+  "priceUsd": 6.06
+ },
+ {
+  "file": "abf6f629d76ebb7c",
+  "name": "PREDNITOP CREAM (30 G)",
+  "manufacturer": "راما",
+  "strength": null,
+  "dosageForm": "كريم",
+  "activeIngredient": "PREDNISOLONE",
+  "unit": "tube",
+  "priceUsd": 5.38
+ },
+ {
+  "file": "a58bee4652496154",
+  "name": "AZMIRON SUSP (30 ML)",
+  "manufacturer": "مسعود فارما",
+  "strength": null,
+  "dosageForm": "معلق",
+  "activeIngredient": "IRON",
+  "unit": "bottle",
+  "priceUsd": 4.05
+ },
+ {
+  "file": "9f26b2532f9430f5",
+  "name": "UNI METFORAL 500 (40 TAB)",
+  "manufacturer": "يونيفارما",
+  "strength": "500 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "METFORMIN",
+  "unit": "box",
+  "priceUsd": 4.96
+ },
+ {
+  "file": "1ea0c6cedf53486b",
+  "name": "LANSOPRAZOLE-30 CAP. (20 CAP)",
+  "manufacturer": "شفا",
+  "strength": "30 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "LANSOPRAZOLE",
+  "unit": "box",
+  "priceUsd": 3.8
+ },
+ {
+  "file": "1f478d5b4f156303",
+  "name": "MELOXICAM DOMINA-15 TAB. (20 TAB)",
+  "manufacturer": "دومنا",
+  "strength": "15 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "MELOXICAM",
+  "unit": "box",
+  "priceUsd": 1.58
+ },
+ {
+  "file": "6a61dbd6650edd6e",
+  "name": "CLARIMAN - 500 (20 TAB)",
+  "manufacturer": "هيومن فارما",
+  "strength": "500 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "CLARITHROMYCIN",
+  "unit": "box",
+  "priceUsd": 4.77
+ },
+ {
+  "file": "0386a2c598c4255c",
+  "name": "DICLOSMART-50 F.CTD TAB. (20 TAB)",
+  "manufacturer": "ابن زهر",
+  "strength": "50 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "DICLOFENAC",
+  "unit": "box",
+  "priceUsd": 3.39
+ },
+ {
+  "file": "7c2ad9fbea8cf739",
+  "name": "ROSUVA-20 CTD TAB. (28 TAB)",
+  "manufacturer": "يونيفارما",
+  "strength": "20 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "ROSUVASTATIN",
+  "unit": "box",
+  "priceUsd": 5.71
+ },
+ {
+  "file": "9ecfbd497af4df86",
+  "name": "PREGABALIN BARAKAT-150 CAP (30 CAP)",
+  "manufacturer": "بركات",
+  "strength": "150 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "PREGABALIN",
+  "unit": "box",
+  "priceUsd": 6.87
+ },
+ {
+  "file": "2bd9959ac74e58e4",
+  "name": "ROSUVASTAT-20 CTD TAB. (30 TAB)",
+  "manufacturer": "دياموند فارما",
+  "strength": "20 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "ROSUVASTATIN",
+  "unit": "box",
+  "priceUsd": 3.57
+ },
+ {
+  "file": "bccbdb6661026ebc",
+  "name": "AMOXIPEN SUSP. (100 ML)",
+  "manufacturer": "بركات",
+  "strength": null,
+  "dosageForm": "معلق",
+  "activeIngredient": "AMOXICILLIN",
+  "unit": "bottle",
+  "priceUsd": 4.56
+ },
+ {
+  "file": "21035aebce22e210",
+  "name": "KETOPROFEN RAMA SYRUP (100 ML)",
+  "manufacturer": "راما",
+  "strength": null,
+  "dosageForm": "شراب",
+  "activeIngredient": "KETOPROFEN",
+  "unit": "bottle",
+  "priceUsd": 5.77
+ },
+ {
+  "file": "414a8a7ca9987654",
+  "name": "LORATIVAN-2 TAB. (20 TAB)",
+  "manufacturer": "دومنا",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "LORATADINE",
+  "unit": "box",
+  "priceUsd": 3.51
+ },
+ {
+  "file": "df3dcfa3dd8074b5",
+  "name": "DIASPIROGYL CTD TAB. (20 TAB)",
+  "manufacturer": "دياموند فارما",
+  "strength": null,
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "ACETYLSALICYLIC ACID",
+  "unit": "box",
+  "priceUsd": 2.18
+ },
+ {
+  "file": "9bf496e2e286d40a",
+  "name": "CIPROKINOL-500 CTD TAB. (20 TAB)",
+  "manufacturer": "كيمي",
+  "strength": "500 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "CIPROFLOXACIN",
+  "unit": "box",
+  "priceUsd": 5.58
+ },
+ {
+  "file": "d51d70b05005ec49",
+  "name": "TOLIDON PLUS TAB. (10 TAB)",
+  "manufacturer": "بركات",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "LIDOCAINE",
+  "unit": "box",
+  "priceUsd": 6.67
+ },
+ {
+  "file": "7176ddab56c0980d",
+  "name": "ENALAPRIL ALFARES-20 TAB. (30 TAB)",
+  "manufacturer": "الفارس",
+  "strength": "20 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "ENALAPRIL",
+  "unit": "box",
+  "priceUsd": 5.94
+ },
+ {
+  "file": "e858106b1c28b3aa",
+  "name": "ES-OMEPRAL 40 CAP. (20 CAP)",
+  "manufacturer": "آسيا",
+  "strength": "40 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "OMEPRAZOLE",
+  "unit": "box",
+  "priceUsd": 5.43
+ },
+ {
+  "file": "4192cd02d5964f30",
+  "name": "CIPROKINOL-750 CTD TAB. (20 TAB)",
+  "manufacturer": "كيمي",
+  "strength": "750 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "CIPROFLOXACIN",
+  "unit": "box",
+  "priceUsd": 6.48
+ },
+ {
+  "file": "c2151f6016b4e31c",
+  "name": "DICLOFENAC K HUMAN-50 CTD TAB. (20 TAB)",
+  "manufacturer": "هيومن فارما",
+  "strength": "50 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "DICLOFENAC",
+  "unit": "box",
+  "priceUsd": 5.29
+ },
+ {
+  "file": "4fe178c0d21e95d2",
+  "name": "AMOXICILLIN-1000 VIAL (100 VIAL)",
+  "manufacturer": "شفا",
+  "strength": "1000 MG",
+  "dosageForm": "فيال",
+  "activeIngredient": "AMOXICILLIN",
+  "unit": "vial",
+  "priceUsd": 5.03
+ },
+ {
+  "file": "c6518dbf8d18bd44",
+  "name": "ASPIRIN-75 CTD TAB. (30 TAB)",
+  "manufacturer": "دومنا",
+  "strength": "75 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "ACETYLSALICYLIC ACID",
+  "unit": "box",
+  "priceUsd": 3.73
+ },
+ {
+  "file": "007d814de08b6c9e",
+  "name": "BETA-NEOMYCINE CREAM (30 G)",
+  "manufacturer": "دومنا",
+  "strength": null,
+  "dosageForm": "كريم",
+  "activeIngredient": "NEOMYCIN",
+  "unit": "tube",
+  "priceUsd": 2.76
+ },
+ {
+  "file": "e224e87b67c0c258",
+  "name": "TRAMAL (20 TAB)",
+  "manufacturer": "ابن زهر",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "TRAMADOL",
+  "unit": "box",
+  "priceUsd": 4.94
+ },
+ {
+  "file": "959d10b83dd6f9fa",
+  "name": "ASPIRIN HUMAN-100 (30 TAB)",
+  "manufacturer": "هيومن فارما",
+  "strength": "100 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "ACETYLSALICYLIC ACID",
+  "unit": "box",
+  "priceUsd": 1.28
+ },
+ {
+  "file": "ddbdcb934c52e970",
+  "name": "FUROSEMIDE DOMINA-50 AMP. (5 AMP)",
+  "manufacturer": "دومنا",
+  "strength": "50 MG",
+  "dosageForm": "أمبولات",
+  "activeIngredient": "FUROSEMIDE",
+  "unit": "ampoule",
+  "priceUsd": 3.5
+ },
+ {
+  "file": "89a14da4968986b6",
+  "name": "ULTRAVIT CTD TAB. (100 TAB)",
+  "manufacturer": "آسيا",
+  "strength": null,
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "ASCORBIC ACID",
+  "unit": "box",
+  "priceUsd": 6.0
+ },
+ {
+  "file": "01d883f2c5299539",
+  "name": "TOBRA-80 AMP. (5 AMP)",
+  "manufacturer": "شفا",
+  "strength": "80 MG",
+  "dosageForm": "أمبولات",
+  "activeIngredient": "TOBRAMYCIN",
+  "unit": "ampoule",
+  "priceUsd": 5.52
+ },
+ {
+  "file": "395c5c39fb945000",
+  "name": "DICLONEUR (20 TAB)",
+  "manufacturer": "يونيفارما",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "DICLOFENAC",
+  "unit": "box",
+  "priceUsd": 4.94
+ },
+ {
+  "file": "40e668d099be2680",
+  "name": "NITRONTINE-100 CAP. (20 CAP)",
+  "manufacturer": "كيمي",
+  "strength": "100 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "NITROGLYCERIN",
+  "unit": "box",
+  "priceUsd": 2.33
+ },
+ {
+  "file": "76163a984a330122",
+  "name": "KETOPROFEN RAMA GEL (30 G)",
+  "manufacturer": "راما",
+  "strength": null,
+  "dosageForm": "جل",
+  "activeIngredient": "KETOPROFEN",
+  "unit": "tube",
+  "priceUsd": 3.52
+ },
+ {
+  "file": "d0c9a229794dd6e9",
+  "name": "LIDOSOL FORTE 5% GEL (30 ML)",
+  "manufacturer": "راما",
+  "strength": null,
+  "dosageForm": "جل",
+  "activeIngredient": "LIDOCAINE",
+  "unit": "tube",
+  "priceUsd": 3.74
+ },
+ {
+  "file": "145bc3cd109e4dcb",
+  "name": "FOLICID TAB. (30 TAB)",
+  "manufacturer": "كيمي",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "FOLIC ACID",
+  "unit": "box",
+  "priceUsd": 4.89
+ },
+ {
+  "file": "e8ce506902f83ad6",
+  "name": "ONDANSET SYRUP (100 ML)",
+  "manufacturer": "راما",
+  "strength": null,
+  "dosageForm": "شراب",
+  "activeIngredient": "ONDANSETRON",
+  "unit": "bottle",
+  "priceUsd": 3.42
+ },
+ {
+  "file": "1cf5660e0b78cdcf",
+  "name": "PARACETAMOL HAMA PHARMA 1000 TAB. (20 TAB)",
+  "manufacturer": "حماة",
+  "strength": "1000 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "PARACETAMOL",
+  "unit": "box",
+  "priceUsd": 5.26
+ },
+ {
+  "file": "dcb12c34b8777f6e",
+  "name": "NITRONTINE-25 CAP. (20 CAP)",
+  "manufacturer": "كيمي",
+  "strength": "25 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "NITROGLYCERIN",
+  "unit": "box",
+  "priceUsd": 7.02
+ },
+ {
+  "file": "55079bb64afa4249",
+  "name": "AZITROLYD 200 DRY SYRUP (15 ML)",
+  "manufacturer": "الفارس",
+  "strength": "200 MG",
+  "dosageForm": "شراب",
+  "activeIngredient": "AZITHROMYCIN",
+  "unit": "bottle",
+  "priceUsd": 1.86
+ },
+ {
+  "file": "c57813e12c4ba38a",
+  "name": "DICLOFENAC KIMI-25 SUPP. (10 SUPP)",
+  "manufacturer": "كيمي",
+  "strength": "25 MG",
+  "dosageForm": "تحاميل",
+  "activeIngredient": "DICLOFENAC",
+  "unit": "suppository",
+  "priceUsd": 5.12
+ },
+ {
+  "file": "50690c33e7a85d4a",
+  "name": "DEXAMINE TAB. (30 TAB)",
+  "manufacturer": "آسيا",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "DEXAMETHASONE",
+  "unit": "box",
+  "priceUsd": 5.97
+ },
+ {
+  "file": "7309de4ca92f6e65",
+  "name": "LANSOPRAZOLE-15 CAP. (20 CAP)",
+  "manufacturer": "شفا",
+  "strength": "15 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "LANSOPRAZOLE",
+  "unit": "box",
+  "priceUsd": 3.28
+ },
+ {
+  "file": "1ec989ef8828131a",
+  "name": "FUCITOP CREAM (30 G)",
+  "manufacturer": "راما",
+  "strength": null,
+  "dosageForm": "كريم",
+  "activeIngredient": "FUSIDIC ACID",
+  "unit": "tube",
+  "priceUsd": 3.98
+ },
+ {
+  "file": "838e3de468902326",
+  "name": "VALPROVITAL DROPS (60 ML)",
+  "manufacturer": "فيتا فارما",
+  "strength": null,
+  "dosageForm": "نقط",
+  "activeIngredient": "VALPROIC ACID",
+  "unit": "bottle",
+  "priceUsd": 7.32
+ },
+ {
+  "file": "547baff10771e96d",
+  "name": "NITROMOND CAP. (20 CAP)",
+  "manufacturer": "دياموند فارما",
+  "strength": null,
+  "dosageForm": "محافظ",
+  "activeIngredient": "NITROGLYCERIN",
+  "unit": "box",
+  "priceUsd": 0.86
+ },
+ {
+  "file": "0dceb846fc125dd4",
+  "name": "AUGMENTA-625 CTD TAB. (15 TAB)",
+  "manufacturer": "آسيا",
+  "strength": "625 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "AMOXICILLIN + CLAVULANIC ACID",
+  "unit": "box",
+  "priceUsd": 4.35
+ },
+ {
+  "file": "0706f5604087b0bb",
+  "name": "METFORMIN-ELSAAD 500 F.CTD TAB. (20 TAB)",
+  "manufacturer": "السعد",
+  "strength": "500 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "METFORMIN",
+  "unit": "box",
+  "priceUsd": 1.71
+ },
+ {
+  "file": "bd1703b67c462935",
+  "name": "DICLOZONE B12 (20 TAB)",
+  "manufacturer": "هيومن فارما",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "DICLOFENAC",
+  "unit": "box",
+  "priceUsd": 5.99
+ },
+ {
+  "file": "60de43e5938c736e",
+  "name": "AMBROXOL HUMAN TAB. (20 TAB)",
+  "manufacturer": "هيومن فارما",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "AMBROXOL",
+  "unit": "box",
+  "priceUsd": 7.09
+ },
+ {
+  "file": "d43085289a6eb1ce",
+  "name": "HYDROCORT TAB. (100 TAB)",
+  "manufacturer": "الفارس",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "HYDROCORTISONE",
+  "unit": "box",
+  "priceUsd": 4.18
+ },
+ {
+  "file": "73e1115e1355c4eb",
+  "name": "SIMVATROL-40/145 (30 TAB)",
+  "manufacturer": "حماة",
+  "strength": "40/145 MG",
+  "dosageForm": "أقراص",
+  "activeIngredient": "SIMVASTATIN",
+  "unit": "box",
+  "priceUsd": 1.3
+ },
+ {
+  "file": "2b7f54654e126157",
+  "name": "LOSARTAN-100 CTD TAB. (30 TAB)",
+  "manufacturer": "آسيا",
+  "strength": "100 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "LOSARTAN",
+  "unit": "box",
+  "priceUsd": 4.56
+ },
+ {
+  "file": "fa0e08a22e1dd466",
+  "name": "TOBRABIOTIC EYE DROP (8 ML)",
+  "manufacturer": "دلتا",
+  "strength": null,
+  "dosageForm": "قطرة عينية",
+  "activeIngredient": "TOBRAMYCIN",
+  "unit": "bottle",
+  "priceUsd": 4.33
+ },
+ {
+  "file": "1aa81e5db3db7593",
+  "name": "LANSODOL-15 CAP. (20 CAP)",
+  "manufacturer": "دلتا",
+  "strength": "15 MG",
+  "dosageForm": "محافظ",
+  "activeIngredient": "LANSOPRAZOLE",
+  "unit": "box",
+  "priceUsd": 5.55
+ },
+ {
+  "file": "11df5645652634d6",
+  "name": "CONGESTIMOL (20 CAP)",
+  "manufacturer": "دياموند فارما",
+  "strength": null,
+  "dosageForm": "محافظ",
+  "activeIngredient": "TIMOLOL",
+  "unit": "box",
+  "priceUsd": 4.13
+ },
+ {
+  "file": "2c9baf6bc02228d4",
+  "name": "DICLOSAN-100 (10 SUPP)",
+  "manufacturer": "فيتا فارما",
+  "strength": "100 MG",
+  "dosageForm": "تحاميل",
+  "activeIngredient": "DICLOFENAC",
+  "unit": "suppository",
+  "priceUsd": 5.01
+ },
+ {
+  "file": "9a65d5817baff630",
+  "name": "TERBINA CREAM (15 G)",
+  "manufacturer": "السعد",
+  "strength": null,
+  "dosageForm": "كريم",
+  "activeIngredient": "TERBINAFINE",
+  "unit": "tube",
+  "priceUsd": 6.32
+ },
+ {
+  "file": "49f9ca26fff6f258",
+  "name": "LOSARTAN-25 CTD TAB. (50 TAB)",
+  "manufacturer": "آسيا",
+  "strength": "25 MG",
+  "dosageForm": "أقراص ملبسة",
+  "activeIngredient": "LOSARTAN",
+  "unit": "box",
+  "priceUsd": 4.2
+ },
+ {
+  "file": "25ee8f43b4260b2e",
+  "name": "FUCIDERM CREAM (20 G)",
+  "manufacturer": "دلتا",
+  "strength": null,
+  "dosageForm": "كريم",
+  "activeIngredient": "FUSIDIC ACID",
+  "unit": "tube",
+  "priceUsd": 3.43
+ },
+ {
+  "file": "0a1eb7ef25b81f72",
+  "name": "ROSUVA PLUS (20 TAB)",
+  "manufacturer": "يونيفارما",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "ROSUVASTATIN",
+  "unit": "box",
+  "priceUsd": 7.14
+ },
+ {
+  "file": "121a122fbee4d558",
+  "name": "PARACETAMOL PLUS BARAKAT TAB. (32 TAB)",
+  "manufacturer": "بركات",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "PARACETAMOL",
+  "unit": "box",
+  "priceUsd": 2.05
+ },
+ {
+  "file": "0b85c420f42aa995",
+  "name": "DICLOMOL (20 TAB)",
+  "manufacturer": "ابن زهر",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "DICLOFENAC",
+  "unit": "box",
+  "priceUsd": 5.32
+ },
+ {
+  "file": "2e621c1483b8cca9",
+  "name": "CIPROCORT EAR DROP (10 ML)",
+  "manufacturer": "دياموند فارما",
+  "strength": null,
+  "dosageForm": "قطرة أذنية",
+  "activeIngredient": "CIPROFLOXACIN",
+  "unit": "bottle",
+  "priceUsd": 3.31
+ },
+ {
+  "file": "419ea4a85fb0b295",
+  "name": "TRAMADOL HAMA PHARMA (20 TAB)",
+  "manufacturer": "حماة",
+  "strength": null,
+  "dosageForm": "أقراص",
+  "activeIngredient": "TRAMADOL",
+  "unit": "box",
+  "priceUsd": 5.86
+ },
+ {
+  "file": "eeb14e7579ac31ce",
+  "name": "ACYCLOVIR-DELTA EYE OINT. (5 G)",
+  "manufacturer": "دلتا",
+  "strength": null,
+  "dosageForm": "مرهم",
+  "activeIngredient": "ACICLOVIR",
+  "unit": "tube",
+  "priceUsd": 1.44
+ }
+]

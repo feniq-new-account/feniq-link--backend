@@ -7,6 +7,7 @@ import { submitWithRateCheck, withRateUsed } from '../utils/exchangeRate';
 import { useExchangeRateActions } from '../context/ExchangeRateContext';
 import { RateChangedNotice } from './RateChangedNotice';
 import { ImagePicker } from './ImagePicker';
+import { MonthYearInput, monthYearValue } from './MonthYearInput';
 
 export const EMPTY_PRODUCT_FORM = {
   masterProductId: null,
@@ -64,8 +65,9 @@ export function productFormFromProduct(product, usdToSyp) {
     price: priceSyp != null ? String(priceSyp) : '',
     priceUsd: product.priceUsd,
     description: product.description ?? '',
-    productionDate: product.productionDate ?? '',
-    expiryDate: product.expiryDate ?? '',
+    // Shown and saved as a whole month (MonthYearInput): '2026-03-15' -> '2026-03-01'.
+    productionDate: product.productionDate ? `${product.productionDate.slice(0, 7)}-01` : '',
+    expiryDate: product.expiryDate ? `${product.expiryDate.slice(0, 7)}-01` : '',
     // An older server sends only `image`, which was the override itself.
     imageOverride: ('imageOverride' in product ? product.imageOverride : product.image) ?? '',
     catalogImageUrl: product.catalogImageUrl ?? null,
@@ -388,8 +390,8 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
         bonus: mode === 'edit' || form.bonus.trim() ? form.bonus.trim() : undefined,
         priceUsd,
         // An emptied date on an edit clears it; on a create there is nothing to clear.
-        productionDate: form.productionDate || (mode === 'edit' ? null : undefined),
-        expiryDate: form.expiryDate || (mode === 'edit' ? null : undefined),
+        productionDate: monthYearValue(form.productionDate) || (mode === 'edit' ? null : undefined),
+        expiryDate: monthYearValue(form.expiryDate) || (mode === 'edit' ? null : undefined),
         ...descriptionAndImageFields({ mode, form, initial, imagesEnabled: Boolean(onUploadImage) }),
         manuallyDisabled: form.manuallyDisabled,
       },
@@ -503,20 +505,11 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
           <div className="form-row">
             <label>
               {t('productForm.productionDate')}
-              <input
-                type="date"
-                value={form.productionDate}
-                onChange={(e) => setField('productionDate', e.target.value)}
-              />
+              <MonthYearInput value={form.productionDate} onChange={(v) => setField('productionDate', v)} />
             </label>
             <label>
               {t('productForm.expiryDate')}
-              <input
-                type="date"
-                value={form.expiryDate}
-                min={form.productionDate || undefined}
-                onChange={(e) => setField('expiryDate', e.target.value)}
-              />
+              <MonthYearInput value={form.expiryDate} onChange={(v) => setField('expiryDate', v)} />
             </label>
           </div>
           <label>
