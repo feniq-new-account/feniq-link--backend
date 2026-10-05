@@ -414,6 +414,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addToCartButton => 'إضافة';
 
   @override
+  String get availableLabel => 'متوفر';
+
+  @override
   String get unavailableLabel => 'غير متوفر';
 
   @override

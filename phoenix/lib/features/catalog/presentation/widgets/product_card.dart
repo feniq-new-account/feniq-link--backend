@@ -201,59 +201,97 @@ class _ListRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final name = product.nameAr;
-    final manufacturer = product.manufacturerAr;
+    final meta = [
+      if (_hasText(product.strength)) product.strength!,
+      if (_hasText(product.dosageForm)) product.dosageForm!,
+    ].join('  •  ');
 
+    // Top: picture, then name / company / "strength • form", with the
+    // availability (or offer) pill in the far corner. Under it the batch
+    // dates, and a bottom bar with the price in its own rounded box and the
+    // cart action beside it.
     return CustomCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ClipRRect(
-            borderRadius: AppRadius.small,
-            child: _ProductImage(url: product.image, manufacturer: product.manufacturerAr, size: 56),
-          ),
-          const SizedBox(width: AppSizes.spacingMedium),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _NameText(name: name),
-                const SizedBox(height: 2),
-                _ManufacturerText(manufacturer: manufacturer),
-                _IngredientLine(product: product),
-                _BatchDates(product: product),
-                if (_hasText(product.strength) || _hasText(product.dosageForm))
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: [
-                        if (_hasText(product.strength)) _CornerChip(label: product.strength!, emphasized: true),
-                        if (_hasText(product.dosageForm)) _CornerChip(label: product.dosageForm!),
-                      ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: AppRadius.medium,
+                child: _ProductImage(url: product.image, manufacturer: product.manufacturerAr, size: 56),
+              ),
+              const SizedBox(width: AppSizes.spacingMedium),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.nameAr,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                     ),
-                  ),
-                const SizedBox(height: AppSizes.spacingXSmall),
-                _PriceDisplay(product: product),
-                _AlternativesLink(product: product, onTap: onShowAlternatives),
-              ],
-            ),
+                    const SizedBox(height: 2),
+                    Text(
+                      product.manufacturerAr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: AppColors.primaryOf(context),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (meta.isNotEmpty)
+                      Text(
+                        meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
+                      ),
+                    _IngredientLine(product: product),
+                    _BatchDates(product: product),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSizes.spacingSmall),
+              if (!product.isAvailable)
+                StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger)
+              else if (product.hasActiveOffer)
+                StatusBadge(label: l10n.offerBadgeLabel, tone: StatusBadgeTone.pending)
+              else
+                StatusBadge(label: l10n.availableLabel, tone: StatusBadgeTone.info),
+            ],
           ),
-          const SizedBox(width: AppSizes.spacingSmall),
-          if (!product.isAvailable)
-            StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger)
-          else if (cartQuantity > 0)
-            QuantityStepper(
-              quantity: cartQuantity,
-              compact: true,
-              decrementTooltip: l10n.decreaseQuantityLabel,
-              incrementTooltip: l10n.increaseQuantityLabel,
-              onChanged: onCartQuantityChanged ?? (_) {},
-              onBelowMin: onCartRemove,
-            )
-          else
-            AddToCartButton(available: true, onTap: onAddTap, compact: true),
+          const SizedBox(height: AppSizes.spacingSmall),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceOf(context),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: _PriceDisplay(product: product),
+                ),
+              ),
+              const SizedBox(width: AppSizes.spacingSmall),
+              if (product.isAvailable && cartQuantity > 0)
+                QuantityStepper(
+                  quantity: cartQuantity,
+                  compact: true,
+                  decrementTooltip: l10n.decreaseQuantityLabel,
+                  incrementTooltip: l10n.increaseQuantityLabel,
+                  onChanged: onCartQuantityChanged ?? (_) {},
+                  onBelowMin: onCartRemove,
+                )
+              else if (product.isAvailable)
+                AddToCartButton(available: true, onTap: onAddTap, compact: true),
+            ],
+          ),
+          _AlternativesLink(product: product, onTap: onShowAlternatives),
         ],
       ),
     );

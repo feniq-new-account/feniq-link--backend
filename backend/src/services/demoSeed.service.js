@@ -231,4 +231,22 @@ async function seedDemoOrders() {
   return { orders: created };
 }
 
-module.exports = { seedDemoDataIfEmpty, seedDemoOrders, DEMO_WAREHOUSE_PASSWORD, WAREHOUSES, DEMO_ORDERS };
+// A first admin for a fresh deployment, so the panel can be tried before a
+// real one is made with the create-admin workflow. Only while there is no
+// admin at all - the first real admin turns this off for good.
+const DEMO_ADMIN = { name: 'Feniq Admin', phone: '0930000100', password: 'Feniq@Admin2026' };
+
+async function seedDemoAdminIfNone() {
+  if (await User.exists({ role: 'admin' })) return null;
+  if (await User.exists({ phone: DEMO_ADMIN.phone })) return null;
+  await User.create({
+    name: DEMO_ADMIN.name,
+    phone: DEMO_ADMIN.phone,
+    password: await bcrypt.hash(DEMO_ADMIN.password, 10),
+    role: 'admin',
+    status: 'active',
+  });
+  return { phone: DEMO_ADMIN.phone };
+}
+
+module.exports = { seedDemoAdminIfNone, DEMO_ADMIN, seedDemoDataIfEmpty, seedDemoOrders, DEMO_WAREHOUSE_PASSWORD, WAREHOUSES, DEMO_ORDERS };

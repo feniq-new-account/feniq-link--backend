@@ -49,7 +49,7 @@ void main() {
     );
   });
 
-  testWidgets('in Arabic the prefix still leads the field (to its right)', (tester) async {
+  testWidgets('in Arabic too the 09 box sits on the left, the digits right after it', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('ar'),
@@ -65,7 +65,7 @@ void main() {
 
     expect(
       tester.getTopRight(find.text('09')).dx,
-      greaterThan(tester.getTopRight(find.byType(TextFormField)).dx),
+      lessThanOrEqualTo(tester.getTopLeft(find.byType(TextFormField)).dx),
     );
   });
 

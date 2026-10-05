@@ -800,6 +800,12 @@ abstract class AppLocalizations {
   /// **'Add'**
   String get addToCartButton;
 
+  /// No description provided for @availableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get availableLabel;
+
   /// No description provided for @unavailableLabel.
   ///
   /// In en, this message translates to:

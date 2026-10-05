@@ -177,6 +177,7 @@
   "searchProductsHint": "Search by name or manufacturer",
   "searchWarehouseProductsHint": "Search all of this warehouse's products",
   "addToCartButton": "Add",
+  "availableLabel": "Available",
   "unavailableLabel": "Unavailable",
   "offlineBannerMessage": "No connection - showing the copy saved on your phone from {time}. Prices and availability may have changed, and sending an order needs a connection.",
   "@offlineBannerMessage": {
