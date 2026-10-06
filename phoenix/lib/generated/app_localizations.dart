@@ -3199,6 +3199,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send only this warehouse\'s order'**
   String get submitThisWarehouseOnly;
+
+  /// No description provided for @exceptionalOfferBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Special offer'**
+  String get exceptionalOfferBadge;
 }
 
 class _AppLocalizationsDelegate

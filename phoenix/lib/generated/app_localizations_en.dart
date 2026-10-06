@@ -1882,4 +1882,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get submitThisWarehouseOnly => 'Send only this warehouse\'s order';
+
+  @override
+  String get exceptionalOfferBadge => 'Special offer';
 }

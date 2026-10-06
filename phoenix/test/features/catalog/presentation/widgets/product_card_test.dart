@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:feniq/core/widgets/custom_card.dart';
+import 'package:feniq/core/widgets/offer_badge.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
@@ -239,6 +241,31 @@ void main() {
       expect(find.textContaining('انتهاء'), findsNothing);
     });
   });
+
+  for (final isGrid in [true, false]) {
+    testWidgets('${isGrid ? 'grid' : 'list'}: a medicine on offer wears the red badge and frame', (tester) async {
+      await loadRate(13800);
+      const onOffer = ProductModel(
+        id: 'p4',
+        nameAr: 'دواء',
+        manufacturerAr: 'شركة',
+        priceUsd: 5,
+        discountPriceUsd: 4,
+        isAvailable: true,
+        hasActiveOffer: true,
+      );
+      await pumpCard(tester, product: onOffer, isGrid: isGrid, gridHeight: null);
+      expect(find.byType(OfferBadge), findsOneWidget);
+      expect(find.text('Special offer'), findsOneWidget);
+      final card = tester.widget<CustomCard>(find.byType(CustomCard));
+      expect(card.borderColor, isNotNull);
+
+      // A regular medicine: no badge, no frame.
+      await pumpCard(tester, isGrid: isGrid, gridHeight: null);
+      expect(find.byType(OfferBadge), findsNothing);
+      expect(tester.widget<CustomCard>(find.byType(CustomCard)).borderColor, isNull);
+    });
+  }
 
   testWidgets('a bonus offer shows the better bonus and the usual one it replaces', (tester) async {
     await loadRate(13800);

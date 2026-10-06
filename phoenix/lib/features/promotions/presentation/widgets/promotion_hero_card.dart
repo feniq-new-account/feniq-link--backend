@@ -27,10 +27,10 @@ class PromotionHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    // An offer is about one product, a package about several - the subtitle
-    // says which, in the terms the pharmacist thinks in.
+    // An offer leads with its medicine, the offer's own title under it; a
+    // package leads with its title, how many products under it.
     final subtitle = switch (promotion) {
-      final OfferPromotion offer => offer.productName,
+      OfferPromotion() => promotion.subline(isArabic) ?? '',
       PackagePromotion(:final advertisement) =>
         context.l10n.advertisementProductCount(advertisement.items.length),
     };
@@ -48,15 +48,15 @@ class PromotionHeroCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Both badges are Flexible: on a narrow phone a long
-                    // saving label would otherwise push the row past the card
-                    // edge instead of ellipsizing inside its own pill.
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // A Wrap: on a narrow phone the saving badge moves under
+                    // the offer badge rather than either being cut or pushed
+                    // past the card edge.
+                    Wrap(
+                      spacing: AppSizes.spacingSmall,
+                      runSpacing: AppSizes.spacingXSmall,
                       children: [
-                        Flexible(child: PromotionKindBadge(kind: promotion.kind)),
-                        const SizedBox(width: AppSizes.spacingSmall),
-                        Flexible(child: PromotionSavingBadge(promotion: promotion)),
+                        PromotionKindBadge(kind: promotion.kind),
+                        PromotionSavingBadge(promotion: promotion),
                       ],
                     ),
                     const SizedBox(height: AppSizes.spacingSmall),
@@ -75,7 +75,7 @@ class PromotionHeroCard extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  promotion.title(isArabic),
+                                  promotion.headline(isArabic),
                                   style: context.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.textOf(context),
@@ -161,15 +161,25 @@ class PromotionListCard extends StatelessWidget {
                       Flexible(
                         flex: 3,
                         child: FullText(
-                          promotion.title(isArabic),
+                          promotion.headline(isArabic),
                           style: context.textTheme.titleSmall?.copyWith(
                             color: AppColors.textOf(context),
+                            fontWeight: FontWeight.w700,
                           )),
                       ),
                       const SizedBox(width: AppSizes.spacingSmall),
                       Flexible(flex: 2, child: PromotionSavingBadge(promotion: promotion)),
                     ],
                   ),
+                  // The offer's own title ("عرض الشهر"), small, under the
+                  // medicine it is about.
+                  if (promotion.subline(isArabic) case final subline?) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subline,
+                      style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
+                    ),
+                  ],
                   const SizedBox(height: AppSizes.spacingXSmall),
                   PromotionMetaLine(promotion: promotion),
                   const SizedBox(height: AppSizes.spacingSmall),

@@ -15,11 +15,15 @@ class CustomCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(18),
     this.onTap,
+    this.borderColor,
   });
 
   final Widget child;
   final EdgeInsets padding;
   final VoidCallback? onTap;
+  // A coloured outline that sets this card apart (an exceptional offer is
+  // framed in red); null draws the usual hairline border.
+  final Color? borderColor;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +32,9 @@ class CustomCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceElevatedOf(context),
         borderRadius: AppRadius.large,
-        border: Border.all(color: AppColors.borderOf(context)),
+        border: borderColor == null
+            ? Border.all(color: AppColors.borderOf(context))
+            : Border.all(color: borderColor!, width: 1.5),
         boxShadow: AppShadows.card(context),
       ),
       child: onTap == null

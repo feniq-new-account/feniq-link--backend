@@ -1879,4 +1879,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get submitThisWarehouseOnly => 'إرسال طلب هالمستودع بس';
+
+  @override
+  String get exceptionalOfferBadge => 'عرض استثنائي';
 }

@@ -16,6 +16,7 @@ import 'package:feniq/features/catalog/presentation/widgets/manufacturer_avatar.
 import 'package:feniq/features/catalog/presentation/widgets/quantity_picker_sheet.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/core/utils/display_name.dart';
+import 'package:feniq/core/widgets/offer_badge.dart';
 
 // Two layouts sharing the same data/logic: a grid tile (image on top,
 // details below - the default) and a compact list row, toggled from
@@ -108,6 +109,8 @@ class _GridCard extends StatelessWidget {
 
     return CustomCard(
       padding: EdgeInsets.zero,
+      // An exceptional offer is framed in the badge's red.
+      borderColor: _onOffer(product) ? OfferBadge.frameColor(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -145,10 +148,10 @@ class _GridCard extends StatelessWidget {
                   child: StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger),
                 )
               else if (product.hasActiveOffer)
-                PositionedDirectional(
+                const PositionedDirectional(
                   top: AppSizes.spacingSmall,
                   end: AppSizes.spacingSmall,
-                  child: StatusBadge(label: l10n.offerBadgeLabel, tone: StatusBadgeTone.pending),
+                  child: OfferBadge(compact: true),
                 ),
             ],
           ),
@@ -216,11 +219,11 @@ class _ListRow extends StatelessWidget {
       if (_hasText(product.dosageForm)) product.dosageForm!,
     ].join('  •  ');
 
-    // Top: picture, then name / company / "strength • form", with the
-    // availability (or offer) pill in the far corner. Under it the batch
-    // dates, and a bottom bar with the price in its own rounded box and the
-    // cart action beside it.
+    // Top: picture, then the availability (or offer) pill, name, company and
+    // "strength • form", and the batch dates. Under it a bottom bar with the
+    // price in its own rounded box and the cart action beside it.
     return CustomCard(
+      borderColor: _onOffer(product) ? OfferBadge.frameColor(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -236,6 +239,15 @@ class _ListRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // The availability (or offer) pill sits above the name,
+                    // not beside it, so the name keeps the full width.
+                    if (!product.isAvailable)
+                      StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger)
+                    else if (product.hasActiveOffer)
+                      const OfferBadge(compact: true)
+                    else
+                      StatusBadge(label: l10n.availableLabel, tone: StatusBadgeTone.info),
+                    const SizedBox(height: AppSizes.spacingXSmall),
                     Text(
                       product.displayName,
                       style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -258,13 +270,6 @@ class _ListRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: AppSizes.spacingSmall),
-              if (!product.isAvailable)
-                StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger)
-              else if (product.hasActiveOffer)
-                StatusBadge(label: l10n.offerBadgeLabel, tone: StatusBadgeTone.pending)
-              else
-                StatusBadge(label: l10n.availableLabel, tone: StatusBadgeTone.info),
             ],
           ),
           const SizedBox(height: AppSizes.spacingSmall),
@@ -589,3 +594,6 @@ class _BatchDates extends StatelessWidget {
 // A bonus offer is running: the bonus in force is not the product's usual one.
 bool _bonusOnOffer(ProductModel product) =>
     product.regularBonuses.isNotEmpty && BonusTier.format(product.regularBonuses) != BonusTier.format(product.bonuses);
+
+// On an exceptional offer the pharmacist can still buy: framed and badged in red.
+bool _onOffer(ProductModel product) => product.isAvailable && product.hasActiveOffer;
