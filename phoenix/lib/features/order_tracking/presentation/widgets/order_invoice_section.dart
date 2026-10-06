@@ -99,7 +99,7 @@ class _InvoiceLineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final name = item.productNameAr;
+    final name = item.displayName;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.spacingXSmall),

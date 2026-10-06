@@ -105,7 +105,7 @@ class _AlternativesSheetState extends State<_AlternativesSheet> {
                 Text(l10n.alternativesTitle, style: context.textTheme.titleMedium),
                 const SizedBox(height: 2),
                 Text(
-                  widget.product.nameAr,
+                  widget.product.displayName,
                   style: context.textTheme.bodyMedium,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

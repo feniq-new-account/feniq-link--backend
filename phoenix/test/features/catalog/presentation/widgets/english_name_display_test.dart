@@ -1,6 +1,6 @@
-// Product names (catalog overhaul, pre-merge review): the Arabic name is the
-// medicine's name and the only one shown - in the Arabic and the English UI
-// alike. The English name is a search helper and never appears on screen.
+// Product and company names: the owner's choice is the English name, the way
+// it is printed on the box - in the Arabic and the English UI alike. A
+// medicine or company with no English name shows its Arabic one.
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -57,23 +57,37 @@ void main() {
     }
 
     for (final isGrid in [true, false]) {
-      testWidgets('the English UI shows the Arabic product and company names (${isGrid ? 'grid' : 'list'})', (tester) async {
+      testWidgets('the English UI shows the English product and company names (${isGrid ? 'grid' : 'list'})', (tester) async {
         await pump(tester, const Locale('en'), isGrid: isGrid);
-        expect(find.text('بنادول 500'), findsOneWidget);
-        expect(find.text('جي اس كي'), findsOneWidget);
-        expect(find.text('Panadol 500'), findsNothing);
-        expect(find.text('GSK'), findsNothing);
+        expect(find.text('Panadol 500'), findsOneWidget);
+        expect(find.text('GSK'), findsOneWidget);
+        expect(find.text('بنادول 500'), findsNothing);
+        expect(find.text('جي اس كي'), findsNothing);
       });
     }
 
-    testWidgets('the Arabic UI shows the Arabic names too', (tester) async {
+    testWidgets('the Arabic UI shows the English names too', (tester) async {
       await pump(tester, const Locale('ar'), isGrid: true);
-      expect(find.text('بنادول 500'), findsOneWidget);
-      expect(find.text('Panadol 500'), findsNothing);
+      expect(find.text('Panadol 500'), findsOneWidget);
+      expect(find.text('بنادول 500'), findsNothing);
+    });
+
+    test('a medicine or company with no English name shows its Arabic one', () {
+      final product = ProductModel.fromJson({
+        'id': 'p2',
+        'nameAr': 'دواء محلي',
+        'nameEn': '  ',
+        'manufacturerAr': 'شركة محلية',
+        'priceUsd': 1,
+        'discountPriceUsd': 1,
+        'isAvailable': true,
+      });
+      expect(product.displayName, 'دواء محلي');
+      expect(product.displayManufacturer, 'شركة محلية');
     });
   });
 
-  testWidgets('the manufacturer card shows the Arabic company name in the English UI', (tester) async {
+  testWidgets('the manufacturer card shows the English company name', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('en'),
@@ -93,8 +107,8 @@ void main() {
         ),
       ),
     );
-    expect(find.text('جي اس كي'), findsOneWidget);
-    expect(find.text('GSK'), findsNothing);
+    expect(find.text('GSK'), findsOneWidget);
+    expect(find.text('جي اس كي'), findsNothing);
   });
 
   group('parsing', () {

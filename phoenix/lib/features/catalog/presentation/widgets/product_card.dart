@@ -102,8 +102,8 @@ class _GridCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final name = product.nameAr;
-    final manufacturer = product.manufacturerAr;
+    final name = product.displayName;
+    final manufacturer = product.displayManufacturer;
 
     return CustomCard(
       padding: EdgeInsets.zero,
@@ -114,7 +114,7 @@ class _GridCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.vertical(top: AppRadius.large.topLeft),
-                child: _ProductImage(url: product.image, manufacturer: product.manufacturerAr, aspectRatio: 1.4),
+                child: _ProductImage(url: product.image, manufacturer: product.displayManufacturer, aspectRatio: 1.4),
               ),
               // Strength and dosage form each in their own corner, never
               // folded into the name.
@@ -219,7 +219,7 @@ class _ListRow extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: AppRadius.medium,
-                child: _ProductImage(url: product.image, manufacturer: product.manufacturerAr, size: 56),
+                child: _ProductImage(url: product.image, manufacturer: product.displayManufacturer, size: 56),
               ),
               const SizedBox(width: AppSizes.spacingMedium),
               Expanded(
@@ -227,14 +227,14 @@ class _ListRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      product.nameAr,
+                      product.displayName,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      product.manufacturerAr,
+                      product.displayManufacturer,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: context.textTheme.bodySmall?.copyWith(

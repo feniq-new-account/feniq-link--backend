@@ -214,7 +214,7 @@ class _CartViewState extends State<CartView> {
       for (final item in cubit.state.items)
         if (item.hasUnconfirmedBonusChange)
           l10n.bonusChangedLine(
-            item.nameAr,
+            item.displayName(true),
             item.bonuses.isEmpty ? l10n.noBonus : l10n.bonusValue(BonusTier.format(item.bonuses)),
           ),
     ];

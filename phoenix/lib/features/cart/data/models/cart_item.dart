@@ -1,6 +1,7 @@
 import 'package:feniq/core/utils/pricing.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 /// One product inside a package, for the package line's expandable detail.
 ///
@@ -17,6 +18,9 @@ class CartPackageContent {
   final String productId;
   final String nameAr;
   final String? nameEn;
+
+  /// The name shown: English when there is one (see englishFirst).
+  String get displayName => englishFirst(nameEn, nameAr);
 
   /// Units of this product in ONE copy of the package. The tile shows
   /// `quantityPerCopy * copies` so the pharmacist can see what is actually
@@ -72,6 +76,9 @@ class CartItem {
   final String? nameEn;
   final String manufacturerAr;
   final String? manufacturerEn;
+
+  /// The company shown: English when there is one (see englishFirst).
+  String get displayManufacturer => englishFirst(manufacturerEn, manufacturerAr);
   final String? image;
   final String? unitAr;
   final String? unitEn;
@@ -126,12 +133,13 @@ class CartItem {
 
   bool get isPackage => packageId != null;
 
-  /// What the line is called on screen. A product line: the product's Arabic
-  /// name - the only name a medicine is shown by (its English name is a
-  /// search helper). A package line carries the package's title in
-  /// nameAr/nameEn, and a title follows the UI language like every other
-  /// title in the app.
-  String displayName(bool isArabic) => isPackage && !isArabic ? (nameEn ?? nameAr) : nameAr;
+  /// What the line is called on screen. A medicine is shown by its English
+  /// name when it has one (the
+  /// owner's choice - names read as printed on the box). A package line
+  /// carries the package's title in nameAr/nameEn, and a title follows the UI
+  /// language like every other title in the app.
+  String displayName(bool isArabic) =>
+      isPackage ? (isArabic ? nameAr : (nameEn ?? nameAr)) : englishFirst(nameEn, nameAr);
 
   /// The lira price of one unit at [usdToSyp] - what the order charges for a
   /// loose line. A package copy has no per-unit SYP from the server and keeps

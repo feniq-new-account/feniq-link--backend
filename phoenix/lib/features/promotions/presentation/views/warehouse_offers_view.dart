@@ -73,7 +73,7 @@ class WarehouseOffersView extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final offer = promotion.offer;
     final product = offer.toCartProduct();
-    final name = product.nameAr;
+    final name = product.displayName;
     final cartCubit = context.read<CartCubit>();
     final warehouseId = offer.warehouseId;
     // The offer's own warehouse name, localized - `warehouseName` above is the

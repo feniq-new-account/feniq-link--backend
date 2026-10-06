@@ -95,7 +95,7 @@ class CartItemTile extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSizes.spacingXSmall),
                     Text(
-                      item.manufacturerAr,
+                      item.displayManufacturer,
                       style: context.textTheme.bodyMedium?.copyWith(color: secondary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -157,7 +157,7 @@ class CartItemTile extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsetsDirectional.only(top: 2),
                           child: Text(
-                            '${content.nameAr} x${content.quantityPerCopy * item.quantity}',
+                            '${content.displayName} x${content.quantityPerCopy * item.quantity}',
                             style: context.textTheme.bodySmall?.copyWith(color: secondary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

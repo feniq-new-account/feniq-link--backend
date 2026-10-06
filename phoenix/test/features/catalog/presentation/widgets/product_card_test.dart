@@ -173,8 +173,9 @@ void main() {
   testWidgets('a medicine with no picture shows its company\'s initial instead of a blank box', (tester) async {
     for (final grid in [true, false]) {
       await pumpCard(tester, isGrid: grid);
-      // _product's company is 'شركة'; the avatar draws its first letter.
-      expect(find.text('ش'), findsOneWidget, reason: grid ? 'grid' : 'list');
+      // _product's company is shown as 'Co' (its English name); the avatar
+      // draws its first letter.
+      expect(find.text('C'), findsOneWidget, reason: grid ? 'grid' : 'list');
       expect(tester.takeException(), isNull);
     }
   });

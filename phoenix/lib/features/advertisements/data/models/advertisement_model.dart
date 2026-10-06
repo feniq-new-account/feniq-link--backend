@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/display_name.dart';
 // One product line inside a package. A package carries no per-product price -
 // `priceUsd` is the product's CURRENT catalog price, and the package total is
 // the discount.
@@ -21,6 +22,9 @@ class AdvertisementItemModel {
   final String productId;
   final String nameAr;
   final String? nameEn;
+
+  /// The name shown: English when there is one (see englishFirst).
+  String get displayName => englishFirst(nameEn, nameAr);
   final String? image;
   final String? unitAr;
   final String? unitEn;

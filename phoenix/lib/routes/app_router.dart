@@ -196,6 +196,7 @@ class AppRouter {
                 warehouseId: warehouseId,
                 warehouseName: args?.warehouseName ?? '',
                 manufacturer: args?.manufacturer ?? '',
+                manufacturerTitle: args?.manufacturerTitle,
               ),
             ),
           );

@@ -129,7 +129,7 @@ class _ReorderButtonState extends State<ReorderButton> {
 
     if (preparation.unavailableItems.isNotEmpty) {
       final names = preparation.unavailableItems
-          .map((item) => item.productNameAr)
+          .map((item) => item.displayName)
           .join(isArabic ? '، ' : ', ');
       await AppDialog.show(
         context: context,

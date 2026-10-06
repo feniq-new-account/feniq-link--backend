@@ -76,10 +76,21 @@ class _ManufacturersViewState extends State<ManufacturersView> {
   }
 
   void _handleSelect(BuildContext context, String manufacturer) {
+    final shown = context
+        .read<ManufacturersCubit>()
+        .state
+        .manufacturers
+        .where((m) => m.name == manufacturer)
+        .map((m) => m.displayName)
+        .firstOrNull;
     context.pushNamed(
       RouteNames.catalog,
       pathParameters: {'warehouseId': widget.warehouseId},
-      extra: CatalogRouteArgs(warehouseName: widget.warehouseName, manufacturer: manufacturer),
+      extra: CatalogRouteArgs(
+        warehouseName: widget.warehouseName,
+        manufacturer: manufacturer,
+        manufacturerTitle: shown,
+      ),
     );
   }
 

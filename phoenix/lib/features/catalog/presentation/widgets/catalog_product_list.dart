@@ -63,7 +63,7 @@ class _CatalogProductListState extends State<CatalogProductList> {
 
   void _handleAdd(ProductModel product, int quantity) {
     final l10n = context.l10n;
-    final name = product.nameAr;
+    final name = product.displayName;
     final cartCubit = context.read<CartCubit>();
 
     // Section 6.6: a product from another warehouse goes to that warehouse's

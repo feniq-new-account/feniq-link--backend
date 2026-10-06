@@ -29,7 +29,7 @@ class ReturnListTile extends StatelessWidget {
     final l10n = context.l10n;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final itemNames = returnRequest.items
-        .map((item) => item.productNameAr ?? '')
+        .map((item) => item.displayName ?? '')
         .where((name) => name.isNotEmpty)
         .join(isArabic ? '، ' : ', ');
     final reasonTypes = returnRequest.items.map((item) => item.reasonType).toSet();

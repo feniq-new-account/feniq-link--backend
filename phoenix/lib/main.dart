@@ -17,6 +17,7 @@ import 'package:feniq/core/session/session_scope.dart';
 import 'package:feniq/features/app_update/presentation/app_update_gate.dart';
 import 'package:feniq/firebase_options.dart';
 import 'package:feniq/core/theme/dark_theme.dart';
+import 'package:feniq/core/widgets/app_text_scale.dart';
 import 'package:feniq/core/widgets/offline_banner.dart';
 import 'package:feniq/core/theme/light_theme.dart';
 import 'package:feniq/features/auth/data/repositories/auth_repository_impl.dart';
@@ -375,7 +376,9 @@ class MyApp extends StatelessWidget {
                     // phone's saved copy (OfflineBanner). The child keeps one
                     // fixed place in the tree, so the navigator never rebuilds
                     // when the strip appears or goes.
-                    builder: (context, child) => OfflineBannerFrame(child: child ?? const SizedBox.shrink()),
+                    builder: (context, child) => AppTextScale(
+                      child: OfflineBannerFrame(child: child ?? const SizedBox.shrink()),
+                    ),
                   );
                 },
               ),

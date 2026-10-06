@@ -130,7 +130,7 @@ class _AdvertisementCardState extends State<AdvertisementCard> {
                     children: [
                       Expanded(
                         child: Text(
-                          item.nameAr,
+                          item.displayName,
                           style: context.textTheme.bodyMedium,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

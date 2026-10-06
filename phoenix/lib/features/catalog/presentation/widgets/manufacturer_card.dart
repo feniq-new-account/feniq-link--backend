@@ -37,7 +37,7 @@ class ManufacturerCard extends StatelessWidget {
               ),
               // The admin-set logo, or the first letter in a coloured circle.
               child: ManufacturerAvatar(
-                name: manufacturer.name,
+                name: manufacturer.displayName,
                 id: manufacturer.id,
                 logoUrl: manufacturer.logoUrl,
               ),
@@ -45,7 +45,7 @@ class ManufacturerCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.spacingSmall),
           Text(
-            manufacturer.name,
+            manufacturer.displayName,
             textAlign: TextAlign.center,
             style: context.textTheme.titleSmall,
             maxLines: 2,

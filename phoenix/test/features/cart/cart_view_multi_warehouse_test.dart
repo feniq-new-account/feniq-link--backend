@@ -129,15 +129,15 @@ void main() {
     await pumpCart(tester);
 
     expect(find.byType(ChoiceChip), findsNWidgets(2));
-    expect(find.textContaining('دواء p2'), findsOneWidget);
-    expect(find.textContaining('دواء p1'), findsNothing);
+    expect(find.textContaining('Product p2'), findsOneWidget);
+    expect(find.textContaining('Product p1'), findsNothing);
 
     await tester.tap(find.text('Warehouse A · 1'));
     await tester.pumpAndSettle();
 
     expect(cartCubit.state.warehouseId, 'A');
-    expect(find.textContaining('دواء p1'), findsOneWidget);
-    expect(find.textContaining('دواء p2'), findsNothing);
+    expect(find.textContaining('Product p1'), findsOneWidget);
+    expect(find.textContaining('Product p2'), findsNothing);
   });
 
   testWidgets('"Send all orders" sends one order per warehouse, then opens the orders list', (tester) async {

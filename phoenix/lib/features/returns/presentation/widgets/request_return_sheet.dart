@@ -242,7 +242,7 @@ class _RequestReturnSheetBodyState extends State<_RequestReturnSheetBody> {
                 const SizedBox(height: AppSizes.spacingSmall),
                 ...state.orderItems.map((item) {
                   final selected = state.selectedItemIds.contains(item.id);
-                  final name = item.productNameAr;
+                  final name = item.displayName;
                   return _ReturnItemTile(
                     item: item,
                     name: name,

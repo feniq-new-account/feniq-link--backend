@@ -597,7 +597,7 @@ class _ReturnableOrderCard extends StatelessWidget {
     final shownItems = order.items.take(3).toList();
     final hiddenCount = order.items.length - shownItems.length;
     final itemsText = shownItems
-        .map((item) => item.productNameAr)
+        .map((item) => item.displayName)
         .join(isArabic ? '، ' : ', ');
 
     return Container(
