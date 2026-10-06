@@ -52,7 +52,7 @@ void main() {
     expect(find.text('محتوى الباقة'), findsOneWidget);
     expect(find.text('PREGABALIN BAHRI-75 CAP. (14 CAP)'), findsOneWidget);
     expect(find.text('Bahri'), findsOneWidget);
-    expect(find.text('⁦75 MG⁩  •  محافظ'), findsOneWidget);
+    expect(find.text('\u206675 MG\u2069  •  محافظ'), findsOneWidget);
     expect(find.text('× 3'), findsOneWidget);
     expect(find.textContaining('الباقة ثابتة'), findsOneWidget);
     // Read-only without an add action (a package already in the cart).

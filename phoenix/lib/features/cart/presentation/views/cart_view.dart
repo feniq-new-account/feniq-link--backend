@@ -470,7 +470,8 @@ class _CartViewState extends State<CartView> {
           String limitText(num usdAmount) =>
               formatMoneyFromUsd(usdAmount, usdToSyp, l10n.currencySuffix);
 
-          return Column(
+          return LayoutBuilder(
+            builder: (context, box) => Column(
             children: [
               Expanded(
                 child: SingleChildScrollView(
@@ -554,9 +555,11 @@ class _CartViewState extends State<CartView> {
               // The order summary sits on its own raised sheet, so the total
               // and the submit button read as one block, apart from the lines
               // scrolling above them.
-              Flexible(
-                // At most the room left beside the lines (up to half the
-                // screen); the lines above keep the rest.
+              ConstrainedBox(
+                // Its full height normally; at most 70% of the screen, so on
+                // a small phone with the keyboard up it scrolls within itself
+                // and the lines above keep some room.
+                constraints: BoxConstraints(maxHeight: box.maxHeight * 0.7),
                 child: Container(
                 padding: const EdgeInsets.fromLTRB(
                   AppSizes.spacingMedium + AppSizes.spacingXSmall,
@@ -696,6 +699,7 @@ class _CartViewState extends State<CartView> {
               ),
               ),
             ],
+          ),
           );
         },
         ),
