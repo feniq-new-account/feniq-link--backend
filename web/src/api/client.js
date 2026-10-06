@@ -380,6 +380,23 @@ export const api = {
   approveAccount: (userId) => request(`/admin/accounts/${userId}/approve`, { method: 'POST' }),
   rejectAccount: (userId) => request(`/admin/accounts/${userId}/reject`, { method: 'POST' }),
   blockAccount: (userId) => request(`/admin/accounts/${userId}/block`, { method: 'POST' }),
+  // Registration approval page: the syndicate list, the approval switch and the
+  // admins' Telegram bot (backend adminRegistration.controller.js).
+  registrationStatus: () => request('/admin/registration'),
+  // The signed-in user's own password. The response carries a fresh session
+  // (token + refreshToken): every other device is signed out.
+  changePassword: (currentPassword, newPassword) =>
+    request('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } }),
+  uploadSyndicateList: (file) => requestUpload('/admin/registration/syndicate-list', file),
+  checkRegistrationName: ({ name, pharmacyName, phone }) =>
+    request('/admin/registration/check', { method: 'POST', body: { name, pharmacyName, phone } }),
+  setApprovalRequired: (required) =>
+    request('/admin/registration/approval', { method: 'PUT', body: { required } }),
+  setTelegramBot: (token) =>
+    request('/admin/registration/telegram/bot', { method: 'PUT', body: { token } }),
+  removeTelegramBot: () => request('/admin/registration/telegram/bot', { method: 'DELETE' }),
+  createTelegramLink: () => request('/admin/registration/telegram/link', { method: 'POST' }),
+  unlinkTelegram: () => request('/admin/registration/telegram/link', { method: 'DELETE' }),
   unblockAccount: (userId) => request(`/admin/accounts/${userId}/unblock`, { method: 'POST' }),
   // Emergency password recovery - the manual stand-in for the pharmacy app's
   // /auth/forgot-password while no SMS provider is wired up. Admin-only, and

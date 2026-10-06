@@ -77,7 +77,8 @@
     "catalogDuplicates": "Duplicate review",
     "manufacturers": "Manufacturers",
     "categories": "Categories",
-    "discountCodes": "Discount codes"
+    "discountCodes": "Discount codes",
+    "registration": "Pharmacy approval"
   },
   "auth": {
     "phoneLabel": "Phone number",
@@ -1161,5 +1162,82 @@
       "notInReview": "This code is no longer waiting for review. The list has been reloaded.",
       "rejectionNoteRequired": "A rejection reason is required."
     }
+  },
+  "registration": {
+    "approval": {
+      "title": "Approving new pharmacies",
+      "on": "On: anyone on the syndicate list gets in at once; everyone else waits for you.",
+      "off": "Off: everyone who registers gets in at once.",
+      "pending": "{{count}} pharmacies are waiting for you (Accounts page or Telegram).",
+      "turnOn": "Turn approval on",
+      "turnOff": "Turn approval off",
+      "confirmOff": "Turning approval off lets in all {{count}} waiting pharmacies now. Continue?"
+    },
+    "list": {
+      "title": "Syndicate list",
+      "loaded": "Loaded: {{count}} pharmacists.",
+      "lastImport": "(last upload {{date}} — {{name}})",
+      "empty": "Not uploaded yet. Until it is, every registration waits for you.",
+      "hint": "Upload the cleaned pharmacies workbook (with its full-table sheet). A new file replaces the old list, and anyone waiting who is now on it is let in.",
+      "upload": "Upload",
+      "uploading": "Uploading...",
+      "done": "Done: {{count}} pharmacists uploaded.",
+      "autoApproved": "{{count}} waiting pharmacies were let in.",
+      "choose": "Choose file",
+      "noFile": "No file chosen"
+    },
+    "try": {
+      "title": "Try a name",
+      "hint": "Type a name the way a pharmacist might in the app and see whether it gets in.",
+      "name": "Pharmacist's name",
+      "pharmacyName": "Pharmacy name (optional)",
+      "phone": "Mobile (optional)",
+      "check": "Check"
+    },
+    "match": {
+      "onList": "✓ Gets in automatically",
+      "notOnList": "✗ Waits for approval",
+      "matched": "Matched:",
+      "closest": "Closest:",
+      "father": "father",
+      "badgeOn": "On the syndicate list",
+      "badgeOff": "Not on the syndicate list",
+      "score": "Match:"
+    },
+    "telegram": {
+      "title": "Telegram alerts",
+      "why": "Every registration reaches you on Telegram with approve and reject buttons.",
+      "step1": "In Telegram, open",
+      "step2": "Send it",
+      "step3": "It then asks for a username ending in bot, e.g.",
+      "save": "Save",
+      "bot": "Bot is running:",
+      "unreachable": "Could not reach the bot. Check the token is still valid.",
+      "noPublicUrl": "The server does not know its public address, so button presses will not arrive. (PUBLIC_API_URL)",
+      "linkHint": "Last step: link your Telegram to receive the alerts.",
+      "link": "Link my Telegram",
+      "openLink": "Open Telegram and press Start",
+      "linkExpires": "The link works once, for {{minutes}} minutes.",
+      "linkedCheck": "I pressed Start — refresh",
+      "linked": "Your Telegram is linked ✓ every new registration will reach you.",
+      "unlink": "Unlink",
+      "linkedAdmins": "Linked admins: {{count}}",
+      "remove": "Remove the bot",
+      "confirmRemove": "All Telegram alerts stop and every admin is unlinked. Continue?",
+      "step2b": "and pick any name for the bot.",
+      "step4": "It replies with a long token — copy it and paste it here:"
+    }
+  },
+  "changePassword": {
+    "button": "Password",
+    "title": "Change password",
+    "current": "Current password",
+    "new": "New password (at least {{count}} characters)",
+    "confirm": "Repeat the new password",
+    "save": "Change password",
+    "tooShort": "The new password must be at least {{count}} characters.",
+    "mismatch": "The two new passwords do not match.",
+    "wrongCurrent": "The current password is wrong.",
+    "done": "Password changed ✓ Any other device signed in to this account was signed out."
   }
 }

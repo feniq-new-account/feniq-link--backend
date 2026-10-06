@@ -83,6 +83,14 @@ module.exports = {
   // REQUIRE_ACCOUNT_APPROVAL=true to send them to the admin approval queue
   // (status 'pending') instead.
   requireAccountApproval: process.env.REQUIRE_ACCOUNT_APPROVAL === 'true',
+  // New-registration alerts with approve/reject buttons (services/telegram.service.js).
+  // The token can also be pasted in the admin panel instead; this one wins.
+  // publicUrl is where Telegram delivers button presses - Render sets
+  // RENDER_EXTERNAL_URL on its own, PUBLIC_API_URL overrides it elsewhere.
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN || '',
+    publicUrl: (process.env.PUBLIC_API_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, ''),
+  },
   imageApiKey: process.env.IMAGE_API_KEY || '',
   // Images kept on this server's own disk instead of Cloudinary - for a
   // deployment that must stay inside the country (services/mediaStorage.service.js).

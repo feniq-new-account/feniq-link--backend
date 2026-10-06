@@ -43,11 +43,13 @@ const adminComplaintRoutes = require('./adminComplaint.routes');
 const warehouseDiscountCodeRoutes = require('./warehouseDiscountCode.routes');
 const adminDiscountCodeRoutes = require('./adminDiscountCode.routes');
 const discountCodeRoutes = require('./discountCode.routes');
+const telegramRoutes = require('./telegram.routes');
 
 const router = Router();
 
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
+router.use('/telegram', telegramRoutes);
 router.use('/admin', adminRoutes);
 router.use('/admin/offers', adminOfferRoutes);
 router.use('/admin/advertisements', adminAdvertisementRoutes);
