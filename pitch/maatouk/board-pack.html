@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>فينيق — ملف مجلس إدارة مستودع معتوق</title>
+<link rel="stylesheet" href="brand.css">
+<style>
+  @page { size: A4; margin: 0; }
+  body { background: #8a93a0; }
+  .page {
+    width: 210mm; height: 297mm; overflow: hidden; position: relative;
+    background: #fff; margin: 0 auto 8mm; page-break-after: always; break-after: page;
+    padding: 13mm 15mm 16mm;
+    font-size: 10.4pt; line-height: 1.75;
+  }
+  @media print { body { background: #fff; } .page { margin: 0; } }
+
+  /* ترويسة الصفحات الداخلية */
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7mm; }
+  .top img { height: 12mm; }
+  .top .who { font-size: 8.5pt; color: var(--ink-soft); }
+  .foot {
+    position: absolute; bottom: 7mm; left: 15mm; right: 15mm;
+    display: flex; justify-content: space-between; font-size: 8pt; color: var(--ink-soft);
+    border-top: 1px solid var(--silver); padding-top: 2.5mm;
+  }
+  h1 { font-weight: 800; font-size: 21pt; line-height: 1.3; letter-spacing: -0.01em; }
+  h2 { font-weight: 800; font-size: 15pt; line-height: 1.35; margin-bottom: 3mm; }
+  h3 { font-weight: 700; font-size: 11pt; line-height: 1.4; margin-bottom: 1.5mm; }
+  p + p { margin-top: 2mm; }
+  .lead { font-size: 11.2pt; line-height: 1.8; }
+  .soft { color: var(--ink-soft); }
+  .small { font-size: 8.6pt; line-height: 1.6; }
+  ul.list { list-style: none; }
+  ul.list li { position: relative; padding-right: 5.5mm; margin-bottom: 1.6mm; }
+  ul.list li::before {
+    content: ""; position: absolute; right: 0; top: 0.72em;
+    width: 3mm; height: 1.1mm; background: var(--orange); border-radius: 1px;
+  }
+
+  /* الصفحة الأولى: الملخص */
+  .hero {
+    margin: -13mm -15mm 7mm; padding: 11mm 15mm 9mm;
+    background: var(--ground); color: #fff;
+    display: grid; grid-template-columns: 1fr auto; gap: 8mm; align-items: center;
+  }
+  .hero h1 { color: #fff; font-size: 22pt; }
+  .hero .sub { color: var(--on-dark-soft); font-size: 10pt; margin-top: 2mm; }
+  .hero img { height: 33mm; }
+  .hero .plate { font-size: 9pt; margin-bottom: 3mm; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm; }
+  .card {
+    border: 1px solid var(--silver-edge); border-radius: 4px; padding: 4.5mm 5mm;
+    background: var(--paper);
+  }
+  .card--navy { background: var(--drawer); border-color: var(--seam); color: #fff; }
+  .card--navy .soft { color: var(--on-dark-soft); }
+  .ask {
+    margin-top: 6mm; border: 2px solid var(--orange); border-radius: 4px;
+    padding: 5mm 6mm; display: grid; grid-template-columns: auto 1fr; gap: 5mm; align-items: center;
+    background: var(--orange-wash);
+  }
+  .ask .big { font-family: "Reem Kufi", sans-serif; font-weight: 700; font-size: 26pt; color: var(--orange-deep); line-height: 1; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 6mm; }
+  .fact { border-top: 3px solid var(--navy); padding-top: 2.5mm; }
+  .fact b { display: block; font-family: "Reem Kufi", sans-serif; font-size: 20pt; font-weight: 700; line-height: 1.1; }
+  .fact > span { font-size: 8.8pt; color: var(--ink-soft); line-height: 1.5; display: block; }
+
+  /* الخطوات */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3.5mm; margin: 4mm 0 6mm; }
+  .step { background: var(--drawer); color: #fff; border-radius: 3px; padding: 3.5mm 3.5mm 4mm; border-bottom: 3px solid var(--seam); }
+  .step .n { font-family: "Reem Kufi", sans-serif; font-weight: 700; color: var(--orange); font-size: 15pt; line-height: 1; }
+  .step > b { display: block; margin: 1.5mm 0 1mm; font-size: 10pt; line-height: 1.4; }
+  .step > span { font-size: 8.4pt; color: var(--on-dark-soft); line-height: 1.55; display: block; }
+
+  .phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; align-items: start; }
+  .phones figure { text-align: center; }
+  .phones img { width: 100%; }
+  figcaption { font-size: 8.6pt; color: var(--ink-soft); margin-top: 2mm; line-height: 1.5; }
+  .note { font-size: 8.2pt; color: var(--ink-soft); background: var(--paper); border-right: 3px solid var(--silver-edge); padding: 1.5mm 3mm; margin-top: 3mm; }
+
+  .boxes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2mm; margin: 3mm 0 4mm; }
+  .boxes img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; border: 1px solid var(--silver); border-radius: 3px; padding: 1mm; }
+  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm 6mm; }
+  .tool { display: grid; grid-template-columns: 7mm 1fr; gap: 2mm; align-items: start; }
+  .tool i { font-style: normal; font-family: "Reem Kufi", sans-serif; font-weight: 700; color: #fff; background: var(--orange); border-radius: 2px; height: 7mm; display: grid; place-items: center; font-size: 9pt; }
+  .tool div > b { display: block; font-size: 9.8pt; line-height: 1.4; }
+  .tool div > span { display: block; font-size: 8.6pt; color: var(--ink-soft); line-height: 1.5; }
+
+  table.money { width: 100%; border-collapse: collapse; font-size: 9.6pt; }
+  table.money td { padding: 1.6mm 2mm; border-bottom: 1px solid var(--silver); }
+  table.money td:last-child { text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.money tr.total td { font-weight: 800; border-bottom: 0; color: var(--green); }
+
+  .offer {
+    background: var(--ground); color: #fff; border-radius: 4px; padding: 5mm 6mm; margin-top: 5mm;
+    border-bottom: 3px solid var(--orange);
+  }
+  .offer h3 { color: #fff; }
+  .offer ul.list li { color: #fff; }
+
+  .qa { columns: 2; column-gap: 7mm; }
+  .q { break-inside: avoid; margin-bottom: 5mm; }
+  .q h3 { font-size: 10.6pt; margin-bottom: 1mm; display: flex; gap: 2mm; }
+  .q h3::before { content: ""; flex: 0 0 auto; width: 2.2mm; height: 2.2mm; margin-top: 1.6mm; background: var(--orange); border-radius: 1px; }
+  .q p { font-size: 9.8pt; line-height: 1.75; color: #24364d; }
+
+  .try { display: grid; grid-template-columns: 1fr; gap: 4mm; }
+  .try .row { display: grid; grid-template-columns: 13mm 1fr; gap: 4mm; align-items: start; border: 1px solid var(--silver-edge); border-radius: 4px; padding: 4mm 5mm; background: var(--paper); }
+  .try .row .n { font-family: "Reem Kufi", sans-serif; font-weight: 700; font-size: 22pt; color: var(--orange); line-height: 1; text-align: center; }
+  .cred { display: inline-grid; grid-template-columns: auto auto; gap: 0.6mm 4mm; background: #fff; border: 1px solid var(--silver-edge); border-radius: 3px; padding: 2mm 4mm; margin-top: 2mm; font-size: 9.6pt; }
+  .cred b { font-weight: 700; }
+  .cred code { font-family: "Alexandria", sans-serif; direction: ltr; unicode-bidi: isolate; font-weight: 700; letter-spacing: 0.02em; }
+  .contact { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: 5mm; }
+  .contact div { background: var(--orange); color: #1A1206; border-radius: 4px; padding: 4mm 5mm; border-bottom: 3px solid var(--orange-deep); }
+  .contact b { font-size: 15pt; display: block; direction: ltr; text-align: right; }
+</style>
+</head>
+<body>
+
+<!-- ======================== 1. الملخص ======================== -->
+<section class="page" id="summary">
+  <div class="hero">
+    <div>
+      <span class="plate">ملخص لمجلس الإدارة</span>
+      <h1>فينيق: قناة طلب رقمية<br>بين مستودع معتوق والصيدليات</h1>
+      <p class="sub">مقدّم إلى مجلس إدارة مستودع معتوق · تشرين الأول 2026</p>
+    </div>
+    <img src="assets/logo-dark.png" alt="فينيق">
+  </div>
+
+  <p class="lead">
+    فينيق منصة تربط مستودعات الأدوية بالصيدليات. الصيدلية تبحث عن الصنف وتطلبه من تطبيق على الموبايل،
+    والمستودع يستلم الطلبية مكتوبة ومرتّبة على لوحة تحكم من أي لابتوب، بلا مكالمات ولا تدوين.
+    <b>لا يستبدل طريقة عملكم ولا مندوبيكم:</b> هو قناة بيع إضافية إلى جانبها.
+  </p>
+
+  <div class="cols" style="margin-top:6mm">
+    <div class="card">
+      <h3>ماذا يربح مستودع معتوق؟</h3>
+      <ul class="list">
+        <li>صيدليات أكثر تطلب منكم في أي وقت، لا فقط في جولات المندوبين وساعات الهاتف.</li>
+        <li>طلبيات مكتوبة كما أرادتها الصيدلية: أخطاء أقل بالأصناف والكميات.</li>
+        <li>أدوات ترويج لأصنافكم داخل التطبيق: عروض، بونص، باقات، أكواد حسم، بانرات.</li>
+        <li>الطلبيات والمرتجعات وأرصدة الصيدليات في مكان واحد.</li>
+      </ul>
+    </div>
+    <div class="card card--navy">
+      <h3>ما الجاهز اليوم؟</h3>
+      <ul class="list">
+        <li>تطبيق الصيدليات (Android) ولوحة تحكم المستودع يعملان الآن.</li>
+        <li>أصناف يونيفارما كلها من قائمة وزارة الصحة جاهزة للرفع، و183 منها بصورة العلبة.</li>
+        <li>رفع بقية الأصناف والأسعار من ملف إكسل يخرج من برنامج المحاسبة.</li>
+        <li>فريق فينيق يتولى الإعداد ويعرّف الصيدليات بمستودعكم.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="facts">
+    <div class="fact"><b class="num">289</b><span>صنفاً ليونيفارما في قائمة وزارة الصحة، محمّلة في نسختنا التجريبية باسم معتوق</span></div>
+    <div class="fact"><b class="num ltr">5%</b><span>من قيمة الطلبيات التي تصل عبر فينيق فقط، ومنها <span class="ltr">4%</span> حسم يذهب للصيدلية نفسها</span></div>
+    <div class="fact"><b class="num">60</b><span>يوماً للتجربة بفرع واحد، ثم يقرر المجلس على بيّنة</span></div>
+  </div>
+
+  <div class="ask">
+    <div class="big">القرار</div>
+    <div>
+      <h3 style="margin-bottom:1mm">المطلوب من المجلس: الموافقة على تجربة بفرع واحد لمدة 60 يوماً</h3>
+      <p class="small">بلا التزام بعدها. خلال التجربة يحصل معتوق على عرض الشريك المؤسس (الصفحة 4). وفي نهايتها نعرض على المجلس ما حدث فعلاً بالأرقام: كم صيدلية طلبت، وكم طلبية وصلت، وبأي قيمة.</p>
+    </div>
+  </div>
+
+  <div class="boxes" style="margin-top:6mm">
+    <img src="assets/products/p00.webp" alt=""><img src="assets/products/p01.webp" alt=""><img src="assets/products/p04.webp" alt="">
+    <img src="assets/products/p05.webp" alt=""><img src="assets/products/p08.webp" alt=""><img src="assets/products/p10.webp" alt="">
+  </div>
+  <p class="small soft" style="margin-top:-2mm">أصناف من يونيفارما محمّلة في نسختنا التجريبية، بصور العلب من موقع الشركة.</p>
+
+  <div class="foot">
+    <span>فينيق · FENIQ — اللاذقية</span>
+    <span class="ltr">0982-001415 · 0956-634694</span>
+    <span>1</span>
+  </div>
+</section>
+
+<!-- ======================== 2. كيف يعمل ======================== -->
+<section class="page" id="how">
+  <div class="top">
+    <span class="plate">كيف يعمل فينيق</span>
+    <img src="assets/logo-light.png" alt="فينيق">
+  </div>
+  <h2>الطلبية نفسها، من دون مكالمة</h2>
+  <p class="soft">اليوم تمر الطلبية بمكالمة أو رسالة واتساب، ثم يدوّنها أحد باليد. مع فينيق تصل مكتوبة وجاهزة للتجهيز:</p>
+
+  <div class="steps">
+    <div class="step"><span class="n">1</span><b>الصيدلية تبحث وتطلب</b><span>بأول حروف اسم الصنف، وترى السعر والتوفر والعروض.</span></div>
+    <div class="step"><span class="n">2</span><b>تظهر فوراً على لوحتكم</b><span>من دون تحديث الصفحة، مصنّفة حسب الحالة.</span></div>
+    <div class="step"><span class="n">3</span><b>تؤكدون وتجهّزون</b><span>والصيدلية تتابع الحالة خطوة بخطوة من الموبايل.</span></div>
+    <div class="step"><span class="n">4</span><b>التسليم والدفع</b><span>الدفع عند التسليم كما اليوم. لا بطاقات ولا دفع إلكتروني.</span></div>
+  </div>
+
+  <h3>ما تراه الصيدلية (تطبيق Android)</h3>
+  <div class="phones">
+    <figure><img class="phone" src="assets/shots/a3-search.jpg" alt=""><figcaption>البحث: السعر، العرض، البونص، المادة الفعالة، وتاريخ الصلاحية</figcaption></figure>
+    <figure><img class="phone" src="assets/shots/a8-cart.jpg" alt=""><figcaption>السلة: الكميات، كود الحسم، والإجمالي قبل الإرسال</figcaption></figure>
+    <figure><img class="phone" src="assets/shots/a6-tracking.jpg" alt=""><figcaption>تتبّع الطلبية: من الإرسال حتى التسليم</figcaption></figure>
+  </div>
+  <p class="note">لقطات حقيقية من التطبيق ولوحة التحكم، من نسخة تجريبية ببيانات توضيحية: أسماء الصيدليات والطلبيات والأسعار ليست حقيقية.</p>
+
+  <div class="foot"><span>فينيق · ملف مجلس إدارة مستودع معتوق</span><span>2</span></div>
+</section>
+
+<!-- ======================== 3. لوحة المستودع ويونيفارما ======================== -->
+<section class="page" id="dashboard">
+  <div class="top">
+    <span class="plate">لوحة تحكم المستودع</span>
+    <img src="assets/logo-light.png" alt="فينيق">
+  </div>
+  <h2>كل طلبيات الصيدليات أمامكم، مرتّبة حسب الحالة</h2>
+  <img class="shot" src="assets/shots/d1-orders-all.jpg" alt="" style="width:100%">
+  <p class="small soft" style="margin-top:2mm">صفحة الطلبات: جديدة، بانتظار الموافقة، قيد التحضير، بالطريق، تم التسليم. زر واحد ينقل الطلبية للمرحلة التالية، والصيدلية ترى الحالة الجديدة في تطبيقها.</p>
+
+  <h2 style="margin-top:6mm">أصناف يونيفارما جاهزة قبل أن نبدأ</h2>
+  <p>
+    حمّلنا في نسختنا التجريبية <b>كل أصناف يونيفارما المسجّلة في قائمة وزارة الصحة السورية (289 صنفاً)</b>
+    بالمادة الفعالة والعيار والشكل الدوائي، و<b>183 منها بصورة العلبة</b> من موقع الشركة، ومعها أصناف معتوق فارما.
+    تظهر للصيدلية قسماً كاملاً باسم الشركة داخل متجر معتوق، وإذا نفد صنف يقترح التطبيق بديلاً بنفس المادة الفعالة <b>من أصنافكم أنتم</b>.
+  </p>
+  <div class="boxes">
+    <img src="assets/products/p00.webp" alt=""><img src="assets/products/p01.webp" alt=""><img src="assets/products/p02.webp" alt="">
+    <img src="assets/products/p03.webp" alt=""><img src="assets/products/p06.webp" alt=""><img src="assets/products/p07.webp" alt="">
+  </div>
+
+  <h3>أدوات البيع والترويج في اللوحة</h3>
+  <div class="tools">
+    <div class="tool"><i>%</i><div><b>عروض لفترة محددة</b><span>نسبة حسم على صنف، تظهر للصيدليات في قسم العروض.</span></div></div>
+    <div class="tool"><i class="ltr">+1</i><div><b>بونص</b><span>مثل <span class="ltr">10+1</span> على أي صنف، يُحسب تلقائياً في الطلبية.</span></div></div>
+    <div class="tool"><i>3</i><div><b>باقات</b><span>مجموعة أصناف بسعر واحد، مثل باقة الضغط والسكري.</span></div></div>
+    <div class="tool"><i>#</i><div><b>أكواد حسم</b><span>كود عام لكل الصيدليات، أو خاص بصيدلية واحدة.</span></div></div>
+    <div class="tool"><i>%</i><div><b>حسم على شركة كاملة</b><span>نسبة ثابتة على كل أصناف شركة مصنّعة، مثل يونيفارما.</span></div></div>
+    <div class="tool"><i>▣</i><div><b>بانرات</b><span>على الصفحة الرئيسية للتطبيق لأصناف تختارونها.</span></div></div>
+  </div>
+
+  <div class="foot"><span>فينيق · ملف مجلس إدارة مستودع معتوق</span><span>3</span></div>
+</section>
+
+<!-- ======================== 4. مقترح التجربة والكلفة ======================== -->
+<section class="page" id="offer">
+  <div class="top">
+    <span class="plate">مقترح الشراكة</span>
+    <img src="assets/logo-light.png" alt="فينيق">
+  </div>
+  <h2 style="margin-bottom:2mm">تجربة بفرع واحد لمدة 60 يوماً</h2>
+
+  <div class="cols">
+    <div>
+      <h3>كيف نبدأ</h3>
+      <ul class="list">
+        <li><b>الأصناف والأسعار:</b> ندخلها مع فريقكم من ملف إكسل، وأصناف يونيفارما جاهزة أصلاً.</li>
+        <li><b>التعريف بمستودعكم:</b> فريق فينيق يزور الصيدليات ويشجعها على الطلب منكم.</li>
+        <li><b>استقبال الطلبيات:</b> على لوحة التحكم، وتجهّزونها بالطريقة التي نتفق عليها.</li>
+        <li><b>متابعة وتطوير:</b> دعم مباشر، ونعدّل حسب ملاحظاتكم.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>ما نحتاجه منكم</h3>
+      <ul class="list">
+        <li>اختيار الفرع الذي تبدأ به التجربة.</li>
+        <li>ملف الأصناف والأسعار (إكسل).</li>
+        <li>شخص من فريقكم مسؤول عن لوحة التحكم.</li>
+        <li>الاتفاق على طريقة تجهيز الطلبيات وتوصيلها.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin-top:4mm">الكلفة</h3>
+  <p>
+    <b><span class="ltr">5%</span> من قيمة الطلبيات التي تصل عبر فينيق فقط:</b> <b><span class="ltr">4%</span> حسم مباشر للصيدلية</b> على طلبيتها منكم (هو ما يشجعها على الطلب عبر التطبيق)،
+    و<b><span class="ltr">1%</span> عمولة فينيق</b>. لا اشتراك ولا رسوم تسجيل، والطلبيات بالهاتف أو عبر المندوب لا يُقتطع منها شيء. مثال:
+  </p>
+  <div class="cols" style="margin-top:3mm; grid-template-columns: 1.1fr 0.9fr; align-items:start">
+    <table class="money">
+      <tr><td>قيمة الأصناف (بعد العروض)</td><td>36,721 ل.س</td></tr>
+      <tr><td>حسم الصيدلية <span class="ltr">4%</span></td><td><span class="ltr">−1,469</span> ل.س</td></tr>
+      <tr><td>ما تدفعه الصيدلية عند التسليم</td><td>35,252 ل.س</td></tr>
+      <tr><td>عمولة فينيق <span class="ltr">1%</span></td><td><span class="ltr">−353</span> ل.س</td></tr>
+      <tr class="total"><td>صافي ما يستلمه المستودع</td><td>34,899 ل.س</td></tr>
+    </table>
+    <p class="small soft">الأرقام من الطلب رقم 3 في النسخة التجريبية، كما تعرضها لوحة التحكم تحت «ملخص مالي» باسم «خصم المنصة» و«عمولة المنصة». وتُسجَّل العمولة عند تسليم الطلبية.</p>
+  </div>
+
+  <div class="offer" style="margin-top:4mm">
+    <h3>عرض الشريك المؤسس لمستودع معتوق (خلال الستين يوماً)</h3>
+    <ul class="list">
+      <li>بلا عمولة فينيق (الـ1%) طوال فترة التجربة. يبقى حسم الصيدليات لأنه هو ما يجذب الطلبيات إليكم.</li>
+      <li>بانر لأصنافكم على الصفحة الرئيسية للتطبيق بلا مقابل.</li>
+      <li>إدخال الكتالوج كاملاً وتدريب فريقكم من فريق فينيق.</li>
+      <li>بلا أي التزام بعد التجربة: إن قررتم التوقف يُخفى المستودع من التطبيق في اليوم نفسه.</li>
+    </ul>
+  </div>
+
+  <p style="margin-top:4mm"><b>في نهاية التجربة</b> نقدّم للمجلس ما حدث فعلاً: عدد الصيدليات التي طلبت، وعدد الطلبيات وقيمتها. ثم يقرر المجلس: الاستمرار، أو التوسع إلى الفرعين الآخرين، أو التوقف.</p>
+
+  <div class="foot"><span>فينيق · ملف مجلس إدارة مستودع معتوق</span><span>4</span></div>
+</section>
+
+<!-- ======================== 5. أسئلة وأجوبة ======================== -->
+<section class="page" id="qa">
+  <div class="top">
+    <span class="plate">أسئلة يتوقعها المجلس</span>
+    <img src="assets/logo-light.png" alt="فينيق">
+  </div>
+  <h2 style="margin-bottom:5mm">أسئلة وأجوبة</h2>
+  <div class="qa">
+    <div class="q"><h3>هل يحلّ فينيق محلّ مندوبينا أو طريقة عملنا؟</h3>
+      <p>لا. المندوب يكمل عمله في الميدان ويبني العلاقة مع الصيادلة، والتطبيق يأخذ عنه الطلبيات الروتينية المتكررة. والهاتف والواتساب يبقيان كما هما.</p></div>
+    <div class="q"><h3>من يُدخل الأصناف والأسعار، وكيف تُحدَّث؟</h3>
+      <p>فريق فينيق يدخلها أول مرة من ملف إكسل يخرج من برنامج المحاسبة. بعدها تحدّثون الأسعار والتوفر من اللوحة مباشرة، أو برفع ملف جديد فتتحدث كلها دفعة واحدة، ويُحفظ سجل لكل تغيير سعر.</p></div>
+    <div class="q"><h3>من يرى أسعارنا؟</h3>
+      <p>الصيدليات المسجّلة داخل التطبيق فقط، كما تصلها اليوم قوائم الأسعار عبر الواتساب والمندوبين. الأسعار غير منشورة على الإنترنت، وحسابات المستودعات الأخرى لا ترى إلا أصنافها وطلبياتها.</p></div>
+    <div class="q"><h3>كيف نعرف أن طلبية جديدة وصلت؟</h3>
+      <p>تظهر فوراً على لوحة التحكم من دون تحديث الصفحة، في تبويب الطلبات الجديدة، مع اسم الصيدلية ورقمها وزر واتساب للتواصل معها.</p></div>
+    <div class="q"><h3>كيف يتم الدفع والتحصيل؟</h3>
+      <p>الدفع عند التسليم كما اليوم. لا بطاقات ولا دفع إلكتروني. واللوحة تتابع رصيد كل صيدلية وتسجّل الدفعات، وتصدر فاتورة لكل طلبية مسلّمة.</p></div>
+    <div class="q"><h3>كم صيدلية تستعمل فينيق اليوم؟</h3>
+      <p>نحن في مرحلة الإطلاق في اللاذقية، ولا نذكر أرقاماً قبل أن تتحقق. ما نلتزم به: فريقنا يزور الصيدليات ويعرّفها بمستودعكم، ومعتوق يكون من أوائل المستودعات الكبيرة على المنصة، فيكون في الواجهة حين تنضم الصيدليات.</p></div>
+    <div class="q"><h3>ماذا عن فروعنا الثلاثة؟</h3>
+      <p>تبدأ التجربة بفرع واحد تختارونه. اليوم يعمل كل فرع بحساب مستقل بأصنافه وطلبياته. وإدارة الفروع من حساب واحد، مع حسابات منفصلة للموظفين، نجهّزها قبل التوسع إلى الفرعين الآخرين.</p></div>
+    <div class="q"><h3>ماذا لو نفد صنف؟</h3>
+      <p>توقفون عرضه بضغطة من اللوحة. وعلى كل صنف في التطبيق زر «البدائل» يعرض أصنافاً بنفس المادة الفعالة والعيار من أصنافكم أنتم.</p></div>
+    <div class="q"><h3>والمرتجعات والشكاوى؟</h3>
+      <p>الصيدلية ترسل طلب إرجاع موثّقاً بالأصناف والكميات من التطبيق، وأنتم توافقون أو ترفضون من اللوحة. والملاحظات والشكاوى في قسم خاص بها.</p></div>
+    <div class="q"><h3>ماذا لو قررنا التوقف؟</h3>
+      <p>خلال التجربة لا يوجد أي التزام. يُخفى المستودع من التطبيق في اليوم نفسه.</p></div>
+    <div class="q"><h3>هل نحتاج أجهزة أو برامج خاصة؟</h3>
+      <p>لا. لوحة التحكم تفتح من متصفح أي لابتوب أو كمبيوتر، وتطبيق الصيدلية يعمل على موبايلات Android وينزَّل مباشرة بلا متجر Google Play. نسخة iPhone غير متوفرة حالياً.</p></div>
+  </div>
+  <div class="foot"><span>فينيق · ملف مجلس إدارة مستودع معتوق</span><span>5</span></div>
+</section>
+
+<!-- ======================== 6. جرّب بنفسك ======================== -->
+<section class="page" id="try">
+  <div class="top">
+    <span class="plate">جرّب بنفسك</span>
+    <img src="assets/logo-light.png" alt="فينيق">
+  </div>
+  <h2>جرّبوا فينيق بأنفسكم في 5 دقائق</h2>
+  <p class="soft" style="margin-bottom:5mm">شخصان: واحد على اللابتوب بدور المستودع، وواحد على موبايل Android بدور الصيدلية.</p>
+
+  <div class="try">
+    <div class="row"><div class="n">1</div><div>
+      <h3>لوحة المستودع (على اللابتوب)</h3>
+      <p>افتحوا الرابط وادخلوا بالحساب التجريبي:</p>
+      <div class="cred">
+        <b>الرابط</b><code>https://feniq-connect-web.onrender.com</code>
+        <b>الهاتف</b><code>0930000101</code>
+        <b>كلمة السر</b><code>Feniq@Demo2026</code>
+      </div>
+    </div></div>
+    <div class="row"><div class="n">2</div><div>
+      <h3>تطبيق الصيدلية (على موبايل Android)</h3>
+      <p>ثبّتوا ملف التطبيق <span class="ltr">feniq.apk</span> المرسَل مع هذا الملف. إذا طلب الموبايل السماح بالتثبيت من هذا المصدر، اسمحوا مرة واحدة ثم اضغطوا «تثبيت». بعدها أنشئوا حساب صيدلية تجريبياً برقم أي موبايل واسم «تجربة».</p>
+    </div></div>
+    <div class="row"><div class="n">3</div><div>
+      <h3>أرسلوا طلبية وشاهدوها تصل</h3>
+      <p>من التطبيق ادخلوا «مستودع النجاح»، أضيفوا صنفين إلى السلة واضغطوا «إرسال الطلب». ستظهر الطلبية على اللوحة فوراً. اضغطوا «تأكيد الطلب»، ثم افتحوا «طلباتي» على الموبايل واسحبوا للأسفل لتروا الحالة الجديدة.</p>
+    </div></div>
+  </div>
+
+  <p class="note" style="margin-top:5mm">
+    الحساب التجريبي عام ببيانات وهمية: «النجاح» و«الشفاء» و«الأمل» أسماء تجريبية وليست مستودعات شريكة.
+    الخادم التجريبي قد يتأخر حتى دقيقة في أول فتح بعد فترة توقف، فافتحوه قبل الاجتماع بدقيقتين.
+  </p>
+
+  <h3 style="margin-top:7mm">للتواصل وترتيب زيارة أو عرض مباشر</h3>
+  <div class="contact">
+    <div><span class="small">هاتف وواتساب</span><b>0982-001415</b></div>
+    <div><span class="small">هاتف وواتساب</span><b>0956-634694</b></div>
+  </div>
+
+  <div class="foot"><span>فينيق · ملف مجلس إدارة مستودع معتوق</span><span>6</span></div>
+</section>
+
+</body>
+</html>
