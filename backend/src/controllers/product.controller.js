@@ -42,4 +42,13 @@ const alternatives = asyncHandler(async (req, res) => {
   res.json({ success: true, ...productViewModel.toProductListResponse(items, rate?.usdToSyp ?? null) });
 });
 
-module.exports = { list, manufacturers, alternatives };
+// The same medicine and its alternatives at the other warehouses, each with
+// the warehouse to go to.
+const alternativesElsewhere = asyncHandler(async (req, res) => {
+  const { warehouseId, productId } = req.params;
+  const entries = await productService.listAlternativesElsewhere(warehouseId, productId);
+  const rate = await getRate();
+  res.json({ success: true, ...productViewModel.toElsewhereResponse(entries, rate?.usdToSyp ?? null) });
+});
+
+module.exports = { list, manufacturers, alternatives, alternativesElsewhere };

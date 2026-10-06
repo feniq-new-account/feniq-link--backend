@@ -17,6 +17,7 @@ class CatalogView extends StatefulWidget {
     required this.warehouseName,
     required this.manufacturer,
     this.manufacturerTitle,
+    this.initialSearch,
   });
 
   final String warehouseId;
@@ -27,13 +28,15 @@ class CatalogView extends StatefulWidget {
   final String manufacturer;
   // What the app bar calls the company - its English name when it has one.
   final String? manufacturerTitle;
+  // The search box's starting text (the cubit was opened with the same query).
+  final String? initialSearch;
 
   @override
   State<CatalogView> createState() => _CatalogViewState();
 }
 
 class _CatalogViewState extends State<CatalogView> {
-  final _searchController = TextEditingController();
+  late final _searchController = TextEditingController(text: widget.initialSearch?.trim() ?? '');
   // Grid vs. list density - purely a local display preference (see
   // ProductCard's `isGrid`), never touches CatalogCubit/the fetched data.
   bool _isGrid = false;

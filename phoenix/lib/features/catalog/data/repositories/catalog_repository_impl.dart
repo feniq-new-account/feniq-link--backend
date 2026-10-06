@@ -11,6 +11,7 @@ import 'package:feniq/core/offline/offline_store.dart';
 import 'package:feniq/core/offline/offline_syncable.dart';
 import 'package:feniq/core/session/session_scope.dart';
 import 'package:feniq/features/catalog/data/models/category_model.dart';
+import 'package:feniq/features/catalog/data/models/elsewhere_alternative.dart';
 import 'package:feniq/features/catalog/data/offline/catalog_snapshot.dart';
 import 'package:feniq/features/catalog/data/models/manufacturer_model.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
@@ -192,6 +193,25 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
         }
       }
       throw failure;
+    }
+  }
+
+  @override
+  Future<List<ElsewhereAlternative>> getAlternativesElsewhere({
+    required String warehouseId,
+    required String productId,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get(Endpoints.productAlternativesElsewhere(warehouseId, productId));
+      final data = response.data as Map<String, dynamic>;
+      final raw = data['alternatives'];
+      if (raw is! List) return const [];
+      return [
+        for (final entry in raw)
+          if (entry is Map<String, dynamic>) ?ElsewhereAlternative.tryFromJson(entry),
+      ];
+    } on DioException catch (e) {
+      throw ServerFailure.fromDioError(e);
     }
   }
 

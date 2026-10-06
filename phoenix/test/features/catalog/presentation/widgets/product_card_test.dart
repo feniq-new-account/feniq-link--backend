@@ -51,6 +51,8 @@ void main() {
     Locale? locale,
     ProductModel product = _product,
     double? gridHeight = 316,
+    double listWidth = 328,
+    double textScale = 1,
     ValueChanged<int>? onAdd,
     ValueChanged<int>? onCartQuantityChanged,
     VoidCallback? onCartRemove,
@@ -60,6 +62,10 @@ void main() {
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: BlocProvider<ExchangeRateCubit>.value(
           value: rateCubit,
           child: Scaffold(
@@ -67,7 +73,7 @@ void main() {
               // A grid cell at the catalog's real metrics, or a list row as wide
               // as a 360pt phone leaves it (minus the screen's side padding).
               child: SizedBox(
-                width: isGrid ? 160 : 328,
+                width: isGrid ? 160 : listWidth,
                 height: isGrid ? gridHeight : null,
                 child: ProductCard(
                   product: product,
@@ -85,12 +91,55 @@ void main() {
     );
   }
 
-  testWidgets('not in the cart -> shows the Add button, no stepper', (tester) async {
+  testWidgets('not in the cart -> shows the cart button, no stepper', (tester) async {
     await pumpCard(tester, cartQuantity: 0);
 
-    expect(find.text('Add'), findsOneWidget);
+    // The grid tile's cart button is a square icon in the price's corner.
+    expect(find.byIcon(Icons.add_shopping_cart_outlined), findsOneWidget);
+    expect(find.byTooltip('Add to cart'), findsOneWidget);
     expect(find.byType(QuantityStepper), findsNothing);
   });
+
+  testWidgets('grid: the corner cart button opens the quantity picker and adds', (tester) async {
+    final added = <int>[];
+    await pumpCard(tester, onAdd: added.add, gridHeight: null);
+
+    await tester.tap(find.byIcon(Icons.add_shopping_cart_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+
+    expect(added, [1]);
+  });
+
+  for (final isGrid in [true, false]) {
+    testWidgets('${isGrid ? 'grid' : 'list'}: an available medicine carries no "available" label', (tester) async {
+      await pumpCard(tester, isGrid: isGrid, gridHeight: null);
+      expect(find.text('Available'), findsNothing);
+      expect(find.text('Unavailable'), findsNothing);
+    });
+
+    testWidgets('${isGrid ? 'grid' : 'list'}: an unavailable one says so and cannot be added', (tester) async {
+      await pumpCard(
+        tester,
+        isGrid: isGrid,
+        gridHeight: null,
+        product: const ProductModel(
+          id: 'p5',
+          nameAr: 'دواء',
+          manufacturerAr: 'شركة',
+          priceUsd: 5,
+          discountPriceUsd: 5,
+          isAvailable: false,
+          hasActiveOffer: false,
+        ),
+      );
+      expect(find.text('Unavailable'), findsOneWidget);
+      expect(find.byIcon(Icons.add_shopping_cart_outlined), findsNothing);
+      expect(find.text('Add to cart'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('price is shown in SYP only, with no USD figure anywhere', (tester) async {
     await loadRate(5000); // 1 USD = 5000 SYP -> $5 product => 25,000 ل.س
@@ -216,6 +265,44 @@ void main() {
       });
     }
 
+    for (final isGrid in [true, false]) {
+      testWidgets('${isGrid ? 'grid' : 'list'}: a small phone with a large font still fits everything', (tester) async {
+        await loadRate(13800);
+        final busy = ProductModel(
+          id: 'p6',
+          nameAr: full.nameAr,
+          manufacturerAr: 'شركة الصناعات الدوائية المتحدة',
+          activeIngredient: 'AMOXICILLIN + CLAVULANIC ACID',
+          strength: '875 MG/125 MG',
+          dosageForm: 'أقراص مغلفة بالفيلم',
+          productionDate: full.productionDate,
+          expiryDate: full.expiryDate,
+          priceUsd: 50,
+          discountPriceUsd: 40,
+          isAvailable: true,
+          hasActiveOffer: true,
+          bonuses: const [BonusTier(buy: 10, free: 3)],
+          regularBonuses: const [BonusTier(buy: 10, free: 2)],
+        );
+        tester.view.physicalSize = const Size(800, 4000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        for (final quantity in [0, 12]) {
+          await pumpCard(
+            tester,
+            product: busy,
+            isGrid: isGrid,
+            gridHeight: null,
+            listWidth: 288,
+            textScale: 1.3,
+            cartQuantity: quantity,
+            locale: const Locale('ar'),
+          );
+          expect(tester.takeException(), isNull, reason: 'cart quantity $quantity');
+        }
+      });
+    }
+
     testWidgets('the strength keeps its left-to-right order inside the Arabic line', (tester) async {
       await loadRate(13800);
       final syrup = ProductModel(
@@ -230,8 +317,9 @@ void main() {
         hasActiveOffer: false,
       );
       await pumpCard(tester, product: syrup, isGrid: false, locale: const Locale('ar'));
-      // Isolated, so it renders "100 MG/5 ML", never "MG/5 ML 100".
-      expect(find.textContaining('\u2066100 MG/5 ML\u2069'), findsOneWidget);
+      // Laid out left-to-right, so it renders "100 MG/5 ML", never "MG/5 ML 100".
+      final strength = tester.widget<Text>(find.text('100 MG/5 ML'));
+      expect(strength.textDirection, TextDirection.ltr);
     });
 
     testWidgets('a product without them shows none of it', (tester) async {

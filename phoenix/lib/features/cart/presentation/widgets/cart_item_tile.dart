@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/widgets/name_text.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -86,7 +87,7 @@ class CartItemTile extends StatelessWidget {
                           const SizedBox(width: AppSizes.spacingXSmall),
                         ],
                         Expanded(
-                          child: Text(
+                          child: NameText(
                             name,
                             style: context.textTheme.titleMedium,
                           ),

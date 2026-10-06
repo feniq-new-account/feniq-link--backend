@@ -10,10 +10,13 @@ class CatalogCubit extends Cubit<CatalogState> {
     required CatalogRepository catalogRepository,
     required String warehouseId,
     String? manufacturer,
+    // Opens already searched (arriving from another warehouse's alternatives
+    // sheet, straight onto the medicine).
+    String? initialSearch,
   }) : _catalogRepository = catalogRepository,
        _warehouseId = warehouseId,
        _manufacturer = manufacturer,
-       super(const CatalogState());
+       super(CatalogState(searchQuery: initialSearch?.trim() ?? ''));
 
   final CatalogRepository _catalogRepository;
   final String _warehouseId;
@@ -45,9 +48,11 @@ class CatalogCubit extends Cubit<CatalogState> {
     emit(state.copyWith(status: CatalogStatus.loading));
     try {
       final categories = await _catalogRepository.getCategories();
+      final query = state.searchQuery.trim();
       final result = await _catalogRepository.getProducts(
         warehouseId: _warehouseId,
         manufacturer: _manufacturer,
+        search: query.isEmpty ? null : query,
       );
       if (_isStale(requestId)) return;
       emit(
