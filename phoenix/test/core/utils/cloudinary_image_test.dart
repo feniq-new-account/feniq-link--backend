@@ -106,4 +106,17 @@ void main() {
       expect(twice, once);
     });
   });
+
+  test('framed: trims the empty margin, then fits the picture on white at exactly the box', () {
+    const raw = 'https://res.cloudinary.com/demo/image/upload/v1/catalog/abc.webp';
+    expect(
+      cloudinaryOptimizedUrl(raw, width: 300, height: 214, framed: true),
+      'https://res.cloudinary.com/demo/image/upload/e_trim/f_auto,q_auto,w_300,h_214,c_pad,b_white/v1/catalog/abc.webp',
+    );
+    // Without both sizes it is the plain rendition.
+    expect(cloudinaryOptimizedUrl(raw, width: 300, framed: true), contains('c_limit'));
+    // Never on a URL that already carries a transformation.
+    const done = 'https://res.cloudinary.com/demo/image/upload/w_100,c_fill/v1/x.jpg';
+    expect(cloudinaryOptimizedUrl(done, width: 300, height: 200, framed: true), done);
+  });
 }

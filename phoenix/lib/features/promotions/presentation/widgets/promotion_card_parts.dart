@@ -178,9 +178,12 @@ class PromotionThumbnail extends StatelessWidget {
     return SizedBox(
       width: width,
       height: height,
+      // Trimmed and framed on white, like every medicine picture, so the
+      // thumbnails line up whatever the original photos were.
       child: AppNetworkImage(
         url: promotion.imageUrl,
-        crop: true,
+        framed: true,
+        fit: BoxFit.contain,
         borderRadius: borderRadius,
         fallbackIcon: switch (promotion.kind) {
           PromotionKind.offer => Icons.local_offer_outlined,

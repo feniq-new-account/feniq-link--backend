@@ -455,13 +455,25 @@ class _ProductImage extends StatelessWidget {
     // right-sizes and caches it. A medicine with no picture shows its company's
     // coloured initial (the same one the company list uses) rather than a blank
     // box, so a catalog that is only partly photographed still looks finished.
-    final image = AppNetworkImage(
-      url: url,
-      fit: BoxFit.cover,
-      width: size,
-      height: size,
-      fallback: _CompanyTile(name: manufacturer, size: size),
-    );
+    //
+    // Every picture sits in the same white tile with the same margin, trimmed
+    // and fitted (never cropped) by Cloudinary to exactly that size, so all
+    // medicines look the same size whatever their original photo was.
+    final hasImage = url != null && url!.trim().isNotEmpty;
+    final image = hasImage
+        ? ColoredBox(
+            color: Colors.white,
+            child: Padding(
+              padding: EdgeInsets.all(size == null ? AppSizes.spacingSmall : 4),
+              child: AppNetworkImage(
+                url: url,
+                fit: BoxFit.contain,
+                framed: true,
+                fallback: _CompanyTile(name: manufacturer, size: size),
+              ),
+            ),
+          )
+        : _CompanyTile(name: manufacturer, size: size);
 
     if (size != null) {
       return SizedBox(width: size, height: size, child: image);

@@ -77,6 +77,7 @@ class PackageContentRow extends StatelessWidget {
               width: 44,
               height: 44,
               fit: BoxFit.contain,
+              framed: true,
               fallbackIcon: Icons.medication_outlined,
             ),
           ),

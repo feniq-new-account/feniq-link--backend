@@ -254,7 +254,9 @@ class _ItemImage extends StatelessWidget {
       url: url,
       width: 72,
       height: 72,
-      fit: BoxFit.cover,
+      // Trimmed and framed on white, the same as the catalog card.
+      fit: BoxFit.contain,
+      framed: true,
       borderRadius: AppRadius.medium,
       fallbackIcon: Icons.medication_outlined,
     );
