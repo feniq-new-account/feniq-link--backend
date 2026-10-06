@@ -1879,4 +1879,20 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get submitThisWarehouseOnly => 'إرسال طلب هالمستودع بس';
+
+  @override
+  String get exceptionalOfferBadge => 'عرض استثنائي';
+
+  @override
+  String get packageContentsTitle => 'محتوى الباقة';
+
+  @override
+  String get packageFixedNote =>
+      'الباقة ثابتة: تُطلب كاملة كما حدّدها المستودع، ويمكنك اختيار عدد النسخ فقط.';
+
+  @override
+  String get packageShowContents => 'عرض محتوى الباقة';
+
+  @override
+  String get packageAddToCart => 'إضافة الباقة إلى السلة';
 }

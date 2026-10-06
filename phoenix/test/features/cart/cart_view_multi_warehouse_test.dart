@@ -129,15 +129,15 @@ void main() {
     await pumpCart(tester);
 
     expect(find.byType(ChoiceChip), findsNWidgets(2));
-    expect(find.textContaining('دواء p2'), findsOneWidget);
-    expect(find.textContaining('دواء p1'), findsNothing);
+    expect(find.textContaining('Product p2'), findsOneWidget);
+    expect(find.textContaining('Product p1'), findsNothing);
 
     await tester.tap(find.text('Warehouse A · 1'));
     await tester.pumpAndSettle();
 
     expect(cartCubit.state.warehouseId, 'A');
-    expect(find.textContaining('دواء p1'), findsOneWidget);
-    expect(find.textContaining('دواء p2'), findsNothing);
+    expect(find.textContaining('Product p1'), findsOneWidget);
+    expect(find.textContaining('Product p2'), findsNothing);
   });
 
   testWidgets('"Send all orders" sends one order per warehouse, then opens the orders list', (tester) async {
@@ -157,5 +157,18 @@ void main() {
     expect(sentFor, ['B', 'A']);
     expect(cartCubit.state.isEmpty, isTrue);
     expect(find.text('my-orders'), findsOneWidget);
+  });
+
+  testWidgets('a small phone with the keyboard up: nothing overflows, the code field stays in view', (tester) async {
+    tester.view.physicalSize = const Size(360, 600);
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    addTearDown(tester.view.reset);
+    cartCubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+    cartCubit.addProduct(_product('p2'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+    await pumpCart(tester);
+
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('discountCodeInput')).hitTestable(), findsOneWidget);
   });
 }

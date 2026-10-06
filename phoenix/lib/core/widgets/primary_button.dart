@@ -7,6 +7,7 @@ import '../constants/app_sizes.dart';
 import '../extensions/build_context_extensions.dart';
 import '../theme/app_text_theme.dart';
 import 'press_scale.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 /// The one primary action on a screen: the FENIQ website's call to action - a
 /// pill of the bird's orange with a warm glow under it.
@@ -60,7 +61,7 @@ class PrimaryButton extends StatelessWidget {
                   width: 20,
                   child: CircularProgressIndicator(strokeWidth: 2, color: onColor),
                 )
-              : Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+              : FitLabel(label),
         ),
       ),
     );

@@ -9,6 +9,7 @@ import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/core/widgets/status_badge.dart';
 import 'package:feniq/features/returns/data/models/return_model.dart';
 import 'package:feniq/features/returns/presentation/utils/return_labels.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class ReturnListTile extends StatelessWidget {
   const ReturnListTile({
@@ -29,7 +30,7 @@ class ReturnListTile extends StatelessWidget {
     final l10n = context.l10n;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final itemNames = returnRequest.items
-        .map((item) => item.productNameAr ?? '')
+        .map((item) => item.displayName ?? '')
         .where((name) => name.isNotEmpty)
         .join(isArabic ? '، ' : ', ');
     final reasonTypes = returnRequest.items.map((item) => item.reasonType).toSet();
@@ -58,15 +59,12 @@ class ReturnListTile extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Flexible(
-                            child: Text(
+                            child: FullText(
                               l10n.orderNumberLabel(returnRequest.orderNumber.toString()),
                               style: context.textTheme.bodySmall?.copyWith(
                                 color: AppColors.textSecondaryOf(context),
                                 fontWeight: FontWeight.w700,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              )),
                           ),
                         ],
                       ),
@@ -75,8 +73,6 @@ class ReturnListTile extends StatelessWidget {
                     Text(
                       itemNames,
                       style: context.textTheme.titleMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -94,24 +90,18 @@ class ReturnListTile extends StatelessWidget {
               Icon(Icons.event_outlined, size: 14, color: AppColors.textSecondaryOf(context)),
               const SizedBox(width: 4),
               Expanded(
-                child: Text(
+                child: FullText(
                   DateFormatter.formatDateTime(returnRequest.createdAt),
                   style: context.textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondaryOf(context),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  )),
               ),
               const SizedBox(width: AppSizes.spacingSmall),
               Flexible(
-                child: Text(
+                child: FullText(
                   reasonText,
                   textAlign: TextAlign.end,
-                  style: context.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  style: context.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
               ),
             ],
           ),

@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/display_name.dart';
 // One product line inside a package. A package carries no per-product price -
 // `priceUsd` is the product's CURRENT catalog price, and the package total is
 // the discount.
@@ -16,11 +17,18 @@ class AdvertisementItemModel {
     this.priceUsd,
     required this.quantity,
     required this.isAvailable,
+    this.manufacturerAr,
+    this.manufacturerEn,
+    this.strength,
+    this.dosageForm,
   });
 
   final String productId;
   final String nameAr;
   final String? nameEn;
+
+  /// The name shown: English when there is one (see englishFirst).
+  String get displayName => englishFirst(nameEn, nameAr);
   final String? image;
   final String? unitAr;
   final String? unitEn;
@@ -29,6 +37,15 @@ class AdvertisementItemModel {
   // How many of this product the package includes.
   final int quantity;
   final bool isAvailable;
+  // What the medicine is, so the package shows exactly what it holds (null
+  // from an older server).
+  final String? manufacturerAr;
+  final String? manufacturerEn;
+  final String? strength;
+  final String? dosageForm;
+
+  /// The company shown: English when there is one.
+  String? get displayManufacturer => englishFirstOrNull(manufacturerEn, manufacturerAr);
 
   /// The line's catalog cost (price x quantity), or null when the product is
   /// gone.
@@ -47,6 +64,10 @@ class AdvertisementItemModel {
     priceUsd: json['priceUsd'] as num?,
     quantity: (json['quantity'] as num?)?.toInt() ?? 1,
     isAvailable: (json['isAvailable'] as bool?) ?? false,
+    manufacturerAr: json['manufacturerAr'] as String?,
+    manufacturerEn: json['manufacturerEn'] as String?,
+    strength: json['strength'] as String?,
+    dosageForm: json['dosageForm'] as String?,
   );
 }
 

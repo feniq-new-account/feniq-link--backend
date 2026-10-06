@@ -118,8 +118,6 @@ class _OrderProgressBarState extends State<OrderProgressBar>
                   child: Text(
                     labels[index],
                     textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     style: context.textTheme.bodyMedium?.copyWith(
                       fontSize: 11,
                       fontWeight: index == widget.currentStageIndex

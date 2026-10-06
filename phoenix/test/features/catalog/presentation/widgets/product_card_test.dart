@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:feniq/core/widgets/custom_card.dart';
+import 'package:feniq/core/widgets/offer_badge.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
@@ -48,7 +50,7 @@ void main() {
     bool isGrid = true,
     Locale? locale,
     ProductModel product = _product,
-    double gridHeight = 316,
+    double? gridHeight = 316,
     ValueChanged<int>? onAdd,
     ValueChanged<int>? onCartQuantityChanged,
     VoidCallback? onCartRemove,
@@ -173,8 +175,9 @@ void main() {
   testWidgets('a medicine with no picture shows its company\'s initial instead of a blank box', (tester) async {
     for (final grid in [true, false]) {
       await pumpCard(tester, isGrid: grid);
-      // _product's company is 'شركة'; the avatar draws its first letter.
-      expect(find.text('ش'), findsOneWidget, reason: grid ? 'grid' : 'list');
+      // _product's company is shown as 'Co' (its English name); the avatar
+      // draws its first letter.
+      expect(find.text('C'), findsOneWidget, reason: grid ? 'grid' : 'list');
       expect(tester.takeException(), isNull);
     }
   });
@@ -198,9 +201,13 @@ void main() {
     for (final isGrid in [true, false]) {
       testWidgets('${isGrid ? 'grid' : 'list'}: each shown on its own, nothing overflows', (tester) async {
         await loadRate(13800);
-        // The catalog grid's real cell (catalog_product_list.dart: mainAxisExtent 344).
-        await pumpCard(tester, product: full, isGrid: isGrid, gridHeight: 344, locale: const Locale('ar'));
+        // A catalog grid cell is as tall as its content (catalog_product_list.dart).
+        await pumpCard(tester, product: full, isGrid: isGrid, gridHeight: null, locale: const Locale('ar'));
         expect(tester.takeException(), isNull);
+        // The whole name, never cut off with "...".
+        final name = tester.widget<Text>(find.text(full.nameAr));
+        expect(name.maxLines, isNull);
+        expect(name.overflow, isNot(TextOverflow.ellipsis));
         expect(find.textContaining('1000 MG'), findsOneWidget);
         expect(find.textContaining('أقراص ملبسة'), findsOneWidget);
         expect(find.text('METFORMIN'), findsOneWidget, reason: 'the strength is no longer folded into the ingredient');
@@ -209,6 +216,24 @@ void main() {
       });
     }
 
+    testWidgets('the strength keeps its left-to-right order inside the Arabic line', (tester) async {
+      await loadRate(13800);
+      final syrup = ProductModel(
+        id: 'p9',
+        nameAr: 'IBUPROFEN SUSP.',
+        manufacturerAr: 'شركة',
+        strength: '100 MG/5 ML',
+        dosageForm: 'معلق',
+        priceUsd: 5,
+        discountPriceUsd: 5,
+        isAvailable: true,
+        hasActiveOffer: false,
+      );
+      await pumpCard(tester, product: syrup, isGrid: false, locale: const Locale('ar'));
+      // Isolated, so it renders "100 MG/5 ML", never "MG/5 ML 100".
+      expect(find.textContaining('\u2066100 MG/5 ML\u2069'), findsOneWidget);
+    });
+
     testWidgets('a product without them shows none of it', (tester) async {
       await loadRate(13800);
       await pumpCard(tester, locale: const Locale('ar'));
@@ -216,6 +241,31 @@ void main() {
       expect(find.textContaining('انتهاء'), findsNothing);
     });
   });
+
+  for (final isGrid in [true, false]) {
+    testWidgets('${isGrid ? 'grid' : 'list'}: a medicine on offer wears the red badge and frame', (tester) async {
+      await loadRate(13800);
+      const onOffer = ProductModel(
+        id: 'p4',
+        nameAr: 'دواء',
+        manufacturerAr: 'شركة',
+        priceUsd: 5,
+        discountPriceUsd: 4,
+        isAvailable: true,
+        hasActiveOffer: true,
+      );
+      await pumpCard(tester, product: onOffer, isGrid: isGrid, gridHeight: null);
+      expect(find.byType(OfferBadge), findsOneWidget);
+      expect(find.text('Special offer'), findsOneWidget);
+      final card = tester.widget<CustomCard>(find.byType(CustomCard));
+      expect(card.borderColor, isNotNull);
+
+      // A regular medicine: no badge, no frame.
+      await pumpCard(tester, isGrid: isGrid, gridHeight: null);
+      expect(find.byType(OfferBadge), findsNothing);
+      expect(tester.widget<CustomCard>(find.byType(CustomCard)).borderColor, isNull);
+    });
+  }
 
   testWidgets('a bonus offer shows the better bonus and the usual one it replaces', (tester) async {
     await loadRate(13800);

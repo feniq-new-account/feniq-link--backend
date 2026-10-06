@@ -18,6 +18,7 @@ import 'package:feniq/features/auth/data/models/registration_draft.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 const int _otpLength = 6;
 const Duration _resendCooldown = Duration(seconds: 60);
@@ -123,7 +124,7 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(l10n.otpTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: FullText(l10n.otpTitle, minScale: 0.65),
       ),
       body: BlocListener<AuthCubit, AuthState>(
         listenWhen: (previous, current) =>

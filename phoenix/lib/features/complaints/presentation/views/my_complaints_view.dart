@@ -17,6 +17,7 @@ import 'package:feniq/features/complaints/presentation/managers/my_complaints_cu
 import 'package:feniq/features/complaints/presentation/managers/my_complaints_state.dart';
 import 'package:feniq/features/complaints/presentation/widgets/complaint_list_tile.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Section 1: the pharmacy's "My Complaints" screen - reached from the profile
 // screen. Lists complaints the pharmacy filed, each opening its full detail;
@@ -96,17 +97,14 @@ class _MyComplaintsViewState extends State<MyComplaintsView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.complaintsTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
+                FullText(l10n.complaintsTitle, minScale: 0.6),
+                FullText(
                   l10n.complaintsCountSubtitle(state.complaints.length),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.normal,
                     color: Colors.white70,
-                  ),
-                ),
+                  ), minScale: 0.6),
               ],
             );
           },

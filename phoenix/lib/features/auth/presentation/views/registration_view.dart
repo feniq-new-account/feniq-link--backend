@@ -17,6 +17,7 @@ import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
 import 'package:feniq/features/auth/presentation/widgets/location_map_field.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class RegistrationView extends StatefulWidget {
   const RegistrationView({super.key});
@@ -127,7 +128,7 @@ class _RegistrationViewState extends State<RegistrationView> {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(l10n.registrationTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: FullText(l10n.registrationTitle, minScale: 0.65),
       ),
       body: BlocListener<AuthCubit, AuthState>(
         listenWhen: (previous, current) =>

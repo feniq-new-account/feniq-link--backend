@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:feniq/core/utils/pricing.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 class ProductModel {
   const ProductModel({
@@ -44,6 +45,12 @@ class ProductModel {
   final String? nameEn;
   final String manufacturerAr;
   final String? manufacturerEn;
+
+  /// The name shown: English when there is one (see englishFirst).
+  String get displayName => englishFirst(nameEn, nameAr);
+
+  /// The company shown: English when there is one (see englishFirst).
+  String get displayManufacturer => englishFirst(manufacturerEn, manufacturerAr);
   // The effective image: the warehouse's own, else the catalog item's.
   final String? image;
   // What the medicine is made of and how strong (e.g. 'PARACETAMOL', '500 MG/TAB.').

@@ -176,7 +176,7 @@ void main() {
     expect(find.text('Some prices in your cart have changed.'), findsOneWidget);
     expect(
       find.text(
-        'دواء p1 is now 12,000 SYP (was 10,000 SYP). '
+        'Product p1 is now 12,000 SYP (was 10,000 SYP). '
         'Submit again to place the order at the new prices.',
       ),
       findsOneWidget,

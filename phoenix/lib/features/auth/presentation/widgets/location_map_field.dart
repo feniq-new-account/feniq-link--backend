@@ -274,8 +274,6 @@ class _LocationMapFieldState extends State<LocationMapField> {
                 _isResolving
                     ? l10n.resolvingAddressText
                     : (_resolvedAddress ?? l10n.pickLocationHint),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
                 style: context.textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondaryOf(context),
                 ),

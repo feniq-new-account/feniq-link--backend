@@ -11,6 +11,8 @@ import 'package:feniq/core/widgets/app_network_image.dart';
 import 'package:feniq/core/widgets/status_badge.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/features/promotions/data/models/promotion.dart';
+import 'package:feniq/core/widgets/full_text.dart';
+import 'package:feniq/core/widgets/offer_badge.dart';
 
 // The pieces the hero card and the compact list card both draw, so the two
 // stay one visual language rather than two that drift apart.
@@ -19,7 +21,8 @@ import 'package:feniq/features/promotions/data/models/promotion.dart';
 // StatusBadge), so it reads correctly in light and dark and in RTL and LTR
 // without a single hardcoded colour.
 
-/// "Offer" / "Package" - which of the two things this card is.
+/// "Offer" / "Package" - which of the two things this card is. An offer
+/// wears the red exceptional-offer badge, so it stands out at a glance.
 class PromotionKindBadge extends StatelessWidget {
   const PromotionKindBadge({super.key, required this.kind});
 
@@ -27,16 +30,11 @@ class PromotionKindBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return StatusBadge(
-      label: switch (kind) {
-        PromotionKind.offer => l10n.offerBadgeLabel,
-        PromotionKind.package => l10n.promotionsPackageBadge,
-      },
-      // Navy: an informational label, not a warning and not a call to action -
-      // the saving figure below is the only thing meant to draw the eye.
-      tone: StatusBadgeTone.info,
-    );
+    return switch (kind) {
+      PromotionKind.offer => const OfferBadge(compact: true),
+      // Navy: an informational label, not a warning and not a call to action.
+      PromotionKind.package => StatusBadge(label: context.l10n.promotionsPackageBadge, tone: StatusBadgeTone.info),
+    };
   }
 }
 
@@ -151,7 +149,7 @@ class PromotionMetaLine extends StatelessWidget {
         Icon(Icons.storefront_outlined, size: AppSizes.iconSizeSmall, color: secondary),
         const SizedBox(width: AppSizes.spacingXSmall),
         Expanded(
-          child: Text(label, style: style, maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: FullText(label, style: style),
         ),
       ],
     );
@@ -180,9 +178,12 @@ class PromotionThumbnail extends StatelessWidget {
     return SizedBox(
       width: width,
       height: height,
+      // Trimmed and framed on white, like every medicine picture, so the
+      // thumbnails line up whatever the original photos were.
       child: AppNetworkImage(
         url: promotion.imageUrl,
-        crop: true,
+        framed: true,
+        fit: BoxFit.contain,
         borderRadius: borderRadius,
         fallbackIcon: switch (promotion.kind) {
           PromotionKind.offer => Icons.local_offer_outlined,

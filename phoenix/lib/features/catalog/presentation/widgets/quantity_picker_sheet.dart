@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:feniq/core/constants/app_padding.dart';
-import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/widgets/primary_button.dart';
@@ -41,24 +40,18 @@ class _QuantityPickerSheetState extends State<_QuantityPickerSheet> {
       padding: EdgeInsets.only(
         left: AppPadding.screen.left,
         right: AppPadding.screen.right,
-        top: AppSizes.spacingMedium,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSizes.spacingLarge,
+        top: AppSizes.spacingXSmall,
+        // Clear of the keyboard and of the phone's own navigation buttons
+        // (Android draws the app beneath them): the add button is never
+        // covered. MediaQuery.padding is already zero while the keyboard is up.
+        bottom: MediaQuery.viewInsetsOf(context).bottom + MediaQuery.paddingOf(context).bottom + AppSizes.spacingLarge,
       ),
+      // No handle of its own: the theme's bottom sheet already draws one
+      // (BottomSheetThemeData.showDragHandle) - two were showing.
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: AppSizes.spacingMedium),
-              decoration: BoxDecoration(
-                color: Theme.of(context).dividerColor,
-                borderRadius: AppRadius.full,
-              ),
-            ),
-          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

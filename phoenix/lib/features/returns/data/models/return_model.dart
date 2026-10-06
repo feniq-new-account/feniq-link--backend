@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/display_name.dart';
 // Section 8: reasonType is a short, fixed enum by design - the pharmacist
 // never picks a resolution (approve/reject), only the warehouse does, once
 // status leaves 'pending' (Section 7).
@@ -21,6 +22,9 @@ class ReturnItemModel {
   final String? customReason;
   final String? productNameAr;
   final String? productNameEn;
+
+  /// The medicine shown: English when there is one (see englishFirst).
+  String? get displayName => englishFirstOrNull(productNameEn, productNameAr);
 
   factory ReturnItemModel.fromJson(Map<String, dynamic> json) => ReturnItemModel(
     orderItemId: json['orderItemId'] as String,

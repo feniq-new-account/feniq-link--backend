@@ -149,6 +149,48 @@ async function addDemoDiscounts(warehouseIds) {
   return docs.length;
 }
 
+// English names for the demo companies, so the app can show every company in
+// English. Set through the same path the admin panel uses to rename a
+// company, which carries the name to every catalog item of it.
+const MANUFACTURER_EN = {
+  'آسيا': 'Asia Pharma',
+  'بحري': 'Bahri',
+  'شفا': 'Shifa',
+  'بركات': 'Barakat',
+  'ابن زهر': 'Ibn Zahr',
+  'هيومن فارما': 'Human Pharma',
+  'الشهباء': 'Al-Shahba',
+  'زين فارما': 'Zein Pharma',
+  'دومنا': 'Domna',
+  'السعد': 'Al-Saad',
+  'دياموند فارما': 'Diamond Pharma',
+  'راما': 'Rama',
+  'الفارس': 'Al-Fares',
+  'يونيفارما': 'Unipharma',
+  'كيمي': 'Chemi',
+  'حماة': 'Hama Pharma',
+  'دلتا': 'Delta',
+  'مسعود فارما': 'Masoud Pharma',
+  'فيتا فارما': 'Vita Pharma',
+  'شركة الأدوية الوطنية': 'National Pharma',
+  'شركة الشرق للأدوية': 'Al-Sharq Pharma',
+  'شركة ألفا للأدوية': 'Alpha Pharma',
+  'شركة الحياة للأدوية': 'Al-Hayat Pharma',
+  'ابن حيان للصناعات الدوائية': 'Ibn Hayyan Pharma',
+};
+
+async function nameDemoManufacturers() {
+  const Manufacturer = require('../models/manufacturer.model');
+  const { updateManufacturer } = require('./manufacturer.service');
+  const unnamed = await Manufacturer.find({ nameAr: { $in: Object.keys(MANUFACTURER_EN) }, nameEn: null })
+    .select('_id nameAr')
+    .lean();
+  for (const manufacturer of unnamed) {
+    await updateManufacturer(manufacturer._id, { nameEn: MANUFACTURER_EN[manufacturer.nameAr] });
+  }
+  return unnamed.length;
+}
+
 async function seedDemoCatalogImages() {
   const users = await User.find({ phone: { $in: WAREHOUSES.map((w) => w.phone) }, role: 'warehouse' })
     .select('_id phone')
@@ -192,7 +234,8 @@ async function seedDemoCatalogImages() {
   const logos = await addDemoLogos(users);
   const discounts = await addDemoDiscounts(warehouseIds);
   const dated = await dateDemoProducts(warehouseIds);
-  return { uploaded, stocked, linked, logos, discounts, dated };
+  const named = await nameDemoManufacturers();
+  return { uploaded, stocked, linked, logos, discounts, dated, named };
 }
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;

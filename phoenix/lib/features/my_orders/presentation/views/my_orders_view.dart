@@ -16,6 +16,7 @@ import 'package:feniq/features/my_orders/presentation/managers/my_orders_cubit.d
 import 'package:feniq/features/my_orders/presentation/managers/my_orders_state.dart';
 import 'package:feniq/features/my_orders/presentation/widgets/order_list_tile.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class MyOrdersView extends StatefulWidget {
   const MyOrdersView({super.key});
@@ -64,13 +65,10 @@ class _MyOrdersViewState extends State<MyOrdersView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.myOrdersTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
+                FullText(l10n.myOrdersTitle, minScale: 0.6),
+                FullText(
                   l10n.myOrdersCountSubtitle(state.orders.length),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                ),
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },

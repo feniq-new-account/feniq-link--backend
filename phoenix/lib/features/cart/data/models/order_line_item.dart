@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/display_name.dart';
 // A snapshotted invoice line - name/manufacturer/price exactly as they were
 // at order time (see orderItem.model.js on the backend), not a live product
 // lookup. Only present on the detail fetch (GET /orders/:id).
@@ -28,6 +29,12 @@ class OrderLineItem {
   final String? productNameEn;
   final String manufacturerAr;
   final String? manufacturerEn;
+
+  /// The medicine shown: English when there is one (see englishFirst).
+  String get displayName => englishFirst(productNameEn, productNameAr);
+
+  /// The company shown: English when there is one (see englishFirst).
+  String get displayManufacturer => englishFirst(manufacturerEn, manufacturerAr);
   final int quantity;
   final num unitPrice;
   final num discountPrice;

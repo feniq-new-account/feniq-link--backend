@@ -7,6 +7,7 @@ import 'package:feniq/core/theme/app_text_theme.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/features/catalog/data/models/manufacturer_model.dart';
 import 'package:feniq/features/catalog/presentation/widgets/manufacturer_avatar.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // The pharmacist's entry into a warehouse's catalog is now this card, not a
 // medicine directly - tapping one filters the catalog down to this
@@ -37,7 +38,7 @@ class ManufacturerCard extends StatelessWidget {
               ),
               // The admin-set logo, or the first letter in a coloured circle.
               child: ManufacturerAvatar(
-                name: manufacturer.name,
+                name: manufacturer.displayName,
                 id: manufacturer.id,
                 logoUrl: manufacturer.logoUrl,
               ),
@@ -45,11 +46,9 @@ class ManufacturerCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.spacingSmall),
           Text(
-            manufacturer.name,
+            manufacturer.displayName,
             textAlign: TextAlign.center,
             style: context.textTheme.titleSmall,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSizes.spacingXSmall),
           // Display-only: the warehouse's standing discount for this
@@ -58,16 +57,13 @@ class ManufacturerCard extends StatelessWidget {
           // "15%", a fractional one (the warehouse's Discounts form accepts
           // those) as "25.5%", never rounded. Green = the app's "positive /
           // saving" colour, matching the discounted-price figure on ProductCard.
-          Text(
+          FullText(
             l10n.companyDiscountValue(_formatPercent(manufacturer.discountPercentage)),
             textAlign: TextAlign.center,
             style: context.textTheme.bodySmall?.copyWith(
               color: AppColors.secondaryOf(context),
               fontWeight: AppTextTheme.semiBold,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+            )),
         ],
       ),
     );

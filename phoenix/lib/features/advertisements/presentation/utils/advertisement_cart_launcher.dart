@@ -78,7 +78,7 @@ Future<void> launchAdvertisementCart(BuildContext context, String advertisementI
   // checkout (ADVERTISEMENT_ITEM_MISSING), so it is never half-added here.
   if (!preparation.isComplete) {
     final names = preparation.unavailableItems
-        .map((item) => item.productNameAr)
+        .map((item) => item.displayName)
         .where((name) => name.isNotEmpty)
         .join(isArabic ? '، ' : ', ');
     await AppDialog.show(

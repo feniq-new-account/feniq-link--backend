@@ -1,6 +1,7 @@
 import 'package:feniq/core/utils/pricing.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 /// One product inside a package, for the package line's expandable detail.
 ///
@@ -12,11 +13,29 @@ class CartPackageContent {
     required this.nameAr,
     this.nameEn,
     required this.quantityPerCopy,
+    this.manufacturerAr,
+    this.manufacturerEn,
+    this.strength,
+    this.dosageForm,
+    this.image,
   });
 
   final String productId;
   final String nameAr;
   final String? nameEn;
+  // What the medicine is, so the pharmacist sees exactly what the package
+  // holds (null from an older server).
+  final String? manufacturerAr;
+  final String? manufacturerEn;
+  final String? strength;
+  final String? dosageForm;
+  final String? image;
+
+  /// The company shown: English when there is one.
+  String? get displayManufacturer => englishFirstOrNull(manufacturerEn, manufacturerAr);
+
+  /// The name shown: English when there is one (see englishFirst).
+  String get displayName => englishFirst(nameEn, nameAr);
 
   /// Units of this product in ONE copy of the package. The tile shows
   /// `quantityPerCopy * copies` so the pharmacist can see what is actually
@@ -72,6 +91,9 @@ class CartItem {
   final String? nameEn;
   final String manufacturerAr;
   final String? manufacturerEn;
+
+  /// The company shown: English when there is one (see englishFirst).
+  String get displayManufacturer => englishFirst(manufacturerEn, manufacturerAr);
   final String? image;
   final String? unitAr;
   final String? unitEn;
@@ -126,12 +148,13 @@ class CartItem {
 
   bool get isPackage => packageId != null;
 
-  /// What the line is called on screen. A product line: the product's Arabic
-  /// name - the only name a medicine is shown by (its English name is a
-  /// search helper). A package line carries the package's title in
-  /// nameAr/nameEn, and a title follows the UI language like every other
-  /// title in the app.
-  String displayName(bool isArabic) => isPackage && !isArabic ? (nameEn ?? nameAr) : nameAr;
+  /// What the line is called on screen. A medicine is shown by its English
+  /// name when it has one (the
+  /// owner's choice - names read as printed on the box). A package line
+  /// carries the package's title in nameAr/nameEn, and a title follows the UI
+  /// language like every other title in the app.
+  String displayName(bool isArabic) =>
+      isPackage ? (isArabic ? nameAr : (nameEn ?? nameAr)) : englishFirst(nameEn, nameAr);
 
   /// The lira price of one unit at [usdToSyp] - what the order charges for a
   /// loose line. A package copy has no per-unit SYP from the server and keeps
@@ -151,6 +174,15 @@ class CartItem {
 
   /// The line's lira total at [usdToSyp] (free bonus units are not charged).
   int? lineTotalSypAt(double? usdToSyp) {
+    if (isPackage) {
+      // As the order prices it (order.service.js): the copies' total in USD,
+      // to the cent, converted and rounded once - not one rounded copy times
+      // the copies, which drifted a lira from the cart summary (7,063 x 2 =
+      // 14,126 on the line against the order's 14,125).
+      if (usdToSyp == null || usdToSyp <= 0) return null;
+      final totalUsd = (discountPriceUsd * quantity * 100).round() / 100;
+      return (totalUsd * usdToSyp).round();
+    }
     final unit = unitSypAt(usdToSyp);
     return unit == null ? null : unit * quantity;
   }

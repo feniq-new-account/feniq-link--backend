@@ -1,5 +1,6 @@
 import 'package:feniq/features/cart/data/models/cart_item.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // A line from the original order whose product the warehouse no longer sells
 // (deleted, deactivated, or moved warehouse). Reported so the pharmacist can
@@ -15,6 +16,9 @@ class UnavailableReorderItem {
   final String productId;
   final String productNameAr;
   final String? productNameEn;
+
+  /// The medicine shown: English when there is one (see englishFirst).
+  String get displayName => englishFirst(productNameEn, productNameAr);
   final int quantity;
 
   factory UnavailableReorderItem.fromJson(Map<String, dynamic> json) => UnavailableReorderItem(

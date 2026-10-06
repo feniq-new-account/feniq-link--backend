@@ -14,6 +14,7 @@ import 'package:feniq/core/widgets/failure_widget.dart';
 import 'package:feniq/features/reviews/data/models/review_model.dart';
 import 'package:feniq/features/reviews/presentation/managers/pharmacy_reviews_cubit.dart';
 import 'package:feniq/features/reviews/presentation/managers/pharmacy_reviews_state.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // The pharmacist's own ratings/reviews list, opened from the Profile screen's
 // compact Ratings entry. It is only a full-screen home for what ProfileView
@@ -32,7 +33,7 @@ class PharmacyReviewsView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(l10n.yourRatingTitle),
+        title: FullText(l10n.yourRatingTitle, minScale: 0.6),
       ),
       body: BlocBuilder<PharmacyReviewsCubit, PharmacyReviewsState>(
         builder: (context, state) {
@@ -87,17 +88,14 @@ class PharmacyReviewsView extends StatelessWidget {
                       _StarRow(rating: state.averageRating.round()),
                       const SizedBox(width: AppSizes.spacingSmall),
                       Flexible(
-                        child: Text(
+                        child: FullText(
                           l10n.ratingSummary(
                             state.averageRating.toStringAsFixed(1),
                             state.reviews.length.toString(),
                           ),
                           style: context.textTheme.bodyMedium?.copyWith(
                             color: AppColors.textSecondaryOf(context),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          )),
                       ),
                     ],
                   ),
@@ -167,12 +165,9 @@ class _ReviewCard extends StatelessWidget {
           ),
           if (warehouseName != null) ...[
             const SizedBox(height: AppSizes.spacingXSmall),
-            Text(
+            FullText(
               warehouseName,
-              style: context.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+              style: context.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
           ],
           if (review.comment != null && review.comment!.isNotEmpty) ...[
             const SizedBox(height: AppSizes.spacingXSmall),

@@ -34,6 +34,7 @@ import 'package:feniq/features/returns/data/models/return_model.dart';
 import 'package:feniq/features/returns/data/repositories/return_repository.dart';
 import 'package:feniq/features/returns/presentation/widgets/request_return_sheet.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class OrderTrackingView extends StatefulWidget {
   const OrderTrackingView({super.key});
@@ -185,21 +186,15 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        l10n.orderNumberLabel(order.orderNumber.toString()),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
+                      FullText(
+                        l10n.orderNumberLabel(order.orderNumber.toString()), minScale: 0.6),
+                      FullText(
                         [
                           if ((isArabic ? order.warehouseNameAr : order.warehouseNameEn) != null)
                             (isArabic ? order.warehouseNameAr : order.warehouseNameEn)!,
                           if (order.createdAt != null) DateFormatter.formatDate(order.createdAt!),
                         ].join(' · '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                      ),
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
                     ],
                   ),
             actions: [
@@ -802,12 +797,9 @@ class _OrderComplaintsSection extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 2),
-                            Text(
+                            FullText(
                               complaint.subject,
-                              style: context.textTheme.bodyMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              style: context.textTheme.bodyMedium),
                           ],
                         ),
                       ),

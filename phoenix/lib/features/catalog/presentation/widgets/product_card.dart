@@ -15,6 +15,8 @@ import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/catalog/presentation/widgets/manufacturer_avatar.dart';
 import 'package:feniq/features/catalog/presentation/widgets/quantity_picker_sheet.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/utils/display_name.dart';
+import 'package:feniq/core/widgets/offer_badge.dart';
 
 // Two layouts sharing the same data/logic: a grid tile (image on top,
 // details below - the default) and a compact list row, toggled from
@@ -102,11 +104,13 @@ class _GridCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final name = product.nameAr;
-    final manufacturer = product.manufacturerAr;
+    final name = product.displayName;
+    final manufacturer = product.displayManufacturer;
 
     return CustomCard(
       padding: EdgeInsets.zero,
+      // An exceptional offer is framed in the badge's red.
+      borderColor: _onOffer(product) ? OfferBadge.frameColor(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -114,21 +118,28 @@ class _GridCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.vertical(top: AppRadius.large.topLeft),
-                child: _ProductImage(url: product.image, manufacturer: product.manufacturerAr, aspectRatio: 1.4),
+                child: _ProductImage(url: product.image, manufacturer: product.displayManufacturer, aspectRatio: 1.4),
               ),
               // Strength and dosage form each in their own corner, never
-              // folded into the name.
-              if (_hasText(product.strength))
+              // folded into the name. One row, so two long labels share the
+              // width instead of running into each other.
+              if (_hasText(product.strength) || _hasText(product.dosageForm))
                 PositionedDirectional(
                   bottom: AppSizes.spacingXSmall,
                   start: AppSizes.spacingXSmall,
-                  child: _CornerChip(label: product.strength!, emphasized: true),
-                ),
-              if (_hasText(product.dosageForm))
-                PositionedDirectional(
-                  bottom: AppSizes.spacingXSmall,
                   end: AppSizes.spacingXSmall,
-                  child: _CornerChip(label: product.dosageForm!),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (_hasText(product.strength))
+                        Flexible(child: _CornerChip(label: product.strength!, emphasized: true))
+                      else
+                        const SizedBox.shrink(),
+                      const SizedBox(width: AppSizes.spacingXSmall),
+                      if (_hasText(product.dosageForm)) Flexible(child: _CornerChip(label: product.dosageForm!)),
+                    ],
+                  ),
                 ),
               if (!product.isAvailable)
                 PositionedDirectional(
@@ -137,10 +148,10 @@ class _GridCard extends StatelessWidget {
                   child: StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger),
                 )
               else if (product.hasActiveOffer)
-                PositionedDirectional(
+                const PositionedDirectional(
                   top: AppSizes.spacingSmall,
                   end: AppSizes.spacingSmall,
-                  child: StatusBadge(label: l10n.offerBadgeLabel, tone: StatusBadgeTone.pending),
+                  child: OfferBadge(compact: true),
                 ),
             ],
           ),
@@ -202,15 +213,17 @@ class _ListRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final meta = [
-      if (_hasText(product.strength)) product.strength!,
+      // The strength is isolated left-to-right so "100 MG/5 ML" never reads
+      // as "MG/5 ML 100" inside the Arabic line.
+      if (_hasText(product.strength)) ltrIsolate(product.strength!),
       if (_hasText(product.dosageForm)) product.dosageForm!,
     ].join('  •  ');
 
-    // Top: picture, then name / company / "strength • form", with the
-    // availability (or offer) pill in the far corner. Under it the batch
-    // dates, and a bottom bar with the price in its own rounded box and the
-    // cart action beside it.
+    // Top: picture, then the availability (or offer) pill, name, company and
+    // "strength • form", and the batch dates. Under it a bottom bar with the
+    // price in its own rounded box and the cart action beside it.
     return CustomCard(
+      borderColor: _onOffer(product) ? OfferBadge.frameColor(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -219,24 +232,29 @@ class _ListRow extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: AppRadius.medium,
-                child: _ProductImage(url: product.image, manufacturer: product.manufacturerAr, size: 56),
+                child: _ProductImage(url: product.image, manufacturer: product.displayManufacturer, size: 56),
               ),
               const SizedBox(width: AppSizes.spacingMedium),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // The availability (or offer) pill sits above the name,
+                    // not beside it, so the name keeps the full width.
+                    if (!product.isAvailable)
+                      StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger)
+                    else if (product.hasActiveOffer)
+                      const OfferBadge(compact: true)
+                    else
+                      StatusBadge(label: l10n.availableLabel, tone: StatusBadgeTone.info),
+                    const SizedBox(height: AppSizes.spacingXSmall),
                     Text(
-                      product.nameAr,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      product.displayName,
                       style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      product.manufacturerAr,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      product.displayManufacturer,
                       style: context.textTheme.bodySmall?.copyWith(
                         color: AppColors.primaryOf(context),
                         fontWeight: FontWeight.w600,
@@ -245,8 +263,6 @@ class _ListRow extends StatelessWidget {
                     if (meta.isNotEmpty)
                       Text(
                         meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
                       ),
                     _IngredientLine(product: product),
@@ -254,13 +270,6 @@ class _ListRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: AppSizes.spacingSmall),
-              if (!product.isAvailable)
-                StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger)
-              else if (product.hasActiveOffer)
-                StatusBadge(label: l10n.offerBadgeLabel, tone: StatusBadgeTone.pending)
-              else
-                StatusBadge(label: l10n.availableLabel, tone: StatusBadgeTone.info),
             ],
           ),
           const SizedBox(height: AppSizes.spacingSmall),
@@ -315,8 +324,6 @@ class _IngredientLine extends StatelessWidget {
       child: Text(
         text,
         style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 11.5),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -371,8 +378,6 @@ class _PriceDisplay extends StatelessWidget {
           _bonusOnOffer(product)
               ? context.l10n.bonusInsteadOf(BonusTier.format(product.bonuses), BonusTier.format(product.regularBonuses))
               : context.l10n.bonusValue(BonusTier.format(product.bonuses)),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: context.textTheme.bodySmall?.copyWith(
             color: AppColors.secondaryOf(context),
             fontWeight: FontWeight.w600,
@@ -450,13 +455,25 @@ class _ProductImage extends StatelessWidget {
     // right-sizes and caches it. A medicine with no picture shows its company's
     // coloured initial (the same one the company list uses) rather than a blank
     // box, so a catalog that is only partly photographed still looks finished.
-    final image = AppNetworkImage(
-      url: url,
-      fit: BoxFit.cover,
-      width: size,
-      height: size,
-      fallback: _CompanyTile(name: manufacturer, size: size),
-    );
+    //
+    // Every picture sits in the same white tile with the same margin, trimmed
+    // and fitted (never cropped) by Cloudinary to exactly that size, so all
+    // medicines look the same size whatever their original photo was.
+    final hasImage = url != null && url!.trim().isNotEmpty;
+    final image = hasImage
+        ? ColoredBox(
+            color: Colors.white,
+            child: Padding(
+              padding: EdgeInsets.all(size == null ? AppSizes.spacingSmall : 4),
+              child: AppNetworkImage(
+                url: url,
+                fit: BoxFit.contain,
+                framed: true,
+                fallback: _CompanyTile(name: manufacturer, size: size),
+              ),
+            ),
+          )
+        : _CompanyTile(name: manufacturer, size: size);
 
     if (size != null) {
       return SizedBox(width: size, height: size, child: image);
@@ -487,8 +504,8 @@ class _CompanyTile extends StatelessWidget {
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 
-// The medicine's name: kept compact so a card shows the name, company,
-// strength, form and dates without scrolling.
+// The medicine's name, always in full (it wraps; it is never cut off): a
+// health app must never show half a medicine name.
 class _NameText extends StatelessWidget {
   const _NameText({required this.name});
 
@@ -499,8 +516,6 @@ class _NameText extends StatelessWidget {
     return Text(
       name,
       style: context.textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w700, height: 1.25),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
     );
   }
 }
@@ -515,8 +530,6 @@ class _ManufacturerText extends StatelessWidget {
     return Text(
       manufacturer,
       style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 11),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
     );
   }
 }
@@ -533,7 +546,6 @@ class _CornerChip extends StatelessWidget {
     final color = emphasized ? AppColors.navyOf(context) : AppColors.surfaceElevatedOf(context);
     final textColor = emphasized ? Colors.white : AppColors.textOf(context);
     return Container(
-      constraints: const BoxConstraints(maxWidth: 110),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.92),
@@ -542,8 +554,6 @@ class _CornerChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         textDirection: _isLatin(label) ? TextDirection.ltr : null,
         style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: textColor, height: 1.2),
       ),
@@ -570,25 +580,24 @@ class _BatchDates extends StatelessWidget {
     final l10n = context.l10n;
     final base = context.textTheme.bodySmall?.copyWith(fontSize: 10.5, color: AppColors.textSecondaryOf(context));
     final expiresSoon = expires != null && expires.isBefore(DateTime.now().add(const Duration(days: 183)));
+    // Each date is one unbreakable piece ("انتهاء 08/2027"): when both do not
+    // fit on one line the expiry moves to the next line whole - a date is
+    // never cut off.
     return Padding(
       padding: const EdgeInsets.only(top: 3),
-      child: Text.rich(
-        TextSpan(
-          children: [
-            if (produced != null) TextSpan(text: l10n.productionDateShort(_format(produced))),
-            if (produced != null && expires != null) const TextSpan(text: '  ·  '),
-            if (expires != null)
-              TextSpan(
-                text: l10n.expiryDateShort(_format(expires)),
-                style: expiresSoon
-                    ? TextStyle(color: AppColors.warningOf(context), fontWeight: FontWeight.w700)
-                    : null,
-              ),
-          ],
-        ),
-        style: base,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      child: Wrap(
+        spacing: AppSizes.spacingSmall,
+        runSpacing: 1,
+        children: [
+          if (produced != null) Text(l10n.productionDateShort(_format(produced)), style: base),
+          if (expires != null)
+            Text(
+              l10n.expiryDateShort(_format(expires)),
+              style: expiresSoon
+                  ? base?.copyWith(color: AppColors.warningOf(context), fontWeight: FontWeight.w700)
+                  : base,
+            ),
+        ],
       ),
     );
   }
@@ -597,3 +606,6 @@ class _BatchDates extends StatelessWidget {
 // A bonus offer is running: the bonus in force is not the product's usual one.
 bool _bonusOnOffer(ProductModel product) =>
     product.regularBonuses.isNotEmpty && BonusTier.format(product.regularBonuses) != BonusTier.format(product.bonuses);
+
+// On an exceptional offer the pharmacist can still buy: framed and badged in red.
+bool _onOffer(ProductModel product) => product.isAvailable && product.hasActiveOffer;

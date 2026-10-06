@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/display_name.dart';
 // The pharmacist's entry into a warehouse's catalog: one distinct
 // manufacturer (its Arabic name - also the exact string the catalog filters
 // on) paired with the warehouse's standing discount for that manufacturer,
@@ -19,6 +20,9 @@ class ManufacturerModel {
   // used to pick the placeholder avatar's colour.
   final String? id;
   final String? nameEn;
+
+  /// The company shown: English when there is one (see englishFirst).
+  String get displayName => englishFirst(nameEn, name);
   // The company's logo (set by the admin). Null means the card draws the
   // first letter of the name in a coloured circle instead.
   final String? logoUrl;

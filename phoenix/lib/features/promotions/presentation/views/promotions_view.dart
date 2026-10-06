@@ -20,6 +20,8 @@ import 'package:feniq/features/promotions/presentation/widgets/promotion_filter_
 import 'package:feniq/features/promotions/presentation/widgets/promotion_hero_card.dart';
 import 'package:feniq/features/promotions/presentation/widgets/promotions_hero_carousel.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
+import 'package:feniq/features/advertisements/presentation/widgets/package_contents.dart';
 
 /// The Offers & Ads tab: the one place a pharmacist browses everything being
 /// promoted right now - product offers and warehouse packages together.
@@ -64,10 +66,21 @@ class _PromotionsViewState extends State<PromotionsView> {
           extra: promotion.warehouseName(Localizations.localeOf(context).languageCode == 'ar'),
         );
       case PackagePromotion(:final advertisement):
-        if (_openingPackage) return;
-        setState(() => _openingPackage = true);
-        await launchAdvertisementCart(context, advertisement.id);
-        if (mounted) setState(() => _openingPackage = false);
+        // First what the package holds, in full; the add action is in the
+        // sheet (the package is fixed - taken whole, in copies).
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        await showPackageContentsSheet(
+          context,
+          title: promotion.title(isArabic),
+          subtitle: promotion.warehouseName(isArabic),
+          entries: [for (final item in advertisement.items) PackageContentEntry.fromItem(item)],
+          onAdd: () async {
+            if (_openingPackage || !mounted) return;
+            setState(() => _openingPackage = true);
+            await launchAdvertisementCart(context, advertisement.id);
+            if (mounted) setState(() => _openingPackage = false);
+          },
+        );
     }
   }
 
@@ -88,13 +101,10 @@ class _PromotionsViewState extends State<PromotionsView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.offersAndAdsTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
+                FullText(l10n.offersAndAdsTitle, minScale: 0.6),
+                FullText(
                   l10n.promotionsCountSubtitle(state.totalCount),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                ),
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },

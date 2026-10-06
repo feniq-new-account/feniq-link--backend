@@ -14,6 +14,7 @@ import 'package:feniq/features/debts/data/models/warehouse_debt_model.dart';
 import 'package:feniq/features/debts/presentation/managers/debts_cubit.dart';
 import 'package:feniq/features/debts/presentation/managers/debts_state.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Section 16: the pharmacist's "my debts" list - one row per warehouse they
 // owe, plus a total. Extracted verbatim from ProfileView so the Account
@@ -192,12 +193,9 @@ class _DebtTile extends StatelessWidget {
             ),
             const SizedBox(width: AppSizes.spacingSmall),
             Expanded(
-              child: Text(
+              child: FullText(
                 name,
-                style: context.textTheme.bodyMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+                style: context.textTheme.bodyMedium),
             ),
             const SizedBox(width: AppSizes.spacingSmall),
             Column(

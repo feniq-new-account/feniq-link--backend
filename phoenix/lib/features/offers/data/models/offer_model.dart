@@ -1,5 +1,6 @@
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 /// One currently-running product offer, as GET /offers/active returns it.
 ///
@@ -57,6 +58,12 @@ class OfferModel {
   // catalog flow with, exactly as a tapped banner does.
   final String manufacturerAr;
   final String? manufacturerEn;
+
+  /// The name shown: English when there is one (see englishFirst).
+  String get displayName => englishFirst(nameEn, nameAr);
+
+  /// The company shown: English when there is one (see englishFirst).
+  String get displayManufacturer => englishFirst(manufacturerEn, manufacturerAr);
   final String? image;
   final String? unitAr;
   final String? unitEn;

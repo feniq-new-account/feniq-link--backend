@@ -9,6 +9,7 @@ import 'package:feniq/core/widgets/status_badge.dart';
 import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/cart/presentation/utils/order_status_label.dart';
 import 'package:feniq/features/cart/presentation/widgets/reorder_button.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class OrderListTile extends StatelessWidget {
   const OrderListTile({super.key, required this.order, required this.onTap});
@@ -49,14 +50,11 @@ class OrderListTile extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Flexible(
-                            child: Text(
+                            child: FullText(
                               warehouseName,
                               style: context.textTheme.bodyMedium?.copyWith(
                                 color: AppColors.textSecondaryOf(context),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              )),
                           ),
                         ],
                       ),

@@ -16,6 +16,7 @@ import 'package:feniq/features/complaints/data/models/complaint_model.dart';
 import 'package:feniq/features/complaints/presentation/managers/complaint_detail_cubit.dart';
 import 'package:feniq/features/complaints/presentation/managers/complaint_detail_state.dart';
 import 'package:feniq/features/complaints/presentation/utils/complaint_labels.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Section 1: the full complaint - reached from "My Complaints" or from tapping
 // the "your complaint got a reply" notification. Read-only: the pharmacy never
@@ -31,7 +32,7 @@ class ComplaintDetailView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(l10n.complaintDetailTitle),
+        title: FullText(l10n.complaintDetailTitle, minScale: 0.6),
       ),
       body: BlocBuilder<ComplaintDetailCubit, ComplaintDetailState>(
         builder: (context, state) {
@@ -130,7 +131,7 @@ class _SectionHeader extends StatelessWidget {
         ),
         const SizedBox(width: AppSizes.spacingSmall),
         Expanded(
-          child: Text(text, style: context.textTheme.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: FullText(text, style: context.textTheme.titleMedium),
         ),
       ],
     );
