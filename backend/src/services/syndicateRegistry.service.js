@@ -133,7 +133,12 @@ async function parseWorkbook(buffer) {
       if (row.hasValues) skipped += 1;
       continue;
     }
-    const phones = [read(row, 'phone'), read(row, 'phone2')].map(toMobile).filter(Boolean);
+    // One cell may hold two numbers ("0933... / 0944..."), as the cleaned list
+    // writes them; an older copy had a second "موبايل آخر" column instead.
+    const phones = [read(row, 'phone'), read(row, 'phone2')]
+      .flatMap((cell) => cell.split(/[/,;\n،]+/))
+      .map(toMobile)
+      .filter(Boolean);
     const sourceRow = Number(read(row, 'sourceRow'));
     entries.push({
       pharmacistName,
@@ -256,7 +261,8 @@ async function check({ name, pharmacyName, phone }, { excludeUserId = null } = {
   if (best.approve) {
     reasons.push(best.nameFound ? 'الاسم موجود بقائمة النقابة' : 'رقم الموبايل موجود بقائمة النقابة والاسم قريب');
     if (best.nameFound && best.samePhone) reasons.push('ورقم الموبايل كمان مطابق');
-    if (/الغاء|إلغاء/.test(best.entry.notes || '')) {
+    // The cleaned list writes this in the address; an older copy had a notes column.
+    if (/الغاء|إلغاء/.test(`${best.entry.notes || ''} ${best.entry.address || ''}`)) {
       decision = 'review';
       reasons.push('بس بالقائمة مكتوب جنبه «إلغاء»');
     } else {

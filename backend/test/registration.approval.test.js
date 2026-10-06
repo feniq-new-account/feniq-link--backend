@@ -97,16 +97,16 @@ async function listWorkbook(rows) {
   region.addRow(['#', 'اسم الصيدلاني', 'اسم الأب', 'اسم الصيدلية', 'الموبايل', 'العنوان بالتفصيل', 'ملاحظات']);
   region.addRow(['  الشيخ ضاهر', null, null, null, null, '1 صيدلية']);
   const flat = workbook.addWorksheet('كل الصيدليات');
-  flat.addRow(['#', 'المنطقة', 'الحي / القرية', 'اسم الصيدلاني', 'اسم الأب', 'اسم الصيدلية', 'الموبايل', 'موبايل آخر', 'العنوان بالتفصيل', 'ملاحظات', 'رقم السطر بالملف الأصلي']);
-  rows.forEach((r, i) => flat.addRow([i + 1, r.region, r.place, r.name, r.father, r.pharmacy, r.phone, r.phone2 || '', r.address || '', r.notes || '', 100 + i]));
+  flat.addRow(['#', 'المنطقة', 'الحي / القرية', 'اسم الصيدلاني', 'اسم الأب', 'اسم الصيدلية', 'الموبايل', 'العنوان بالتفصيل']);
+  rows.forEach((r, i) => flat.addRow([i + 1, r.region, r.place, r.name, r.father, r.pharmacy, r.phone, r.address || '']));
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
 const LIST = [
   { region: 'مدينة اللاذقية', place: 'الشيخ ضاهر', name: 'ياسمين شغري', father: 'سمير', pharmacy: 'صيدلية ياسمين', phone: '0999000111' },
   { region: 'ريف اللاذقية', place: 'مشيرفة الساموك', name: 'العصماء جابر محمد', father: 'جابر', pharmacy: 'صيدلية الاء', phone: '0944000222' },
-  { region: 'مدينة اللاذقية', place: 'سقوبين', name: 'بتول مكنا', father: 'فراس', pharmacy: 'صيدلية البتول', phone: '', notes: 'مكتوب جنبه «إلغاء» بالملف' },
-  { region: 'مدينة جبلة', place: 'العمارة', name: 'رامي حداد', father: 'نبيل', pharmacy: '', phone: '0933000444', phone2: '963988000555' },
+  { region: 'مدينة اللاذقية', place: 'سقوبين', name: 'بتول مكنا', father: 'فراس', pharmacy: 'صيدلية البتول', phone: '', address: 'سقوبين — مكتوب جنبه «إلغاء» بملف النقابة' },
+  { region: 'مدينة جبلة', place: 'العمارة', name: 'رامي حداد', father: 'نبيل', pharmacy: '', phone: '0933000444 / 963988000555' },
 ];
 
 function uploadForm(buffer, name = 'list.xlsx', type = XLSX) {

@@ -383,6 +383,10 @@ export const api = {
   // Registration approval page: the syndicate list, the approval switch and the
   // admins' Telegram bot (backend adminRegistration.controller.js).
   registrationStatus: () => request('/admin/registration'),
+  // The signed-in user's own password. The response carries a fresh session
+  // (token + refreshToken): every other device is signed out.
+  changePassword: (currentPassword, newPassword) =>
+    request('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } }),
   uploadSyndicateList: (file) => requestUpload('/admin/registration/syndicate-list', file),
   checkRegistrationName: ({ name, pharmacyName, phone }) =>
     request('/admin/registration/check', { method: 'POST', body: { name, pharmacyName, phone } }),

@@ -1227,5 +1227,17 @@
       "step2b": "and pick any name for the bot.",
       "step4": "It replies with a long token — copy it and paste it here:"
     }
+  },
+  "changePassword": {
+    "button": "Password",
+    "title": "Change password",
+    "current": "Current password",
+    "new": "New password (at least {{count}} characters)",
+    "confirm": "Repeat the new password",
+    "save": "Change password",
+    "tooShort": "The new password must be at least {{count}} characters.",
+    "mismatch": "The two new passwords do not match.",
+    "wrongCurrent": "The current password is wrong.",
+    "done": "Password changed ✓ Any other device signed in to this account was signed out."
   }
 }

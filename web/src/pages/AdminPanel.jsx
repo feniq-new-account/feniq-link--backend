@@ -3,6 +3,7 @@ import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import { LanguageToggle } from '../components/LanguageToggle';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { NavBadge } from '../components/NavBadge';
 import { useUnreadBadges } from '../realtime/UnreadBadgesProvider';
 import { AdminDashboardPage } from './AdminDashboardPage';
@@ -36,6 +37,7 @@ export function AdminPanel() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   // Per-tab "new since you last looked" counts - see realtime/unreadBadges.js.
   const { countUnder, total: unreadTotal } = useUnreadBadges();
 
@@ -113,12 +115,19 @@ export function AdminPanel() {
           </div>
           <div className="adm-topbar-actions">
             <span className="user-name">{user?.name}</span>
+            <button type="button" className="btn-secondary" onClick={() => setIsChangingPassword(true)}>
+              {t('changePassword.button')}
+            </button>
             <LanguageToggle />
             <button className="adm-logout-btn" onClick={logout}>
               {t('common.logOut')}
             </button>
           </div>
         </header>
+
+        {isChangingPassword && (
+          <ChangePasswordModal role={user?.role} onClose={() => setIsChangingPassword(false)} />
+        )}
 
         <div className="adm-content">
           <Routes>
