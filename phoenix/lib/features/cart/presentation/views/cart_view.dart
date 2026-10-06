@@ -540,10 +540,6 @@ class _CartViewState extends State<CartView> {
                         ),
                       ),
                       const SizedBox(height: AppSizes.spacingMedium),
-                      // One code per order. Its amount shows in the summary
-                      // below, quoted by the server.
-                      const DiscountCodeField(),
-                      const SizedBox(height: AppSizes.spacingMedium),
                       AppTextField(
                         label: l10n.notesLabel,
                         controller: _notesController,
@@ -558,7 +554,10 @@ class _CartViewState extends State<CartView> {
               // The order summary sits on its own raised sheet, so the total
               // and the submit button read as one block, apart from the lines
               // scrolling above them.
-              Container(
+              Flexible(
+                // At most the room left beside the lines (up to half the
+                // screen); the lines above keep the rest.
+                child: Container(
                 padding: const EdgeInsets.fromLTRB(
                   AppSizes.spacingMedium + AppSizes.spacingXSmall,
                   AppSizes.spacingMedium + AppSizes.spacingXSmall,
@@ -578,9 +577,17 @@ class _CartViewState extends State<CartView> {
                 ),
                 child: SafeArea(
                   top: false,
+                  // Scrolls within itself when space is tight (a small phone
+                  // with the keyboard up): never past the screen edge.
+                  child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // One code per order, right above the figures it
+                      // changes - always in view (never under this sheet), and
+                      // above the keyboard while it is typed.
+                      const DiscountCodeField(),
+                      const SizedBox(height: AppSizes.spacingMedium),
                       // The server's figures for this cart - subtotal,
                       // platform discount, any code discount, total - so
                       // what is on screen is what the order will cost.
@@ -684,7 +691,9 @@ class _CartViewState extends State<CartView> {
                         ),
                     ],
                   ),
+                  ),
                 ),
+              ),
               ),
             ],
           );

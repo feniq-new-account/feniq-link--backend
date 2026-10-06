@@ -174,6 +174,15 @@ class CartItem {
 
   /// The line's lira total at [usdToSyp] (free bonus units are not charged).
   int? lineTotalSypAt(double? usdToSyp) {
+    if (isPackage) {
+      // As the order prices it (order.service.js): the copies' total in USD,
+      // to the cent, converted and rounded once - not one rounded copy times
+      // the copies, which drifted a lira from the cart summary (7,063 x 2 =
+      // 14,126 on the line against the order's 14,125).
+      if (usdToSyp == null || usdToSyp <= 0) return null;
+      final totalUsd = (discountPriceUsd * quantity * 100).round() / 100;
+      return (totalUsd * usdToSyp).round();
+    }
     final unit = unitSypAt(usdToSyp);
     return unit == null ? null : unit * quantity;
   }

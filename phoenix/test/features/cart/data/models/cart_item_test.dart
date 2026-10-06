@@ -281,4 +281,19 @@ void main() {
       });
     });
   });
+
+  test('a package line costs what the order charges - not one rounded copy times the copies', () {
+    // The owner's cart: 51.04 USD a copy at 138.375 SYP/USD, two copies.
+    final line = CartItem.fromPackage(
+      packageId: 'ad1',
+      titleAr: 'باقة الشتاء',
+      warehouseName: 'مستودع النجاح',
+      pricePerCopyUsd: 51.04,
+      copies: 2,
+      contents: const [],
+    );
+    expect(line.unitSypAt(138.375), 7063, reason: 'one copy, as shown');
+    // round(102.08 x 138.375) = 14,125 - the order's own figure.
+    expect(line.lineTotalSypAt(138.375), 14125);
+  });
 }
