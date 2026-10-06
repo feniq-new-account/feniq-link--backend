@@ -21,6 +21,7 @@ function serializeAdminProduct({ product, warehouse }) {
     priceUsd: product.price,
     isAvailable: product.isAvailable,
     manuallyDisabled: product.manuallyDisabled,
+    hiddenByWarehouse: product.hiddenByWarehouse === true,
     isActive: product.isActive,
     lastPriceUpdate: product.lastPriceUpdate,
     createdAt: product.createdAt,

@@ -40,6 +40,7 @@ export const EMPTY_PRODUCT_FORM = {
   imageFile: null,
   clearImage: false,
   manuallyDisabled: false,
+  hiddenByWarehouse: false,
 };
 
 export function productFormFromProduct(product, usdToSyp) {
@@ -74,6 +75,7 @@ export function productFormFromProduct(product, usdToSyp) {
     imageFile: null,
     clearImage: false,
     manuallyDisabled: product.manuallyDisabled,
+    hiddenByWarehouse: product.hiddenByWarehouse === true,
   };
 }
 
@@ -116,11 +118,15 @@ export function formatBonusTiers(tiers) {
   return (tiers ?? []).map((tier) => `${tier.buy}+${tier.free}`).join('، ');
 }
 
+// Hidden from the catalog outranks unavailable: pharmacists see neither, but
+// a hidden product does not show at all.
 export function productAvailabilityLabel(product, t) {
+  if (product.hiddenByWarehouse) return t('products.hidden');
   return product.manuallyDisabled ? t('products.paused') : t('products.available');
 }
 
 export function productAvailabilityClass(product) {
+  if (product.hiddenByWarehouse) return 'availability-hidden';
   return product.isAvailable ? 'availability-available' : 'availability-paused';
 }
 
@@ -394,6 +400,7 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
         expiryDate: monthYearValue(form.expiryDate) || (mode === 'edit' ? null : undefined),
         ...descriptionAndImageFields({ mode, form, initial, imagesEnabled: Boolean(onUploadImage) }),
         manuallyDisabled: form.manuallyDisabled,
+        hiddenByWarehouse: form.hiddenByWarehouse,
       },
       rateUsed
     );
@@ -528,6 +535,14 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
               onChange={(e) => setField('manuallyDisabled', e.target.checked)}
             />
             {t('productForm.temporarilyPaused')}
+          </label>
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={form.hiddenByWarehouse}
+              onChange={(e) => setField('hiddenByWarehouse', e.target.checked)}
+            />
+            {t('productForm.hiddenFromCatalog')}
           </label>
 
           <RateChangedNotice rateChange={rateChange} />

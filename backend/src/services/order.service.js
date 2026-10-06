@@ -415,10 +415,11 @@ async function loadRequestedPackages(packageRequests, warehouseId, { lenient = f
 // productNameAr/productNameEn are correct whether the product is
 // catalog-linked or legacy.
 async function loadOrderProducts(productIds, warehouseId) {
+  // A product its warehouse hid can't be ordered: it reads as gone.
   const products = await Product.find({
     _id: { $in: [...new Set(productIds)] },
     warehouseId,
-    isActive: true,
+    ...Product.VISIBLE_TO_PHARMACIES,
   }).populate('masterProductId');
   products.forEach(applyResolvedIdentity);
   return new Map(products.map((p) => [p._id.toString(), p]));
@@ -1590,7 +1591,7 @@ async function prepareReorder(orderId, pharmacyId) {
     ? await Product.find({
         _id: { $in: productIds },
         warehouseId: order.warehouseId,
-        isActive: true,
+        ...Product.VISIBLE_TO_PHARMACIES,
       })
         .select(
           'categoryId nameAr nameEn manufacturerAr manufacturerEn manufacturerId image unitAr unitEn price isAvailable masterProductId'

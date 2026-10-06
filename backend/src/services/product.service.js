@@ -15,6 +15,8 @@ const {
 const { getDiscountMapForWarehouse, discountPercentageFor } = require('./manufacturerDiscount.service');
 const { activeOfferFilter, offerMapFor } = require('./offer.service');
 
+const { VISIBLE_TO_PHARMACIES } = Product;
+
 // Everything the pharmacist-facing catalog actually consumes off a product
 // row: product.viewmodel.js's serializeProductWithOffer needs categoryId /
 // image / unitAr / unitEn / price / isAvailable plus the resolved identity
@@ -56,7 +58,14 @@ async function listWarehouseProducts(
   // A search also finds a medicine by its active ingredient (a paracetamol
   // brand when the pharmacist types "باراسيتامول").
   const masterProductIds = search ? await catalogIdsMatchingIngredient(search) : [];
-  const filter = buildProductFilter({ warehouseId, search, manufacturer, categoryId, masterProductIds });
+  const filter = buildProductFilter({
+    warehouseId,
+    search,
+    manufacturer,
+    categoryId,
+    masterProductIds,
+    visibleToPharmaciesOnly: true,
+  });
   const { rows: products, hasMore, nextCursor } = await findProductPage(filter, {
     limit,
     after,
@@ -111,7 +120,7 @@ async function listAlternatives(warehouseId, productId) {
   if (!available) {
     throw ApiError.notFound('Warehouse not found.');
   }
-  const product = await Product.findOne({ _id: productId, warehouseId, isActive: true })
+  const product = await Product.findOne({ _id: productId, warehouseId, ...VISIBLE_TO_PHARMACIES })
     .select('masterProductId')
     .populate({ path: 'masterProductId', select: 'activeIngredientKey strengthKey formKey' })
     .lean();
@@ -135,7 +144,7 @@ async function listAlternatives(warehouseId, productId) {
 
   const candidates = await Product.find({
     warehouseId,
-    isActive: true,
+    ...VISIBLE_TO_PHARMACIES,
     masterProductId: { $in: siblings.map((item) => item._id) },
   })
     .select(CATALOG_PRODUCT_SELECT)
@@ -160,7 +169,7 @@ async function listAlternativesElsewhere(warehouseId, productId) {
   if (!available) {
     throw ApiError.notFound('Warehouse not found.');
   }
-  const product = await Product.findOne({ _id: productId, warehouseId, isActive: true })
+  const product = await Product.findOne({ _id: productId, warehouseId, ...VISIBLE_TO_PHARMACIES })
     .select('masterProductId')
     .populate({ path: 'masterProductId', select: 'activeIngredientKey strengthKey formKey' })
     .lean();
@@ -193,7 +202,7 @@ async function listAlternativesElsewhere(warehouseId, productId) {
 
   const candidates = await Product.find({
     warehouseId: { $in: others.map((w) => w._id) },
-    isActive: true,
+    ...VISIBLE_TO_PHARMACIES,
     isAvailable: true,
     masterProductId: { $in: catalogIds },
   })
@@ -257,10 +266,10 @@ async function listAlternativesElsewhere(warehouseId, productId) {
 // as it always did.
 async function listManufacturerEntriesForWarehouse(warehouseId) {
   const [linkedIds, legacyNames] = await Promise.all([
-    Product.distinct('manufacturerId', { warehouseId, isActive: true, manufacturerId: { $ne: null } }),
+    Product.distinct('manufacturerId', { warehouseId, ...VISIBLE_TO_PHARMACIES, manufacturerId: { $ne: null } }),
     Product.distinct('manufacturerAr', {
       warehouseId,
-      isActive: true,
+      ...VISIBLE_TO_PHARMACIES,
       masterProductId: null,
       manufacturerId: null,
     }),

@@ -97,6 +97,11 @@ const productSchema = new Schema(
     // manuallyDisabled changes - not written to directly by controllers.
     isAvailable: { type: Boolean, default: true },
     manuallyDisabled: { type: Boolean, default: false },
+    // The warehouse took it off its catalog: pharmacists no longer see it
+    // anywhere (catalog, search, alternatives, offers, packages) and it can't
+    // be ordered, while the warehouse keeps it in its own list to show again.
+    // Unlike manuallyDisabled ("unavailable"), which still lists it, greyed.
+    hiddenByWarehouse: { type: Boolean, default: false },
     // Legacy free-text units. New code writes `unit` (a fixed code, see
     // config/units.js); these stay for the products written before it, and
     // are still sent so installed app builds keep showing a unit.
@@ -235,3 +240,7 @@ productSchema.index(
 
 module.exports = model('Product', productSchema);
 module.exports.DEACTIVATED_BY = DEACTIVATED_BY;
+// The products a pharmacist may see or order: switched on by the platform and
+// not hidden by their warehouse. `$ne: true` so a row saved before the hide
+// flag existed counts as shown.
+module.exports.VISIBLE_TO_PHARMACIES = Object.freeze({ isActive: true, hiddenByWarehouse: { $ne: true } });
