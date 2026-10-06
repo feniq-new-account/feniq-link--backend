@@ -34,15 +34,13 @@ class LinkedReturnModel {
   );
 }
 
-// Section 6.7/8: matches orders.status - 'cancelled' is a special status
-// shown outside the 5-stage progress bar, never one of its steps.
-const List<String> kOrderTrackedStages = [
-  'pending',
-  'confirmed',
-  'preparing',
-  'out_for_delivery',
-  'delivered',
-];
+// The steps the pharmacist follows an order through: sent, (edited by the
+// warehouse, only when it was), waiting for the warehouse's approval, on the
+// way, delivered. 'cancelled' is shown outside the bar, never one of its steps.
+// 'confirmed' and 'preparing' are no longer used by the warehouse (it approves
+// straight into "on the way"); an older order still in one of them reads as
+// waiting for approval.
+enum OrderStage { sent, modified, awaitingApproval, outForDelivery, delivered }
 
 // Section 7: only cancellable before the order goes out for delivery.
 const List<String> kOrderCancellableStatuses = ['pending', 'confirmed', 'preparing'];
@@ -210,8 +208,28 @@ class OrderModel {
     return null;
   }
 
-  // -1 when cancelled (outside the bar entirely), else 0-4.
-  int get stageIndex => kOrderTrackedStages.indexOf(status);
+  // The progress bar's steps for this order - "edited" only when it was.
+  List<OrderStage> get trackedStages => [
+    OrderStage.sent,
+    if (wasModified) OrderStage.modified,
+    OrderStage.awaitingApproval,
+    OrderStage.outForDelivery,
+    OrderStage.delivered,
+  ];
+
+  // Where the order is now; null when cancelled (outside the bar entirely).
+  OrderStage? get currentStage => switch (status) {
+    'pending' || 'confirmed' || 'preparing' => OrderStage.awaitingApproval,
+    'out_for_delivery' => OrderStage.outForDelivery,
+    'delivered' => OrderStage.delivered,
+    _ => null,
+  };
+
+  // -1 when cancelled, else the current step's position in [trackedStages].
+  int get stageIndex {
+    final stage = currentStage;
+    return stage == null ? -1 : trackedStages.indexOf(stage);
+  }
 
   // Section: the pharmacist should be prompted to photograph the shipment seal.
   // Only while the order is genuinely in transit, only if the warehouse opted

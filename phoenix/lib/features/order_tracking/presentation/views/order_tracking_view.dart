@@ -259,7 +259,7 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
           if (order.isCancelled)
             _CancelledBanner(reason: order.cancelReason)
           else ...[
-            CustomCard(child: OrderProgressBar(currentStageIndex: order.stageIndex)),
+            CustomCard(child: OrderProgressBar(stages: order.trackedStages, currentStageIndex: order.stageIndex)),
             const SizedBox(height: AppSizes.spacingMedium),
             _CurrentStatusHighlight(order: order),
           ],
@@ -354,8 +354,8 @@ class _CurrentStatusHighlight extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final stageIndex = order.stageIndex;
-    if (stageIndex < 0) return const SizedBox.shrink();
+    final stage = order.currentStage;
+    if (stage == null) return const SizedBox.shrink();
 
     final description = orderStatusDescription(l10n, order.status);
     final lastUpdate = order.statusHistory.isEmpty ? null : order.statusHistory.last.changedAt;
@@ -369,7 +369,7 @@ class _CurrentStatusHighlight extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(OrderProgressBar.stageIcons[stageIndex], size: 26, color: AppColors.primaryOf(context)),
+          Icon(OrderProgressBar.iconFor(stage), size: 26, color: AppColors.primaryOf(context)),
           const SizedBox(width: AppSizes.spacingMedium),
           Expanded(
             child: Column(

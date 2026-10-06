@@ -81,7 +81,7 @@ class _HistoryRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      orderStatusLabel(context.l10n, entry.status),
+                      orderHistoryLabel(context.l10n, entry.status),
                       style: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 2),

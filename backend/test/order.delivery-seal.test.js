@@ -158,7 +158,8 @@ test('a warehouse document that predates the field seeds orders as not requiring
 test('end to end with defaults: a fresh order is delivered with no seal photo, one click per stage', async () => {
   await Warehouse.collection.updateOne({ _id: ids.warehouse }, { $unset: { requireDeliverySealPhoto: '' } });
   const created = await createRealOrder();
-  for (let i = 0; i < 4; i += 1) {
+  // Two clicks: waiting for approval -> on the way -> delivered.
+  for (let i = 0; i < 2; i += 1) {
     await warehouseOrderService.advanceOrderStatus(created._id.toString(), ids.warehouse, ids.warehouseUser);
   }
   assert.strictEqual((await Order.findById(created._id)).status, 'delivered');
@@ -226,7 +227,7 @@ test('order requiring a seal photo, with one uploaded, advances to delivered', a
 
 test('requiring a seal photo does not affect the earlier transitions', async () => {
   const order = await makeOrder('pending', { requiresDeliverySealPhoto: true });
-  for (const expected of ['confirmed', 'preparing', 'out_for_delivery']) {
+  for (const expected of ['out_for_delivery']) {
     const updated = await warehouseOrderService.advanceOrderStatus(
       order._id.toString(), ids.warehouse, ids.warehouseUser
     );

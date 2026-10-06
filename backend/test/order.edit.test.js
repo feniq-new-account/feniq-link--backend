@@ -122,8 +122,8 @@ test('the warehouse can edit its own 10-day-old pending order (permissions + sta
 });
 
 test('a non-pending order is still rejected - by status, not by age', async () => {
-  // Fresh, but already confirmed => still blocked.
-  const fresh = await makeOrder('confirmed', 0);
+  // Fresh, but already on its way => still blocked.
+  const fresh = await makeOrder('out_for_delivery', 0);
   await assert.rejects(() => editQuantity(fresh.order, fresh.item, 4), withCode('ORDER_NOT_EDITABLE'));
 
   // Ancient, but still pending => allowed (the age is irrelevant).

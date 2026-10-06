@@ -7,10 +7,12 @@ import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
 import { formatSyp } from '../utils/currency';
-import { mergeAdvancedOrders, nextStatusOf, rememberAdvanced, syncAdvancedWithRows } from './warehouseOrdersList';
+import { isEditable, mergeAdvancedOrders, nextStatusOf, rememberAdvanced, syncAdvancedWithRows } from './warehouseOrdersList';
 
 const PAGE_SIZE = 20;
-const STATUS_VALUES = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
+// Three stages for the warehouse: awaiting approval -> on the way -> delivered
+// (approving sends the order out), plus the pharmacy's cancellations.
+const STATUS_VALUES = ['pending', 'out_for_delivery', 'delivered', 'cancelled'];
 const ADVANCE_KEYS = {
   pending: 'orders.advancePending',
   confirmed: 'orders.advanceConfirmed',
@@ -115,6 +117,39 @@ export function WarehouseOrdersPage() {
     pendingByOrder.current.set(order.id, request.catch(() => {}));
   };
 
+  const openOrder = (order) => navigate(`/warehouse/orders/${order.id}`);
+  // The edit form sits on the order's page; this opens it scrolled to it.
+  const editOrder = (order) => navigate(`/warehouse/orders/${order.id}#edit`);
+
+  // The row's actions: move it on, and - until it is sent - edit it.
+  const renderActions = (order) => (
+    <div className="wh-order-actions">
+      {ADVANCE_KEYS[order.status] && (
+        <button
+          className={`wh-row-action wh-advance-to-${nextStatusOf(order.status)}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            handleAdvance(order, order.status);
+          }}
+        >
+          {t(ADVANCE_KEYS[order.status])}
+        </button>
+      )}
+      {isEditable(order.status) && (
+        <button
+          type="button"
+          className="wh-row-action wh-row-action-secondary"
+          onClick={(event) => {
+            event.stopPropagation();
+            editOrder(order);
+          }}
+        >
+          {t('orders.editOrder')}
+        </button>
+      )}
+    </div>
+  );
+
   const statusTabs = [{ value: '', label: t('orders.tabAll') }, ...STATUS_VALUES.map((value) => ({
     value,
     label: statusLabel(value),
@@ -161,7 +196,7 @@ export function WarehouseOrdersPage() {
         <p className="hint">{t('orders.noOrders')}</p>
       ) : (
         <>
-          <div className="wh-card table-scroll">
+          <div className="wh-card table-scroll wh-orders-table">
             <table className="wh-table">
               <thead>
                 <tr>
@@ -176,7 +211,7 @@ export function WarehouseOrdersPage() {
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <tr key={order.id} onClick={() => navigate(`/warehouse/orders/${order.id}`)}>
+                  <tr key={order.id} onClick={() => openOrder(order)}>
                     <td>
                       <span className="wh-num wh-table-order-num">
                         {t('orders.orderNumber', { number: order.orderNumber })}
@@ -194,23 +229,48 @@ export function WarehouseOrdersPage() {
                     <td>
                       <span className={`status-badge status-${order.status}`}>{statusLabel(order.status)}</span>
                     </td>
-                    <td>
-                      {ADVANCE_KEYS[order.status] && (
-                        <button
-                          className={`wh-row-action wh-advance-to-${nextStatusOf(order.status)}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleAdvance(order, order.status);
-                          }}
-                        >
-                          {t(ADVANCE_KEYS[order.status])}
-                        </button>
-                      )}
-                    </td>
+                    <td>{renderActions(order)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* On a phone the table's last columns (status, actions) fell off
+              the screen edge; there each order is a card instead. */}
+          <div className="wh-order-cards">
+            {orders.map((order) => (
+              <div
+                key={order.id}
+                className="wh-card wh-order-card"
+                role="button"
+                tabIndex={0}
+                onClick={() => openOrder(order)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') openOrder(order);
+                }}
+              >
+                <div className="wh-order-card-head">
+                  <span className="wh-num wh-table-order-num">
+                    {t('orders.orderNumber', { number: order.orderNumber })}
+                  </span>
+                  <span className={`status-badge status-${order.status}`}>{statusLabel(order.status)}</span>
+                </div>
+                <div className="wh-order-card-pharmacy">
+                  {displayName(order.pharmacy?.nameEn, order.pharmacy?.nameAr)}
+                  {order.pharmacy?.city && <span className="wh-table-sub"> · {order.pharmacy.city}</span>}
+                </div>
+                <div className="wh-order-card-meta">
+                  <span className="wh-num wh-table-total">{formatSyp(order.finalPrice)}</span>
+                  <span className="wh-table-sub">
+                    {t('orders.itemCountColumn')}: <span className="wh-num">{order.items.length}</span>
+                  </span>
+                  <span className="wh-num wh-table-date">
+                    {order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}
+                  </span>
+                </div>
+                {renderActions(order)}
+              </div>
+            ))}
           </div>
           <p className="wh-table-hint">{t('orders.clickRowHint')}</p>
           <LoadMoreControl

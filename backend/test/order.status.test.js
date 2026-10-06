@@ -133,7 +133,8 @@ test('a new order model defaults to the "Sent" stage (status: pending)', () => {
 
 test('the warehouse advances an order one stage at a time through the whole flow', async () => {
   const order = await makeOrder('pending');
-  const sequence = ['confirmed', 'preparing', 'out_for_delivery', 'delivered'];
+  // Waiting for approval -> on the way -> delivered: approving sends it out.
+  const sequence = ['out_for_delivery', 'delivered'];
 
   for (const expected of sequence) {
     const updated = await warehouseOrderService.advanceOrderStatus(
@@ -153,7 +154,7 @@ test('each advance emits one order.status.updated to the owning warehouse, carry
   assert.strictEqual(emitted[0].room, `warehouse:${ids.warehouse}`);
   assert.strictEqual(emitted[0].event, 'order.status.updated');
   // Internal enum value is unchanged - the realtime payload is untouched.
-  assert.strictEqual(emitted[0].payload.status, 'confirmed');
+  assert.strictEqual(emitted[0].payload.status, 'out_for_delivery');
 });
 
 // --- Rejected transitions --------------------------------------------------
@@ -234,11 +235,21 @@ test('advancing to Delivered notifies the pharmacist', async () => {
   assert.match(notifications[0].bodyAr, /تم تسليم/);
 });
 
-test('advancing to Waiting for Approval / Preparing does not ping the pharmacist', async () => {
-  const order = await makeOrder('pending');
+test('an older order left in a stage no longer used moves straight on to On the way', async () => {
+  for (const legacy of ['confirmed', 'preparing']) {
+    const order = await makeOrder(legacy);
+    const updated = await warehouseOrderService.advanceOrderStatus(order._id.toString(), ids.warehouse, ids.warehouseUser);
+    assert.strictEqual(updated.status, 'out_for_delivery', legacy);
+  }
+});
 
-  await warehouseOrderService.advanceOrderStatus(order._id.toString(), ids.warehouse, ids.warehouseUser); // -> confirmed
-  await warehouseOrderService.advanceOrderStatus(order._id.toString(), ids.warehouse, ids.warehouseUser); // -> preparing
-
-  assert.deepStrictEqual(notifications, []);
+test("the warehouse's waiting-for-approval tab also lists an order left in an older stage", async () => {
+  const pending = await makeOrder('pending');
+  const legacy = await makeOrder('preparing');
+  const onTheWay = await makeOrder('out_for_delivery');
+  const { rows } = await warehouseOrderService.listOrdersForWarehouse(ids.warehouse, 'pending', { limit: 100 });
+  const listed = new Set(rows.map(({ order }) => order._id.toString()));
+  assert.ok(listed.has(pending._id.toString()));
+  assert.ok(listed.has(legacy._id.toString()));
+  assert.ok(!listed.has(onTheWay._id.toString()));
 });

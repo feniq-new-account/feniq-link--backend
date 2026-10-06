@@ -28,16 +28,24 @@ const {
 } = require('./manufacturerDiscount.service');
 const { emitToWarehouse, EVENTS } = require('../realtime');
 
-// Section 7/13b: the warehouse only ever moves an order forward through this
-// fixed sequence, one stage at a time - no skipping, no picking an arbitrary
-// status. 'cancelled' isn't part of it: only the pharmacist can cancel
+// Section 7/13b: the warehouse only ever moves an order forward, one stage at
+// a time - no skipping, no picking an arbitrary status. Three stages (the
+// owner's call, to keep it to as few clicks as possible): waiting for approval
+// ('pending') -> on the way ('out_for_delivery') -> delivered. Approving IS
+// sending it out. 'confirmed' and 'preparing' are no longer reached; an older
+// order still in one counts as waiting for approval and moves straight on.
+// 'cancelled' isn't part of it: only the pharmacist can cancel
 // (order.service.js), and only before 'out_for_delivery'.
-const PROGRESSION = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered'];
+const AWAITING_APPROVAL = ['pending', 'confirmed', 'preparing'];
+const NEXT_STATUS = {
+  pending: 'out_for_delivery',
+  confirmed: 'out_for_delivery',
+  preparing: 'out_for_delivery',
+  out_for_delivery: 'delivered',
+};
 
 function nextStatus(current) {
-  const index = PROGRESSION.indexOf(current);
-  if (index === -1 || index === PROGRESSION.length - 1) return null;
-  return PROGRESSION[index + 1];
+  return NEXT_STATUS[current] ?? null;
 }
 
 const DEFAULT_WAREHOUSE_ORDERS_LIMIT = 20;
@@ -58,7 +66,9 @@ async function listOrdersForWarehouse(
     if (!Order.schema.path('status').enumValues.includes(status)) {
       throw ApiError.badRequest('Invalid status filter.', undefined, 'INVALID_STATUS_FILTER');
     }
-    filter.status = status;
+    // The "waiting for approval" tab also holds any older order left in a
+    // stage the warehouse no longer uses.
+    filter.status = status === 'pending' ? { $in: AWAITING_APPROVAL } : status;
   }
   if (after !== null) {
     filter.orderNumber = { $gt: after };
@@ -339,10 +349,11 @@ function validateEditPayload({
   return { add, remove, update, packageUpdates, packageRemovals };
 }
 
-// Section: the warehouse correcting an order before it's confirmed - add a
+// Section: the warehouse correcting an order before it approves it - add a
 // product, drop one, or change a quantity, all in one request, then
-// reprice the whole order from scratch. Once the pharmacy or warehouse has
-// acted on it (status past 'pending'), items are frozen - see
+// reprice the whole order from scratch (say the pharmacy asked for 10 and the
+// warehouse has 8: they agree on the phone and the warehouse fixes the order
+// itself). Once it is on its way, items are frozen - see
 // ORDER_NOT_EDITABLE below. IDOR guard: scoped to warehouseId, same pattern
 // as every other warehouse-side order function in this file.
 async function updateOrderItems(orderId, warehouseId, userId, payload) {
@@ -353,7 +364,7 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
   if (!order) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }
-  if (order.status !== 'pending') {
+  if (!AWAITING_APPROVAL.includes(order.status)) {
     throw ApiError.forbidden(
       'This order can no longer be edited after confirmation.',
       'ORDER_NOT_EDITABLE'

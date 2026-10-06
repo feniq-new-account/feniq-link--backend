@@ -82,7 +82,8 @@ async function addOrderHistory({ warehouses, pharmacies }) {
         });
         const orderId = (order._id || order.id).toString();
         await warehouseOrderService.setDeliverySealRequirement(orderId, warehouseId, false);
-        for (let s = 0; s < 4; s += 1) await warehouseOrderService.advanceOrderStatus(orderId, warehouseId, userId);
+        // Approve (= on its way), then deliver.
+        for (let s = 0; s < 2; s += 1) await warehouseOrderService.advanceOrderStatus(orderId, warehouseId, userId);
         created += 1;
       }
     }

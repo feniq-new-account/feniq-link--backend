@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
+import 'package:feniq/features/cart/data/models/order_model.dart';
+import 'package:feniq/features/cart/presentation/utils/order_status_label.dart';
 
-// Section 6.7: a horizontal progress bar across five stages, with an
-// animated icon marking the current one - 'cancelled' never reaches this
-// widget at all (OrderTrackingView shows a distinct cancelled state instead).
+// Section 6.7: a horizontal progress bar across the order's stages (four, or
+// five when the warehouse edited it), with an animated icon marking the
+// current one - 'cancelled' never reaches this widget at all
+// (OrderTrackingView shows a distinct cancelled state instead).
 class OrderProgressBar extends StatefulWidget {
-  const OrderProgressBar({super.key, required this.currentStageIndex});
+  const OrderProgressBar({super.key, required this.stages, required this.currentStageIndex});
 
+  final List<OrderStage> stages;
   final int currentStageIndex;
 
   // Exposed so OrderTrackingView can show the same icon on its "current
-  // status" highlight card, without duplicating this list.
-  static const stageIcons = [
-    Icons.send_outlined,
-    Icons.fact_check_outlined,
-    Icons.inventory_2_outlined,
-    Icons.local_shipping_outlined,
-    Icons.check_circle_outline,
-  ];
+  // status" highlight card.
+  static IconData iconFor(OrderStage stage) => switch (stage) {
+    OrderStage.sent => Icons.send_outlined,
+    OrderStage.modified => Icons.edit_note_outlined,
+    OrderStage.awaitingApproval => Icons.fact_check_outlined,
+    OrderStage.outForDelivery => Icons.local_shipping_outlined,
+    OrderStage.delivered => Icons.check_circle_outline,
+  };
 
   @override
   State<OrderProgressBar> createState() => _OrderProgressBarState();
@@ -46,13 +50,7 @@ class _OrderProgressBarState extends State<OrderProgressBar>
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final labels = [
-      l10n.stageSent,
-      l10n.stageUnderReview,
-      l10n.stagePreparing,
-      l10n.stageOutForDelivery,
-      l10n.stageDelivered,
-    ];
+    final labels = [for (final stage in widget.stages) orderStageLabel(l10n, stage)];
     final progress = widget.currentStageIndex / (labels.length - 1);
 
     return LayoutBuilder(
@@ -92,7 +90,7 @@ class _OrderProgressBarState extends State<OrderProgressBar>
                       final isCurrent = index == widget.currentStageIndex;
 
                       final dot = _StageDot(
-                        icon: OrderProgressBar.stageIcons[index],
+                        icon: OrderProgressBar.iconFor(widget.stages[index]),
                         completed: isCompleted,
                         current: isCurrent,
                       );
