@@ -30,6 +30,7 @@ function serializeProduct(product) {
     priceUsd: product.price,
     isAvailable: product.isAvailable,
     manuallyDisabled: product.manuallyDisabled,
+    hiddenByWarehouse: product.hiddenByWarehouse === true,
     lastPriceUpdate: product.lastPriceUpdate,
     createdAt: product.createdAt,
   };

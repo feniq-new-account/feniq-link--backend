@@ -51,7 +51,7 @@ async function loadProductsFor(advertisements) {
   ];
   if (productIds.length === 0) return new Map();
 
-  const products = await Product.find({ _id: { $in: productIds }, isActive: true })
+  const products = await Product.find({ _id: { $in: productIds }, ...Product.VISIBLE_TO_PHARMACIES })
     .select(ADVERTISEMENT_PRODUCT_SELECT)
     .populate({ path: 'masterProductId', select: CATALOG_IDENTITY_SELECT });
   products.forEach(applyResolvedIdentity);
@@ -140,7 +140,7 @@ async function prepareAdvertisementCart(advertisementId) {
   const products = await Product.find({
     _id: { $in: productIds },
     warehouseId: advertisement.warehouseId,
-    isActive: true,
+    ...Product.VISIBLE_TO_PHARMACIES,
   })
     .select(ADVERTISEMENT_PRODUCT_SELECT)
     .populate({ path: 'masterProductId', select: CATALOG_IDENTITY_SELECT });

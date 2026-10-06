@@ -842,6 +842,11 @@ h2 {
   background: var(--color-text-secondary);
 }
 
+.availability-badge.availability-hidden {
+  background: var(--color-text-secondary);
+  opacity: 0.75;
+}
+
 /* --- Modal (product add/edit form) --- */
 
 .modal-overlay {
@@ -1436,6 +1441,11 @@ h2 {
 .warehouse-shell .availability-badge.availability-paused {
   background: #fff3e0;
   color: #e65100;
+}
+
+.warehouse-shell .availability-badge.availability-hidden {
+  background: #eceff1;
+  color: #455a64;
 }
 
 .warehouse-shell .availability-badge.availability-out {
@@ -3178,6 +3188,11 @@ a.adm-pill {
 .admin-shell .availability-badge.availability-paused {
   background: #fff3e0;
   color: #e65100;
+}
+
+.admin-shell .availability-badge.availability-hidden {
+  background: #eceff1;
+  color: #455a64;
 }
 
 .admin-shell .availability-badge.availability-out {

@@ -145,7 +145,7 @@ async function listActiveOffers({ limit = ACTIVE_OFFERS_DEFAULT_LIMIT, after = n
 
   // One $in per collection for the whole list, never a query per offer.
   const [products, warehouses] = await Promise.all([
-    Product.find({ _id: { $in: productIds }, isActive: true })
+    Product.find({ _id: { $in: productIds }, ...Product.VISIBLE_TO_PHARMACIES })
       .select(OFFER_PRODUCT_SELECT)
       .populate({ path: 'masterProductId', select: CATALOG_IDENTITY_SELECT })
       .lean(),

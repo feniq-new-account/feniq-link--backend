@@ -166,11 +166,15 @@ function buildProductFilter({
   categoryId,
   availableOnly = false,
   masterProductIds = [],
+  // The pharmacist's view: leaves out what the warehouse hid from its catalog
+  // (the warehouse's own list and the admin's still show it).
+  visibleToPharmaciesOnly = false,
 } = {}) {
   const filter = {};
   if (warehouseId) filter.warehouseId = warehouseId;
   filter.isActive = activeOnly ? true : { $in: [true, false, null] };
   if (availableOnly) filter.isAvailable = true;
+  if (visibleToPharmaciesOnly) filter.hiddenByWarehouse = { $ne: true };
 
   const category = optionalString(categoryId, 'category');
   if (category) {
