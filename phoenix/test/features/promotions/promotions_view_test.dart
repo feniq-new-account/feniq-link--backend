@@ -364,6 +364,12 @@ void main() {
       await tester.tap(find.byType(PromotionHeroCard).first);
       await tester.pumpAndSettle();
 
+      // First what the package holds - nothing is added yet.
+      expect(find.text("What's in the package"), findsOneWidget);
+      verifyNever(() => advertisementsRepository.prepareAdvertisementCart(any()));
+
+      await tester.tap(find.text('Add the package to the cart'));
+      await tester.pumpAndSettle();
       verify(() => advertisementsRepository.prepareAdvertisementCart('a1')).called(1);
     });
   });

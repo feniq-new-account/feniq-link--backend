@@ -3205,6 +3205,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Special offer'**
   String get exceptionalOfferBadge;
+
+  /// No description provided for @packageContentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s in the package'**
+  String get packageContentsTitle;
+
+  /// No description provided for @packageFixedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A package is fixed: it is ordered whole, as the warehouse set it up - you only choose how many copies.'**
+  String get packageFixedNote;
+
+  /// No description provided for @packageShowContents.
+  ///
+  /// In en, this message translates to:
+  /// **'Show what\'s inside'**
+  String get packageShowContents;
+
+  /// No description provided for @packageAddToCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the package to the cart'**
+  String get packageAddToCart;
 }
 
 class _AppLocalizationsDelegate

@@ -21,6 +21,7 @@ import 'package:feniq/features/promotions/presentation/widgets/promotion_hero_ca
 import 'package:feniq/features/promotions/presentation/widgets/promotions_hero_carousel.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/core/widgets/full_text.dart';
+import 'package:feniq/features/advertisements/presentation/widgets/package_contents.dart';
 
 /// The Offers & Ads tab: the one place a pharmacist browses everything being
 /// promoted right now - product offers and warehouse packages together.
@@ -65,10 +66,21 @@ class _PromotionsViewState extends State<PromotionsView> {
           extra: promotion.warehouseName(Localizations.localeOf(context).languageCode == 'ar'),
         );
       case PackagePromotion(:final advertisement):
-        if (_openingPackage) return;
-        setState(() => _openingPackage = true);
-        await launchAdvertisementCart(context, advertisement.id);
-        if (mounted) setState(() => _openingPackage = false);
+        // First what the package holds, in full; the add action is in the
+        // sheet (the package is fixed - taken whole, in copies).
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        await showPackageContentsSheet(
+          context,
+          title: promotion.title(isArabic),
+          subtitle: promotion.warehouseName(isArabic),
+          entries: [for (final item in advertisement.items) PackageContentEntry.fromItem(item)],
+          onAdd: () async {
+            if (_openingPackage || !mounted) return;
+            setState(() => _openingPackage = true);
+            await launchAdvertisementCart(context, advertisement.id);
+            if (mounted) setState(() => _openingPackage = false);
+          },
+        );
     }
   }
 

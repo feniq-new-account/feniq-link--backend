@@ -915,5 +915,9 @@
   "submitAllDone": "انبعتت كل الطلبات ({count}).",
   "submitAllPartial": "انبعت {sent} من {total}. الطلبات اللي ما انبعتت ضلّت بالسلّة مع السبب.",
   "submitThisWarehouseOnly": "إرسال طلب هالمستودع بس",
-  "exceptionalOfferBadge": "عرض استثنائي"
+  "exceptionalOfferBadge": "عرض استثنائي",
+  "packageContentsTitle": "محتوى الباقة",
+  "packageFixedNote": "الباقة ثابتة: تُطلب كاملة كما حدّدها المستودع، ويمكنك اختيار عدد النسخ فقط.",
+  "packageShowContents": "عرض محتوى الباقة",
+  "packageAddToCart": "إضافة الباقة إلى السلة"
 }

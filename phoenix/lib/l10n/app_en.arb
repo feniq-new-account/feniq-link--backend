@@ -1081,5 +1081,9 @@
     }
   },
   "submitThisWarehouseOnly": "Send only this warehouse's order",
-  "exceptionalOfferBadge": "Special offer"
+  "exceptionalOfferBadge": "Special offer",
+  "packageContentsTitle": "What's in the package",
+  "packageFixedNote": "A package is fixed: it is ordered whole, as the warehouse set it up - you only choose how many copies.",
+  "packageShowContents": "Show what's inside",
+  "packageAddToCart": "Add the package to the cart"
 }

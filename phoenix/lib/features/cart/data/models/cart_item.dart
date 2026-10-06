@@ -13,11 +13,26 @@ class CartPackageContent {
     required this.nameAr,
     this.nameEn,
     required this.quantityPerCopy,
+    this.manufacturerAr,
+    this.manufacturerEn,
+    this.strength,
+    this.dosageForm,
+    this.image,
   });
 
   final String productId;
   final String nameAr;
   final String? nameEn;
+  // What the medicine is, so the pharmacist sees exactly what the package
+  // holds (null from an older server).
+  final String? manufacturerAr;
+  final String? manufacturerEn;
+  final String? strength;
+  final String? dosageForm;
+  final String? image;
+
+  /// The company shown: English when there is one.
+  String? get displayManufacturer => englishFirstOrNull(manufacturerEn, manufacturerAr);
 
   /// The name shown: English when there is one (see englishFirst).
   String get displayName => englishFirst(nameEn, nameAr);

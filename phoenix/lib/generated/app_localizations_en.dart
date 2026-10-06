@@ -1885,4 +1885,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exceptionalOfferBadge => 'Special offer';
+
+  @override
+  String get packageContentsTitle => 'What\'s in the package';
+
+  @override
+  String get packageFixedNote =>
+      'A package is fixed: it is ordered whole, as the warehouse set it up - you only choose how many copies.';
+
+  @override
+  String get packageShowContents => 'Show what\'s inside';
+
+  @override
+  String get packageAddToCart => 'Add the package to the cart';
 }

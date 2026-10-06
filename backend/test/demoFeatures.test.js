@@ -92,6 +92,12 @@ test('every feature gets demo data, once, visible over the API', async () => {
   // Once a warehouse has moved every order on, the next start brings a new one.
   await Order.updateMany({ status: 'pending' }, { $set: { status: 'confirmed' } });
   assert.strictEqual((await seedDemoFeatures()).waitingOrders, demo.WAREHOUSES.length);
+  // A package shows exactly what is in it: each medicine's company, strength and form.
+  const packages = await call('GET', '/advertisements/active', { token: pharmacy });
+  const items = packages.body.advertisements.flatMap((ad) => ad.items);
+  assert.ok(items.length > 0, 'demo packages have items');
+  assert.ok(items.every((i) => 'strength' in i && 'dosageForm' in i && 'manufacturerAr' in i));
+  assert.ok(items.some((i) => i.strength && i.dosageForm && i.manufacturerEn), JSON.stringify(items[0]));
   const banners = await call('GET', '/banners/active', { token: pharmacy });
   assert.ok(banners.body.banners.length >= 3, 'a live banner per demo warehouse');
 });
