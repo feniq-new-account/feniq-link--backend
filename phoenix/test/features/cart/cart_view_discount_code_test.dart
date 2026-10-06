@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:feniq/core/config/app_features.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/error/failure.dart';
@@ -74,6 +75,10 @@ const _quote = CartQuote(
 // under the field, and the two ways a submit can be refused over the code
 // (DISCOUNT_CODE_CHANGED).
 void main() {
+  // Hidden in the app for now (AppFeatures); these tests still cover it.
+  setUp(() => AppFeatures.discountCodes = true);
+  tearDown(() => AppFeatures.discountCodes = false);
+
   late CartCubit cartCubit;
   late ExchangeRateCubit rateCubit;
   late _MockOrderRepository orderRepo;

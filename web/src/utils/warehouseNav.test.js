@@ -5,6 +5,7 @@ import {
   findNavGroup,
   isNavItemActive,
   navItemTarget,
+  WAREHOUSE_NAV_ALL,
 } from './warehouseNav';
 import en from '../locales/en/translation.json';
 import ar from '../locales/ar/translation.json';
@@ -35,8 +36,9 @@ const LEGACY_DESTINATIONS = [
 // Destinations added since, each a new page rather than a moved one.
 const ADDED_DESTINATIONS = ['/warehouse/discount-codes'];
 
+// Every page the sidebar can lead to, a switched-off feature's included.
 function allDestinations() {
-  return WAREHOUSE_NAV.flatMap((item) =>
+  return WAREHOUSE_NAV_ALL.flatMap((item) =>
     item.children ? item.children.map((child) => child.path) : [item.path]
   );
 }
@@ -145,8 +147,10 @@ describe('isNavItemActive', () => {
   // Two lit tabs at once is the failure mode a path-prefix check invites, and
   // the one a reviewer cannot see without a browser.
   it('never lights two tabs for the same URL', () => {
+    // The pages the sidebar shows (a switched-off feature's page lights none).
+    const shown = WAREHOUSE_NAV.flatMap((item) => (item.children ? item.children.map((c) => c.path) : [item.path]));
     const urls = [
-      ...allDestinations(),
+      ...shown,
       ...WAREHOUSE_NAV_GROUPS.map((group) => group.aliasPath),
       '/warehouse/orders/900',
       '/warehouse/returns/7',
@@ -243,5 +247,13 @@ describe('the labels the sidebar renders', () => {
         label(en, group.labelKey)
       );
     }
+  });
+});
+
+describe('switched-off features', () => {
+  it('hides the discount codes tab while the feature is off, the page itself untouched', () => {
+    const shown = WAREHOUSE_NAV.flatMap((item) => (item.children ? item.children.map((c) => c.path) : [item.path]));
+    expect(shown).not.toContain('/warehouse/discount-codes');
+    expect(allDestinations()).toContain('/warehouse/discount-codes');
   });
 });

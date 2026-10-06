@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:feniq/core/config/app_features.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
@@ -48,6 +49,10 @@ OrderModel _order(String id) => OrderModel(
 // Carts at several warehouses on the cart screen: a chip per warehouse to move
 // between them, and one button that sends each as its own order.
 void main() {
+  // Hidden in the app for now (AppFeatures); these tests still cover it.
+  setUp(() => AppFeatures.discountCodes = true);
+  tearDown(() => AppFeatures.discountCodes = false);
+
   setUpAll(() => registerFallbackValue(<CartItem>[]));
 
   late CartCubit cartCubit;
@@ -170,5 +175,14 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byKey(const Key('discountCodeInput')).hitTestable(), findsOneWidget);
+  });
+
+  testWidgets('discount codes are switched off for now: no code field in the cart', (tester) async {
+    AppFeatures.discountCodes = false;
+    cartCubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+    await pumpCart(tester);
+
+    expect(find.byKey(const Key('discountCodeInput')), findsNothing);
+    expect(find.text('Submit order'), findsOneWidget);
   });
 }

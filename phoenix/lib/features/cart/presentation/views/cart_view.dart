@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/config/app_features.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
@@ -589,8 +590,10 @@ class _CartViewState extends State<CartView> {
                       // One code per order, right above the figures it
                       // changes - always in view (never under this sheet), and
                       // above the keyboard while it is typed.
-                      const DiscountCodeField(),
-                      const SizedBox(height: AppSizes.spacingMedium),
+                      if (AppFeatures.discountCodes) ...[
+                        const DiscountCodeField(),
+                        const SizedBox(height: AppSizes.spacingMedium),
+                      ],
                       // The server's figures for this cart - subtotal,
                       // platform discount, any code discount, total - so
                       // what is on screen is what the order will cost.

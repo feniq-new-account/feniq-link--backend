@@ -14,7 +14,7 @@ import {
   totalUnread,
   unreadStorageKey,
 } from './unreadBadges';
-import { WAREHOUSE_NAV } from '../utils/warehouseNav';
+import { WAREHOUSE_NAV, WAREHOUSE_NAV_ALL } from '../utils/warehouseNav';
 
 // The unread-badge rules, without React: what raises a tab's count, what
 // clears it, and what must never touch it. UnreadBadgesProvider.jsx only wires
@@ -147,7 +147,7 @@ describe('roles stay separate', () => {
   });
 
   it('every bucket points at a route its own panel actually has', () => {
-    const warehouseTabPaths = WAREHOUSE_NAV.flatMap((item) =>
+    const warehouseTabPaths = WAREHOUSE_NAV_ALL.flatMap((item) =>
       item.children ? item.children.map((c) => c.path) : [item.path]
     );
     for (const bucket of BADGE_BUCKETS.warehouse) {

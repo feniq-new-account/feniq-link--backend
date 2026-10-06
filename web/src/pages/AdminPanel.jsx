@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { isFeatureShown } from '../config/features';
 import { useAuth } from '../auth/AuthContext';
 import { LanguageToggle } from '../components/LanguageToggle';
 import { ChangePasswordModal } from '../components/ChangePasswordModal';
@@ -49,7 +50,7 @@ export function AdminPanel() {
     { path: '/admin/registration', label: t('nav.registration') },
     { path: '/admin/offers', label: t('nav.offers') },
     // Review queue for warehouse codes, the platform's own codes, every code.
-    { path: '/admin/discount-codes', label: t('nav.discountCodes') },
+    { path: '/admin/discount-codes', label: t('nav.discountCodes'), feature: 'discountCodes' },
     // One tab, two sub-sections (general ads / package ads) - see
     // AdvertisementsSubNav. They were separate tabs until it turned out both
     // render as "الإعلانات" in Arabic.
@@ -89,7 +90,7 @@ export function AdminPanel() {
           <div className="adm-sidebar-subtitle">{t('nav.adminTitle')}</div>
         </div>
         <nav className="adm-nav">
-          {TABS.map((tab) => (
+          {TABS.filter((tab) => isFeatureShown(tab.feature)).map((tab) => (
             <NavLink key={tab.path} to={tab.path} className={navLinkClassName} onClick={closeSidebar}>
               {tab.label}
               <NavBadge count={countUnder(tab.path)} />

@@ -4613,6 +4613,57 @@ a.adm-pill {
 .wh-row-action.wh-advance-to-out_for_delivery { background: #00838f; }
 .wh-row-action.wh-advance-to-delivered { background: #2e7d32; }
 
+/* The order row's actions: move it on, and edit it until it is sent. */
+.wh-order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.wh-row-action.wh-row-action-secondary {
+  background: none;
+  color: var(--wh-navy);
+  border: 1px solid var(--wh-border);
+}
+
+/* Orders as cards on a phone: the table's last columns (status, actions) used
+   to fall off the screen edge there. */
+.wh-order-cards {
+  display: none;
+}
+@media (max-width: 760px) {
+  .wh-orders-table,
+  .wh-orders-table + .wh-table-hint {
+    display: none;
+  }
+  .wh-order-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+.wh-order-card {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+}
+.wh-order-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.wh-order-card-pharmacy {
+  font-weight: var(--font-weight-subheading);
+}
+.wh-order-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+
 /* A full date field in an RTL page lays its day / month / year segments out
    right to left, so Chrome's Arabic placeholder (يوم/شهر/سنة) and the picked
    date read scrambled. Dates are written left to right everywhere. */
