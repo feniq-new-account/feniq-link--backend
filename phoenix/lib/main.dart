@@ -18,6 +18,7 @@ import 'package:feniq/features/app_update/presentation/app_update_gate.dart';
 import 'package:feniq/firebase_options.dart';
 import 'package:feniq/core/theme/dark_theme.dart';
 import 'package:feniq/core/widgets/app_text_scale.dart';
+import 'package:feniq/core/widgets/system_bars_safe_area.dart';
 import 'package:feniq/core/widgets/offline_banner.dart';
 import 'package:feniq/core/theme/light_theme.dart';
 import 'package:feniq/features/auth/data/repositories/auth_repository_impl.dart';
@@ -377,7 +378,11 @@ class MyApp extends StatelessWidget {
                     // fixed place in the tree, so the navigator never rebuilds
                     // when the strip appears or goes.
                     builder: (context, child) => AppTextScale(
-                      child: OfflineBannerFrame(child: child ?? const SizedBox.shrink()),
+                      // Nothing ever sits beneath the phone's navigation
+                      // buttons - see SystemBarsSafeArea.
+                      child: SystemBarsSafeArea(
+                        child: OfflineBannerFrame(child: child ?? const SizedBox.shrink()),
+                      ),
                     ),
                   );
                 },

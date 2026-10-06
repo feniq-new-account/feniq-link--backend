@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
-import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
 import 'package:feniq/core/error/error_translator.dart';
 import 'package:feniq/core/error/failure.dart';
@@ -87,17 +86,13 @@ class _AlternativesSheetState extends State<_AlternativesSheet> {
       initialChildSize: 0.75,
       minChildSize: 0.4,
       maxChildSize: 0.95,
-      builder: (context, scrollController) => Column(
+      // No handle of its own (the theme's bottom sheet draws one), and clear
+      // of the phone's navigation buttons at the bottom.
+      builder: (context, scrollController) => SafeArea(
+        top: false,
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: AppSizes.spacingMedium),
-              decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: AppRadius.full),
-            ),
-          ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: AppPadding.screen.left),
             child: Column(
@@ -157,6 +152,7 @@ class _AlternativesSheetState extends State<_AlternativesSheet> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
