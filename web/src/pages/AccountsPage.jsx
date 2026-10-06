@@ -26,6 +26,27 @@ const EMPTY_WAREHOUSE_FORM = {
   deliveryType: 'self',
 };
 
+// What the registration's syndicate-list check found, under the account's
+// name: on the list, or not - with the closest listed name for the admin to
+// compare against when it waits for a decision.
+function SyndicateBadge({ match }) {
+  const { t } = useTranslation();
+  if (!match) return null;
+  const onList = match.decision === 'approved';
+  return (
+    <div className={`reg-badge ${onList ? 'reg-badge-on' : 'reg-badge-off'}`}>
+      {onList ? t('registration.match.badgeOn') : t('registration.match.badgeOff')}
+      {match.pharmacistName && (
+        <span className="reg-badge-detail">
+          {' — '}
+          {onList ? t('registration.match.matched') : t('registration.match.closest')} {match.pharmacistName}
+          {match.place && ` (${match.place})`} {`${match.score}%`}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function accountName(account) {
   return account.pharmacy?.nameEn || account.warehouse?.nameEn || account.user.name;
 }
@@ -706,6 +727,7 @@ export function AccountsPage() {
                       {account.pharmacy?.ownerName && (
                         <div className="adm-table-sub">{account.pharmacy.ownerName}</div>
                       )}
+                      <SyndicateBadge match={account.pharmacy?.syndicateMatch} />
                       <div className="adm-table-sub adm-num" dir="ltr">
                         {account.user.phone}
                       </div>

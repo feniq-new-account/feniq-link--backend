@@ -1,6 +1,8 @@
 const { Router } = require('express');
 const { authenticate, authorize } = require('../middlewares/auth.middleware');
 const controller = require('../controllers/admin.controller');
+const registration = require('../controllers/adminRegistration.controller');
+const { syndicateListUpload } = require('../middlewares/upload.middleware');
 
 const router = Router();
 
@@ -18,5 +20,15 @@ router.post('/accounts/:userId/unblock', controller.unblockAccount);
 // warehouse login, so it must never be reachable by any other role.
 router.post('/warehouses', controller.createWarehouse);
 router.post('/notifications', controller.broadcastNotification);
+
+// Registration approval: the syndicate list, the approval switch, the Telegram bot.
+router.get('/registration', registration.getStatus);
+router.post('/registration/syndicate-list', syndicateListUpload, registration.importList);
+router.post('/registration/check', registration.checkName);
+router.put('/registration/approval', registration.setApproval);
+router.put('/registration/telegram/bot', registration.setBotToken);
+router.delete('/registration/telegram/bot', registration.removeBot);
+router.post('/registration/telegram/link', registration.createTelegramLink);
+router.delete('/registration/telegram/link', registration.unlinkTelegram);
 
 module.exports = router;

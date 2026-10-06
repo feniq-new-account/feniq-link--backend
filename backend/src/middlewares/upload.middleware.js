@@ -79,6 +79,27 @@ const catalogImportUpload = wrapMulter(
   'The Excel file must be smaller than 5MB.'
 );
 
+// The pharmacists' syndicate list (syndicateRegistry.service.js). Usually
+// picked from a phone, whose file picker does not always label an .xlsx as
+// one - so a generic binary type is accepted too when the name ends in .xlsx;
+// the service then fails cleanly on anything ExcelJS cannot read.
+const SYNDICATE_LIST_MIME_TYPES = new Set([XLSX_MIME_TYPE, 'application/octet-stream', 'application/zip', '']);
+const syndicateListUpload = wrapMulter(
+  multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+      const looksLikeXlsx = /\.xlsx$/i.test(file.originalname || '');
+      if (file.mimetype === XLSX_MIME_TYPE || (looksLikeXlsx && SYNDICATE_LIST_MIME_TYPES.has(file.mimetype))) {
+        cb(null, true);
+        return;
+      }
+      cb(ApiError.badRequest('File must be an .xlsx Excel workbook.'));
+    },
+    limits: { fileSize: MAX_CATALOG_IMPORT_SIZE_BYTES },
+  }).single('file'),
+  'The Excel file must be smaller than 5MB.'
+);
+
 // Section: banner media. A warehouse-submitted banner stays image-only
 // (unchanged from before this feature); the admin's own upload additionally
 // accepts GIF/video, with no size cap (see adminBannerMediaUpload below).
@@ -213,4 +234,5 @@ module.exports = {
   resolveAdminBannerMediaType,
   resolveWarehouseBannerMediaType,
   MAX_RETURN_PHOTOS,
+  syndicateListUpload,
 };

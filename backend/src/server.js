@@ -9,6 +9,8 @@ const { ensureFinancialIndexes } = require('./services/ledger.service');
 const { ensureDiscountCodeIndexes } = require('./services/discountCode.service');
 const { initRealtime } = require('./realtime');
 const User = require('./models/user.model');
+const platformSettings = require('./services/platformSettings.service');
+const telegram = require('./services/telegram.service');
 const { seedDemoBonuses, turnOffDemoSealPhoto, seedDemoAdminIfNone, seedDemoDataIfEmpty, seedDemoOrders } = require('./services/demoSeed.service');
 const { seedDemoCatalogImages } = require('./services/demoCatalogImages.service');
 const { seedDemoFeatures } = require('./services/demoFeatures.service');
@@ -85,7 +87,7 @@ async function start() {
 
     // With approval turned off, pharmacies that registered while it was on
     // would otherwise sit on the approval-pending screen forever.
-    if (!env.requireAccountApproval) {
+    if (!(await platformSettings.isApprovalRequired())) {
       const { modifiedCount } = await User.updateMany(
         { role: 'pharmacy', status: 'pending' },
         { $set: { status: 'active' } }
@@ -131,6 +133,12 @@ async function start() {
     }
 
     startScheduledRefresh();
+    // Points the Telegram bot at this server (if a bot is configured). Not
+    // awaited: Telegram being unreachable must not hold the boot up.
+    telegram.setupWebhook().catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error('Telegram webhook setup failed:', err.message);
+    });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('MongoDB connection failed. Starting server anyway (DB-dependent routes will fail).');

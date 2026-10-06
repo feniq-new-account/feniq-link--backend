@@ -11,6 +11,9 @@ const Warehouse = require('../models/warehouse.model');
 const otpService = require('./otp.service');
 const financialAudit = require('./financialAudit.service');
 const { emitToAdmins, EVENTS } = require('../realtime');
+const syndicateRegistry = require('./syndicateRegistry.service');
+const platformSettings = require('./platformSettings.service');
+const telegram = require('./telegram.service');
 
 const BCRYPT_SALT_ROUNDS = 10;
 
@@ -236,6 +239,21 @@ async function register({
 
   const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
+  // The syndicate-list check (syndicateRegistry.service.js): a pharmacist on
+  // the list gets in at once; anyone else waits for an admin while approval is
+  // on. Run even with approval off, so the admin still sees who was on the
+  // list. A failure here must never cost the pharmacy its registration - it
+  // just falls back to the admin deciding.
+  let match = null;
+  try {
+    match = await syndicateRegistry.check({ name, pharmacyName, phone });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Syndicate check failed; the registration goes to manual review:', err.message);
+  }
+  const approvalRequired = await platformSettings.isApprovalRequired();
+  const autoApproved = match?.decision === 'approved';
+
   let user;
   try {
     user = await User.create({
@@ -243,7 +261,7 @@ async function register({
       phone,
       password: hashedPassword,
       role: 'pharmacy',
-      status: env.requireAccountApproval ? 'pending' : 'active',
+      status: !approvalRequired || autoApproved ? 'active' : 'pending',
     });
   } catch (err) {
     // 11000 = duplicate key on the unique users.phone index: a second
@@ -275,6 +293,7 @@ async function register({
     phone,
     location: location || undefined,
     addedBy: 'self',
+    syndicateMatch: match ? syndicateRegistry.toStoredMatch(match) : undefined,
   });
 
   // A brand-new pharmacy lands in the admin's approval queue, and until an
@@ -289,6 +308,13 @@ async function register({
       role: user.role,
     });
   }
+  // Every registration reaches the admins' Telegram - with approve/reject
+  // buttons when it waits, with a block button when it is already in. Not
+  // awaited: Telegram being slow or down must not slow the signup.
+  telegram.notifyRegistration(user._id).catch((err) => {
+    // eslint-disable-next-line no-console
+    console.error('Telegram registration alert failed:', err.message);
+  });
 
   return { user, pharmacy, warehouse: null, ...(await issueTokenPair(user)) };
 }

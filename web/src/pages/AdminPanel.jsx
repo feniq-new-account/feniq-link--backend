@@ -7,6 +7,7 @@ import { NavBadge } from '../components/NavBadge';
 import { useUnreadBadges } from '../realtime/UnreadBadgesProvider';
 import { AdminDashboardPage } from './AdminDashboardPage';
 import { AccountsPage } from './AccountsPage';
+import { AdminRegistrationPage } from './AdminRegistrationPage';
 import { AdminOffersPage } from './AdminOffersPage';
 import { AdminDiscountCodesPage } from './AdminDiscountCodesPage';
 import { AdminAdvertisementsPage } from './AdminAdvertisementsPage';
@@ -41,6 +42,9 @@ export function AdminPanel() {
   const TABS = [
     { path: '/admin/dashboard', label: t('nav.dashboard') },
     { path: '/admin/accounts', label: t('nav.accounts') },
+    // Who gets in when a pharmacy signs up: the approval switch, the
+    // syndicate list and the Telegram bot.
+    { path: '/admin/registration', label: t('nav.registration') },
     { path: '/admin/offers', label: t('nav.offers') },
     // Review queue for warehouse codes, the platform's own codes, every code.
     { path: '/admin/discount-codes', label: t('nav.discountCodes') },
@@ -120,6 +124,7 @@ export function AdminPanel() {
           <Routes>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/accounts" element={<AccountsPage />} />
+            <Route path="/admin/registration" element={<AdminRegistrationPage />} />
             {/* Old bookmark - the section was renamed Pending Accounts -> Accounts. */}
             <Route path="/admin/pending-accounts" element={<Navigate to="/admin/accounts" replace />} />
             <Route path="/admin/offers" element={<AdminOffersPage />} />
