@@ -413,9 +413,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addToCartButton => 'Add';
 
   @override
-  String get availableLabel => 'Available';
-
-  @override
   String get unavailableLabel => 'Unavailable';
 
   @override
@@ -451,10 +448,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get alternativesSubtitle =>
-      'Same active ingredient, strength and form, from this warehouse';
+      'Same active ingredient, strength and form';
 
   @override
   String get alternativesEmpty => 'No alternatives in this warehouse.';
+
+  @override
+  String get alternativesHereTitle => 'In this warehouse';
+
+  @override
+  String get alternativesNoneEverywhere =>
+      'No alternatives here or at any other warehouse.';
+
+  @override
+  String get alternativesElsewhereTitle => 'At other warehouses';
+
+  @override
+  String get alternativesElsewhereHint => 'Tap one to go to its warehouse.';
+
+  @override
+  String get alternativesSameMedicine => 'Same medicine';
+
+  @override
+  String get alternativesGoToWarehouse => 'Go to warehouse';
 
   @override
   String get offerBadgeLabel => 'Offer';

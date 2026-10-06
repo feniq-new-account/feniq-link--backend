@@ -32,17 +32,22 @@ class OfferBadge extends StatelessWidget {
           children: [
             Icon(Icons.local_offer, size: compact ? 12 : 14, color: Colors.white),
             const SizedBox(width: 4),
-            // Its natural width: the badge is placed where it never has to
-            // share a line (a card corner, the end of a row).
-            Text(
-              context.l10n.exceptionalOfferBadge,
-              maxLines: 1,
-              softWrap: false,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: compact ? 11 : 12,
-                fontWeight: FontWeight.w800,
-                height: 1.2,
+            // Its natural width wherever there is room; squeezed (a narrow
+            // phone, a large system font) it shrinks rather than overflow.
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  context.l10n.exceptionalOfferBadge,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: compact ? 11 : 12,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
               ),
             ),
           ],

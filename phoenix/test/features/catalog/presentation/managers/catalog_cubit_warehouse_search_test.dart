@@ -38,6 +38,31 @@ void main() {
     ).thenAnswer((_) async => const PaginatedResult(items: [_product], hasMore: false, nextCursor: null));
   });
 
+  blocTest<CatalogCubit, CatalogState>(
+    "opened from another warehouse's alternatives: the company's catalog, already searched for the medicine",
+    setUp: () => when(() => repository.getCategories()).thenAnswer((_) async => const []),
+    build: () => CatalogCubit(
+      catalogRepository: repository,
+      warehouseId: 'w2',
+      manufacturer: 'شركة',
+      initialSearch: ' Panadol 500 ',
+    ),
+    act: (cubit) => cubit.initialize(),
+    verify: (cubit) {
+      expect(cubit.state.searchQuery, 'Panadol 500');
+      verify(
+        () => repository.getProducts(
+          warehouseId: 'w2',
+          search: 'Panadol 500',
+          categoryId: null,
+          manufacturer: 'شركة',
+          limit: any(named: 'limit'),
+          after: any(named: 'after'),
+        ),
+      ).called(1);
+    },
+  );
+
   group('warehouse-wide search (no manufacturer)', () {
     blocTest<CatalogCubit, CatalogState>(
       'typing searches the whole warehouse - no manufacturer filter is sent',

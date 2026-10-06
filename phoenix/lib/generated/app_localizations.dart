@@ -800,12 +800,6 @@ abstract class AppLocalizations {
   /// **'Add'**
   String get addToCartButton;
 
-  /// No description provided for @availableLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Available'**
-  String get availableLabel;
-
   /// No description provided for @unavailableLabel.
   ///
   /// In en, this message translates to:
@@ -857,7 +851,7 @@ abstract class AppLocalizations {
   /// No description provided for @alternativesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Same active ingredient, strength and form, from this warehouse'**
+  /// **'Same active ingredient, strength and form'**
   String get alternativesSubtitle;
 
   /// No description provided for @alternativesEmpty.
@@ -865,6 +859,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No alternatives in this warehouse.'**
   String get alternativesEmpty;
+
+  /// No description provided for @alternativesHereTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'In this warehouse'**
+  String get alternativesHereTitle;
+
+  /// No description provided for @alternativesNoneEverywhere.
+  ///
+  /// In en, this message translates to:
+  /// **'No alternatives here or at any other warehouse.'**
+  String get alternativesNoneEverywhere;
+
+  /// No description provided for @alternativesElsewhereTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'At other warehouses'**
+  String get alternativesElsewhereTitle;
+
+  /// No description provided for @alternativesElsewhereHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap one to go to its warehouse.'**
+  String get alternativesElsewhereHint;
+
+  /// No description provided for @alternativesSameMedicine.
+  ///
+  /// In en, this message translates to:
+  /// **'Same medicine'**
+  String get alternativesSameMedicine;
+
+  /// No description provided for @alternativesGoToWarehouse.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to warehouse'**
+  String get alternativesGoToWarehouse;
 
   /// No description provided for @offerBadgeLabel.
   ///

@@ -30,4 +30,15 @@ router.get(
   controller.alternatives
 );
 
+// The same medicine and its alternatives at the other warehouses.
+router.get(
+  '/:productId/alternatives/elsewhere',
+  authenticate,
+  authorize('pharmacy'),
+  requireActiveStatus,
+  stringQueryOnly,
+  objectIdParams('warehouseId', 'productId'),
+  controller.alternativesElsewhere
+);
+
 module.exports = router;
