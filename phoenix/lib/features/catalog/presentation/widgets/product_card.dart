@@ -15,6 +15,7 @@ import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/catalog/presentation/widgets/manufacturer_avatar.dart';
 import 'package:feniq/features/catalog/presentation/widgets/quantity_picker_sheet.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/utils/display_name.dart';
 
 // Two layouts sharing the same data/logic: a grid tile (image on top,
 // details below - the default) and a compact list row, toggled from
@@ -117,18 +118,25 @@ class _GridCard extends StatelessWidget {
                 child: _ProductImage(url: product.image, manufacturer: product.displayManufacturer, aspectRatio: 1.4),
               ),
               // Strength and dosage form each in their own corner, never
-              // folded into the name.
-              if (_hasText(product.strength))
+              // folded into the name. One row, so two long labels share the
+              // width instead of running into each other.
+              if (_hasText(product.strength) || _hasText(product.dosageForm))
                 PositionedDirectional(
                   bottom: AppSizes.spacingXSmall,
                   start: AppSizes.spacingXSmall,
-                  child: _CornerChip(label: product.strength!, emphasized: true),
-                ),
-              if (_hasText(product.dosageForm))
-                PositionedDirectional(
-                  bottom: AppSizes.spacingXSmall,
                   end: AppSizes.spacingXSmall,
-                  child: _CornerChip(label: product.dosageForm!),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (_hasText(product.strength))
+                        Flexible(child: _CornerChip(label: product.strength!, emphasized: true))
+                      else
+                        const SizedBox.shrink(),
+                      const SizedBox(width: AppSizes.spacingXSmall),
+                      if (_hasText(product.dosageForm)) Flexible(child: _CornerChip(label: product.dosageForm!)),
+                    ],
+                  ),
                 ),
               if (!product.isAvailable)
                 PositionedDirectional(
@@ -202,7 +210,9 @@ class _ListRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final meta = [
-      if (_hasText(product.strength)) product.strength!,
+      // The strength is isolated left-to-right so "100 MG/5 ML" never reads
+      // as "MG/5 ML 100" inside the Arabic line.
+      if (_hasText(product.strength)) ltrIsolate(product.strength!),
       if (_hasText(product.dosageForm)) product.dosageForm!,
     ].join('  •  ');
 
@@ -228,15 +238,11 @@ class _ListRow extends StatelessWidget {
                   children: [
                     Text(
                       product.displayName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       product.displayManufacturer,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: context.textTheme.bodySmall?.copyWith(
                         color: AppColors.primaryOf(context),
                         fontWeight: FontWeight.w600,
@@ -245,8 +251,6 @@ class _ListRow extends StatelessWidget {
                     if (meta.isNotEmpty)
                       Text(
                         meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
                       ),
                     _IngredientLine(product: product),
@@ -315,8 +319,6 @@ class _IngredientLine extends StatelessWidget {
       child: Text(
         text,
         style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 11.5),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -371,8 +373,6 @@ class _PriceDisplay extends StatelessWidget {
           _bonusOnOffer(product)
               ? context.l10n.bonusInsteadOf(BonusTier.format(product.bonuses), BonusTier.format(product.regularBonuses))
               : context.l10n.bonusValue(BonusTier.format(product.bonuses)),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: context.textTheme.bodySmall?.copyWith(
             color: AppColors.secondaryOf(context),
             fontWeight: FontWeight.w600,
@@ -487,8 +487,8 @@ class _CompanyTile extends StatelessWidget {
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 
-// The medicine's name: kept compact so a card shows the name, company,
-// strength, form and dates without scrolling.
+// The medicine's name, always in full (it wraps; it is never cut off): a
+// health app must never show half a medicine name.
 class _NameText extends StatelessWidget {
   const _NameText({required this.name});
 
@@ -499,8 +499,6 @@ class _NameText extends StatelessWidget {
     return Text(
       name,
       style: context.textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w700, height: 1.25),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
     );
   }
 }
@@ -515,8 +513,6 @@ class _ManufacturerText extends StatelessWidget {
     return Text(
       manufacturer,
       style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 11),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
     );
   }
 }
@@ -533,7 +529,6 @@ class _CornerChip extends StatelessWidget {
     final color = emphasized ? AppColors.navyOf(context) : AppColors.surfaceElevatedOf(context);
     final textColor = emphasized ? Colors.white : AppColors.textOf(context);
     return Container(
-      constraints: const BoxConstraints(maxWidth: 110),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.92),
@@ -542,8 +537,6 @@ class _CornerChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         textDirection: _isLatin(label) ? TextDirection.ltr : null,
         style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: textColor, height: 1.2),
       ),
@@ -570,25 +563,24 @@ class _BatchDates extends StatelessWidget {
     final l10n = context.l10n;
     final base = context.textTheme.bodySmall?.copyWith(fontSize: 10.5, color: AppColors.textSecondaryOf(context));
     final expiresSoon = expires != null && expires.isBefore(DateTime.now().add(const Duration(days: 183)));
+    // Each date is one unbreakable piece ("انتهاء 08/2027"): when both do not
+    // fit on one line the expiry moves to the next line whole - a date is
+    // never cut off.
     return Padding(
       padding: const EdgeInsets.only(top: 3),
-      child: Text.rich(
-        TextSpan(
-          children: [
-            if (produced != null) TextSpan(text: l10n.productionDateShort(_format(produced))),
-            if (produced != null && expires != null) const TextSpan(text: '  ·  '),
-            if (expires != null)
-              TextSpan(
-                text: l10n.expiryDateShort(_format(expires)),
-                style: expiresSoon
-                    ? TextStyle(color: AppColors.warningOf(context), fontWeight: FontWeight.w700)
-                    : null,
-              ),
-          ],
-        ),
-        style: base,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      child: Wrap(
+        spacing: AppSizes.spacingSmall,
+        runSpacing: 1,
+        children: [
+          if (produced != null) Text(l10n.productionDateShort(_format(produced)), style: base),
+          if (expires != null)
+            Text(
+              l10n.expiryDateShort(_format(expires)),
+              style: expiresSoon
+                  ? base?.copyWith(color: AppColors.warningOf(context), fontWeight: FontWeight.w700)
+                  : base,
+            ),
+        ],
       ),
     );
   }

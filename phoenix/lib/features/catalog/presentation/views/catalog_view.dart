@@ -8,6 +8,7 @@ import 'package:feniq/features/catalog/presentation/managers/catalog_state.dart'
 import 'package:feniq/features/catalog/presentation/widgets/catalog_product_list.dart';
 import 'package:feniq/features/catalog/presentation/widgets/catalog_search_bar.dart';
 import 'package:feniq/core/widgets/brand_header_glow.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class CatalogView extends StatefulWidget {
   const CatalogView({
@@ -60,13 +61,10 @@ class _CatalogViewState extends State<CatalogView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.manufacturerTitle ?? widget.manufacturer, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
+                FullText(widget.manufacturerTitle ?? widget.manufacturer, minScale: 0.6),
+                FullText(
                   l10n.catalogItemsCountSubtitle(state.products.length),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                ),
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },

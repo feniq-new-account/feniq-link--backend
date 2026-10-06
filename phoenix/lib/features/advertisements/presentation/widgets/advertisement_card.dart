@@ -10,6 +10,7 @@ import 'package:feniq/core/widgets/app_network_image.dart';
 import 'package:feniq/features/advertisements/data/models/advertisement_model.dart';
 import 'package:feniq/features/advertisements/presentation/utils/advertisement_cart_launcher.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // One advertised package: its products, each at its advertised price, and the
 // package total the pharmacy actually pays. Tapping it fetches the package
@@ -89,17 +90,12 @@ class _AdvertisementCardState extends State<AdvertisementCard> {
                         Text(
                           title,
                           style: context.textTheme.titleMedium,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
+                        FullText(
                           warehouseName,
                           style: context.textTheme.bodySmall?.copyWith(
                             color: AppColors.textSecondaryOf(context),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          )),
                       ],
                     ),
                   ),
@@ -129,12 +125,9 @@ class _AdvertisementCardState extends State<AdvertisementCard> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text(
+                        child: FullText(
                           item.displayName,
-                          style: context.textTheme.bodyMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          style: context.textTheme.bodyMedium),
                       ),
                       Padding(
                         padding: const EdgeInsetsDirectional.only(end: AppSizes.spacingSmall),

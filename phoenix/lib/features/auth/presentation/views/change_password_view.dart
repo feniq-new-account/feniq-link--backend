@@ -14,6 +14,7 @@ import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Keys for the widget tests.
 const Key changePasswordCurrentFieldKey = ValueKey('changePasswordCurrent');
@@ -114,7 +115,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
           backgroundColor: AppColors.navyOf(context),
           foregroundColor: Colors.white,
           automaticallyImplyLeading: !_forced,
-          title: Text(l10n.changePasswordTitle),
+          title: FullText(l10n.changePasswordTitle, minScale: 0.6),
           actions: [
             if (_forced)
               TextButton(

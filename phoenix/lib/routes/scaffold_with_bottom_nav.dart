@@ -60,14 +60,16 @@ class ScaffoldWithBottomNav extends StatelessWidget {
           // second line: NavigationBar's own Material resets DefaultTextStyle,
           // so this has to sit *inside* the bar, around each destination,
           // rather than around the bar itself. With every label a uniform one
-          // line tall, all five icons resolve to the same offset. The ellipsis
-          // is only a floor for very narrow screens or a large system text
-          // scale - at the theme's label size the longest label fits whole.
+          // line tall, all five icons resolve to the same offset. A label is
+          // never cut off: on a very narrow screen or a large system text
+          // scale it wraps rather than ending in "..." (at the theme's label
+          // size the longest label fits whole on one line).
           destinations: [
             for (final destination in _destinations(context, l10n))
               DefaultTextStyle.merge(
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                overflow: TextOverflow.visible,
+                softWrap: false,
                 child: destination,
               ),
           ],

@@ -21,6 +21,7 @@ import 'package:feniq/features/promotions/data/models/promotion.dart';
 import 'package:feniq/features/promotions/presentation/managers/promotions_state.dart';
 import 'package:feniq/features/promotions/presentation/managers/warehouse_offers_cubit.dart';
 import 'package:feniq/features/promotions/presentation/widgets/promotion_hero_card.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 /// What a tapped Offer card on the Offers & Ads tab opens: the offers running
 /// at that offer's own warehouse, and no other warehouse's.
@@ -148,17 +149,14 @@ class WarehouseOffersView extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.warehouseOffersTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
+                FullText(l10n.warehouseOffersTitle, minScale: 0.6),
+                FullText(
                   warehouseName.isEmpty ? count : '$warehouseName · $count',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.normal,
                     color: Colors.white70,
-                  ),
-                ),
+                  ), minScale: 0.6),
               ],
             );
           },

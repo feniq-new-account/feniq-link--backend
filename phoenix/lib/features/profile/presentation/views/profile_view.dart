@@ -15,6 +15,7 @@ import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
 import 'package:feniq/features/settings/presentation/managers/settings_cubit.dart';
 import 'package:feniq/features/settings/presentation/managers/settings_state.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Section 6.10: name, pharmacy name, phone, language switch, logout - the
 // last screen for the pharmacist. Theme switching rides along too (it was
@@ -93,7 +94,7 @@ class ProfileView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(l10n.profileTitle),
+        title: FullText(l10n.profileTitle, minScale: 0.6),
       ),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
@@ -351,12 +352,9 @@ class _SectionHeader extends StatelessWidget {
         ),
         const SizedBox(width: AppSizes.spacingSmall),
         Expanded(
-          child: Text(
+          child: FullText(
             text,
-            style: context.textTheme.titleMedium,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+            style: context.textTheme.titleMedium),
         ),
       ],
     );
@@ -407,8 +405,6 @@ class _IdentityHeader extends StatelessWidget {
                 Text(
                   name,
                   style: context.textTheme.titleLarge,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 if (pharmacyName != null && pharmacyName!.isNotEmpty) ...[
                   const SizedBox(height: AppSizes.spacingSmall),
@@ -424,15 +420,12 @@ class _IdentityHeader extends StatelessWidget {
                         Icon(Icons.local_pharmacy_outlined, size: 13, color: ink),
                         const SizedBox(width: AppSizes.spacingXSmall),
                         Flexible(
-                          child: Text(
+                          child: FullText(
                             pharmacyName!,
                             style: context.textTheme.bodySmall?.copyWith(
                               color: ink,
                               fontWeight: FontWeight.w700,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                            )),
                         ),
                       ],
                     ),
@@ -449,14 +442,11 @@ class _IdentityHeader extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSizes.spacingXSmall),
                       Flexible(
-                        child: Text(
+                        child: FullText(
                           city!,
                           style: context.textTheme.bodySmall?.copyWith(
                             color: AppColors.textSecondaryOf(context),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          )),
                       ),
                     ],
                   ),

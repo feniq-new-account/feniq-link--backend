@@ -14,6 +14,7 @@ import 'package:feniq/core/widgets/failure_widget.dart';
 import 'package:feniq/features/debts/data/models/debt_detail_model.dart';
 import 'package:feniq/features/debts/presentation/managers/debt_detail_cubit.dart';
 import 'package:feniq/features/debts/presentation/managers/debt_detail_state.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Money-Flow V2. The account statement for one warehouse: every financial
 // event in order, with a running balance.
@@ -39,7 +40,7 @@ class DebtDetailView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(warehouseName, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: FullText(warehouseName, minScale: 0.65),
       ),
       body: BlocBuilder<DebtDetailCubit, DebtDetailState>(
         builder: (context, state) {
@@ -144,12 +145,9 @@ class _BalanceSummaryCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Flexible(
-                child: Text(
+                child: FullText(
                   isCredit ? l10n.creditBalanceLabel : l10n.currentBalanceLabel,
-                  style: context.textTheme.titleMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  style: context.textTheme.titleMedium),
               ),
               const SizedBox(width: AppSizes.spacingSmall),
               Flexible(
@@ -187,14 +185,11 @@ class _SummaryLine extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
-          child: Text(
+          child: FullText(
             label,
             style: context.textTheme.bodyMedium?.copyWith(
               color: AppColors.textSecondaryOf(context),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+            )),
         ),
         Flexible(
           // No ellipsis on a monetary figure - truncating it would read as a

@@ -12,6 +12,7 @@ import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class CartItemTile extends StatelessWidget {
   const CartItemTile({
@@ -87,19 +88,14 @@ class CartItemTile extends StatelessWidget {
                           child: Text(
                             name,
                             style: context.textTheme.titleMedium,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: AppSizes.spacingXSmall),
-                    Text(
+                    FullText(
                       item.displayManufacturer,
-                      style: context.textTheme.bodyMedium?.copyWith(color: secondary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      style: context.textTheme.bodyMedium?.copyWith(color: secondary)),
                     const SizedBox(height: AppSizes.spacingSmall),
                     if (item.hasOffer)
                       Wrap(
@@ -156,12 +152,9 @@ class CartItemTile extends StatelessWidget {
                       for (final content in item.packageContents)
                         Padding(
                           padding: const EdgeInsetsDirectional.only(top: 2),
-                          child: Text(
+                          child: FullText(
                             '${content.displayName} x${content.quantityPerCopy * item.quantity}',
-                            style: context.textTheme.bodySmall?.copyWith(color: secondary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                            style: context.textTheme.bodySmall?.copyWith(color: secondary)),
                         ),
                     ],
                   ],
@@ -187,12 +180,9 @@ class CartItemTile extends StatelessWidget {
           // the stepper rather than beside it, so that at full size the
           // caption never squeezes the line total.
           if (item.isPackage) ...[
-            Text(
+            FullText(
               l10n.packageCopiesLabel,
-              style: context.textTheme.bodySmall?.copyWith(color: secondary),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+              style: context.textTheme.bodySmall?.copyWith(color: secondary)),
             const SizedBox(height: AppSizes.spacingXSmall),
           ],
           Row(

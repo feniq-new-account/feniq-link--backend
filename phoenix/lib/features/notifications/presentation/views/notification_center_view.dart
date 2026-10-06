@@ -14,6 +14,7 @@ import 'package:feniq/features/notifications/presentation/managers/notification_
 import 'package:feniq/features/notifications/presentation/managers/notification_state.dart';
 import 'package:feniq/features/notifications/presentation/utils/discount_code_deep_link.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 /// The in-app inbox. Reads the single app-wide [NotificationCubit]; the FCM
 /// layer keeps it filled. Tapping an order notification re-uses the existing
@@ -66,7 +67,7 @@ class _NotificationCenterViewState extends State<NotificationCenterView> {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(l10n.notificationsTitle),
+        title: FullText(l10n.notificationsTitle, minScale: 0.6),
         actions: [
           BlocBuilder<NotificationCubit, NotificationState>(
             buildWhen: (previous, current) =>
@@ -174,8 +175,6 @@ class _NotificationTile extends StatelessWidget {
                                 ? FontWeight.w800
                                 : AppTextTheme.semiBold,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (unread) ...[
@@ -199,8 +198,6 @@ class _NotificationTile extends StatelessWidget {
                       style: context.textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondaryOf(context),
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                   const SizedBox(height: AppSizes.spacingXSmall),

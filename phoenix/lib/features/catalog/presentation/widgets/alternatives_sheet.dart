@@ -14,6 +14,7 @@ import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/catalog/data/repositories/catalog_repository.dart';
 import 'package:feniq/features/catalog/presentation/widgets/product_card.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // The alternatives to one medicine: what else this warehouse has with the same
 // active ingredient, strength and form, available ones first then cheapest.
@@ -104,12 +105,9 @@ class _AlternativesSheetState extends State<_AlternativesSheet> {
               children: [
                 Text(l10n.alternativesTitle, style: context.textTheme.titleMedium),
                 const SizedBox(height: 2),
-                Text(
+                FullText(
                   widget.product.displayName,
-                  style: context.textTheme.bodyMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  style: context.textTheme.bodyMedium),
                 Text(
                   l10n.alternativesSubtitle,
                   style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),

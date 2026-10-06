@@ -11,6 +11,7 @@ import 'package:feniq/core/widgets/app_network_image.dart';
 import 'package:feniq/core/widgets/status_badge.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/features/promotions/data/models/promotion.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // The pieces the hero card and the compact list card both draw, so the two
 // stay one visual language rather than two that drift apart.
@@ -151,7 +152,7 @@ class PromotionMetaLine extends StatelessWidget {
         Icon(Icons.storefront_outlined, size: AppSizes.iconSizeSmall, color: secondary),
         const SizedBox(width: AppSizes.spacingXSmall),
         Expanded(
-          child: Text(label, style: style, maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: FullText(label, style: style),
         ),
       ],
     );

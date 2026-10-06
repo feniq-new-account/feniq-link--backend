@@ -20,6 +20,7 @@ import 'package:feniq/features/promotions/presentation/widgets/promotion_filter_
 import 'package:feniq/features/promotions/presentation/widgets/promotion_hero_card.dart';
 import 'package:feniq/features/promotions/presentation/widgets/promotions_hero_carousel.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 /// The Offers & Ads tab: the one place a pharmacist browses everything being
 /// promoted right now - product offers and warehouse packages together.
@@ -88,13 +89,10 @@ class _PromotionsViewState extends State<PromotionsView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.offersAndAdsTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
+                FullText(l10n.offersAndAdsTitle, minScale: 0.6),
+                FullText(
                   l10n.promotionsCountSubtitle(state.totalCount),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                ),
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },

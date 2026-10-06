@@ -6,6 +6,7 @@ import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/features/promotions/data/models/promotion.dart';
 
 import 'promotion_card_parts.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 /// One card in the Offers & Ads hero carousel: a picture, what it is, what it
 /// saves, and where it is from.
@@ -59,25 +60,40 @@ class PromotionHeroCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: AppSizes.spacingSmall),
-                    Text(
-                      promotion.title(isArabic),
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textOf(context),
+                    // The carousel's pages are a fixed height, so the title
+                    // and subtitle get whatever room is left and, when they
+                    // need more lines than fit, are drawn smaller to fit it -
+                    // shown in full, never cut off.
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, box) => FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.topStart,
+                          child: SizedBox(
+                            width: box.maxWidth,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  promotion.title(isArabic),
+                                  style: context.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textOf(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  subtitle,
+                                  style: context.textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textSecondaryOf(context),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondaryOf(context),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
                     PromotionMetaLine(promotion: promotion),
                     const SizedBox(height: AppSizes.spacingXSmall),
                     PromotionPriceLine(promotion: promotion),
@@ -144,14 +160,11 @@ class PromotionListCard extends StatelessWidget {
                     children: [
                       Flexible(
                         flex: 3,
-                        child: Text(
+                        child: FullText(
                           promotion.title(isArabic),
                           style: context.textTheme.titleSmall?.copyWith(
                             color: AppColors.textOf(context),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          )),
                       ),
                       const SizedBox(width: AppSizes.spacingSmall),
                       Flexible(flex: 2, child: PromotionSavingBadge(promotion: promotion)),

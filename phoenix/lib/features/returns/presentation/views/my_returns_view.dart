@@ -20,6 +20,7 @@ import 'package:feniq/features/returns/presentation/managers/my_returns_cubit.da
 import 'package:feniq/features/returns/presentation/managers/my_returns_state.dart';
 import 'package:feniq/features/returns/presentation/widgets/request_return_sheet.dart';
 import 'package:feniq/features/returns/presentation/widgets/return_list_tile.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Extra room under the scrolling content so the floating "Request Return"
 // button never sits on top of the last card or a page-level empty/error
@@ -126,14 +127,11 @@ class _MyReturnsViewState extends State<MyReturnsView> with SingleTickerProvider
               ListTile(
                 leading: Icon(Icons.storefront_outlined, color: AppColors.textOf(sheetContext)),
                 title: Text(l10n.returnableOrderNumber('${order.orderNumber}')),
-                subtitle: Text(
+                subtitle: FullText(
                   (isArabic ? order.warehouseNameAr : order.warehouseNameEn) ??
                       order.warehouseNameAr ??
                       order.warehouseNameEn ??
-                      '',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                      ''),
                 trailing: Text(formatSyp(order.finalPrice, l10n.currencySuffix)),
                 onTap: () => Navigator.pop(sheetContext, order),
               ),
@@ -257,13 +255,10 @@ class _MyReturnsViewState extends State<MyReturnsView> with SingleTickerProvider
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.returnsTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
+                FullText(l10n.returnsTitle, minScale: 0.6),
+                FullText(
                   l10n.returnsCountSubtitle(state.returns.length),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                ),
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },
@@ -378,8 +373,6 @@ class _ReturnsTabBar extends StatelessWidget {
             child: Text(
               l10n.myReturnsListSectionTitle,
               textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
           Tab(
@@ -387,8 +380,6 @@ class _ReturnsTabBar extends StatelessWidget {
             child: Text(
               l10n.returnableSectionTitle,
               textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -633,12 +624,9 @@ class _ReturnableOrderCard extends StatelessWidget {
                     Icon(Icons.storefront_rounded, size: 18, color: AppColors.textOf(context)),
                     const SizedBox(width: AppSizes.spacingXSmall),
                     Expanded(
-                      child: Text(
+                      child: FullText(
                         warehouseName,
-                        style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                     ),
                     const SizedBox(width: AppSizes.spacingSmall),
                     _OrderNumberPill(label: l10n.returnableOrderNumber('${order.orderNumber}')),
@@ -650,14 +638,11 @@ class _ReturnableOrderCard extends StatelessWidget {
                     Icon(Icons.event_outlined, size: 14, color: AppColors.textSecondaryOf(context)),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: Text(
+                      child: FullText(
                         l10n.returnableDeliveredOnLabel(DateFormatter.formatDate(order.deliveredAt)),
                         style: context.textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondaryOf(context),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        )),
                     ),
                   ],
                 ),
@@ -668,8 +653,6 @@ class _ReturnableOrderCard extends StatelessWidget {
                   Text(
                     itemsText,
                     style: context.textTheme.bodyMedium,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 if (hiddenCount > 0) ...[
                   const SizedBox(height: AppSizes.spacingXSmall),
@@ -681,30 +664,24 @@ class _ReturnableOrderCard extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: AppSizes.spacingMedium),
-                Text(
+                FullText(
                   formatSyp(order.finalPrice, l10n.currencySuffix),
                   style: context.textTheme.titleSmall?.copyWith(
                     color: AppColors.textOf(context),
                     fontWeight: FontWeight.w800,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  )),
                 const SizedBox(height: AppSizes.spacingSmall),
                 Row(
                   children: [
                     Icon(Icons.timer_outlined, size: 16, color: accent),
                     const SizedBox(width: AppSizes.spacingXSmall),
                     Flexible(
-                      child: Text(
+                      child: FullText(
                         l10n.returnableHoursLeft('${order.hoursRemaining}'),
                         style: context.textTheme.bodySmall?.copyWith(
                           color: accent,
                           fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        )),
                     ),
                     if (order.isEndingSoon) ...[
                       const SizedBox(width: AppSizes.spacingSmall),

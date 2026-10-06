@@ -24,6 +24,7 @@ import 'package:feniq/features/cart/presentation/widgets/discount_code_field.dar
 import 'package:feniq/features/catalog/data/models/manufacturers_route_args.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class CartView extends StatefulWidget {
   const CartView({super.key});
@@ -392,14 +393,11 @@ class _CartViewState extends State<CartView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.cartTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                FullText(l10n.cartTitle, minScale: 0.6),
                 if (state.warehouseName != null)
-                  Text(
+                  FullText(
                     '${state.warehouseName} · ${l10n.catalogItemsCountSubtitle(state.itemCount)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                  ),
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },
@@ -725,7 +723,7 @@ class _QuoteSummary extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSizes.spacingXSmall),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: style ?? muted, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Expanded(child: FullText(label, style: style ?? muted)),
           Text(amount, key: key, style: style ?? muted),
         ],
       ),
@@ -758,12 +756,9 @@ class _QuoteSummary extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(
+              child: FullText(
                 l10n.invoiceTotalLabel,
-                style: context.textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+                style: context.textTheme.titleMedium),
             ),
             if (state.isQuoting) ...[
               SizedBox(

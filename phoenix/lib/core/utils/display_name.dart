@@ -11,3 +11,8 @@ String? englishFirstOrNull(String? english, String? arabic) {
   final en = english?.trim();
   return en == null || en.isEmpty ? arabic : en;
 }
+
+/// [text] kept left-to-right inside right-to-left Arabic text, so a strength
+/// like "100 MG/5 ML" never reads back as "MG/5 ML 100" - in a health app a
+/// reversed strength can be misread. Wraps it in Unicode directional isolates.
+String ltrIsolate(String text) => '\u2066$text\u2069';

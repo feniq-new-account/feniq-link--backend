@@ -15,6 +15,7 @@ import 'package:feniq/features/catalog/presentation/managers/catalog_cubit.dart'
 import 'package:feniq/features/catalog/presentation/managers/catalog_state.dart';
 import 'package:feniq/features/catalog/presentation/widgets/alternatives_sheet.dart';
 import 'package:feniq/features/catalog/presentation/widgets/product_card.dart';
+import 'package:feniq/core/widgets/sliver_row_grid.dart';
 
 // The product results of a CatalogCubit - loading skeleton, error, empty
 // state, the grid/list of ProductCards with their cart actions, and "load
@@ -151,25 +152,14 @@ class _CatalogProductListState extends State<CatalogProductList> {
             SliverPadding(
               padding: AppPadding.screen,
               sliver: isGrid
-                  ? SliverGrid(
-                      // Fluid column count - see WarehouseSelectionView for
-                      // the same treatment.
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 170,
-                        mainAxisSpacing: AppSizes.spacingMedium,
-                        crossAxisSpacing: AppSizes.spacingMedium,
-                        // 250 wasn't enough: the SYP price (plus its "~ $x"
-                        // USD hint, and a strikethrough original when an
-                        // offer is active) can wrap to two lines on a narrow
-                        // card and overflow the cell - this leaves headroom
-                        // for that case, plus the in-cart quantity stepper
-                        // that can replace the "Add" button.
-                        mainAxisExtent: 344,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => cardFor(state.products[index], grid: true),
-                        childCount: state.products.length,
-                      ),
+                  ? SliverRowGrid(
+                      // Fluid column count (one per 170px), rows as tall as
+                      // their content: a long name wraps instead of being cut.
+                      maxCrossAxisExtent: 170,
+                      mainAxisSpacing: AppSizes.spacingMedium,
+                      crossAxisSpacing: AppSizes.spacingMedium,
+                      itemCount: state.products.length,
+                      itemBuilder: (context, index) => cardFor(state.products[index], grid: true),
                     )
                   : SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {

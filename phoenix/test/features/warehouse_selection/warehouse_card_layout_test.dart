@@ -8,14 +8,15 @@ import 'package:feniq/features/warehouse_selection/data/models/warehouse_model.d
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_card.dart';
 import 'package:feniq/generated/app_localizations.dart';
 
-// The redesigned card has a fixed budget: WarehouseSelectionView lays it out
-// in a grid tile of at most 210pt wide and exactly 220pt tall. A card that
-// overflows that renders a yellow-and-black overflow stripe in front of the
-// pharmacist, so the budget is worth pinning - especially against the two
-// things that stretch it, a long name and a large text scale.
+// WarehouseSelectionView lays the card out in a grid row (SliverRowGrid) of
+// at most 210pt wide and at least 220pt tall; a long name wraps and the row
+// grows with it rather than the name being cut off. A card that overflows
+// renders a yellow-and-black stripe in front of the pharmacist, so the layout
+// is worth pinning - especially against the two things that stretch it, a
+// long name and a large text scale.
 //
 // A RenderFlex overflow throws in a widget test, so simply pumping the card
-// inside the real tile size is the assertion; the expects below just prove
+// the way the grid row does is the assertion; the expects below just prove
 // the content actually made it in.
 void main() {
   // A touch narrower than the tile the grid produces on a phone (two columns
@@ -50,13 +51,19 @@ void main() {
           body: Center(
             child: MediaQuery(
               data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+              // As SliverRowGrid lays a card out: the tile's width, at least
+              // its height, and as tall as the content needs.
               child: SizedBox(
                 width: tileSize.width,
-                height: tileSize.height,
-                child: WarehouseCard(
-                  warehouse: model ?? warehouse(),
-                  onSelect: () {},
-                  onViewProfile: () {},
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: tileSize.height),
+                  child: IntrinsicHeight(
+                    child: WarehouseCard(
+                      warehouse: model ?? warehouse(),
+                      onSelect: () {},
+                      onViewProfile: () {},
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -110,6 +117,10 @@ void main() {
     );
 
     expect(find.byType(WarehouseCard), findsOneWidget);
+    // The whole name, never cut off with "...".
+    final name = tester.widget<Text>(find.text('A Very Long Warehouse Name That Will Not Fit On Two Lines Either'));
+    expect(name.maxLines, isNull);
+    expect(name.overflow, isNot(TextOverflow.ellipsis));
     // The city pill must survive the name, not be pushed out by it.
     expect(find.text('Latakia'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);

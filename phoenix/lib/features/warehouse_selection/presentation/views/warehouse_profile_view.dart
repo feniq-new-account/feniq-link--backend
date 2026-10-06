@@ -21,6 +21,7 @@ import 'package:feniq/features/warehouse_selection/data/models/warehouse_profile
 import 'package:feniq/features/warehouse_selection/presentation/managers/warehouse_profile_cubit.dart';
 import 'package:feniq/features/warehouse_selection/presentation/managers/warehouse_profile_state.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Section 17: the pharmacist's read-only "about this warehouse" screen -
 // reached from a separate affordance on WarehouseCard (an info icon, not
@@ -64,7 +65,7 @@ class WarehouseProfileView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(warehouseName, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: FullText(warehouseName, minScale: 0.65),
         actions: const [CartButton()],
       ),
       body: BlocBuilder<WarehouseProfileCubit, WarehouseProfileState>(
@@ -189,8 +190,6 @@ class _ProfileHeader extends StatelessWidget {
           name,
           style: context.textTheme.displaySmall,
           textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: AppSizes.spacingXSmall),
         Row(
@@ -200,12 +199,9 @@ class _ProfileHeader extends StatelessWidget {
             Icon(Icons.location_on_outlined, size: AppSizes.iconSizeSmall, color: AppColors.textSecondaryOf(context)),
             const SizedBox(width: AppSizes.spacingXSmall),
             Flexible(
-              child: Text(
+              child: FullText(
                 profile.city,
-                style: context.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondaryOf(context)),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+                style: context.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondaryOf(context))),
             ),
           ],
         ),
@@ -232,12 +228,9 @@ class _ContactSection extends StatelessWidget {
               Icon(Icons.phone_outlined, size: AppSizes.iconSizeSmall, color: AppColors.textSecondaryOf(context)),
               const SizedBox(width: AppSizes.spacingSmall),
               Expanded(
-                child: Text(
+                child: FullText(
                   profile.phone,
-                  style: context.textTheme.bodyMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  style: context.textTheme.bodyMedium),
               ),
               WhatsAppButton(phone: profile.phone),
             ],
@@ -331,8 +324,6 @@ class _IconTextRow extends StatelessWidget {
           child: Text(
             text,
             style: context.textTheme.bodyMedium,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -366,17 +357,14 @@ class _ReviewsSection extends StatelessWidget {
                 _StarRow(rating: profile.averageRating.round()),
                 const SizedBox(width: AppSizes.spacingSmall),
                 Flexible(
-                  child: Text(
+                  child: FullText(
                     l10n.ratingSummary(
                       profile.averageRating.toStringAsFixed(1),
                       profile.reviewsCount.toString(),
                     ),
                     style: context.textTheme.bodyMedium?.copyWith(
                       color: AppColors.textSecondaryOf(context),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    )),
                 ),
               ],
             ),
@@ -424,12 +412,9 @@ class _ReviewCard extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSizes.spacingXSmall),
                     Flexible(
-                      child: Text(
+                      child: FullText(
                         reviewerName,
-                        style: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        style: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
