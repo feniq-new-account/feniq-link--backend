@@ -65,6 +65,11 @@ import 'package:feniq/features/rep/presentation/views/rep_pharmacy_detail_view.d
 import 'package:feniq/features/rep/presentation/views/visit_scan_view.dart';
 import 'package:feniq/features/rep/presentation/views/rep_shell_view.dart';
 import 'package:feniq/features/panel/panel_home_view.dart';
+import 'package:feniq/features/warehouse/data/repositories/warehouse_orders_repository.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_order_detail_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_orders_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/views/warehouse_order_detail_view.dart';
+import 'package:feniq/features/warehouse/presentation/views/warehouse_shell_view.dart';
 import 'package:feniq/features/reviews/data/repositories/review_repository.dart';
 import 'package:feniq/features/reviews/presentation/managers/pharmacy_reviews_cubit.dart';
 import 'package:feniq/features/reviews/presentation/views/pharmacy_reviews_view.dart';
@@ -399,7 +404,33 @@ class AppRouter {
       // navigation stack alive (IndexedStack) - switching tabs doesn't rebuild
       // or reload the others. Everything above (catalog/cart/order tracking)
       // stays outside the shell so it pushes full-screen over the nav bar.
-      // Warehouse and admin accounts: one screen that opens the web panel.
+      // A warehouse account: its orders (and its account), and one order.
+      GoRoute(
+        name: RouteNames.warehouseHome,
+        path: RoutePaths.warehouseHome,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: BlocProvider(
+            create: (context) => WarehouseOrdersCubit(repository: context.read<WarehouseOrdersRepository>())..load(),
+            child: const WarehouseShellView(),
+          ),
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.warehouseOrder,
+        path: RoutePaths.warehouseOrder,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: BlocProvider(
+            create: (context) => WarehouseOrderDetailCubit(
+              repository: context.read<WarehouseOrdersRepository>(),
+              orderId: state.pathParameters['orderId']!,
+            )..load(),
+            child: const WarehouseOrderDetailView(),
+          ),
+        ),
+      ),
+      // Admin accounts: one screen that opens the web panel.
       GoRoute(
         name: RouteNames.panelHome,
         path: RoutePaths.panelHome,
@@ -602,8 +633,11 @@ const Set<String> _repOpenPaths = {
 
 // Keeps each role on its own side of the app: a rep (whose pharmacy-side
 // requests the server would refuse anyway - a stale notification link, a
-// remembered address) is sent to /rep, a warehouse or admin account to the
-// panel landing, and a pharmacy is sent away from both.
+// remembered address) is sent to /rep, a warehouse account to /warehouse, an
+// admin account to the panel landing, and a pharmacy is sent away from all
+// three. A warehouse tapping an order notification lands on the pharmacy's
+// tracking path (the one deep link every push uses) and is taken to its own
+// view of that order instead.
 // Only once the session is known: while it is still being checked (splash)
 // nothing is redirected. Offline, the role comes from the stored token.
 String? roleRedirect(BuildContext context, GoRouterState state) {
@@ -618,14 +652,25 @@ String? roleRedirect(BuildContext context, GoRouterState state) {
   final location = state.matchedLocation;
   final inRepArea = location == RoutePaths.repHome || location.startsWith('${RoutePaths.repHome}/');
   final inPanelArea = location == RoutePaths.panelHome;
+  final inWarehouseArea =
+      location == RoutePaths.warehouseHome || location.startsWith('${RoutePaths.warehouseHome}/');
   if (auth.isRep) {
     return inRepArea || _repOpenPaths.contains(location) ? null : RoutePaths.repHome;
+  }
+  if (auth.isWarehouse) {
+    if (inWarehouseArea || _repOpenPaths.contains(location) || location == RoutePaths.notifications) return null;
+    final tracked = _orderTrackingPath.firstMatch(location);
+    if (tracked != null) return '${RoutePaths.warehouseHome}/orders/${tracked.group(1)}';
+    return RoutePaths.warehouseHome;
   }
   if (auth.isPanelUser) {
     return inPanelArea || _repOpenPaths.contains(location) ? null : RoutePaths.panelHome;
   }
-  return inRepArea || inPanelArea ? RoutePaths.warehouseSelection : null;
+  return inRepArea || inPanelArea || inWarehouseArea ? RoutePaths.warehouseSelection : null;
 }
+
+// RoutePaths.orderTracking with its id: '/orders/<id>'.
+final RegExp _orderTrackingPath = RegExp(r'^/orders/([^/]+)$');
 
 String? appRedirect(BuildContext context, GoRouterState state) =>
     forcePasswordChangeRedirect(context, state) ?? roleRedirect(context, state);

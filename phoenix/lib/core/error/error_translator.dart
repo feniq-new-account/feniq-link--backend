@@ -206,6 +206,18 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
     case 'INVALID_LOCATION':
       return l10n.errorRepInvalidLocation;
 
+    // A warehouse working its orders in the app (warehouseOrder.service.js).
+    case 'CANNOT_REMOVE_LAST_ITEM':
+      return l10n.errorCannotRemoveLastItem;
+    case 'ORDER_ALREADY_ADVANCED':
+      return l10n.errorOrderAlreadyAdvanced;
+    case 'ORDER_NOT_ADVANCEABLE':
+      return l10n.errorOrderNotAdvanceable;
+    case 'ORDER_NOT_EDITABLE':
+      return l10n.errorOrderNotEditable;
+    case 'PACKAGE_ITEMS_LOCKED':
+      return l10n.errorPackageItemsLocked;
+
     case 'UNEXPECTED_ERROR':
       return l10n.errorState;
     default:

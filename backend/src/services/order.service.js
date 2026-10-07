@@ -43,6 +43,8 @@ const { codeDiscountSyp } = discountCodes;
 // requires this file back, so there is no cycle here.
 const { loadActiveAdvertisementOrThrow, isAdvertisementAvailable } = require('./advertisement.service');
 const { emitToWarehouse, EVENTS } = require('../realtime');
+const notificationService = require('./notification.service');
+const Pharmacy = require('../models/pharmacy.model');
 
 // Section 15: the SYP stacking lives with its USD twin now
 // (manufacturerDiscount.service.js stackedDiscountSyp / computeFinalPrice), so the
@@ -1094,8 +1096,42 @@ async function createOrder({
     orderNumber: order.orderNumber,
     warehouseId: order.warehouseId.toString(),
   });
+  await notifyWarehouseOfOrder(order, 'created');
 
   return order;
+}
+
+// A push to the warehouse's own account for the two order events it must not
+// miss while away from the panel: a new order, and a pharmacy cancelling one.
+// The realtime events above only reach an open panel; this reaches the Feniq
+// app on the warehouse's phone. Never throws: sendToUser swallows its own
+// errors, and a failed lookup here only skips the push.
+async function notifyWarehouseOfOrder(order, kind) {
+  try {
+    const [warehouse, pharmacy] = await Promise.all([
+      Warehouse.findById(order.warehouseId).select('userId').lean(),
+      Pharmacy.findById(order.pharmacyId).select('nameAr nameEn').lean(),
+    ]);
+    if (!warehouse?.userId) return;
+    const fromAr = pharmacy?.nameAr || pharmacy?.nameEn;
+    const fromEn = pharmacy?.nameEn || pharmacy?.nameAr;
+    const created = kind === 'created';
+    await notificationService.sendToUser(warehouse.userId, {
+      titleAr: created ? 'طلبية جديدة' : 'طلبية ملغاة',
+      titleEn: created ? 'New order' : 'Order cancelled',
+      bodyAr: created
+        ? `طلبية رقم ${order.orderNumber}${fromAr ? ` من ${fromAr}` : ''}`
+        : `${fromAr ? `${fromAr} ألغت` : 'انلغت'} الطلبية رقم ${order.orderNumber}`,
+      bodyEn: created
+        ? `Order #${order.orderNumber}${fromEn ? ` from ${fromEn}` : ''}`
+        : `${fromEn ? `${fromEn} cancelled` : 'Cancelled:'} order #${order.orderNumber}`,
+      type: 'order_update',
+      relatedOrderId: order._id,
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Warehouse order notification failed.', err.message);
+  }
 }
 
 // The cart's quote (POST /discount-codes/preview): what this cart costs right
@@ -1480,6 +1516,7 @@ async function cancelOrder(orderId, pharmacyId, userId) {
     orderNumber: order.orderNumber,
     warehouseId: order.warehouseId.toString(),
   });
+  await notifyWarehouseOfOrder(order, 'cancelled');
 
   return { order: cancelled, warehouse, items };
 }

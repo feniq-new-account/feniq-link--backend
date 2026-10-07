@@ -3661,6 +3661,288 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not open the panel. Open {url} in your browser.'**
   String panelHomeOpenFailed(String url);
+
+  /// No description provided for @warehouseNavOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get warehouseNavOrders;
+
+  /// No description provided for @warehouseNavAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get warehouseNavAccount;
+
+  /// No description provided for @warehouseFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get warehouseFilterAll;
+
+  /// No description provided for @warehouseApproveAndSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve & send'**
+  String get warehouseApproveAndSend;
+
+  /// No description provided for @warehouseMarkDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as delivered'**
+  String get warehouseMarkDelivered;
+
+  /// No description provided for @warehouseConfirmApproveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve and send this order?'**
+  String get warehouseConfirmApproveTitle;
+
+  /// No description provided for @warehouseConfirmApproveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Order #{number} goes out to the pharmacy, and its items can no longer be changed.'**
+  String warehouseConfirmApproveBody(int number);
+
+  /// No description provided for @warehouseConfirmDeliveredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as delivered?'**
+  String get warehouseConfirmDeliveredTitle;
+
+  /// No description provided for @warehouseConfirmDeliveredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Has order #{number} reached the pharmacy?'**
+  String warehouseConfirmDeliveredBody(int number);
+
+  /// No description provided for @warehouseOrderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order #{number}'**
+  String warehouseOrderTitle(int number);
+
+  /// No description provided for @warehouseOrderItemsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Items: {count}'**
+  String warehouseOrderItemsCount(int count);
+
+  /// No description provided for @warehouseNoOrdersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders here'**
+  String get warehouseNoOrdersTitle;
+
+  /// No description provided for @warehouseNoOrdersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New orders show up here as soon as they arrive, with a notification.'**
+  String get warehouseNoOrdersSubtitle;
+
+  /// No description provided for @warehouseSectionPharmacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy'**
+  String get warehouseSectionPharmacy;
+
+  /// No description provided for @warehouseSectionItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get warehouseSectionItems;
+
+  /// No description provided for @warehouseSectionMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts'**
+  String get warehouseSectionMoney;
+
+  /// No description provided for @warehouseSectionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Order history'**
+  String get warehouseSectionHistory;
+
+  /// No description provided for @warehouseSectionNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy\'s notes'**
+  String get warehouseSectionNotes;
+
+  /// No description provided for @warehouseCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get warehouseCall;
+
+  /// No description provided for @warehouseFreeUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} free'**
+  String warehouseFreeUnits(int count);
+
+  /// No description provided for @warehousePackageLine.
+  ///
+  /// In en, this message translates to:
+  /// **'In a package'**
+  String get warehousePackageLine;
+
+  /// No description provided for @warehouseSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get warehouseSubtotal;
+
+  /// No description provided for @warehouseDiscounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts'**
+  String get warehouseDiscounts;
+
+  /// No description provided for @warehousePharmacyPays.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy pays'**
+  String get warehousePharmacyPays;
+
+  /// No description provided for @warehouseFeniqShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Feniq\'s share'**
+  String get warehouseFeniqShare;
+
+  /// No description provided for @warehouseYouKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'You keep'**
+  String get warehouseYouKeep;
+
+  /// No description provided for @warehouseRepCommissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rep commission ({rate}%)'**
+  String warehouseRepCommissionTitle(String rate);
+
+  /// No description provided for @warehouseRepShare.
+  ///
+  /// In en, this message translates to:
+  /// **'To the rep'**
+  String get warehouseRepShare;
+
+  /// No description provided for @warehouseRepSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Your saving'**
+  String get warehouseRepSaving;
+
+  /// No description provided for @warehouseEditItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit items'**
+  String get warehouseEditItems;
+
+  /// No description provided for @warehouseSaveEdits.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get warehouseSaveEdits;
+
+  /// No description provided for @warehouseRemoveLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get warehouseRemoveLine;
+
+  /// No description provided for @warehouseRestoreLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get warehouseRestoreLine;
+
+  /// No description provided for @warehouseEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding a product or changing a package is done in the warehouse panel.'**
+  String get warehouseEditHint;
+
+  /// No description provided for @warehouseConfirmSaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the changes?'**
+  String get warehouseConfirmSaveTitle;
+
+  /// No description provided for @warehouseConfirmSaveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The order is repriced, and the pharmacy is notified of the change.'**
+  String get warehouseConfirmSaveBody;
+
+  /// No description provided for @warehouseCannotEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You can\'t remove every item. If the order can\'t go ahead, talk to the pharmacy.'**
+  String get warehouseCannotEmpty;
+
+  /// No description provided for @warehouseWaitingSeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the pharmacy\'s seal photo before delivery.'**
+  String get warehouseWaitingSeal;
+
+  /// No description provided for @warehouseHasReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Has a return'**
+  String get warehouseHasReturn;
+
+  /// No description provided for @warehouseCancelReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reason: {reason}'**
+  String warehouseCancelReason(String reason);
+
+  /// No description provided for @warehouseAccountPanelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Products, offers, reps and reports are in the warehouse panel.'**
+  String get warehouseAccountPanelHint;
+
+  /// No description provided for @warehouseOrderAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Order #{number} is now: {status}'**
+  String warehouseOrderAdvanced(int number, String status);
+
+  /// No description provided for @errorCannotRemoveLastItem.
+  ///
+  /// In en, this message translates to:
+  /// **'You can\'t remove the order\'s last item.'**
+  String get errorCannotRemoveLastItem;
+
+  /// No description provided for @errorOrderAlreadyAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'The order already moved on. Refresh the page.'**
+  String get errorOrderAlreadyAdvanced;
+
+  /// No description provided for @errorOrderNotAdvanceable.
+  ///
+  /// In en, this message translates to:
+  /// **'This order can\'t move to another stage.'**
+  String get errorOrderNotAdvanceable;
+
+  /// No description provided for @errorOrderNotEditable.
+  ///
+  /// In en, this message translates to:
+  /// **'The order was sent, so its items can no longer be changed.'**
+  String get errorOrderNotEditable;
+
+  /// No description provided for @errorPackageItemsLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'A package\'s items are changed in the warehouse panel.'**
+  String get errorPackageItemsLocked;
 }
 
 class _AppLocalizationsDelegate

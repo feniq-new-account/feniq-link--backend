@@ -28,8 +28,9 @@ void main() {
       expect(homeRouteNameFor(const AuthState(tokenRole: 'rep')), RouteNames.repHome);
     });
 
-    test('a warehouse or admin account lands on the panel landing', () {
-      expect(homeRouteNameFor(const AuthState(user: _warehouse)), RouteNames.panelHome);
+    test('a warehouse lands on its orders, an admin on the panel landing', () {
+      expect(homeRouteNameFor(const AuthState(user: _warehouse)), RouteNames.warehouseHome);
+      expect(homeRouteNameFor(const AuthState(tokenRole: 'warehouse')), RouteNames.warehouseHome);
       expect(homeRouteNameFor(const AuthState(tokenRole: 'admin')), RouteNames.panelHome);
     });
   });
@@ -58,6 +59,9 @@ void main() {
           GoRoute(path: RoutePaths.repScan, builder: (_, __) => page('REP SCAN')),
           GoRoute(path: RoutePaths.repPharmacy, builder: (_, __) => page('REP PHARMACY')),
           GoRoute(path: RoutePaths.panelHome, builder: (_, __) => page('PANEL HOME')),
+          GoRoute(path: RoutePaths.warehouseHome, builder: (_, __) => page('WAREHOUSE HOME')),
+          GoRoute(path: RoutePaths.warehouseOrder, builder: (_, s) => page('WAREHOUSE ORDER ${s.pathParameters['orderId']}')),
+          GoRoute(path: RoutePaths.orderTracking, builder: (_, __) => page('TRACKING')),
         ],
       );
       await tester.pumpWidget(
@@ -76,6 +80,10 @@ void main() {
     const activeRep = AuthState(sessionStatus: SessionStatus.active, user: _rep);
     const activePharmacist = AuthState(sessionStatus: SessionStatus.active, user: _pharmacist);
     const activeWarehouse = AuthState(sessionStatus: SessionStatus.active, user: _warehouse);
+    const activeAdmin = AuthState(
+      sessionStatus: SessionStatus.active,
+      user: UserModel(id: 'a1', name: 'Admin', phone: '+963930000001', role: 'admin', status: 'active', lang: 'ar'),
+    );
 
     testWidgets('a rep asking for a pharmacy screen (a stale link) is sent to the rep home', (tester) async {
       await pump(tester, activeRep, RoutePaths.cart);
@@ -122,18 +130,39 @@ void main() {
       expect(find.text('CHANGE PASSWORD'), findsOneWidget);
     });
 
-    testWidgets('a warehouse account asking for a pharmacy or rep screen is sent to the panel landing', (tester) async {
+    testWidgets('a warehouse account asking for a pharmacy or rep screen is sent to its orders', (tester) async {
       await pump(tester, activeWarehouse, RoutePaths.cart);
-      expect(find.text('PANEL HOME'), findsOneWidget);
+      expect(find.text('WAREHOUSE HOME'), findsOneWidget);
       await pump(tester, activeWarehouse, RoutePaths.repHome);
+      expect(find.text('WAREHOUSE HOME'), findsOneWidget);
+      await pump(tester, activeWarehouse, RoutePaths.panelHome);
+      expect(find.text('WAREHOUSE HOME'), findsOneWidget);
+    });
+
+    testWidgets('a warehouse stays on its own screens, the notifications and the auth steps', (tester) async {
+      await pump(tester, activeWarehouse, '/warehouse/orders/o1');
+      expect(find.text('WAREHOUSE ORDER o1'), findsOneWidget);
+      await pump(tester, activeWarehouse, RoutePaths.notifications);
+      expect(find.text('NOTIFICATIONS'), findsOneWidget);
+      await pump(tester, activeWarehouse, RoutePaths.privacyPolicy);
+      expect(find.text('PRIVACY'), findsOneWidget);
+    });
+
+    testWidgets('an order notification tapped by a warehouse opens its own view of that order', (tester) async {
+      await pump(tester, activeWarehouse, '/orders/o42');
+      expect(find.text('WAREHOUSE ORDER o42'), findsOneWidget);
+    });
+
+    testWidgets('an admin is kept on the panel landing', (tester) async {
+      await pump(tester, activeAdmin, RoutePaths.cart);
+      expect(find.text('PANEL HOME'), findsOneWidget);
+      await pump(tester, activeAdmin, RoutePaths.warehouseHome);
       expect(find.text('PANEL HOME'), findsOneWidget);
     });
 
-    testWidgets('a warehouse account stays on the panel landing and the auth steps', (tester) async {
-      await pump(tester, activeWarehouse, RoutePaths.panelHome);
-      expect(find.text('PANEL HOME'), findsOneWidget);
-      await pump(tester, activeWarehouse, RoutePaths.privacyPolicy);
-      expect(find.text('PRIVACY'), findsOneWidget);
+    testWidgets('a pharmacy asking for a warehouse screen is sent to the warehouse list', (tester) async {
+      await pump(tester, activePharmacist, RoutePaths.warehouseHome);
+      expect(find.text('WAREHOUSES'), findsOneWidget);
     });
 
     testWidgets('a pharmacy asking for the panel landing is sent to the warehouse list', (tester) async {

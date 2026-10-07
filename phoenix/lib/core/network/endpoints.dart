@@ -72,6 +72,12 @@ class Endpoints {
   // The pharmacy's own visit QR, for its app to show to a rep.
   static const String pharmacyVisitCode = '/pharmacy/visit-code';
 
+  // A warehouse account's own orders (backend/src/routes/warehouseOrder.routes.js).
+  static const String warehouseOrders = '/warehouse/orders';
+  static String warehouseOrder(String orderId) => '/warehouse/orders/$orderId';
+  static String warehouseOrderAdvance(String orderId) => '/warehouse/orders/$orderId/advance-status';
+  static String warehouseOrderItems(String orderId) => '/warehouse/orders/$orderId/items';
+
   static const String activeBanners = '/banners/active';
 
   // Every product offer currently running, across every warehouse - the
