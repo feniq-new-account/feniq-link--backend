@@ -6,6 +6,7 @@ import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/features/promotions/data/models/promotion.dart';
 
 import 'promotion_card_parts.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 /// One card in the Offers & Ads hero carousel: a picture, what it is, what it
 /// saves, and where it is from.
@@ -26,10 +27,10 @@ class PromotionHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    // An offer is about one product, a package about several - the subtitle
-    // says which, in the terms the pharmacist thinks in.
+    // An offer leads with its medicine, the offer's own title under it; a
+    // package leads with its title, how many products under it.
     final subtitle = switch (promotion) {
-      final OfferPromotion offer => offer.productName,
+      OfferPromotion() => promotion.subline(isArabic) ?? '',
       PackagePromotion(:final advertisement) =>
         context.l10n.advertisementProductCount(advertisement.items.length),
     };
@@ -47,37 +48,52 @@ class PromotionHeroCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Both badges are Flexible: on a narrow phone a long
-                    // saving label would otherwise push the row past the card
-                    // edge instead of ellipsizing inside its own pill.
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // A Wrap: on a narrow phone the saving badge moves under
+                    // the offer badge rather than either being cut or pushed
+                    // past the card edge.
+                    Wrap(
+                      spacing: AppSizes.spacingSmall,
+                      runSpacing: AppSizes.spacingXSmall,
                       children: [
-                        Flexible(child: PromotionKindBadge(kind: promotion.kind)),
-                        const SizedBox(width: AppSizes.spacingSmall),
-                        Flexible(child: PromotionSavingBadge(promotion: promotion)),
+                        PromotionKindBadge(kind: promotion.kind),
+                        PromotionSavingBadge(promotion: promotion),
                       ],
                     ),
                     const SizedBox(height: AppSizes.spacingSmall),
-                    Text(
-                      promotion.title(isArabic),
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textOf(context),
+                    // The carousel's pages are a fixed height, so the title
+                    // and subtitle get whatever room is left and, when they
+                    // need more lines than fit, are drawn smaller to fit it -
+                    // shown in full, never cut off.
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, box) => FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.topStart,
+                          child: SizedBox(
+                            width: box.maxWidth,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  promotion.headline(isArabic),
+                                  style: context.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textOf(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  subtitle,
+                                  style: context.textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textSecondaryOf(context),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondaryOf(context),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
                     PromotionMetaLine(promotion: promotion),
                     const SizedBox(height: AppSizes.spacingXSmall),
                     PromotionPriceLine(promotion: promotion),
@@ -144,19 +160,26 @@ class PromotionListCard extends StatelessWidget {
                     children: [
                       Flexible(
                         flex: 3,
-                        child: Text(
-                          promotion.title(isArabic),
+                        child: FullText(
+                          promotion.headline(isArabic),
                           style: context.textTheme.titleSmall?.copyWith(
                             color: AppColors.textOf(context),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                            fontWeight: FontWeight.w700,
+                          )),
                       ),
                       const SizedBox(width: AppSizes.spacingSmall),
                       Flexible(flex: 2, child: PromotionSavingBadge(promotion: promotion)),
                     ],
                   ),
+                  // The offer's own title ("عرض الشهر"), small, under the
+                  // medicine it is about.
+                  if (promotion.subline(isArabic) case final subline?) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subline,
+                      style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
+                    ),
+                  ],
                   const SizedBox(height: AppSizes.spacingXSmall),
                   PromotionMetaLine(promotion: promotion),
                   const SizedBox(height: AppSizes.spacingSmall),

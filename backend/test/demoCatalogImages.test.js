@@ -59,7 +59,7 @@ test('uploads every picture once and stocks the demo warehouses', async () => {
   assert.ok(items.every((i) => i.imageUrl.startsWith('https://media.test/media/')));
 
   const again = await seedDemoCatalogImages();
-  assert.deepStrictEqual(again, { uploaded: 0, stocked: 0, linked: 0, logos: 0, discounts: 0, dated: 0 });
+  assert.deepStrictEqual(again, { uploaded: 0, stocked: 0, linked: 0, logos: 0, discounts: 0, dated: 0, named: 0 });
 });
 
 test('the pharmacy sees the pictured medicines with image, strength and form', async () => {
@@ -130,6 +130,9 @@ test('every demo medicine card has its six facts: name, ingredient, price, form,
     assert.ok(p.activeIngredient, `ingredient missing on ${p.nameAr}`);
     assert.ok(p.dosageForm, `form missing on ${p.nameAr}`);
     assert.ok(p.expiryDate, `expiry missing on ${p.nameAr}`);
+    // The app shows names in English: every demo medicine and company has one.
+    assert.ok(p.nameEn, `English name missing on ${p.nameAr}`);
+    assert.ok(p.manufacturerEn, `English company missing on ${p.nameAr} (${p.manufacturerAr})`);
     assert.strictEqual(typeof p.priceUsd, 'number');
   }
   assert.ok(all.some((p) => p.discountPriceUsd < p.priceUsd), 'some show a price before and after a discount');

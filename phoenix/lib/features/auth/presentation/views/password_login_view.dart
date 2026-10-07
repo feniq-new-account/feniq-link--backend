@@ -17,6 +17,7 @@ import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Section 6-2: the returning-user alternative to the OTP flow - phone +
 // password, no SMS round-trip. Only reachable via the link on
@@ -109,7 +110,7 @@ class _PasswordLoginViewState extends State<PasswordLoginView> {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(l10n.passwordLoginTitle),
+        title: FullText(l10n.passwordLoginTitle, minScale: 0.6),
       ),
       body: BlocListener<AuthCubit, AuthState>(
         listenWhen: (previous, current) =>

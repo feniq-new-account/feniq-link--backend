@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/config/app_features.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
@@ -24,6 +25,7 @@ import 'package:feniq/features/cart/presentation/widgets/discount_code_field.dar
 import 'package:feniq/features/catalog/data/models/manufacturers_route_args.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class CartView extends StatefulWidget {
   const CartView({super.key});
@@ -214,7 +216,7 @@ class _CartViewState extends State<CartView> {
       for (final item in cubit.state.items)
         if (item.hasUnconfirmedBonusChange)
           l10n.bonusChangedLine(
-            item.nameAr,
+            item.displayName(true),
             item.bonuses.isEmpty ? l10n.noBonus : l10n.bonusValue(BonusTier.format(item.bonuses)),
           ),
     ];
@@ -392,14 +394,11 @@ class _CartViewState extends State<CartView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.cartTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                FullText(l10n.cartTitle, minScale: 0.6),
                 if (state.warehouseName != null)
-                  Text(
+                  FullText(
                     '${state.warehouseName} · ${l10n.catalogItemsCountSubtitle(state.itemCount)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                  ),
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },
@@ -472,7 +471,8 @@ class _CartViewState extends State<CartView> {
           String limitText(num usdAmount) =>
               formatMoneyFromUsd(usdAmount, usdToSyp, l10n.currencySuffix);
 
-          return Column(
+          return LayoutBuilder(
+            builder: (context, box) => Column(
             children: [
               Expanded(
                 child: SingleChildScrollView(
@@ -542,10 +542,6 @@ class _CartViewState extends State<CartView> {
                         ),
                       ),
                       const SizedBox(height: AppSizes.spacingMedium),
-                      // One code per order. Its amount shows in the summary
-                      // below, quoted by the server.
-                      const DiscountCodeField(),
-                      const SizedBox(height: AppSizes.spacingMedium),
                       AppTextField(
                         label: l10n.notesLabel,
                         controller: _notesController,
@@ -560,7 +556,12 @@ class _CartViewState extends State<CartView> {
               // The order summary sits on its own raised sheet, so the total
               // and the submit button read as one block, apart from the lines
               // scrolling above them.
-              Container(
+              ConstrainedBox(
+                // Its full height normally; at most 70% of the screen, so on
+                // a small phone with the keyboard up it scrolls within itself
+                // and the lines above keep some room.
+                constraints: BoxConstraints(maxHeight: box.maxHeight * 0.7),
+                child: Container(
                 padding: const EdgeInsets.fromLTRB(
                   AppSizes.spacingMedium + AppSizes.spacingXSmall,
                   AppSizes.spacingMedium + AppSizes.spacingXSmall,
@@ -580,9 +581,19 @@ class _CartViewState extends State<CartView> {
                 ),
                 child: SafeArea(
                   top: false,
+                  // Scrolls within itself when space is tight (a small phone
+                  // with the keyboard up): never past the screen edge.
+                  child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // One code per order, right above the figures it
+                      // changes - always in view (never under this sheet), and
+                      // above the keyboard while it is typed.
+                      if (AppFeatures.discountCodes) ...[
+                        const DiscountCodeField(),
+                        const SizedBox(height: AppSizes.spacingMedium),
+                      ],
                       // The server's figures for this cart - subtotal,
                       // platform discount, any code discount, total - so
                       // what is on screen is what the order will cost.
@@ -686,9 +697,12 @@ class _CartViewState extends State<CartView> {
                         ),
                     ],
                   ),
+                  ),
                 ),
               ),
+              ),
             ],
+          ),
           );
         },
         ),
@@ -725,7 +739,7 @@ class _QuoteSummary extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSizes.spacingXSmall),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: style ?? muted, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Expanded(child: FullText(label, style: style ?? muted)),
           Text(amount, key: key, style: style ?? muted),
         ],
       ),
@@ -758,12 +772,9 @@ class _QuoteSummary extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(
+              child: FullText(
                 l10n.invoiceTotalLabel,
-                style: context.textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+                style: context.textTheme.titleMedium),
             ),
             if (state.isQuoting) ...[
               SizedBox(

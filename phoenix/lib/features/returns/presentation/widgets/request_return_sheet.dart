@@ -230,7 +230,8 @@ class _RequestReturnSheetBodyState extends State<_RequestReturnSheetBody> {
             left: AppSizes.spacingLarge,
             right: AppSizes.spacingLarge,
             top: AppSizes.spacingLarge,
-            bottom: MediaQuery.of(context).viewInsets.bottom + AppSizes.spacingLarge,
+            // Clear of the keyboard and of the phone's navigation buttons.
+            bottom: MediaQuery.viewInsetsOf(context).bottom + MediaQuery.paddingOf(context).bottom + AppSizes.spacingLarge,
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -242,7 +243,7 @@ class _RequestReturnSheetBodyState extends State<_RequestReturnSheetBody> {
                 const SizedBox(height: AppSizes.spacingSmall),
                 ...state.orderItems.map((item) {
                   final selected = state.selectedItemIds.contains(item.id);
-                  final name = item.productNameAr;
+                  final name = item.displayName;
                   return _ReturnItemTile(
                     item: item,
                     name: name,

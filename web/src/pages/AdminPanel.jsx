@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { isFeatureShown } from '../config/features';
 import { useAuth } from '../auth/AuthContext';
 import { LanguageToggle } from '../components/LanguageToggle';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { NavBadge } from '../components/NavBadge';
 import { useUnreadBadges } from '../realtime/UnreadBadgesProvider';
 import { AdminDashboardPage } from './AdminDashboardPage';
 import { AccountsPage } from './AccountsPage';
+import { AdminRegistrationPage } from './AdminRegistrationPage';
 import { AdminOffersPage } from './AdminOffersPage';
 import { AdminDiscountCodesPage } from './AdminDiscountCodesPage';
 import { AdminAdvertisementsPage } from './AdminAdvertisementsPage';
@@ -35,15 +38,19 @@ export function AdminPanel() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   // Per-tab "new since you last looked" counts - see realtime/unreadBadges.js.
   const { countUnder, total: unreadTotal } = useUnreadBadges();
 
   const TABS = [
     { path: '/admin/dashboard', label: t('nav.dashboard') },
     { path: '/admin/accounts', label: t('nav.accounts') },
+    // Who gets in when a pharmacy signs up: the approval switch, the
+    // syndicate list and the Telegram bot.
+    { path: '/admin/registration', label: t('nav.registration') },
     { path: '/admin/offers', label: t('nav.offers') },
     // Review queue for warehouse codes, the platform's own codes, every code.
-    { path: '/admin/discount-codes', label: t('nav.discountCodes') },
+    { path: '/admin/discount-codes', label: t('nav.discountCodes'), feature: 'discountCodes' },
     // One tab, two sub-sections (general ads / package ads) - see
     // AdvertisementsSubNav. They were separate tabs until it turned out both
     // render as "الإعلانات" in Arabic.
@@ -83,7 +90,7 @@ export function AdminPanel() {
           <div className="adm-sidebar-subtitle">{t('nav.adminTitle')}</div>
         </div>
         <nav className="adm-nav">
-          {TABS.map((tab) => (
+          {TABS.filter((tab) => isFeatureShown(tab.feature)).map((tab) => (
             <NavLink key={tab.path} to={tab.path} className={navLinkClassName} onClick={closeSidebar}>
               {tab.label}
               <NavBadge count={countUnder(tab.path)} />
@@ -109,6 +116,9 @@ export function AdminPanel() {
           </div>
           <div className="adm-topbar-actions">
             <span className="user-name">{user?.name}</span>
+            <button type="button" className="btn-secondary" onClick={() => setIsChangingPassword(true)}>
+              {t('changePassword.button')}
+            </button>
             <LanguageToggle />
             <button className="adm-logout-btn" onClick={logout}>
               {t('common.logOut')}
@@ -116,10 +126,15 @@ export function AdminPanel() {
           </div>
         </header>
 
+        {isChangingPassword && (
+          <ChangePasswordModal role={user?.role} onClose={() => setIsChangingPassword(false)} />
+        )}
+
         <div className="adm-content">
           <Routes>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/accounts" element={<AccountsPage />} />
+            <Route path="/admin/registration" element={<AdminRegistrationPage />} />
             {/* Old bookmark - the section was renamed Pending Accounts -> Accounts. */}
             <Route path="/admin/pending-accounts" element={<Navigate to="/admin/accounts" replace />} />
             <Route path="/admin/offers" element={<AdminOffersPage />} />

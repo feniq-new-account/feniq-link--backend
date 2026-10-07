@@ -54,7 +54,8 @@ function placeOrder(quantity = 1) {
 // Walks an order all the way to 'delivered' through the real transitions.
 async function deliver(order) {
   let current = order;
-  for (let i = 0; i < 4; i += 1) {
+  // Two clicks: waiting for approval -> on the way -> delivered.
+  for (let i = 0; i < 2; i += 1) {
     current = await warehouseOrderService.advanceOrderStatus(
       current._id.toString(),
       ids.warehouse,
@@ -122,7 +123,7 @@ test.beforeEach(async () => {
 test('no ledger entry exists for any status before delivered', async () => {
   const order = await placeOrder();
 
-  for (const expected of ['confirmed', 'preparing', 'out_for_delivery']) {
+  for (const expected of ['out_for_delivery']) {
     const moved = await warehouseOrderService.advanceOrderStatus(
       order._id.toString(),
       ids.warehouse,
@@ -244,7 +245,7 @@ test('two concurrent deliveries produce one charge and one conflict', async () =
   const order = await placeOrder();
   // Walk it to the last step before delivery, then race the final transition.
   let current = order;
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < 1; i += 1) {
     current = await warehouseOrderService.advanceOrderStatus(
       current._id.toString(),
       ids.warehouse,
@@ -305,7 +306,7 @@ test('the unique index makes a second charge for the same order impossible', asy
 test('a delivery whose charge fails leaves the order undelivered', async () => {
   const order = await placeOrder();
   let current = order;
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < 1; i += 1) {
     current = await warehouseOrderService.advanceOrderStatus(
       current._id.toString(),
       ids.warehouse,

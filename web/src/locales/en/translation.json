@@ -78,7 +78,8 @@
     "manufacturers": "Manufacturers",
     "categories": "Categories",
     "discountCodes": "Discount codes",
-    "reps": "Reps"
+    "reps": "Reps",
+    "registration": "Pharmacy approval"
   },
   "auth": {
     "phoneLabel": "Phone number",
@@ -99,16 +100,17 @@
     "clickRowHint": "Click any row to view the order's details",
     "newOrdersArrived_one": "{{count}} new order arrived — show it",
     "newOrdersArrived_other": "{{count}} new orders arrived — show them",
-    "statusPending": "Sent",
-    "statusConfirmed": "Waiting for Approval",
-    "statusPreparing": "Preparing",
+    "statusPending": "Awaiting approval",
+    "statusConfirmed": "Awaiting approval",
+    "statusPreparing": "Awaiting approval",
     "statusOutForDelivery": "On the Way",
     "statusDelivered": "Delivered",
     "statusCancelled": "Cancelled",
     "statusModified": "Order modified",
-    "advancePending": "Confirm order",
-    "advanceConfirmed": "Start preparing",
-    "advancePreparing": "Start delivery",
+    "advancePending": "Approve & send",
+    "advanceConfirmed": "Approve & send",
+    "advancePreparing": "Approve & send",
+    "editOrder": "Edit",
     "advanceOutForDelivery": "Mark as delivered",
     "updating": "Updating...",
     "noOrders": "No orders here right now.",
@@ -551,7 +553,8 @@
     "manufacturerFilterPlaceholder": "Manufacturer...",
     "removed": "Removed",
     "available": "Available",
-    "paused": "Paused",
+    "paused": "Unavailable",
+    "hidden": "Hidden from catalog",
     "confirmRemove": "Remove \"{{name}}\" ({{warehouse}})? Pharmacies will no longer be able to order it.",
     "searchByNamePlaceholder": "Search by name or manufacturer...",
     "adminEditHint": "Adding products is the warehouse's responsibility — the admin can only edit or disable an item, never create one."
@@ -577,7 +580,8 @@
     "catalogImageHint": "The medicine's catalog image - shown until you upload your own.",
     "imageUploadFailed": "The product was saved, but the image did not upload. Save again to retry.",
     "errorImage": "Upload a JPEG, PNG or WEBP image.",
-    "temporarilyPaused": "Temporarily paused (hidden from pharmacies)",
+    "temporarilyPaused": "Unavailable for now (pharmacies see it greyed out as unavailable and cannot order it)",
+    "hiddenFromCatalog": "Hide from catalog (pharmacies never see it; it stays here for you to show again)",
     "saveChanges": "Save changes",
     "selectMedicineRequired": "Please select a medicine from the central catalog.",
     "pricePositive": "Price must be a positive number.",
@@ -1241,5 +1245,82 @@
       "phone": "Invalid Syrian mobile number (09xxxxxxxx).",
       "password": "The password must be at least {{min}} characters."
     }
+  },
+  "registration": {
+    "approval": {
+      "title": "Approving new pharmacies",
+      "on": "On: anyone on the syndicate list gets in at once; everyone else waits for you.",
+      "off": "Off: everyone who registers gets in at once.",
+      "pending": "{{count}} pharmacies are waiting for you (Accounts page or Telegram).",
+      "turnOn": "Turn approval on",
+      "turnOff": "Turn approval off",
+      "confirmOff": "Turning approval off lets in all {{count}} waiting pharmacies now. Continue?"
+    },
+    "list": {
+      "title": "Syndicate list",
+      "loaded": "Loaded: {{count}} pharmacists.",
+      "lastImport": "(last upload {{date}} — {{name}})",
+      "empty": "Not uploaded yet. Until it is, every registration waits for you.",
+      "hint": "Upload the cleaned pharmacies workbook (with its full-table sheet). A new file replaces the old list, and anyone waiting who is now on it is let in.",
+      "upload": "Upload",
+      "uploading": "Uploading...",
+      "done": "Done: {{count}} pharmacists uploaded.",
+      "autoApproved": "{{count}} waiting pharmacies were let in.",
+      "choose": "Choose file",
+      "noFile": "No file chosen"
+    },
+    "try": {
+      "title": "Try a name",
+      "hint": "Type a name the way a pharmacist might in the app and see whether it gets in.",
+      "name": "Pharmacist's name",
+      "pharmacyName": "Pharmacy name (optional)",
+      "phone": "Mobile (optional)",
+      "check": "Check"
+    },
+    "match": {
+      "onList": "✓ Gets in automatically",
+      "notOnList": "✗ Waits for approval",
+      "matched": "Matched:",
+      "closest": "Closest:",
+      "father": "father",
+      "badgeOn": "On the syndicate list",
+      "badgeOff": "Not on the syndicate list",
+      "score": "Match:"
+    },
+    "telegram": {
+      "title": "Telegram alerts",
+      "why": "Every registration reaches you on Telegram with approve and reject buttons.",
+      "step1": "In Telegram, open",
+      "step2": "Send it",
+      "step3": "It then asks for a username ending in bot, e.g.",
+      "save": "Save",
+      "bot": "Bot is running:",
+      "unreachable": "Could not reach the bot. Check the token is still valid.",
+      "noPublicUrl": "The server does not know its public address, so button presses will not arrive. (PUBLIC_API_URL)",
+      "linkHint": "Last step: link your Telegram to receive the alerts.",
+      "link": "Link my Telegram",
+      "openLink": "Open Telegram and press Start",
+      "linkExpires": "The link works once, for {{minutes}} minutes.",
+      "linkedCheck": "I pressed Start — refresh",
+      "linked": "Your Telegram is linked ✓ every new registration will reach you.",
+      "unlink": "Unlink",
+      "linkedAdmins": "Linked admins: {{count}}",
+      "remove": "Remove the bot",
+      "confirmRemove": "All Telegram alerts stop and every admin is unlinked. Continue?",
+      "step2b": "and pick any name for the bot.",
+      "step4": "It replies with a long token — copy it and paste it here:"
+    }
+  },
+  "changePassword": {
+    "button": "Password",
+    "title": "Change password",
+    "current": "Current password",
+    "new": "New password (at least {{count}} characters)",
+    "confirm": "Repeat the new password",
+    "save": "Change password",
+    "tooShort": "The new password must be at least {{count}} characters.",
+    "mismatch": "The two new passwords do not match.",
+    "wrongCurrent": "The current password is wrong.",
+    "done": "Password changed ✓ Any other device signed in to this account was signed out."
   }
 }

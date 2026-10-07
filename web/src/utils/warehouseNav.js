@@ -14,7 +14,10 @@
 // a group is an affordance, never a path prefix, so no bookmark or deep link
 // breaks. That is what warehouseNav.test.js pins.
 
-export const WAREHOUSE_NAV = [
+import { isFeatureShown } from '../config/features';
+
+// Every tab, including those behind a switched-off feature (config/features.js).
+export const WAREHOUSE_NAV_ALL = [
   { id: 'orders', labelKey: 'nav.orders', path: '/warehouse/orders' },
   { id: 'catalog', labelKey: 'nav.catalog', path: '/warehouse/products' },
   // Deliberately standalone rather than folded into Orders or Promotions: it is
@@ -41,7 +44,7 @@ export const WAREHOUSE_NAV = [
       { id: 'discounts', labelKey: 'nav.discounts', path: '/warehouse/discounts' },
       // Codes a pharmacy types at checkout - not the manufacturer discounts
       // above, which apply on their own.
-      { id: 'discountCodes', labelKey: 'nav.discountCodes', path: '/warehouse/discount-codes' },
+      { id: 'discountCodes', labelKey: 'nav.discountCodes', path: '/warehouse/discount-codes', feature: 'discountCodes' },
     ],
   },
   {
@@ -64,6 +67,11 @@ export const WAREHOUSE_NAV = [
   },
   { id: 'settings', labelKey: 'nav.settings', path: '/warehouse/settings' },
 ];
+
+// The sidebar as shown: a switched-off feature's tabs left out.
+export const WAREHOUSE_NAV = WAREHOUSE_NAV_ALL.filter((item) => isFeatureShown(item.feature)).map((item) =>
+  item.children ? { ...item, children: item.children.filter((child) => isFeatureShown(child.feature)) } : item
+);
 
 export const WAREHOUSE_NAV_GROUPS = WAREHOUSE_NAV.filter((item) => Boolean(item.children));
 

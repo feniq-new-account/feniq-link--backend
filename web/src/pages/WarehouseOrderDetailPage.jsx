@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { ProductPicker } from '../components/CatalogPickers';
@@ -10,6 +10,7 @@ import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { formatUsdAsSyp, formatSyp, formatMoneyFromUsd, remainingPaymentAmountFromSyp } from '../utils/currency';
 import { PAYMENT_METHODS, PAYMENT_CURRENCIES as CURRENCIES, createIdempotencyKeys } from '../utils/payments';
 import { mayAdvance } from './orderStatusFlow';
+import { isEditable } from './warehouseOrdersList';
 import { realtimeBatchMatchesOrder } from './warehouseOrderDetailRealtime';
 
 function statusKeySuffix(status) {
@@ -175,7 +176,7 @@ function RecordPaymentModal({ pharmacyId, onClose, onRecorded }) {
 }
 
 // Section: the warehouse correcting an order's items before it's confirmed
-// - only ever rendered while status is 'pending' (the parent gates it, see
+// - only ever rendered before the order is sent out (the parent gates it, see
 // WarehouseOrderDetailPage below); the backend rejects an edit past that
 // point regardless. Local draft state (quantities, staged removals, staged
 // new lines) lives here and is only ever sent to the server as one batched
@@ -341,7 +342,7 @@ function EditItemsSection({ order, onSaved }) {
   };
 
   return (
-    <div className="wh-detail-card">
+    <div className="wh-detail-card" id="edit">
       <h2 className="wh-detail-card-title">{t('orderDetail.editItemsTitle')}</h2>
 
       {/* Section: packages. A package was bought as a unit at an agreed price,
@@ -553,6 +554,13 @@ export function WarehouseOrderDetailPage() {
   const [error, setError] = useState(null);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [sealBusy, setSealBusy] = useState(false);
+  const location = useLocation();
+
+  const scrollToEdit = () => document.getElementById('edit')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Opened from the list's "Edit" button: straight to the edit form.
+  useEffect(() => {
+    if (order && location.hash === '#edit') scrollToEdit();
+  }, [order, location.hash]);
 
   // The order-detail endpoint only exposes `hasReturn` (a badge, not enough
   // to act on) - the pending return itself, if any, comes from the existing
@@ -865,7 +873,7 @@ export function WarehouseOrderDetailPage() {
               </div>
             )}
 
-            {order.status === 'pending' && <EditItemsSection order={order} onSaved={load} />}
+            {isEditable(order.status) && <EditItemsSection order={order} onSaved={load} />}
 
             {order.deliverySealPhoto && (
               <div className="wh-detail-card">
@@ -997,6 +1005,11 @@ export function WarehouseOrderDetailPage() {
               {ADVANCE_KEYS[order.status] && (
                 <button className="btn-primary" disabled={isAdvancing} onClick={handleAdvance}>
                   {isAdvancing ? t('orders.updating') : t(ADVANCE_KEYS[order.status])}
+                </button>
+              )}
+              {isEditable(order.status) && (
+                <button type="button" className="btn-secondary" onClick={scrollToEdit}>
+                  {t('orders.editOrder')}
                 </button>
               )}
               {order.requiresDeliverySealPhoto &&

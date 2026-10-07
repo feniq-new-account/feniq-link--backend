@@ -136,7 +136,7 @@ void main() {
     expect(find.byType(StatusBadge), findsNWidgets(2));
     expect(find.text('Pending review'), findsOneWidget);
     expect(find.text('Approved'), findsOneWidget);
-    expect(find.textContaining('دواء A'), findsWidgets);
+    expect(find.textContaining('Medicine A'), findsWidgets);
   });
 
   testWidgets('3. the second tab shows the eligible orders', (tester) async {

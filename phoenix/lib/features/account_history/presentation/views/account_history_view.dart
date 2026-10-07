@@ -19,6 +19,7 @@ import 'package:feniq/features/debts/presentation/managers/debts_state.dart';
 import 'package:feniq/features/returns/presentation/managers/my_returns_cubit.dart';
 import 'package:feniq/features/returns/presentation/managers/my_returns_state.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // The pharmacy's financial home. It owns no business logic of its own: the
 // three cards each read an existing cubit (SavingsCubit / DebtsCubit /
@@ -44,7 +45,7 @@ class AccountHistoryView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(l10n.accountHistoryTitle),
+        title: FullText(l10n.accountHistoryTitle, minScale: 0.6),
       ),
       body: AppRefreshIndicator(
         onRefresh: () => _refreshAll(context),
@@ -290,11 +291,11 @@ class _MiniCard extends StatelessWidget {
               Icon(icon, size: 20, color: AppColors.textOf(context)),
               const SizedBox(width: AppSizes.spacingSmall),
               Expanded(
+                // Plain wrapping text: this card sits in an IntrinsicHeight
+                // row, where FullText cannot measure itself.
                 child: Text(
                   title,
                   style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -313,8 +314,6 @@ class _MiniCard extends StatelessWidget {
                   style: context.textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondaryOf(context),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Icon(

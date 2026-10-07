@@ -8,6 +8,7 @@ import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/core/widgets/status_badge.dart';
 import 'package:feniq/features/complaints/data/models/complaint_model.dart';
 import 'package:feniq/features/complaints/presentation/utils/complaint_labels.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // One row in "My Complaints" (Section 1). Shows the complaint number, its
 // context (general / a warehouse / an order), the subject, the status pill,
@@ -50,8 +51,6 @@ class ComplaintListTile extends StatelessWidget {
                     Text(
                       complaint.subject,
                       style: context.textTheme.titleMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -121,12 +120,9 @@ class ComplaintListTile extends StatelessWidget {
         Icon(icon, size: 15, color: AppColors.textSecondaryOf(context)),
         const SizedBox(width: 4),
         Expanded(
-          child: Text(
+          child: FullText(
             text,
-            style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+            style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context))),
         ),
       ],
     );

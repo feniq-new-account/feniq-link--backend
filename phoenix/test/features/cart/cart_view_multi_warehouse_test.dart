@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:feniq/core/config/app_features.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
@@ -48,6 +49,10 @@ OrderModel _order(String id) => OrderModel(
 // Carts at several warehouses on the cart screen: a chip per warehouse to move
 // between them, and one button that sends each as its own order.
 void main() {
+  // Hidden in the app for now (AppFeatures); these tests still cover it.
+  setUp(() => AppFeatures.discountCodes = true);
+  tearDown(() => AppFeatures.discountCodes = false);
+
   setUpAll(() => registerFallbackValue(<CartItem>[]));
 
   late CartCubit cartCubit;
@@ -129,15 +134,15 @@ void main() {
     await pumpCart(tester);
 
     expect(find.byType(ChoiceChip), findsNWidgets(2));
-    expect(find.textContaining('دواء p2'), findsOneWidget);
-    expect(find.textContaining('دواء p1'), findsNothing);
+    expect(find.textContaining('Product p2'), findsOneWidget);
+    expect(find.textContaining('Product p1'), findsNothing);
 
     await tester.tap(find.text('Warehouse A · 1'));
     await tester.pumpAndSettle();
 
     expect(cartCubit.state.warehouseId, 'A');
-    expect(find.textContaining('دواء p1'), findsOneWidget);
-    expect(find.textContaining('دواء p2'), findsNothing);
+    expect(find.textContaining('Product p1'), findsOneWidget);
+    expect(find.textContaining('Product p2'), findsNothing);
   });
 
   testWidgets('"Send all orders" sends one order per warehouse, then opens the orders list', (tester) async {
@@ -157,5 +162,27 @@ void main() {
     expect(sentFor, ['B', 'A']);
     expect(cartCubit.state.isEmpty, isTrue);
     expect(find.text('my-orders'), findsOneWidget);
+  });
+
+  testWidgets('a small phone with the keyboard up: nothing overflows, the code field stays in view', (tester) async {
+    tester.view.physicalSize = const Size(360, 600);
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    addTearDown(tester.view.reset);
+    cartCubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+    cartCubit.addProduct(_product('p2'), warehouseId: 'B', warehouseName: 'Warehouse B', quantity: 1);
+    await pumpCart(tester);
+
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('discountCodeInput')).hitTestable(), findsOneWidget);
+  });
+
+  testWidgets('discount codes are switched off for now: no code field in the cart', (tester) async {
+    AppFeatures.discountCodes = false;
+    cartCubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'Warehouse A', quantity: 1);
+    await pumpCart(tester);
+
+    expect(find.byKey(const Key('discountCodeInput')), findsNothing);
+    expect(find.text('Submit order'), findsOneWidget);
   });
 }

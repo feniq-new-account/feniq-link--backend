@@ -774,7 +774,8 @@ test('the ledger charge attributes every package on the order, not just the firs
   });
 
   let current = order;
-  for (let i = 0; i < 4; i += 1) {
+  // Two clicks: waiting for approval -> on the way -> delivered.
+  for (let i = 0; i < 2; i += 1) {
     current = await warehouseOrderService.advanceOrderStatus(
       current._id.toString(), ids.warehouse, ids.whUser
     );

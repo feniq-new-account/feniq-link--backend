@@ -76,7 +76,26 @@ function toProductListResponse(items, usdToSyp = null) {
   return { products: items.map((item) => serializeProductWithOffer(item, usdToSyp)), priceRate: usdToSyp > 0 ? usdToSyp : null };
 }
 
+// One medicine at another warehouse: the product exactly as the catalog shows
+// it, and the warehouse it is at (the card fields the app needs to go there).
+function toElsewhereResponse(entries, usdToSyp = null) {
+  return {
+    alternatives: entries.map(({ warehouse, isSameMedicine, ...item }) => ({
+      warehouse: {
+        id: warehouse._id,
+        nameAr: warehouse.nameAr,
+        nameEn: warehouse.nameEn ?? null,
+        city: warehouse.city ?? null,
+        logo: warehouse.logo ?? null,
+      },
+      isSameMedicine: Boolean(isSameMedicine),
+      product: serializeProductWithOffer(item, usdToSyp),
+    })),
+    priceRate: usdToSyp > 0 ? usdToSyp : null,
+  };
+}
+
 // serializeProductWithOffer is exported so the reorder endpoint
 // (order.viewmodel.js) can emit the exact same product shape the catalog
 // browse does - one serializer, so the cart parses both identically.
-module.exports = { toProductListResponse, serializeProductWithOffer };
+module.exports = { toProductListResponse, toElsewhereResponse, serializeProductWithOffer };

@@ -34,6 +34,7 @@ class AppNetworkImage extends StatelessWidget {
     this.fallback,
     this.borderRadius,
     this.crop = false,
+    this.framed = false,
   });
 
   final String? url;
@@ -47,6 +48,10 @@ class AppNetworkImage extends StatelessWidget {
   /// Cloudinary crop strategy: `false` = `c_limit` (keep aspect ratio),
   /// `true` = `c_fill` (crop to the exact box). See [cloudinaryOptimizedUrl].
   final bool crop;
+
+  /// A medicine photo, trimmed and framed on white at exactly the drawn size
+  /// so every medicine looks the same size - see [cloudinaryOptimizedUrl].
+  final bool framed;
 
   // Upper bounds so an unbounded / buggy layout constraint can never turn
   // into a request for (or a decode of) a giant image. 1400 logical px covers
@@ -102,6 +107,7 @@ class AppNetworkImage extends StatelessWidget {
             width: targetW,
             height: targetH,
             crop: crop,
+            framed: framed,
           );
 
           // Decode cap. Cloudinary's `w_`/`h_` already right-sized the bytes;
@@ -113,7 +119,7 @@ class AppNetworkImage extends StatelessWidget {
           //    box, ignoring aspect ratio. One dimension scales proportionally.
           final int? memW;
           final int? memH;
-          if (crop && targetW != null && targetH != null) {
+          if ((crop || framed) && targetW != null && targetH != null) {
             memW = targetW;
             memH = targetH;
           } else {

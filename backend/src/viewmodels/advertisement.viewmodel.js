@@ -11,6 +11,20 @@ const { effectiveImage } = require('../utils/productImage');
 // pharmacy pays; the gap between the sum of the catalog prices and that total
 // is the saving.
 const { itemsTotalUsd, savingPercentage } = require('./warehouseAdvertisement.viewmodel');
+const { resolveProductIdentity } = require('../services/productCatalog.service');
+
+// What is in a package, shown in full (additive - older app builds ignore
+// them): the company, strength and dosage form of each medicine.
+function identityFacts(product) {
+  if (!product) return { manufacturerAr: null, manufacturerEn: null, strength: null, dosageForm: null };
+  const identity = resolveProductIdentity(product);
+  return {
+    manufacturerAr: identity.manufacturerAr ?? null,
+    manufacturerEn: identity.manufacturerEn ?? null,
+    strength: identity.strength ?? null,
+    dosageForm: identity.dosageForm ?? null,
+  };
+}
 
 function serializeItem(item, productById) {
   const product = productById.get(item.productId.toString()) ?? null;
@@ -18,6 +32,7 @@ function serializeItem(item, productById) {
     productId: item.productId,
     nameAr: product ? product.nameAr : null,
     nameEn: product ? product.nameEn : null,
+    ...identityFacts(product),
     image: effectiveImage(product),
     unitAr: product ? product.unitAr : null,
     unitEn: product ? product.unitEn : null,
@@ -88,6 +103,8 @@ function toAdvertisementCartResponse({ advertisement, warehouse, items, unavaila
         nameEn: product.nameEn,
         manufacturerAr: product.manufacturerAr,
         manufacturerEn: product.manufacturerEn,
+        strength: identityFacts(product).strength,
+        dosageForm: identityFacts(product).dosageForm,
         image: effectiveImage(product),
         unitAr: product.unitAr,
         unitEn: product.unitEn,

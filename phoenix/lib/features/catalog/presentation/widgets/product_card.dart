@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/widgets/name_text.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -15,6 +16,7 @@ import 'package:feniq/features/catalog/data/models/product_model.dart';
 import 'package:feniq/features/catalog/presentation/widgets/manufacturer_avatar.dart';
 import 'package:feniq/features/catalog/presentation/widgets/quantity_picker_sheet.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/widgets/offer_badge.dart';
 
 // Two layouts sharing the same data/logic: a grid tile (image on top,
 // details below - the default) and a compact list row, toggled from
@@ -82,6 +84,10 @@ class ProductCard extends StatelessWidget {
   }
 }
 
+// Grid tile. The picture on top, with the dosage form and strength stacked in
+// its top-left corner and the offer (or "unavailable") badge in the other;
+// under it the name, company, ingredient and batch dates; and at the bottom
+// the prices in one corner and the cart button in the other.
 class _GridCard extends StatelessWidget {
   const _GridCard({
     required this.product,
@@ -102,11 +108,12 @@ class _GridCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final name = product.nameAr;
-    final manufacturer = product.manufacturerAr;
+    final inCart = product.isAvailable && cartQuantity > 0;
 
     return CustomCard(
       padding: EdgeInsets.zero,
+      // An exceptional offer is framed in the badge's red.
+      borderColor: _onOffer(product) ? OfferBadge.frameColor(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -114,51 +121,54 @@ class _GridCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.vertical(top: AppRadius.large.topLeft),
-                child: _ProductImage(url: product.image, manufacturer: product.manufacturerAr, aspectRatio: 1.4),
+                child: _ProductImage(url: product.image, manufacturer: product.displayManufacturer, aspectRatio: 1.6),
               ),
-              // Strength and dosage form each in their own corner, never
-              // folded into the name.
-              if (_hasText(product.strength))
-                PositionedDirectional(
-                  bottom: AppSizes.spacingXSmall,
-                  start: AppSizes.spacingXSmall,
-                  child: _CornerChip(label: product.strength!, emphasized: true),
+              PositionedDirectional(
+                top: AppSizes.spacingXSmall + 2,
+                end: AppSizes.spacingXSmall + 2,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 104),
+                  child: _FormAndStrength(product: product),
                 ),
-              if (_hasText(product.dosageForm))
-                PositionedDirectional(
-                  bottom: AppSizes.spacingXSmall,
-                  end: AppSizes.spacingXSmall,
-                  child: _CornerChip(label: product.dosageForm!),
-                ),
+              ),
               if (!product.isAvailable)
                 PositionedDirectional(
-                  top: AppSizes.spacingSmall,
-                  end: AppSizes.spacingSmall,
+                  bottom: AppSizes.spacingXSmall + 2,
+                  start: AppSizes.spacingXSmall + 2,
                   child: StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger),
                 )
               else if (product.hasActiveOffer)
-                PositionedDirectional(
-                  top: AppSizes.spacingSmall,
-                  end: AppSizes.spacingSmall,
-                  child: StatusBadge(label: l10n.offerBadgeLabel, tone: StatusBadgeTone.pending),
+                const PositionedDirectional(
+                  bottom: AppSizes.spacingXSmall + 2,
+                  start: AppSizes.spacingXSmall + 2,
+                  child: OfferBadge(compact: true),
                 ),
             ],
           ),
           Padding(
-            padding: const EdgeInsets.all(AppSizes.spacingSmall),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _NameText(name: name),
+                _NameText(name: product.displayName),
                 const SizedBox(height: 2),
-                _ManufacturerText(manufacturer: manufacturer),
+                _ManufacturerText(manufacturer: product.displayManufacturer),
                 _IngredientLine(product: product),
                 _BatchDates(product: product),
-                const SizedBox(height: AppSizes.spacingXSmall),
-                _PriceDisplay(product: product),
-                _AlternativesLink(product: product, onTap: onShowAlternatives),
                 const SizedBox(height: AppSizes.spacingSmall),
-                if (product.isAvailable && cartQuantity > 0)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(child: _PriceDisplay(product: product)),
+                    if (product.isAvailable && !inCart) ...[
+                      const SizedBox(width: AppSizes.spacingXSmall),
+                      AddToCartButton(available: true, onTap: onAddTap, iconOnly: true),
+                    ],
+                  ],
+                ),
+                _AlternativesLink(product: product, onTap: onShowAlternatives),
+                if (inCart) ...[
+                  const SizedBox(height: AppSizes.spacingXSmall),
                   Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: QuantityStepper(
@@ -169,9 +179,8 @@ class _GridCard extends StatelessWidget {
                       onChanged: onCartQuantityChanged ?? (_) {},
                       onBelowMin: onCartRemove,
                     ),
-                  )
-                else
-                  AddToCartButton(available: product.isAvailable, onTap: onAddTap),
+                  ),
+                ],
               ],
             ),
           ),
@@ -181,6 +190,14 @@ class _GridCard extends StatelessWidget {
   }
 }
 
+// List row - the catalog's default. Every corner carries something:
+//   top-right    the picture
+//   middle       name, company, ingredient, batch dates
+//   top-left     dosage form, its strength under it, and "البدائل"
+//   bottom-right the prices (before / after the discount, bonus)
+//   bottom-left  the cart action - or "غير متوفر" when it can't be ordered
+// An available product carries no availability label at all: being listed
+// means it is in stock.
 class _ListRow extends StatelessWidget {
   const _ListRow({
     required this.product,
@@ -201,16 +218,26 @@ class _ListRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final meta = [
-      if (_hasText(product.strength)) product.strength!,
-      if (_hasText(product.dosageForm)) product.dosageForm!,
-    ].join('  •  ');
 
-    // Top: picture, then name / company / "strength • form", with the
-    // availability (or offer) pill in the far corner. Under it the batch
-    // dates, and a bottom bar with the price in its own rounded box and the
-    // cart action beside it.
+    final Widget action;
+    if (!product.isAvailable) {
+      action = StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger);
+    } else if (cartQuantity > 0) {
+      action = QuantityStepper(
+        quantity: cartQuantity,
+        compact: true,
+        decrementTooltip: l10n.decreaseQuantityLabel,
+        incrementTooltip: l10n.increaseQuantityLabel,
+        onChanged: onCartQuantityChanged ?? (_) {},
+        onBelowMin: onCartRemove,
+      );
+    } else {
+      action = AddToCartButton(available: true, onTap: onAddTap, compact: true);
+    }
+
     return CustomCard(
+      padding: const EdgeInsets.all(12),
+      borderColor: _onOffer(product) ? OfferBadge.frameColor(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -219,81 +246,70 @@ class _ListRow extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: AppRadius.medium,
-                child: _ProductImage(url: product.image, manufacturer: product.manufacturerAr, size: 56),
+                child: _ProductImage(url: product.image, manufacturer: product.displayManufacturer, size: 60),
               ),
-              const SizedBox(width: AppSizes.spacingMedium),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      product.nameAr,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                    ),
+                    _NameText(name: product.displayName, fontSize: 13.5),
                     const SizedBox(height: 2),
-                    Text(
-                      product.manufacturerAr,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: AppColors.primaryOf(context),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (meta.isNotEmpty)
-                      Text(
-                        meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
-                      ),
+                    _ManufacturerText(manufacturer: product.displayManufacturer, emphasized: true),
                     _IngredientLine(product: product),
                     _BatchDates(product: product),
                   ],
                 ),
               ),
               const SizedBox(width: AppSizes.spacingSmall),
-              if (!product.isAvailable)
-                StatusBadge(label: l10n.unavailableLabel, tone: StatusBadgeTone.danger)
-              else if (product.hasActiveOffer)
-                StatusBadge(label: l10n.offerBadgeLabel, tone: StatusBadgeTone.pending)
-              else
-                StatusBadge(label: l10n.availableLabel, tone: StatusBadgeTone.info),
-            ],
-          ),
-          const SizedBox(height: AppSizes.spacingSmall),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceOf(context),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: _PriceDisplay(product: product),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 104),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _FormAndStrength(product: product),
+                    _AlternativesLink(product: product, onTap: onShowAlternatives),
+                  ],
                 ),
               ),
-              const SizedBox(width: AppSizes.spacingSmall),
-              if (product.isAvailable && cartQuantity > 0)
-                QuantityStepper(
-                  quantity: cartQuantity,
-                  compact: true,
-                  decrementTooltip: l10n.decreaseQuantityLabel,
-                  incrementTooltip: l10n.increaseQuantityLabel,
-                  onChanged: onCartQuantityChanged ?? (_) {},
-                  onBelowMin: onCartRemove,
-                )
-              else if (product.isAvailable)
-                AddToCartButton(available: true, onTap: onAddTap, compact: true),
             ],
           ),
-          _AlternativesLink(product: product, onTap: onShowAlternatives),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(child: _PriceDisplay(product: product, showOfferBadge: true)),
+              const SizedBox(width: AppSizes.spacingSmall),
+              // Never more than half the row: the price keeps the other half.
+              Flexible(child: action),
+            ],
+          ),
         ],
       ),
+    );
+  }
+}
+
+// The dosage form ("أقراص مغلفة") with its strength ("875 MG/125 MG") under
+// it, both right-aligned to the card's corner. Nothing when neither is known.
+class _FormAndStrength extends StatelessWidget {
+  const _FormAndStrength({required this.product});
+
+  final ProductModel product;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasForm = _hasText(product.dosageForm);
+    final hasStrength = _hasText(product.strength);
+    if (!hasForm && !hasStrength) return const SizedBox.shrink();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (hasForm) _CornerChip(label: product.dosageForm!),
+        if (hasForm && hasStrength) const SizedBox(height: 3),
+        if (hasStrength) _CornerChip(label: product.strength!, emphasized: true),
+      ],
     );
   }
 }
@@ -312,11 +328,14 @@ class _IngredientLine extends StatelessWidget {
     final text = ingredient;
     return Padding(
       padding: const EdgeInsets.only(top: 2),
-      child: Text(
+      child: NameText(
         text,
-        style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 11.5),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+        style: context.textTheme.bodySmall?.copyWith(
+          color: AppColors.textSecondaryOf(context),
+          fontSize: 10.5,
+          letterSpacing: 0.2,
+          height: 1.3,
+        ),
       ),
     );
   }
@@ -337,13 +356,21 @@ class _AlternativesLink extends StatelessWidget {
       onTap: onTap,
       borderRadius: AppRadius.small,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Text(
-          context.l10n.alternativesLink,
-          style: context.textTheme.bodySmall?.copyWith(
-            color: AppColors.primaryOf(context),
-            fontWeight: FontWeight.w600,
-          ),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.swap_horiz_rounded, size: 14, color: AppColors.primaryOf(context)),
+            const SizedBox(width: 3),
+            Text(
+              context.l10n.alternativesLink,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: AppColors.primaryOf(context),
+                fontWeight: FontWeight.w600,
+                fontSize: 11.5,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -351,9 +378,12 @@ class _AlternativesLink extends StatelessWidget {
 }
 
 class _PriceDisplay extends StatelessWidget {
-  const _PriceDisplay({required this.product});
+  const _PriceDisplay({required this.product, this.showOfferBadge = false});
 
   final ProductModel product;
+  // The list row has no picture corner to badge, so its offer badge sits on
+  // the price's first line, beside the price before the discount.
+  final bool showOfferBadge;
 
   // The price, and under it the warehouse's bonus when the product has one
   // ("بونص 10+1", catalog overhaul Phase 8).
@@ -366,16 +396,15 @@ class _PriceDisplay extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         price,
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           _bonusOnOffer(product)
               ? context.l10n.bonusInsteadOf(BonusTier.format(product.bonuses), BonusTier.format(product.regularBonuses))
               : context.l10n.bonusValue(BonusTier.format(product.bonuses)),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: context.textTheme.bodySmall?.copyWith(
             color: AppColors.secondaryOf(context),
             fontWeight: FontWeight.w600,
+            fontSize: 11,
           ),
         ),
       ],
@@ -396,38 +425,42 @@ class _PriceDisplay extends StatelessWidget {
     // Phase 7), never a local conversion of the USD figure.
     final usdToSyp = context.watch<ExchangeRateCubit>().state.usdToSyp;
     final hasDiscount = product.discountPriceUsd < product.priceUsd;
+    final badge = showOfferBadge && _onOffer(product);
 
-    if (!hasDiscount) {
-      return Text(
-        formatMoneySyp(product.finalSypAt(usdToSyp), l10n.currencySuffix),
-        style: context.textTheme.titleSmall?.copyWith(
-          color: AppColors.primaryOf(context),
-          fontSize: 14,
-        ),
-      );
-    }
+    final current = Text(
+      formatMoneySyp(product.finalSypAt(usdToSyp), l10n.currencySuffix),
+      style: TextStyle(
+        color: hasDiscount ? AppColors.secondaryOf(context) : AppColors.primaryOf(context),
+        fontWeight: FontWeight.w700,
+        fontSize: 15,
+        height: 1.2,
+      ),
+    );
+    if (!hasDiscount && !badge) return current;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          formatMoneySyp(product.unitSypAt(usdToSyp), l10n.currencySuffix),
-          style: TextStyle(
-            decoration: TextDecoration.lineThrough,
-            color: AppColors.textSecondaryOf(context),
-            fontSize: 11.5,
-          ),
+        Wrap(
+          spacing: AppSizes.spacingSmall,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            if (hasDiscount)
+              Text(
+                formatMoneySyp(product.unitSypAt(usdToSyp), l10n.currencySuffix),
+                style: TextStyle(
+                  decoration: TextDecoration.lineThrough,
+                  color: AppColors.textSecondaryOf(context),
+                  fontSize: 11,
+                ),
+              ),
+            if (badge) const OfferBadge(compact: true),
+          ],
         ),
-        const SizedBox(height: 2),
-        Text(
-          formatMoneySyp(product.finalSypAt(usdToSyp), l10n.currencySuffix),
-          style: TextStyle(
-            color: AppColors.secondaryOf(context),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
+        const SizedBox(height: 3),
+        current,
       ],
     );
   }
@@ -450,13 +483,25 @@ class _ProductImage extends StatelessWidget {
     // right-sizes and caches it. A medicine with no picture shows its company's
     // coloured initial (the same one the company list uses) rather than a blank
     // box, so a catalog that is only partly photographed still looks finished.
-    final image = AppNetworkImage(
-      url: url,
-      fit: BoxFit.cover,
-      width: size,
-      height: size,
-      fallback: _CompanyTile(name: manufacturer, size: size),
-    );
+    //
+    // Every picture sits in the same white tile with the same margin, trimmed
+    // and fitted (never cropped) by Cloudinary to exactly that size, so all
+    // medicines look the same size whatever their original photo was.
+    final hasImage = url != null && url!.trim().isNotEmpty;
+    final image = hasImage
+        ? ColoredBox(
+            color: Colors.white,
+            child: Padding(
+              padding: EdgeInsets.all(size == null ? AppSizes.spacingSmall : 4),
+              child: AppNetworkImage(
+                url: url,
+                fit: BoxFit.contain,
+                framed: true,
+                fallback: _CompanyTile(name: manufacturer, size: size),
+              ),
+            ),
+          )
+        : _CompanyTile(name: manufacturer, size: size);
 
     if (size != null) {
       return SizedBox(width: size, height: size, child: image);
@@ -487,36 +532,39 @@ class _CompanyTile extends StatelessWidget {
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 
-// The medicine's name: kept compact so a card shows the name, company,
-// strength, form and dates without scrolling.
+// The medicine's name, always in full (it wraps; it is never cut off): a
+// health app must never show half a medicine name.
 class _NameText extends StatelessWidget {
-  const _NameText({required this.name});
+  const _NameText({required this.name, this.fontSize = 13});
 
   final String name;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
+    return NameText(
       name,
-      style: context.textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w700, height: 1.25),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
+      style: context.textTheme.bodyMedium?.copyWith(fontSize: fontSize, fontWeight: FontWeight.w700, height: 1.25),
     );
   }
 }
 
 class _ManufacturerText extends StatelessWidget {
-  const _ManufacturerText({required this.manufacturer});
+  const _ManufacturerText({required this.manufacturer, this.emphasized = false});
 
   final String manufacturer;
+  // The list row shows the company in the brand colour.
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
+    return NameText(
       manufacturer,
-      style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 11),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
+      style: context.textTheme.bodySmall?.copyWith(
+        color: emphasized ? AppColors.primaryOf(context) : AppColors.textSecondaryOf(context),
+        fontWeight: emphasized ? FontWeight.w600 : null,
+        fontSize: 11,
+      ),
     );
   }
 }
@@ -533,8 +581,7 @@ class _CornerChip extends StatelessWidget {
     final color = emphasized ? AppColors.navyOf(context) : AppColors.surfaceElevatedOf(context);
     final textColor = emphasized ? Colors.white : AppColors.textOf(context);
     return Container(
-      constraints: const BoxConstraints(maxWidth: 110),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(6),
@@ -542,10 +589,9 @@ class _CornerChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         textDirection: _isLatin(label) ? TextDirection.ltr : null,
-        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: textColor, height: 1.2),
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: textColor, height: 1.25),
       ),
     );
   }
@@ -570,25 +616,24 @@ class _BatchDates extends StatelessWidget {
     final l10n = context.l10n;
     final base = context.textTheme.bodySmall?.copyWith(fontSize: 10.5, color: AppColors.textSecondaryOf(context));
     final expiresSoon = expires != null && expires.isBefore(DateTime.now().add(const Duration(days: 183)));
+    // Each date is one unbreakable piece ("انتهاء 08/2027"): when both do not
+    // fit on one line the expiry moves to the next line whole - a date is
+    // never cut off.
     return Padding(
       padding: const EdgeInsets.only(top: 3),
-      child: Text.rich(
-        TextSpan(
-          children: [
-            if (produced != null) TextSpan(text: l10n.productionDateShort(_format(produced))),
-            if (produced != null && expires != null) const TextSpan(text: '  ·  '),
-            if (expires != null)
-              TextSpan(
-                text: l10n.expiryDateShort(_format(expires)),
-                style: expiresSoon
-                    ? TextStyle(color: AppColors.warningOf(context), fontWeight: FontWeight.w700)
-                    : null,
-              ),
-          ],
-        ),
-        style: base,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      child: Wrap(
+        spacing: AppSizes.spacingSmall,
+        runSpacing: 1,
+        children: [
+          if (produced != null) Text(l10n.productionDateShort(_format(produced)), style: base),
+          if (expires != null)
+            Text(
+              l10n.expiryDateShort(_format(expires)),
+              style: expiresSoon
+                  ? base?.copyWith(color: AppColors.warningOf(context), fontWeight: FontWeight.w700)
+                  : base,
+            ),
+        ],
       ),
     );
   }
@@ -597,3 +642,6 @@ class _BatchDates extends StatelessWidget {
 // A bonus offer is running: the bonus in force is not the product's usual one.
 bool _bonusOnOffer(ProductModel product) =>
     product.regularBonuses.isNotEmpty && BonusTier.format(product.regularBonuses) != BonusTier.format(product.bonuses);
+
+// On an exceptional offer the pharmacist can still buy: framed and badged in red.
+bool _onOffer(ProductModel product) => product.isAvailable && product.hasActiveOffer;

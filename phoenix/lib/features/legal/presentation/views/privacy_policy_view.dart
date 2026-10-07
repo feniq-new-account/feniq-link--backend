@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/features/legal/presentation/widgets/privacy_policy_body.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // The in-app privacy policy screen. Reachable from Profile and from the
 // registration screen, and - like every route in AppRouter - without being
@@ -16,11 +17,8 @@ class PrivacyPolicyView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(
-          context.l10n.privacyPolicy,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: FullText(
+          context.l10n.privacyPolicy, minScale: 0.65),
       ),
       body: SafeArea(
         child: Center(

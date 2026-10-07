@@ -23,15 +23,21 @@ export function mergeAdvancedOrders(rows, advanced) {
   return merged.sort((a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0));
 }
 
-// The server's status for an order may move on without this tab (another
-// operator, the pharmacy cancelling): a reload that carries a status further
-// along than the one remembered wins.
-const STAGE = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered'];
+// The warehouse's three stages: awaiting approval -> on the way -> delivered
+// (approving sends the order out). 'confirmed' / 'preparing' are no longer
+// reached; an older order left in one counts as awaiting approval.
+export const AWAITING_APPROVAL = ['pending', 'confirmed', 'preparing'];
+const RANK = { pending: 0, confirmed: 0, preparing: 0, out_for_delivery: 1, delivered: 2 };
+const NEXT = { pending: 'out_for_delivery', confirmed: 'out_for_delivery', preparing: 'out_for_delivery', out_for_delivery: 'delivered' };
 
 // The stage a click moves an order to; null past the last one (or cancelled).
 export function nextStatusOf(status) {
-  const index = STAGE.indexOf(status);
-  return index === -1 || index === STAGE.length - 1 ? null : STAGE[index + 1];
+  return NEXT[status] ?? null;
+}
+
+// Whether the warehouse may still change the order's items (before it is sent).
+export function isEditable(status) {
+  return AWAITING_APPROVAL.includes(status);
 }
 
 export function rememberAdvanced(advanced, order, status) {
@@ -47,8 +53,8 @@ export function syncAdvancedWithRows(advanced, rows) {
   for (const row of rows) {
     const entry = next.get(row.id);
     if (!entry) continue;
-    const listed = STAGE.indexOf(row.status);
-    const remembered = STAGE.indexOf(entry.status);
+    const listed = RANK[row.status] ?? -1;
+    const remembered = RANK[entry.status] ?? -1;
     if (row.status === 'cancelled' || listed > remembered) {
       next.set(row.id, { order: row, status: row.status });
       changed = true;

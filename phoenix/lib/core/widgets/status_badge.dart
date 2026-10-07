@@ -4,6 +4,7 @@ import '../constants/app_colors.dart';
 import '../constants/app_radius.dart';
 import '../theme/app_text_theme.dart';
 import '../extensions/build_context_extensions.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 /// The four semantic tones a status pill can take (Section 3-d of the
 /// visual-polish pass) - `pending` (orange), `success` (green, e.g.
@@ -45,10 +46,8 @@ class StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: AppRadius.badge),
-      child: Text(
+      child: FitLabel(
         label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         style: AppTextTheme.style(fontSize: 12, fontWeight: AppTextTheme.semiBold, color: fg, height: 1.4),
       ),
     );

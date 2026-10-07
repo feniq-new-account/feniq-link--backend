@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/widgets/name_text.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -12,6 +13,8 @@ import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/widgets/full_text.dart';
+import 'package:feniq/features/advertisements/presentation/widgets/package_contents.dart';
 
 class CartItemTile extends StatelessWidget {
   const CartItemTile({
@@ -84,22 +87,17 @@ class CartItemTile extends StatelessWidget {
                           const SizedBox(width: AppSizes.spacingXSmall),
                         ],
                         Expanded(
-                          child: Text(
+                          child: NameText(
                             name,
                             style: context.textTheme.titleMedium,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: AppSizes.spacingXSmall),
-                    Text(
-                      item.manufacturerAr,
-                      style: context.textTheme.bodyMedium?.copyWith(color: secondary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    FullText(
+                      item.displayManufacturer,
+                      style: context.textTheme.bodyMedium?.copyWith(color: secondary)),
                     const SizedBox(height: AppSizes.spacingSmall),
                     if (item.hasOffer)
                       Wrap(
@@ -151,18 +149,34 @@ class CartItemTile extends StatelessWidget {
                     // What the package actually delivers, at the current copy
                     // count - so "x2 copies" is never an abstraction the
                     // pharmacist has to do the arithmetic on.
+                    // Each medicine in full (name, company, strength, form),
+                    // and the full list - with pictures - one tap away.
                     if (item.isPackage && item.packageContents.isNotEmpty) ...[
-                      const SizedBox(height: AppSizes.spacingXSmall),
+                      const SizedBox(height: AppSizes.spacingSmall),
                       for (final content in item.packageContents)
                         Padding(
-                          padding: const EdgeInsetsDirectional.only(top: 2),
-                          child: Text(
-                            '${content.nameAr} x${content.quantityPerCopy * item.quantity}',
-                            style: context.textTheme.bodySmall?.copyWith(color: secondary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          padding: const EdgeInsets.only(bottom: AppSizes.spacingSmall),
+                          child: PackageContentRow(
+                            entry: PackageContentEntry.fromCart(content, copies: item.quantity),
+                            showImage: false,
                           ),
                         ),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: TextButton.icon(
+                          onPressed: () => showPackageContentsSheet(
+                            context,
+                            title: name,
+                            subtitle: item.manufacturerAr, // a package line carries its warehouse here
+                            entries: [
+                              for (final content in item.packageContents)
+                                PackageContentEntry.fromCart(content, copies: item.quantity),
+                            ],
+                          ),
+                          icon: const Icon(Icons.inventory_2_outlined, size: 18),
+                          label: Text(l10n.packageShowContents),
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -187,12 +201,9 @@ class CartItemTile extends StatelessWidget {
           // the stepper rather than beside it, so that at full size the
           // caption never squeezes the line total.
           if (item.isPackage) ...[
-            Text(
+            FullText(
               l10n.packageCopiesLabel,
-              style: context.textTheme.bodySmall?.copyWith(color: secondary),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+              style: context.textTheme.bodySmall?.copyWith(color: secondary)),
             const SizedBox(height: AppSizes.spacingXSmall),
           ],
           Row(
@@ -244,7 +255,9 @@ class _ItemImage extends StatelessWidget {
       url: url,
       width: 72,
       height: 72,
-      fit: BoxFit.cover,
+      // Trimmed and framed on white, the same as the catalog card.
+      fit: BoxFit.contain,
+      framed: true,
       borderRadius: AppRadius.medium,
       fallbackIcon: Icons.medication_outlined,
     );

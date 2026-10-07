@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/display_name.dart';
 // Section: a delivered order the pharmacy could still raise a return
 // against - GET /orders/returnable (backend: order.service.js's
 // listReturnableOrders). The server only ever returns orders that are
@@ -16,6 +17,9 @@ class ReturnableOrderItemModel {
   final String productId;
   final String productNameAr;
   final String? productNameEn;
+
+  /// The medicine shown: English when there is one (see englishFirst).
+  String get displayName => englishFirst(productNameEn, productNameAr);
   final int quantity;
   final num discountPrice;
 

@@ -62,6 +62,14 @@ const userSchema = new Schema(
     // `updatedAt` so a later retention/purge job can find accounts by when the
     // user actually asked to leave.
     deletedAt: { type: Date, default: null },
+
+    // Admins only: the Telegram chat that receives new-registration alerts and
+    // whose approve/reject buttons act as this admin (services/telegram.service.js).
+    // Set by opening the one-time link from the admin panel - the link token is
+    // stored hashed and expires, so a forwarded link is useless after a while.
+    telegramChatId: { type: Number, default: null },
+    telegramLinkTokenHash: { type: String, default: null, select: false },
+    telegramLinkExpiresAt: { type: Date, default: null, select: false },
   },
   { timestamps: true }
 );

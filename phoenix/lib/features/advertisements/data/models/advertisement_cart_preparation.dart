@@ -98,6 +98,11 @@ class AdvertisementCartPreparation {
                 nameAr: (map['nameAr'] as String?) ?? '',
                 nameEn: map['nameEn'] as String?,
                 quantityPerCopy: (map['quantity'] as num).toInt(),
+                manufacturerAr: map['manufacturerAr'] as String?,
+                manufacturerEn: map['manufacturerEn'] as String?,
+                strength: map['strength'] as String?,
+                dosageForm: map['dosageForm'] as String?,
+                image: map['image'] as String?,
               ))
           .toList(),
       image: rawItems

@@ -43,12 +43,20 @@ bool isCloudinaryUrl(String? url) {
 ///    overflow server-side. Only for fixed-size thumbnails where the source
 ///    aspect ratio genuinely does not matter.
 ///
+/// [framed]: for medicine photos. The empty margin around the product
+/// (transparent or white) is trimmed first (`e_trim`), then the picture is
+/// fitted into exactly width x height on a white background (`c_pad,b_white`)
+/// - so every medicine comes back the same size and framing, whether its
+/// original was tightly cropped or sat in a big empty canvas. Needs both
+/// dimensions; without them it falls back to the plain rendition.
+///
 /// Non-Cloudinary / already-transformed / empty URLs come back unchanged.
 String cloudinaryOptimizedUrl(
   String url, {
   int? width,
   int? height,
   bool crop = false,
+  bool framed = false,
 }) {
   if (!isCloudinaryUrl(url)) return url;
 
@@ -70,6 +78,10 @@ String cloudinaryOptimizedUrl(
 
   final hasWidth = width != null && width > 0;
   final hasHeight = height != null && height > 0;
+
+  if (framed && hasWidth && hasHeight) {
+    return '${head}e_trim/f_auto,q_auto,w_$width,h_$height,c_pad,b_white/$tail';
+  }
 
   final params = <String>['f_auto', 'q_auto'];
   if (hasWidth) params.add('w_$width');

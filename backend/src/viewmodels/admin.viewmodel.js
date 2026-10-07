@@ -1,9 +1,32 @@
 const { serializeUser, serializePharmacy, serializeWarehouse } = require('./auth.viewmodel');
 
+// The admin lists add what the registration's syndicate-list check found
+// (pharmacy.model.js syndicateMatch) - admin-only, so it is spread on here
+// rather than added to the shared serializePharmacy behind every auth response.
+function serializeSyndicateMatch(match) {
+  if (!match || !match.decision) return null;
+  return {
+    decision: match.decision,
+    score: match.score,
+    reasons: match.reasons || [],
+    pharmacistName: match.pharmacistName,
+    fatherName: match.fatherName,
+    pharmacyName: match.pharmacyName,
+    region: match.region,
+    place: match.place,
+    phones: match.phones || [],
+  };
+}
+
+function serializeAdminPharmacy(pharmacy) {
+  const base = serializePharmacy(pharmacy);
+  return base ? { ...base, syndicateMatch: serializeSyndicateMatch(pharmacy.syndicateMatch) } : null;
+}
+
 function toPendingAccountItem({ user, pharmacy, warehouse }) {
   return {
     user: serializeUser(user),
-    pharmacy: serializePharmacy(pharmacy),
+    pharmacy: serializeAdminPharmacy(pharmacy),
     warehouse: serializeWarehouse(warehouse),
   };
 }
@@ -19,7 +42,7 @@ function toPendingAccountsResponse(items) {
 function toAccountItem({ user, pharmacy, warehouse }) {
   return {
     user: { ...serializeUser(user), createdAt: user.createdAt },
-    pharmacy: serializePharmacy(pharmacy),
+    pharmacy: serializeAdminPharmacy(pharmacy),
     warehouse: serializeWarehouse(warehouse),
   };
 }

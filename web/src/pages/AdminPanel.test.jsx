@@ -58,9 +58,11 @@ describe('the admin menu', () => {
 });
 
 describe('discount codes in the admin panel', () => {
-  it('has a Discount codes entry that opens the page, in both languages', () => {
+  // Switched off for now (config/features.js): no menu entry, but the page
+  // still opens by its URL.
+  it('opens the page by URL in both languages, with no menu entry while switched off', () => {
     const html = renderAt('/admin/discount-codes');
-    expect(navLinks(html)).toContain('/admin/discount-codes');
+    expect(navLinks(html)).not.toContain('/admin/discount-codes');
     expect(html).toContain('<h1>Discount codes</h1>');
     // The three views, the review queue first.
     expect(html).toContain('Review queue (0)');

@@ -6,6 +6,7 @@ import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/features/debts/presentation/managers/debts_cubit.dart';
 import 'package:feniq/features/debts/presentation/widgets/debts_overview.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // The pharmacist's standalone debts page, opened from the Account History
 // screen's Debts card. It is only a shell around DebtsOverview - the same
@@ -22,7 +23,7 @@ class MyDebtsView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: Text(l10n.debtsTitle),
+        title: FullText(l10n.debtsTitle, minScale: 0.6),
       ),
       body: AppRefreshIndicator(
         onRefresh: () => context.read<DebtsCubit>().load(),

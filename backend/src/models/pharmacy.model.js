@@ -55,6 +55,33 @@ const pharmacySchema = new Schema(
     // until someone asks. Not a secret on its own: a rep's scan only counts
     // when their phone is also at this pharmacy's `location`.
     visitCode: { type: String, default: undefined },
+    // What the registration was checked against the syndicate list and what
+    // came of it (services/syndicateRegistry.service.js). A copy, not a
+    // reference: the list is replaced wholesale on every upload. Absent on
+    // pharmacies registered before the check existed or added by an admin.
+    //   decision 'approved' - found on the list, activated without waiting
+    //            'review'   - not found (or doubtful); waits for an admin
+    // `entryKey` identifies the listed pharmacist across uploads, so a second
+    // account claiming the same listed name goes to review instead of in.
+    syndicateMatch: {
+      type: new Schema(
+        {
+          decision: { type: String, enum: ['approved', 'review'], required: true },
+          score: { type: Number, default: 0 },
+          reasons: { type: [String], default: [] },
+          entryKey: { type: String, default: null },
+          pharmacistName: { type: String, default: null },
+          fatherName: { type: String, default: null },
+          pharmacyName: { type: String, default: null },
+          region: { type: String, default: null },
+          place: { type: String, default: null },
+          phones: { type: [String], default: [] },
+          checkedAt: { type: Date, default: Date.now },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
   },
   { timestamps: true }
 );
@@ -76,5 +103,7 @@ pharmacySchema.index({ nameAr: 1 });
 pharmacySchema.index({ nameEn: 1 });
 pharmacySchema.index({ ownerName: 1 });
 pharmacySchema.index({ phone: 1 });
+// The duplicate-claim check in syndicateRegistry.service.js.
+pharmacySchema.index({ 'syndicateMatch.entryKey': 1 }, { sparse: true });
 
 module.exports = model('Pharmacy', pharmacySchema);

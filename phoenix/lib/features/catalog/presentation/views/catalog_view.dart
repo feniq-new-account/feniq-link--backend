@@ -8,9 +8,17 @@ import 'package:feniq/features/catalog/presentation/managers/catalog_state.dart'
 import 'package:feniq/features/catalog/presentation/widgets/catalog_product_list.dart';
 import 'package:feniq/features/catalog/presentation/widgets/catalog_search_bar.dart';
 import 'package:feniq/core/widgets/brand_header_glow.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class CatalogView extends StatefulWidget {
-  const CatalogView({super.key, required this.warehouseId, required this.warehouseName, required this.manufacturer});
+  const CatalogView({
+    super.key,
+    required this.warehouseId,
+    required this.warehouseName,
+    required this.manufacturer,
+    this.manufacturerTitle,
+    this.initialSearch,
+  });
 
   final String warehouseId;
   // Still needed for cart operations (CartCubit.addProduct, the conflicting-
@@ -18,13 +26,17 @@ class CatalogView extends StatefulWidget {
   // instead of this - see CatalogRouteArgs.
   final String warehouseName;
   final String manufacturer;
+  // What the app bar calls the company - its English name when it has one.
+  final String? manufacturerTitle;
+  // The search box's starting text (the cubit was opened with the same query).
+  final String? initialSearch;
 
   @override
   State<CatalogView> createState() => _CatalogViewState();
 }
 
 class _CatalogViewState extends State<CatalogView> {
-  final _searchController = TextEditingController();
+  late final _searchController = TextEditingController(text: widget.initialSearch?.trim() ?? '');
   // Grid vs. list density - purely a local display preference (see
   // ProductCard's `isGrid`), never touches CatalogCubit/the fetched data.
   bool _isGrid = false;
@@ -52,13 +64,10 @@ class _CatalogViewState extends State<CatalogView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.manufacturer, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
+                FullText(widget.manufacturerTitle ?? widget.manufacturer, minScale: 0.6),
+                FullText(
                   l10n.catalogItemsCountSubtitle(state.products.length),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                ),
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },

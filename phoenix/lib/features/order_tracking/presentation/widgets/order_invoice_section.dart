@@ -9,6 +9,7 @@ import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/features/cart/data/models/order_line_item.dart';
 import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Section 6.8: the digital invoice - full line items plus the same
 // totalPrice -> discountAmount -> finalPrice breakdown computed at order
@@ -99,7 +100,7 @@ class _InvoiceLineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final name = item.productNameAr;
+    final name = item.displayName;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.spacingXSmall),
@@ -158,7 +159,7 @@ class _TotalsRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Flexible(
-            child: Text(label, style: style, maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: FullText(label, style: style),
           ),
           Flexible(
             child: Text(

@@ -235,8 +235,9 @@ async function searchPaginatedProductsForWarehouse(
 // no rate is not checked.
 //
 // Adding a medicine this warehouse already has (catalog overhaul Phase 3.4):
-//  - it disabled that product itself (manuallyDisabled) -> the product is
-//    re-enabled with the new price and fields, and returned as such;
+//  - it disabled that product itself (manuallyDisabled) or hid it from its
+//    catalog (hiddenByWarehouse) -> the product is re-enabled (and shown
+//    again) with the new price and fields, and returned as such;
 //  - the platform disabled it (recall / admin) -> refused with
 //    CATALOG_ITEM_WITHDRAWN / PRODUCT_DISABLED_BY_ADMIN, nothing changes;
 //  - it is live -> PRODUCT_ALREADY_LINKED, as before.
@@ -253,6 +254,7 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
   await assertRateUsedIsCurrent(data.rateUsed, { required: requireRateUsed });
 
   const manuallyDisabled = data.manuallyDisabled === true;
+  const hiddenByWarehouse = data.hiddenByWarehouse === true;
 
   let product;
   let reEnabled = false;
@@ -264,7 +266,7 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
       const existing = await Product.findOne({ warehouseId, masterProductId: data.masterProductId }).session(session);
       if (existing) {
         throwIfBlocked(existing);
-        if (!existing.manuallyDisabled) {
+        if (!existing.manuallyDisabled && !existing.hiddenByWarehouse) {
           throw ApiError.conflict('You already have a product linked to this medicine.', 'PRODUCT_ALREADY_LINKED');
         }
         product = await applyProductUpdate(
@@ -282,6 +284,7 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
             productionDate: data.productionDate,
             expiryDate: data.expiryDate,
             manuallyDisabled,
+            hiddenByWarehouse,
           },
           { session, resolve: false }
         );
@@ -304,6 +307,7 @@ async function createProduct(warehouseId, data, { requireRateUsed = false, userI
             price: data.priceUsd,
             manuallyDisabled,
             isAvailable: computeIsAvailable(manuallyDisabled),
+            hiddenByWarehouse,
             lastPriceUpdate: new Date(),
           },
         ],
@@ -435,6 +439,11 @@ async function applyProductUpdate(
 
   if (changes.manuallyDisabled !== undefined) {
     product.manuallyDisabled = changes.manuallyDisabled === true;
+  }
+
+  // Off the pharmacists' catalog altogether, or back on it.
+  if (changes.hiddenByWarehouse !== undefined) {
+    product.hiddenByWarehouse = changes.hiddenByWarehouse === true;
   }
 
   product.isAvailable = computeIsAvailable(product.manuallyDisabled);

@@ -842,6 +842,11 @@ h2 {
   background: var(--color-text-secondary);
 }
 
+.availability-badge.availability-hidden {
+  background: var(--color-text-secondary);
+  opacity: 0.75;
+}
+
 /* --- Modal (product add/edit form) --- */
 
 .modal-overlay {
@@ -1436,6 +1441,11 @@ h2 {
 .warehouse-shell .availability-badge.availability-paused {
   background: #fff3e0;
   color: #e65100;
+}
+
+.warehouse-shell .availability-badge.availability-hidden {
+  background: #eceff1;
+  color: #455a64;
 }
 
 .warehouse-shell .availability-badge.availability-out {
@@ -3180,6 +3190,11 @@ a.adm-pill {
   color: #e65100;
 }
 
+.admin-shell .availability-badge.availability-hidden {
+  background: #eceff1;
+  color: #455a64;
+}
+
 .admin-shell .availability-badge.availability-out {
   background: #ffebee;
   color: var(--adm-red);
@@ -4598,6 +4613,57 @@ a.adm-pill {
 .wh-row-action.wh-advance-to-out_for_delivery { background: #00838f; }
 .wh-row-action.wh-advance-to-delivered { background: #2e7d32; }
 
+/* The order row's actions: move it on, and edit it until it is sent. */
+.wh-order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.wh-row-action.wh-row-action-secondary {
+  background: none;
+  color: var(--wh-navy);
+  border: 1px solid var(--wh-border);
+}
+
+/* Orders as cards on a phone: the table's last columns (status, actions) used
+   to fall off the screen edge there. */
+.wh-order-cards {
+  display: none;
+}
+@media (max-width: 760px) {
+  .wh-orders-table,
+  .wh-orders-table + .wh-table-hint {
+    display: none;
+  }
+  .wh-order-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+.wh-order-card {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+}
+.wh-order-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.wh-order-card-pharmacy {
+  font-weight: var(--font-weight-subheading);
+}
+.wh-order-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+
 /* A full date field in an RTL page lays its day / month / year segments out
    right to left, so Chrome's Arabic placeholder (يوم/شهر/سنة) and the picked
    date read scrambled. Dates are written left to right everywhere. */
@@ -4606,4 +4672,173 @@ input[type='datetime-local'],
 input[type='month'] {
   direction: ltr;
   text-align: left;
+}
+
+/* — registration approval page (AdminRegistrationPage.jsx) and the
+   syndicate-list badge on the Accounts list — */
+
+.reg-page {
+  max-width: 760px;
+}
+
+.reg-card {
+  margin-bottom: 16px;
+}
+
+.reg-card-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.reg-card-body .hint,
+.reg-card-body .error-text {
+  margin: 0;
+}
+
+.reg-state {
+  margin: 0;
+  font-weight: var(--font-weight-subheading);
+  padding-inline-start: 10px;
+  border-inline-start: 3px solid var(--adm-border);
+}
+
+.reg-state-on {
+  border-inline-start-color: var(--adm-green);
+}
+
+.reg-state-off {
+  border-inline-start-color: var(--adm-orange);
+}
+
+.reg-sub {
+  font-size: 13px;
+  font-weight: var(--font-weight-body);
+  color: var(--adm-text-secondary);
+}
+
+.reg-success {
+  margin: 0;
+  color: var(--adm-green);
+  font-weight: var(--font-weight-subheading);
+}
+
+.reg-upload,
+.reg-token,
+.reg-try {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.reg-upload input[type='file'] {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.reg-token input,
+.reg-try input {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.reg-steps {
+  margin: 0;
+  padding-inline-start: 20px;
+  line-height: 1.8;
+}
+
+.reg-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.reg-link a.btn-primary {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.reg-text-button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--adm-red);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.reg-match {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--adm-border);
+  border-inline-start-width: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reg-match-on {
+  border-inline-start-color: var(--adm-green);
+}
+
+.reg-match-off {
+  border-inline-start-color: var(--adm-orange);
+}
+
+.reg-match-verdict {
+  font-weight: var(--font-weight-subheading);
+}
+
+.reg-badge {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: var(--font-weight-subheading);
+}
+
+.reg-badge-on {
+  color: var(--adm-green);
+}
+
+.reg-badge-off {
+  color: var(--adm-orange);
+}
+
+.reg-badge-detail {
+  font-weight: var(--font-weight-body);
+  color: var(--adm-text-secondary);
+}
+
+.reg-file-label {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.reg-file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.reg-upload {
+  align-items: center;
+}
+
+.reg-file-name {
+  flex: 1 1 160px;
+  overflow-wrap: anywhere;
+}
+
+.reg-steps code {
+  background: var(--adm-bg);
+  padding: 1px 6px;
+  font-size: 13px;
 }

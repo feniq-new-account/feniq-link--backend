@@ -414,9 +414,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addToCartButton => 'إضافة';
 
   @override
-  String get availableLabel => 'متوفر';
-
-  @override
   String get unavailableLabel => 'غير متوفر';
 
   @override
@@ -451,11 +448,30 @@ class AppLocalizationsAr extends AppLocalizations {
   String get alternativesTitle => 'البدائل';
 
   @override
-  String get alternativesSubtitle =>
-      'نفس المادة الفعالة والعيار والشكل، من هذا المستودع';
+  String get alternativesSubtitle => 'نفس المادة الفعالة والعيار والشكل';
 
   @override
   String get alternativesEmpty => 'لا توجد بدائل في هذا المستودع.';
+
+  @override
+  String get alternativesHereTitle => 'في هذا المستودع';
+
+  @override
+  String get alternativesNoneEverywhere =>
+      'لا توجد بدائل له في هذا المستودع ولا في غيره.';
+
+  @override
+  String get alternativesElsewhereTitle => 'في مستودعات أخرى';
+
+  @override
+  String get alternativesElsewhereHint =>
+      'اضغط على أي منها للانتقال إلى مستودعه.';
+
+  @override
+  String get alternativesSameMedicine => 'نفس الدواء';
+
+  @override
+  String get alternativesGoToWarehouse => 'انتقل إلى المستودع';
 
   @override
   String get offerBadgeLabel => 'عرض';
@@ -1879,4 +1895,20 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get submitThisWarehouseOnly => 'إرسال طلب هالمستودع بس';
+
+  @override
+  String get exceptionalOfferBadge => 'عرض استثنائي';
+
+  @override
+  String get packageContentsTitle => 'محتوى الباقة';
+
+  @override
+  String get packageFixedNote =>
+      'الباقة ثابتة: تُطلب كاملة كما حدّدها المستودع، ويمكنك اختيار عدد النسخ فقط.';
+
+  @override
+  String get packageShowContents => 'عرض محتوى الباقة';
+
+  @override
+  String get packageAddToCart => 'إضافة الباقة إلى السلة';
 }

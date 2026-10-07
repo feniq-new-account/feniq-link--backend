@@ -34,6 +34,13 @@ sealed class Promotion {
   String title(bool isArabic);
   String warehouseName(bool isArabic);
 
+  /// What a card leads with. For an offer that is the medicine itself (its
+  /// English name) - what the pharmacist is looking for - with the offer's
+  /// own title ("عرض الشهر") under it as [subline]. A package leads with its
+  /// title and has no subline.
+  String headline(bool isArabic) => title(isArabic);
+  String? subline(bool isArabic) => null;
+
   /// The card's image, when there is one. Null renders the app's standard
   /// themed placeholder (see AppNetworkImage) - most catalog products carry no
   /// image yet, so a promotion card must read well without one.
@@ -68,9 +75,15 @@ class OfferPromotion extends Promotion {
   @override
   String? get imageUrl => offer.image;
 
-  /// The discounted product's own (Arabic) name - the offer's subtitle, and
-  /// what the pharmacist is really looking for.
-  String get productName => offer.nameAr;
+  /// The discounted product's name (English when it has one) - what the
+  /// pharmacist is really looking for, so the card's headline.
+  String get productName => offer.displayName;
+
+  @override
+  String headline(bool isArabic) => productName;
+
+  @override
+  String? subline(bool isArabic) => title(isArabic);
 }
 
 class PackagePromotion extends Promotion {

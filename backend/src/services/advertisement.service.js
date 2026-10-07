@@ -40,7 +40,8 @@ function isAdvertisementAvailable(advertisement) {
 // Only what a card and a cart line actually need off a product.
 const ADVERTISEMENT_PRODUCT_SELECT =
   'categoryId nameAr nameEn manufacturerAr manufacturerEn image unitAr unitEn price isAvailable masterProductId';
-const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl';
+// strength / dosageForm: so the pharmacist sees exactly what is in a package.
+const CATALOG_IDENTITY_SELECT = 'nameAr nameEn manufacturerAr manufacturerEn imageUrl activeIngredient strength dosageForm';
 
 // One $in for every advertisement in the list, however many items each holds -
 // never a query per advertisement or per item.
@@ -50,7 +51,7 @@ async function loadProductsFor(advertisements) {
   ];
   if (productIds.length === 0) return new Map();
 
-  const products = await Product.find({ _id: { $in: productIds }, isActive: true })
+  const products = await Product.find({ _id: { $in: productIds }, ...Product.VISIBLE_TO_PHARMACIES })
     .select(ADVERTISEMENT_PRODUCT_SELECT)
     .populate({ path: 'masterProductId', select: CATALOG_IDENTITY_SELECT });
   products.forEach(applyResolvedIdentity);
@@ -139,7 +140,7 @@ async function prepareAdvertisementCart(advertisementId) {
   const products = await Product.find({
     _id: { $in: productIds },
     warehouseId: advertisement.warehouseId,
-    isActive: true,
+    ...Product.VISIBLE_TO_PHARMACIES,
   })
     .select(ADVERTISEMENT_PRODUCT_SELECT)
     .populate({ path: 'masterProductId', select: CATALOG_IDENTITY_SELECT });

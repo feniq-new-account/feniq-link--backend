@@ -10,11 +10,14 @@ import 'package:feniq/core/widgets/app_network_image.dart';
 import 'package:feniq/features/advertisements/data/models/advertisement_model.dart';
 import 'package:feniq/features/advertisements/presentation/utils/advertisement_cart_launcher.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
+import 'package:feniq/core/widgets/full_text.dart';
+import 'package:feniq/features/advertisements/presentation/widgets/package_contents.dart';
 
-// One advertised package: its products, each at its advertised price, and the
-// package total the pharmacy actually pays. Tapping it fetches the package
-// fresh from the server, drops it into the EXISTING cart and opens the cart
-// screen - no separate advertisement cart, no intermediate screen.
+// One advertised package: its products in full (name, company, strength,
+// form, quantity), each at its catalog price, and the package total the
+// pharmacy actually pays. Tapping the card opens the full list of what it
+// holds (with the add action); the button fetches the package fresh from the
+// server, drops it into the EXISTING cart and opens the cart screen.
 //
 // Double-tap safe: `_busy` gates the whole flow.
 class AdvertisementCard extends StatefulWidget {
@@ -39,6 +42,17 @@ class _AdvertisementCardState extends State<AdvertisementCard> {
     if (mounted) setState(() => _busy = false);
   }
 
+  // What the package holds, in full, before it goes into the cart.
+  void _showContents(String title, String warehouseName) {
+    showPackageContentsSheet(
+      context,
+      title: title,
+      subtitle: warehouseName,
+      entries: [for (final item in widget.advertisement.items) PackageContentEntry.fromItem(item)],
+      onAdd: _onTap,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -59,7 +73,7 @@ class _AdvertisementCardState extends State<AdvertisementCard> {
       shape: const RoundedRectangleBorder(borderRadius: AppRadius.large),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: _busy ? null : _onTap,
+        onTap: _busy ? null : () => _showContents(title, warehouseName),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.spacingMedium),
           child: Column(
@@ -89,17 +103,12 @@ class _AdvertisementCardState extends State<AdvertisementCard> {
                         Text(
                           title,
                           style: context.textTheme.titleMedium,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
+                        FullText(
                           warehouseName,
                           style: context.textTheme.bodySmall?.copyWith(
                             color: AppColors.textSecondaryOf(context),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          )),
                       ],
                     ),
                   ),
@@ -119,37 +128,25 @@ class _AdvertisementCardState extends State<AdvertisementCard> {
               ),
               const SizedBox(height: AppSizes.spacingSmall),
 
-              // Each product line: name, its package quantity, and the line's
-              // catalog cost (price x quantity). A product that has since been
-              // removed (priceUsd null) shows no price - the tap handler blocks
-              // ordering an incomplete package anyway.
+              // Each product in full: name, company, strength and form, its
+              // quantity in the package, and the line's catalog cost (price x
+              // quantity). A product that has since been removed (priceUsd
+              // null) shows no price - ordering an incomplete package is
+              // blocked anyway.
               for (final item in advertisement.items)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
+                  padding: const EdgeInsets.only(bottom: AppSizes.spacingSmall),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          item.nameAr,
-                          style: context.textTheme.bodyMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsetsDirectional.only(end: AppSizes.spacingSmall),
-                        child: Text(
-                          l10n.advertisementItemQuantity(item.quantity),
-                          style: context.textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondaryOf(context),
-                          ),
-                        ),
-                      ),
-                      if (item.lineTotalUsd != null)
+                      Expanded(child: PackageContentRow(entry: PackageContentEntry.fromItem(item), showImage: false)),
+                      if (item.lineTotalUsd != null) ...[
+                        const SizedBox(width: AppSizes.spacingSmall),
                         Text(
                           money(item.lineTotalUsd!),
                           style: context.textTheme.bodyMedium?.copyWith(fontWeight: AppTextTheme.semiBold),
                         ),
+                      ],
                     ],
                   ),
                 ),

@@ -21,6 +21,7 @@ import 'package:feniq/features/catalog/presentation/managers/manufacturers_state
 import 'package:feniq/features/catalog/presentation/widgets/manufacturer_card.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/core/widgets/brand_header_glow.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // New step between warehouse selection and the catalog (Section 16):
 // warehouse -> manufacturers -> medicines, replacing the old warehouse ->
@@ -76,10 +77,21 @@ class _ManufacturersViewState extends State<ManufacturersView> {
   }
 
   void _handleSelect(BuildContext context, String manufacturer) {
+    final shown = context
+        .read<ManufacturersCubit>()
+        .state
+        .manufacturers
+        .where((m) => m.name == manufacturer)
+        .map((m) => m.displayName)
+        .firstOrNull;
     context.pushNamed(
       RouteNames.catalog,
       pathParameters: {'warehouseId': widget.warehouseId},
-      extra: CatalogRouteArgs(warehouseName: widget.warehouseName, manufacturer: manufacturer),
+      extra: CatalogRouteArgs(
+        warehouseName: widget.warehouseName,
+        manufacturer: manufacturer,
+        manufacturerTitle: shown,
+      ),
     );
   }
 
@@ -111,13 +123,10 @@ class _ManufacturersViewState extends State<ManufacturersView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.warehouseName, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
+                FullText(widget.warehouseName, minScale: 0.6),
+                FullText(
                   l10n.manufacturersCountSubtitle(state.manufacturers.length),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                ),
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },

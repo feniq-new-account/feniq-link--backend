@@ -27,6 +27,8 @@ import 'package:feniq/features/warehouse_selection/presentation/widgets/warehous
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_city_scope_bar.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/core/widgets/brand_header_glow.dart';
+import 'package:feniq/core/widgets/full_text.dart';
+import 'package:feniq/core/widgets/sliver_row_grid.dart';
 
 // One set of grid metrics for the loaded grid and its loading skeleton, so
 // the placeholder cells land exactly where the cards are about to. The tile
@@ -159,23 +161,17 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            l10n.warehouseSelectionTitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
+                          FullText(
+                            l10n.warehouseSelectionTitle, minScale: 0.6),
+                          FullText(
                             l10n.warehousesAvailableSubtitle(
                               state.warehouses.length,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.normal,
                               color: Colors.white70,
-                            ),
-                          ),
+                            ), minScale: 0.6),
                         ],
                       );
                     },
@@ -340,22 +336,22 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
                       //
                       // Tile metrics are shared with the skeleton above - see
                       // _tileHeight.
-                      sliver: SliverGrid(
-                        gridDelegate:
-                            const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: _tileMaxWidth,
-                              mainAxisSpacing: _gridSpacing,
-                              crossAxisSpacing: _gridSpacing,
-                              mainAxisExtent: _tileHeight,
-                            ),
-                        delegate: SliverChildBuilderDelegate((context, index) {
+                      sliver: SliverRowGrid(
+                        maxCrossAxisExtent: _tileMaxWidth,
+                        mainAxisSpacing: _gridSpacing,
+                        crossAxisSpacing: _gridSpacing,
+                        // The card's designed height; a long name grows the
+                        // row rather than being cut off.
+                        minRowHeight: _tileHeight,
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
                           final warehouse = filtered[index];
                           return WarehouseCard(
                             warehouse: warehouse,
                             onSelect: () => _handleSelect(warehouse),
                             onViewProfile: () => _handleViewProfile(warehouse),
                           );
-                        }, childCount: filtered.length),
+                        },
                       ),
                     );
                 }

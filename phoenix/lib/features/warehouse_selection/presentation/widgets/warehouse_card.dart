@@ -8,6 +8,7 @@ import 'package:feniq/core/widgets/app_network_image.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/core/widgets/whatsapp_button.dart';
 import 'package:feniq/features/warehouse_selection/data/models/warehouse_model.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 // Section 17 (redesign): tapping the card itself selects the warehouse
 // (continues to /manufacturers) - there is no full-width "Select" button;
@@ -92,11 +93,9 @@ class WarehouseCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     height: 1.25,
                   ),
-                  // Two lines: warehouse names in Arabic routinely outrun a
-                  // ~170px tile, and truncating one to "مستودع الشام لل..."
-                  // costs the pharmacist the one word that identifies it.
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  // Always in full: the name wraps onto as many lines as it
+                  // needs (the grid row grows with it) - cutting it to
+                  // "مستودع الشام لل..." costs the one word that identifies it.
                 ),
                 const SizedBox(height: AppSizes.spacingXSmall + 1),
                 _CityPill(city: warehouse.city),
@@ -129,15 +128,12 @@ class WarehouseCard extends StatelessWidget {
                       minimumSize: const Size(0, _actionHeight),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: Text(
+                    child: FitLabel(
                       l10n.warehouseProfileButtonLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: context.textTheme.labelMedium?.copyWith(
                         fontWeight: AppTextTheme.semiBold,
                         color: AppColors.textOf(context),
-                      ),
-                    ),
+                      )),
                   ),
                 ),
                 const SizedBox(width: AppSizes.spacingSmall),
@@ -219,16 +215,13 @@ class _CityPill extends StatelessWidget {
           ),
           const SizedBox(width: 3),
           Flexible(
-            child: Text(
+            child: FitLabel(
               city,
               style: context.textTheme.labelSmall?.copyWith(
                 color: AppColors.textSecondaryOf(context),
                 fontWeight: AppTextTheme.semiBold,
                 fontSize: 11,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+              )),
           ),
         ],
       ),

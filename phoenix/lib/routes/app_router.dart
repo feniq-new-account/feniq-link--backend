@@ -191,11 +191,14 @@ class AppRouter {
                 catalogRepository: context.read<CatalogRepository>(),
                 warehouseId: warehouseId,
                 manufacturer: args?.manufacturer ?? '',
+                initialSearch: args?.initialSearch,
               )..initialize(),
               child: CatalogView(
                 warehouseId: warehouseId,
                 warehouseName: args?.warehouseName ?? '',
                 manufacturer: args?.manufacturer ?? '',
+                manufacturerTitle: args?.manufacturerTitle,
+                initialSearch: args?.initialSearch,
               ),
             ),
           );

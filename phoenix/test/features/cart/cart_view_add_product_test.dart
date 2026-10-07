@@ -166,7 +166,10 @@ void main() {
     // One line, labelled as a package, showing what it delivers.
     expect(find.text('Winter Package'), findsOneWidget);
     expect(find.text('Package'), findsOneWidget);
-    expect(find.text('د1 x2'), findsOneWidget);
+    expect(find.text('Product p1'), findsOneWidget);
+    expect(find.text('× 2'), findsOneWidget);
+    // The full list is one tap away.
+    expect(find.text("Show what's inside"), findsOneWidget);
     // Add Product still works on a package cart.
     expect(find.text('Add product'), findsOneWidget);
   });

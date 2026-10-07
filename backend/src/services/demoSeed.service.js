@@ -149,8 +149,8 @@ async function seedDemoDataIfEmpty() {
 // [warehouse index, target status, [product nameEn, quantity]...]
 const DEMO_ORDERS = [
   [0, 'pending', [['Paracetamol 500mg', 20], ['Omeprazole 20mg', 10]]],
-  [1, 'confirmed', [['Amoxicillin 500mg', 15], ['Vitamin C 1000mg', 12]]],
-  [2, 'preparing', [['Vitamin D 50000 IU', 10], ['Metformin 850mg', 25]]],
+  [1, 'pending', [['Amoxicillin 500mg', 15], ['Vitamin C 1000mg', 12]]],
+  [2, 'out_for_delivery', [['Vitamin D 50000 IU', 10], ['Metformin 850mg', 25]]],
   [0, 'out_for_delivery', [['Ibuprofen 400mg', 30], ['Azithromycin 250mg', 8]]],
   [1, 'delivered', [['Amlodipine 5mg', 20], ['Atorvastatin 20mg', 10], ['Sunscreen SPF 50', 5]]],
 ];

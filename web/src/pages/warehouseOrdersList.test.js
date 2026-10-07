@@ -11,18 +11,18 @@ describe('mergeAdvancedOrders', () => {
 
   it('keeps an advanced order in place with its new status, though the tab no longer lists it', () => {
     const a = order('a', 1);
-    let advanced = rememberAdvanced(new Map(), a, 'confirmed');
-    // The "Pending" tab reloads without it.
+    let advanced = rememberAdvanced(new Map(), a, 'out_for_delivery');
+    // The "Awaiting approval" tab reloads without it.
     const merged = mergeAdvancedOrders([order('b', 2), order('c', 3)], advanced);
     expect(merged.map((o) => [o.id, o.status])).toEqual([
-      ['a', 'confirmed'],
+      ['a', 'out_for_delivery'],
       ['b', 'pending'],
       ['c', 'pending'],
     ]);
 
     // And the next click moves it on again, still in place.
-    advanced = rememberAdvanced(advanced, a, 'preparing');
-    expect(mergeAdvancedOrders([order('b', 2)], advanced)[0]).toMatchObject({ id: 'a', status: 'preparing' });
+    advanced = rememberAdvanced(advanced, a, 'delivered');
+    expect(mergeAdvancedOrders([order('b', 2)], advanced)[0]).toMatchObject({ id: 'a', status: 'delivered' });
   });
 
   it('a listed order takes the status it was advanced to', () => {
@@ -34,27 +34,35 @@ describe('mergeAdvancedOrders', () => {
 
 describe('syncAdvancedWithRows', () => {
   it('a status further along on the server wins, and so does a cancellation', () => {
-    let advanced = rememberAdvanced(new Map(), order('a', 1), 'confirmed');
-    advanced = rememberAdvanced(advanced, order('b', 2), 'confirmed');
-    const synced = syncAdvancedWithRows(advanced, [order('a', 1, 'preparing'), order('b', 2, 'cancelled')]);
-    expect(synced.get('a').status).toBe('preparing');
+    let advanced = rememberAdvanced(new Map(), order('a', 1), 'out_for_delivery');
+    advanced = rememberAdvanced(advanced, order('b', 2), 'out_for_delivery');
+    const synced = syncAdvancedWithRows(advanced, [order('a', 1, 'delivered'), order('b', 2, 'cancelled')]);
+    expect(synced.get('a').status).toBe('delivered');
     expect(synced.get('b').status).toBe('cancelled');
   });
 
   it('an older status from a reload does not undo a click', () => {
-    const advanced = rememberAdvanced(new Map(), order('a', 1), 'preparing');
-    expect(syncAdvancedWithRows(advanced, [order('a', 1, 'confirmed')])).toBe(advanced);
+    const advanced = rememberAdvanced(new Map(), order('a', 1), 'out_for_delivery');
+    expect(syncAdvancedWithRows(advanced, [order('a', 1, 'pending')])).toBe(advanced);
   });
 });
 
 describe('nextStatusOf', () => {
-  it('walks the stages one at a time and stops at delivered or cancelled', () => {
+  it('approving sends the order out; an older stage moves straight on too', () => {
     const { nextStatusOf } = require('./warehouseOrdersList');
-    expect(nextStatusOf('pending')).toBe('confirmed');
-    expect(nextStatusOf('confirmed')).toBe('preparing');
+    expect(nextStatusOf('pending')).toBe('out_for_delivery');
+    expect(nextStatusOf('confirmed')).toBe('out_for_delivery');
     expect(nextStatusOf('preparing')).toBe('out_for_delivery');
     expect(nextStatusOf('out_for_delivery')).toBe('delivered');
     expect(nextStatusOf('delivered')).toBeNull();
     expect(nextStatusOf('cancelled')).toBeNull();
+  });
+});
+
+describe('isEditable', () => {
+  it('only before the order is sent out', () => {
+    const { isEditable } = require('./warehouseOrdersList');
+    expect(['pending', 'confirmed', 'preparing'].every(isEditable)).toBe(true);
+    expect(['out_for_delivery', 'delivered', 'cancelled'].some(isEditable)).toBe(false);
   });
 });

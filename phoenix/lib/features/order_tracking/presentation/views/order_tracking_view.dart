@@ -34,6 +34,7 @@ import 'package:feniq/features/returns/data/models/return_model.dart';
 import 'package:feniq/features/returns/data/repositories/return_repository.dart';
 import 'package:feniq/features/returns/presentation/widgets/request_return_sheet.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/core/widgets/full_text.dart';
 
 class OrderTrackingView extends StatefulWidget {
   const OrderTrackingView({super.key});
@@ -185,21 +186,15 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        l10n.orderNumberLabel(order.orderNumber.toString()),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
+                      FullText(
+                        l10n.orderNumberLabel(order.orderNumber.toString()), minScale: 0.6),
+                      FullText(
                         [
                           if ((isArabic ? order.warehouseNameAr : order.warehouseNameEn) != null)
                             (isArabic ? order.warehouseNameAr : order.warehouseNameEn)!,
                           if (order.createdAt != null) DateFormatter.formatDate(order.createdAt!),
                         ].join(' · '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70),
-                      ),
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
                     ],
                   ),
             actions: [
@@ -264,7 +259,7 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
           if (order.isCancelled)
             _CancelledBanner(reason: order.cancelReason)
           else ...[
-            CustomCard(child: OrderProgressBar(currentStageIndex: order.stageIndex)),
+            CustomCard(child: OrderProgressBar(stages: order.trackedStages, currentStageIndex: order.stageIndex)),
             const SizedBox(height: AppSizes.spacingMedium),
             _CurrentStatusHighlight(order: order),
           ],
@@ -359,8 +354,8 @@ class _CurrentStatusHighlight extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final stageIndex = order.stageIndex;
-    if (stageIndex < 0) return const SizedBox.shrink();
+    final stage = order.currentStage;
+    if (stage == null) return const SizedBox.shrink();
 
     final description = orderStatusDescription(l10n, order.status);
     final lastUpdate = order.statusHistory.isEmpty ? null : order.statusHistory.last.changedAt;
@@ -374,7 +369,7 @@ class _CurrentStatusHighlight extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(OrderProgressBar.stageIcons[stageIndex], size: 26, color: AppColors.primaryOf(context)),
+          Icon(OrderProgressBar.iconFor(stage), size: 26, color: AppColors.primaryOf(context)),
           const SizedBox(width: AppSizes.spacingMedium),
           Expanded(
             child: Column(
@@ -802,12 +797,9 @@ class _OrderComplaintsSection extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 2),
-                            Text(
+                            FullText(
                               complaint.subject,
-                              style: context.textTheme.bodyMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              style: context.textTheme.bodyMedium),
                           ],
                         ),
                       ),
