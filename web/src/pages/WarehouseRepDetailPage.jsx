@@ -162,9 +162,9 @@ export function WarehouseRepDetailPage() {
 
   return (
     <div>
-      <p>
-        <Link to="/warehouse/reps">← {t('reps.back')}</Link>
-      </p>
+      <Link className="wh-detail-back" to="/warehouse/reps">
+        ← {t('reps.back')}
+      </Link>
       {error && <p className="error-text">{error}</p>}
       {rep && (
         <>
@@ -215,13 +215,15 @@ export function WarehouseRepDetailPage() {
                         <span className="wh-num">{pharmacy.activity.monthOrdersCount}</span>
                         <div className="wh-table-sub wh-num">{formatSyp(pharmacy.activity.monthOrdersTotal)}</div>
                       </td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        <button type="button" className="btn-secondary" onClick={() => printQr(pharmacy)}>
-                          {t('reps.printQr')}
-                        </button>{' '}
-                        <button type="button" className="btn-secondary" onClick={() => unassign(pharmacy)}>
-                          {t('reps.unassign')}
-                        </button>
+                      <td>
+                        <div className="wh-row-actions">
+                          <button type="button" onClick={() => printQr(pharmacy)}>
+                            {t('reps.printQr')}
+                          </button>
+                          <button type="button" onClick={() => unassign(pharmacy)}>
+                            {t('reps.unassign')}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -239,7 +241,12 @@ export function WarehouseRepDetailPage() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t('reps.searchPlaceholder')}
               />
-              <button type="submit" className="btn-secondary" disabled={isSearching}>
+              <button
+                type="submit"
+                className="btn-secondary"
+                style={{ width: 'auto', marginTop: 0 }}
+                disabled={isSearching}
+              >
                 {t('reps.search')}
               </button>
             </form>
@@ -263,6 +270,7 @@ export function WarehouseRepDetailPage() {
                           <button
                             type="button"
                             className="btn-primary"
+                            style={{ width: 'auto', marginTop: 0 }}
                             disabled={!rep.isActive}
                             onClick={() => assign(pharmacy)}
                           >

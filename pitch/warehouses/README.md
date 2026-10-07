@@ -1,0 +1,60 @@
+# الملف العام لكل المستودعات
+
+عرض تعريفي بفينيق موجّه لأي مستودع أدوية (تشرين الأول 2026). يُرسَل PDF بالواتساب ويُعرض
+PPTX بالاجتماع. **هذا هو الملف الذي يُرسَل. ملف معتوق (`pitch/maatouk/`) قديم ولا يُرسَل.**
+
+| الملف | شو هو |
+|---|---|
+| `out/deck.pdf` | 13 شريحة 16:9 |
+| `out/deck.pptx` | نفس الشرائح باوربوينت، وتحت كل شريحة ملاحظات للمقدّم (كل شريحة صورة كاملة ليبقى الخط والاتجاه العربي سليمين على أي جهاز؛ الملاحظات نص قابل للتعديل) |
+
+## سياسة الربح المعتمدة فيه (قرار المالك، `HANDOFF.md`)
+
+- التطبيق مجاني للصيدليات.
+- اشتراك المستودع يبدأ من 200,000 ل.س شهرياً بالعملة القديمة، ومجاني حتى نهاية 2026.
+- فينيق يأخذ ربع عمولة المندوب على الطلبيات التي تمر عبر فينيق فقط (مثال بالملف: عمولة 2% ← المندوب 1%،
+  فينيق 0.5%، المستودع يوفّر 0.5%).
+- الصيدليات التي يجلبها فريق فينيق تُسلَّم لمناديب المستودع.
+- لا ذكر لـ«مجلس إدارة» ولا «فروع»، ولا أي حسم إجباري على الصيدليات.
+
+## المصادر
+
+- `deck.html` + `brand.css`: النصوص والتصميم (هوية `DESIGN.md`). ملاحظات المقدّم بـ `<aside class="notes">`.
+- `assets/shots/`: لقطات حقيقية من نسخة **محلية** فيها «مستودع تجريبي» (6 صيدليات وهمية، مندوبان، طلبيات بكل
+  الحالات). لا شي منها على السيرفر الحقيقي. الأسعار توضيحية (سعر صرف 120 ل.س/دولار، بالليرة الجديدة كما يعرضها
+  النظام). `d*` من لوحة المستودع، `a*` من تطبيق الصيدلية.
+- `tools/seed-showcase.js`: يبذر القاعدة المحلية. يستعمل خدمات السيرفر الحقيقية، مستودع واحد بلا حسم منصة ولا
+  عمولة منصة، ويحذف من المستودع التجريبي الأصناف المخدّرة/النفسية قبل أي طلبية أو عرض.
+- `tools/shoot-panel.js` و `tools/shoot-app.js`: يصوّران اللوحة والتطبيق (Playwright).
+
+## إعادة التصوير والبناء
+
+```bash
+# 1) قاعدة بالذاكرة بـ replica set (المعاملات)، ثم السيرفر ولوحة الويب
+MONGOD_PATH=<mongod> DEV_REPLSET_DBPATH=/tmp/showcase-db node backend/scripts/start-dev-replset.js
+export MONGODB_URI='mongodb://127.0.0.1:27018/showcase?replicaSet=rs0' JWT_SECRET=$(openssl rand -hex 32) \
+       MEDIA_DIR=/tmp/showcase-media MEDIA_PUBLIC_URL=http://127.0.0.1:4000/media
+node pitch/warehouses/tools/seed-showcase.js
+(cd backend && SEED_DEMO_DATA=false CORS_ORIGINS=http://127.0.0.1:5173,http://127.0.0.1:8081 node src/server.js) &
+(cd web && VITE_API_BASE_URL=http://127.0.0.1:4000/api npx vite --host 127.0.0.1 --port 5173) &
+# 2) تطبيق الصيدلية: Flutter 3.38+ على نسخة مؤقتة من phoenix/ (3.35 لا يبني الويب بسبب firebase_core_web 3.11،
+#    و pub get/upgrade بيعدّل pubspec.lock فلا تشغّله داخل المستودع)
+cp -r phoenix /tmp/phoenix-web && cd /tmp/phoenix-web
+flutter pub upgrade firebase_core firebase_core_web firebase_messaging firebase_messaging_web firebase_remote_config
+flutter build web --release --dart-define=API_BASE_URL=http://127.0.0.1:4000/api --output /tmp/appweb
+(cd /tmp/appweb && python3 -m http.server 8081 --bind 127.0.0.1) &
+# 3) اللقطات ثم الملف
+export PLAYWRIGHT_CORE=<مسار playwright-core> CHROMIUM_PATH=<مسار chromium>
+node pitch/warehouses/tools/shoot-panel.js && node pitch/warehouses/tools/shoot-app.js
+cd pitch/warehouses && node render.js && python3 build_pptx.py   # يحتاج python-pptx و Pillow
+```
+
+## نقاط لازم المالك يأكدها قبل الإرسال
+
+- «يبدأ من 200,000»: فهمنا «حد أدنى» أن الاشتراك قد يزيد حسب المستودع. وإضافة «(يعادل 2,000 ل.س بالجديدة)» من عندنا
+  (حذف الأقواس إن لم تُرِدها).
+- صفحة الأسئلة تقول إن البدائل تظهر من مستودعات أخرى عند عدم وجود بديل عند المستودع (هذا سلوك التطبيق الحالي).
+- شريحة المناديب تذكر تطبيق المندوب (قائمة صيدلياته ومسح الباركود): تبقى كلها قابلة للتحقق فقط بعد إصدار APK جديد.
+- أرقام التواصل (0982-001415 و 0956-634694) منقولة من ملف معتوق القديم.
+- الكود لا يزال يطبّق افتراضياً حسم منصة 4% وعمولة منصة 1% على كل مستودع جديد (`warehouse.model.js`). الملف يعد بعدم
+  وجودهما، فلازم يُصفَّرا قبل أي مستودع حقيقي.

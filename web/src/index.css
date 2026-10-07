@@ -1906,6 +1906,28 @@ a.adm-pill {
   color: var(--wh-red);
 }
 
+.wh-row-actions a {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--wh-border);
+  font-weight: var(--font-weight-label);
+  font-size: 12px;
+  color: var(--wh-navy);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* A name in a table that opens its page. */
+.wh-link {
+  color: var(--wh-navy);
+  font-weight: var(--font-weight-subheading);
+  text-decoration: none;
+}
+
+.wh-link:hover {
+  text-decoration: underline;
+}
+
 /* — order detail page — */
 
 .wh-detail-back {
@@ -1917,6 +1939,11 @@ a.adm-pill {
   font-weight: var(--font-weight-subheading);
   font-size: 13px;
   color: var(--wh-navy);
+}
+
+a.wh-detail-back {
+  display: inline-block;
+  text-decoration: none;
 }
 
 .wh-detail-grid {

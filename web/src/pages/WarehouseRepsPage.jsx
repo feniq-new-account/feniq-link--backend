@@ -105,7 +105,12 @@ export function WarehouseRepsPage() {
     <div>
       <div className="wh-page-head">
         <h1>{t('reps.title')}</h1>
-        <button type="button" className="btn-primary" onClick={() => setIsFormOpen((open) => !open)}>
+        <button
+          type="button"
+          className="btn-primary"
+          style={{ width: 'auto', marginTop: 0 }}
+          onClick={() => setIsFormOpen((open) => !open)}
+        >
           {t('reps.addRep')}
         </button>
       </div>
@@ -177,7 +182,7 @@ export function WarehouseRepsPage() {
               {reps.map((rep) => (
                 <tr key={rep.id}>
                   <td>
-                    <Link to={`/warehouse/reps/${rep.id}`}>{rep.name}</Link>
+                    <Link className="wh-link" to={`/warehouse/reps/${rep.id}`}>{rep.name}</Link>
                     <div className="wh-table-sub wh-num" dir="ltr">{toLocalPhone(rep.phone)}</div>
                   </td>
                   <td className="wh-num">{rep.pharmacyCount}</td>
@@ -193,16 +198,16 @@ export function WarehouseRepsPage() {
                     <div className="wh-table-sub wh-num">{formatSyp(rep.monthOrdersTotal)}</div>
                   </td>
                   <td>{rep.isActive ? t('reps.active') : t('reps.inactive')}</td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    <Link className="btn-secondary" to={`/warehouse/reps/${rep.id}`}>
-                      {t('reps.open')}
-                    </Link>{' '}
-                    <button type="button" className="btn-secondary" onClick={() => resetPassword(rep)}>
-                      {t('reps.resetPassword')}
-                    </button>{' '}
-                    <button type="button" className="btn-secondary" onClick={() => toggleActive(rep)}>
-                      {rep.isActive ? t('reps.deactivate') : t('reps.activate')}
-                    </button>
+                  <td>
+                    <div className="wh-row-actions">
+                      <Link to={`/warehouse/reps/${rep.id}`}>{t('reps.open')}</Link>
+                      <button type="button" onClick={() => resetPassword(rep)}>
+                        {t('reps.resetPassword')}
+                      </button>
+                      <button type="button" onClick={() => toggleActive(rep)}>
+                        {rep.isActive ? t('reps.deactivate') : t('reps.activate')}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
