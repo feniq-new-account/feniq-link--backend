@@ -4,6 +4,52 @@ import 'package:feniq/features/auth/data/models/user_model.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
 
 void main() {
+  group('AuthState role', () {
+    const rep = UserModel(
+      id: 'r1',
+      name: 'Ahmad',
+      phone: '+963940000201',
+      role: 'rep',
+      status: 'active',
+      lang: 'ar',
+    );
+    const pharmacist = UserModel(
+      id: 'p1',
+      name: 'Dr. Test',
+      phone: '+963999999999',
+      role: 'pharmacy',
+      status: 'active',
+      lang: 'ar',
+    );
+
+    test('nothing is known before sign-in', () {
+      const state = AuthState();
+      expect(state.role, isNull);
+      expect(state.isRep, isFalse);
+    });
+
+    test('the signed-in user decides', () {
+      expect(const AuthState(user: rep).isRep, isTrue);
+      expect(const AuthState(user: pharmacist).isRep, isFalse);
+      expect(const AuthState(user: rep).role, 'rep');
+    });
+
+    test('with no user (offline), the role in the stored token is used', () {
+      expect(const AuthState(tokenRole: 'rep').isRep, isTrue);
+      expect(const AuthState(tokenRole: 'pharmacy').isRep, isFalse);
+    });
+
+    test('a known user wins over the token', () {
+      expect(const AuthState(user: pharmacist, tokenRole: 'rep').isRep, isFalse);
+    });
+
+    test('copyWith keeps the token role unless a new one is given', () {
+      const state = AuthState(tokenRole: 'rep');
+      expect(state.copyWith(sessionStatus: SessionStatus.offline).tokenRole, 'rep');
+      expect(state.copyWith(tokenRole: 'pharmacy').tokenRole, 'pharmacy');
+    });
+  });
+
   group('AuthState', () {
     group('constructor', () {
       test('creates instance with default values', () {

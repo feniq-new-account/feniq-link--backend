@@ -194,6 +194,18 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
     case 'COMPLAINT_NOT_FOUND':
       return l10n.errorComplaintNotFound;
 
+    // Field reps (backend/src/services/repPortal.service.js).
+    case 'PHARMACY_NOT_ASSIGNED':
+      return l10n.errorRepPharmacyNotAssigned;
+    case 'VISIT_CODE_NOT_FOUND':
+      return l10n.errorRepVisitCodeUnknown;
+    case 'INVALID_VISIT_CODE':
+      return l10n.errorRepVisitCodeInvalid;
+    case 'REP_INACTIVE':
+      return l10n.errorRepInactive;
+    case 'INVALID_LOCATION':
+      return l10n.errorRepInvalidLocation;
+
     case 'UNEXPECTED_ERROR':
       return l10n.errorState;
     default:

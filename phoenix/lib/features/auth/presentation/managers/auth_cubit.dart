@@ -10,6 +10,7 @@ import 'package:feniq/core/services/fcm_service.dart';
 import 'package:feniq/core/services/navigation_service.dart';
 import 'package:feniq/core/services/secure_storage_service.dart';
 import 'package:feniq/core/session/session_scope.dart';
+import 'package:feniq/core/utils/jwt_role.dart';
 import 'package:feniq/features/auth/data/models/auth_response.dart';
 import 'package:feniq/features/auth/data/models/user_model.dart';
 import 'package:feniq/features/auth/data/repositories/auth_repository_impl.dart';
@@ -96,9 +97,13 @@ class AuthCubit extends Cubit<AuthState> {
       return;
     }
     _sessionCheckInFlight = true;
+    // Kept outside the try so the catch-all below can still tell an offline
+    // start which home screen to open (the role is in the token).
+    String? storedToken;
     try {
       _log('[AUTH] Session check started (resume: $isResume)');
       final token = await _secureStorage.read(StorageKeys.authToken);
+      storedToken = token;
       if (token == null || token.isEmpty) {
         _log('[AUTH] No token - unauthenticated');
         _isHandlingUnauthorized = false;
@@ -136,6 +141,7 @@ class AuthCubit extends Cubit<AuthState> {
           emit(
             state.copyWith(
               sessionStatus: SessionStatus.offline,
+              tokenRole: roleFromJwt(token),
               errorCode: f.code,
               errorMessage: f.errMessage,
             ),
@@ -148,7 +154,12 @@ class AuthCubit extends Cubit<AuthState> {
       // screen; a resume leaves the session as-is.
       _log('[AUTH] Unexpected error during session check - keeping token ($e)');
       if (!isResume) {
-        emit(state.copyWith(sessionStatus: SessionStatus.offline));
+        emit(
+          state.copyWith(
+            sessionStatus: SessionStatus.offline,
+            tokenRole: roleFromJwt(storedToken),
+          ),
+        );
       }
     } finally {
       _sessionCheckInFlight = false;

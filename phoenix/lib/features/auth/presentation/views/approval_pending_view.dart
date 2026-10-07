@@ -13,6 +13,7 @@ import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/core/widgets/secondary_button.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
+import 'package:feniq/routes/home_route.dart';
 import 'package:feniq/routes/route_names.dart';
 
 class ApprovalPendingView extends StatefulWidget {
@@ -82,7 +83,7 @@ class _ApprovalPendingViewState extends State<ApprovalPendingView>
       listener: (context, state) => context.goNamed(
         state.sessionStatus == SessionStatus.passwordChangeRequired
             ? RouteNames.changePassword
-            : RouteNames.warehouseSelection,
+            : homeRouteNameFor(state),
       ),
       child: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {

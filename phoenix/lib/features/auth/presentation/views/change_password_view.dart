@@ -13,6 +13,7 @@ import 'package:feniq/core/widgets/app_text_field.dart';
 import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
+import 'package:feniq/routes/home_route.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/core/widgets/full_text.dart';
 
@@ -93,7 +94,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
 
     AppSnackbar.show(context, l10n.changePasswordSuccess);
     if (_forced) {
-      context.goNamed(RouteNames.warehouseSelection);
+      context.goNamed(homeRouteNameFor(cubit.state));
     } else {
       GoRouter.of(context).pop();
     }

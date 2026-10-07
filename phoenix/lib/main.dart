@@ -39,6 +39,9 @@ import 'package:feniq/features/complaints/data/repositories/complaint_repository
 import 'package:feniq/features/complaints/data/repositories/complaint_repository_impl.dart';
 import 'package:feniq/features/debts/data/repositories/debt_repository.dart';
 import 'package:feniq/features/debts/data/repositories/debt_repository_impl.dart';
+import 'package:feniq/features/rep/data/repositories/rep_repository.dart';
+import 'package:feniq/features/rep/data/repositories/rep_repository_impl.dart';
+import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/exchange_rate/data/repositories/exchange_rate_repository.dart';
 import 'package:feniq/features/exchange_rate/data/repositories/exchange_rate_repository_impl.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
@@ -139,6 +142,7 @@ Future<void> main() async {
   final bannersRepository = BannersRepositoryImpl(apiClient: apiClient);
   final advertisementsRepository = AdvertisementsRepositoryImpl(apiClient: apiClient);
   final offersRepository = OffersRepositoryImpl(apiClient: apiClient);
+  final repRepository = RepRepositoryImpl(apiClient: apiClient);
   final appRouter = AppRouter();
   runApp(
     MyApp(
@@ -159,6 +163,7 @@ Future<void> main() async {
       bannersRepository: bannersRepository,
       advertisementsRepository: advertisementsRepository,
       offersRepository: offersRepository,
+      repRepository: repRepository,
       notificationRepository: notificationRepository,
       fcmService: fcmService,
       sessionScope: sessionScope,
@@ -227,6 +232,7 @@ class MyApp extends StatelessWidget {
     required this.bannersRepository,
     required this.advertisementsRepository,
     required this.offersRepository,
+    this.repRepository,
     required this.notificationRepository,
     required this.fcmService,
     required this.sessionScope,
@@ -251,6 +257,8 @@ class MyApp extends StatelessWidget {
   final BannersRepositoryImpl bannersRepository;
   final AdvertisementsRepositoryImpl advertisementsRepository;
   final OffersRepositoryImpl offersRepository;
+  // Only the rep screens read it; null in a test that never visits them.
+  final RepRepository? repRepository;
   final NotificationRepository notificationRepository;
   final FcmService fcmService;
   final SessionScope sessionScope;
@@ -280,6 +288,9 @@ class MyApp extends StatelessWidget {
         // by the Offers & Ads tab to list what is running.
         RepositoryProvider<AdvertisementsRepository>.value(value: advertisementsRepository),
         RepositoryProvider<OffersRepository>.value(value: offersRepository),
+        if (repRepository != null) RepositoryProvider<RepRepository>.value(value: repRepository!),
+        // The platform location API, behind a seam the scan flow can be tested through.
+        RepositoryProvider<LocationProvider>.value(value: const GeolocatorLocationProvider()),
       ],
       child: MultiBlocProvider(
         providers: [

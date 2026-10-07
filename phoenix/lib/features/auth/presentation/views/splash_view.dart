@@ -5,6 +5,7 @@ import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/widgets/brand_logo.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
+import 'package:feniq/routes/home_route.dart';
 import 'package:feniq/routes/route_names.dart';
 
 // The two halves of the logo's breathing animation, keyed so a test can find
@@ -48,7 +49,7 @@ class _SplashViewState extends State<SplashView> {
       case SessionStatus.passwordChangeRequired:
         context.goNamed(RouteNames.changePassword);
       case SessionStatus.active:
-        context.goNamed(RouteNames.warehouseSelection);
+        context.goNamed(homeRouteNameFor(context.read<AuthCubit>().state));
       case SessionStatus.offline:
         // The stored token is still present and untouched - the server just
         // could not be reached to re-validate it on this launch. That is not
@@ -57,7 +58,7 @@ class _SplashViewState extends State<SplashView> {
         // (and every other screen that needs the network) already shows its
         // own error state with a retry, which is where a genuine outage
         // belongs.
-        context.goNamed(RouteNames.warehouseSelection);
+        context.goNamed(homeRouteNameFor(context.read<AuthCubit>().state));
       case SessionStatus.unknown:
         // The check is still running - stay on the logo.
         break;

@@ -1090,5 +1090,93 @@
   "packageContentsTitle": "What's in the package",
   "packageFixedNote": "A package is fixed: it is ordered whole, as the warehouse set it up - you only choose how many copies.",
   "packageShowContents": "Show what's inside",
-  "packageAddToCart": "Add the package to the cart"
+  "packageAddToCart": "Add the package to the cart",
+  "repNavPharmacies": "My pharmacies",
+  "repNavVisits": "My visits",
+  "repSearchHint": "Search by name, owner, phone or address",
+  "repScanAction": "Scan visit code",
+  "repNoPharmaciesTitle": "No pharmacies assigned to you yet",
+  "repNoPharmaciesSubtitle": "The warehouse assigns your pharmacies - they appear here as soon as it does.",
+  "repNoSearchResults": "No pharmacy matches your search",
+  "repNeverVisited": "Never visited",
+  "repLastVisitAgo": "{days, plural, =0{Last visit: today} =1{Last visit: yesterday} other{Last visit: {days} days ago}}",
+  "@repLastVisitAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "repMonthOrdersCount": "{count, plural, =0{No orders this month} =1{1 order this month} other{{count} orders this month}}",
+  "@repMonthOrdersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repStatPharmacies": "Pharmacies",
+  "repStatVisitsWeek": "Visits, 7 days",
+  "repStatOrdersMonth": "Orders this month",
+  "repStatSalesMonth": "Their value",
+  "repOwnerLabel": "Owner",
+  "repCallAction": "Call",
+  "repLogVisitAction": "Log a visit",
+  "repNoLocationWarning": "This pharmacy has not set its map location yet, so a visit here cannot be verified.",
+  "repRecentOrders": "Latest orders",
+  "repNoOrdersYet": "No orders from this pharmacy yet",
+  "repRecentVisits": "Your latest visits here",
+  "repNoVisitsHere": "You have not visited this pharmacy yet",
+  "repVisitsTitle": "My visits",
+  "repNoVisitsTitle": "No visits logged yet",
+  "repNoVisitsSubtitle": "Scan the QR code at a pharmacy to log your visit.",
+  "repVisitVerified": "Verified",
+  "repVisitOutOfRange": "Out of range",
+  "repVisitMockLocation": "Spoofed location",
+  "repVisitNoPharmacyLocation": "Pharmacy has no location",
+  "repDistanceMeters": "{meters} m away",
+  "@repDistanceMeters": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "repScanTitle": "Scan visit code",
+  "repScanHint": "Point the camera at the Feniq QR code at the pharmacy.",
+  "repScanNotFeniq": "That is not a Feniq visit code.",
+  "repScanLocating": "Finding your location...",
+  "repScanSubmitting": "Logging the visit...",
+  "repScanVerifiedTitle": "Visit verified",
+  "repScanDuplicateTitle": "Already logged a moment ago",
+  "repScanUnverifiedTitle": "Visit logged, not verified",
+  "repScanOutOfRangeMessage": "Your phone is {meters} m from the pharmacy. Go to the pharmacy and scan again to verify.",
+  "@repScanOutOfRangeMessage": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "repScanMockMessage": "Your phone reports a spoofed location, so the visit cannot be verified.",
+  "repScanNoLocationMessage": "The pharmacy has not set its location yet, so the visit cannot be verified.",
+  "repScanAnother": "Scan another code",
+  "repScanTryAgain": "Try again",
+  "repLocationServiceOff": "Turn on location (GPS) on your phone, then try again.",
+  "repLocationDenied": "Location permission is needed to verify the visit.",
+  "repLocationDeniedForever": "Location permission is blocked. Allow it from the app settings.",
+  "repLocationUnavailable": "Could not find your location. Check that GPS is on and try again.",
+  "repOpenSettings": "Open settings",
+  "repCameraDenied": "Camera permission is needed to scan the code. Allow it from the app settings.",
+  "repCameraUnavailable": "The camera could not be started.",
+  "repWarehouseLabel": "Warehouse",
+  "repProfileHint": "You are signed in as a rep. Your warehouse manages your pharmacies.",
+  "errorRepPharmacyNotAssigned": "This pharmacy is not assigned to you.",
+  "errorRepVisitCodeUnknown": "No pharmacy has this visit code.",
+  "errorRepVisitCodeInvalid": "That is not a Feniq visit code.",
+  "errorRepInactive": "Your rep account has been switched off by the warehouse.",
+  "errorRepInvalidLocation": "Could not read your location. Try again.",
+  "pharmacyVisitCodeTitle": "Visit code",
+  "pharmacyVisitCodeSubtitle": "For reps who visit you",
+  "pharmacyVisitCodeIntro": "Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy."
 }

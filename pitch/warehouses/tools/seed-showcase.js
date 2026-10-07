@@ -232,17 +232,22 @@ async function main() {
   await curatePromotions(warehouse._id, warehouseUser._id);
   await varyBalances(warehouse._id, warehouseUser._id, pharmacies);
 
-  // زيارات موثّقة بمسح الباركود من موقع الصيدلية نفسه، موزّعة على الأيام الماضية.
+  // زيارات بمسح الباركود، موزّعة على الأيام الماضية. بترتيب الأقدم أول: السيرفر يعدّ
+  // المسح الثاني للصيدلية خلال نصف ساعة «تكراراً» ويرجّع الأول، فالترتيب العكسي يضيّع الزيارات.
+  // كل زيارة عند مسافة صغيرة من الصيدلية، وواحدة (آخر عنصر بقائمة المندوب الأول) بعيدة لتظهر «خارج النطاق».
   const now = Date.now();
   for (const [r, spec] of REPS.entries()) {
     const rep = reps[r];
-    for (const [pharmacyIndex, daysAgo] of spec.visits) {
+    const visits = [...spec.visits].sort((a, b) => b[1] - a[1]);
+    for (const [i, [pharmacyIndex, daysAgo]] of visits.entries()) {
       const pharmacy = pharmacies[pharmacyIndex];
       const code = await visitCodes.getOrCreateVisitCode(pharmacy._id);
       const [longitude, latitude] = pharmacy.location.coordinates;
+      const far = r === 0 && i === 0; // أقدم زيارة للمندوب الأول
+      const offset = far ? 0.0045 : 0.00012 * ((i % 3) + 1); // ~500 م أو ~13-40 م
       await repPortal.recordVisit(
         rep.toObject ? rep.toObject() : rep,
-        { code: visitCodes.qrPayloadFor(code), latitude, longitude, accuracy: 12, isMocked: false },
+        { code: visitCodes.qrPayloadFor(code), latitude: latitude + offset, longitude, accuracy: 12, isMocked: false },
         new Date(now - daysAgo * DAY_MS - 3 * 60 * 60 * 1000)
       );
     }

@@ -62,6 +62,16 @@ class Endpoints {
   static const String debts = '/pharmacy/debts';
   static String debtDetail(String warehouseId) => '/pharmacy/debts/$warehouseId';
 
+  // A warehouse's field rep (role 'rep'): their own profile and numbers, the
+  // pharmacies assigned to them, and logging a visit by scanning a pharmacy's
+  // QR (backend/src/routes/rep.routes.js).
+  static const String repMe = '/rep/me';
+  static const String repPharmacies = '/rep/pharmacies';
+  static String repPharmacy(String pharmacyId) => '/rep/pharmacies/$pharmacyId';
+  static const String repVisits = '/rep/visits';
+  // The pharmacy's own visit QR, for its app to show to a rep.
+  static const String pharmacyVisitCode = '/pharmacy/visit-code';
+
   static const String activeBanners = '/banners/active';
 
   // Every product offer currently running, across every warehouse - the

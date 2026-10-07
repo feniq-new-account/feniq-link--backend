@@ -3259,6 +3259,366 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add the package to the cart'**
   String get packageAddToCart;
+
+  /// No description provided for @repNavPharmacies.
+  ///
+  /// In en, this message translates to:
+  /// **'My pharmacies'**
+  String get repNavPharmacies;
+
+  /// No description provided for @repNavVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'My visits'**
+  String get repNavVisits;
+
+  /// No description provided for @repSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name, owner, phone or address'**
+  String get repSearchHint;
+
+  /// No description provided for @repScanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan visit code'**
+  String get repScanAction;
+
+  /// No description provided for @repNoPharmaciesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No pharmacies assigned to you yet'**
+  String get repNoPharmaciesTitle;
+
+  /// No description provided for @repNoPharmaciesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The warehouse assigns your pharmacies - they appear here as soon as it does.'**
+  String get repNoPharmaciesSubtitle;
+
+  /// No description provided for @repNoSearchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No pharmacy matches your search'**
+  String get repNoSearchResults;
+
+  /// No description provided for @repNeverVisited.
+  ///
+  /// In en, this message translates to:
+  /// **'Never visited'**
+  String get repNeverVisited;
+
+  /// No description provided for @repLastVisitAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =0{Last visit: today} =1{Last visit: yesterday} other{Last visit: {days} days ago}}'**
+  String repLastVisitAgo(int days);
+
+  /// No description provided for @repMonthOrdersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No orders this month} =1{1 order this month} other{{count} orders this month}}'**
+  String repMonthOrdersCount(int count);
+
+  /// No description provided for @repStatPharmacies.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacies'**
+  String get repStatPharmacies;
+
+  /// No description provided for @repStatVisitsWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits, 7 days'**
+  String get repStatVisitsWeek;
+
+  /// No description provided for @repStatOrdersMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders this month'**
+  String get repStatOrdersMonth;
+
+  /// No description provided for @repStatSalesMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Their value'**
+  String get repStatSalesMonth;
+
+  /// No description provided for @repOwnerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get repOwnerLabel;
+
+  /// No description provided for @repCallAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get repCallAction;
+
+  /// No description provided for @repLogVisitAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Log a visit'**
+  String get repLogVisitAction;
+
+  /// No description provided for @repNoLocationWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This pharmacy has not set its map location yet, so a visit here cannot be verified.'**
+  String get repNoLocationWarning;
+
+  /// No description provided for @repRecentOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest orders'**
+  String get repRecentOrders;
+
+  /// No description provided for @repNoOrdersYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders from this pharmacy yet'**
+  String get repNoOrdersYet;
+
+  /// No description provided for @repRecentVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Your latest visits here'**
+  String get repRecentVisits;
+
+  /// No description provided for @repNoVisitsHere.
+  ///
+  /// In en, this message translates to:
+  /// **'You have not visited this pharmacy yet'**
+  String get repNoVisitsHere;
+
+  /// No description provided for @repVisitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My visits'**
+  String get repVisitsTitle;
+
+  /// No description provided for @repNoVisitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No visits logged yet'**
+  String get repNoVisitsTitle;
+
+  /// No description provided for @repNoVisitsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the QR code at a pharmacy to log your visit.'**
+  String get repNoVisitsSubtitle;
+
+  /// No description provided for @repVisitVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get repVisitVerified;
+
+  /// No description provided for @repVisitOutOfRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of range'**
+  String get repVisitOutOfRange;
+
+  /// No description provided for @repVisitMockLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Spoofed location'**
+  String get repVisitMockLocation;
+
+  /// No description provided for @repVisitNoPharmacyLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy has no location'**
+  String get repVisitNoPharmacyLocation;
+
+  /// No description provided for @repDistanceMeters.
+  ///
+  /// In en, this message translates to:
+  /// **'{meters} m away'**
+  String repDistanceMeters(int meters);
+
+  /// No description provided for @repScanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan visit code'**
+  String get repScanTitle;
+
+  /// No description provided for @repScanHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the Feniq QR code at the pharmacy.'**
+  String get repScanHint;
+
+  /// No description provided for @repScanNotFeniq.
+  ///
+  /// In en, this message translates to:
+  /// **'That is not a Feniq visit code.'**
+  String get repScanNotFeniq;
+
+  /// No description provided for @repScanLocating.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your location...'**
+  String get repScanLocating;
+
+  /// No description provided for @repScanSubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging the visit...'**
+  String get repScanSubmitting;
+
+  /// No description provided for @repScanVerifiedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit verified'**
+  String get repScanVerifiedTitle;
+
+  /// No description provided for @repScanDuplicateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Already logged a moment ago'**
+  String get repScanDuplicateTitle;
+
+  /// No description provided for @repScanUnverifiedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit logged, not verified'**
+  String get repScanUnverifiedTitle;
+
+  /// No description provided for @repScanOutOfRangeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone is {meters} m from the pharmacy. Go to the pharmacy and scan again to verify.'**
+  String repScanOutOfRangeMessage(int meters);
+
+  /// No description provided for @repScanMockMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone reports a spoofed location, so the visit cannot be verified.'**
+  String get repScanMockMessage;
+
+  /// No description provided for @repScanNoLocationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The pharmacy has not set its location yet, so the visit cannot be verified.'**
+  String get repScanNoLocationMessage;
+
+  /// No description provided for @repScanAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan another code'**
+  String get repScanAnother;
+
+  /// No description provided for @repScanTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get repScanTryAgain;
+
+  /// No description provided for @repLocationServiceOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location (GPS) on your phone, then try again.'**
+  String get repLocationServiceOff;
+
+  /// No description provided for @repLocationDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is needed to verify the visit.'**
+  String get repLocationDenied;
+
+  /// No description provided for @repLocationDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is blocked. Allow it from the app settings.'**
+  String get repLocationDeniedForever;
+
+  /// No description provided for @repLocationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not find your location. Check that GPS is on and try again.'**
+  String get repLocationUnavailable;
+
+  /// No description provided for @repOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get repOpenSettings;
+
+  /// No description provided for @repCameraDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission is needed to scan the code. Allow it from the app settings.'**
+  String get repCameraDenied;
+
+  /// No description provided for @repCameraUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera could not be started.'**
+  String get repCameraUnavailable;
+
+  /// No description provided for @repWarehouseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse'**
+  String get repWarehouseLabel;
+
+  /// No description provided for @repProfileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You are signed in as a rep. Your warehouse manages your pharmacies.'**
+  String get repProfileHint;
+
+  /// No description provided for @errorRepPharmacyNotAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'This pharmacy is not assigned to you.'**
+  String get errorRepPharmacyNotAssigned;
+
+  /// No description provided for @errorRepVisitCodeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'No pharmacy has this visit code.'**
+  String get errorRepVisitCodeUnknown;
+
+  /// No description provided for @errorRepVisitCodeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'That is not a Feniq visit code.'**
+  String get errorRepVisitCodeInvalid;
+
+  /// No description provided for @errorRepInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rep account has been switched off by the warehouse.'**
+  String get errorRepInactive;
+
+  /// No description provided for @errorRepInvalidLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read your location. Try again.'**
+  String get errorRepInvalidLocation;
+
+  /// No description provided for @pharmacyVisitCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit code'**
+  String get pharmacyVisitCodeTitle;
+
+  /// No description provided for @pharmacyVisitCodeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'For reps who visit you'**
+  String get pharmacyVisitCodeSubtitle;
+
+  /// No description provided for @pharmacyVisitCodeIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy.'**
+  String get pharmacyVisitCodeIntro;
 }
 
 class _AppLocalizationsDelegate

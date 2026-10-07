@@ -16,6 +16,7 @@ import 'package:feniq/core/widgets/phone_text_field.dart';
 import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
+import 'package:feniq/routes/home_route.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/core/widgets/full_text.dart';
 
@@ -94,7 +95,7 @@ class _PasswordLoginViewState extends State<PasswordLoginView> {
       case SessionStatus.passwordChangeRequired:
         context.goNamed(RouteNames.changePassword);
       case SessionStatus.active:
-        context.goNamed(RouteNames.warehouseSelection);
+        context.goNamed(homeRouteNameFor(cubit.state));
       case SessionStatus.unknown:
       case SessionStatus.unauthenticated:
       case SessionStatus.offline:
