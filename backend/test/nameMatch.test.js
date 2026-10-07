@@ -56,3 +56,12 @@ test('a final alef for a final ya is forgiven on longer names only', () => {
   assert.ok(tokensMatch(one('سلمى'), one('سلما')));
   assert.ok(!tokensMatch(one('علا'), one('علي')));
 });
+
+test('the score says how closely the name was typed', () => {
+  const pct = (typed, listed, father = '') => Math.round(personMatch(typed, listed, father).score * 100);
+  assert.strictEqual(pct('صيدلية د. ياسمين سمير شغري', 'ياسمين شغري', 'سمير'), 100);
+  assert.strictEqual(pct('ياسمن شغري', 'ياسمين شغري', 'سمير'), 98);
+  assert.strictEqual(pct('ابراهيم عصفوزي', 'ابراهيم عصفوري'), 93);
+  assert.strictEqual(pct('ابراهيم محمد عصفوري', 'ابراهيم عصفوري'), 90);
+  assert.strictEqual(pct('ابراهيم', 'ابراهيم عصفوري'), 50);
+});

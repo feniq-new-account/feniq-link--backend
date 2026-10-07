@@ -10,9 +10,10 @@ const adminService = require('../services/admin.service');
 // when a pharmacy signs up.
 
 const getStatus = asyncHandler(async (req, res) => {
-  const [registry, approvalRequired, telegramStatus, pending] = await Promise.all([
+  const [registry, approvalRequired, minScore, telegramStatus, pending] = await Promise.all([
     syndicateRegistry.getStatus(),
     platformSettings.isApprovalRequired(),
+    platformSettings.getAutoApproveMinScore(),
     telegram.getStatus(req.user._id),
     adminService.countPendingAccountsByRole(),
   ]);
@@ -20,6 +21,7 @@ const getStatus = asyncHandler(async (req, res) => {
     success: true,
     registry,
     approvalRequired,
+    minScore,
     pendingPharmacies: pending.pharmacyCount,
     telegram: telegramStatus,
   });
@@ -65,6 +67,19 @@ const setApproval = asyncHandler(async (req, res) => {
   res.json({ success: true, approvalRequired: required, released });
 });
 
+// The lowest match percentage that gets in without an admin. Lowering it may
+// now let in some of those already waiting, so they are checked again.
+const setMinScore = asyncHandler(async (req, res) => {
+  const { minScore } = req.body || {};
+  const { min, max } = platformSettings.MIN_SCORE_RANGE;
+  if (!Number.isInteger(minScore) || minScore < min || minScore > max) {
+    throw ApiError.badRequest(`النسبة لازم تكون رقم صحيح بين ${min} و ${max}.`, undefined, 'MIN_SCORE_INVALID');
+  }
+  await platformSettings.setAutoApproveMinScore(minScore);
+  const { approved } = await syndicateRegistry.recheckPending();
+  res.json({ success: true, minScore, autoApproved: approved.length });
+});
+
 const setBotToken = asyncHandler(async (req, res) => {
   const result = await telegram.configureBot(req.body?.token);
   res.json({ success: true, ...result });
@@ -90,6 +105,7 @@ module.exports = {
   importList,
   checkName,
   setApproval,
+  setMinScore,
   setBotToken,
   removeBot,
   createTelegramLink,

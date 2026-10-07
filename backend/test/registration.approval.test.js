@@ -107,6 +107,7 @@ const LIST = [
   { region: 'ريف اللاذقية', place: 'مشيرفة الساموك', name: 'العصماء جابر محمد', father: 'جابر', pharmacy: 'صيدلية الاء', phone: '0944000222' },
   { region: 'مدينة اللاذقية', place: 'سقوبين', name: 'بتول مكنا', father: 'فراس', pharmacy: 'صيدلية البتول', phone: '', address: 'سقوبين — مكتوب جنبه «إلغاء» بملف النقابة' },
   { region: 'مدينة جبلة', place: 'العمارة', name: 'رامي حداد', father: 'نبيل', pharmacy: '', phone: '0933000444 / 963988000555' },
+  { region: 'ريف جبلة', place: 'سيانو', name: 'ابراهيم عصفوري', father: 'خليل', pharmacy: '', phone: '0944000666' },
 ];
 
 function uploadForm(buffer, name = 'list.xlsx', type = XLSX) {
@@ -141,6 +142,7 @@ test('starts with no list, approval off and no bot', async () => {
   assert.strictEqual(status, 200);
   assert.strictEqual(body.registry.count, 0);
   assert.strictEqual(body.approvalRequired, false);
+  assert.strictEqual(body.minScore, 80);
   assert.strictEqual(body.telegram.configured, false);
 });
 
@@ -223,6 +225,33 @@ test('a listed name marked "إلغاء" waits', async () => {
 test('the listed mobile number plus a close name is enough', async () => {
   const { body } = await register({ name: 'رامي', pharmacyName: 'صيدلية جديدة', phone: '0933000444' });
   assert.strictEqual(body.user.status, 'active');
+});
+
+test('the minimum match percentage decides how close is close enough', async () => {
+  const strict = await call('PUT', '/admin/registration/min-score', { token: adminToken, body: { minScore: 95 } });
+  assert.strictEqual(strict.status, 200);
+  assert.strictEqual(strict.body.autoApproved, 0);
+
+  // A weak letter missing (0.95) and one slip (0.85): 90%.
+  const { body } = await register({ name: 'ابراهم عصفوزي', pharmacyName: 'صيدلية الامل', phone: '0966000010' });
+  assert.strictEqual(body.user.status, 'pending');
+  const waiting = await Pharmacy.findOne({ phone: '0966000010' }).lean();
+  assert.strictEqual(waiting.syndicateMatch.score, 90);
+  assert.ok(waiting.syndicateMatch.reasons.some((r) => r.includes('أقل من الحد (95%)')), waiting.syndicateMatch.reasons);
+  assert.strictEqual(waiting.syndicateMatch.pharmacistName, 'ابراهيم عصفوري');
+
+  // Back to 80%: whoever waits and now clears it is let in.
+  const relaxed = await call('PUT', '/admin/registration/min-score', { token: adminToken, body: { minScore: 80 } });
+  assert.strictEqual(relaxed.body.autoApproved, 1);
+  assert.strictEqual(await statusOf('0966000010'), 'active');
+});
+
+test('a minimum outside 50-100 is refused', async () => {
+  for (const minScore of [49, 101, 80.5, '80']) {
+    const { status, body } = await call('PUT', '/admin/registration/min-score', { token: adminToken, body: { minScore } });
+    assert.strictEqual(status, 400, String(minScore));
+    assert.strictEqual(body.code, 'MIN_SCORE_INVALID');
+  }
 });
 
 test('someone not on the list waits, with nothing rejected automatically', async () => {

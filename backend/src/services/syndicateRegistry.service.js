@@ -7,6 +7,7 @@ const SyndicatePharmacy = require('../models/syndicatePharmacy.model');
 const SyndicateImport = require('../models/syndicateImport.model');
 const Pharmacy = require('../models/pharmacy.model');
 const User = require('../models/user.model');
+const platformSettings = require('./platformSettings.service');
 
 // The pharmacists' syndicate list, and the check every new pharmacy
 // registration goes through: a pharmacist on the list is let in at once,
@@ -221,6 +222,8 @@ async function check({ name, pharmacyName, phone }, { excludeUserId = null } = {
     return { decision: 'review', score: 0, reasons: ['قائمة النقابة لسّا ما انرفعت'], entry: null };
   }
 
+  // The lowest match the admin lets in without looking (panel setting, default 80%).
+  const minScore = await platformSettings.getAutoApproveMinScore();
   const typedPhone = phoneKey(phone);
   const typedName = nameTokens(name);
   const typedPharmacy = nameTokens(pharmacyName);
@@ -234,18 +237,24 @@ async function check({ name, pharmacyName, phone }, { excludeUserId = null } = {
     const nameFound = byOwner.full || byPharmacy.full;
     const ratio = Math.max(byOwner.ratio, byPharmacy.ratio);
 
-    let score = nameFound ? 90 : Math.round(ratio * 60);
+    // The percentage: how closely the name was typed (100 = exactly, up to
+    // spelling conventions), plus 10 when the pharmacy's own name matches too
+    // and 30 when the mobile number is the listed one.
+    const closeness = nameFound
+      ? Math.max(byOwner.full ? byOwner.score : 0, byPharmacy.full ? byPharmacy.score : 0)
+      : Math.max(byOwner.score, byPharmacy.score);
+    let score = Math.round(closeness * 100);
     if (samePharmacyName) score += 10;
-    if (samePhone) score = Math.max(score + 10, 70);
+    if (samePhone) score += 30;
     score = Math.min(score, 100);
 
-    const approve = nameFound || (samePhone && (ratio >= 0.5 || samePharmacyName));
-    const candidate = { entry, score, approve, nameFound, samePhone, samePharmacyName, ratio };
-    if (
-      !best ||
-      (candidate.approve && !best.approve) ||
-      (candidate.approve === best.approve && candidate.score > best.score)
-    ) {
+    // Who it could be at all (the whole name, or the listed number with a
+    // close name), and whether the match is close enough to let in unseen.
+    const plausible = nameFound || (samePhone && (ratio >= 0.5 || samePharmacyName));
+    const approve = plausible && score >= minScore;
+    const candidate = { entry, score, approve, plausible, nameFound, samePhone, samePharmacyName, ratio };
+    const rank = (c) => (c.approve ? 2 : c.plausible ? 1 : 0);
+    if (!best || rank(candidate) > rank(best) || (rank(candidate) === rank(best) && candidate.score > best.score)) {
       best = candidate;
     }
   }
@@ -276,6 +285,8 @@ async function check({ name, pharmacyName, phone }, { excludeUserId = null } = {
         reasons.push('بس هالاسم انقبل قبل هيك بحساب تاني');
       }
     }
+  } else if (best.plausible) {
+    reasons.push(`الاسم قريب بس التطابق ${best.score}% أقل من الحد (${minScore}%)`);
   } else if (best.samePhone) {
     reasons.push('رقم الموبايل موجود بالقائمة بس باسم مختلف');
   } else if (best.samePharmacyName) {

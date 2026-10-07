@@ -392,6 +392,8 @@ export const api = {
     request('/admin/registration/check', { method: 'POST', body: { name, pharmacyName, phone } }),
   setApprovalRequired: (required) =>
     request('/admin/registration/approval', { method: 'PUT', body: { required } }),
+  setAutoApproveMinScore: (minScore) =>
+    request('/admin/registration/min-score', { method: 'PUT', body: { minScore } }),
   setTelegramBot: (token) =>
     request('/admin/registration/telegram/bot', { method: 'PUT', body: { token } }),
   removeTelegramBot: () => request('/admin/registration/telegram/bot', { method: 'DELETE' }),
