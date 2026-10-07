@@ -154,7 +154,14 @@ test('a warehouse creates a rep who signs in from the app and must pick a passwo
   assert.strictEqual(me.status, 200);
   assert.strictEqual(me.body.rep.name, 'سامر');
   assert.strictEqual(me.body.warehouse.nameEn, 'Warehouse A');
-  assert.deepStrictEqual(me.body.stats, { pharmacyCount: 0, visitsLast7Days: 0, monthOrdersCount: 0, monthOrdersTotal: 0 });
+  assert.deepStrictEqual(me.body.stats, {
+    pharmacyCount: 0,
+    visitsLast7Days: 0,
+    monthOrdersCount: 0,
+    monthOrdersTotal: 0,
+    commissionRate: 0,
+    monthCommissionAmount: 0,
+  });
 });
 
 test('creating a rep refuses a taken phone (either spelling), a bad phone and a short password', async () => {

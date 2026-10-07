@@ -7,11 +7,21 @@ function toRep(rep) {
     name: rep.name,
     phone: rep.phone,
     isActive: rep.isActive,
+    commissionRate: rep.commissionRate ?? 0,
     createdAt: rep.createdAt,
   };
 }
 
-function toRepRow({ rep, pharmacyCount, visits30d, unverifiedVisits30d, lastVisitAt, monthOrdersCount, monthOrdersTotal }) {
+function toRepRow({
+  rep,
+  pharmacyCount,
+  visits30d,
+  unverifiedVisits30d,
+  lastVisitAt,
+  monthOrdersCount,
+  monthOrdersTotal,
+  monthCommission,
+}) {
   return {
     ...toRep(rep),
     pharmacyCount,
@@ -20,6 +30,7 @@ function toRepRow({ rep, pharmacyCount, visits30d, unverifiedVisits30d, lastVisi
     lastVisitAt,
     monthOrdersCount,
     monthOrdersTotal,
+    monthCommission: monthCommission ?? { repAmount: 0, feniqAmount: 0, savingAmount: 0 },
   };
 }
 

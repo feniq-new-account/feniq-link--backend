@@ -44,13 +44,19 @@ function startOfWeek(now) {
 
 async function getMe(rep, now = new Date()) {
   const monthStart = startOfBusinessMonth(now);
-  const [warehouse, pharmacyCount, weekVisits, monthOrders] = await Promise.all([
+  const [warehouse, pharmacyCount, weekVisits, monthOrders, monthCommission] = await Promise.all([
     Warehouse.findById(rep.warehouseId).select('nameAr nameEn phone logo city').lean(),
     RepAssignment.countDocuments({ repId: rep._id, active: true }),
     RepVisit.countDocuments({ repId: rep._id, status: 'verified', scannedAt: { $gte: startOfWeek(now) } }),
     Order.aggregate([
       { $match: { repId: rep._id, createdAt: { $gte: monthStart }, status: { $ne: 'cancelled' } } },
       { $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$finalPrice' } } },
+    ]),
+    // What the rep has earned this month: their half of the commission on
+    // DELIVERED orders. Only their own share - not Feniq's or the warehouse's.
+    Order.aggregate([
+      { $match: { repId: rep._id, createdAt: { $gte: monthStart }, status: 'delivered', repCommission: { $ne: null } } },
+      { $group: { _id: null, repAmount: { $sum: '$repCommission.repAmount' } } },
     ]),
   ]);
   return {
@@ -61,6 +67,9 @@ async function getMe(rep, now = new Date()) {
       visitsLast7Days: weekVisits,
       monthOrdersCount: monthOrders[0]?.count ?? 0,
       monthOrdersTotal: monthOrders[0]?.total ?? 0,
+      // The rep's earnings at their warehouse's commission rate.
+      commissionRate: rep.commissionRate ?? 0,
+      monthCommissionAmount: monthCommission[0]?.repAmount ?? 0,
     },
   };
 }

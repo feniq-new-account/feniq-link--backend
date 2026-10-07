@@ -11,6 +11,7 @@ const { assertPasswordPolicy } = require('../utils/password');
 const { normalizePhone, isValidPhone, toInternationalPhone } = require('../utils/phone');
 const { startOfBusinessMonth } = require('../utils/businessTime');
 const { runInTransaction } = require('../utils/transaction');
+const { parseRepCommissionRate, MAX_REP_COMMISSION_RATE } = require('../utils/repCommission');
 const { revokeAllSessions } = require('./auth.service');
 const pharmacyVisitCodes = require('./pharmacyVisitCode.service');
 
@@ -37,6 +38,21 @@ function cleanName(name) {
   return value;
 }
 
+// The commission rate from a request: absent -> null (leave it), valid -> the
+// number, anything else -> a 400.
+function readCommissionRate(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const rate = parseRepCommissionRate(value);
+  if (rate === null) {
+    throw ApiError.badRequest(
+      `The commission rate must be a number from 0 to ${MAX_REP_COMMISSION_RATE} (at most two decimals).`,
+      undefined,
+      'INVALID_COMMISSION_RATE'
+    );
+  }
+  return rate;
+}
+
 function escapeRegex(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -53,8 +69,9 @@ async function loadWarehouseRepOrThrow(warehouseId, repId) {
 // there is no approval step. The password is a temporary one the warehouse
 // hands over, so the app makes the rep choose their own on first sign-in
 // (mustChangePassword, same as an admin reset).
-async function createRep(warehouseId, { name, phone, password }) {
+async function createRep(warehouseId, { name, phone, password, commissionRate }) {
   const repName = cleanName(name);
+  const rate = readCommissionRate(commissionRate);
   const cleanPhone = normalizePhone(typeof phone === 'string' ? phone : '');
   if (!isValidPhone(cleanPhone)) {
     throw ApiError.badRequest('Please enter a valid phone number.', undefined, 'INVALID_PHONE_FORMAT');
@@ -86,9 +103,10 @@ async function createRep(warehouseId, { name, phone, password }) {
         ],
         { session }
       );
-      const [rep] = await Rep.create([{ userId: user._id, warehouseId, name: repName, phone: appPhone }], {
-        session,
-      });
+      const [rep] = await Rep.create(
+        [{ userId: user._id, warehouseId, name: repName, phone: appPhone, commissionRate: rate ?? 0 }],
+        { session }
+      );
       return rep;
     });
   } catch (err) {
@@ -102,9 +120,13 @@ async function createRep(warehouseId, { name, phone, password }) {
 // Rename, or switch on/off. Switching off blocks the login and ends every
 // session at once, so a rep who left cannot keep using a phone that is still
 // signed in. Their pharmacies stay assigned until the warehouse moves them.
-async function updateRep(warehouseId, repId, { name, isActive } = {}) {
+async function updateRep(warehouseId, repId, { name, isActive, commissionRate } = {}) {
   const rep = await loadWarehouseRepOrThrow(warehouseId, repId);
   const userUpdate = {};
+  const rate = readCommissionRate(commissionRate);
+  // Only orders placed from now on carry the new rate: each order froze the
+  // rate it was placed under (order.model.js's repCommission).
+  if (rate !== null) rep.commissionRate = rate;
   if (name !== undefined) {
     rep.name = cleanName(name);
     userUpdate.name = rep.name;
@@ -216,7 +238,7 @@ async function listReps(warehouseId, now = new Date()) {
   const since = new Date(now.getTime() - VISIT_WINDOW_DAYS * 24 * 60 * 60 * 1000);
   const monthStart = startOfBusinessMonth(now);
 
-  const [assignments, visits, orders] = await Promise.all([
+  const [assignments, visits, orders, commissions] = await Promise.all([
     RepAssignment.aggregate([
       { $match: { repId: { $in: repIds }, active: true } },
       { $group: { _id: '$repId', count: { $sum: 1 } } },
@@ -243,11 +265,33 @@ async function listReps(warehouseId, now = new Date()) {
       },
       { $group: { _id: '$repId', count: { $sum: 1 }, total: { $sum: '$finalPrice' } } },
     ]),
+    // The month's commission, on DELIVERED orders only: that is when the
+    // warehouse owes the rep - and Feniq - their shares.
+    Order.aggregate([
+      {
+        $match: {
+          warehouseId,
+          repId: { $in: repIds },
+          createdAt: { $gte: monthStart },
+          status: 'delivered',
+          repCommission: { $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: '$repId',
+          repAmount: { $sum: '$repCommission.repAmount' },
+          feniqAmount: { $sum: '$repCommission.feniqAmount' },
+          savingAmount: { $sum: '$repCommission.savingAmount' },
+        },
+      },
+    ]),
   ]);
   const index = (rows) => new Map(rows.map((row) => [row._id.toString(), row]));
   const assignmentsByRep = index(assignments);
   const visitsByRep = index(visits);
   const ordersByRep = index(orders);
+  const commissionByRep = index(commissions);
 
   return reps.map((rep) => {
     const key = rep._id.toString();
@@ -259,6 +303,11 @@ async function listReps(warehouseId, now = new Date()) {
       lastVisitAt: visitsByRep.get(key)?.lastVisitAt ?? null,
       monthOrdersCount: ordersByRep.get(key)?.count ?? 0,
       monthOrdersTotal: ordersByRep.get(key)?.total ?? 0,
+      monthCommission: {
+        repAmount: commissionByRep.get(key)?.repAmount ?? 0,
+        feniqAmount: commissionByRep.get(key)?.feniqAmount ?? 0,
+        savingAmount: commissionByRep.get(key)?.savingAmount ?? 0,
+      },
     };
   });
 }

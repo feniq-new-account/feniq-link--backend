@@ -669,17 +669,22 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
     preCodeSyp,
     discountCodeSyp,
     platformCompensationSyp,
+    repCommission,
   } = rollUpOrderMoney({
     subtotalSyp: totalPrice,
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse.discountRate,
     commissionRate: warehouse.commissionRate,
+    // The rate frozen when the order was placed - an edit never re-prices the
+    // rep's commission at whatever their rate is today.
+    repCommissionRate: order.repCommission?.rate ?? 0,
     discountCodeTerms: code ? { type: code.type, value: code.value, fundedBy: code.fundedBy } : null,
   });
 
   order.totalPrice = totalPrice;
   order.discountAmount = discountAmount;
   order.commissionAmount = commissionAmount;
+  order.repCommission = repCommission;
   order.advertisementDiscountAmount = advertisementDiscountAmount;
   order.finalPrice = finalPrice;
   if (code) {

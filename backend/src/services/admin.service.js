@@ -431,8 +431,8 @@ function requiredString(value, field, code) {
 // is a later, separate edit, not something the admin re-enters on every
 // create. Deliberately NOT read from the request body - a client can't set
 // its own rates by adding the fields to the payload.
-const DEFAULT_DISCOUNT_RATE = 4;
-const DEFAULT_COMMISSION_RATE = 1;
+const DEFAULT_DISCOUNT_RATE = 0;
+const DEFAULT_COMMISSION_RATE = 0;
 
 // Section 7 counterpart to approveAccount above: a warehouse the admin
 // onboards directly, rather than one that self-registered and is waiting for

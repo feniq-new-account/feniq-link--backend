@@ -113,6 +113,23 @@ const orderSchema = new Schema(
     // never moves an order - and the commission it earned - to someone else.
     // null when the pharmacy had no rep at this warehouse.
     repId: { type: Schema.Types.ObjectId, ref: 'Rep', default: null },
+    // The rep commission on this order, frozen with the order like repId (a
+    // later change of the rep's rate never rewrites it) and re-derived from
+    // the frozen rate when the warehouse edits the order. null when the order
+    // has no rep, or the rep had no commission rate. `feniqAmount` is Feniq's
+    // quarter - the same figure `commissionAmount` carries (utils/repCommission.js).
+    repCommission: {
+      type: new Schema(
+        {
+          rate: { type: Number, required: true },
+          repAmount: { type: Number, required: true },
+          feniqAmount: { type: Number, required: true },
+          savingAmount: { type: Number, required: true },
+        },
+        { _id: false }
+      ),
+      default: null,
+    },
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'],
