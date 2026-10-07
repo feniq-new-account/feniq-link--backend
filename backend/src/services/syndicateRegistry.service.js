@@ -212,10 +212,11 @@ async function getStatus() {
 // `entry` is the closest listed pharmacist (null when nothing is close), shown
 // to the admin as "closest name on the list" even when the decision is review.
 //
-// Approved when the pharmacist's name (typed as the owner's name, or as the
-// pharmacy's name - "صيدلية عمار شغري") matches a listed pharmacist, or when
-// the mobile number is on the list and the name is at least close. Phone
-// numbers and addresses that differ never count against anyone.
+// Approved only when the pharmacist's whole name - first name and family name,
+// typed as the owner's name or as the pharmacy's name ("صيدلية عمار شغري") -
+// matches a listed pharmacist, at or above the admin's minimum percentage.
+// One word is never enough, even with the listed mobile number. Phone numbers
+// and addresses that differ never count against anyone.
 async function check({ name, pharmacyName, phone }, { excludeUserId = null } = {}) {
   const entries = await loadEntries();
   if (entries.length === 0) {
@@ -248,9 +249,11 @@ async function check({ name, pharmacyName, phone }, { excludeUserId = null } = {
     if (samePhone) score += 30;
     score = Math.min(score, 100);
 
-    // Who it could be at all (the whole name, or the listed number with a
-    // close name), and whether the match is close enough to let in unseen.
-    const plausible = nameFound || (samePhone && (ratio >= 0.5 || samePharmacyName));
+    // Only the pharmacist's whole name (first name and family name) can let a
+    // pharmacy in: one word, even with the listed mobile number, waits for an
+    // admin (the owner's rule). The number and the pharmacy's name only add
+    // to the percentage of a whole-name match.
+    const plausible = nameFound;
     const approve = plausible && score >= minScore;
     const candidate = { entry, score, approve, plausible, nameFound, samePhone, samePharmacyName, ratio };
     const rank = (c) => (c.approve ? 2 : c.plausible ? 1 : 0);
@@ -268,8 +271,8 @@ async function check({ name, pharmacyName, phone }, { excludeUserId = null } = {
   let decision = best.approve ? 'approved' : 'review';
 
   if (best.approve) {
-    reasons.push(best.nameFound ? 'الاسم موجود بقائمة النقابة' : 'رقم الموبايل موجود بقائمة النقابة والاسم قريب');
-    if (best.nameFound && best.samePhone) reasons.push('ورقم الموبايل كمان مطابق');
+    reasons.push('الاسم موجود بقائمة النقابة');
+    if (best.samePhone) reasons.push('ورقم الموبايل كمان مطابق');
     // The cleaned list writes this in the address; an older copy had a notes column.
     if (/الغاء|إلغاء/.test(`${best.entry.notes || ''} ${best.entry.address || ''}`)) {
       decision = 'review';
@@ -288,7 +291,7 @@ async function check({ name, pharmacyName, phone }, { excludeUserId = null } = {
   } else if (best.plausible) {
     reasons.push(`الاسم قريب بس التطابق ${best.score}% أقل من الحد (${minScore}%)`);
   } else if (best.samePhone) {
-    reasons.push('رقم الموبايل موجود بالقائمة بس باسم مختلف');
+    reasons.push('رقم الموبايل موجود بالقائمة بس اسم الصيدلاني ناقص أو مختلف');
   } else if (best.samePharmacyName) {
     reasons.push('اسم الصيدلية موجود بالقائمة بس اسم الصيدلاني لأ');
   } else if (entry) {
