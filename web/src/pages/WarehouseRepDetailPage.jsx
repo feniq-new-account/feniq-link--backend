@@ -5,6 +5,8 @@ import QRCode from 'qrcode';
 import { api } from '../api/client';
 import { formatSyp } from '../utils/currency';
 import {
+  commissionSplit,
+  formatPercent,
   isVisitDue,
   lastSeenKey,
   toLocalPhone,
@@ -175,6 +177,19 @@ export function WarehouseRepDetailPage() {
             </span>
           </div>
           {!rep.isActive && <p className="hint">{t('reps.inactive')}</p>}
+          {rep.commissionRate > 0 ? (
+            <p className="hint">
+              {t('reps.commissionRate')}: <span className="wh-num">{formatPercent(rep.commissionRate)}</span>
+              {' — '}
+              {t('reps.commissionSplit', {
+                rep: formatPercent(commissionSplit(rep.commissionRate).rep),
+                feniq: formatPercent(commissionSplit(rep.commissionRate).feniq),
+                saving: formatPercent(commissionSplit(rep.commissionRate).saving),
+              })}
+            </p>
+          ) : (
+            <p className="hint">{t('reps.commissionNone')}</p>
+          )}
 
           {pharmacies.length === 0 ? (
             <div className="wh-empty-state">
