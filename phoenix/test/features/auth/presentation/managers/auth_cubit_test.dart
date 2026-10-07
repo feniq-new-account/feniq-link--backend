@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/constants/storage_keys.dart';
@@ -107,6 +109,38 @@ void main() {
       expect(cubit.state.sessionStatus, SessionStatus.offline);
       expect(cubit.state.sessionStatus, isNot(SessionStatus.unauthenticated));
       verifyNever(() => storage.delete(any()));
+      await cubit.close();
+    });
+
+    test('offline, the role in the stored token is kept so a rep still opens their own screens', () async {
+      String part(Object value) => base64Url.encode(utf8.encode(jsonEncode(value))).replaceAll('=', '');
+      final repToken = '${part({'alg': 'HS256'})}.${part({'sub': 'r1', 'role': 'rep'})}.sig';
+      when(() => storage.read(StorageKeys.authToken)).thenAnswer((_) async => repToken);
+      when(() => repo.getMe()).thenThrow(
+        ServerFailure('No Internet Connection', code: FailureCode.network),
+      );
+      final cubit = build();
+
+      await cubit.checkSession();
+
+      expect(cubit.state.sessionStatus, SessionStatus.offline);
+      expect(cubit.state.user, isNull);
+      expect(cubit.state.tokenRole, 'rep');
+      expect(cubit.state.isRep, isTrue);
+      await cubit.close();
+    });
+
+    test('offline with a token that is not a JWT leaves the role unknown (pharmacy home)', () async {
+      when(() => storage.read(StorageKeys.authToken)).thenAnswer((_) async => 'jwt');
+      when(() => repo.getMe()).thenThrow(
+        ServerFailure('No Internet Connection', code: FailureCode.network),
+      );
+      final cubit = build();
+
+      await cubit.checkSession();
+
+      expect(cubit.state.tokenRole, isNull);
+      expect(cubit.state.isRep, isFalse);
       await cubit.close();
     });
 

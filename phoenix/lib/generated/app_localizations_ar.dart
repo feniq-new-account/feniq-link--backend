@@ -167,6 +167,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get passwordLoginSubtitle => 'أدخل رقم هاتفك وكلمة السر';
 
   @override
+  String get repAppName => 'فينيق مندوب';
+
+  @override
+  String get repLoginTitle => 'دخول المندوب';
+
+  @override
+  String get repLoginSubtitle =>
+      'أدخل رقم موبايلك وكلمة السر اللي أعطاك ياها المستودع';
+
+  @override
+  String get repForgotPasswordHint =>
+      'نسيت كلمة السر؟ اطلب من المستودع كلمة سر جديدة.';
+
+  @override
+  String get errorRepAppOnly =>
+      'هذا التطبيق للمناديب فقط. حساب الصيدلية يدخل من تطبيق فينيق للصيدليات.';
+
+  @override
+  String get errorPharmacyAppOnly =>
+      'هذا حساب مندوب. سجّل الدخول من تطبيق «Feniq Rep» الخاص بالمناديب.';
+
+  @override
   String get backToRegistrationLink => 'جديد هون؟ أنشئ حساب';
 
   @override
@@ -1911,4 +1933,232 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get packageAddToCart => 'إضافة الباقة إلى السلة';
+
+  @override
+  String get repNavPharmacies => 'صيدلياتي';
+
+  @override
+  String get repNavVisits => 'زياراتي';
+
+  @override
+  String get repSearchHint => 'ابحث بالاسم أو المسؤول أو الهاتف أو العنوان';
+
+  @override
+  String get repScanAction => 'مسح باركود الزيارة';
+
+  @override
+  String get repNoPharmaciesTitle => 'لا توجد صيدليات معيّنة لك بعد';
+
+  @override
+  String get repNoPharmaciesSubtitle =>
+      'المستودع هو من يسند لك الصيدليات، وتظهر هنا فور إسنادها.';
+
+  @override
+  String get repNoSearchResults => 'لا توجد صيدلية مطابقة لبحثك';
+
+  @override
+  String get repNeverVisited => 'لم تُزَر بعد';
+
+  @override
+  String repLastVisitAgo(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'آخر زيارة: منذ $days يوم',
+      many: 'آخر زيارة: منذ $days يوماً',
+      few: 'آخر زيارة: منذ $days أيام',
+      two: 'آخر زيارة: منذ يومين',
+      one: 'آخر زيارة: أمس',
+      zero: 'آخر زيارة: اليوم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String repMonthOrdersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count طلبية هذا الشهر',
+      many: '$count طلبية هذا الشهر',
+      few: '$count طلبيات هذا الشهر',
+      two: 'طلبيتان هذا الشهر',
+      one: 'طلبية واحدة هذا الشهر',
+      zero: 'لا طلبيات هذا الشهر',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repStatPharmacies => 'الصيدليات';
+
+  @override
+  String get repStatVisitsWeek => 'زيارات 7 أيام';
+
+  @override
+  String get repStatOrdersMonth => 'طلبيات الشهر';
+
+  @override
+  String get repStatSalesMonth => 'قيمتها';
+
+  @override
+  String get repStatCommissionMonth => 'عمولتك هذا الشهر';
+
+  @override
+  String repCommissionHint(String rate) {
+    return 'عمولتك $rate من قيمة الطلبيات المسلَّمة لصيدلياتك عبر فينيق.';
+  }
+
+  @override
+  String get repOwnerLabel => 'المسؤول';
+
+  @override
+  String get repCallAction => 'اتصال';
+
+  @override
+  String get repLogVisitAction => 'سجّل زيارة';
+
+  @override
+  String get repNoLocationWarning =>
+      'هذه الصيدلية لم تحدد موقعها على الخريطة بعد، فلا يمكن توثيق الزيارة عندها.';
+
+  @override
+  String get repRecentOrders => 'آخر الطلبيات';
+
+  @override
+  String get repNoOrdersYet => 'لا طلبيات من هذه الصيدلية بعد';
+
+  @override
+  String get repRecentVisits => 'آخر زياراتك هنا';
+
+  @override
+  String get repNoVisitsHere => 'لم تزر هذه الصيدلية بعد';
+
+  @override
+  String get repVisitsTitle => 'زياراتي';
+
+  @override
+  String get repNoVisitsTitle => 'لم تسجّل أي زيارة بعد';
+
+  @override
+  String get repNoVisitsSubtitle =>
+      'امسح باركود الصيدلية عند زيارتها لتسجيل الزيارة.';
+
+  @override
+  String get repVisitVerified => 'موثّقة';
+
+  @override
+  String get repVisitOutOfRange => 'خارج النطاق';
+
+  @override
+  String get repVisitMockLocation => 'موقع مزيّف';
+
+  @override
+  String get repVisitNoPharmacyLocation => 'الصيدلية بلا موقع';
+
+  @override
+  String repDistanceMeters(int meters) {
+    return 'على بعد $meters م';
+  }
+
+  @override
+  String get repScanTitle => 'مسح باركود الزيارة';
+
+  @override
+  String get repScanHint =>
+      'وجّه الكاميرا نحو باركود فينيق الموجود عند الصيدلية.';
+
+  @override
+  String get repScanNotFeniq => 'هذا ليس باركود زيارة من فينيق.';
+
+  @override
+  String get repScanLocating => 'جارٍ تحديد موقعك...';
+
+  @override
+  String get repScanSubmitting => 'جارٍ تسجيل الزيارة...';
+
+  @override
+  String get repScanVerifiedTitle => 'تم توثيق الزيارة';
+
+  @override
+  String get repScanDuplicateTitle => 'سُجّلت هذه الزيارة قبل قليل';
+
+  @override
+  String get repScanUnverifiedTitle => 'سُجّلت الزيارة وهي غير موثّقة';
+
+  @override
+  String repScanOutOfRangeMessage(int meters) {
+    return 'هاتفك على بعد $meters م من الصيدلية. اذهب إلى الصيدلية وامسح الباركود من جديد ليُوثَّق.';
+  }
+
+  @override
+  String get repScanMockMessage =>
+      'هاتفك يُبلّغ عن موقع مزيّف، لذلك لا يمكن توثيق الزيارة.';
+
+  @override
+  String get repScanNoLocationMessage =>
+      'الصيدلية لم تحدد موقعها بعد، لذلك لا يمكن توثيق الزيارة.';
+
+  @override
+  String get repScanAnother => 'مسح باركود آخر';
+
+  @override
+  String get repScanTryAgain => 'حاول مرة أخرى';
+
+  @override
+  String get repLocationServiceOff =>
+      'فعّل خدمة الموقع (GPS) في هاتفك ثم حاول مرة أخرى.';
+
+  @override
+  String get repLocationDenied => 'نحتاج إذن الموقع لتوثيق الزيارة.';
+
+  @override
+  String get repLocationDeniedForever =>
+      'إذن الموقع محظور. اسمح به من إعدادات التطبيق.';
+
+  @override
+  String get repLocationUnavailable =>
+      'تعذّر تحديد موقعك. تأكد أن GPS يعمل وحاول مرة أخرى.';
+
+  @override
+  String get repOpenSettings => 'فتح الإعدادات';
+
+  @override
+  String get repCameraDenied =>
+      'نحتاج إذن الكاميرا لمسح الباركود. اسمح به من إعدادات التطبيق.';
+
+  @override
+  String get repCameraUnavailable => 'تعذّر تشغيل الكاميرا.';
+
+  @override
+  String get repWarehouseLabel => 'المستودع';
+
+  @override
+  String get repProfileHint =>
+      'أنت مسجّل الدخول كمندوب. المستودع هو من يدير صيدلياتك.';
+
+  @override
+  String get errorRepPharmacyNotAssigned => 'هذه الصيدلية غير معيّنة لك.';
+
+  @override
+  String get errorRepVisitCodeUnknown => 'لا توجد صيدلية بهذا الباركود.';
+
+  @override
+  String get errorRepVisitCodeInvalid => 'هذا ليس باركود زيارة من فينيق.';
+
+  @override
+  String get errorRepInactive => 'أوقف المستودع حساب المندوب الخاص بك.';
+
+  @override
+  String get errorRepInvalidLocation => 'تعذّرت قراءة موقعك. حاول مرة أخرى.';
+
+  @override
+  String get pharmacyVisitCodeTitle => 'باركود الزيارة';
+
+  @override
+  String get pharmacyVisitCodeSubtitle => 'للمناديب الذين يزورونك';
+
+  @override
+  String get pharmacyVisitCodeIntro =>
+      'اعرض هذا الباركود لمندوب المستودع ليمسحه عند زيارتك. تُوثَّق الزيارة فقط إذا كان هاتفه عند صيدليتك.';
 }

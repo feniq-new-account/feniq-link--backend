@@ -33,6 +33,7 @@ class AuthState {
     this.otpSent = false,
     this.user,
     this.pharmacy,
+    this.tokenRole,
   });
 
   final SessionStatus sessionStatus;
@@ -46,6 +47,15 @@ class AuthState {
   final UserModel? user;
   final PharmacyModel? pharmacy;
 
+  // The role read from the stored access token - the only thing known about
+  // the account while the server cannot be reached to say (`offline`). Never
+  // trusted for anything the server enforces; it only picks which home screen
+  // an offline start opens.
+  final String? tokenRole;
+
+  String? get role => user?.role ?? tokenRole;
+  bool get isRep => role == 'rep';
+
   AuthState copyWith({
     SessionStatus? sessionStatus,
     bool? isSubmitting,
@@ -55,6 +65,7 @@ class AuthState {
     bool? otpSent,
     UserModel? user,
     PharmacyModel? pharmacy,
+    String? tokenRole,
   }) {
     return AuthState(
       sessionStatus: sessionStatus ?? this.sessionStatus,
@@ -64,6 +75,7 @@ class AuthState {
       otpSent: otpSent ?? this.otpSent,
       user: user ?? this.user,
       pharmacy: pharmacy ?? this.pharmacy,
+      tokenRole: tokenRole ?? this.tokenRole,
     );
   }
 }

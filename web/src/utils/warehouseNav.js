@@ -23,6 +23,8 @@ export const WAREHOUSE_NAV_ALL = [
   // Deliberately standalone rather than folded into Orders or Promotions: it is
   // an action queue that needs quick access, not a browsing screen.
   { id: 'returns', labelKey: 'nav.returns', path: '/warehouse/returns' },
+  // Field reps: their accounts, the pharmacies each covers, and their visits.
+  { id: 'reps', labelKey: 'nav.reps', path: '/warehouse/reps' },
   {
     id: 'promotions',
     labelKey: 'nav.promotions',

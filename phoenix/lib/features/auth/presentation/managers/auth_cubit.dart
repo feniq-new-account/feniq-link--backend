@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:feniq/core/config/app_edition.dart';
 import 'package:feniq/core/constants/storage_keys.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/core/services/auth_event_bus.dart';
@@ -10,6 +11,7 @@ import 'package:feniq/core/services/fcm_service.dart';
 import 'package:feniq/core/services/navigation_service.dart';
 import 'package:feniq/core/services/secure_storage_service.dart';
 import 'package:feniq/core/session/session_scope.dart';
+import 'package:feniq/core/utils/jwt_role.dart';
 import 'package:feniq/features/auth/data/models/auth_response.dart';
 import 'package:feniq/features/auth/data/models/user_model.dart';
 import 'package:feniq/features/auth/data/repositories/auth_repository_impl.dart';
@@ -96,9 +98,13 @@ class AuthCubit extends Cubit<AuthState> {
       return;
     }
     _sessionCheckInFlight = true;
+    // Kept outside the try so the catch-all below can still tell an offline
+    // start which home screen to open (the role is in the token).
+    String? storedToken;
     try {
       _log('[AUTH] Session check started (resume: $isResume)');
       final token = await _secureStorage.read(StorageKeys.authToken);
+      storedToken = token;
       if (token == null || token.isEmpty) {
         _log('[AUTH] No token - unauthenticated');
         _isHandlingUnauthorized = false;
@@ -136,6 +142,7 @@ class AuthCubit extends Cubit<AuthState> {
           emit(
             state.copyWith(
               sessionStatus: SessionStatus.offline,
+              tokenRole: roleFromJwt(token),
               errorCode: f.code,
               errorMessage: f.errMessage,
             ),
@@ -148,7 +155,12 @@ class AuthCubit extends Cubit<AuthState> {
       // screen; a resume leaves the session as-is.
       _log('[AUTH] Unexpected error during session check - keeping token ($e)');
       if (!isResume) {
-        emit(state.copyWith(sessionStatus: SessionStatus.offline));
+        emit(
+          state.copyWith(
+            sessionStatus: SessionStatus.offline,
+            tokenRole: roleFromJwt(storedToken),
+          ),
+        );
       }
     } finally {
       _sessionCheckInFlight = false;
@@ -265,6 +277,14 @@ class AuthCubit extends Cubit<AuthState> {
 
   // Section 6-2: phone + password, no OTP - only usable after an account
   // already went through register() at least once.
+  // A rep signs in to the rep app and a pharmacy to the pharmacy app (see
+  // AppEdition); the other way round is refused with a message that says where
+  // to go. Null when the account belongs here.
+  String? _wrongAppCodeFor(UserModel user) {
+    if (AppEdition.isRepApp) return user.isRep ? null : 'REP_APP_ONLY';
+    return user.isRep ? 'PHARMACY_APP_ONLY' : null;
+  }
+
   Future<bool> loginWithPassword({
     required String phone,
     required String password,
@@ -275,6 +295,19 @@ class AuthCubit extends Cubit<AuthState> {
         phone: phone,
         password: password,
       );
+      // The two apps take different accounts: the answer comes before anything
+      // is stored, so a refused account leaves nothing behind on this phone.
+      final wrongApp = _wrongAppCodeFor(result.user);
+      if (wrongApp != null) {
+        emit(
+          state.copyWith(
+            isSubmitting: false,
+            errorMessage: 'This account belongs to the other Feniq app.',
+            errorCode: wrongApp,
+          ),
+        );
+        return false;
+      }
       await _persistSession(result);
       _onAuthenticated();
       final sessionStatus = _sessionStatusFor(result.user);

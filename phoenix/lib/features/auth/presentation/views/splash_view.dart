@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:feniq/core/config/app_edition.dart';
 import 'package:feniq/core/constants/app_colors.dart';
+import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/widgets/brand_logo.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
+import 'package:feniq/routes/home_route.dart';
 import 'package:feniq/routes/route_names.dart';
 
 // The two halves of the logo's breathing animation, keyed so a test can find
 // them among the router's own page transitions.
 const Key splashLogoFadeKey = ValueKey('splashLogoFade');
 const Key splashLogoScaleKey = ValueKey('splashLogoScale');
+const Key splashRepNameKey = ValueKey('splashRepName');
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -48,7 +52,7 @@ class _SplashViewState extends State<SplashView> {
       case SessionStatus.passwordChangeRequired:
         context.goNamed(RouteNames.changePassword);
       case SessionStatus.active:
-        context.goNamed(RouteNames.warehouseSelection);
+        context.goNamed(homeRouteNameFor(context.read<AuthCubit>().state));
       case SessionStatus.offline:
         // The stored token is still present and untouched - the server just
         // could not be reached to re-validate it on this launch. That is not
@@ -57,7 +61,7 @@ class _SplashViewState extends State<SplashView> {
         // (and every other screen that needs the network) already shows its
         // own error state with a retry, which is where a genuine outage
         // belongs.
-        context.goNamed(RouteNames.warehouseSelection);
+        context.goNamed(homeRouteNameFor(context.read<AuthCubit>().state));
       case SessionStatus.unknown:
         // The check is still running - stay on the logo.
         break;
@@ -136,6 +140,24 @@ class _SplashLogoState extends State<_SplashLogo>
           ),
         ),
       ),
+      // The rep app names itself under the logo (the pharmacy app has no text).
+      bottomNavigationBar: AppEdition.isRepApp
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 32),
+                child: Text(
+                  context.l10n.repAppName,
+                  key: splashRepNameKey,
+                  textAlign: TextAlign.center,
+                  style: context.textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

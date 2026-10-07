@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:feniq/core/config/app_edition.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -16,8 +17,12 @@ import 'package:feniq/core/widgets/phone_text_field.dart';
 import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
+import 'package:feniq/routes/home_route.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/core/widgets/full_text.dart';
+
+// The rep app's name on its sign-in, keyed so a test can find it.
+const Key repAppNameKey = ValueKey('repAppName');
 
 // Section 6-2: the returning-user alternative to the OTP flow - phone +
 // password, no SMS round-trip. Only reachable via the link on
@@ -94,7 +99,7 @@ class _PasswordLoginViewState extends State<PasswordLoginView> {
       case SessionStatus.passwordChangeRequired:
         context.goNamed(RouteNames.changePassword);
       case SessionStatus.active:
-        context.goNamed(RouteNames.warehouseSelection);
+        context.goNamed(homeRouteNameFor(cubit.state));
       case SessionStatus.unknown:
       case SessionStatus.unauthenticated:
       case SessionStatus.offline:
@@ -105,12 +110,13 @@ class _PasswordLoginViewState extends State<PasswordLoginView> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isRepApp = AppEdition.isRepApp;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
-        title: FullText(l10n.passwordLoginTitle, minScale: 0.6),
+        title: FullText(isRepApp ? l10n.repLoginTitle : l10n.passwordLoginTitle, minScale: 0.6),
       ),
       body: BlocListener<AuthCubit, AuthState>(
         listenWhen: (previous, current) =>
@@ -131,9 +137,24 @@ class _PasswordLoginViewState extends State<PasswordLoginView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Center(child: BrandLogo(width: 150)),
+                  // The rep app says so on its own sign-in, so it can never be
+                  // mistaken for the pharmacy app.
+                  if (isRepApp) ...[
+                    const SizedBox(height: AppSizes.spacingSmall),
+                    Center(
+                      child: Text(
+                        l10n.repAppName,
+                        key: repAppNameKey,
+                        style: context.textTheme.titleLarge?.copyWith(
+                          color: AppColors.primaryOf(context),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AppSizes.spacingLarge),
                   Text(
-                    l10n.passwordLoginSubtitle,
+                    isRepApp ? l10n.repLoginSubtitle : l10n.passwordLoginSubtitle,
                     style: context.textTheme.bodyMedium?.copyWith(
                       color: AppColors.textSecondaryOf(context),
                     ),
@@ -167,22 +188,37 @@ class _PasswordLoginViewState extends State<PasswordLoginView> {
                     ),
                   ),
                   const SizedBox(height: AppSizes.spacingSmall),
-                  Center(
-                    child: TextButton.icon(
-                      onPressed: _contactSupportForPassword,
-                      icon: const Icon(Icons.support_agent_outlined, size: 18),
-                      label: Text(
-                        l10n.forgotPasswordSupportLink,
+                  if (isRepApp)
+                    // A rep's password comes from the warehouse, not from Feniq
+                    // support, and a rep never creates an account here.
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSizes.spacingSmall),
+                      child: Text(
+                        l10n.repForgotPasswordHint,
                         textAlign: TextAlign.center,
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondaryOf(context),
+                        ),
+                      ),
+                    )
+                  else ...[
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: _contactSupportForPassword,
+                        icon: const Icon(Icons.support_agent_outlined, size: 18),
+                        label: Text(
+                          l10n.forgotPasswordSupportLink,
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
-                  ),
-                  Center(
-                    child: TextButton(
-                      onPressed: () => context.pushReplacementNamed(RouteNames.registration),
-                      child: Text(l10n.backToRegistrationLink),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => context.pushReplacementNamed(RouteNames.registration),
+                        child: Text(l10n.backToRegistrationLink),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

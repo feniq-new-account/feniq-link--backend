@@ -49,6 +49,12 @@ const pharmacySchema = new Schema(
       type: { type: String, enum: ['Point'] },
       coordinates: { type: [Number] },
     },
+    // The token in the pharmacy's visit QR (the sticker on its glass a rep
+    // scans to log a visit - repPortal.service.js). Minted on first request
+    // (pharmacyVisitCode.service.js), so older pharmacies simply have none
+    // until someone asks. Not a secret on its own: a rep's scan only counts
+    // when their phone is also at this pharmacy's `location`.
+    visitCode: { type: String, default: undefined },
     // What the registration was checked against the syndicate list and what
     // came of it (services/syndicateRegistry.service.js). A copy, not a
     // reference: the list is replaced wholesale on every upload. Absent on
@@ -83,6 +89,7 @@ const pharmacySchema = new Schema(
 pharmacySchema.index({ userId: 1 });
 pharmacySchema.index({ city: 1 });
 pharmacySchema.index({ location: '2dsphere' });
+pharmacySchema.index({ visitCode: 1 }, { unique: true, sparse: true });
 
 // Perf/pagination follow-up: plain single-field indexes backing the
 // unanchored regex `$or` name searches (admin.service.js's

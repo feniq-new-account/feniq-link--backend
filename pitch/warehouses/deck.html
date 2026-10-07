@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>فينيق — عرض للمستودعات</title>
+<link rel="stylesheet" href="brand.css">
+<style>
+  @page { size: 1920px 1080px; margin: 0; }
+  body { background: #5c6675; }
+  .slide {
+    width: 1920px; height: 1080px; overflow: hidden; position: relative;
+    margin: 0 auto 40px; page-break-after: always; break-after: page;
+    background: #fff; padding: 96px 120px 110px; font-size: 32px; line-height: 1.6;
+  }
+  @media print { body { background: #fff; } .slide { margin: 0; } }
+  .slide.dark { background: var(--ground); color: #fff; }
+  .slide.paper { background: var(--paper); }
+  .slide.orange { background: var(--orange); color: #1A1206; }
+  .notes { display: none; }
+
+  .kicker { font-size: 26px; margin-bottom: 26px; }
+  h1 { font-weight: 800; font-size: 76px; line-height: 1.22; letter-spacing: -0.01em; }
+  h2 { font-weight: 800; font-size: 62px; line-height: 1.25; letter-spacing: -0.01em; margin-bottom: 18px; }
+  .sub { font-size: 34px; color: var(--ink-soft); }
+  .dark .sub { color: var(--on-dark-soft); }
+  .soft { color: var(--ink-soft); }
+  .dark .soft { color: var(--on-dark-soft); }
+  .foot {
+    position: absolute; bottom: 44px; left: 120px; right: 120px;
+    display: flex; justify-content: space-between; align-items: center; font-size: 20px; color: var(--ink-soft);
+  }
+  .dark .foot { color: var(--on-dark-soft); }
+  .foot img { height: 64px; }
+  ul.list { list-style: none; }
+  ul.list li { position: relative; padding-right: 44px; margin-bottom: 16px; }
+  ul.list li::before { content: ""; position: absolute; right: 0; top: 0.72em; width: 26px; height: 9px; background: var(--orange); border-radius: 2px; }
+
+  /* 1 الغلاف */
+  .cover { display: grid; grid-template-columns: 1fr 520px; gap: 80px; align-items: center; height: 100%; }
+  .cover h1 { font-size: 92px; }
+  .cover .logo { width: 100%; }
+  .cover .chips { display: flex; gap: 18px; margin-top: 64px; }
+  .cover .chips .plate { font-size: 30px; padding: 10px 28px 12px; }
+
+  /* 2 المقارنة */
+  table.cmp { width: 100%; border-collapse: separate; border-spacing: 0 10px; font-size: 28px; margin-top: 14px; }
+  table.cmp th { font-size: 26px; font-weight: 700; text-align: right; padding: 0 28px 4px; color: var(--ink-soft); }
+  table.cmp td { padding: 15px 28px; vertical-align: middle; line-height: 1.45; }
+  table.cmp td.k { font-weight: 800; width: 22%; }
+  table.cmp td.old { background: #fff; border: 1px solid var(--silver-edge); color: #4a5568; }
+  table.cmp td.new { background: var(--drawer); color: #fff; border-bottom: 4px solid var(--seam); font-weight: 600; }
+  table.cmp td.new::before { content: ""; display: inline-block; width: 22px; height: 8px; background: var(--orange); border-radius: 2px; margin-left: 16px; vertical-align: middle; }
+
+  /* 3 درجان متقابلان */
+  .pairs { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 30px; margin-top: 40px; }
+  .pairs .head { font-family: "Reem Kufi", sans-serif; font-weight: 700; font-size: 30px; }
+  .drawer { background: var(--drawer); border-radius: 4px; border-bottom: 4px solid var(--seam); padding: 28px 32px; display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; }
+  .drawer .plate { font-size: 27px; white-space: nowrap; }
+  .drawer > span:not(.plate) { font-size: 28px; color: var(--on-dark-soft); line-height: 1.45; }
+
+  /* لقطات */
+  .phones3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 70px; margin-top: 26px; align-items: start; }
+  .phones3 figure { text-align: center; }
+  .phones3 img { width: 310px; margin: 0 auto; }
+  .phones3 figcaption { font-size: 26px; margin-top: 18px; line-height: 1.45; }
+.phones4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 56px; margin-top: 30px; align-items: start; }
+  .phones4 figure { text-align: center; }
+  .phones4 img { width: 292px; margin: 0 auto; }
+  .phones4 figcaption { font-size: 25px; margin-top: 16px; line-height: 1.45; }
+  .demo-note { font-size: 20px; color: var(--ink-soft); }
+  .dark .demo-note { color: var(--on-dark-soft); }
+
+  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 44px 40px; }
+  .tool { display: grid; grid-template-columns: 64px 1fr; gap: 20px; align-items: start; }
+  .tool i { font-style: normal; font-family: "Reem Kufi", sans-serif; font-weight: 700; color: #fff; background: var(--orange); border-radius: 4px; height: 64px; display: grid; place-items: center; font-size: 28px; border-bottom: 3px solid var(--orange-deep); }
+  .tool div > b { display: block; font-size: 34px; line-height: 1.3; }
+  .tool div > span { display: block; font-size: 27px; color: var(--ink-soft); line-height: 1.45; margin-top: 4px; }
+
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 36px; }
+  .step { background: var(--drawer); color: #fff; border-radius: 4px; border-bottom: 5px solid var(--seam); padding: 44px 36px 50px; }
+  .step .n { font-family: "Reem Kufi", sans-serif; font-weight: 700; color: var(--orange); font-size: 84px; line-height: 1; }
+  .step > b { display: block; font-size: 38px; margin: 20px 0 14px; line-height: 1.3; }
+  .step > span { display: block; font-size: 29px; color: var(--on-dark-soft); line-height: 1.55; }
+  .chips { display: flex; gap: 18px; margin-top: 18px; }
+  .chips .plate { font-size: 30px; padding: 8px 26px 10px; }
+
+  /* نقاط مرقّمة (الكلفة) */
+  .points { display: grid; gap: 40px; }
+  .point { display: grid; grid-template-columns: 76px 1fr; gap: 26px; align-items: start; }
+  .point .n { font-family: "Reem Kufi", sans-serif; font-weight: 700; font-size: 44px; color: #1A1206; background: var(--orange); border-radius: 4px; height: 76px; display: grid; place-items: center; border-bottom: 4px solid var(--orange-deep); }
+  .point > div > b { display: block; font-size: 33px; line-height: 1.4; }
+  .point > div > span { display: block; font-size: 26px; color: var(--on-dark-soft); line-height: 1.5; margin-top: 4px; }
+  .split-card { background: var(--drawer); border-radius: 6px; border-bottom: 6px solid var(--orange); padding: 40px 44px 44px; }
+  .split-bar { display: flex; height: 120px; border-radius: 4px; overflow: hidden; margin: 26px 0 22px; direction: rtl; }
+  .split-bar > div { display: grid; place-items: center; font-family: "Reem Kufi", sans-serif; font-weight: 700; font-size: 42px; }
+  .split-bar .rep { flex: 50; background: #fff; color: var(--navy); }
+  .split-bar .feniq { flex: 25; background: var(--orange); color: #1A1206; }
+  .split-bar .save { flex: 25; background: #2E7D4F; color: #fff; }
+  .legend { display: grid; gap: 10px; font-size: 27px; }
+  .legend div { display: flex; justify-content: space-between; gap: 16px; }
+  .legend b { white-space: nowrap; }
+
+  /* أسئلة وأجوبة */
+  .qa { display: grid; grid-template-columns: 1fr 1fr; gap: 40px 56px; margin-top: 34px; }
+  .q h3 { font-size: 34px; line-height: 1.4; display: flex; gap: 14px; }
+  .q h3::before { content: ""; flex: 0 0 auto; width: 18px; height: 18px; margin-top: 0.62em; background: var(--orange); border-radius: 2px; }
+  .q p { font-size: 28px; line-height: 1.6; color: var(--ink-soft); margin-top: 4px; padding-right: 32px; }
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="slide dark">
+  <div class="cover">
+    <div>
+      <span class="plate kicker">عرض للمستودعات</span>
+      <h1>فينيق<br>قناة طلب رقمية بين<br>المستودعات والصيدليات</h1>
+      <p class="sub" style="margin-top:28px">اللاذقية · تشرين الأول 2026</p>
+      <div class="chips">
+        <span class="plate">تطبيق للصيدليات</span><span class="plate">لوحة للمستودع</span><span class="plate plate--orange">حساب لكل مندوب</span>
+      </div>
+    </div>
+    <img class="logo" src="assets/logo-dark.png" alt="فينيق">
+  </div>
+  <aside class="notes">هذا عرض قصير عن فينيق، منصة تربط مستودعات الأدوية بالصيدليات. الفكرة باختصار: الصيدلية تطلب من تطبيق على الموبايل، والمستودع يستلم الطلبية مكتوبة على لوحة تحكم، ولكل مندوب حساب يرى فيه صيدلياته. في آخر العرض سنعرض الكلفة بالتفصيل، وهي بسيطة.</aside>
+</section>
+
+<!-- 2 -->
+<section class="slide paper">
+  <h2>الطلبية نفسها، بطريقتين</h2>
+  <p class="sub">اليوم تمر الطلبية بمكالمة أو رسالة واتساب، ثم يدوّنها أحد باليد.</p>
+  <table class="cmp">
+    <tr><th></th><th>بالهاتف والواتساب</th><th>عبر فينيق</th></tr>
+    <tr><td class="k">إرسال الطلب</td><td class="old">مكالمات، وتأخير في الرد والتدوين بأوقات الذروة</td><td class="new">طلب مباشر من التطبيق بثوانٍ، في أي وقت</td></tr>
+    <tr><td class="k">دقة الطلبية</td><td class="old">أخطاء بالأصناف والكميات من الكلام الشفهي</td><td class="new">كل صنف وكمية مكتوبان كما طلبتهما الصيدلية</td></tr>
+    <tr><td class="k">الحسابات</td><td class="old">دفاتر وملفات متفرقة لأرصدة الصيدليات</td><td class="new">رصيد كل صيدلية ودفعاتها وفواتيرها في مكان واحد</td></tr>
+    <tr><td class="k">المرتجعات</td><td class="old">تسجيل يدوي يصعب تتبعه</td><td class="new">طلب إرجاع منظّم وموثّق من التطبيق</td></tr>
+    <tr><td class="k">المندوب</td><td class="old">جولات بلا سجل واضح للزيارات والطلبيات</td><td class="new">صيدلياته وزياراته الموثّقة وطلبياته على حسابه</td></tr>
+  </table>
+  <div class="foot"><span>فينيق · عرض للمستودعات</span><img src="assets/mark-light.png" alt=""></div>
+  <aside class="notes">كلنا نعرف كيف تصل الطلبيات اليوم: مكالمات ورسائل واتساب، خصوصاً بأوقات الذروة، وبعدها أحد يكتبها باليد، ومن هنا تأتي أخطاء الأصناف والكميات. فينيق لا يغيّر طريقة عمل المستودع، لكنه يضيف طريقاً تصل منه الطلبية مكتوبة وجاهزة، ويجمع الحسابات والمرتجعات وعمل المناديب في مكان واحد.</aside>
+</section>
+
+<!-- 3 -->
+<section class="slide dark">
+  <h2>ما تربحه الصيدلية يقابله ما يربحه المستودع</h2>
+  <div class="pairs">
+    <div class="head">الصيدلية · تطبيق Android</div><div class="head">المستودع · لوحة تحكم على الويب</div>
+    <div class="drawer"><span class="plate">بحث سريع</span><span>كل الأصناف مع السعر والتوفر بأول حروف الاسم</span></div>
+    <div class="drawer"><span class="plate">طلبات مبوّبة</span><span>كل طلبية تصل مصنّفة حسب الحالة، لا شيء يضيع بين الرسائل</span></div>
+    <div class="drawer"><span class="plate">طلب وتتبّع</span><span>ترسل الطلبية بنقرة وتتابع حالتها حتى تصل</span></div>
+    <div class="drawer"><span class="plate">أصنافكم بيدكم</span><span>الأسعار والتوفر من اللوحة، أو الكتالوج كاملاً من ملف إكسل</span></div>
+    <div class="drawer"><span class="plate">إعادة الطلب</span><span>كل طلبياتها السابقة محفوظة، وتعيد أي منها بضغطة</span></div>
+    <div class="drawer"><span class="plate">الحسابات</span><span>رصيد كل صيدلية، الدفعات، وفاتورة لكل طلبية مسلّمة</span></div>
+    <div class="drawer"><span class="plate">عروض وحسومات</span><span>ترى عروضكم وبونصكم وباقاتكم داخل التطبيق</span></div>
+    <div class="drawer"><span class="plate">قناة بيع إضافية</span><span>صيدليات أكثر تطلب منكم إلى جانب طريقة عملكم الحالية</span></div>
+  </div>
+  <div class="foot"><span>الدفع عند التسليم فقط. لا بطاقات ولا دفع إلكتروني.</span><img src="assets/mark-dark.png" alt=""></div>
+  <aside class="notes">فينيق له طرفان: الصيدلية تستعمل تطبيقاً على موبايل أندرويد، والمستودع يستعمل لوحة تحكم تفتح من أي لابتوب. كل ميزة للصيدلية يقابلها شيء يربحه المستودع. والدفع يبقى عند التسليم كما هو اليوم.</aside>
+</section>
+
+<!-- 4 -->
+<section class="slide paper">
+  <h2>ما تراه الصيدلية</h2>
+  <div class="phones3">
+    <figure><img class="phone" src="assets/shots/a2-products.png" alt=""><figcaption>الأصناف: السعر، العرض، البونص، والبدائل</figcaption></figure>
+    <figure><img class="phone" src="assets/shots/a3-cart.png" alt=""><figcaption>السلة: الكميات والبونص والإجمالي</figcaption></figure>
+    <figure><img class="phone" src="assets/shots/a6-tracking.png" alt=""><figcaption>تتبّع الطلبية من الإرسال حتى التسليم</figcaption></figure>
+  </div>
+  <div class="foot"><span class="demo-note">لقطات حقيقية من التطبيق ببيانات تجريبية: «مستودع تجريبي» والصيدليات والأسعار توضيحية.</span><img src="assets/mark-light.png" alt=""></div>
+  <aside class="notes">هذه لقطات حقيقية من التطبيق، من نسخة تجريبية. الصيدلي يتصفح أصناف المستودع فيرى السعر والعرض والبونص وتاريخ الصلاحية، ويضيف للسلة فيُحسب البونص تلقائياً، ثم يرسل ويتابع طلبيته خطوة بخطوة. المستودع في اللقطات اسمه «مستودع تجريبي» والأسعار توضيحية.</aside>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <h2>ما تراه أنت: كل الطلبيات مرتّبة حسب الحالة</h2>
+  <img class="shot" src="assets/shots/d1-orders.jpg" alt="" style="width:100%; height:730px; object-fit:cover; object-position:top; margin-top:10px">
+  <div class="foot"><span>الطلبية تظهر فوراً من دون تحديث الصفحة · زر واحد ينقلها للمرحلة التالية · وتعديلها ممكن قبل الإرسال</span><img src="assets/mark-light.png" alt=""></div>
+  <aside class="notes">وهذه لوحة التحكم عند المستودع. كل طلبية تظهر فوراً من دون تحديث الصفحة، مع اسم الصيدلية وقيمة الطلبية وحالتها: بانتظار الموافقة، بالطريق، تم التسليم. زر واحد ينقلها للمرحلة التالية، والصيدلية ترى الحالة الجديدة في تطبيقها. وقبل الإرسال يمكن تعديل الطلبية من زر «تعديل».</aside>
+</section>
+
+<!-- 6 -->
+<section class="slide dark">
+  <div style="display:grid; grid-template-columns: 620px 1fr; gap: 60px; align-items:center; height:100%">
+    <div>
+      <h2>الأصناف والأسعار بيدك</h2>
+      <ul class="list" style="font-size:29px; margin-top:30px">
+        <li>ارفع كتالوجك كاملاً من ملف إكسل (القالب جاهز للتحميل)، فتظهر أصنافك للصيدليات بصور العلب والمادة الفعالة.</li>
+        <li>عدّل الأسعار والتوفر من اللوحة، أو بملف جديد دفعة واحدة.</li>
+        <li>أخفِ صنفاً من الكتالوج بضغطة إن نفد.</li>
+        <li>البونص مثل <span class="ltr">10+3</span> على أي صنف، ويُحسب تلقائياً في الطلبية.</li>
+      </ul>
+    </div>
+    <div>
+      <img class="shot" src="assets/shots/d3-catalog.jpg" alt="" style="width:100%">
+      <p class="demo-note" style="margin-top:14px">من لوحة التحكم: الكتالوج مجمّع حسب الشركة المصنّعة. بيانات تجريبية.</p>
+    </div>
+  </div>
+  <div class="foot"><span>فينيق · عرض للمستودعات</span><img src="assets/mark-dark.png" alt=""></div>
+  <aside class="notes">الكتالوج يدخل من ملف إكسل: يحمّل المستودع القالب، يعبّئه من برنامج المحاسبة، ويرفعه، فتظهر الأصناف للصيدليات بصور العلب والمادة الفعالة. بعدها يعدّل الأسعار والتوفر من اللوحة أو بملف جديد، ويخفي أي صنف نفد بضغطة. والبونص يُحدَّد على أي صنف ويُحسب تلقائياً.</aside>
+</section>
+
+<!-- 7 -->
+<section class="slide paper">
+  <div style="display:grid; grid-template-columns: 1fr 380px; gap: 90px; align-items:start">
+    <div>
+      <h2>أدوات بيع وترويج داخل التطبيق</h2>
+      <p class="sub" style="margin-bottom:40px">تتحكم بها من لوحة التحكم، وتظهر للصيدليات بعد مراجعة فريق فينيق.</p>
+      <div class="tools">
+        <div class="tool"><i>%</i><div><b>عروض لفترة محددة</b><span>نسبة حسم على صنف تظهر في قسم العروض</span></div></div>
+        <div class="tool"><i class="ltr">+1</i><div><b>بونص</b><span>مثل <span class="ltr">10+1</span>، يُحسب تلقائياً في الطلبية</span></div></div>
+        <div class="tool"><i>3</i><div><b>باقات</b><span>مجموعة أصناف بسعر واحد، مثل باقة الأمراض المزمنة</span></div></div>
+        <div class="tool"><i>%</i><div><b>حسم على شركة كاملة</b><span>نسبة ثابتة على كل أصناف شركة مصنّعة</span></div></div>
+        <div class="tool"><i>▣</i><div><b>بانرات</b><span>على الصفحة الرئيسية للتطبيق لأصناف تختارها</span></div></div>
+        <div class="tool"><i>★</i><div><b>تقييمات وشكاوى</b><span>الصيدلية تقيّم الطلبية، والشكوى تصل منظّمة إلى الإدارة</span></div></div>
+      </div>
+    </div>
+    <img class="phone" src="assets/shots/a4-offers.png" alt="" style="width:380px">
+  </div>
+  <div class="foot"><span class="demo-note">قسم العروض في التطبيق، ببيانات تجريبية.</span><img src="assets/mark-light.png" alt=""></div>
+  <aside class="notes">هنا قوة إضافية: أدوات ترويج داخل التطبيق. يمكن عمل عرض على صنف، أو بونص مثل عشرة وواحد، أو باقة أصناف بسعر واحد، أو حسم ثابت على كل أصناف شركة، أو بانر على الصفحة الرئيسية. كل هذا يتحكم به المستودع من اللوحة، وتمر العروض والبانرات بمراجعة فريق فينيق قبل أن تظهر للصيدليات.</aside>
+</section>
+
+<!-- 8 -->
+<section class="slide dark">
+  <div style="display:grid; grid-template-columns: 620px 1fr; gap: 70px; align-items:center; height:100%">
+    <div>
+      <h2>مناديبك على فينيق</h2>
+      <ul class="list" style="font-size:28px; margin-top:26px">
+        <li><b>حساب لكل مندوب:</b> تنشئه من اللوحة، ولا يرى المندوب إلا صيدلياته.</li>
+        <li><b>صيدلياته:</b> تُسند كل صيدلية لمندوب، وتنقلها بين المناديب متى شئت.</li>
+        <li><b>زيارة موثّقة:</b> يمسح المندوب باركود الصيدلية، فتُسجَّل الزيارة إذا كان هاتفه عندها فعلاً.</li>
+        <li><b>طلبياته وعمولته:</b> كل طلبية من صيدلياته تُنسب إليه تلقائياً، وتحدّد أنت نسبة عمولته؛ وأرقام الشهر أمامك.</li>
+      </ul>
+    </div>
+    <div>
+      <img class="shot" src="assets/shots/d5-reps.jpg" alt="" style="width:100%">
+      <p class="demo-note" style="margin-top:14px">من لوحة التحكم: مناديبك، وأرقام كل واحد منهم وعمولته هذا الشهر. أسماء وبيانات تجريبية.</p>
+    </div>
+  </div>
+  <div class="foot"><span>المندوب يبقى، وتصير له أدوات: لا شيء يُلغى من طريقة عملكم</span><img src="assets/mark-dark.png" alt=""></div>
+  <aside class="notes">المندوب لا يُستبدل، بل يحصل على أدوات. للمستودع صفحة «المناديب»: ينشئ حساباً لكل مندوب ويسند له صيدلياته. المندوب في تطبيقه يرى صيدلياته فقط، وعند زيارة صيدلية يمسح باركودها: تُسجَّل الزيارة موثّقة إذا كان هاتفه عند الصيدلية، وإلا تُسجَّل غير موثّقة ويراها المستودع. وكل طلبية من صيدليات المندوب تُنسب إليه تلقائياً. أنت تحدّد نسبة عمولة كل مندوب، وتُحسب من الطلبيات المسلَّمة فقط، وتظهر أمامك في الجدول موزّعة: كم للمندوب وكم لفينيق وكم توفّره أنت.</aside>
+</section>
+
+<!-- 8b -->
+<section class="slide paper">
+  <h2>تطبيق المندوب: الزيارة تُسجَّل بمسح باركود الصيدلية</h2>
+  <div class="phones4">
+    <figure><img class="phone" src="assets/shots/r1-pharmacies.png" alt=""><figcaption>صيدلياته، والأقدم زيارة أولاً</figcaption></figure>
+    <figure><img class="phone" src="assets/shots/r2-pharmacy.png" alt=""><figcaption>تفاصيل الصيدلية وطلبياتها</figcaption></figure>
+    <figure><img class="phone" src="assets/shots/r6-scan-verified.png" alt=""><figcaption>يمسح الباركود، فتُوثَّق الزيارة بالموقع</figcaption></figure>
+    <figure><img class="phone" src="assets/shots/r5-visit-code.png" alt=""><figcaption>الباركود من تطبيق الصيدلية، أو ملصق مطبوع</figcaption></figure>
+  </div>
+  <div class="foot"><span class="demo-note">لقطات حقيقية من التطبيق ببيانات تجريبية: أسماء الصيدليات والأرقام توضيحية.</span><img src="assets/mark-light.png" alt=""></div>
+  <aside class="notes">هذا ما يراه المندوب في موبايله: صيدلياته فقط، مرتّبة بحيث تظهر الأقدم زيارة أولاً، فيعرف إلى أين يذهب. عند الزيارة يمسح باركود الصيدلية فتُسجَّل الزيارة موثّقة إذا كان هاتفه عندها فعلاً. والباركود تعرضه الصيدلية من تطبيقها أو يُطبع ملصقاً على الزجاج. وهذه هي نفس لوحة المستودع التي رأيناها: كل زيارة تظهر عندكم بوقتها وبعدها عن الصيدلية.</aside>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div style="display:grid; grid-template-columns: 1fr 900px; gap: 80px; align-items:center; height: 100%">
+    <div>
+      <h2>المال والحسابات واضحة</h2>
+      <ul class="list" style="margin-top:30px">
+        <li>الدفع عند التسليم كما اليوم.</li>
+        <li>رصيد كل صيدلية ودفعاتها المسجّلة.</li>
+        <li>فاتورة لكل طلبية مسلّمة.</li>
+        <li>المرتجعات بطلب موثّق توافق عليه أو ترفضه.</li>
+      </ul>
+    </div>
+    <div>
+      <img class="shot" src="assets/shots/d7-balances.jpg" alt="" style="width:100%">
+      <p class="demo-note" style="margin-top:14px">من لوحة التحكم: أرصدة الصيدليات. أرقام وأسماء توضيحية.</p>
+    </div>
+  </div>
+  <div class="foot"><span>فينيق · عرض للمستودعات</span><img src="assets/mark-light.png" alt=""></div>
+  <aside class="notes">من الناحية المالية: الدفع يبقى عند التسليم. اللوحة تتابع رصيد كل صيدلية وتسجّل الدفعات وتصدر فاتورة لكل طلبية مسلّمة. والمرتجعات تصل بطلب موثّق من الصيدلية، يوافق عليه المستودع أو يرفضه.</aside>
+</section>
+
+<!-- 10 -->
+<section class="slide dark">
+  <h2>الكلفة: ثلاث نقاط بسيطة</h2>
+  <div style="display:grid; grid-template-columns: 1fr 700px; gap: 70px; margin-top: 30px; align-items:center">
+    <div class="points">
+      <div class="point"><div class="n">1</div><div><b>التطبيق مجاني للصيدليات</b><span>بلا اشتراك ولا رسوم عليها.</span></div></div>
+      <div class="point"><div class="n">2</div><div><b>اشتراك المستودع: يبدأ من <span class="ltr">200,000</span> ل.س شهرياً</b><span>بالعملة القديمة (يعادل <span class="ltr">2,000</span> ل.س بالجديدة).</span><div style="margin-top:14px"><span class="plate plate--orange" style="font-size:28px">مجاني حتى نهاية <span class="ltr">2026</span></span></div></div></div>
+      <div class="point"><div class="n">3</div><div><b>ربع عمولة المندوب، على طلبيات فينيق فقط</b><span>ليست نسبة ثابتة على الطلبية: تتبع عمولة مندوبك أنت. وما يمرّ بالهاتف أو الواتساب لا يُقتطع منه شيء.</span></div></div>
+    </div>
+    <div class="split-card">
+      <span class="plate plate--orange" style="font-size:26px">مثال</span>
+      <p style="font-size:30px; margin-top:16px; line-height:1.5">عمولة المندوب المعتادة <span class="ltr">2%</span> على طلبية تمر عبر فينيق:</p>
+      <div class="split-bar">
+        <div class="rep"><span class="ltr">1%</span></div>
+        <div class="feniq"><span class="ltr">0.5%</span></div>
+        <div class="save"><span class="ltr">0.5%</span></div>
+      </div>
+      <div class="legend">
+        <div><span>المندوب: النصف</span><b class="ltr">1%</b></div>
+        <div><span>فينيق: الربع</span><b class="ltr">0.5%</b></div>
+        <div><span>يوفّره المستودع: الربع</span><b class="ltr">0.5%</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>الصيدليات الجديدة التي يجلبها فريق فينيق تُسلَّم لمناديبك، ولا يأخذ فينيق حصة المندوب منها</span><img src="assets/mark-dark.png" alt=""></div>
+  <aside class="notes">الكلفة ثلاث نقاط. الأولى: التطبيق مجاني للصيدليات. الثانية: اشتراك المستودع يبدأ من مئتي ألف ليرة شهرياً بالعملة القديمة، أي ألفا ليرة بالجديدة، ومجاني حتى نهاية 2026. الثالثة: فينيق يأخذ ربع عمولة المندوب على الطلبيات التي تمر عبره فقط، وليست نسبة ثابتة. المثال: إذا كانت عمولة المندوب المعتادة اثنين بالمئة، يأخذ المندوب النصف أي واحد بالمئة، ويأخذ فينيق الربع أي نصف بالمئة، ويوفّر المستودع الربع الباقي. والصيدليات التي يجلبها فريق فينيق نعطيها لمناديب المستودع، ولا نأخذ حصة المندوب منها.</aside>
+</section>
+
+<!-- 11 -->
+<section class="slide paper">
+  <h2>كيف نبدأ</h2>
+  <div class="chips"><span class="plate plate--dark">مجاني للصيدليات</span><span class="plate plate--dark">اشتراك المستودع مجاني حتى نهاية <span class="ltr">2026</span></span></div>
+  <div class="steps">
+    <div class="step"><span class="n">1</span><b>فتح حساب المستودع</b><span>فريق فينيق ينشئ الحساب ويعطيك الدخول إلى اللوحة.</span></div>
+    <div class="step"><span class="n">2</span><b>الأصناف والأسعار</b><span>من ملف إكسل (القالب جاهز)، ويساعدك فريقنا في أول رفع.</span></div>
+    <div class="step"><span class="n">3</span><b>المناديب</b><span>تنشئ حساباً لكل مندوب وتسند له صيدلياته.</span></div>
+    <div class="step"><span class="n">4</span><b>أول طلبية</b><span>تظهر على اللوحة فور وصولها، وتتابعها حتى التسليم.</span></div>
+  </div>
+  <p style="margin-top:56px; font-size:34px"><b>المطلوب منك:</b> ملف الأصناف والأسعار، أسماء مناديبك وصيدلياتهم، وشخص مسؤول عن اللوحة.</p>
+  <div class="foot"><span>فينيق · عرض للمستودعات</span><img src="assets/mark-light.png" alt=""></div>
+  <aside class="notes">البداية بسيطة: نفتح حساب المستودع، ندخل الأصناف والأسعار من ملف إكسل، تنشئون حسابات المناديب وتسندون لهم صيدلياتهم، ثم تصل أول طلبية. المطلوب من المستودع قليل: ملف الأصناف، وأسماء المناديب وصيدلياتهم، وشخص مسؤول عن اللوحة. وتذكير: التطبيق مجاني للصيدليات، واشتراك المستودع مجاني حتى نهاية 2026.</aside>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+  <h2>أسئلة يسألها أصحاب المستودعات</h2>
+  <div class="qa">
+    <div class="q"><h3>هل يحلّ فينيق محلّ المندوب؟</h3>
+      <p>لا. المندوب يبقى ويبني علاقته مع الصيادلة، وتصير له أدوات: صيدلياته وزياراته وطلبياته على حسابه. والهاتف والواتساب يبقيان كما هما.</p></div>
+    <div class="q"><h3>من يرى أسعارنا؟</h3>
+      <p>الصيدليات المسجّلة التي يفعّل فريق فينيق حساباتها، داخل التطبيق فقط. الأسعار غير منشورة على الإنترنت.</p></div>
+    <div class="q"><h3>كيف نعرف أن طلبية وصلت؟</h3>
+      <p>تظهر فوراً على اللوحة من دون تحديث الصفحة، مع زر واتساب للتواصل مع الصيدلية.</p></div>
+    <div class="q"><h3>كيف يتم الدفع والتحصيل؟</h3>
+      <p>الدفع عند التسليم كما اليوم، لا بطاقات ولا دفع إلكتروني. واللوحة تسجّل الدفعات وتتابع الأرصدة وتصدر الفواتير.</p></div>
+    <div class="q"><h3>ماذا لو نفد صنف؟</h3>
+      <p>تخفيه من الكتالوج بضغطة. وعلى كل صنف في التطبيق زر «البدائل» يعرض بدائل بنفس المادة الفعالة والعيار من مستودعك، وإن لم يوجد بديل عندك تُعرض بدائل من مستودعات أخرى على المنصة.</p></div>
+    <div class="q"><h3>ماذا نحتاج من أجهزة؟</h3>
+      <p>لوحة التحكم تفتح من متصفح أي لابتوب. وتطبيق الصيدلية والمندوب يعمل على موبايلات Android وينزَّل مباشرة. نسخة iPhone غير متوفرة حالياً.</p></div>
+  </div>
+  <div class="foot"><span>فينيق · عرض للمستودعات</span><img src="assets/mark-light.png" alt=""></div>
+  <aside class="notes">أسئلة متوقعة. المندوب لا يُستبدل. الأسعار تراها الصيدليات المسجّلة المفعّلة فقط داخل التطبيق. الطلبية تظهر فوراً على اللوحة. الدفع عند التسليم. وإذا نفد صنف يخفيه المستودع بضغطة، والتطبيق يقترح للصيدلية بدائل بنفس المادة الفعالة والعيار من مستودعه أولاً، وإن لم يوجد بديل عنده يعرض بدائل من مستودعات أخرى. لا حاجة لأجهزة خاصة: لابتوب للوحة وموبايل أندرويد للتطبيق.</aside>
+</section>
+
+<!-- 13 -->
+<section class="slide orange">
+  <div style="margin-top: 70px">
+    <span class="plate plate--dark" style="font-size:30px">الخطوة التالية</span>
+    <h1 style="margin-top:36px; font-size:88px">جرّب فينيق مع مستودعك</h1>
+    <p style="font-size:34px; margin-top:30px; max-width:1300px">نعرض لك اللوحة والتطبيق مباشرة، ونرتّب معك البداية: الأصناف، والمناديب، وأول طلبية. التطبيق مجاني للصيدليات، واشتراك المستودع مجاني حتى نهاية <span class="ltr">2026</span>.</p>
+  </div>
+  <div style="position:absolute; bottom: 110px; right: 120px; left: 120px; display:flex; gap: 40px; align-items:center">
+    <div style="background:#1A1206; color:#fff; border-radius:6px; padding: 22px 40px"><span style="font-size:22px; color:#f5c9a0">هاتف وواتساب</span><div class="ltr" style="font-size:44px; font-weight:800; display:block">0982-001415</div></div>
+    <div style="background:#1A1206; color:#fff; border-radius:6px; padding: 22px 40px"><span style="font-size:22px; color:#f5c9a0">هاتف وواتساب</span><div class="ltr" style="font-size:44px; font-weight:800; display:block">0956-634694</div></div>
+    <img src="assets/logo-light.png" alt="فينيق" style="height:250px; width:auto; flex:none; margin-right:auto; margin-bottom:-30px">
+  </div>
+  <aside class="notes">الخطوة التالية عرض مباشر للوحة والتطبيق، وترتيب البداية مع المستودع. أرقام فريق فينيق على الشاشة، هاتف وواتساب.</aside>
+</section>
+
+</body>
+</html>

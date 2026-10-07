@@ -154,6 +154,18 @@ class ProfileView extends StatelessWidget {
                   ),
 
                   const SizedBox(height: AppSizes.spacingXLarge),
+                  _SectionHeader(l10n.pharmacyVisitCodeTitle),
+                  const SizedBox(height: AppSizes.spacingSmall),
+                  // The QR a warehouse's rep scans when they visit - see
+                  // features/rep.
+                  _ProfileNavCard(
+                    icon: Icons.qr_code_2,
+                    title: l10n.pharmacyVisitCodeTitle,
+                    subtitle: l10n.pharmacyVisitCodeSubtitle,
+                    onTap: () => context.pushNamed(RouteNames.pharmacyVisitCode),
+                  ),
+
+                  const SizedBox(height: AppSizes.spacingXLarge),
                   _SectionHeader(l10n.complaintsTitle),
                   const SizedBox(height: AppSizes.spacingSmall),
                   _ProfileNavCard(

@@ -43,6 +43,9 @@ const adminComplaintRoutes = require('./adminComplaint.routes');
 const warehouseDiscountCodeRoutes = require('./warehouseDiscountCode.routes');
 const adminDiscountCodeRoutes = require('./adminDiscountCode.routes');
 const discountCodeRoutes = require('./discountCode.routes');
+const warehouseRepRoutes = require('./warehouseRep.routes');
+const repRoutes = require('./rep.routes');
+const pharmacyVisitCodeRoutes = require('./pharmacyVisitCode.routes');
 const telegramRoutes = require('./telegram.routes');
 
 const router = Router();
@@ -92,6 +95,9 @@ router.use('/admin/complaints', adminComplaintRoutes);
 router.use('/warehouse/discount-codes', warehouseDiscountCodeRoutes);
 router.use('/admin/discount-codes', adminDiscountCodeRoutes);
 router.use('/discount-codes', discountCodeRoutes);
+router.use('/warehouse/reps', warehouseRepRoutes);
+router.use('/rep', repRoutes);
+router.use('/pharmacy/visit-code', pharmacyVisitCodeRoutes);
 
 // Feature routes are mounted here as each day's work adds them:
 // ...

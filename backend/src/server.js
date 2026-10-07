@@ -13,6 +13,7 @@ const platformSettings = require('./services/platformSettings.service');
 const telegram = require('./services/telegram.service');
 const { seedDemoBonuses, turnOffDemoSealPhoto, seedDemoAdminIfNone, seedDemoDataIfEmpty, seedDemoOrders } = require('./services/demoSeed.service');
 const { seedDemoCatalogImages } = require('./services/demoCatalogImages.service');
+const { zeroLegacyPlatformRates } = require('./services/platformRatesPolicy.service');
 const { seedDemoFeatures } = require('./services/demoFeatures.service');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
@@ -83,6 +84,15 @@ async function start() {
           '',
         ].join('\n')
       );
+    }
+
+    // The old 4% discount / 1% commission defaults are gone (profit policy in
+    // services/platformRatesPolicy.service.js); warehouses made under them are
+    // brought to zero once.
+    const zeroed = await zeroLegacyPlatformRates();
+    if (zeroed) {
+      // eslint-disable-next-line no-console
+      console.log(`Set the old platform rates to zero on ${zeroed} warehouse(s).`);
     }
 
     // With approval turned off, pharmacies that registered while it was on

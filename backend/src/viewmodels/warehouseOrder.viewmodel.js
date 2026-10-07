@@ -108,6 +108,17 @@ function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn, has
       // it is a pure function of frozen fields. An admin code's compensation
       // is part of what the warehouse earns.
       warehouseNetSyp: order.finalPrice + platformCompensationOf(order) - order.commissionAmount,
+      // The split of the rep's commission, frozen when the order was placed:
+      // half to the rep, a quarter to Feniq (already inside commissionAmount),
+      // the rest saved by the warehouse. null when no rep earns on this order.
+      repCommission: order.repCommission?.rate
+        ? {
+            rate: order.repCommission.rate,
+            repAmount: order.repCommission.repAmount,
+            feniqAmount: order.repCommission.feniqAmount,
+            savingAmount: order.repCommission.savingAmount,
+          }
+        : null,
       notes: order.notes,
       cancelReason: order.cancelReason,
       createdAt: order.createdAt,

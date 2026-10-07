@@ -152,9 +152,10 @@ jobs:
       # The fixed download link for trying the app on a phone: a release asset
       # is served straight as an .apk (no zip) and downloads much faster than
       # an artifact. Built for 64-bit ARM only (every current phone), which
-      # halves the size. main only - a PR never replaces it.
+      # halves the size. main only - neither a PR nor a manual run of another
+      # branch ever replaces it.
       - name: Build phone APK (arm64)
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: >
           flutter build apk --release
           --target-platform android-arm64
@@ -162,7 +163,7 @@ jobs:
           --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
 
       - name: Publish to the test-latest release
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

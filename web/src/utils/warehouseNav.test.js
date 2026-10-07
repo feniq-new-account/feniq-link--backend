@@ -34,7 +34,7 @@ const LEGACY_DESTINATIONS = [
 ];
 
 // Destinations added since, each a new page rather than a moved one.
-const ADDED_DESTINATIONS = ['/warehouse/discount-codes'];
+const ADDED_DESTINATIONS = ['/warehouse/discount-codes', '/warehouse/reps'];
 
 // Every page the sidebar can lead to, a switched-off feature's included.
 function allDestinations() {
@@ -52,11 +52,12 @@ function label(locale, labelKey) {
 }
 
 describe('the warehouse sidebar', () => {
-  it('is seven tabs, in this order', () => {
+  it('is eight tabs, in this order', () => {
     expect(WAREHOUSE_NAV.map((item) => item.id)).toEqual([
       'orders',
       'catalog',
       'returns',
+      'reps',
       'promotions',
       'financials',
       'feedback',

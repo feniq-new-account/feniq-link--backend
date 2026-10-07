@@ -7,6 +7,9 @@ const { freeQuantityFor, sameBonus, effectiveBonuses } = require('../utils/bonus
 const Order = require('../models/order.model');
 const OrderItem = require('../models/orderItem.model');
 const Warehouse = require('../models/warehouse.model');
+const RepAssignment = require('../models/repAssignment.model');
+const Rep = require('../models/rep.model');
+const { feniqRateFor, splitRepCommission } = require('../utils/repCommission');
 const Counter = require('../models/counter.model');
 const Return = require('../models/return.model');
 const Review = require('../models/review.model');
@@ -140,6 +143,10 @@ function rollUpOrderMoney({
   advertisementDiscountSypAmount = 0,
   discountRate = 0,
   commissionRate = 0,
+  // The rep's commission rate on this order (utils/repCommission.js): Feniq's
+  // quarter of it is added to the platform commission, and the three-way split
+  // comes back as `repCommission`.
+  repCommissionRate = 0,
   discountCodeTerms = null,
 }) {
   // What the pharmacy owes before the platform's own discount comes off.
@@ -152,9 +159,17 @@ function rollUpOrderMoney({
   // What the warehouse earns on the order: the pharmacy's payment plus
   // whatever the platform owes it for an admin code.
   const warehouseRevenueSyp = finalPrice + platformCompensationSyp;
-  const commissionAmount = Math.round((warehouseRevenueSyp * commissionRate) / 100);
+  const commissionAmount = Math.round(
+    (warehouseRevenueSyp * (commissionRate + feniqRateFor(repCommissionRate))) / 100
+  );
+  const split = splitRepCommission(warehouseRevenueSyp, repCommissionRate);
 
   return {
+    // Frozen on the order; null when no rep commission applies.
+    repCommission:
+      split.totalAmount > 0 || split.rate > 0
+        ? { rate: split.rate, repAmount: split.repAmount, feniqAmount: split.feniqAmount, savingAmount: split.savingAmount }
+        : null,
     discountAmount,
     advertisementDiscountAmount: advertisementDiscountSypAmount,
     preCodeSyp,
@@ -674,6 +689,17 @@ async function createOrder({
 
   const warehouse = await Warehouse.findById(warehouseId);
 
+  // The rep who covers this pharmacy for this warehouse right now, frozen on
+  // the order (order.model.js's repId) so the rep's numbers - and later their
+  // commission - follow the order even if the pharmacy is reassigned.
+  const repAssignment = await RepAssignment.findOne({ warehouseId, pharmacyId, active: true })
+    .select('repId')
+    .lean();
+  // Their commission rate, frozen on the order with the rep (see repCommission
+  // in order.model.js): Feniq's share of an order is a quarter of it.
+  const rep = repAssignment ? await Rep.findById(repAssignment.repId).select('commissionRate').lean() : null;
+  const repCommissionRate = rep?.commissionRate ?? 0;
+
   // Section: packages. The client names a package by id and says how many
   // copies it wants - nothing else. Every product in it, every price and the
   // package total are read here, server-side, so a tampered request can't buy
@@ -956,11 +982,13 @@ async function createOrder({
     preCodeSyp,
     discountCodeSyp: codeDiscountAmount,
     platformCompensationSyp,
+    repCommission,
   } = rollUpOrderMoney({
     subtotalSyp: totalPrice,
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse.discountRate,
     commissionRate: warehouse.commissionRate,
+    repCommissionRate,
     discountCodeTerms: codeDoc ? discountCodes.termsOf(codeDoc) : null,
   });
 
@@ -987,6 +1015,8 @@ async function createOrder({
           orderNumber,
           pharmacyId,
           warehouseId,
+          repId: repAssignment ? repAssignment.repId : null,
+          repCommission,
           status: 'pending',
           currency: 'SYP',
           // The rate every line above was priced through, frozen here.

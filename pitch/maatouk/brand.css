@@ -1,0 +1,88 @@
+/* هوية فينيق للمطبوعات (ملف مجلس الإدارة والعرض التقديمي).
+   نفس ألوان وخطوط الموقع (DESIGN.md): كحلي، برتقالي، فضي؛ Alexandria و Reem Kufi. */
+@font-face {
+  font-family: "Alexandria";
+  src: url("assets/fonts/alexandria-arabic.woff2") format("woff2");
+  font-weight: 400 800;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Alexandria";
+  src: url("assets/fonts/alexandria-latin.woff2") format("woff2");
+  font-weight: 400 800;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Reem Kufi";
+  src: url("assets/fonts/reemkufi-arabic.woff2") format("woff2");
+  font-weight: 500 700;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Reem Kufi";
+  src: url("assets/fonts/reemkufi-latin.woff2") format("woff2");
+  font-weight: 500 700;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --orange: #F2760A;
+  --orange-deep: #C85A00;
+  --orange-wash: #FDF0E4;
+  --navy: #16283F;
+  --silver: #E4E7EB;
+  --silver-edge: #B9BFC7;
+  --ground: #0E1A2C;
+  --paper: #F7F7F8;
+  --drawer: #1D3452;
+  --seam: #0A1422;
+  --ink-soft: #46566B;
+  --on-dark-soft: #B4C2D6;
+  --green: #2E7D4F;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--paper); }
+body {
+  font-family: "Alexandria", system-ui, sans-serif;
+  color: var(--navy);
+  direction: rtl;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  font-feature-settings: "lnum";
+}
+.ltr { direction: ltr; unicode-bidi: isolate; display: inline-block; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* لوحة الاسم الفضية (مثل لوحات أدراج الصيدلية في الموقع) */
+.plate {
+  display: inline-block;
+  font-family: "Reem Kufi", "Alexandria", sans-serif;
+  font-weight: 600;
+  background: var(--silver);
+  color: var(--navy);
+  border: 1px solid var(--silver-edge);
+  border-radius: 2px;
+  padding: 0.18em 0.7em 0.22em;
+  line-height: 1.2;
+}
+.plate--orange { background: var(--orange); border-color: var(--orange-deep); color: #1A1206; }
+.plate--dark { background: var(--drawer); border-color: var(--seam); color: #fff; }
+
+/* المقبض البرتقالي الصغير */
+.handle { display: inline-block; width: 0.55em; height: 0.18em; background: var(--orange); border-radius: 2px; vertical-align: middle; }
+
+.shot {
+  display: block;
+  border: 1px solid var(--silver-edge);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 2px 0 var(--silver-edge);
+}
+.phone {
+  display: block;
+  border-radius: 18px;
+  border: 5px solid var(--seam);
+  background: var(--seam);
+  box-shadow: 0 3px 0 #000;
+}

@@ -52,6 +52,18 @@ import 'package:feniq/features/promotions/presentation/views/warehouse_offers_vi
 import 'package:feniq/features/returns/data/repositories/return_repository.dart';
 import 'package:feniq/features/returns/presentation/managers/my_returns_cubit.dart';
 import 'package:feniq/features/returns/presentation/views/my_returns_view.dart';
+import 'package:feniq/features/rep/data/repositories/rep_repository.dart';
+import 'package:feniq/features/rep/data/services/location_provider.dart';
+import 'package:feniq/features/rep/presentation/managers/rep_home_cubit.dart';
+import 'package:feniq/features/rep/presentation/managers/rep_pharmacies_cubit.dart';
+import 'package:feniq/features/rep/presentation/managers/rep_pharmacy_detail_cubit.dart';
+import 'package:feniq/features/rep/presentation/managers/rep_visits_cubit.dart';
+import 'package:feniq/features/rep/presentation/managers/visit_code_cubit.dart';
+import 'package:feniq/features/rep/presentation/managers/visit_scan_cubit.dart';
+import 'package:feniq/features/rep/presentation/views/pharmacy_visit_code_view.dart';
+import 'package:feniq/features/rep/presentation/views/rep_pharmacy_detail_view.dart';
+import 'package:feniq/features/rep/presentation/views/visit_scan_view.dart';
+import 'package:feniq/features/rep/presentation/views/rep_shell_view.dart';
 import 'package:feniq/features/reviews/data/repositories/review_repository.dart';
 import 'package:feniq/features/reviews/presentation/managers/pharmacy_reviews_cubit.dart';
 import 'package:feniq/features/reviews/presentation/views/pharmacy_reviews_view.dart';
@@ -80,7 +92,7 @@ class AppRouter {
   late final GoRouter router = GoRouter(
     navigatorKey: NavigationService.instance.navigatorKey,
     initialLocation: RoutePaths.splash,
-    redirect: forcePasswordChangeRedirect,
+    redirect: appRedirect,
     routes: <RouteBase>[
       GoRoute(
         name: RouteNames.splash,
@@ -386,6 +398,65 @@ class AppRouter {
       // navigation stack alive (IndexedStack) - switching tabs doesn't rebuild
       // or reload the others. Everything above (catalog/cart/order tracking)
       // stays outside the shell so it pushes full-screen over the nav bar.
+      // Field reps: the same app, signed in with a rep account. appRedirect
+      // keeps a rep inside /rep and everyone else out of it.
+      GoRoute(
+        name: RouteNames.repHome,
+        path: RoutePaths.repHome,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (context) => RepHomeCubit(repository: context.read<RepRepository>())..load()),
+              BlocProvider(
+                create: (context) => RepPharmaciesCubit(repository: context.read<RepRepository>())..load(),
+              ),
+              BlocProvider(create: (context) => RepVisitsCubit(repository: context.read<RepRepository>())..load()),
+            ],
+            child: const RepShellView(),
+          ),
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.repPharmacy,
+        path: RoutePaths.repPharmacy,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: BlocProvider(
+            create: (context) => RepPharmacyDetailCubit(
+              repository: context.read<RepRepository>(),
+              pharmacyId: state.pathParameters['pharmacyId']!,
+            )..load(),
+            child: const RepPharmacyDetailView(),
+          ),
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.repScan,
+        path: RoutePaths.repScan,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: BlocProvider(
+            create: (context) => VisitScanCubit(
+              repository: context.read<RepRepository>(),
+              locationProvider: context.read<LocationProvider>(),
+            ),
+            child: const VisitScanView(),
+          ),
+        ),
+      ),
+      // The pharmacy's own QR for a rep to scan (opened from its Profile).
+      GoRoute(
+        name: RouteNames.pharmacyVisitCode,
+        path: RoutePaths.pharmacyVisitCode,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: BlocProvider(
+            create: (context) => VisitCodeCubit(repository: context.read<RepRepository>())..load(),
+            child: const PharmacyVisitCodeView(),
+          ),
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             ScaffoldWithBottomNav(navigationShell: navigationShell),
@@ -511,3 +582,38 @@ String? forcePasswordChangeRedirect(BuildContext context, GoRouterState state) {
   if (state.matchedLocation == RoutePaths.changePassword) return null;
   return RoutePaths.changePassword;
 }
+
+// Paths a rep may be on besides /rep itself: the auth steps they pass through,
+// and the static privacy policy.
+const Set<String> _repOpenPaths = {
+  RoutePaths.splash,
+  RoutePaths.login,
+  RoutePaths.changePassword,
+  RoutePaths.approvalPending,
+  RoutePaths.privacyPolicy,
+};
+
+// Keeps each role on its own side of the app: a rep (whose pharmacy-side
+// requests the server would refuse anyway - a stale notification link, a
+// remembered address) is sent to /rep, and a pharmacy is sent away from /rep.
+// Only once the session is known: while it is still being checked (splash)
+// nothing is redirected. Offline, the role comes from the stored token.
+String? roleRedirect(BuildContext context, GoRouterState state) {
+  final AuthState auth;
+  try {
+    auth = context.read<AuthCubit>().state;
+  } catch (_) {
+    return null;
+  }
+  if (auth.sessionStatus != SessionStatus.active && auth.sessionStatus != SessionStatus.offline) return null;
+
+  final location = state.matchedLocation;
+  final inRepArea = location == RoutePaths.repHome || location.startsWith('${RoutePaths.repHome}/');
+  if (auth.isRep) {
+    return inRepArea || _repOpenPaths.contains(location) ? null : RoutePaths.repHome;
+  }
+  return inRepArea ? RoutePaths.warehouseSelection : null;
+}
+
+String? appRedirect(BuildContext context, GoRouterState state) =>
+    forcePasswordChangeRedirect(context, state) ?? roleRedirect(context, state);

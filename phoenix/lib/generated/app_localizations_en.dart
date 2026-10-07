@@ -169,6 +169,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordLoginSubtitle => 'Enter your phone number and password';
 
   @override
+  String get repAppName => 'Feniq Rep';
+
+  @override
+  String get repLoginTitle => 'Rep sign in';
+
+  @override
+  String get repLoginSubtitle =>
+      'Enter your mobile number and the password your warehouse gave you';
+
+  @override
+  String get repForgotPasswordHint =>
+      'Forgot your password? Ask your warehouse for a new one.';
+
+  @override
+  String get errorRepAppOnly =>
+      'This app is for field reps only. A pharmacy account signs in to the Feniq pharmacy app.';
+
+  @override
+  String get errorPharmacyAppOnly =>
+      'This is a rep account. Sign in to the \"Feniq Rep\" app made for reps.';
+
+  @override
   String get backToRegistrationLink => 'New here? Create an account';
 
   @override
@@ -1914,4 +1936,230 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get packageAddToCart => 'Add the package to the cart';
+
+  @override
+  String get repNavPharmacies => 'My pharmacies';
+
+  @override
+  String get repNavVisits => 'My visits';
+
+  @override
+  String get repSearchHint => 'Search by name, owner, phone or address';
+
+  @override
+  String get repScanAction => 'Scan visit code';
+
+  @override
+  String get repNoPharmaciesTitle => 'No pharmacies assigned to you yet';
+
+  @override
+  String get repNoPharmaciesSubtitle =>
+      'The warehouse assigns your pharmacies - they appear here as soon as it does.';
+
+  @override
+  String get repNoSearchResults => 'No pharmacy matches your search';
+
+  @override
+  String get repNeverVisited => 'Never visited';
+
+  @override
+  String repLastVisitAgo(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Last visit: $days days ago',
+      one: 'Last visit: yesterday',
+      zero: 'Last visit: today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String repMonthOrdersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count orders this month',
+      one: '1 order this month',
+      zero: 'No orders this month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repStatPharmacies => 'Pharmacies';
+
+  @override
+  String get repStatVisitsWeek => 'Visits, 7 days';
+
+  @override
+  String get repStatOrdersMonth => 'Orders this month';
+
+  @override
+  String get repStatSalesMonth => 'Their value';
+
+  @override
+  String get repStatCommissionMonth => 'Your commission this month';
+
+  @override
+  String repCommissionHint(String rate) {
+    return 'You earn $rate of the value of delivered orders from your pharmacies placed through Feniq.';
+  }
+
+  @override
+  String get repOwnerLabel => 'Owner';
+
+  @override
+  String get repCallAction => 'Call';
+
+  @override
+  String get repLogVisitAction => 'Log a visit';
+
+  @override
+  String get repNoLocationWarning =>
+      'This pharmacy has not set its map location yet, so a visit here cannot be verified.';
+
+  @override
+  String get repRecentOrders => 'Latest orders';
+
+  @override
+  String get repNoOrdersYet => 'No orders from this pharmacy yet';
+
+  @override
+  String get repRecentVisits => 'Your latest visits here';
+
+  @override
+  String get repNoVisitsHere => 'You have not visited this pharmacy yet';
+
+  @override
+  String get repVisitsTitle => 'My visits';
+
+  @override
+  String get repNoVisitsTitle => 'No visits logged yet';
+
+  @override
+  String get repNoVisitsSubtitle =>
+      'Scan the QR code at a pharmacy to log your visit.';
+
+  @override
+  String get repVisitVerified => 'Verified';
+
+  @override
+  String get repVisitOutOfRange => 'Out of range';
+
+  @override
+  String get repVisitMockLocation => 'Spoofed location';
+
+  @override
+  String get repVisitNoPharmacyLocation => 'Pharmacy has no location';
+
+  @override
+  String repDistanceMeters(int meters) {
+    return '$meters m away';
+  }
+
+  @override
+  String get repScanTitle => 'Scan visit code';
+
+  @override
+  String get repScanHint =>
+      'Point the camera at the Feniq QR code at the pharmacy.';
+
+  @override
+  String get repScanNotFeniq => 'That is not a Feniq visit code.';
+
+  @override
+  String get repScanLocating => 'Finding your location...';
+
+  @override
+  String get repScanSubmitting => 'Logging the visit...';
+
+  @override
+  String get repScanVerifiedTitle => 'Visit verified';
+
+  @override
+  String get repScanDuplicateTitle => 'Already logged a moment ago';
+
+  @override
+  String get repScanUnverifiedTitle => 'Visit logged, not verified';
+
+  @override
+  String repScanOutOfRangeMessage(int meters) {
+    return 'Your phone is $meters m from the pharmacy. Go to the pharmacy and scan again to verify.';
+  }
+
+  @override
+  String get repScanMockMessage =>
+      'Your phone reports a spoofed location, so the visit cannot be verified.';
+
+  @override
+  String get repScanNoLocationMessage =>
+      'The pharmacy has not set its location yet, so the visit cannot be verified.';
+
+  @override
+  String get repScanAnother => 'Scan another code';
+
+  @override
+  String get repScanTryAgain => 'Try again';
+
+  @override
+  String get repLocationServiceOff =>
+      'Turn on location (GPS) on your phone, then try again.';
+
+  @override
+  String get repLocationDenied =>
+      'Location permission is needed to verify the visit.';
+
+  @override
+  String get repLocationDeniedForever =>
+      'Location permission is blocked. Allow it from the app settings.';
+
+  @override
+  String get repLocationUnavailable =>
+      'Could not find your location. Check that GPS is on and try again.';
+
+  @override
+  String get repOpenSettings => 'Open settings';
+
+  @override
+  String get repCameraDenied =>
+      'Camera permission is needed to scan the code. Allow it from the app settings.';
+
+  @override
+  String get repCameraUnavailable => 'The camera could not be started.';
+
+  @override
+  String get repWarehouseLabel => 'Warehouse';
+
+  @override
+  String get repProfileHint =>
+      'You are signed in as a rep. Your warehouse manages your pharmacies.';
+
+  @override
+  String get errorRepPharmacyNotAssigned =>
+      'This pharmacy is not assigned to you.';
+
+  @override
+  String get errorRepVisitCodeUnknown => 'No pharmacy has this visit code.';
+
+  @override
+  String get errorRepVisitCodeInvalid => 'That is not a Feniq visit code.';
+
+  @override
+  String get errorRepInactive =>
+      'Your rep account has been switched off by the warehouse.';
+
+  @override
+  String get errorRepInvalidLocation =>
+      'Could not read your location. Try again.';
+
+  @override
+  String get pharmacyVisitCodeTitle => 'Visit code';
+
+  @override
+  String get pharmacyVisitCodeSubtitle => 'For reps who visit you';
+
+  @override
+  String get pharmacyVisitCodeIntro =>
+      'Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy.';
 }

@@ -354,6 +354,8 @@ test('rollUpOrderMoney is the single definition both paths share', () => {
     finalPrice: 384000,
     commissionAmount: 3840,
     warehouseNetSyp: 380160,
+    // No rep on the order: nothing to split.
+    repCommission: null,
   });
 });
 

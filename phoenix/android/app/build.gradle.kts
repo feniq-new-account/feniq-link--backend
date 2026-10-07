@@ -11,6 +11,16 @@ import java.util.Properties
 // ============================================================================
 val feniqApplicationId = "com.feniq.link"
 
+// The same code is also built as a second, separate app for the field reps
+// ("Feniq Rep"): its own application id, name and icon, so it installs beside
+// the pharmacy app on one phone and the two can never be mistaken for each
+// other. It is chosen by the environment (FENIQ_APP=rep, which
+// .github/workflows/android-rep-apk.yml sets), together with
+// `--dart-define=APP_EDITION=rep` for the Dart side. Without it, this is the
+// pharmacy app, byte for byte as before.
+val isRepApp = System.getenv("FENIQ_APP") == "rep"
+val appApplicationId = if (isRepApp) "$feniqApplicationId.rep" else feniqApplicationId
+
 // The release signing key lives outside git. It is read from, in order:
 //   1. android/key.properties (storeFile, storePassword, keyAlias, keyPassword)
 //      - what CI writes from the repository secrets, and what a local build
@@ -65,7 +75,9 @@ android {
     }
 
     defaultConfig {
-        applicationId = feniqApplicationId
+        applicationId = appApplicationId
+        manifestPlaceholders["appLabel"] = if (isRepApp) "Feniq Rep" else "Feniq"
+        manifestPlaceholders["appIcon"] = if (isRepApp) "@mipmap/ic_launcher_rep" else "@mipmap/ic_launcher"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -107,14 +119,14 @@ flutter {
 // and the build log says why.
 val googleServicesFile = file("google-services.json")
 val googleServicesMatches = googleServicesFile.exists() &&
-    Regex("\"package_name\"\\s*:\\s*\"${Regex.escape(feniqApplicationId)}\"")
+    Regex("\"package_name\"\\s*:\\s*\"${Regex.escape(appApplicationId)}\"")
         .containsMatchIn(googleServicesFile.readText())
 if (googleServicesMatches) {
     apply(plugin = "com.google.gms.google-services")
 } else {
     logger.warn(
         "WARNING: android/app/google-services.json is missing or not for " +
-            "'$feniqApplicationId' - building WITHOUT Firebase (no push notifications). " +
+            "'$appApplicationId' - building WITHOUT Firebase (no push notifications). " +
             "See phoenix/android/README.md."
     )
 }

@@ -32,6 +32,9 @@ class UserModel {
     mustChangePassword: json['mustChangePassword'] == true,
   );
 
+  /// A warehouse's field sales rep: signs in to the same app but lands on the
+  /// rep screens (features/rep), not the pharmacy ones.
+  bool get isRep => role == 'rep';
   bool get isPending => status == 'pending';
   bool get isBlocked => status == 'blocked';
   bool get isActive => status == 'active';

@@ -273,7 +273,7 @@ async function getOrderDetailForWarehouse(orderId, warehouseId) {
   // toWarehouseOrderDetailResponse reads exactly these order fields.
   const order = await Order.findOne({ _id: orderId, warehouseId })
     .select(
-      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt'
+      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice repCommission notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt'
     );
   if (!order) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
@@ -669,17 +669,22 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
     preCodeSyp,
     discountCodeSyp,
     platformCompensationSyp,
+    repCommission,
   } = rollUpOrderMoney({
     subtotalSyp: totalPrice,
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse.discountRate,
     commissionRate: warehouse.commissionRate,
+    // The rate frozen when the order was placed - an edit never re-prices the
+    // rep's commission at whatever their rate is today.
+    repCommissionRate: order.repCommission?.rate ?? 0,
     discountCodeTerms: code ? { type: code.type, value: code.value, fundedBy: code.fundedBy } : null,
   });
 
   order.totalPrice = totalPrice;
   order.discountAmount = discountAmount;
   order.commissionAmount = commissionAmount;
+  order.repCommission = repCommission;
   order.advertisementDiscountAmount = advertisementDiscountAmount;
   order.finalPrice = finalPrice;
   if (code) {

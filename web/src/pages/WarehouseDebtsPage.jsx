@@ -688,7 +688,7 @@ export function WarehouseDebtsPage() {
                     onClick={() => setSelectedPharmacyId(row.pharmacyId)}
                   >
                     <td>{row.nameEn}</td>
-                    <td className="wh-num">{row.phone}</td>
+                    <td className="wh-num"><span dir="ltr" style={{ unicodeBidi: 'isolate' }}>{row.phone}</span></td>
                     <td className="wh-num">
                       {row.lastActivityAt
                         ? new Date(row.lastActivityAt).toLocaleDateString()

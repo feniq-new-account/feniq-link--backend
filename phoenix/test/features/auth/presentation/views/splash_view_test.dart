@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:feniq/core/config/app_edition.dart';
+import 'package:feniq/features/auth/data/models/user_model.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
 import 'package:feniq/features/auth/presentation/views/splash_view.dart';
@@ -49,6 +53,11 @@ void main() {
           name: RouteNames.approvalPending,
           builder: (_, __) => const Scaffold(body: Text('APPROVAL PAGE')),
         ),
+        GoRoute(
+          path: RoutePaths.repHome,
+          name: RouteNames.repHome,
+          builder: (_, __) => const Scaffold(body: Text('REP PAGE')),
+        ),
       ],
     );
 
@@ -90,6 +99,55 @@ void main() {
     expect(find.byIcon(Icons.wifi_off_rounded), findsNothing);
   });
 
+  const repUser = UserModel(
+    id: 'rep1',
+    name: 'أحمد',
+    phone: '+963940000201',
+    role: 'rep',
+    status: 'active',
+    lang: 'ar',
+  );
+
+  // The splash reacts to the status CHANGING, then asks the cubit who the
+  // account is - so the state is switched only when the status is emitted.
+  Future<void> emitAfterSplash(WidgetTester tester, AuthState next) async {
+    final controller = StreamController<AuthState>();
+    addTearDown(controller.close);
+    whenListen(authCubit, controller.stream, initialState: const AuthState());
+    await pumpSplash(tester);
+    when(() => authCubit.state).thenReturn(next);
+    controller.add(next);
+    await tester.pump();
+    await tester.pump();
+  }
+
+  testWidgets('a rep goes to the rep screens, not the warehouse list', (tester) async {
+    await emitAfterSplash(tester, const AuthState(sessionStatus: SessionStatus.active, user: repUser));
+
+    expect(find.text('REP PAGE'), findsOneWidget);
+    expect(find.text('WAREHOUSES PAGE'), findsNothing);
+  });
+
+  testWidgets('a rep starting without a connection still reaches the rep screens '
+      '(the role comes from the stored token)', (tester) async {
+    await emitAfterSplash(tester, const AuthState(sessionStatus: SessionStatus.offline, tokenRole: 'rep'));
+
+    expect(find.text('REP PAGE'), findsOneWidget);
+  });
+
+  testWidgets('a pharmacy on the same path still goes to the warehouse list', (tester) async {
+    await emitAfterSplash(
+      tester,
+      const AuthState(
+        sessionStatus: SessionStatus.active,
+        user: UserModel(id: 'p1', name: 'Dr', phone: '+963931000001', role: 'pharmacy', status: 'active', lang: 'ar'),
+      ),
+    );
+
+    expect(find.text('WAREHOUSES PAGE'), findsOneWidget);
+    expect(find.text('REP PAGE'), findsNothing);
+  });
+
   double scaleValue(WidgetTester tester) => tester
       .widget<ScaleTransition>(find.byKey(splashLogoScaleKey))
       .scale
@@ -129,5 +187,21 @@ void main() {
 
     expect(scaleValue(tester), closeTo(1.04, 0.001));
     expect(opacityValue(tester), closeTo(0.85, 0.001));
+  });
+
+  group('the rep edition', () {
+    tearDown(() => AppEdition.isRepApp = false);
+
+    testWidgets('names itself under the logo, which the pharmacy app does not', (tester) async {
+      await pumpSplash(tester);
+      expect(find.byKey(splashRepNameKey), findsNothing);
+    });
+
+    testWidgets('the rep app shows "Feniq Rep" under the logo', (tester) async {
+      AppEdition.isRepApp = true;
+      await pumpSplash(tester);
+      expect(find.byKey(splashRepNameKey), findsOneWidget);
+      expect(find.text('Feniq Rep'), findsOneWidget);
+    });
   });
 }
