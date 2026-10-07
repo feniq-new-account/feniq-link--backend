@@ -169,6 +169,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordLoginSubtitle => 'Enter your phone number and password';
 
   @override
+  String get repAppName => 'Feniq Rep';
+
+  @override
+  String get repLoginTitle => 'Rep sign in';
+
+  @override
+  String get repLoginSubtitle =>
+      'Enter your mobile number and the password your warehouse gave you';
+
+  @override
+  String get repForgotPasswordHint =>
+      'Forgot your password? Ask your warehouse for a new one.';
+
+  @override
+  String get errorRepAppOnly =>
+      'This app is for field reps only. A pharmacy account signs in to the Feniq pharmacy app.';
+
+  @override
+  String get errorPharmacyAppOnly =>
+      'This is a rep account. Sign in to the \"Feniq Rep\" app made for reps.';
+
+  @override
   String get backToRegistrationLink => 'New here? Create an account';
 
   @override

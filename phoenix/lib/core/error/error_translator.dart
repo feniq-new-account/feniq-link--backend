@@ -206,6 +206,12 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
     case 'INVALID_LOCATION':
       return l10n.errorRepInvalidLocation;
 
+    // Each app takes only its own accounts (AppEdition).
+    case 'REP_APP_ONLY':
+      return l10n.errorRepAppOnly;
+    case 'PHARMACY_APP_ONLY':
+      return l10n.errorPharmacyAppOnly;
+
     case 'UNEXPECTED_ERROR':
       return l10n.errorState;
     default:
