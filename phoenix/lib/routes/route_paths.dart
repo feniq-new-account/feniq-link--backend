@@ -32,4 +32,6 @@ class RoutePaths {
   static const String repPharmacy = '/rep/pharmacies/:pharmacyId';
   static const String repScan = '/rep/scan';
   static const String pharmacyVisitCode = '/visit-code';
+
+  static const String panelHome = '/panel-home';
 }

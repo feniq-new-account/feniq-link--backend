@@ -14,4 +14,10 @@ class AppConfig {
     // 'http://localhost:5000/api'
         
   );
+
+  // The web panel (warehouses and admins). The app's panel landing opens it.
+  static const String panelUrl = String.fromEnvironment(
+    'PANEL_URL',
+    defaultValue: 'https://feniq-connect-web.onrender.com',
+  );
 }

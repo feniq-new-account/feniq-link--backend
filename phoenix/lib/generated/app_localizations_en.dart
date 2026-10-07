@@ -169,28 +169,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordLoginSubtitle => 'Enter your phone number and password';
 
   @override
-  String get repAppName => 'Feniq Rep';
-
-  @override
-  String get repLoginTitle => 'Rep sign in';
-
-  @override
-  String get repLoginSubtitle =>
-      'Enter your mobile number and the password your warehouse gave you';
-
-  @override
-  String get repForgotPasswordHint =>
-      'Forgot your password? Ask your warehouse for a new one.';
-
-  @override
-  String get errorRepAppOnly =>
-      'This app is for field reps only. A pharmacy account signs in to the Feniq pharmacy app.';
-
-  @override
-  String get errorPharmacyAppOnly =>
-      'This is a rep account. Sign in to the \"Feniq Rep\" app made for reps.';
-
-  @override
   String get backToRegistrationLink => 'New here? Create an account';
 
   @override
@@ -2162,4 +2140,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pharmacyVisitCodeIntro =>
       'Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy.';
+
+  @override
+  String get panelHomeTitle => 'Warehouse account';
+
+  @override
+  String panelHomeGreeting(String name) {
+    return 'Hello $name';
+  }
+
+  @override
+  String get panelHomeBody =>
+      'The warehouse screens inside the app are on their way. For now, orders, products and reps are in the warehouse panel.';
+
+  @override
+  String get panelHomeOpenPanel => 'Open the warehouse panel';
+
+  @override
+  String panelHomeOpenFailed(String url) {
+    return 'Could not open the panel. Open $url in your browser.';
+  }
 }

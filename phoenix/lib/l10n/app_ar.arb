@@ -57,12 +57,6 @@
   "passwordsMustMatchHint": "يجب أن تتطابق كلمتا المرور.",
   "passwordLoginTitle": "تسجيل الدخول بكلمة السر",
   "passwordLoginSubtitle": "أدخل رقم هاتفك وكلمة السر",
-  "repAppName": "فينيق مندوب",
-  "repLoginTitle": "دخول المندوب",
-  "repLoginSubtitle": "أدخل رقم موبايلك وكلمة السر اللي أعطاك ياها المستودع",
-  "repForgotPasswordHint": "نسيت كلمة السر؟ اطلب من المستودع كلمة سر جديدة.",
-  "errorRepAppOnly": "هذا التطبيق للمناديب فقط. حساب الصيدلية يدخل من تطبيق فينيق للصيدليات.",
-  "errorPharmacyAppOnly": "هذا حساب مندوب. سجّل الدخول من تطبيق «Feniq Rep» الخاص بالمناديب.",
   "backToRegistrationLink": "جديد هون؟ أنشئ حساب",
   "forgotPasswordSupportLink": "نسيت كلمة المرور؟ تواصل مع الدعم عبر واتساب",
   "forgotPasswordSupportMessage": "مرحباً، أريد استعادة كلمة المرور لحسابي. اسم الصيدلية: ___ رقم الهاتف المسجّل: ___",
@@ -992,5 +986,10 @@
   "errorRepInvalidLocation": "تعذّرت قراءة موقعك. حاول مرة أخرى.",
   "pharmacyVisitCodeTitle": "باركود الزيارة",
   "pharmacyVisitCodeSubtitle": "للمناديب الذين يزورونك",
-  "pharmacyVisitCodeIntro": "اعرض هذا الباركود لمندوب المستودع ليمسحه عند زيارتك. تُوثَّق الزيارة فقط إذا كان هاتفه عند صيدليتك."
+  "pharmacyVisitCodeIntro": "اعرض هذا الباركود لمندوب المستودع ليمسحه عند زيارتك. تُوثَّق الزيارة فقط إذا كان هاتفه عند صيدليتك.",
+  "panelHomeTitle": "حساب المستودع",
+  "panelHomeGreeting": "أهلاً {name}",
+  "panelHomeBody": "شاشات المستودع جوّا التطبيق عم تنجهّز. لهلق، الطلبيات والأصناف والمناديب من لوحة المستودع.",
+  "panelHomeOpenPanel": "افتح لوحة المستودع",
+  "panelHomeOpenFailed": "ما قدرنا نفتح اللوحة. افتح {url} من المتصفح."
 }

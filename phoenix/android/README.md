@@ -117,24 +117,3 @@ keyPassword=...
 
 > iOS غير منشور حالياً؛ `lib/firebase_options.dart` (قسم iOS) ومعرّف iOS (`com.example.phoenix` في
 > `ios/Runner.xcodeproj`) ما زالا على القديم. قبل أي نسخة iOS: `flutterfire configure` على مشروع المالك.
-
-## 6. تطبيق المناديب «Feniq Rep» (تطبيق منفصل من نفس الكود)
-
-تطبيق المندوب مو جزء من تطبيق الصيدليات: هو تطبيق تاني على الموبايل، يتثبّت جنبه.
-
-| | تطبيق الصيدليات | تطبيق المناديب |
-|---|---|---|
-| الاسم تحت الأيقونة | Feniq | **Feniq Rep** |
-| الأيقونة | الطائر على كحلي | نفسها + شريط برتقالي مكتوب عليه **REP** |
-| `applicationId` | `com.feniq.link` | `com.feniq.link.rep` |
-| الدخول | الصيدليات فقط (المندوب يُرفض برسالة تدله على تطبيقه) | المناديب فقط (أي حساب تاني يُرفض)، بلا تسجيل حساب جديد |
-| الـworkflow | `android-apk.yml` | `android-rep-apk.yml` |
-| الرابط الثابت (من `main`) | `releases/download/test-latest/feniq-test.apk` | `releases/download/rep-test-latest/feniq-rep-test.apk` |
-
-كيف بيتفرّقوا بالكود:
-- أندرويد: `FENIQ_APP=rep` بالبيئة (بيعيّن المعرّف والاسم والأيقونة في `app/build.gradle.kts` عبر `manifestPlaceholders`).
-- دارت: `--dart-define=APP_EDITION=rep` (`lib/core/config/app_edition.dart`).
-- محلياً: `FENIQ_APP=rep flutter build apk --release --dart-define=APP_EDITION=rep`.
-- بدون هالمتغيرين كل شي متل ما كان: تطبيق الصيدليات.
-- المعرّف مختلف فـ`google-services.json` الحالي (للصيدليات) ما بيطابقه، فتطبيق المناديب بيتبني بلا Firebase (بلا إشعارات push) لحد ما تضيف له تطبيق أندرويد بـFirebase (`com.feniq.link.rep`) وتحط الملف الجديد.
-- نفس مفتاح التوقيع (الأسرار نفسها) لتطبيقي الصيدليات والمناديب.

@@ -167,28 +167,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get passwordLoginSubtitle => 'أدخل رقم هاتفك وكلمة السر';
 
   @override
-  String get repAppName => 'فينيق مندوب';
-
-  @override
-  String get repLoginTitle => 'دخول المندوب';
-
-  @override
-  String get repLoginSubtitle =>
-      'أدخل رقم موبايلك وكلمة السر اللي أعطاك ياها المستودع';
-
-  @override
-  String get repForgotPasswordHint =>
-      'نسيت كلمة السر؟ اطلب من المستودع كلمة سر جديدة.';
-
-  @override
-  String get errorRepAppOnly =>
-      'هذا التطبيق للمناديب فقط. حساب الصيدلية يدخل من تطبيق فينيق للصيدليات.';
-
-  @override
-  String get errorPharmacyAppOnly =>
-      'هذا حساب مندوب. سجّل الدخول من تطبيق «Feniq Rep» الخاص بالمناديب.';
-
-  @override
   String get backToRegistrationLink => 'جديد هون؟ أنشئ حساب';
 
   @override
@@ -2161,4 +2139,24 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get pharmacyVisitCodeIntro =>
       'اعرض هذا الباركود لمندوب المستودع ليمسحه عند زيارتك. تُوثَّق الزيارة فقط إذا كان هاتفه عند صيدليتك.';
+
+  @override
+  String get panelHomeTitle => 'حساب المستودع';
+
+  @override
+  String panelHomeGreeting(String name) {
+    return 'أهلاً $name';
+  }
+
+  @override
+  String get panelHomeBody =>
+      'شاشات المستودع جوّا التطبيق عم تنجهّز. لهلق، الطلبيات والأصناف والمناديب من لوحة المستودع.';
+
+  @override
+  String get panelHomeOpenPanel => 'افتح لوحة المستودع';
+
+  @override
+  String panelHomeOpenFailed(String url) {
+    return 'ما قدرنا نفتح اللوحة. افتح $url من المتصفح.';
+  }
 }

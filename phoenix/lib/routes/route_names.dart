@@ -33,4 +33,7 @@ class RouteNames {
   static const String repPharmacy = 'rep-pharmacy';
   static const String repScan = 'rep-scan';
   static const String pharmacyVisitCode = 'pharmacy-visit-code';
+
+  // A warehouse or admin account: the landing that opens the web panel.
+  static const String panelHome = 'panel-home';
 }

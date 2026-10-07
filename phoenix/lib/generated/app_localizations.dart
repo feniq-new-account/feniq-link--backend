@@ -398,42 +398,6 @@ abstract class AppLocalizations {
   /// **'Enter your phone number and password'**
   String get passwordLoginSubtitle;
 
-  /// No description provided for @repAppName.
-  ///
-  /// In en, this message translates to:
-  /// **'Feniq Rep'**
-  String get repAppName;
-
-  /// No description provided for @repLoginTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Rep sign in'**
-  String get repLoginTitle;
-
-  /// No description provided for @repLoginSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter your mobile number and the password your warehouse gave you'**
-  String get repLoginSubtitle;
-
-  /// No description provided for @repForgotPasswordHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Forgot your password? Ask your warehouse for a new one.'**
-  String get repForgotPasswordHint;
-
-  /// No description provided for @errorRepAppOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'This app is for field reps only. A pharmacy account signs in to the Feniq pharmacy app.'**
-  String get errorRepAppOnly;
-
-  /// No description provided for @errorPharmacyAppOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'This is a rep account. Sign in to the \"Feniq Rep\" app made for reps.'**
-  String get errorPharmacyAppOnly;
-
   /// No description provided for @backToRegistrationLink.
   ///
   /// In en, this message translates to:
@@ -3667,6 +3631,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy.'**
   String get pharmacyVisitCodeIntro;
+
+  /// No description provided for @panelHomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse account'**
+  String get panelHomeTitle;
+
+  /// No description provided for @panelHomeGreeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello {name}'**
+  String panelHomeGreeting(String name);
+
+  /// No description provided for @panelHomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The warehouse screens inside the app are on their way. For now, orders, products and reps are in the warehouse panel.'**
+  String get panelHomeBody;
+
+  /// No description provided for @panelHomeOpenPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the warehouse panel'**
+  String get panelHomeOpenPanel;
+
+  /// No description provided for @panelHomeOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the panel. Open {url} in your browser.'**
+  String panelHomeOpenFailed(String url);
 }
 
 class _AppLocalizationsDelegate

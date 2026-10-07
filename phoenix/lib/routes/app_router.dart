@@ -64,6 +64,7 @@ import 'package:feniq/features/rep/presentation/views/pharmacy_visit_code_view.d
 import 'package:feniq/features/rep/presentation/views/rep_pharmacy_detail_view.dart';
 import 'package:feniq/features/rep/presentation/views/visit_scan_view.dart';
 import 'package:feniq/features/rep/presentation/views/rep_shell_view.dart';
+import 'package:feniq/features/panel/panel_home_view.dart';
 import 'package:feniq/features/reviews/data/repositories/review_repository.dart';
 import 'package:feniq/features/reviews/presentation/managers/pharmacy_reviews_cubit.dart';
 import 'package:feniq/features/reviews/presentation/views/pharmacy_reviews_view.dart';
@@ -398,6 +399,12 @@ class AppRouter {
       // navigation stack alive (IndexedStack) - switching tabs doesn't rebuild
       // or reload the others. Everything above (catalog/cart/order tracking)
       // stays outside the shell so it pushes full-screen over the nav bar.
+      // Warehouse and admin accounts: one screen that opens the web panel.
+      GoRoute(
+        name: RouteNames.panelHome,
+        path: RoutePaths.panelHome,
+        pageBuilder: (context, state) => buildPageTransition(state: state, child: const PanelHomeView()),
+      ),
       // Field reps: the same app, signed in with a rep account. appRedirect
       // keeps a rep inside /rep and everyone else out of it.
       GoRoute(
@@ -583,8 +590,8 @@ String? forcePasswordChangeRedirect(BuildContext context, GoRouterState state) {
   return RoutePaths.changePassword;
 }
 
-// Paths a rep may be on besides /rep itself: the auth steps they pass through,
-// and the static privacy policy.
+// Paths a rep (or a warehouse/admin account) may be on besides its own home:
+// the auth steps they pass through, and the static privacy policy.
 const Set<String> _repOpenPaths = {
   RoutePaths.splash,
   RoutePaths.login,
@@ -595,7 +602,8 @@ const Set<String> _repOpenPaths = {
 
 // Keeps each role on its own side of the app: a rep (whose pharmacy-side
 // requests the server would refuse anyway - a stale notification link, a
-// remembered address) is sent to /rep, and a pharmacy is sent away from /rep.
+// remembered address) is sent to /rep, a warehouse or admin account to the
+// panel landing, and a pharmacy is sent away from both.
 // Only once the session is known: while it is still being checked (splash)
 // nothing is redirected. Offline, the role comes from the stored token.
 String? roleRedirect(BuildContext context, GoRouterState state) {
@@ -609,10 +617,14 @@ String? roleRedirect(BuildContext context, GoRouterState state) {
 
   final location = state.matchedLocation;
   final inRepArea = location == RoutePaths.repHome || location.startsWith('${RoutePaths.repHome}/');
+  final inPanelArea = location == RoutePaths.panelHome;
   if (auth.isRep) {
     return inRepArea || _repOpenPaths.contains(location) ? null : RoutePaths.repHome;
   }
-  return inRepArea ? RoutePaths.warehouseSelection : null;
+  if (auth.isPanelUser) {
+    return inPanelArea || _repOpenPaths.contains(location) ? null : RoutePaths.panelHome;
+  }
+  return inRepArea || inPanelArea ? RoutePaths.warehouseSelection : null;
 }
 
 String? appRedirect(BuildContext context, GoRouterState state) =>
