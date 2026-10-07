@@ -99,8 +99,23 @@ preCode               = discountBase − platformDiscount
 codeDiscount          = discount code, last of all (§9); 0 without one
 finalPrice            = preCode − codeDiscount                 // what the pharmacy owes
 compensation          = codeDiscount if an ADMIN code, else 0  // platform owes warehouse
-commission            = round((finalPrice + compensation) × warehouse.commissionRate / 100)
+commission            = round((finalPrice + compensation)
+                              × (warehouse.commissionRate + feniqRateFor(order.repCommission.rate)) / 100)
 ```
+
+> **Feniq's profit policy (owner's decision, October 2026).** The warehouse
+> `discountRate` and `commissionRate` now default to **0** - the old 4% / 1% were
+> placeholders, and warehouses still carrying exactly 4 / 1 are zeroed once at
+> boot (`platformRatesPolicy.service.js`). Feniq's only cut of an order is a
+> quarter of the **rep's commission** on it. With a rep rate `r` (set per rep by
+> the warehouse, 0-10%): the rep takes half (`r/2`), Feniq a quarter (`r/4`, added
+> to `commission` above) and the warehouse keeps the other quarter as a saving.
+> The split is frozen on the order (`order.repCommission`, `utils/repCommission.js`),
+> re-derived from the frozen rate when the warehouse edits the order, and
+> counted - for the rep, the warehouse's Reps page and Feniq - on **delivered**
+> orders only, less any approved return in the same proportion as the
+> clawback in §4 (`repCommissionTotals.service.js`). The 4% / 1% example below
+> just pins the arithmetic with arbitrary rates.
 
 **The warehouse's effective cut off its own advertised price is therefore
 predictable:**
