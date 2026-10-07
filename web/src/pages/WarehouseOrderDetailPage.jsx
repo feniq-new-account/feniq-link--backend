@@ -903,10 +903,14 @@ export function WarehouseOrderDetailPage() {
                 <span>{t('orderDetail.total')}</span>
                 <span className="wh-num">{formatSyp(order.totalPrice)}</span>
               </div>
-              <div className="wh-summary-row wh-summary-discount">
-                <span>{t('orderDetail.platformDiscountLabel')}</span>
-                <span className="wh-num">− {formatSyp(order.discountAmount)}</span>
-              </div>
+              {/* The platform takes no pharmacy discount by default, so a zero
+                  line would only confuse - it shows on an order that has one. */}
+              {order.discountAmount > 0 && (
+                <div className="wh-summary-row wh-summary-discount">
+                  <span>{t('orderDetail.platformDiscountLabel')}</span>
+                  <span className="wh-num">− {formatSyp(order.discountAmount)}</span>
+                </div>
+              )}
               {/* Only on an order that came from an advertisement package -
                   its own line, never folded into the platform discount above,
                   so the two stay auditable. */}
@@ -948,17 +952,49 @@ export function WarehouseOrderDetailPage() {
                   V1 stored a commission on every order and showed it nowhere,
                   so a warehouse could not tell what a package deal really
                   earned. Both figures are frozen on the order. */}
-              <div className="wh-summary-row wh-summary-commission">
-                <span>{t('orderDetail.commissionLabel')}</span>
-                <span className="wh-num">− {formatSyp(order.commissionAmount)}</span>
-              </div>
-              <div className="wh-summary-total wh-summary-net">
-                <span>{t('orderDetail.warehouseNetLabel')}</span>
-                <span className="wh-num">
-                  {formatSyp(order.warehouseNetSyp ?? order.finalPrice - order.commissionAmount)}
-                </span>
-              </div>
+              {order.commissionAmount > 0 && (
+                <div className="wh-summary-row wh-summary-commission">
+                  <span>{t('orderDetail.commissionLabel')}</span>
+                  <span className="wh-num">− {formatSyp(order.commissionAmount)}</span>
+                </div>
+              )}
+              {(order.commissionAmount > 0 || order.platformCompensationSyp > 0) && (
+                <div className="wh-summary-total wh-summary-net">
+                  <span>{t('orderDetail.warehouseNetLabel')}</span>
+                  <span className="wh-num">
+                    {formatSyp(order.warehouseNetSyp ?? order.finalPrice - order.commissionAmount)}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* The rep's commission on this order, as it was when the order
+                was placed: half to the rep, a quarter to Feniq, and the rest
+                the warehouse keeps. Counted in the rep's totals on delivery. */}
+            {order.repCommission && (
+              <div className="wh-detail-card">
+                <h2 className="wh-detail-card-title">{t('orderDetail.repCommission.title')}</h2>
+                <div className="wh-summary-row">
+                  <span>{t('orderDetail.repCommission.rate')}</span>
+                  <span className="wh-num">{order.repCommission.rate}%</span>
+                </div>
+                <div className="wh-summary-row">
+                  <span>{t('orderDetail.repCommission.rep')}</span>
+                  <span className="wh-num">{formatSyp(order.repCommission.repAmount)}</span>
+                </div>
+                <div className="wh-summary-row">
+                  <span>{t('orderDetail.repCommission.feniq')}</span>
+                  <span className="wh-num">{formatSyp(order.repCommission.feniqAmount)}</span>
+                </div>
+                <div className="wh-summary-row">
+                  <span>{t('orderDetail.repCommission.saving')}</span>
+                  <span className="wh-num">{formatSyp(order.repCommission.savingAmount)}</span>
+                </div>
+                {order.status !== 'delivered' && (
+                  <p className="hint" style={{ marginBottom: 0 }}>{t('orderDetail.repCommission.pending')}</p>
+                )}
+              </div>
+            )}
 
             <div className="wh-detail-card">
               <h2 className="wh-detail-card-title">{t('orderDetail.statusHistory')}</h2>

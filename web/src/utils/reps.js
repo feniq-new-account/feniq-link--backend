@@ -49,15 +49,46 @@ export function normalizePhoneInput(value) {
   return typeof value === 'string' ? value.replace(/[\s-]/g, '') : '';
 }
 
+// The rep's commission is a percentage of the value of the orders placed under
+// them through Feniq - backend/src/utils/repCommission.js. Half of it is the
+// rep's, a quarter goes to Feniq, and what is left stays with the warehouse.
+export const MAX_REP_COMMISSION_RATE = 10;
+
+// Text from the form -> a number of percent. Blank means "no commission" (0).
+// Returns null when it is not a rate the server would accept (0..10, at most
+// two decimals).
+export function parseCommissionInput(value) {
+  const text = typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : '';
+  if (text === '') return 0;
+  if (!/^\d+(?:[.,]\d{1,2})?$/.test(text)) return null;
+  const rate = Number(text.replace(',', '.'));
+  return rate >= 0 && rate <= MAX_REP_COMMISSION_RATE ? rate : null;
+}
+
+// Where each percentage point of a rate ends up, in percent of the order value.
+export function commissionSplit(rate) {
+  const total = Number(rate) || 0;
+  const round = (n) => Math.round(n * 10000) / 10000;
+  return { rep: round(total / 2), feniq: round(total / 4), saving: round(total / 4) };
+}
+
+// "2" -> "2", "0.5" -> "0.5": no trailing zeros, no locale digits.
+export function formatPercent(value) {
+  return `${Math.round((Number(value) || 0) * 100) / 100}%`;
+}
+
 // Mirrors backend rep.service.js createRep's checks so the form says what is
 // wrong before the round trip. Returns { key, values } for the first problem,
 // or null. The server still has the last word.
-export function repFormError({ name, phone, password }) {
+export function repFormError({ name, phone, password, commissionRate }) {
   const trimmed = typeof name === 'string' ? name.trim() : '';
   if (trimmed.length < 2 || trimmed.length > 60) return { key: 'reps.errors.name' };
   if (!PHONE_PATTERN.test(normalizePhoneInput(phone))) return { key: 'reps.errors.phone' };
   const min = passwordPolicyError(password, 'rep');
   if (min !== null) return { key: 'reps.errors.password', values: { min } };
+  if (parseCommissionInput(commissionRate) === null) {
+    return { key: 'reps.errors.commission', values: { max: MAX_REP_COMMISSION_RATE } };
+  }
   return null;
 }
 

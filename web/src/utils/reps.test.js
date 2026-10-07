@@ -4,8 +4,12 @@ import ar from '../locales/ar/translation.json';
 import {
   VISIT_STATUSES,
   daysSince,
+  MAX_REP_COMMISSION_RATE,
+  commissionSplit,
+  formatPercent,
   isVisitDue,
   lastSeenKey,
+  parseCommissionInput,
   repFormError,
   toLocalPhone,
   visitStatusKey,
@@ -119,5 +123,58 @@ describe('translations', () => {
     expect(keys(ar.reps).sort()).toEqual(keys(en.reps).sort());
     expect(en.nav.reps).toBeTruthy();
     expect(ar.nav.reps).toBeTruthy();
+  });
+});
+
+describe('rep commission', () => {
+  it('reads a percentage the server would accept, and rejects the rest', () => {
+    expect(parseCommissionInput('')).toBe(0);
+    expect(parseCommissionInput('  ')).toBe(0);
+    expect(parseCommissionInput('2')).toBe(2);
+    expect(parseCommissionInput('1,5')).toBe(1.5);
+    expect(parseCommissionInput('0.25')).toBe(0.25);
+    expect(parseCommissionInput(String(MAX_REP_COMMISSION_RATE))).toBe(MAX_REP_COMMISSION_RATE);
+    for (const bad of ['10.01', '11', '-1', '1.234', 'abc', '1e2', '2%']) {
+      expect(parseCommissionInput(bad), bad).toBeNull();
+    }
+  });
+
+  it('splits a rate: half to the rep, a quarter to Feniq, a quarter saved', () => {
+    expect(commissionSplit(2)).toEqual({ rep: 1, feniq: 0.5, saving: 0.5 });
+    expect(commissionSplit(1)).toEqual({ rep: 0.5, feniq: 0.25, saving: 0.25 });
+    expect(commissionSplit(0)).toEqual({ rep: 0, feniq: 0, saving: 0 });
+    const { rep, feniq, saving } = commissionSplit(3.33);
+    expect(rep + feniq + saving).toBeCloseTo(3.33, 4);
+  });
+
+  it('shows percentages without trailing zeros', () => {
+    expect(formatPercent(2)).toBe('2%');
+    expect(formatPercent(0.5)).toBe('0.5%');
+    expect(formatPercent(0.125)).toBe('0.13%');
+    expect(formatPercent(undefined)).toBe('0%');
+  });
+
+  it('the rep form refuses a bad commission and accepts a blank one', () => {
+    const ok = { name: 'سامر', phone: '0931000009', password: 'Abcdef12!' };
+    expect(repFormError({ ...ok, commissionRate: '' })).toBeNull();
+    expect(repFormError({ ...ok, commissionRate: '2' })).toBeNull();
+    expect(repFormError({ ...ok, commissionRate: '50' })).toEqual({
+      key: 'reps.errors.commission',
+      values: { max: MAX_REP_COMMISSION_RATE },
+    });
+  });
+
+  it('has a translation for every commission string in both languages', () => {
+    const keys = [
+      'commissionRate', 'commissionHint', 'commissionSplit', 'commission', 'monthCommission', 'commissionRep',
+      'commissionFeniq', 'commissionSaving', 'commissionNone', 'editCommission', 'editCommissionPrompt',
+      'commissionUpdated', 'commissionCountsDelivered',
+    ];
+    for (const key of keys) {
+      expect(en.reps[key], key).toBeTruthy();
+      expect(ar.reps[key], key).toBeTruthy();
+    }
+    expect(en.reps.errors.commission).toBeTruthy();
+    expect(ar.reps.errors.commission).toBeTruthy();
   });
 });

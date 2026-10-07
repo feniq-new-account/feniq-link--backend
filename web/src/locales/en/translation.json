@@ -183,7 +183,15 @@
     "discountCodeLabel": "Discount code {{code}}",
     "discountCodeFundedBy_warehouse": "Paid by your warehouse",
     "discountCodeFundedBy_platform": "Paid by Feniq",
-    "platformCompensationLabel": "Feniq compensation"
+    "platformCompensationLabel": "Feniq compensation",
+    "repCommission": {
+      "title": "Rep commission",
+      "rate": "Rate",
+      "rep": "To the rep",
+      "feniq": "To Feniq",
+      "saving": "Warehouse saves",
+      "pending": "Counted in the rep's totals once the order is delivered."
+    }
   },
   "returns": {
     "filterAll": "All",
@@ -1243,8 +1251,22 @@
     "errors": {
       "name": "Enter the rep name (at least 2 characters).",
       "phone": "Invalid Syrian mobile number (09xxxxxxxx).",
-      "password": "The password must be at least {{min}} characters."
-    }
+      "password": "The password must be at least {{min}} characters.",
+      "commission": "The commission must be a number from 0 to {{max}}% (at most two decimals)."
+    },
+    "commissionRate": "Rep commission (% of orders)",
+    "commissionHint": "A percentage of the value of orders from the rep's pharmacies placed through Feniq. Half goes to the rep, a quarter to Feniq, and the rest stays with the warehouse as a saving. Leave it at 0 for no commission. A change applies to new orders only.",
+    "commissionSplit": "Per order: rep {{rep}}, Feniq {{feniq}}, warehouse saves {{saving}}",
+    "commission": "Commission",
+    "monthCommission": "This month's commission",
+    "commissionRep": "Rep: {{amount}}",
+    "commissionFeniq": "Feniq: {{amount}}",
+    "commissionSaving": "Warehouse saves: {{amount}}",
+    "commissionNone": "No commission",
+    "editCommission": "Edit commission",
+    "editCommissionPrompt": "{{name}}'s commission on their orders (0 to {{max}}%). A change applies to new orders only:",
+    "commissionUpdated": "{{name}}'s commission is now {{rate}}. It applies to new orders.",
+    "commissionCountsDelivered": "Commissions are counted from delivered orders only."
   },
   "registration": {
     "approval": {

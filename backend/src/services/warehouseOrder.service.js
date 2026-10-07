@@ -273,7 +273,7 @@ async function getOrderDetailForWarehouse(orderId, warehouseId) {
   // toWarehouseOrderDetailResponse reads exactly these order fields.
   const order = await Order.findOne({ _id: orderId, warehouseId })
     .select(
-      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt'
+      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice repCommission notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt'
     );
   if (!order) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');

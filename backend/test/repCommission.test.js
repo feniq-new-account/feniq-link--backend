@@ -239,6 +239,26 @@ test('an order from a rep\'s pharmacy carries the three-way split, and Feniq\'s 
   assert.strictEqual(String(stored.repId), rep.id);
 });
 
+test('the warehouse sees the split on the order detail, and nothing when no rep earns on it', async () => {
+  const { res } = await createRep(ctx.wh.token, 4);
+  const ph = await createPharmacy('صيدلية تفصيل الطلبية');
+  await assign(ctx.wh.token, ph.pharmacy._id.toString(), res.body.rep.id);
+  const order = await placeOrder(ph, ctx.wh, 3); // 60,000 SYP at 4%
+  const detail = await call('GET', `/warehouse/orders/${order._id || order.id}`, { token: ctx.wh.token });
+  assert.strictEqual(detail.status, 200);
+  assert.deepStrictEqual(detail.body.order.repCommission, {
+    rate: 4,
+    repAmount: 1200,
+    feniqAmount: 600,
+    savingAmount: 600,
+  });
+  assert.strictEqual(detail.body.order.commissionAmount, 600);
+
+  const plain = await placeOrder(ctx.phNoRep, ctx.wh, 1);
+  const plainDetail = await call('GET', `/warehouse/orders/${plain._id || plain.id}`, { token: ctx.wh.token });
+  assert.strictEqual(plainDetail.body.order.repCommission, null);
+});
+
 test('an order from a pharmacy with no rep has no rep commission and no Feniq commission', async () => {
   const order = await placeOrder(ctx.phNoRep, ctx.wh, 2);
   const stored = await Order.findById(order._id || order.id).lean();

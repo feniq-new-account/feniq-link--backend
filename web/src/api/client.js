@@ -679,8 +679,8 @@ export const api = {
     request(`/warehouse/returns/${returnId}/reject`, { method: 'POST', body: { rejectionNote } }),
   // Field reps (WarehouseRepsPage / WarehouseRepDetailPage).
   warehouseReps: () => request('/warehouse/reps'),
-  createWarehouseRep: ({ name, phone, password }) =>
-    request('/warehouse/reps', { method: 'POST', body: { name, phone, password } }),
+  createWarehouseRep: ({ name, phone, password, commissionRate }) =>
+    request('/warehouse/reps', { method: 'POST', body: { name, phone, password, commissionRate } }),
   updateWarehouseRep: (repId, changes) => request(`/warehouse/reps/${repId}`, { method: 'PATCH', body: changes }),
   resetWarehouseRepPassword: (repId, password) =>
     request(`/warehouse/reps/${repId}/reset-password`, { method: 'POST', body: { password } }),

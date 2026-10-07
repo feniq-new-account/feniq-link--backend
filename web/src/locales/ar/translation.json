@@ -195,7 +195,15 @@
     "discountCodeLabel": "كود الخصم {{code}}",
     "discountCodeFundedBy_warehouse": "على حساب مستودعك",
     "discountCodeFundedBy_platform": "على حساب فينيق",
-    "platformCompensationLabel": "تعويض فينيق"
+    "platformCompensationLabel": "تعويض فينيق",
+    "repCommission": {
+      "title": "عمولة المندوب",
+      "rate": "النسبة",
+      "rep": "للمندوب",
+      "feniq": "لفينيق",
+      "saving": "يوفّره المستودع",
+      "pending": "تُحتسب في مجاميع المندوب عند تسليم الطلبية."
+    }
   },
   "returns": {
     "filterAll": "الكل",
@@ -1263,8 +1271,22 @@
     "errors": {
       "name": "اكتب اسم المندوب (حرفين على الأقل).",
       "phone": "رقم موبايل سوري غير صحيح (09xxxxxxxx).",
-      "password": "يجب أن تتكون كلمة السر من {{min}} أحرف على الأقل."
-    }
+      "password": "يجب أن تتكون كلمة السر من {{min}} أحرف على الأقل.",
+      "commission": "يجب أن تكون العمولة رقماً بين 0 و{{max}}٪ (منزلتان عشريتان كحد أقصى)."
+    },
+    "commissionRate": "عمولة المندوب (٪ من الطلبيات)",
+    "commissionHint": "نسبة من قيمة طلبيات صيدليات المندوب التي تمر عبر فينيق. نصفها للمندوب، وربعها لفينيق، والباقي يبقى توفيراً للمستودع. اتركها 0 إن لم تعطِ المندوب عمولة. التعديل ينطبق على الطلبيات الجديدة فقط.",
+    "commissionSplit": "من كل طلبية: للمندوب {{rep}}، لفينيق {{feniq}}، يوفّره المستودع {{saving}}",
+    "commission": "العمولة",
+    "monthCommission": "عمولة هذا الشهر",
+    "commissionRep": "للمندوب: {{amount}}",
+    "commissionFeniq": "لفينيق: {{amount}}",
+    "commissionSaving": "توفير المستودع: {{amount}}",
+    "commissionNone": "بلا عمولة",
+    "editCommission": "تعديل العمولة",
+    "editCommissionPrompt": "نسبة عمولة {{name}} من طلبياته (من 0 إلى {{max}}٪). التعديل ينطبق على الطلبيات الجديدة فقط:",
+    "commissionUpdated": "تم تحديث عمولة {{name}} إلى {{rate}}. تنطبق على الطلبيات الجديدة.",
+    "commissionCountsDelivered": "تُحسب العمولات من الطلبيات المسلّمة فقط."
   },
   "registration": {
     "approval": {

@@ -3,10 +3,19 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { formatSyp } from '../utils/currency';
-import { lastSeenKey, repFormError, toLocalPhone, normalizePhoneInput } from '../utils/reps';
+import {
+  MAX_REP_COMMISSION_RATE,
+  commissionSplit,
+  formatPercent,
+  lastSeenKey,
+  normalizePhoneInput,
+  parseCommissionInput,
+  repFormError,
+  toLocalPhone,
+} from '../utils/reps';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 
-const EMPTY_FORM = { name: '', phone: '', password: '' };
+const EMPTY_FORM = { name: '', phone: '', password: '', commissionRate: '' };
 
 // The warehouse's field reps: who they are, how many pharmacies each covers,
 // how often they visited them, and this month's orders placed under them.
@@ -41,6 +50,9 @@ export function WarehouseRepsPage() {
   // A visit changes the counts on this page.
   useRealtimeSync([REALTIME_EVENTS.REP_VISIT_CREATED], () => load());
 
+  const formRate = parseCommissionInput(form.commissionRate);
+  const commissionPreview = formRate ? commissionSplit(formRate) : null;
+
   const lastSeen = (value) => {
     const { key, count } = lastSeenKey(value);
     return t(key, { count });
@@ -61,6 +73,7 @@ export function WarehouseRepsPage() {
         name: form.name.trim(),
         phone: normalizePhoneInput(form.phone),
         password: form.password,
+        commissionRate: parseCommissionInput(form.commissionRate),
       });
       setNotice(t('reps.created', { name: rep.name, phone: toLocalPhone(rep.phone) }));
       setForm(EMPTY_FORM);
@@ -78,6 +91,28 @@ export function WarehouseRepsPage() {
     setError(null);
     try {
       await api.updateWarehouseRep(rep.id, { isActive: !rep.isActive });
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const editCommission = async (rep) => {
+    const answer = window.prompt(
+      t('reps.editCommissionPrompt', { name: rep.name, max: MAX_REP_COMMISSION_RATE }),
+      String(rep.commissionRate ?? 0)
+    );
+    if (answer === null) return;
+    const rate = parseCommissionInput(answer);
+    if (rate === null) {
+      setError(t('reps.errors.commission', { max: MAX_REP_COMMISSION_RATE }));
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    try {
+      await api.updateWarehouseRep(rep.id, { commissionRate: rate });
+      setNotice(t('reps.commissionUpdated', { name: rep.name, rate: formatPercent(rate) }));
       await load();
     } catch (err) {
       setError(err.message);
@@ -150,6 +185,27 @@ export function WarehouseRepsPage() {
               />
             </label>
             <p className="hint">{t('reps.tempPasswordHint')}</p>
+            <label>
+              {t('reps.commissionRate')}
+              <input
+                type="text"
+                inputMode="decimal"
+                dir="ltr"
+                placeholder="0"
+                value={form.commissionRate}
+                onChange={(e) => setForm({ ...form, commissionRate: e.target.value })}
+              />
+            </label>
+            <p className="hint">{t('reps.commissionHint')}</p>
+            {commissionPreview && (
+              <p className="hint">
+                {t('reps.commissionSplit', {
+                  rep: formatPercent(commissionPreview.rep),
+                  feniq: formatPercent(commissionPreview.feniq),
+                  saving: formatPercent(commissionPreview.saving),
+                })}
+              </p>
+            )}
             {formError && <p className="error-text">{formError}</p>}
             <button type="submit" className="btn-primary" disabled={isSaving}>
               {isSaving ? t('reps.creating') : t('reps.create')}
@@ -174,6 +230,7 @@ export function WarehouseRepsPage() {
                 <th>{t('reps.visits30d')}</th>
                 <th>{t('reps.lastVisit')}</th>
                 <th>{t('reps.monthOrders')}</th>
+                <th>{t('reps.monthCommission')}</th>
                 <th>{t('reps.status')}</th>
                 <th />
               </tr>
@@ -197,10 +254,31 @@ export function WarehouseRepsPage() {
                     <span className="wh-num">{rep.monthOrdersCount}</span>
                     <div className="wh-table-sub wh-num">{formatSyp(rep.monthOrdersTotal)}</div>
                   </td>
+                  <td>
+                    {rep.commissionRate > 0 ? (
+                      <>
+                        <span className="wh-num">{formatPercent(rep.commissionRate)}</span>
+                        <div className="wh-table-sub wh-num">
+                          {t('reps.commissionRep', { amount: formatSyp(rep.monthCommission?.repAmount ?? 0) })}
+                        </div>
+                        <div className="wh-table-sub wh-num">
+                          {t('reps.commissionFeniq', { amount: formatSyp(rep.monthCommission?.feniqAmount ?? 0) })}
+                        </div>
+                        <div className="wh-table-sub wh-num">
+                          {t('reps.commissionSaving', { amount: formatSyp(rep.monthCommission?.savingAmount ?? 0) })}
+                        </div>
+                      </>
+                    ) : (
+                      <span className="wh-table-sub">{t('reps.commissionNone')}</span>
+                    )}
+                  </td>
                   <td>{rep.isActive ? t('reps.active') : t('reps.inactive')}</td>
                   <td>
                     <div className="wh-row-actions">
                       <Link to={`/warehouse/reps/${rep.id}`}>{t('reps.open')}</Link>
+                      <button type="button" onClick={() => editCommission(rep)}>
+                        {t('reps.editCommission')}
+                      </button>
                       <button type="button" onClick={() => resetPassword(rep)}>
                         {t('reps.resetPassword')}
                       </button>
@@ -213,6 +291,7 @@ export function WarehouseRepsPage() {
               ))}
             </tbody>
           </table>
+          <p className="hint" style={{ padding: '8px 16px' }}>{t('reps.commissionCountsDelivered')}</p>
         </div>
       )}
     </div>
