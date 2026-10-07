@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/config/app_features.dart';
 import 'package:feniq/features/notifications/data/models/notification_model.dart';
 import 'package:feniq/features/notifications/data/repositories/notification_repository.dart';
 
@@ -20,8 +21,11 @@ class NotificationCubit extends Cubit<NotificationState> {
   final NotificationRepository _repository;
   late final StreamSubscription<List<NotificationModel>> _subscription;
 
-  void _apply(List<NotificationModel> items) {
+  void _apply(List<NotificationModel> all) {
     if (isClosed) return;
+    // Discount codes are switched off for now (AppFeatures): a code's
+    // announcement would point at something the pharmacy cannot use.
+    final items = AppFeatures.discountCodes ? all : all.where((n) => !n.isDiscountCode).toList();
     emit(
       NotificationState(
         notifications: items,

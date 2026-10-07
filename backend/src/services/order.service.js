@@ -43,6 +43,7 @@ const { codeDiscountSyp } = discountCodes;
 // requires this file back, so there is no cycle here.
 const { loadActiveAdvertisementOrThrow, isAdvertisementAvailable } = require('./advertisement.service');
 const { emitToWarehouse, EVENTS } = require('../realtime');
+const { FEATURES } = require('../config/features');
 
 // Section 15: the SYP stacking lives with its USD twin now
 // (manufacturerDiscount.service.js stackedDiscountSyp / computeFinalPrice), so the
@@ -1059,7 +1060,7 @@ async function createOrder({
           // still flip it per order, but changing the warehouse default won't).
           // The client never sends this - it's read straight from the warehouse.
           // Off unless the warehouse turned it on.
-          requiresDeliverySealPhoto: warehouse.requireDeliverySealPhoto ?? false,
+          requiresDeliverySealPhoto: FEATURES.deliverySealPhoto && (warehouse.requireDeliverySealPhoto ?? false),
           statusHistory: [{ status: 'pending', changedBy: userId, changedAt: now }],
         },
       ],

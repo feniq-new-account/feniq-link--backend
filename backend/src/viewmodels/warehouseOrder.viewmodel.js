@@ -1,6 +1,7 @@
 const { serializeOrderDiscountCode } = require('./discountCode.viewmodel');
 const { platformCompensationOf } = require('../services/discountCode.service');
 const { serializePharmacy } = require('./auth.viewmodel');
+const { FEATURES } = require('../config/features');
 
 function serializeOrderItem(item) {
   return {
@@ -131,7 +132,7 @@ function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn, has
       // `requiresDeliverySealPhoto` drives the per-order toggle + the "waiting
       // for the photo" hint next to the advance button; the other two are the
       // stored result, shown read-only.
-      requiresDeliverySealPhoto: order.requiresDeliverySealPhoto ?? false,
+      requiresDeliverySealPhoto: FEATURES.deliverySealPhoto && (order.requiresDeliverySealPhoto ?? false),
       deliverySealPhoto: order.deliverySealPhoto ?? null,
       deliverySealConfirmedAt: order.deliverySealConfirmedAt ?? null,
       pharmacy: serializePharmacy(pharmacy),

@@ -27,6 +27,7 @@ const {
   computeDiscountedPriceUsd,
 } = require('./manufacturerDiscount.service');
 const { emitToWarehouse, EVENTS } = require('../realtime');
+const { FEATURES } = require('../config/features');
 
 // Section 7/13b: the warehouse only ever moves an order forward, one stage at
 // a time - no skipping, no picking an arbitrary status. Three stages (the
@@ -151,7 +152,7 @@ async function advanceOrderStatus(orderId, warehouseId, userId) {
   // check - the client cannot skip it by calling advance-status directly.
   // Every other transition, and every order that doesn't require the photo, is
   // completely unaffected.
-  if (next === 'delivered' && order.requiresDeliverySealPhoto && !order.deliverySealPhoto) {
+  if (next === 'delivered' && FEATURES.deliverySealPhoto && order.requiresDeliverySealPhoto && !order.deliverySealPhoto) {
     throw ApiError.badRequest(
       'A seal photo is required to confirm delivery.',
       undefined,
