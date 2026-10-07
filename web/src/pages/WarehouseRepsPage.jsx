@@ -104,12 +104,12 @@ export function WarehouseRepsPage() {
     );
     if (answer === null) return;
     const rate = parseCommissionInput(answer);
+    setNotice(null);
     if (rate === null) {
       setError(t('reps.errors.commission', { max: MAX_REP_COMMISSION_RATE }));
       return;
     }
     setError(null);
-    setNotice(null);
     try {
       await api.updateWarehouseRep(rep.id, { commissionRate: rate });
       setNotice(t('reps.commissionUpdated', { name: rep.name, rate: formatPercent(rate) }));

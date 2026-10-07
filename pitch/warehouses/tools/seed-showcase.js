@@ -77,8 +77,8 @@ const OFFER_INGREDIENTS = [
 const PACKAGE_INGREDIENTS = ['METFORMIN', 'ATORVASTATIN', 'ENALAPRIL'];
 
 const REPS = [
-  { name: 'أحمد', phone: '0940000201', pharmacies: [0, 1, 2], visits: [[0, 1], [1, 2], [2, 4], [0, 6], [1, 9]] },
-  { name: 'ليلى', phone: '0940000202', pharmacies: [3, 4, 5], visits: [[3, 0], [4, 1], [5, 3], [3, 5]] },
+  { name: 'أحمد', phone: '0940000201', commissionRate: 2, pharmacies: [0, 1, 2], visits: [[0, 1], [1, 2], [2, 4], [0, 6], [1, 9]] },
+  { name: 'ليلى', phone: '0940000202', commissionRate: 2, pharmacies: [3, 4, 5], visits: [[3, 0], [4, 1], [5, 3], [3, 5]] },
 ];
 
 async function hideSensitiveProducts() {
@@ -213,10 +213,13 @@ async function main() {
     );
   }
 
-  // المناديب وصيدلياتهم قبل الطلبيات، فتُنسب كل طلبية لمندوب صيدليتها تلقائياً.
+  // المناديب وصيدلياتهم قبل الطلبيات، فتُنسب كل طلبية لمندوب صيدليتها تلقائياً وتُجمَّد عليها عمولة المندوب (2%:
+  // نصفها للمندوب وربعها لفينيق والباقي توفير للمستودع).
   const reps = [];
   for (const spec of REPS) {
-    const rep = await repService.createRep(warehouse._id, { name: spec.name, phone: spec.phone, password: PASSWORD });
+    const rep = await repService.createRep(warehouse._id, {
+      name: spec.name, phone: spec.phone, password: PASSWORD, commissionRate: spec.commissionRate,
+    });
     // حساب تجريبي: ندخل بدون شاشة «اختر كلمة سر جديدة».
     await User.updateOne({ _id: rep.userId }, { $set: { mustChangePassword: false } });
     for (const index of spec.pharmacies) {
