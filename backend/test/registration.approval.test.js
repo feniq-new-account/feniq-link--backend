@@ -222,9 +222,18 @@ test('a listed name marked "إلغاء" waits', async () => {
   assert.strictEqual(body.user.status, 'pending');
 });
 
-test('the listed mobile number plus a close name is enough', async () => {
-  const { body } = await register({ name: 'رامي', pharmacyName: 'صيدلية جديدة', phone: '0933000444' });
-  assert.strictEqual(body.user.status, 'active');
+test('a first name alone waits, even with the listed mobile number', async () => {
+  const { body } = await register({ name: 'رامي', pharmacyName: 'صيدلية الحياة', phone: '0933000444' });
+  assert.strictEqual(body.user.status, 'pending');
+  const pharmacy = await Pharmacy.findOne({ phone: '0933000444' }).lean();
+  assert.strictEqual(pharmacy.syndicateMatch.decision, 'review');
+  assert.strictEqual(pharmacy.syndicateMatch.pharmacistName, 'رامي حداد');
+  assert.ok(pharmacy.syndicateMatch.reasons.some((r) => r.includes('ناقص')), pharmacy.syndicateMatch.reasons);
+});
+
+test('a different person is not let in on the listed mobile number', async () => {
+  const { body } = await register({ name: 'علي محمد', pharmacyName: 'صيدلية الحياة', phone: '0944000222' });
+  assert.strictEqual(body.user.status, 'pending');
 });
 
 test('the minimum match percentage decides how close is close enough', async () => {
