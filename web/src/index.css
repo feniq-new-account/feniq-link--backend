@@ -4870,3 +4870,21 @@ input[type='month'] {
   padding: 1px 6px;
   font-size: 13px;
 }
+
+.reg-min-score {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--adm-border);
+}
+
+.reg-min-score label {
+  font-weight: var(--font-weight-subheading);
+}
+
+.reg-min-score select {
+  min-width: 120px;
+}

@@ -87,21 +87,32 @@ function levenshtein(a, b) {
   return prev[b.length];
 }
 
-// One word against another. Exact (after normalization), the same without
-// the article or give or take weak letters, or - only for long words, where a
-// single slip cannot turn one common name into another - one edit apart
-// (two for very long ones).
-function tokensMatch(a, b) {
-  if (a === b) return true;
+// One word against another, as a closeness from 0 (different words) to 1:
+//   1     the same word (after normalization)
+//   0.97  the same without the article ("السليمان"/"سليمان")
+//   0.95  give or take weak letters ("ياسمن"/"ياسمين", "سلمى"/"سلما")
+//   0.85  one slip in a long word - only long ones, where a single letter
+//         cannot turn one common name into another ("احمد"/"محمد" stay apart)
+//   0.75  two slips in a very long word
+// These feed the match percentage the admin sets a minimum for.
+function tokenSimilarity(a, b) {
+  if (a === b) return 1;
   const x = stripArticle(a);
   const y = stripArticle(b);
-  if (x === y) return true;
-  if (differsOnlyByWeakLetters(x, y) || finalAlefYaSwap(x, y)) return true;
+  if (x === y) return 0.97;
+  if (differsOnlyByWeakLetters(x, y) || finalAlefYaSwap(x, y)) return 0.95;
   const shorter = Math.min(x.length, y.length);
-  if (shorter >= 5 && levenshtein(x, y) <= 1) return true;
-  if (shorter >= 8 && levenshtein(x, y) <= 2) return true;
-  return false;
+  if (shorter >= 5 && levenshtein(x, y) <= 1) return 0.85;
+  if (shorter >= 8 && levenshtein(x, y) <= 2) return 0.75;
+  return 0;
 }
+
+function tokensMatch(a, b) {
+  return tokenSimilarity(a, b) > 0;
+}
+
+// Each extra word the list cannot explain (a grandfather's name, say) costs this share.
+const UNEXPLAINED_WORD_FACTOR = 0.9;
 
 // How well a typed name matches a listed person.
 //
@@ -110,10 +121,12 @@ function tokensMatch(a, b) {
 //            name, or be missing from either, without counting against it
 //   typed:   what the user wrote
 //
-// Returns { full, ratio }:
+// Returns { full, ratio, score }:
 //   full  - every part of the listed name is there, the first names agree,
 //           and the typed name adds at most one word the list doesn't explain
 //   ratio - share of the listed name's parts that were found (0..1)
+//   score - how closely: the found parts' closeness averaged over the whole
+//           listed name, less 10% per unexplained extra word (0..1)
 function personMatch(typed, listed, father = '') {
   return personMatchTokens(nameTokens(typed), nameTokens(listed), nameTokens(father));
 }
@@ -121,19 +134,31 @@ function personMatch(typed, listed, father = '') {
 // personMatch on names already split by nameTokens - the registry check
 // splits the typed name once and the list's names once per upload.
 function personMatchTokens(input, target, fatherTokens) {
-  if (input.length === 0 || target.length === 0) return { full: false, ratio: 0 };
+  if (input.length === 0 || target.length === 0) return { full: false, ratio: 0, score: 0 };
 
   const isFather = (token) => fatherTokens.some((f) => tokensMatch(token, f));
   // A middle word on the list that is the father's name is optional.
   const required = target.filter((token, i) => !(target.length >= 3 && i > 0 && i < target.length - 1 && isFather(token)));
 
+  // Each listed part takes the closest typed word still free.
   const used = new Array(input.length).fill(false);
   let found = 0;
+  let closeness = 0;
   required.forEach((token) => {
-    const at = input.findIndex((candidate, i) => !used[i] && tokensMatch(candidate, token));
+    let at = -1;
+    let best = 0;
+    input.forEach((candidate, i) => {
+      if (used[i]) return;
+      const similarity = tokenSimilarity(candidate, token);
+      if (similarity > best) {
+        best = similarity;
+        at = i;
+      }
+    });
     if (at !== -1) {
       used[at] = true;
       found += 1;
+      closeness += best;
     }
   });
 
@@ -141,7 +166,8 @@ function personMatchTokens(input, target, fatherTokens) {
   const firstNamesAgree = tokensMatch(input[0], required[0]);
   const unexplained = input.filter((token, i) => !used[i] && !isFather(token)).length;
   const full = found === required.length && firstNamesAgree && unexplained <= 1 && required.length >= 2;
-  return { full, ratio };
+  const score = (closeness / required.length) * UNEXPLAINED_WORD_FACTOR ** unexplained;
+  return { full, ratio, score };
 }
 
 // A pharmacy's own name ("صيدلية الشفاء") against the listed one. Common
@@ -165,6 +191,7 @@ function phoneKey(value) {
 
 module.exports = {
   nameTokens,
+  tokenSimilarity,
   tokensMatch,
   personMatch,
   personMatchTokens,

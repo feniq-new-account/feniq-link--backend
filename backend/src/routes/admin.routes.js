@@ -26,6 +26,7 @@ router.get('/registration', registration.getStatus);
 router.post('/registration/syndicate-list', syndicateListUpload, registration.importList);
 router.post('/registration/check', registration.checkName);
 router.put('/registration/approval', registration.setApproval);
+router.put('/registration/min-score', registration.setMinScore);
 router.put('/registration/telegram/bot', registration.setBotToken);
 router.delete('/registration/telegram/bot', registration.removeBot);
 router.post('/registration/telegram/link', registration.createTelegramLink);

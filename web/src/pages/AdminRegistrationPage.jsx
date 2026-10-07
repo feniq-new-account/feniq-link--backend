@@ -100,7 +100,43 @@ function ApprovalCard({ status, onChanged }) {
       <button type="button" className={on ? 'btn-secondary' : 'btn-primary'} disabled={busy} onClick={toggle}>
         {on ? t('registration.approval.turnOff') : t('registration.approval.turnOn')}
       </button>
+      <MinScoreControl minScore={status.minScore} onChanged={onChanged} />
     </Card>
+  );
+}
+
+// The lowest syndicate-list match that gets in without the admin looking.
+// Higher = stricter: only names typed almost exactly as listed get straight in.
+const MIN_SCORE_OPTIONS = [70, 75, 80, 85, 90, 95, 100];
+
+function MinScoreControl({ minScore, onChanged }) {
+  const { t } = useTranslation();
+  const { busy, error, run } = useAction();
+  const [released, setReleased] = useState(null);
+
+  const change = (event) => {
+    const value = Number(event.target.value);
+    run(async () => {
+      const data = await api.setAutoApproveMinScore(value);
+      setReleased(data.autoApproved);
+      await onChanged();
+    });
+  };
+
+  return (
+    <div className="reg-min-score">
+      <label htmlFor="reg-min-score">{t('registration.approval.minScore')}</label>
+      <select id="reg-min-score" value={minScore} onChange={change} disabled={busy}>
+        {MIN_SCORE_OPTIONS.map((value) => (
+          <option key={value} value={value}>
+            {`${value}%`}
+          </option>
+        ))}
+      </select>
+      <p className="hint">{t('registration.approval.minScoreHint')}</p>
+      {released > 0 && <p className="reg-success">{t('registration.approval.released', { count: released })}</p>}
+      {error && <p className="error-text">{error}</p>}
+    </div>
   );
 }
 

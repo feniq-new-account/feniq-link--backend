@@ -8,6 +8,7 @@ const PlatformSetting = require('../models/platformSetting.model');
 const KEYS = {
   ACCOUNT_APPROVAL: 'accountApproval',
   TELEGRAM_BOT_TOKEN: 'telegramBotToken',
+  AUTO_APPROVE_MIN_SCORE: 'autoApproveMinScore',
 };
 
 async function getValue(key) {
@@ -29,6 +30,21 @@ async function isApprovalRequired() {
 
 async function setApprovalRequired(required) {
   await setValue(KEYS.ACCOUNT_APPROVAL, Boolean(required));
+}
+
+// The lowest syndicate-list match percentage that lets a registration in
+// without an admin looking (syndicateRegistry.service.js check). Below it the
+// pharmacy waits, however close. The owner's choice: 80%.
+const DEFAULT_AUTO_APPROVE_MIN_SCORE = 80;
+const MIN_SCORE_RANGE = { min: 50, max: 100 };
+
+async function getAutoApproveMinScore() {
+  const value = await getValue(KEYS.AUTO_APPROVE_MIN_SCORE);
+  return Number.isInteger(value) ? value : DEFAULT_AUTO_APPROVE_MIN_SCORE;
+}
+
+async function setAutoApproveMinScore(score) {
+  await setValue(KEYS.AUTO_APPROVE_MIN_SCORE, score);
 }
 
 // The bot token is a credential, so it is stored encrypted under a key derived
@@ -69,6 +85,9 @@ async function setTelegramBotToken(token) {
 }
 
 module.exports = {
+  MIN_SCORE_RANGE,
+  getAutoApproveMinScore,
+  setAutoApproveMinScore,
   isApprovalRequired,
   setApprovalRequired,
   getTelegramBotToken,

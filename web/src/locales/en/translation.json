@@ -1277,7 +1277,10 @@
       "pending": "{{count}} pharmacies are waiting for you (Accounts page or Telegram).",
       "turnOn": "Turn approval on",
       "turnOff": "Turn approval off",
-      "confirmOff": "Turning approval off lets in all {{count}} waiting pharmacies now. Continue?"
+      "confirmOff": "Turning approval off lets in all {{count}} waiting pharmacies now. Continue?",
+      "minScore": "Lowest match to let in automatically",
+      "minScoreHint": "A name typed exactly as listed = 100%. One wrong letter ≈ 95%, an extra word ≈ 90%. Anything lower waits for you.",
+      "released": "{{count}} waiting pharmacies were let in."
     },
     "list": {
       "title": "Syndicate list",
