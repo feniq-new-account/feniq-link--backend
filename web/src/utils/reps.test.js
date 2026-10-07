@@ -143,12 +143,15 @@ describe('rep commission', () => {
     }
   });
 
-  it('splits a rate: half to the rep, a quarter to Feniq, a quarter saved', () => {
-    expect(commissionSplit(2)).toEqual({ rep: 1, feniq: 0.5, saving: 0.5 });
-    expect(commissionSplit(1)).toEqual({ rep: 0.5, feniq: 0.25, saving: 0.25 });
-    expect(commissionSplit(0)).toEqual({ rep: 0, feniq: 0, saving: 0 });
-    const { rep, feniq, saving } = commissionSplit(3.33);
-    expect(rep + feniq + saving).toBeCloseTo(3.33, 4);
+  it('splits a rate in quarters: Feniq, the pharmacy, the rep, and the warehouse', () => {
+    expect(commissionSplit(2)).toEqual({ feniq: 0.5, pharmacy: 0.5, rep: 0.5, saving: 0.5 });
+    expect(commissionSplit(0)).toEqual({ feniq: 0, pharmacy: 0, rep: 0, saving: 0 });
+    const { rep, feniq, pharmacy, saving } = commissionSplit(3.33);
+    expect(rep + feniq + pharmacy + saving).toBeCloseTo(3.33, 3);
+  });
+
+  it('a warehouse that gives its quarter away: the rep takes half, the warehouse keeps nothing', () => {
+    expect(commissionSplit(2, true)).toEqual({ feniq: 0.5, pharmacy: 0.5, rep: 1, saving: 0 });
   });
 
   it('shows percentages without trailing zeros', () => {
@@ -171,8 +174,9 @@ describe('rep commission', () => {
   it('has a translation for every commission string in both languages', () => {
     const keys = [
       'commissionRate', 'commissionHint', 'commissionSplit', 'commission', 'monthCommission', 'commissionRep',
-      'commissionFeniq', 'commissionSaving', 'commissionNone', 'editCommission', 'editCommissionPrompt',
-      'commissionUpdated', 'commissionCountsDelivered',
+      'commissionFeniq', 'commissionPharmacy', 'commissionSaving', 'commissionNone', 'editCommission',
+      'editCommissionPrompt', 'commissionUpdated', 'commissionCountsDelivered', 'shareToRep', 'shareToRepHint',
+      'shareToRepOn', 'shareToRepOff', 'toggleShareToRep', 'shareToRepUpdatedOn', 'shareToRepUpdatedOff',
     ];
     for (const key of keys) {
       expect(en.reps[key], key).toBeTruthy();

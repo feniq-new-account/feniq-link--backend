@@ -923,6 +923,21 @@ export function WarehouseOrderDetailPage() {
                   </span>
                 </div>
               )}
+              {/* The warehouse's loyalty discount by the order's size, and the
+                  pharmacy's credit (its quarter of earlier rep commissions) -
+                  both paid by the warehouse, both already off the total. */}
+              {order.loyaltyDiscountAmount > 0 && (
+                <div className="wh-summary-row wh-summary-discount">
+                  <span>{t('orderDetail.loyaltyDiscountLabel')}</span>
+                  <span className="wh-num">− {formatSyp(order.loyaltyDiscountAmount)}</span>
+                </div>
+              )}
+              {order.creditUsedSyp > 0 && (
+                <div className="wh-summary-row wh-summary-discount">
+                  <span>{t('orderDetail.creditUsedLabel')}</span>
+                  <span className="wh-num">− {formatSyp(order.creditUsedSyp)}</span>
+                </div>
+              )}
               {/* The pharmacy's discount code - taken off last, after every
                   discount above. Who pays for it is said right under it. */}
               {order.discountCode && (
@@ -987,10 +1002,19 @@ export function WarehouseOrderDetailPage() {
                   <span>{t('orderDetail.repCommission.feniq')}</span>
                   <span className="wh-num">{formatSyp(order.repCommission.feniqAmount)}</span>
                 </div>
+                {order.repCommission.pharmacyAmount > 0 && (
+                  <div className="wh-summary-row">
+                    <span>{t('orderDetail.repCommission.pharmacy')}</span>
+                    <span className="wh-num">{formatSyp(order.repCommission.pharmacyAmount)}</span>
+                  </div>
+                )}
                 <div className="wh-summary-row">
                   <span>{t('orderDetail.repCommission.saving')}</span>
                   <span className="wh-num">{formatSyp(order.repCommission.savingAmount)}</span>
                 </div>
+                {order.repCommission.warehouseShareToRep && (
+                  <p className="hint" style={{ marginBottom: 0 }}>{t('orderDetail.repCommission.shareToRep')}</p>
+                )}
                 {order.status !== 'delivered' && (
                   <p className="hint" style={{ marginBottom: 0 }}>{t('orderDetail.repCommission.pending')}</p>
                 )}

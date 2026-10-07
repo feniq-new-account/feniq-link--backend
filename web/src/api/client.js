@@ -681,8 +681,11 @@ export const api = {
     request(`/warehouse/returns/${returnId}/reject`, { method: 'POST', body: { rejectionNote } }),
   // Field reps (WarehouseRepsPage / WarehouseRepDetailPage).
   warehouseReps: () => request('/warehouse/reps'),
-  createWarehouseRep: ({ name, phone, password, commissionRate }) =>
-    request('/warehouse/reps', { method: 'POST', body: { name, phone, password, commissionRate } }),
+  createWarehouseRep: ({ name, phone, password, commissionRate, warehouseShareToRep }) =>
+    request('/warehouse/reps', {
+      method: 'POST',
+      body: { name, phone, password, commissionRate, warehouseShareToRep },
+    }),
   updateWarehouseRep: (repId, changes) => request(`/warehouse/reps/${repId}`, { method: 'PATCH', body: changes }),
   resetWarehouseRepPassword: (repId, password) =>
     request(`/warehouse/reps/${repId}/reset-password`, { method: 'POST', body: { password } }),
@@ -952,6 +955,9 @@ export const api = {
   warehouseSettings: () => request('/warehouse/settings'),
   // `requireDeliverySealPhoto` is optional - omitted keys are left untouched
   // server-side (warehouseSettings.service.js).
+  // The warehouse's own loyalty discount: { enabled, tiers: [{ minSyp, discountSyp }] }.
+  updateWarehouseLoyalty: ({ enabled, tiers }) =>
+    request('/warehouse/settings/loyalty', { method: 'PUT', body: { enabled, tiers } }),
   updateWarehouseOrderLimits: ({ minOrderAmountUsd, maxOrderAmountUsd, requireDeliverySealPhoto, rateUsed }) =>
     request('/warehouse/settings', {
       method: 'PATCH',
