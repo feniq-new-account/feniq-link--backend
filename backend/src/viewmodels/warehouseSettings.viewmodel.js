@@ -20,6 +20,11 @@ function toWarehouseSettingsResponse(warehouse) {
       // Proof-of-delivery toggle (warehouse.model.js), on by default. `?? true`
       // for documents that predate the field, matching order.service.js.
       requireDeliverySealPhoto: warehouse.requireDeliverySealPhoto ?? false,
+      // The warehouse's own loyalty discount (utils/loyalty.js).
+      loyalty: {
+        enabled: warehouse.loyalty?.enabled ?? false,
+        tiers: (warehouse.loyalty?.tiers ?? []).map((tier) => ({ minSyp: tier.minSyp, discountSyp: tier.discountSyp })),
+      },
     },
   };
 }

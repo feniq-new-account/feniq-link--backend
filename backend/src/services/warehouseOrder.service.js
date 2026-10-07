@@ -28,6 +28,7 @@ const {
 } = require('./manufacturerDiscount.service');
 const { emitToWarehouse, EVENTS } = require('../realtime');
 const { FEATURES } = require('../config/features');
+const pharmacyCredit = require('./pharmacyCredit.service');
 
 // Section 7/13b: the warehouse only ever moves an order forward, one stage at
 // a time - no skipping, no picking an arbitrary status. Three stages (the
@@ -201,6 +202,10 @@ async function advanceOrderStatus(orderId, warehouseId, userId) {
 
     if (next !== 'delivered') return moved;
 
+    // The pharmacy's quarter of this order's rep commission becomes its credit
+    // at this warehouse, in the same transaction as the delivery.
+    await pharmacyCredit.earnForDelivery(moved, session);
+
     const { entry, alreadyPosted } = await orderLedger.postChargeForDelivery(
       { order: moved, userId, deliveredAt: now, account },
       session
@@ -274,7 +279,7 @@ async function getOrderDetailForWarehouse(orderId, warehouseId) {
   // toWarehouseOrderDetailResponse reads exactly these order fields.
   const order = await Order.findOne({ _id: orderId, warehouseId })
     .select(
-      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice repCommission notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt'
+      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice repCommission loyaltyDiscountAmount creditUsedSyp notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt'
     );
   if (!order) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
@@ -671,17 +676,30 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
     discountCodeSyp,
     platformCompensationSyp,
     repCommission,
+    loyaltyDiscountAmount,
+    creditUsedSyp,
   } = rollUpOrderMoney({
     subtotalSyp: totalPrice,
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse.discountRate,
     commissionRate: warehouse.commissionRate,
     // The rate frozen when the order was placed - an edit never re-prices the
-    // rep's commission at whatever their rate is today.
+    // rep's commission at whatever their rate is today - and the same for who
+    // gets the warehouse's quarter.
     repCommissionRate: order.repCommission?.rate ?? 0,
+    warehouseShareToRep: order.repCommission?.warehouseShareToRep ?? false,
+    // The loyalty tiers frozen on the order: a smaller order may drop to a
+    // lower tier, never onto today's tiers.
+    loyaltyTiers: order.loyaltyTiers ?? [],
+    // Never more credit than the order already took; a smaller order hands the
+    // difference back to the pharmacy (below).
+    creditAvailableSyp: order.creditUsedSyp ?? 0,
     discountCodeTerms: code ? { type: code.type, value: code.value, fundedBy: code.fundedBy } : null,
   });
+  const creditReturnedSyp = Math.max(0, (order.creditUsedSyp ?? 0) - creditUsedSyp);
 
+  order.loyaltyDiscountAmount = loyaltyDiscountAmount;
+  order.creditUsedSyp = creditUsedSyp;
   order.totalPrice = totalPrice;
   order.discountAmount = discountAmount;
   order.commissionAmount = commissionAmount;
@@ -707,7 +725,17 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
     changedAt: now,
     note: ORDER_ITEMS_EDITED_NOTE,
   });
-  await order.save();
+  if (creditReturnedSyp > 0) {
+    await runInTransaction(async (session) => {
+      await pharmacyCredit.giveBack(
+        { pharmacyId: order.pharmacyId, warehouseId: order.warehouseId, orderId: order._id, amountSyp: creditReturnedSyp },
+        session
+      );
+      await order.save({ session });
+    });
+  } else {
+    await order.save();
+  }
 
   const [pharmacy, returnRequest] = await Promise.all([
     // userId: the pharmacist is notified of the edit just below.

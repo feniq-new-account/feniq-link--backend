@@ -18,6 +18,10 @@ function serializeOrder(order) {
     // The discount code this order used - its own line, taken off after every
     // discount above. null without a code.
     discountCode: serializeOrderDiscountCode(order.discountCode),
+    // The warehouse's loyalty discount, and the pharmacy's own credit this
+    // order took - both already off finalPrice.
+    loyaltyDiscountAmount: order.loyaltyDiscountAmount ?? 0,
+    creditUsedSyp: order.creditUsedSyp ?? 0,
     finalPrice: order.finalPrice,
     notes: order.notes,
     warehouseId: order.warehouseId,

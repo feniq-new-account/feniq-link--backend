@@ -117,9 +117,15 @@ function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn, has
             rate: order.repCommission.rate,
             repAmount: order.repCommission.repAmount,
             feniqAmount: order.repCommission.feniqAmount,
+            pharmacyAmount: order.repCommission.pharmacyAmount ?? 0,
             savingAmount: order.repCommission.savingAmount,
+            warehouseShareToRep: order.repCommission.warehouseShareToRep ?? false,
           }
         : null,
+      // The warehouse's loyalty discount on this order, and the pharmacy's
+      // credit it took - both already off finalPrice.
+      loyaltyDiscountAmount: order.loyaltyDiscountAmount ?? 0,
+      creditUsedSyp: order.creditUsedSyp ?? 0,
       notes: order.notes,
       cancelReason: order.cancelReason,
       createdAt: order.createdAt,

@@ -8,5 +8,6 @@ router.use(authenticate, authorize('warehouse'), requireActiveStatus);
 
 router.get('/', controller.get);
 router.patch('/', controller.update);
+router.put('/loyalty', controller.updateLoyalty);
 
 module.exports = router;

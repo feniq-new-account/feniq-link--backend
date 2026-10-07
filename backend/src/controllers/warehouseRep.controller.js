@@ -18,14 +18,25 @@ const list = asyncHandler(async (req, res) => {
 });
 
 const create = asyncHandler(async (req, res) => {
-  const { name, phone, password, commissionRate } = req.body ?? {};
-  const rep = await repService.createRep(await warehouseId(req), { name, phone, password, commissionRate });
+  const { name, phone, password, commissionRate, warehouseShareToRep } = req.body ?? {};
+  const rep = await repService.createRep(await warehouseId(req), {
+    name,
+    phone,
+    password,
+    commissionRate,
+    warehouseShareToRep,
+  });
   res.status(201).json({ success: true, message: 'Rep created.', rep: repViewModel.toRep(rep) });
 });
 
 const update = asyncHandler(async (req, res) => {
-  const { name, isActive, commissionRate } = req.body ?? {};
-  const rep = await repService.updateRep(await warehouseId(req), req.params.repId, { name, isActive, commissionRate });
+  const { name, isActive, commissionRate, warehouseShareToRep } = req.body ?? {};
+  const rep = await repService.updateRep(await warehouseId(req), req.params.repId, {
+    name,
+    isActive,
+    commissionRate,
+    warehouseShareToRep,
+  });
   res.json({ success: true, rep: repViewModel.toRep(rep) });
 });
 

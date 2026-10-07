@@ -116,20 +116,43 @@ const orderSchema = new Schema(
     // The rep commission on this order, frozen with the order like repId (a
     // later change of the rep's rate never rewrites it) and re-derived from
     // the frozen rate when the warehouse edits the order. null when the order
-    // has no rep, or the rep had no commission rate. `feniqAmount` is Feniq's
-    // quarter - the same figure `commissionAmount` carries (utils/repCommission.js).
+    // has no rep, or the rep had no commission rate. Four quarters
+    // (utils/repCommission.js): `feniqAmount` - the same figure
+    // `commissionAmount` carries; `pharmacyAmount` - credited to the pharmacy
+    // at this warehouse once delivered (`pharmacyCreditedAt`), taken off its
+    // next order; `repAmount` - a quarter, or half when the warehouse gave the
+    // rep its own quarter (`warehouseShareToRep`); `savingAmount` - what the
+    // warehouse keeps. Orders placed before October 2026 carry no pharmacy
+    // part (the rep then took half).
     repCommission: {
       type: new Schema(
         {
           rate: { type: Number, required: true },
           repAmount: { type: Number, required: true },
           feniqAmount: { type: Number, required: true },
+          pharmacyAmount: { type: Number, default: 0 },
           savingAmount: { type: Number, required: true },
+          warehouseShareToRep: { type: Boolean, default: false },
+          pharmacyCreditedAt: { type: Date, default: null },
         },
         { _id: false }
       ),
       default: null,
     },
+    // The warehouse's loyalty discount on this order (utils/loyalty.js): the
+    // amount, and the warehouse's tiers as they were when the order was placed
+    // - an edit re-derives the discount from these, never from today's tiers.
+    loyaltyDiscountAmount: { type: Number, default: 0 },
+    loyaltyTiers: {
+      type: [new Schema({ minSyp: Number, discountSyp: Number }, { _id: false })],
+      default: undefined,
+    },
+    // The pharmacy's credit at this warehouse (its quarter of earlier orders'
+    // rep commission) taken off this order automatically
+    // (pharmacyCredit.service.js), and when it was handed back because the
+    // order was cancelled.
+    creditUsedSyp: { type: Number, default: 0 },
+    creditReleasedAt: { type: Date, default: null },
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'],

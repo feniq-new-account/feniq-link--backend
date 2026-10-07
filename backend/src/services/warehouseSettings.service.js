@@ -1,6 +1,7 @@
 const { ApiError } = require('../utils/ApiError');
 const Warehouse = require('../models/warehouse.model');
 const { assertRateUsedIsCurrent } = require('./exchangeRate.service');
+const { parseLoyaltyTiers, MAX_LOYALTY_TIERS } = require('../utils/loyalty');
 
 // Section: the warehouse's own settings it is allowed to change itself -
 // currently the order-size limits (warehouse.model.js's minOrderAmountUsd/
@@ -85,4 +86,36 @@ async function updateOrderLimits(
   return warehouse;
 }
 
-module.exports = { getSettings, updateOrderLimits };
+// The warehouse's loyalty discount: on/off, and its tiers ("an order of at
+// least minSyp gets discountSyp off" - whole liras). The warehouse pays for it,
+// so it is the warehouse's to set. Applies to orders placed from now on: each
+// order keeps the tiers it was placed under (order.model.js's loyaltyTiers).
+async function updateLoyalty(warehouseId, { enabled, tiers }) {
+  const warehouse = await getSettings(warehouseId);
+  if (enabled !== undefined) {
+    if (typeof enabled !== 'boolean') {
+      throw ApiError.badRequest('enabled must be true or false.', undefined, 'INVALID_LOYALTY');
+    }
+    warehouse.loyalty = warehouse.loyalty ?? {};
+    warehouse.loyalty.enabled = enabled;
+  }
+  if (tiers !== undefined) {
+    const parsed = parseLoyaltyTiers(tiers);
+    if (!parsed) {
+      throw ApiError.badRequest(
+        `Each tier needs a minimum above 0 and a discount below it, in whole liras, at most ${MAX_LOYALTY_TIERS} tiers, no two on the same minimum.`,
+        undefined,
+        'INVALID_LOYALTY_TIERS'
+      );
+    }
+    warehouse.loyalty = warehouse.loyalty ?? {};
+    warehouse.loyalty.tiers = parsed;
+  }
+  if (warehouse.loyalty?.enabled && !(warehouse.loyalty.tiers?.length > 0)) {
+    throw ApiError.badRequest('Add at least one tier before switching loyalty on.', undefined, 'LOYALTY_TIERS_REQUIRED');
+  }
+  await warehouse.save();
+  return warehouse;
+}
+
+module.exports = { getSettings, updateOrderLimits, updateLoyalty };

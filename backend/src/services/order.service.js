@@ -10,6 +10,8 @@ const Warehouse = require('../models/warehouse.model');
 const RepAssignment = require('../models/repAssignment.model');
 const Rep = require('../models/rep.model');
 const { feniqRateFor, splitRepCommission } = require('../utils/repCommission');
+const { loyaltyDiscountFor, activeLoyaltyTiers } = require('../utils/loyalty');
+const pharmacyCredit = require('./pharmacyCredit.service');
 const Counter = require('../models/counter.model');
 const Return = require('../models/return.model');
 const Review = require('../models/review.model');
@@ -145,34 +147,58 @@ function rollUpOrderMoney({
   discountRate = 0,
   commissionRate = 0,
   // The rep's commission rate on this order (utils/repCommission.js): Feniq's
-  // quarter of it is added to the platform commission, and the three-way split
-  // comes back as `repCommission`.
+  // quarter of it is added to the platform commission, and the four-way split
+  // comes back as `repCommission`. `warehouseShareToRep`: the warehouse gives
+  // the rep its own quarter.
   repCommissionRate = 0,
+  warehouseShareToRep = false,
+  // The warehouse's loyalty tiers (utils/loyalty.js) - [] when it has none.
+  loyaltyTiers = [],
+  // The pharmacy's credit at this warehouse that this order may take
+  // (pharmacyCredit.service.js) - 0 for none.
+  creditAvailableSyp = 0,
   discountCodeTerms = null,
 }) {
   // What the pharmacy owes before the platform's own discount comes off.
   const discountBaseSyp = subtotalSyp - advertisementDiscountSypAmount;
   const discountAmount = Math.round((discountBaseSyp * discountRate) / 100);
-  const preCodeSyp = discountBaseSyp - discountAmount;
+  const afterPlatformSyp = discountBaseSyp - discountAmount;
+  // The warehouse's loyalty discount by the order's size, then the pharmacy's
+  // credit - both paid by the warehouse, both before anything is commissioned.
+  const { discountSyp: loyaltyDiscountAmount, tier: loyaltyTier } = loyaltyDiscountFor(afterPlatformSyp, loyaltyTiers);
+  const afterLoyaltySyp = afterPlatformSyp - loyaltyDiscountAmount;
+  const creditUsedSyp = Math.max(0, Math.min(Math.round(Number(creditAvailableSyp) || 0), afterLoyaltySyp));
+  const preCodeSyp = afterLoyaltySyp - creditUsedSyp;
   const discountCodeSyp = codeDiscountSyp(discountCodeTerms, preCodeSyp);
   const finalPrice = preCodeSyp - discountCodeSyp;
   const platformCompensationSyp = discountCodeTerms?.fundedBy === 'platform' ? discountCodeSyp : 0;
   // What the warehouse earns on the order: the pharmacy's payment plus
-  // whatever the platform owes it for an admin code.
+  // whatever the platform owes it for an admin code. Every commission is taken
+  // on this - what is left after every discount.
   const warehouseRevenueSyp = finalPrice + platformCompensationSyp;
   const commissionAmount = Math.round(
     (warehouseRevenueSyp * (commissionRate + feniqRateFor(repCommissionRate))) / 100
   );
-  const split = splitRepCommission(warehouseRevenueSyp, repCommissionRate);
+  const split = splitRepCommission(warehouseRevenueSyp, repCommissionRate, { warehouseShareToRep });
 
   return {
     // Frozen on the order; null when no rep commission applies.
     repCommission:
       split.totalAmount > 0 || split.rate > 0
-        ? { rate: split.rate, repAmount: split.repAmount, feniqAmount: split.feniqAmount, savingAmount: split.savingAmount }
+        ? {
+            rate: split.rate,
+            repAmount: split.repAmount,
+            feniqAmount: split.feniqAmount,
+            pharmacyAmount: split.pharmacyAmount,
+            savingAmount: split.savingAmount,
+            warehouseShareToRep: split.warehouseShareToRep,
+          }
         : null,
     discountAmount,
     advertisementDiscountAmount: advertisementDiscountSypAmount,
+    loyaltyDiscountAmount,
+    loyaltyTier,
+    creditUsedSyp,
     preCodeSyp,
     discountCodeSyp,
     platformCompensationSyp,
@@ -698,8 +724,16 @@ async function createOrder({
     .lean();
   // Their commission rate, frozen on the order with the rep (see repCommission
   // in order.model.js): Feniq's share of an order is a quarter of it.
-  const rep = repAssignment ? await Rep.findById(repAssignment.repId).select('commissionRate').lean() : null;
+  const rep = repAssignment
+    ? await Rep.findById(repAssignment.repId).select('commissionRate warehouseShareToRep').lean()
+    : null;
   const repCommissionRate = rep?.commissionRate ?? 0;
+  const loyaltyTiers = activeLoyaltyTiers(warehouse);
+  // The pharmacy's credit here, taken off this order automatically. Read now
+  // and taken for real inside the transaction (a conditional decrement - see
+  // pharmacyCredit.service.js), so a concurrent order can never overdraw it.
+  await pharmacyCredit.ensureAccount(pharmacyId, warehouseId);
+  const creditAvailableSyp = await pharmacyCredit.balanceFor(pharmacyId, warehouseId);
 
   // Section: packages. The client names a package by id and says how many
   // copies it wants - nothing else. Every product in it, every price and the
@@ -984,12 +1018,17 @@ async function createOrder({
     discountCodeSyp: codeDiscountAmount,
     platformCompensationSyp,
     repCommission,
+    loyaltyDiscountAmount,
+    creditUsedSyp,
   } = rollUpOrderMoney({
     subtotalSyp: totalPrice,
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse.discountRate,
     commissionRate: warehouse.commissionRate,
     repCommissionRate,
+    warehouseShareToRep: rep?.warehouseShareToRep ?? false,
+    loyaltyTiers,
+    creditAvailableSyp,
     discountCodeTerms: codeDoc ? discountCodes.termsOf(codeDoc) : null,
   });
 
@@ -1018,6 +1057,9 @@ async function createOrder({
           warehouseId,
           repId: repAssignment ? repAssignment.repId : null,
           repCommission,
+          loyaltyDiscountAmount,
+          loyaltyTiers: loyaltyTiers.length > 0 ? loyaltyTiers : undefined,
+          creditUsedSyp,
           status: 'pending',
           currency: 'SYP',
           // The rate every line above was priced through, frozen here.
@@ -1070,6 +1112,11 @@ async function createOrder({
     await OrderItem.insertMany(
       orderItemsData.map((item) => ({ ...item, orderId: created._id })),
       { session }
+    );
+
+    await pharmacyCredit.useCredit(
+      { pharmacyId, warehouseId, orderId: created._id, amountSyp: creditUsedSyp },
+      session
     );
 
     return created;
@@ -1144,7 +1191,7 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
   const usdToSyp = rate.usdToSyp;
 
   const [warehouse, { advertisements: loadedAdvertisements }] = await Promise.all([
-    Warehouse.findById(warehouseId).select('discountRate commissionRate').lean(),
+    Warehouse.findById(warehouseId).select('discountRate commissionRate loyalty').lean(),
     loadRequestedPackages(packageRequests, warehouseId, { lenient: true }),
   ]);
   const mergedAll = deductLegacyPackageItems(mergeDuplicateItems(plainItems), loadedAdvertisements);
@@ -1178,11 +1225,14 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
     usdToSyp,
   });
 
+  const creditBalanceSyp = await pharmacyCredit.balanceFor(pharmacyId, warehouseId);
   const rolled = rollUpOrderMoney({
     subtotalSyp: totalPrice,
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse?.discountRate ?? 0,
     commissionRate: warehouse?.commissionRate ?? 0,
+    loyaltyTiers: activeLoyaltyTiers(warehouse),
+    creditAvailableSyp: creditBalanceSyp,
     discountCodeTerms: codeDoc ? discountCodes.termsOf(codeDoc) : null,
   });
 
@@ -1197,6 +1247,11 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
     // price, every line after its offer and manufacturer discount.
     subtotalSyp: totalPrice - advertisementDiscountAmount,
     platformDiscountSyp: rolled.discountAmount,
+    // The warehouse's loyalty discount for a cart this size, and the
+    // pharmacy's credit at this warehouse with the part this order takes.
+    loyaltyDiscountSyp: rolled.loyaltyDiscountAmount,
+    creditBalanceSyp,
+    creditUsedSyp: rolled.creditUsedSyp,
     preCodeSyp: rolled.preCodeSyp,
     discountSyp: rolled.discountCodeSyp,
     discountUsd: Math.round((rolled.discountCodeSyp / usdToSyp) * 100) / 100,
@@ -1399,10 +1454,12 @@ async function getSavingsSummaryForPharmacy(pharmacyId) {
   //   advertisement package ->  Order.advertisementDiscountAmount
   //   platform subsidy      ->  Order.discountAmount
   //   discount code         ->  Order.discountCode.discountSyp
+  //   loyalty discount      ->  Order.loyaltyDiscountAmount
+  //   the pharmacy's credit ->  Order.creditUsedSyp (its quarter of earlier rep commissions)
   //
   // Cancelled orders are excluded - a cancelled order saved nothing.
   const orders = await Order.find({ pharmacyId, status: { $ne: 'cancelled' } })
-    .select('_id discountAmount advertisementDiscountAmount discountCode.discountSyp fx')
+    .select('_id discountAmount advertisementDiscountAmount discountCode.discountSyp loyaltyDiscountAmount creditUsedSyp fx')
     .lean();
 
   if (orders.length === 0) {
@@ -1411,6 +1468,8 @@ async function getSavingsSummaryForPharmacy(pharmacyId) {
       advertisementSyp: 0,
       platformDiscountSyp: 0,
       discountCodeSyp: 0,
+      loyaltySyp: 0,
+      creditSyp: 0,
       totalSavingsSyp: 0,
       totalSavingsUsd: 0,
     };
@@ -1431,26 +1490,38 @@ async function getSavingsSummaryForPharmacy(pharmacyId) {
   let advertisementSyp = 0;
   let platformDiscountSyp = 0;
   let discountCodeSyp = 0;
+  let loyaltySyp = 0;
+  let creditSyp = 0;
   // Each order's own frozen rate, so the USD total is a sum of historically
   // correct conversions rather than one live division at the end.
   let totalSavingsUsd = lineRow?.savingsUsd ?? 0;
 
   for (const order of orders) {
     const codeSyp = order.discountCode?.discountSyp ?? 0;
-    const orderSideSyp = (order.advertisementDiscountAmount ?? 0) + (order.discountAmount ?? 0) + codeSyp;
+    const orderSideSyp =
+      (order.advertisementDiscountAmount ?? 0) +
+      (order.discountAmount ?? 0) +
+      codeSyp +
+      (order.loyaltyDiscountAmount ?? 0) +
+      (order.creditUsedSyp ?? 0);
+    loyaltySyp += order.loyaltyDiscountAmount ?? 0;
+    creditSyp += order.creditUsedSyp ?? 0;
     advertisementSyp += order.advertisementDiscountAmount ?? 0;
     platformDiscountSyp += order.discountAmount ?? 0;
     discountCodeSyp += codeSyp;
     if (order.fx?.rate) totalSavingsUsd += orderSideSyp / order.fx.rate;
   }
 
-  const totalSavingsSyp = offerAndManufacturerSyp + advertisementSyp + platformDiscountSyp + discountCodeSyp;
+  const totalSavingsSyp =
+    offerAndManufacturerSyp + advertisementSyp + platformDiscountSyp + discountCodeSyp + loyaltySyp + creditSyp;
 
   return {
     offerAndManufacturerSyp,
     advertisementSyp,
     platformDiscountSyp,
     discountCodeSyp,
+    loyaltySyp,
+    creditSyp,
     totalSavingsSyp,
     // Kept for the clients that still render a USD hint. Same 2-decimal
     // convention as the per-line savingsUsd itself.
@@ -1516,6 +1587,8 @@ async function cancelWithCompareAndSwap(order, userId, now) {
     );
     if (!updated) throw notCancellableError();
     await discountCodes.releaseUse(updated, 'cancelled', session);
+    // The pharmacy's credit this order took goes back to it.
+    await pharmacyCredit.releaseForCancel(updated, session);
     return updated;
   });
 }
