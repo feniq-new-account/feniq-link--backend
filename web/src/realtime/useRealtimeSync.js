@@ -77,6 +77,8 @@ export const REALTIME_EVENTS = {
   RETURN_STATUS_UPDATED: 'return.status.updated',
   // A pharmacy rated this warehouse.
   REVIEW_CREATED: 'review.created',
+  // One of this warehouse's reps scanned a pharmacy's visit QR.
+  REP_VISIT_CREATED: 'rep.visit.created',
 
   // Admin panel (room: admin). Subscribing to account/offer/banner/
   // advertisement *pending* events from the warehouse panel would be harmless

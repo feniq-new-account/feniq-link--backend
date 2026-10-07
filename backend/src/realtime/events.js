@@ -16,6 +16,9 @@ const EVENTS = {
   // reviews are visible immediately (review.service.js), so the warehouse's
   // Reviews page has a new row the moment this fires.
   REVIEW_CREATED: 'review.created',
+  // One of the warehouse's reps scanned a pharmacy's visit QR (verified or
+  // not) - the Reps page's visit log has a new row.
+  REP_VISIT_CREATED: 'rep.visit.created',
 
   // Admin-room events. These mirror the three queues the admin panel actually
   // has a page for - accounts awaiting approval, offers awaiting moderation,

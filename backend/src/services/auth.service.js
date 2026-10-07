@@ -8,6 +8,7 @@ const User = require('../models/user.model');
 const RefreshToken = require('../models/refreshToken.model');
 const Pharmacy = require('../models/pharmacy.model');
 const Warehouse = require('../models/warehouse.model');
+const Rep = require('../models/rep.model');
 const otpService = require('./otp.service');
 const financialAudit = require('./financialAudit.service');
 const { emitToAdmins, EVENTS } = require('../realtime');
@@ -180,6 +181,17 @@ async function loadProfile(user) {
       warehouse: await Warehouse.findOne({ userId: user._id })
         .select('nameAr nameEn city phone logo')
         .lean(),
+    };
+  }
+  // A rep's "warehouse" is the one that employs them - the app shows its name
+  // on the rep's home screen.
+  if (user.role === 'rep') {
+    const rep = await Rep.findOne({ userId: user._id }).select('warehouseId').lean();
+    return {
+      pharmacy: null,
+      warehouse: rep
+        ? await Warehouse.findById(rep.warehouseId).select('nameAr nameEn city phone logo').lean()
+        : null,
     };
   }
   return { pharmacy: null, warehouse: null };

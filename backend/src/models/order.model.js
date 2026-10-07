@@ -108,6 +108,11 @@ const orderSchema = new Schema(
     orderNumber: { type: Number, required: true, unique: true },
     pharmacyId: { type: Schema.Types.ObjectId, ref: 'Pharmacy', required: true },
     warehouseId: { type: Schema.Types.ObjectId, ref: 'Warehouse', required: true },
+    // The warehouse's rep this pharmacy was assigned to when the order was
+    // placed (repAssignment.model.js), frozen here so a later reassignment
+    // never moves an order - and the commission it earned - to someone else.
+    // null when the pharmacy had no rep at this warehouse.
+    repId: { type: Schema.Types.ObjectId, ref: 'Rep', default: null },
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'],
@@ -230,6 +235,9 @@ const orderSchema = new Schema(
 //
 // listOrdersForPharmacy: find({ pharmacyId, orderNumber:{$lt} }).sort({ orderNumber:-1 })
 orderSchema.index({ pharmacyId: 1, orderNumber: -1 });
+// A rep's own numbers (repPortal.service.js) and the warehouse's per-rep
+// totals (rep.service.js) - sparse in practice, most orders carry no rep yet.
+orderSchema.index({ repId: 1, createdAt: -1 });
 // listOrdersForWarehouse (status tab): find({ warehouseId, status, orderNumber:{$gt} }).sort({ orderNumber:1 })
 orderSchema.index({ warehouseId: 1, status: 1, orderNumber: 1 });
 // listOrdersForWarehouse ("all" tab, no status): find({ warehouseId, orderNumber:{$gt} }).sort({ orderNumber:1 })

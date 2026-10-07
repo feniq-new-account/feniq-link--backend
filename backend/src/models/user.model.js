@@ -14,9 +14,12 @@ const userSchema = new Schema(
     name: { type: String, required: true, trim: true },
     phone: { type: String, required: true, unique: true, trim: true },
     password: { type: String, select: false },
+    // 'rep' is a warehouse's field sales rep (rep.model.js): created by that
+    // warehouse from its panel, signs in to the same mobile app, and sees only
+    // the pharmacies the warehouse assigned to them.
     role: {
       type: String,
-      enum: ['admin', 'warehouse', 'pharmacy'],
+      enum: ['admin', 'warehouse', 'pharmacy', 'rep'],
       required: true,
     },
     // 'deleted' is a self-service deletion (auth.service.js deleteAccount) and

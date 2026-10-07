@@ -28,6 +28,8 @@ import { WarehouseDiscountCodesPage } from './WarehouseDiscountCodesPage';
 import { WarehouseDebtsPage } from './WarehouseDebtsPage';
 import { WarehouseSettlementPage } from './WarehouseSettlementPage';
 import { WarehouseImportResultsPage, WarehouseImportsPage } from './WarehouseImportResultsPage';
+import { WarehouseRepsPage } from './WarehouseRepsPage';
+import { WarehouseRepDetailPage } from './WarehouseRepDetailPage';
 
 // Section 13b: the warehouse side of the shared React panel. Real routes
 // (not component state) - each tab gets its own bookmarkable/refreshable
@@ -165,6 +167,8 @@ export function WarehousePanel() {
             <Route path="/warehouse/debts" element={<WarehouseDebtsPage />} />
             <Route path="/warehouse/settlement" element={<WarehouseSettlementPage />} />
             <Route path="/warehouse/returns" element={<WarehouseReturnsPage />} />
+            <Route path="/warehouse/reps" element={<WarehouseRepsPage />} />
+            <Route path="/warehouse/reps/:repId" element={<WarehouseRepDetailPage />} />
             <Route path="/warehouse/returns/:returnId" element={<WarehouseReturnDetailPage />} />
             <Route path="/warehouse/complaints" element={<WarehouseComplaintsPage />} />
             <Route path="/warehouse/complaints/:complaintId" element={<WarehouseComplaintDetailPage />} />

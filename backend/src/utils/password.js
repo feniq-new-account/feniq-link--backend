@@ -21,6 +21,9 @@ const { ApiError } = require('./ApiError');
 
 const MIN_PASSWORD_LENGTH_BY_ROLE = Object.freeze({
   pharmacy: 8,
+  // A rep's login only reaches the pharmacies assigned to them and their own
+  // visits - the same bar as a pharmacy.
+  rep: 8,
   warehouse: 10,
   admin: 12,
 });

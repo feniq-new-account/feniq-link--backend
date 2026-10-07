@@ -33,7 +33,7 @@ const LEGACY_DESTINATIONS = [
 ];
 
 // Destinations added since, each a new page rather than a moved one.
-const ADDED_DESTINATIONS = ['/warehouse/discount-codes'];
+const ADDED_DESTINATIONS = ['/warehouse/discount-codes', '/warehouse/reps'];
 
 function allDestinations() {
   return WAREHOUSE_NAV.flatMap((item) =>
@@ -50,11 +50,12 @@ function label(locale, labelKey) {
 }
 
 describe('the warehouse sidebar', () => {
-  it('is seven tabs, in this order', () => {
+  it('is eight tabs, in this order', () => {
     expect(WAREHOUSE_NAV.map((item) => item.id)).toEqual([
       'orders',
       'catalog',
       'returns',
+      'reps',
       'promotions',
       'financials',
       'feedback',

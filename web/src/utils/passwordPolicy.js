@@ -9,6 +9,7 @@
 // too low here just means the request comes back 400.
 export const MIN_PASSWORD_LENGTH_BY_ROLE = Object.freeze({
   pharmacy: 8,
+  rep: 8,
   warehouse: 10,
   admin: 12,
 });

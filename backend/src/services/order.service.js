@@ -7,6 +7,7 @@ const { freeQuantityFor, sameBonus, effectiveBonuses } = require('../utils/bonus
 const Order = require('../models/order.model');
 const OrderItem = require('../models/orderItem.model');
 const Warehouse = require('../models/warehouse.model');
+const RepAssignment = require('../models/repAssignment.model');
 const Counter = require('../models/counter.model');
 const Return = require('../models/return.model');
 const Review = require('../models/review.model');
@@ -673,6 +674,13 @@ async function createOrder({
 
   const warehouse = await Warehouse.findById(warehouseId);
 
+  // The rep who covers this pharmacy for this warehouse right now, frozen on
+  // the order (order.model.js's repId) so the rep's numbers - and later their
+  // commission - follow the order even if the pharmacy is reassigned.
+  const repAssignment = await RepAssignment.findOne({ warehouseId, pharmacyId, active: true })
+    .select('repId')
+    .lean();
+
   // Section: packages. The client names a package by id and says how many
   // copies it wants - nothing else. Every product in it, every price and the
   // package total are read here, server-side, so a tampered request can't buy
@@ -986,6 +994,7 @@ async function createOrder({
           orderNumber,
           pharmacyId,
           warehouseId,
+          repId: repAssignment ? repAssignment.repId : null,
           status: 'pending',
           currency: 'SYP',
           // The rate every line above was priced through, frozen here.

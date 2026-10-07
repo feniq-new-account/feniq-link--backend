@@ -120,6 +120,12 @@ const WAREHOUSE_BUCKETS = [
     events: [E.REVIEW_CREATED],
   },
   {
+    id: 'repVisits',
+    path: '/warehouse/reps',
+    idField: 'visitId',
+    events: [E.REP_VISIT_CREATED],
+  },
+  {
     id: 'complaints',
     path: '/warehouse/complaints',
     idField: 'complaintId',

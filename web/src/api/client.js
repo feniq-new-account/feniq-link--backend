@@ -660,6 +660,27 @@ export const api = {
   approveReturn: (returnId) => request(`/warehouse/returns/${returnId}/approve`, { method: 'POST' }),
   rejectReturn: (returnId, rejectionNote) =>
     request(`/warehouse/returns/${returnId}/reject`, { method: 'POST', body: { rejectionNote } }),
+  // Field reps (WarehouseRepsPage / WarehouseRepDetailPage).
+  warehouseReps: () => request('/warehouse/reps'),
+  createWarehouseRep: ({ name, phone, password }) =>
+    request('/warehouse/reps', { method: 'POST', body: { name, phone, password } }),
+  updateWarehouseRep: (repId, changes) => request(`/warehouse/reps/${repId}`, { method: 'PATCH', body: changes }),
+  resetWarehouseRepPassword: (repId, password) =>
+    request(`/warehouse/reps/${repId}/reset-password`, { method: 'POST', body: { password } }),
+  warehouseRepPharmacies: (repId) => request(`/warehouse/reps/${repId}/pharmacies`),
+  searchPharmaciesForReps: (q) => request(`/warehouse/reps/pharmacy-search?q=${encodeURIComponent(q)}`),
+  assignPharmacyRep: (pharmacyId, repId) =>
+    request(`/warehouse/reps/pharmacies/${pharmacyId}/rep`, { method: 'PUT', body: { repId } }),
+  pharmacyVisitCode: (pharmacyId) => request(`/warehouse/reps/pharmacies/${pharmacyId}/visit-code`),
+  warehouseRepVisits: ({ repId, pharmacyId, limit, after } = {}) => {
+    const params = new URLSearchParams();
+    if (repId) params.set('repId', repId);
+    if (pharmacyId) params.set('pharmacyId', pharmacyId);
+    if (limit) params.set('limit', limit);
+    if (after) params.set('after', after);
+    const qs = params.toString();
+    return request(`/warehouse/reps/visits${qs ? `?${qs}` : ''}`);
+  },
   warehouseReviews: ({ limit, after, rating } = {}) => {
     const params = new URLSearchParams();
     if (limit) params.set('limit', limit);
