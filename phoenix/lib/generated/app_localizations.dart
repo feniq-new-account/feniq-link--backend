@@ -3344,6 +3344,18 @@ abstract class AppLocalizations {
   /// **'Their value'**
   String get repStatSalesMonth;
 
+  /// No description provided for @repStatCommissionMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Your commission this month'**
+  String get repStatCommissionMonth;
+
+  /// No description provided for @repCommissionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You earn {rate} of the value of delivered orders from your pharmacies placed through Feniq.'**
+  String repCommissionHint(String rate);
+
   /// No description provided for @repOwnerLabel.
   ///
   /// In en, this message translates to:

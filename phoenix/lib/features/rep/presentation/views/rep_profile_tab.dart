@@ -12,6 +12,7 @@ import 'package:feniq/core/widgets/app_dialog.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_home_cubit.dart';
+import 'package:feniq/features/rep/presentation/utils/rep_labels.dart';
 import 'package:feniq/features/rep/presentation/widgets/rep_stat_tile.dart';
 import 'package:feniq/routes/route_names.dart';
 
@@ -124,6 +125,18 @@ class RepProfileTab extends StatelessWidget {
                   ),
                 ],
               ),
+              if (stats.hasCommission) ...[
+                const SizedBox(height: AppSizes.spacingSmall),
+                RepStatTile(
+                  value: formatSyp(stats.monthCommissionAmount, l10n.currencySuffix),
+                  label: l10n.repStatCommissionMonth,
+                ),
+                const SizedBox(height: AppSizes.spacingSmall),
+                Text(
+                  l10n.repCommissionHint(repPercent(stats.ownCommissionRate)),
+                  style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
+                ),
+              ],
             ],
             const SizedBox(height: AppSizes.spacingMedium),
             Text(

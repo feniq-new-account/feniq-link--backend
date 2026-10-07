@@ -12,6 +12,13 @@ String repPharmacyName(BuildContext context, String nameAr, String nameEn) {
   return arabic ? nameEn : nameAr;
 }
 
+/// A percentage without trailing zeros: 1 -> "1%", 0.5 -> "0.5%", 1.25 -> "1.25%".
+String repPercent(double value) {
+  final rounded = (value * 100).round() / 100;
+  final text = rounded == rounded.roundToDouble() ? rounded.toInt().toString() : rounded.toString();
+  return '$text%';
+}
+
 String visitStatusLabel(AppLocalizations l10n, VisitStatus status) {
   switch (status) {
     case VisitStatus.verified:

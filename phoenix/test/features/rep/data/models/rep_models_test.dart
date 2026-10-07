@@ -32,6 +32,24 @@ void main() {
       expect(me.stats.monthOrdersTotal, 15502575);
     });
 
+    test('reads the rep\'s own commission, and an older server without it reads as none', () {
+      final withCommission = RepMe.fromJson({
+        'rep': {'id': 'r1', 'name': 'أحمد', 'phone': '+963940000201'},
+        'stats': {'ownCommissionRate': 1.25, 'monthCommissionAmount': 4500},
+      });
+      expect(withCommission.stats.ownCommissionRate, 1.25);
+      expect(withCommission.stats.monthCommissionAmount, 4500);
+      expect(withCommission.stats.hasCommission, isTrue);
+
+      final without = RepMe.fromJson({
+        'rep': {'id': 'r1', 'name': 'أحمد', 'phone': '+963940000201'},
+        'stats': {'pharmacyCount': 1},
+      });
+      expect(without.stats.ownCommissionRate, 0);
+      expect(without.stats.monthCommissionAmount, 0);
+      expect(without.stats.hasCommission, isFalse);
+    });
+
     test('a missing warehouse and missing stats read as none and zeros', () {
       final me = RepMe.fromJson({
         'rep': {'id': 'r1', 'name': 'ليلى', 'phone': '+963940000202'},

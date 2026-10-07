@@ -1980,6 +1980,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get repStatSalesMonth => 'قيمتها';
 
   @override
+  String get repStatCommissionMonth => 'عمولتك هذا الشهر';
+
+  @override
+  String repCommissionHint(String rate) {
+    return 'عمولتك $rate من قيمة الطلبيات المسلَّمة لصيدلياتك عبر فينيق.';
+  }
+
+  @override
   String get repOwnerLabel => 'المسؤول';
 
   @override

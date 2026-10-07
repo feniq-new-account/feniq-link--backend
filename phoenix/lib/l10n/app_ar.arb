@@ -939,6 +939,8 @@
   "repStatVisitsWeek": "زيارات 7 أيام",
   "repStatOrdersMonth": "طلبيات الشهر",
   "repStatSalesMonth": "قيمتها",
+  "repStatCommissionMonth": "عمولتك هذا الشهر",
+  "repCommissionHint": "عمولتك {rate} من قيمة الطلبيات المسلَّمة لصيدلياتك عبر فينيق.",
   "repOwnerLabel": "المسؤول",
   "repCallAction": "اتصال",
   "repLogVisitAction": "سجّل زيارة",

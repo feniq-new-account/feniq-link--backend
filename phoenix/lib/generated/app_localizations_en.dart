@@ -1977,6 +1977,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get repStatSalesMonth => 'Their value';
 
   @override
+  String get repStatCommissionMonth => 'Your commission this month';
+
+  @override
+  String repCommissionHint(String rate) {
+    return 'You earn $rate of the value of delivered orders from your pharmacies placed through Feniq.';
+  }
+
+  @override
   String get repOwnerLabel => 'Owner';
 
   @override

@@ -333,7 +333,8 @@ test('the warehouse\'s Reps page and the rep\'s own app total the commission on 
   const repToken = await login(appPhone);
   const me = await call('GET', '/rep/me', { token: repToken });
   assert.strictEqual(me.status, 200, JSON.stringify(me.body));
-  assert.strictEqual(me.body.stats.commissionRate, 2);
+  assert.strictEqual(me.body.stats.ownCommissionRate, 1, 'the rep is told their own 1%, not the warehouse\'s 2%');
+  assert.strictEqual(me.body.stats.commissionRate, undefined);
   assert.strictEqual(me.body.stats.monthCommissionAmount, 600, 'the rep sees only their own half');
   assert.strictEqual(me.body.stats.feniqAmount, undefined, 'Feniq\'s and the warehouse\'s shares are not the rep\'s business');
 });

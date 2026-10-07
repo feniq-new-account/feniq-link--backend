@@ -1119,6 +1119,15 @@
   "repStatVisitsWeek": "Visits, 7 days",
   "repStatOrdersMonth": "Orders this month",
   "repStatSalesMonth": "Their value",
+  "repStatCommissionMonth": "Your commission this month",
+  "repCommissionHint": "You earn {rate} of the value of delivered orders from your pharmacies placed through Feniq.",
+  "@repCommissionHint": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "repOwnerLabel": "Owner",
   "repCallAction": "Call",
   "repLogVisitAction": "Log a visit",

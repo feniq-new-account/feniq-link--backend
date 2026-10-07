@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
+import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
 import 'package:feniq/features/rep/data/models/rep_models.dart';
 import 'package:feniq/features/rep/data/repositories/rep_repository.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_home_cubit.dart';
@@ -14,12 +16,15 @@ import 'package:feniq/features/rep/presentation/managers/visit_code_cubit.dart';
 import 'package:feniq/features/rep/presentation/utils/rep_labels.dart';
 import 'package:feniq/features/rep/presentation/views/pharmacy_visit_code_view.dart';
 import 'package:feniq/features/rep/presentation/views/rep_pharmacies_tab.dart';
+import 'package:feniq/features/rep/presentation/views/rep_profile_tab.dart';
 import 'package:feniq/features/rep/presentation/views/rep_visits_tab.dart';
 import 'package:feniq/features/rep/presentation/widgets/rep_pharmacy_card.dart';
 import 'package:feniq/features/rep/presentation/widgets/rep_visit_tile.dart';
 import 'package:feniq/generated/app_localizations.dart';
 
 class MockRepRepository extends Mock implements RepRepository {}
+
+class MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
 class MockRepHomeCubit extends MockCubit<RepHomeState> implements RepHomeCubit {}
 
@@ -67,6 +72,59 @@ void main() {
       expect(lastVisitText(ar, DateTime(2026, 10, 5), _now), 'آخر زيارة: منذ يومين');
       expect(lastVisitText(ar, DateTime(2026, 10, 3), _now), 'آخر زيارة: منذ 4 أيام');
       expect(lastVisitText(ar, DateTime(2026, 9, 20), _now), 'آخر زيارة: منذ 17 يوماً');
+    });
+  });
+
+  group('repPercent', () {
+    test('shows a rate without trailing zeros', () {
+      expect(repPercent(1), '1%');
+      expect(repPercent(0.5), '0.5%');
+      expect(repPercent(1.25), '1.25%');
+      expect(repPercent(0), '0%');
+      expect(repPercent(1.2500001), '1.25%');
+    });
+  });
+
+  group('RepProfileTab', () {
+    late MockRepHomeCubit home;
+    late MockAuthCubit auth;
+
+    Future<void> pump(WidgetTester tester, RepStats stats) async {
+      home = MockRepHomeCubit();
+      auth = MockAuthCubit();
+      when(() => auth.state).thenReturn(const AuthState());
+      when(() => home.state).thenReturn(
+        RepHomeState(
+          status: RepLoadStatus.loaded,
+          me: RepMe(name: 'أحمد', phone: '+963940000201', warehouse: null, stats: stats),
+        ),
+      );
+      await tester.pumpWidget(
+        _app(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthCubit>.value(value: auth),
+              BlocProvider<RepHomeCubit>.value(value: home),
+            ],
+            child: const RepProfileTab(),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('a rep with a commission sees their own month and rate', (tester) async {
+      await pump(tester, const RepStats(monthOrdersCount: 4, ownCommissionRate: 1, monthCommissionAmount: 6000));
+
+      expect(find.text('Your commission this month'), findsOneWidget);
+      expect(find.textContaining('6,000'), findsOneWidget);
+      expect(find.textContaining('You earn 1% of the value of delivered orders'), findsOneWidget);
+    });
+
+    testWidgets('a rep with no commission is not shown a zero-rate line', (tester) async {
+      await pump(tester, const RepStats(monthOrdersCount: 4));
+
+      expect(find.text('Your commission this month'), findsNothing);
+      expect(find.textContaining('You earn'), findsNothing);
     });
   });
 

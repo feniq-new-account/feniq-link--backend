@@ -6,6 +6,8 @@ DateTime? _date(Object? value) => value is String ? DateTime.tryParse(value)?.to
 
 int _int(Object? value) => value is num ? value.toInt() : 0;
 
+double _double(Object? value) => value is num ? value.toDouble() : 0;
+
 /// How a scan turned out. `verified` is the only one that counts as a visit
 /// the warehouse can rely on; the rest are stored too, so the warehouse sees
 /// them (repVisit.model.js).
@@ -56,6 +58,8 @@ class RepStats {
     this.visitsLast7Days = 0,
     this.monthOrdersCount = 0,
     this.monthOrdersTotal = 0,
+    this.ownCommissionRate = 0,
+    this.monthCommissionAmount = 0,
   });
 
   final int pharmacyCount;
@@ -63,11 +67,22 @@ class RepStats {
   final int monthOrdersCount;
   final int monthOrdersTotal;
 
+  /// What the rep earns, in percent of their orders (their half of the
+  /// warehouse's rate). 0 when the warehouse gave them no commission.
+  final double ownCommissionRate;
+
+  /// The rep's commission on this month's delivered orders.
+  final int monthCommissionAmount;
+
+  bool get hasCommission => ownCommissionRate > 0;
+
   factory RepStats.fromJson(Map<String, dynamic>? json) => RepStats(
     pharmacyCount: _int(json?['pharmacyCount']),
     visitsLast7Days: _int(json?['visitsLast7Days']),
     monthOrdersCount: _int(json?['monthOrdersCount']),
     monthOrdersTotal: _int(json?['monthOrdersTotal']),
+    ownCommissionRate: _double(json?['ownCommissionRate']),
+    monthCommissionAmount: _int(json?['monthCommissionAmount']),
   );
 }
 

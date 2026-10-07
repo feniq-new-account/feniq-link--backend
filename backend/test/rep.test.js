@@ -159,7 +159,7 @@ test('a warehouse creates a rep who signs in from the app and must pick a passwo
     visitsLast7Days: 0,
     monthOrdersCount: 0,
     monthOrdersTotal: 0,
-    commissionRate: 0,
+    ownCommissionRate: 0,
     monthCommissionAmount: 0,
   });
 });
