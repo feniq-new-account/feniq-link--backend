@@ -122,6 +122,8 @@ class OrderModel {
     required this.discountAmount,
     required this.commissionAmount,
     this.advertisementDiscountAmount = 0,
+    this.loyaltyDiscountAmount = 0,
+    this.creditUsedSyp = 0,
     this.discountCode,
     required this.finalPrice,
     this.notes,
@@ -150,6 +152,10 @@ class OrderModel {
   // (which is the platform's rate-derived cut). 0 on a normal order and on
   // every order placed before packages existed.
   final num advertisementDiscountAmount;
+  // The warehouse's loyalty discount, and the pharmacy's own credit this order
+  // took (its share of earlier orders' rep commission). 0 when none.
+  final num loyaltyDiscountAmount;
+  final num creditUsedSyp;
   // The discount code this order used, or null. Its own line on the invoice.
   final OrderDiscountCode? discountCode;
   final num finalPrice;
@@ -246,6 +252,8 @@ class OrderModel {
     discountAmount: discountAmount,
     commissionAmount: commissionAmount,
     advertisementDiscountAmount: advertisementDiscountAmount,
+    loyaltyDiscountAmount: loyaltyDiscountAmount,
+    creditUsedSyp: creditUsedSyp,
     discountCode: discountCode,
     finalPrice: finalPrice,
     notes: notes,
@@ -274,6 +282,8 @@ class OrderModel {
     // Absent on responses from a server that predates packages - defaults to
     // 0, which renders exactly as it did before.
     advertisementDiscountAmount: (json['advertisementDiscountAmount'] as num?) ?? 0,
+    loyaltyDiscountAmount: (json['loyaltyDiscountAmount'] as num?) ?? 0,
+    creditUsedSyp: (json['creditUsedSyp'] as num?) ?? 0,
     discountCode: json['discountCode'] is Map<String, dynamic>
         ? OrderDiscountCode.fromJson(json['discountCode'] as Map<String, dynamic>)
         : null,

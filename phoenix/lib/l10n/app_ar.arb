@@ -871,6 +871,8 @@
       }
     }
   },
+  "loyaltyDiscountLine": "حسم الولاء من المستودع",
+  "creditUsedLine": "من رصيدك عند المستودع",
   "discountCodeUpdating": "جارٍ تحديث الخصم",
   "discountCodeChangedTitle": "تغيّر كود الخصم",
   "discountCodeRemovedMessage": "{reason} تمت إزالة الكود من السلة، راجع الإجمالي ثم أرسل الطلب من جديد.",

@@ -1006,6 +1006,8 @@
       }
     }
   },
+  "loyaltyDiscountLine": "Warehouse loyalty discount",
+  "creditUsedLine": "From your credit with the warehouse",
   "discountCodeUpdating": "Updating the discount",
   "discountCodeChangedTitle": "Discount code changed",
   "discountCodeRemovedMessage": "{reason} The code was removed from your cart - check the total, then submit again.",

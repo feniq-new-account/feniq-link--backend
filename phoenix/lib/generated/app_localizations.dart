@@ -3056,6 +3056,18 @@ abstract class AppLocalizations {
   /// **'Discount code ({code})'**
   String discountCodeLine(String code);
 
+  /// No description provided for @loyaltyDiscountLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse loyalty discount'**
+  String get loyaltyDiscountLine;
+
+  /// No description provided for @creditUsedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'From your credit with the warehouse'**
+  String get creditUsedLine;
+
   /// No description provided for @discountCodeUpdating.
   ///
   /// In en, this message translates to:

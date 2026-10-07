@@ -1793,6 +1793,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get loyaltyDiscountLine => 'حسم الولاء من المستودع';
+
+  @override
+  String get creditUsedLine => 'من رصيدك عند المستودع';
+
+  @override
   String get discountCodeUpdating => 'جارٍ تحديث الخصم';
 
   @override

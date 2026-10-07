@@ -1792,6 +1792,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get loyaltyDiscountLine => 'Warehouse loyalty discount';
+
+  @override
+  String get creditUsedLine => 'From your credit with the warehouse';
+
+  @override
   String get discountCodeUpdating => 'Updating the discount';
 
   @override
