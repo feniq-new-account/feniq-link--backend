@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:feniq/core/config/app_edition.dart';
 import 'package:feniq/core/constants/storage_keys.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/core/services/auth_event_bus.dart';
@@ -277,14 +276,6 @@ class AuthCubit extends Cubit<AuthState> {
 
   // Section 6-2: phone + password, no OTP - only usable after an account
   // already went through register() at least once.
-  // A rep signs in to the rep app and a pharmacy to the pharmacy app (see
-  // AppEdition); the other way round is refused with a message that says where
-  // to go. Null when the account belongs here.
-  String? _wrongAppCodeFor(UserModel user) {
-    if (AppEdition.isRepApp) return user.isRep ? null : 'REP_APP_ONLY';
-    return user.isRep ? 'PHARMACY_APP_ONLY' : null;
-  }
-
   Future<bool> loginWithPassword({
     required String phone,
     required String password,
@@ -295,19 +286,6 @@ class AuthCubit extends Cubit<AuthState> {
         phone: phone,
         password: password,
       );
-      // The two apps take different accounts: the answer comes before anything
-      // is stored, so a refused account leaves nothing behind on this phone.
-      final wrongApp = _wrongAppCodeFor(result.user);
-      if (wrongApp != null) {
-        emit(
-          state.copyWith(
-            isSubmitting: false,
-            errorMessage: 'This account belongs to the other Feniq app.',
-            errorCode: wrongApp,
-          ),
-        );
-        return false;
-      }
       await _persistSession(result);
       _onAuthenticated();
       final sessionStatus = _sessionStatusFor(result.user);

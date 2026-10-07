@@ -16,9 +16,9 @@
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
     <application
-        android:label="${appLabel}"
+        android:label="Feniq"
         android:name="${applicationName}"
-        android:icon="${appIcon}">
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"

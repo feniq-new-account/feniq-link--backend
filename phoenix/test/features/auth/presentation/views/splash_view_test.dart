@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:feniq/core/config/app_edition.dart';
 import 'package:feniq/features/auth/data/models/user_model.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
@@ -187,21 +186,5 @@ void main() {
 
     expect(scaleValue(tester), closeTo(1.04, 0.001));
     expect(opacityValue(tester), closeTo(0.85, 0.001));
-  });
-
-  group('the rep edition', () {
-    tearDown(() => AppEdition.isRepApp = false);
-
-    testWidgets('names itself under the logo, which the pharmacy app does not', (tester) async {
-      await pumpSplash(tester);
-      expect(find.byKey(splashRepNameKey), findsNothing);
-    });
-
-    testWidgets('the rep app shows "Feniq Rep" under the logo', (tester) async {
-      AppEdition.isRepApp = true;
-      await pumpSplash(tester);
-      expect(find.byKey(splashRepNameKey), findsOneWidget);
-      expect(find.text('Feniq Rep'), findsOneWidget);
-    });
   });
 }

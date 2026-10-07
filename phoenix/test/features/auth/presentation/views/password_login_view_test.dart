@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:feniq/core/config/app_edition.dart';
 import 'package:feniq/core/widgets/phone_text_field.dart';
 import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
@@ -128,34 +127,5 @@ void main() {
         password: any(named: 'password'),
       ),
     );
-  });
-
-  group('the two editions', () {
-    tearDown(() => AppEdition.isRepApp = false);
-
-    testWidgets('the pharmacy app offers registration and support, and does not say "rep"', (tester) async {
-      await pumpLoginView(tester);
-
-      expect(find.byKey(repAppNameKey), findsNothing);
-      expect(find.text('Log in with password'), findsOneWidget);
-      expect(find.text('New here? Create an account'), findsOneWidget);
-      expect(find.textContaining('Contact support on WhatsApp'), findsOneWidget);
-    });
-
-    testWidgets('the rep app is named, takes a rep\'s sign-in, and has no way into registration', (tester) async {
-      AppEdition.isRepApp = true;
-      await pumpLoginView(tester);
-
-      expect(find.byKey(repAppNameKey), findsOneWidget);
-      expect(find.text('Feniq Rep'), findsOneWidget);
-      expect(find.text('Rep sign in'), findsOneWidget);
-      expect(find.textContaining('the password your warehouse gave you'), findsOneWidget);
-      expect(find.text('New here? Create an account'), findsNothing);
-      expect(find.textContaining('Contact support on WhatsApp'), findsNothing);
-      expect(find.textContaining('Ask your warehouse for a new one'), findsOneWidget);
-      // The form itself is the same.
-      expect(find.byType(PhoneTextField), findsOneWidget);
-      expect(find.byType(PrimaryButton), findsOneWidget);
-    });
   });
 }
