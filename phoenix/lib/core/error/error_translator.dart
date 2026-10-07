@@ -217,6 +217,20 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
       return l10n.errorOrderNotEditable;
     case 'PACKAGE_ITEMS_LOCKED':
       return l10n.errorPackageItemsLocked;
+    case 'INVALID_COMMISSION_RATE':
+      return l10n.errorInvalidCommissionRate;
+    case 'INVALID_PAYMENT_AMOUNT':
+      return l10n.errorInvalidPaymentAmount;
+    case 'INVALID_PHONE_FORMAT':
+      return l10n.errorInvalidPhoneFormat;
+    case 'INVALID_REP_NAME':
+      return l10n.errorInvalidRepName;
+    case 'NO_TRADING_RELATIONSHIP':
+      return l10n.errorNoTradingRelationship;
+    case 'REP_NOT_FOUND':
+      return l10n.errorRepNotFound;
+    case 'RETURN_ALREADY_RESOLVED':
+      return l10n.errorReturnAlreadyResolved;
 
     case 'UNEXPECTED_ERROR':
       return l10n.errorState;

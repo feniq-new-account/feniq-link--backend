@@ -41,6 +41,8 @@ import 'package:feniq/features/debts/data/repositories/debt_repository.dart';
 import 'package:feniq/features/debts/data/repositories/debt_repository_impl.dart';
 import 'package:feniq/features/rep/data/repositories/rep_repository.dart';
 import 'package:feniq/features/rep/data/repositories/rep_repository_impl.dart';
+import 'package:feniq/features/warehouse/data/repositories/warehouse_management_repository.dart';
+import 'package:feniq/features/warehouse/data/repositories/warehouse_management_repository_impl.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_orders_repository.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_orders_repository_impl.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
@@ -146,6 +148,7 @@ Future<void> main() async {
   final offersRepository = OffersRepositoryImpl(apiClient: apiClient);
   final repRepository = RepRepositoryImpl(apiClient: apiClient);
   final warehouseOrdersRepository = WarehouseOrdersRepositoryImpl(apiClient: apiClient);
+  final warehouseManagementRepository = WarehouseManagementRepositoryImpl(apiClient: apiClient);
   final appRouter = AppRouter();
   runApp(
     MyApp(
@@ -168,6 +171,7 @@ Future<void> main() async {
       offersRepository: offersRepository,
       repRepository: repRepository,
       warehouseOrdersRepository: warehouseOrdersRepository,
+      warehouseManagementRepository: warehouseManagementRepository,
       notificationRepository: notificationRepository,
       fcmService: fcmService,
       sessionScope: sessionScope,
@@ -238,6 +242,7 @@ class MyApp extends StatelessWidget {
     required this.offersRepository,
     this.repRepository,
     this.warehouseOrdersRepository,
+    this.warehouseManagementRepository,
     required this.notificationRepository,
     required this.fcmService,
     required this.sessionScope,
@@ -265,6 +270,7 @@ class MyApp extends StatelessWidget {
   // Only the rep screens read it; null in a test that never visits them.
   final RepRepository? repRepository;
   final WarehouseOrdersRepository? warehouseOrdersRepository;
+  final WarehouseManagementRepository? warehouseManagementRepository;
   final NotificationRepository notificationRepository;
   final FcmService fcmService;
   final SessionScope sessionScope;
@@ -297,6 +303,8 @@ class MyApp extends StatelessWidget {
         if (repRepository != null) RepositoryProvider<RepRepository>.value(value: repRepository!),
         if (warehouseOrdersRepository != null)
           RepositoryProvider<WarehouseOrdersRepository>.value(value: warehouseOrdersRepository!),
+        if (warehouseManagementRepository != null)
+          RepositoryProvider<WarehouseManagementRepository>.value(value: warehouseManagementRepository!),
         // The platform location API, behind a seam the scan flow can be tested through.
         RepositoryProvider<LocationProvider>.value(value: const GeolocatorLocationProvider()),
       ],

@@ -37,4 +37,7 @@ class RoutePaths {
 
   static const String warehouseHome = '/warehouse';
   static const String warehouseOrder = '/warehouse/orders/:orderId';
+  static const String warehouseReturn = '/warehouse/returns/:returnId';
+  static const String warehouseAccount = '/warehouse/accounts/:pharmacyId';
+  static const String warehouseRep = '/warehouse/reps/:repId';
 }

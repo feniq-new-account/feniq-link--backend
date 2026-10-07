@@ -77,6 +77,21 @@ class Endpoints {
   static String warehouseOrder(String orderId) => '/warehouse/orders/$orderId';
   static String warehouseOrderAdvance(String orderId) => '/warehouse/orders/$orderId/advance-status';
   static String warehouseOrderItems(String orderId) => '/warehouse/orders/$orderId/items';
+  // Its reps (warehouseRep.routes.js), pharmacy accounts and payments
+  // (warehouseBalance / warehousePayment), and returns (warehouseReturn).
+  static const String warehouseReps = '/warehouse/reps';
+  static String warehouseRep(String repId) => '/warehouse/reps/$repId';
+  static String warehouseRepResetPassword(String repId) => '/warehouse/reps/$repId/reset-password';
+  static String warehouseRepPharmacies(String repId) => '/warehouse/reps/$repId/pharmacies';
+  static const String warehouseRepVisits = '/warehouse/reps/visits';
+  static const String warehouseBalances = '/warehouse/balances';
+  static String warehouseBalance(String pharmacyId) => '/warehouse/balances/$pharmacyId';
+  static const String warehousePayments = '/warehouse/payments';
+  static const String warehouseReturns = '/warehouse/returns';
+  static String warehouseReturn(String returnId) => '/warehouse/returns/$returnId';
+  static String warehouseReturnPreview(String returnId) => '/warehouse/returns/$returnId/credit-preview';
+  static String warehouseReturnApprove(String returnId) => '/warehouse/returns/$returnId/approve';
+  static String warehouseReturnReject(String returnId) => '/warehouse/returns/$returnId/reject';
 
   static const String activeBanners = '/banners/active';
 

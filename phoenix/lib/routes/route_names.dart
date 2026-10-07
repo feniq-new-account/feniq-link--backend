@@ -40,4 +40,7 @@ class RouteNames {
   // A warehouse account: its orders, and one order.
   static const String warehouseHome = 'warehouse-home';
   static const String warehouseOrder = 'warehouse-order';
+  static const String warehouseReturn = 'warehouse-return';
+  static const String warehouseAccount = 'warehouse-account';
+  static const String warehouseRep = 'warehouse-rep';
 }

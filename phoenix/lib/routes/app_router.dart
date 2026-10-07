@@ -65,7 +65,15 @@ import 'package:feniq/features/rep/presentation/views/rep_pharmacy_detail_view.d
 import 'package:feniq/features/rep/presentation/views/visit_scan_view.dart';
 import 'package:feniq/features/rep/presentation/views/rep_shell_view.dart';
 import 'package:feniq/features/panel/panel_home_view.dart';
+import 'package:feniq/features/warehouse/data/repositories/warehouse_management_repository.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_orders_repository.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_accounts_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_rep_detail_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_reps_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_returns_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/views/warehouse_rep_detail_view.dart';
+import 'package:feniq/features/warehouse/presentation/views/warehouse_return_detail_view.dart';
+import 'package:feniq/features/warehouse/presentation/views/warehouse_statement_view.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_order_detail_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_orders_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_order_detail_view.dart';
@@ -410,8 +418,25 @@ class AppRouter {
         path: RoutePaths.warehouseHome,
         pageBuilder: (context, state) => buildPageTransition(
           state: state,
-          child: BlocProvider(
-            create: (context) => WarehouseOrdersCubit(repository: context.read<WarehouseOrdersRepository>())..load(),
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (context) => WarehouseOrdersCubit(repository: context.read<WarehouseOrdersRepository>())..load(),
+              ),
+              // Lazy: each loads the first time its tab is opened.
+              BlocProvider(
+                create: (context) =>
+                    WarehouseReturnsCubit(repository: context.read<WarehouseManagementRepository>())..load(),
+              ),
+              BlocProvider(
+                create: (context) =>
+                    WarehouseAccountsCubit(repository: context.read<WarehouseManagementRepository>())..load(),
+              ),
+              BlocProvider(
+                create: (context) =>
+                    WarehouseRepsCubit(repository: context.read<WarehouseManagementRepository>())..load(),
+              ),
+            ],
             child: const WarehouseShellView(),
           ),
         ),
@@ -427,6 +452,48 @@ class AppRouter {
               orderId: state.pathParameters['orderId']!,
             )..load(),
             child: const WarehouseOrderDetailView(),
+          ),
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.warehouseReturn,
+        path: RoutePaths.warehouseReturn,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: BlocProvider(
+            create: (context) => WarehouseReturnDetailCubit(
+              repository: context.read<WarehouseManagementRepository>(),
+              returnId: state.pathParameters['returnId']!,
+            )..load(),
+            child: const WarehouseReturnDetailView(),
+          ),
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.warehouseAccount,
+        path: RoutePaths.warehouseAccount,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: BlocProvider(
+            create: (context) => WarehouseStatementCubit(
+              repository: context.read<WarehouseManagementRepository>(),
+              pharmacyId: state.pathParameters['pharmacyId']!,
+            )..load(),
+            child: const WarehouseStatementView(),
+          ),
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.warehouseRep,
+        path: RoutePaths.warehouseRep,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: BlocProvider(
+            create: (context) => WarehouseRepDetailCubit(
+              repository: context.read<WarehouseManagementRepository>(),
+              repId: state.pathParameters['repId']!,
+            )..load(),
+            child: WarehouseRepDetailView(repName: state.extra is String ? state.extra! as String : ''),
           ),
         ),
       ),
