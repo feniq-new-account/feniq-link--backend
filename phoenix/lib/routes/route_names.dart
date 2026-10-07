@@ -36,4 +36,8 @@ class RouteNames {
 
   // A warehouse or admin account: the landing that opens the web panel.
   static const String panelHome = 'panel-home';
+
+  // A warehouse account: its orders, and one order.
+  static const String warehouseHome = 'warehouse-home';
+  static const String warehouseOrder = 'warehouse-order';
 }

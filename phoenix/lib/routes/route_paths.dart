@@ -34,4 +34,7 @@ class RoutePaths {
   static const String pharmacyVisitCode = '/visit-code';
 
   static const String panelHome = '/panel-home';
+
+  static const String warehouseHome = '/warehouse';
+  static const String warehouseOrder = '/warehouse/orders/:orderId';
 }

@@ -2159,4 +2159,170 @@ class AppLocalizationsAr extends AppLocalizations {
   String panelHomeOpenFailed(String url) {
     return 'ما قدرنا نفتح اللوحة. افتح $url من المتصفح.';
   }
+
+  @override
+  String get warehouseNavOrders => 'الطلبيات';
+
+  @override
+  String get warehouseNavAccount => 'الحساب';
+
+  @override
+  String get warehouseFilterAll => 'الكل';
+
+  @override
+  String get warehouseApproveAndSend => 'موافقة وإرسال';
+
+  @override
+  String get warehouseMarkDelivered => 'تم التسليم';
+
+  @override
+  String get warehouseConfirmApproveTitle => 'موافقة وإرسال الطلبية؟';
+
+  @override
+  String warehouseConfirmApproveBody(int number) {
+    return 'الطلبية رقم $number رح تطلع للصيدلية، وبعدها ما عاد فيك تعدّل أصنافها.';
+  }
+
+  @override
+  String get warehouseConfirmDeliveredTitle => 'تأكيد التسليم؟';
+
+  @override
+  String warehouseConfirmDeliveredBody(int number) {
+    return 'الطلبية رقم $number وصلت للصيدلية؟';
+  }
+
+  @override
+  String warehouseOrderTitle(int number) {
+    return 'طلبية #$number';
+  }
+
+  @override
+  String warehouseOrderItemsCount(int count) {
+    return 'الأصناف: $count';
+  }
+
+  @override
+  String get warehouseNoOrdersTitle => 'ما في طلبيات هون';
+
+  @override
+  String get warehouseNoOrdersSubtitle =>
+      'الطلبيات الجديدة بتطلع هون أول ما توصل، وبيجيك إشعار فيها.';
+
+  @override
+  String get warehouseSectionPharmacy => 'الصيدلية';
+
+  @override
+  String get warehouseSectionItems => 'الأصناف';
+
+  @override
+  String get warehouseSectionMoney => 'المبالغ';
+
+  @override
+  String get warehouseSectionHistory => 'مراحل الطلبية';
+
+  @override
+  String get warehouseSectionNotes => 'ملاحظات الصيدلية';
+
+  @override
+  String get warehouseCall => 'اتصال';
+
+  @override
+  String warehouseFreeUnits(int count) {
+    return '+$count مجاناً';
+  }
+
+  @override
+  String get warehousePackageLine => 'ضمن عرض';
+
+  @override
+  String get warehouseSubtotal => 'المجموع';
+
+  @override
+  String get warehouseDiscounts => 'الحسومات';
+
+  @override
+  String get warehousePharmacyPays => 'الصيدلية بتدفع';
+
+  @override
+  String get warehouseFeniqShare => 'حصة فينيق';
+
+  @override
+  String get warehouseYouKeep => 'الصافي إلك';
+
+  @override
+  String warehouseRepCommissionTitle(String rate) {
+    return 'عمولة المندوب ($rate%)';
+  }
+
+  @override
+  String get warehouseRepShare => 'للمندوب';
+
+  @override
+  String get warehouseRepSaving => 'توفير إلك';
+
+  @override
+  String get warehouseEditItems => 'تعديل الأصناف';
+
+  @override
+  String get warehouseSaveEdits => 'حفظ التعديلات';
+
+  @override
+  String get warehouseRemoveLine => 'شيل';
+
+  @override
+  String get warehouseRestoreLine => 'رجّع';
+
+  @override
+  String get warehouseEditHint =>
+      'إضافة صنف جديد أو تعديل عرض بتصير من لوحة المستودع.';
+
+  @override
+  String get warehouseConfirmSaveTitle => 'حفظ التعديلات؟';
+
+  @override
+  String get warehouseConfirmSaveBody =>
+      'رح ينحسب سعر الطلبية من جديد، وبيوصل للصيدلية إشعار بالتعديل.';
+
+  @override
+  String get warehouseCannotEmpty =>
+      'ما فيك تشيل كل الأصناف. إذا الطلبية ما بتمشي، احكي مع الصيدلية.';
+
+  @override
+  String get warehouseWaitingSeal =>
+      'بانتظار صورة الختم من الصيدلية قبل التسليم.';
+
+  @override
+  String get warehouseHasReturn => 'عليها مرتجع';
+
+  @override
+  String warehouseCancelReason(String reason) {
+    return 'سبب الإلغاء: $reason';
+  }
+
+  @override
+  String get warehouseAccountPanelHint =>
+      'الأصناف والعروض والمناديب والتقارير بلوحة المستودع.';
+
+  @override
+  String warehouseOrderAdvanced(int number, String status) {
+    return 'صارت الطلبية رقم $number: $status';
+  }
+
+  @override
+  String get errorCannotRemoveLastItem => 'ما فيك تشيل آخر صنف بالطلبية.';
+
+  @override
+  String get errorOrderAlreadyAdvanced =>
+      'الطلبية انتقلت لمرحلة تانية. حدّث الصفحة.';
+
+  @override
+  String get errorOrderNotAdvanceable =>
+      'هالطلبية ما عاد فيها تنتقل لمرحلة تانية.';
+
+  @override
+  String get errorOrderNotEditable =>
+      'الطلبية انبعتت، وما عاد فيك تعدّل أصنافها.';
+
+  @override
+  String get errorPackageItemsLocked => 'أصناف العرض بتتعدّل من لوحة المستودع.';
 }

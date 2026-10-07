@@ -2160,4 +2160,172 @@ class AppLocalizationsEn extends AppLocalizations {
   String panelHomeOpenFailed(String url) {
     return 'Could not open the panel. Open $url in your browser.';
   }
+
+  @override
+  String get warehouseNavOrders => 'Orders';
+
+  @override
+  String get warehouseNavAccount => 'Account';
+
+  @override
+  String get warehouseFilterAll => 'All';
+
+  @override
+  String get warehouseApproveAndSend => 'Approve & send';
+
+  @override
+  String get warehouseMarkDelivered => 'Mark as delivered';
+
+  @override
+  String get warehouseConfirmApproveTitle => 'Approve and send this order?';
+
+  @override
+  String warehouseConfirmApproveBody(int number) {
+    return 'Order #$number goes out to the pharmacy, and its items can no longer be changed.';
+  }
+
+  @override
+  String get warehouseConfirmDeliveredTitle => 'Mark as delivered?';
+
+  @override
+  String warehouseConfirmDeliveredBody(int number) {
+    return 'Has order #$number reached the pharmacy?';
+  }
+
+  @override
+  String warehouseOrderTitle(int number) {
+    return 'Order #$number';
+  }
+
+  @override
+  String warehouseOrderItemsCount(int count) {
+    return 'Items: $count';
+  }
+
+  @override
+  String get warehouseNoOrdersTitle => 'No orders here';
+
+  @override
+  String get warehouseNoOrdersSubtitle =>
+      'New orders show up here as soon as they arrive, with a notification.';
+
+  @override
+  String get warehouseSectionPharmacy => 'Pharmacy';
+
+  @override
+  String get warehouseSectionItems => 'Items';
+
+  @override
+  String get warehouseSectionMoney => 'Amounts';
+
+  @override
+  String get warehouseSectionHistory => 'Order history';
+
+  @override
+  String get warehouseSectionNotes => 'Pharmacy\'s notes';
+
+  @override
+  String get warehouseCall => 'Call';
+
+  @override
+  String warehouseFreeUnits(int count) {
+    return '+$count free';
+  }
+
+  @override
+  String get warehousePackageLine => 'In a package';
+
+  @override
+  String get warehouseSubtotal => 'Subtotal';
+
+  @override
+  String get warehouseDiscounts => 'Discounts';
+
+  @override
+  String get warehousePharmacyPays => 'Pharmacy pays';
+
+  @override
+  String get warehouseFeniqShare => 'Feniq\'s share';
+
+  @override
+  String get warehouseYouKeep => 'You keep';
+
+  @override
+  String warehouseRepCommissionTitle(String rate) {
+    return 'Rep commission ($rate%)';
+  }
+
+  @override
+  String get warehouseRepShare => 'To the rep';
+
+  @override
+  String get warehouseRepSaving => 'Your saving';
+
+  @override
+  String get warehouseEditItems => 'Edit items';
+
+  @override
+  String get warehouseSaveEdits => 'Save changes';
+
+  @override
+  String get warehouseRemoveLine => 'Remove';
+
+  @override
+  String get warehouseRestoreLine => 'Restore';
+
+  @override
+  String get warehouseEditHint =>
+      'Adding a product or changing a package is done in the warehouse panel.';
+
+  @override
+  String get warehouseConfirmSaveTitle => 'Save the changes?';
+
+  @override
+  String get warehouseConfirmSaveBody =>
+      'The order is repriced, and the pharmacy is notified of the change.';
+
+  @override
+  String get warehouseCannotEmpty =>
+      'You can\'t remove every item. If the order can\'t go ahead, talk to the pharmacy.';
+
+  @override
+  String get warehouseWaitingSeal =>
+      'Waiting for the pharmacy\'s seal photo before delivery.';
+
+  @override
+  String get warehouseHasReturn => 'Has a return';
+
+  @override
+  String warehouseCancelReason(String reason) {
+    return 'Cancel reason: $reason';
+  }
+
+  @override
+  String get warehouseAccountPanelHint =>
+      'Products, offers, reps and reports are in the warehouse panel.';
+
+  @override
+  String warehouseOrderAdvanced(int number, String status) {
+    return 'Order #$number is now: $status';
+  }
+
+  @override
+  String get errorCannotRemoveLastItem =>
+      'You can\'t remove the order\'s last item.';
+
+  @override
+  String get errorOrderAlreadyAdvanced =>
+      'The order already moved on. Refresh the page.';
+
+  @override
+  String get errorOrderNotAdvanceable =>
+      'This order can\'t move to another stage.';
+
+  @override
+  String get errorOrderNotEditable =>
+      'The order was sent, so its items can no longer be changed.';
+
+  @override
+  String get errorPackageItemsLocked =>
+      'A package\'s items are changed in the warehouse panel.';
 }

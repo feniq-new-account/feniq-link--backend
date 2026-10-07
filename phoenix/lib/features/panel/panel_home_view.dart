@@ -18,14 +18,14 @@ import 'package:feniq/routes/route_names.dart';
 /// need no platform channel.
 typedef PanelUrlOpener = Future<bool> Function(Uri url);
 
-Future<bool> _openExternally(Uri url) => launchUrl(url, mode: LaunchMode.externalApplication);
+Future<bool> openPanelExternally(Uri url) => launchUrl(url, mode: LaunchMode.externalApplication);
 
 /// Home of a warehouse (or admin) account signed in to the one Feniq app.
 ///
 /// The warehouse screens are not in the app yet, so for now this says so and
 /// opens the web panel, where all of the warehouse's work already is.
 class PanelHomeView extends StatelessWidget {
-  const PanelHomeView({super.key, this.openUrl = _openExternally});
+  const PanelHomeView({super.key, this.openUrl = openPanelExternally});
 
   final PanelUrlOpener openUrl;
 
