@@ -12,6 +12,7 @@ const { normalizePhone, isValidPhone, toInternationalPhone } = require('../utils
 const { startOfBusinessMonth } = require('../utils/businessTime');
 const { runInTransaction } = require('../utils/transaction');
 const { parseRepCommissionRate, MAX_REP_COMMISSION_RATE } = require('../utils/repCommission');
+const { sumRepCommission } = require('./repCommissionTotals.service');
 const { revokeAllSessions } = require('./auth.service');
 const pharmacyVisitCodes = require('./pharmacyVisitCode.service');
 
@@ -265,27 +266,8 @@ async function listReps(warehouseId, now = new Date()) {
       },
       { $group: { _id: '$repId', count: { $sum: 1 }, total: { $sum: '$finalPrice' } } },
     ]),
-    // The month's commission, on DELIVERED orders only: that is when the
-    // warehouse owes the rep - and Feniq - their shares.
-    Order.aggregate([
-      {
-        $match: {
-          warehouseId,
-          repId: { $in: repIds },
-          createdAt: { $gte: monthStart },
-          status: 'delivered',
-          repCommission: { $ne: null },
-        },
-      },
-      {
-        $group: {
-          _id: '$repId',
-          repAmount: { $sum: '$repCommission.repAmount' },
-          feniqAmount: { $sum: '$repCommission.feniqAmount' },
-          savingAmount: { $sum: '$repCommission.savingAmount' },
-        },
-      },
-    ]),
+    // The month's commission: delivered orders only, less any credited return.
+    sumRepCommission({ warehouseId, repId: { $in: repIds }, createdAt: { $gte: monthStart } }, { byRep: true }),
   ]);
   const index = (rows) => new Map(rows.map((row) => [row._id.toString(), row]));
   const assignmentsByRep = index(assignments);

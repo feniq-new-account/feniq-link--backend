@@ -8,6 +8,7 @@ const Warehouse = require('../models/warehouse.model');
 const { ApiError } = require('../utils/ApiError');
 const { startOfBusinessMonth } = require('../utils/businessTime');
 const { REP_SHARE } = require('../utils/repCommission');
+const { sumRepCommission } = require('./repCommissionTotals.service');
 const { distanceMeters, isValidCoordinate } = require('../utils/geo');
 const { pharmacyActivity } = require('./rep.service');
 const pharmacyVisitCodes = require('./pharmacyVisitCode.service');
@@ -54,11 +55,9 @@ async function getMe(rep, now = new Date()) {
       { $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$finalPrice' } } },
     ]),
     // What the rep has earned this month: their half of the commission on
-    // DELIVERED orders. Only their own share - not Feniq's or the warehouse's.
-    Order.aggregate([
-      { $match: { repId: rep._id, createdAt: { $gte: monthStart }, status: 'delivered', repCommission: { $ne: null } } },
-      { $group: { _id: null, repAmount: { $sum: '$repCommission.repAmount' } } },
-    ]),
+    // delivered orders, less any credited return. Only their own share - not
+    // Feniq's or the warehouse's.
+    sumRepCommission({ repId: rep._id, createdAt: { $gte: monthStart } }),
   ]);
   return {
     rep,

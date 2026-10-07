@@ -1267,7 +1267,7 @@
     "editCommission": "Edit commission",
     "editCommissionPrompt": "{{name}}'s commission on their orders (0 to {{max}}%). A change applies to new orders only:",
     "commissionUpdated": "{{name}}'s commission is now {{rate}}. It applies to new orders.",
-    "commissionCountsDelivered": "Commissions are counted from delivered orders only."
+    "commissionCountsDelivered": "Commissions are counted from delivered orders only, less any approved returns."
   },
   "registration": {
     "approval": {

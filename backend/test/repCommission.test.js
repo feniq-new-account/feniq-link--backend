@@ -20,6 +20,7 @@ const Warehouse = require('../src/models/warehouse.model');
 const Product = require('../src/models/product.model');
 const ExchangeRate = require('../src/models/exchangeRate.model');
 const Order = require('../src/models/order.model');
+const Return = require('../src/models/return.model');
 const OrderItem = require('../src/models/orderItem.model');
 const Rep = require('../src/models/rep.model');
 const orderService = require('../src/services/order.service');
@@ -337,6 +338,50 @@ test('the warehouse\'s Reps page and the rep\'s own app total the commission on 
   assert.strictEqual(me.body.stats.commissionRate, undefined);
   assert.strictEqual(me.body.stats.monthCommissionAmount, 600, 'the rep sees only their own half');
   assert.strictEqual(me.body.stats.feniqAmount, undefined, 'Feniq\'s and the warehouse\'s shares are not the rep\'s business');
+});
+
+test('a credited return takes its proportion back from the rep\'s and Feniq\'s shares, a pending one does not', async () => {
+  const wh = await createWarehouse();
+  const ph = await createPharmacy('صيدلية المرتجع');
+  const { res, appPhone } = await createRep(wh.token, 2);
+  const repId = res.body.rep.id;
+  await assign(wh.token, ph.pharmacy._id.toString(), repId);
+
+  const order = await placeOrder(ph, wh, 3); // 60,000 SYP -> 600 / 300 / 300
+  const orderId = String(order._id || order.id);
+  for (let step = 0; step < 2; step += 1) {
+    await warehouseOrderService.advanceOrderStatus(orderId, wh.warehouse._id, wh.user._id);
+  }
+  const item = await OrderItem.findOne({ orderId }).lean();
+  const returnRequest = await Return.create({
+    orderId,
+    pharmacyId: ph.pharmacy._id,
+    warehouseId: wh.warehouse._id,
+    items: [{ orderItemId: item._id, productId: item.productId, quantity: 1, reasonType: 'damaged' }],
+    status: 'pending',
+  });
+
+  const totals = async () => {
+    const list = await call('GET', '/warehouse/reps', { token: wh.token });
+    const me = await call('GET', '/rep/me', { token: await login(appPhone) });
+    return { row: list.body.reps.find((r) => r.id === repId).monthCommission, mine: me.body.stats.monthCommissionAmount };
+  };
+
+  let now = await totals();
+  assert.deepStrictEqual(now.row, { repAmount: 600, feniqAmount: 300, savingAmount: 300 }, 'a pending return changes nothing');
+  assert.strictEqual(now.mine, 600);
+
+  // Half of the order is credited back.
+  await Return.updateOne({ _id: returnRequest._id }, { $set: { status: 'approved', creditSyp: 30000 } });
+  now = await totals();
+  assert.deepStrictEqual(now.row, { repAmount: 300, feniqAmount: 150, savingAmount: 150 });
+  assert.strictEqual(now.mine, 300);
+
+  // A credit larger than the order can never push the commission below zero.
+  await Return.updateOne({ _id: returnRequest._id }, { $set: { creditSyp: 90000 } });
+  now = await totals();
+  assert.deepStrictEqual(now.row, { repAmount: 0, feniqAmount: 0, savingAmount: 0 });
+  assert.strictEqual(now.mine, 0);
 });
 
 test('a rep\'s rate is stored on the rep and survives a reload', async () => {

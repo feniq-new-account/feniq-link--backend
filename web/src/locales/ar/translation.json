@@ -1290,7 +1290,7 @@
     "editCommission": "تعديل العمولة",
     "editCommissionPrompt": "نسبة عمولة {{name}} من طلبياته (من 0 إلى {{max}}٪). التعديل ينطبق على الطلبيات الجديدة فقط:",
     "commissionUpdated": "تم تحديث عمولة {{name}} إلى {{rate}}. تنطبق على الطلبيات الجديدة.",
-    "commissionCountsDelivered": "تُحسب العمولات من الطلبيات المسلّمة فقط."
+    "commissionCountsDelivered": "تُحسب العمولات من الطلبيات المسلّمة فقط، بعد خصم المرتجعات المقبولة."
   },
   "registration": {
     "approval": {
