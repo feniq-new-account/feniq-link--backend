@@ -1187,5 +1187,12 @@
   "errorRepInvalidLocation": "Could not read your location. Try again.",
   "pharmacyVisitCodeTitle": "Visit code",
   "pharmacyVisitCodeSubtitle": "For reps who visit you",
-  "pharmacyVisitCodeIntro": "Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy."
+  "pharmacyVisitCodeIntro": "Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy.",
+  "panelHomeTitle": "Warehouse account",
+  "panelHomeGreeting": "Hello {name}",
+  "@panelHomeGreeting": {"placeholders": {"name": {"type": "String"}}},
+  "panelHomeBody": "The warehouse screens inside the app are on their way. For now, orders, products and reps are in the warehouse panel.",
+  "panelHomeOpenPanel": "Open the warehouse panel",
+  "panelHomeOpenFailed": "Could not open the panel. Open {url} in your browser.",
+  "@panelHomeOpenFailed": {"placeholders": {"url": {"type": "String"}}}
 }

@@ -2139,4 +2139,24 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get pharmacyVisitCodeIntro =>
       'اعرض هذا الباركود لمندوب المستودع ليمسحه عند زيارتك. تُوثَّق الزيارة فقط إذا كان هاتفه عند صيدليتك.';
+
+  @override
+  String get panelHomeTitle => 'حساب المستودع';
+
+  @override
+  String panelHomeGreeting(String name) {
+    return 'أهلاً $name';
+  }
+
+  @override
+  String get panelHomeBody =>
+      'شاشات المستودع جوّا التطبيق عم تنجهّز. لهلق، الطلبيات والأصناف والمناديب من لوحة المستودع.';
+
+  @override
+  String get panelHomeOpenPanel => 'افتح لوحة المستودع';
+
+  @override
+  String panelHomeOpenFailed(String url) {
+    return 'ما قدرنا نفتح اللوحة. افتح $url من المتصفح.';
+  }
 }

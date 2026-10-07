@@ -2140,4 +2140,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pharmacyVisitCodeIntro =>
       'Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy.';
+
+  @override
+  String get panelHomeTitle => 'Warehouse account';
+
+  @override
+  String panelHomeGreeting(String name) {
+    return 'Hello $name';
+  }
+
+  @override
+  String get panelHomeBody =>
+      'The warehouse screens inside the app are on their way. For now, orders, products and reps are in the warehouse panel.';
+
+  @override
+  String get panelHomeOpenPanel => 'Open the warehouse panel';
+
+  @override
+  String panelHomeOpenFailed(String url) {
+    return 'Could not open the panel. Open $url in your browser.';
+  }
 }

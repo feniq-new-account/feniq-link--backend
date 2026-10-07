@@ -986,5 +986,10 @@
   "errorRepInvalidLocation": "تعذّرت قراءة موقعك. حاول مرة أخرى.",
   "pharmacyVisitCodeTitle": "باركود الزيارة",
   "pharmacyVisitCodeSubtitle": "للمناديب الذين يزورونك",
-  "pharmacyVisitCodeIntro": "اعرض هذا الباركود لمندوب المستودع ليمسحه عند زيارتك. تُوثَّق الزيارة فقط إذا كان هاتفه عند صيدليتك."
+  "pharmacyVisitCodeIntro": "اعرض هذا الباركود لمندوب المستودع ليمسحه عند زيارتك. تُوثَّق الزيارة فقط إذا كان هاتفه عند صيدليتك.",
+  "panelHomeTitle": "حساب المستودع",
+  "panelHomeGreeting": "أهلاً {name}",
+  "panelHomeBody": "شاشات المستودع جوّا التطبيق عم تنجهّز. لهلق، الطلبيات والأصناف والمناديب من لوحة المستودع.",
+  "panelHomeOpenPanel": "افتح لوحة المستودع",
+  "panelHomeOpenFailed": "ما قدرنا نفتح اللوحة. افتح {url} من المتصفح."
 }

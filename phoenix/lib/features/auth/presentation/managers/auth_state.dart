@@ -55,6 +55,9 @@ class AuthState {
 
   String? get role => user?.role ?? tokenRole;
   bool get isRep => role == 'rep';
+  // A warehouse (or admin) account signed in to the app: its home is a short
+  // landing that opens the web panel, until the warehouse screens are built.
+  bool get isPanelUser => role == 'warehouse' || role == 'admin';
 
   AuthState copyWith({
     SessionStatus? sessionStatus,

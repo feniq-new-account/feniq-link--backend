@@ -17,6 +17,7 @@ class MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
 const _rep = UserModel(id: 'r1', name: 'أحمد', phone: '+963940000201', role: 'rep', status: 'active', lang: 'ar');
 const _pharmacist = UserModel(id: 'p1', name: 'د. سلمى', phone: '+963931000001', role: 'pharmacy', status: 'active', lang: 'ar');
+const _warehouse = UserModel(id: 'w1', name: 'مستودع النجاح', phone: '+963930000101', role: 'warehouse', status: 'active', lang: 'ar');
 
 void main() {
   group('homeRouteNameFor', () {
@@ -25,6 +26,11 @@ void main() {
       expect(homeRouteNameFor(const AuthState(user: _pharmacist)), RouteNames.warehouseSelection);
       expect(homeRouteNameFor(const AuthState()), RouteNames.warehouseSelection);
       expect(homeRouteNameFor(const AuthState(tokenRole: 'rep')), RouteNames.repHome);
+    });
+
+    test('a warehouse or admin account lands on the panel landing', () {
+      expect(homeRouteNameFor(const AuthState(user: _warehouse)), RouteNames.panelHome);
+      expect(homeRouteNameFor(const AuthState(tokenRole: 'admin')), RouteNames.panelHome);
     });
   });
 
@@ -51,6 +57,7 @@ void main() {
           GoRoute(path: RoutePaths.repHome, builder: (_, __) => page('REP HOME')),
           GoRoute(path: RoutePaths.repScan, builder: (_, __) => page('REP SCAN')),
           GoRoute(path: RoutePaths.repPharmacy, builder: (_, __) => page('REP PHARMACY')),
+          GoRoute(path: RoutePaths.panelHome, builder: (_, __) => page('PANEL HOME')),
         ],
       );
       await tester.pumpWidget(
@@ -68,6 +75,7 @@ void main() {
 
     const activeRep = AuthState(sessionStatus: SessionStatus.active, user: _rep);
     const activePharmacist = AuthState(sessionStatus: SessionStatus.active, user: _pharmacist);
+    const activeWarehouse = AuthState(sessionStatus: SessionStatus.active, user: _warehouse);
 
     testWidgets('a rep asking for a pharmacy screen (a stale link) is sent to the rep home', (tester) async {
       await pump(tester, activeRep, RoutePaths.cart);
@@ -112,6 +120,25 @@ void main() {
     testWidgets('a rep who must change the temporary password goes there first', (tester) async {
       await pump(tester, const AuthState(sessionStatus: SessionStatus.passwordChangeRequired, user: _rep), RoutePaths.repHome);
       expect(find.text('CHANGE PASSWORD'), findsOneWidget);
+    });
+
+    testWidgets('a warehouse account asking for a pharmacy or rep screen is sent to the panel landing', (tester) async {
+      await pump(tester, activeWarehouse, RoutePaths.cart);
+      expect(find.text('PANEL HOME'), findsOneWidget);
+      await pump(tester, activeWarehouse, RoutePaths.repHome);
+      expect(find.text('PANEL HOME'), findsOneWidget);
+    });
+
+    testWidgets('a warehouse account stays on the panel landing and the auth steps', (tester) async {
+      await pump(tester, activeWarehouse, RoutePaths.panelHome);
+      expect(find.text('PANEL HOME'), findsOneWidget);
+      await pump(tester, activeWarehouse, RoutePaths.privacyPolicy);
+      expect(find.text('PRIVACY'), findsOneWidget);
+    });
+
+    testWidgets('a pharmacy asking for the panel landing is sent to the warehouse list', (tester) async {
+      await pump(tester, activePharmacist, RoutePaths.panelHome);
+      expect(find.text('WAREHOUSES'), findsOneWidget);
     });
   });
 }

@@ -3631,6 +3631,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy.'**
   String get pharmacyVisitCodeIntro;
+
+  /// No description provided for @panelHomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse account'**
+  String get panelHomeTitle;
+
+  /// No description provided for @panelHomeGreeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello {name}'**
+  String panelHomeGreeting(String name);
+
+  /// No description provided for @panelHomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The warehouse screens inside the app are on their way. For now, orders, products and reps are in the warehouse panel.'**
+  String get panelHomeBody;
+
+  /// No description provided for @panelHomeOpenPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the warehouse panel'**
+  String get panelHomeOpenPanel;
+
+  /// No description provided for @panelHomeOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the panel. Open {url} in your browser.'**
+  String panelHomeOpenFailed(String url);
 }
 
 class _AppLocalizationsDelegate
