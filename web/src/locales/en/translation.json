@@ -1230,7 +1230,8 @@
     "meters": "{{count}} m",
     "never": "Never",
     "today": "Today",
-    "daysAgo": "{{count}} days ago",
+    "daysAgo_one": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago",
     "areaType": {
       "city": "City",
       "city_ring": "City outskirts",

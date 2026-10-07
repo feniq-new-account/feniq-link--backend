@@ -1888,6 +1888,7 @@ a.adm-pill {
 
 .wh-row-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 

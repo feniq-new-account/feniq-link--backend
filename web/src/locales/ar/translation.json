@@ -1250,7 +1250,11 @@
     "meters": "{{count}} م",
     "never": "لا يوجد",
     "today": "اليوم",
-    "daysAgo": "منذ {{count}} يوم",
+    "daysAgo_one": "منذ يوم واحد",
+    "daysAgo_two": "منذ يومين",
+    "daysAgo_few": "منذ {{count}} أيام",
+    "daysAgo_many": "منذ {{count}} يوماً",
+    "daysAgo_other": "منذ {{count}} يوم",
     "areaType": {
       "city": "مدينة",
       "city_ring": "محيط المدينة",

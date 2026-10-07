@@ -118,9 +118,13 @@ describe('the printable visit sticker', () => {
 
 describe('translations', () => {
   it('has the same rep keys in both languages', () => {
+    // A plural key has a different number of forms per language (Arabic has six).
     const keys = (obj, prefix = '') =>
-      Object.entries(obj).flatMap(([k, v]) => (typeof v === 'object' ? keys(v, `${prefix}${k}.`) : [`${prefix}${k}`]));
-    expect(keys(ar.reps).sort()).toEqual(keys(en.reps).sort());
+      Object.entries(obj).flatMap(([k, v]) =>
+        typeof v === 'object' ? keys(v, `${prefix}${k}.`) : [`${prefix}${k.replace(/_(zero|one|two|few|many|other)$/, '')}`]
+      );
+    const unique = (list) => [...new Set(list)].sort();
+    expect(unique(keys(ar.reps))).toEqual(unique(keys(en.reps)));
     expect(en.nav.reps).toBeTruthy();
     expect(ar.nav.reps).toBeTruthy();
   });
