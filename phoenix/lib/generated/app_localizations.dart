@@ -3710,18 +3710,6 @@ abstract class AppLocalizations {
   /// **'Order #{number} leaves for the pharmacy, and its items can no longer be changed.'**
   String warehouseConfirmApproveBody(int number);
 
-  /// No description provided for @warehouseConfirmDeliveredTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Mark as delivered?'**
-  String get warehouseConfirmDeliveredTitle;
-
-  /// No description provided for @warehouseConfirmDeliveredBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Has order #{number} reached the pharmacy?'**
-  String warehouseConfirmDeliveredBody(int number);
-
   /// No description provided for @warehouseOrderTitle.
   ///
   /// In en, this message translates to:
@@ -4537,6 +4525,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send on its way'**
   String get warehouseSendOnWay;
+
+  /// No description provided for @warehouseCollectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivering order #{number} - did you collect?'**
+  String warehouseCollectTitle(int number);
+
+  /// No description provided for @warehouseCollectTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount: {amount}'**
+  String warehouseCollectTotal(String amount);
+
+  /// No description provided for @warehouseCollectFull.
+  ///
+  /// In en, this message translates to:
+  /// **'All of it'**
+  String get warehouseCollectFull;
+
+  /// No description provided for @warehouseCollectPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Part'**
+  String get warehouseCollectPartial;
+
+  /// No description provided for @warehouseCollectLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get warehouseCollectLater;
+
+  /// No description provided for @warehouseCollectPaidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid now ({currency})'**
+  String warehouseCollectPaidLabel(String currency);
+
+  /// No description provided for @warehouseCollectLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left: {amount}'**
+  String warehouseCollectLeft(String amount);
+
+  /// No description provided for @warehouseCollectSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver and save'**
+  String get warehouseCollectSave;
+
+  /// No description provided for @warehouseCollectPartialInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount above zero and below the total.'**
+  String get warehouseCollectPartialInvalid;
+
+  /// No description provided for @warehouseCollectRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered, and {amount} recorded as paid'**
+  String warehouseCollectRecorded(String amount);
+
+  /// No description provided for @warehouseCollectFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered, but the payment wasn\'t saved - record it from Accounts.'**
+  String get warehouseCollectFailed;
+
+  /// No description provided for @warehouseCollectNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid on delivery of order #{number}'**
+  String warehouseCollectNote(int number);
 }
 
 class _AppLocalizationsDelegate

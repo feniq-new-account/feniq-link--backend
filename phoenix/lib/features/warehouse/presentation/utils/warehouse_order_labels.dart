@@ -29,10 +29,10 @@ String? warehouseAdvanceLabel(AppLocalizations l10n, String status) {
 }
 
 /// The confirmation shown before the forward step: (title, body), or null
-/// when the step needs none - accepting is one tap.
+/// when the step needs none - accepting is one tap, and "delivered" asks
+/// whether it was paid instead (collect_payment_sheet.dart).
 (String, String)? warehouseAdvanceConfirm(AppLocalizations l10n, String status, int orderNumber) {
   return switch (nextWarehouseStatus(status)) {
-    'delivered' => (l10n.warehouseConfirmDeliveredTitle, l10n.warehouseConfirmDeliveredBody(orderNumber)),
     'out_for_delivery' => (l10n.warehouseConfirmApproveTitle, l10n.warehouseConfirmApproveBody(orderNumber)),
     _ => null,
   };

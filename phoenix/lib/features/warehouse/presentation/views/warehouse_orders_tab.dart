@@ -9,6 +9,9 @@ import 'package:feniq/core/widgets/app_dialog.dart';
 import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/widgets/empty_view.dart';
 import 'package:feniq/core/widgets/failure_widget.dart';
+import 'package:feniq/core/utils/currency_formatter.dart';
+import 'package:feniq/features/warehouse/data/repositories/warehouse_management_repository.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/collect_payment_sheet.dart';
 import 'package:feniq/features/cart/presentation/utils/order_status_label.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_load_status.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_order_models.dart';
@@ -49,7 +52,40 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
     }
   }
 
+  // "Delivered" asks one thing instead of "are you sure": was it paid - all,
+  // part, or later. Closing the sheet leaves the order on its way.
+  Future<void> _deliverAndCollect(WarehouseOrderSummary order) async {
+    final l10n = context.l10n;
+    final cubit = context.read<WarehouseOrdersCubit>();
+    final payments = context.read<WarehouseManagementRepository>();
+    final messenger = ScaffoldMessenger.of(context);
+    final collected = await showCollectPaymentSheet(context, orderNumber: order.orderNumber, totalSyp: order.finalPrice);
+    if (collected == null) return;
+    if (!await cubit.advance(order.id)) return;
+    var message = l10n.warehouseOrderAdvanced(order.orderNumber, orderStatusLabel(l10n, 'delivered'));
+    if (collected > 0) {
+      final pharmacyId = order.pharmacy?.id;
+      final saved =
+          pharmacyId != null &&
+          await recordCollectedPayment(
+            payments,
+            pharmacyId: pharmacyId,
+            amountSyp: collected,
+            orderNumber: order.orderNumber,
+            note: l10n.warehouseCollectNote(order.orderNumber),
+          );
+      message = saved
+          ? l10n.warehouseCollectRecorded(formatSyp(collected, l10n.currencySuffix))
+          : l10n.warehouseCollectFailed;
+    }
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
+
   void _confirmAdvance(WarehouseOrderSummary order) {
+    if (nextWarehouseStatus(order.status) == 'delivered') {
+      _deliverAndCollect(order);
+      return;
+    }
     final l10n = context.l10n;
     final cubit = context.read<WarehouseOrdersCubit>();
     final messenger = ScaffoldMessenger.of(context);

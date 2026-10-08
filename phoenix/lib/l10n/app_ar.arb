@@ -1000,8 +1000,6 @@
   "warehouseMarkDelivered": "تم التسليم",
   "warehouseConfirmApproveTitle": "الطلبية طلعت ع الطريق؟",
   "warehouseConfirmApproveBody": "الطلبية رقم {number} رح تطلع للصيدلية، وبعدها ما عاد فيك تعدّل أصنافها.",
-  "warehouseConfirmDeliveredTitle": "تأكيد التسليم؟",
-  "warehouseConfirmDeliveredBody": "الطلبية رقم {number} وصلت للصيدلية؟",
   "warehouseOrderTitle": "طلبية #{number}",
   "warehouseOrderItemsCount": "الأصناف: {count}",
   "warehouseNoOrdersTitle": "ما في طلبيات هون",
@@ -1137,5 +1135,17 @@
   "stageAccepted": "انقبلت",
   "stageAcceptedDesc": "المستودع قبل طلبيتك",
   "warehouseAccept": "قبول",
-  "warehouseSendOnWay": "طلعت ع الطريق"
+  "warehouseSendOnWay": "طلعت ع الطريق",
+  "warehouseCollectTitle": "تسليم الطلبية رقم {number} - قبضت؟",
+  "warehouseCollectTotal": "المبلغ: {amount}",
+  "warehouseCollectFull": "كامل",
+  "warehouseCollectPartial": "جزء",
+  "warehouseCollectLater": "بعدين",
+  "warehouseCollectPaidLabel": "دفع هلق ({currency})",
+  "warehouseCollectLeft": "ضل: {amount}",
+  "warehouseCollectSave": "سلّم واحفظ",
+  "warehouseCollectPartialInvalid": "اكتب مبلغ أكبر من صفر وأصغر من المبلغ كله.",
+  "warehouseCollectRecorded": "تم التسليم، وانسجّل {amount} مدفوع",
+  "warehouseCollectFailed": "تم التسليم، بس الدفعة ما انحفظت - سجّلها من الحسابات.",
+  "warehouseCollectNote": "دفعة عند تسليم الطلبية رقم {number}"
 }

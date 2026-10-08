@@ -2188,14 +2188,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get warehouseConfirmDeliveredTitle => 'Mark as delivered?';
-
-  @override
-  String warehouseConfirmDeliveredBody(int number) {
-    return 'Has order #$number reached the pharmacy?';
-  }
-
-  @override
   String warehouseOrderTitle(int number) {
     return 'Order #$number';
   }
@@ -2669,4 +2661,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseSendOnWay => 'Send on its way';
+
+  @override
+  String warehouseCollectTitle(int number) {
+    return 'Delivering order #$number - did you collect?';
+  }
+
+  @override
+  String warehouseCollectTotal(String amount) {
+    return 'Amount: $amount';
+  }
+
+  @override
+  String get warehouseCollectFull => 'All of it';
+
+  @override
+  String get warehouseCollectPartial => 'Part';
+
+  @override
+  String get warehouseCollectLater => 'Later';
+
+  @override
+  String warehouseCollectPaidLabel(String currency) {
+    return 'Paid now ($currency)';
+  }
+
+  @override
+  String warehouseCollectLeft(String amount) {
+    return 'Left: $amount';
+  }
+
+  @override
+  String get warehouseCollectSave => 'Deliver and save';
+
+  @override
+  String get warehouseCollectPartialInvalid =>
+      'Enter an amount above zero and below the total.';
+
+  @override
+  String warehouseCollectRecorded(String amount) {
+    return 'Delivered, and $amount recorded as paid';
+  }
+
+  @override
+  String get warehouseCollectFailed =>
+      'Delivered, but the payment wasn\'t saved - record it from Accounts.';
+
+  @override
+  String warehouseCollectNote(int number) {
+    return 'Paid on delivery of order #$number';
+  }
 }
