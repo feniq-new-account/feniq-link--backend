@@ -12,6 +12,7 @@ import { PAYMENT_METHODS, PAYMENT_CURRENCIES as CURRENCIES, createIdempotencyKey
 import { mayAdvance } from './orderStatusFlow';
 import { isEditable } from './warehouseOrdersList';
 import { realtimeBatchMatchesOrder } from './warehouseOrderDetailRealtime';
+import { FEATURES } from '../config/features';
 
 function statusKeySuffix(status) {
   return status
@@ -855,7 +856,7 @@ export function WarehouseOrderDetailPage() {
               )}
             </div>
 
-            {order.status !== 'delivered' && order.status !== 'cancelled' && (
+            {FEATURES.deliverySealPhoto && order.status !== 'delivered' && order.status !== 'cancelled' && (
               <div className="wh-detail-card">
                 <h2 className="wh-detail-card-title">{t('orderDetail.sealRequirementTitle')}</h2>
                 <label className="checkbox-row" style={{ marginTop: 8 }}>
@@ -875,7 +876,7 @@ export function WarehouseOrderDetailPage() {
 
             {isEditable(order.status) && <EditItemsSection order={order} onSaved={load} />}
 
-            {order.deliverySealPhoto && (
+            {FEATURES.deliverySealPhoto && order.deliverySealPhoto && (
               <div className="wh-detail-card">
                 <h2 className="wh-detail-card-title">{t('orderDetail.deliverySealPhoto')}</h2>
                 <a href={order.deliverySealPhoto} target="_blank" rel="noreferrer">
@@ -920,6 +921,21 @@ export function WarehouseOrderDetailPage() {
                   <span className="wh-num">
                     − {formatSyp(order.advertisementDiscountAmount)}
                   </span>
+                </div>
+              )}
+              {/* The warehouse's loyalty discount by the order's size, and the
+                  pharmacy's credit (its quarter of earlier rep commissions) -
+                  both paid by the warehouse, both already off the total. */}
+              {order.loyaltyDiscountAmount > 0 && (
+                <div className="wh-summary-row wh-summary-discount">
+                  <span>{t('orderDetail.loyaltyDiscountLabel')}</span>
+                  <span className="wh-num">− {formatSyp(order.loyaltyDiscountAmount)}</span>
+                </div>
+              )}
+              {order.creditUsedSyp > 0 && (
+                <div className="wh-summary-row wh-summary-discount">
+                  <span>{t('orderDetail.creditUsedLabel')}</span>
+                  <span className="wh-num">− {formatSyp(order.creditUsedSyp)}</span>
                 </div>
               )}
               {/* The pharmacy's discount code - taken off last, after every
@@ -986,10 +1002,19 @@ export function WarehouseOrderDetailPage() {
                   <span>{t('orderDetail.repCommission.feniq')}</span>
                   <span className="wh-num">{formatSyp(order.repCommission.feniqAmount)}</span>
                 </div>
+                {order.repCommission.pharmacyAmount > 0 && (
+                  <div className="wh-summary-row">
+                    <span>{t('orderDetail.repCommission.pharmacy')}</span>
+                    <span className="wh-num">{formatSyp(order.repCommission.pharmacyAmount)}</span>
+                  </div>
+                )}
                 <div className="wh-summary-row">
                   <span>{t('orderDetail.repCommission.saving')}</span>
                   <span className="wh-num">{formatSyp(order.repCommission.savingAmount)}</span>
                 </div>
+                {order.repCommission.warehouseShareToRep && (
+                  <p className="hint" style={{ marginBottom: 0 }}>{t('orderDetail.repCommission.shareToRep')}</p>
+                )}
                 {order.status !== 'delivered' && (
                   <p className="hint" style={{ marginBottom: 0 }}>{t('orderDetail.repCommission.pending')}</p>
                 )}
@@ -1048,7 +1073,8 @@ export function WarehouseOrderDetailPage() {
                   {t('orders.editOrder')}
                 </button>
               )}
-              {order.requiresDeliverySealPhoto &&
+              {FEATURES.deliverySealPhoto &&
+                order.requiresDeliverySealPhoto &&
                 order.status === 'out_for_delivery' &&
                 !order.deliverySealPhoto && (
                   <p className="hint">{t('orderDetail.awaitingDeliverySealPhoto')}</p>

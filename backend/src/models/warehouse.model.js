@@ -28,6 +28,16 @@ const warehouseSchema = new Schema(
     // OFF by default (owner's decision, 2026-10-05): delivery is one click,
     // no seal photo. A warehouse can still turn it on in its settings.
     requireDeliverySealPhoto: { type: Boolean, default: false },
+    // The warehouse's own loyalty discount (utils/loyalty.js): off until it
+    // switches it on; tiers of "an order of at least minSyp gets discountSyp
+    // off", set by the warehouse and paid by it.
+    loyalty: {
+      enabled: { type: Boolean, default: false },
+      tiers: {
+        type: [new Schema({ minSyp: { type: Number, required: true }, discountSyp: { type: Number, required: true } }, { _id: false })],
+        default: [],
+      },
+    },
     // Per-warehouse order size limits, in USD - the same currency the cart
     // totals in, so no conversion sits between what the pharmacist sees and
     // what's enforced (order.service.js). Both are opt-in: 0 means "no

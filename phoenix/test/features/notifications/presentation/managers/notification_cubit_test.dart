@@ -1,16 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:feniq/core/config/app_features.dart';
 import 'package:feniq/core/services/storage_service.dart';
 import 'package:feniq/features/notifications/data/models/notification_model.dart';
 import 'package:feniq/features/notifications/data/repositories/notification_repository.dart';
 import 'package:feniq/features/notifications/presentation/managers/notification_cubit.dart';
 
-NotificationModel _model(String id, {DateTime? at}) => NotificationModel(
+NotificationModel _model(String id, {DateTime? at, NotificationType type = NotificationType.offer}) => NotificationModel(
   id: id,
   title: 'Title $id',
   body: 'Body $id',
   receivedAt: at ?? DateTime.utc(2026, 1, 1),
-  type: NotificationType.offer,
+  type: type,
 );
 
 void main() {
@@ -28,6 +29,22 @@ void main() {
   });
 
   tearDown(() => cubit.close());
+
+  test('while discount codes are switched off, their announcements are not listed or counted', () async {
+    await repo.add(_model('code', at: DateTime.utc(2026, 1, 1), type: NotificationType.discountCode));
+    await repo.add(_model('offer', at: DateTime.utc(2026, 1, 2)));
+    await pumpEventQueue();
+    expect(cubit.state.notifications.map((n) => n.id), ['offer']);
+    expect(cubit.state.unreadCount, 1);
+  });
+
+  test('with discount codes switched on, they are listed again', () async {
+    AppFeatures.discountCodes = true;
+    addTearDown(() => AppFeatures.discountCodes = false);
+    await repo.add(_model('code', type: NotificationType.discountCode));
+    await pumpEventQueue();
+    expect(cubit.state.notifications.map((n) => n.id), ['code']);
+  });
 
   test('starts empty', () {
     expect(cubit.state.notifications, isEmpty);

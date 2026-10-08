@@ -68,6 +68,8 @@ import 'package:feniq/features/panel/panel_home_view.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_management_repository.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_orders_repository.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_accounts_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_loyalty_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/views/warehouse_loyalty_view.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_rep_detail_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_reps_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_returns_cubit.dart';
@@ -494,6 +496,18 @@ class AppRouter {
               repId: state.pathParameters['repId']!,
             )..load(),
             child: WarehouseRepDetailView(repName: state.extra is String ? state.extra! as String : ''),
+          ),
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.warehouseLoyalty,
+        path: RoutePaths.warehouseLoyalty,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: BlocProvider(
+            create: (context) =>
+                WarehouseLoyaltyCubit(repository: context.read<WarehouseManagementRepository>())..load(),
+            child: const WarehouseLoyaltyView(),
           ),
         ),
       ),

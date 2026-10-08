@@ -99,6 +99,18 @@ class WarehouseAccountTab extends StatelessWidget {
         ),
         const SizedBox(height: AppSizes.spacingMedium),
         CustomCard(
+          onTap: () => context.pushNamed(RouteNames.warehouseLoyalty),
+          child: Row(
+            children: [
+              const Icon(Icons.loyalty_outlined),
+              const SizedBox(width: AppSizes.spacingMedium),
+              Expanded(child: Text(l10n.warehouseLoyaltyTitle, style: context.textTheme.titleSmall)),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSizes.spacingMedium),
+        CustomCard(
           onTap: () => context.pushNamed(RouteNames.changePassword),
           child: Row(
             children: [

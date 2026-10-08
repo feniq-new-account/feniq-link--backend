@@ -43,4 +43,5 @@ class RouteNames {
   static const String warehouseReturn = 'warehouse-return';
   static const String warehouseAccount = 'warehouse-account';
   static const String warehouseRep = 'warehouse-rep';
+  static const String warehouseLoyalty = 'warehouse-loyalty';
 }

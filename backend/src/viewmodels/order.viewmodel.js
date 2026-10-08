@@ -1,5 +1,6 @@
 const { serializeProductWithOffer } = require('./product.viewmodel');
 const { serializeOrderDiscountCode } = require('./discountCode.viewmodel');
+const { FEATURES } = require('../config/features');
 
 function serializeOrder(order) {
   return {
@@ -17,6 +18,10 @@ function serializeOrder(order) {
     // The discount code this order used - its own line, taken off after every
     // discount above. null without a code.
     discountCode: serializeOrderDiscountCode(order.discountCode),
+    // The warehouse's loyalty discount, and the pharmacy's own credit this
+    // order took - both already off finalPrice.
+    loyaltyDiscountAmount: order.loyaltyDiscountAmount ?? 0,
+    creditUsedSyp: order.creditUsedSyp ?? 0,
     finalPrice: order.finalPrice,
     notes: order.notes,
     warehouseId: order.warehouseId,
@@ -93,7 +98,7 @@ function toOrderDetailResponse(
       // `requiresDeliverySealPhoto` tells the tracking screen whether to prompt
       // the pharmacist while the order is out for delivery; the other two are
       // the stored result. All three are null/false on every pre-existing order.
-      requiresDeliverySealPhoto: order.requiresDeliverySealPhoto ?? false,
+      requiresDeliverySealPhoto: FEATURES.deliverySealPhoto && (order.requiresDeliverySealPhoto ?? false),
       deliverySealPhoto: order.deliverySealPhoto ?? null,
       deliverySealConfirmedAt: order.deliverySealConfirmedAt ?? null,
       statusHistory: (order.statusHistory || []).map((entry) => ({

@@ -50,8 +50,9 @@ export function normalizePhoneInput(value) {
 }
 
 // The rep's commission is a percentage of the value of the orders placed under
-// them through Feniq - backend/src/utils/repCommission.js. Half of it is the
-// rep's, a quarter goes to Feniq, and what is left stays with the warehouse.
+// them through Feniq - backend/src/utils/repCommission.js. It is split in
+// quarters: Feniq, the pharmacy (credit off its next order), the rep, and the
+// warehouse - which keeps its quarter or gives it to the rep.
 export const MAX_REP_COMMISSION_RATE = 10;
 
 // Text from the form -> a number of percent. Blank means "no commission" (0).
@@ -65,11 +66,18 @@ export function parseCommissionInput(value) {
   return rate >= 0 && rate <= MAX_REP_COMMISSION_RATE ? rate : null;
 }
 
-// Where each percentage point of a rate ends up, in percent of the order value.
-export function commissionSplit(rate) {
+// Where a rate ends up, in percent of the order value. With `shareToRep` the
+// warehouse gives the rep its own quarter, and keeps nothing.
+export function commissionSplit(rate, shareToRep = false) {
   const total = Number(rate) || 0;
   const round = (n) => Math.round(n * 10000) / 10000;
-  return { rep: round(total / 2), feniq: round(total / 4), saving: round(total / 4) };
+  const quarter = round(total / 4);
+  return {
+    feniq: quarter,
+    pharmacy: quarter,
+    rep: shareToRep ? round(total / 2) : quarter,
+    saving: shareToRep ? 0 : quarter,
+  };
 }
 
 // "2" -> "2", "0.5" -> "0.5": no trailing zeros, no locale digits.

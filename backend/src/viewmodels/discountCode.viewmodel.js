@@ -78,6 +78,11 @@ function toPreviewResponse(quote) {
     totals: {
       subtotalSyp: quote.subtotalSyp,
       platformDiscountSyp: quote.platformDiscountSyp,
+      // The warehouse's loyalty discount for a cart this size, the pharmacy's
+      // credit at this warehouse, and the part of it this order takes.
+      loyaltyDiscountSyp: quote.loyaltyDiscountSyp ?? 0,
+      creditBalanceSyp: quote.creditBalanceSyp ?? 0,
+      creditUsedSyp: quote.creditUsedSyp ?? 0,
       preCodeSyp: quote.preCodeSyp,
       discountSyp: quote.discountSyp,
       discountUsd: quote.discountUsd,

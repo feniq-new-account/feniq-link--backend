@@ -29,15 +29,17 @@ Map<String, dynamic>? _map(Object? value) => value is Map ? Map<String, dynamic>
 
 /// The rep's share of this month's commission, split three ways.
 class RepMonthCommission {
-  const RepMonthCommission({this.repAmount = 0, this.feniqAmount = 0, this.savingAmount = 0});
+  const RepMonthCommission({this.repAmount = 0, this.feniqAmount = 0, this.pharmacyAmount = 0, this.savingAmount = 0});
 
   final double repAmount;
   final double feniqAmount;
+  final double pharmacyAmount;
   final double savingAmount;
 
   factory RepMonthCommission.fromJson(Map<String, dynamic>? json) => RepMonthCommission(
     repAmount: _double(json?['repAmount']),
     feniqAmount: _double(json?['feniqAmount']),
+    pharmacyAmount: _double(json?['pharmacyAmount']),
     savingAmount: _double(json?['savingAmount']),
   );
 }
@@ -49,6 +51,7 @@ class WarehouseRep {
     required this.phone,
     this.isActive = true,
     this.commissionRate = 0,
+    this.warehouseShareToRep = false,
     this.pharmacyCount = 0,
     this.visits30d = 0,
     this.unverifiedVisits30d = 0,
@@ -64,6 +67,8 @@ class WarehouseRep {
   final bool isActive;
   // In percent: 2 means 2% of an order.
   final double commissionRate;
+  // The warehouse gives this rep its own quarter of the commission too.
+  final bool warehouseShareToRep;
   final int pharmacyCount;
   final int visits30d;
   final int unverifiedVisits30d;
@@ -80,6 +85,7 @@ class WarehouseRep {
     phone: rep.phone,
     isActive: rep.isActive,
     commissionRate: rep.commissionRate,
+    warehouseShareToRep: rep.warehouseShareToRep,
     pharmacyCount: pharmacyCount,
     visits30d: visits30d,
     unverifiedVisits30d: unverifiedVisits30d,
@@ -95,6 +101,7 @@ class WarehouseRep {
     phone: _str(json['phone']),
     isActive: json['isActive'] != false,
     commissionRate: _double(json['commissionRate']),
+    warehouseShareToRep: json['warehouseShareToRep'] == true,
     pharmacyCount: _int(json['pharmacyCount']),
     visits30d: _int(json['visits30d']),
     unverifiedVisits30d: _int(json['unverifiedVisits30d']),
@@ -415,3 +422,34 @@ class WarehouseReturnsPage {
 
 /// The return status filters, in tab order. Null is "all".
 const List<String?> kWarehouseReturnFilters = ['pending', 'approved', 'rejected', null];
+
+// --- Loyalty discount ---------------------------------------------------------
+
+/// One loyalty tier: an order of [minSyp] or more gets [discountSyp] off.
+class LoyaltyTier {
+  const LoyaltyTier({required this.minSyp, required this.discountSyp});
+
+  final int minSyp;
+  final int discountSyp;
+
+  Map<String, dynamic> toJson() => {'minSyp': minSyp, 'discountSyp': discountSyp};
+
+  factory LoyaltyTier.fromJson(Map<String, dynamic> json) =>
+      LoyaltyTier(minSyp: _int(json['minSyp']), discountSyp: _int(json['discountSyp']));
+}
+
+/// The warehouse's loyalty discount: off unless it switches it on.
+class WarehouseLoyalty {
+  const WarehouseLoyalty({this.enabled = false, this.tiers = const []});
+
+  final bool enabled;
+  final List<LoyaltyTier> tiers;
+
+  factory WarehouseLoyalty.fromSettingsJson(Map<String, dynamic> json) {
+    final loyalty = _map(_map(json['settings'])?['loyalty']);
+    return WarehouseLoyalty(
+      enabled: loyalty?['enabled'] == true,
+      tiers: _maps(loyalty?['tiers']).map(LoyaltyTier.fromJson).toList(),
+    );
+  }
+}

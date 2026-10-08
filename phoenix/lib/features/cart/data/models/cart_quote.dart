@@ -19,6 +19,9 @@ class CartQuote {
     this.revision,
     required this.subtotalSyp,
     required this.platformDiscountSyp,
+    this.loyaltyDiscountSyp = 0,
+    this.creditBalanceSyp = 0,
+    this.creditUsedSyp = 0,
     required this.preCodeSyp,
     this.discountSyp = 0,
     required this.finalSyp,
@@ -38,6 +41,16 @@ class CartQuote {
 
   final int subtotalSyp;
   final int platformDiscountSyp;
+
+  /// The warehouse's loyalty discount for a cart this size (its own tiers);
+  /// 0 when it has none or the cart is below them.
+  final int loyaltyDiscountSyp;
+
+  /// The pharmacy's credit at this warehouse - its share of earlier orders'
+  /// rep commission - and the part of it this order takes automatically.
+  final int creditBalanceSyp;
+  final int creditUsedSyp;
+
   final int preCodeSyp;
 
   /// What the code takes off; 0 without one.
@@ -62,6 +75,9 @@ class CartQuote {
       revision: (code?['revision'] as num?)?.toInt(),
       subtotalSyp: _int(totals['subtotalSyp']),
       platformDiscountSyp: _int(totals['platformDiscountSyp']),
+      loyaltyDiscountSyp: _int(totals['loyaltyDiscountSyp']),
+      creditBalanceSyp: _int(totals['creditBalanceSyp']),
+      creditUsedSyp: _int(totals['creditUsedSyp']),
       preCodeSyp: _int(totals['preCodeSyp']),
       discountSyp: _int(totals['discountSyp']),
       finalSyp: _int(totals['finalSyp']),

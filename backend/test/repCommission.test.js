@@ -1,7 +1,7 @@
 // The rep programme's money rule: on an order through Feniq, the rep
-// commission (a % the warehouse pays its rep) is split - half to the rep, a
-// quarter to Feniq (the order's platform commission), the rest saved by the
-// warehouse. No platform discount, no flat commission (owner's decision).
+// commission (a % the warehouse pays its rep) is split in quarters - Feniq (the
+// order's platform commission), the pharmacy (credit), the rep, and the
+// warehouse (kept, or given to the rep). No platform discount, no flat commission.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-rep-commission';
 process.env.NODE_ENV = 'test';
 process.env.DISABLE_AUTH_RATE_LIMIT = '1';
@@ -29,6 +29,7 @@ const { zeroLegacyPlatformRates } = require('../src/services/platformRatesPolicy
 const {
   splitRepCommission,
   feniqRateFor,
+  repRateFor,
   parseRepCommissionRate,
 } = require('../src/utils/repCommission');
 
@@ -129,27 +130,41 @@ test.after(async () => {
 
 // --- The split itself -------------------------------------------------------
 
-test('a 2% rep commission splits half to the rep, a quarter to Feniq, a quarter saved', () => {
+test('a 2% rep commission splits in quarters: Feniq, the pharmacy, the rep, and the warehouse', () => {
   assert.deepStrictEqual(splitRepCommission(10000, 2), {
-    rate: 2, totalAmount: 200, repAmount: 100, feniqAmount: 50, savingAmount: 50,
+    rate: 2, warehouseShareToRep: false, totalAmount: 200, repAmount: 50, feniqAmount: 50, pharmacyAmount: 50, savingAmount: 50,
   });
   assert.strictEqual(feniqRateFor(2), 0.5);
   assert.strictEqual(feniqRateFor(0.75), 0.1875);
 });
 
-test('the three parts never add up to more than the whole, whatever the rounding', () => {
+test('the warehouse may give the rep its own quarter: the rep then takes half and the warehouse keeps nothing', () => {
+  assert.deepStrictEqual(splitRepCommission(10000, 2, { warehouseShareToRep: true }), {
+    rate: 2, warehouseShareToRep: true, totalAmount: 200, repAmount: 100, feniqAmount: 50, pharmacyAmount: 50, savingAmount: 0,
+  });
+  assert.strictEqual(repRateFor(2), 0.5);
+  assert.strictEqual(repRateFor(2, true), 1);
+});
+
+test('the four parts never add up to more than the whole, whatever the rounding', () => {
   for (const revenue of [1, 7, 333, 1999, 60001]) {
     for (const rate of [0.5, 1, 1.5, 2, 3.25, 10]) {
-      const { totalAmount, repAmount, feniqAmount, savingAmount } = splitRepCommission(revenue, rate);
-      assert.ok(savingAmount >= 0);
-      assert.ok(repAmount + feniqAmount + savingAmount >= totalAmount, `${revenue} @ ${rate}%`);
-      assert.ok(repAmount + feniqAmount + savingAmount <= totalAmount + 1, `${revenue} @ ${rate}%`);
+      for (const warehouseShareToRep of [false, true]) {
+        const { totalAmount, repAmount, feniqAmount, pharmacyAmount, savingAmount } =
+          splitRepCommission(revenue, rate, { warehouseShareToRep });
+        const sum = repAmount + feniqAmount + pharmacyAmount + savingAmount;
+        assert.ok(savingAmount >= 0);
+        assert.ok(sum >= totalAmount, `${revenue} @ ${rate}%`);
+        assert.ok(sum <= totalAmount + 2, `${revenue} @ ${rate}%`);
+      }
     }
   }
 });
 
 test('no rate or no revenue means no commission at all', () => {
-  assert.deepStrictEqual(splitRepCommission(10000, 0), { rate: 0, totalAmount: 0, repAmount: 0, feniqAmount: 0, savingAmount: 0 });
+  assert.deepStrictEqual(splitRepCommission(10000, 0), {
+    rate: 0, warehouseShareToRep: false, totalAmount: 0, repAmount: 0, feniqAmount: 0, pharmacyAmount: 0, savingAmount: 0,
+  });
   assert.strictEqual(splitRepCommission(0, 2).totalAmount, 0);
   assert.strictEqual(splitRepCommission(10000, undefined).totalAmount, 0);
 });
@@ -236,7 +251,10 @@ test('an order from a rep\'s pharmacy carries the three-way split, and Feniq\'s 
   assert.strictEqual(stored.finalPrice, 60000);
   assert.strictEqual(stored.discountAmount, 0, 'no platform discount for the pharmacy');
   assert.strictEqual(stored.commissionAmount, 300, 'Feniq: a quarter of 2% of 60,000');
-  assert.deepStrictEqual(stored.repCommission, { rate: 2, repAmount: 600, feniqAmount: 300, savingAmount: 300 });
+  assert.deepStrictEqual(stored.repCommission, {
+    rate: 2, repAmount: 300, feniqAmount: 300, pharmacyAmount: 300, savingAmount: 300,
+    warehouseShareToRep: false, pharmacyCreditedAt: null,
+  });
   assert.strictEqual(String(stored.repId), rep.id);
 });
 
@@ -249,9 +267,11 @@ test('the warehouse sees the split on the order detail, and nothing when no rep 
   assert.strictEqual(detail.status, 200);
   assert.deepStrictEqual(detail.body.order.repCommission, {
     rate: 4,
-    repAmount: 1200,
+    repAmount: 600,
     feniqAmount: 600,
+    pharmacyAmount: 600,
     savingAmount: 600,
+    warehouseShareToRep: false,
   });
   assert.strictEqual(detail.body.order.commissionAmount, 600);
 
@@ -297,7 +317,10 @@ test('changing the rep\'s rate later does not touch an order already placed, and
   });
   const edited = await Order.findById(orderId).lean();
   assert.strictEqual(edited.finalPrice, 100000);
-  assert.deepStrictEqual(edited.repCommission, { rate: 2, repAmount: 1000, feniqAmount: 500, savingAmount: 500 });
+  assert.deepStrictEqual(edited.repCommission, {
+    rate: 2, repAmount: 500, feniqAmount: 500, pharmacyAmount: 500, savingAmount: 500,
+    warehouseShareToRep: false, pharmacyCreditedAt: null,
+  });
   assert.strictEqual(edited.commissionAmount, 500);
 
   // A new order is placed under the new rate.
@@ -328,15 +351,15 @@ test('the warehouse\'s Reps page and the rep\'s own app total the commission on 
   assert.strictEqual(list.status, 200);
   const row = list.body.reps.find((r) => r.id === repId);
   assert.strictEqual(row.commissionRate, 2);
-  assert.deepStrictEqual(row.monthCommission, { repAmount: 600, feniqAmount: 300, savingAmount: 300 });
+  assert.deepStrictEqual(row.monthCommission, { repAmount: 300, feniqAmount: 300, pharmacyAmount: 300, savingAmount: 300 });
   assert.strictEqual(row.monthOrdersCount, 2, 'both orders count as the rep\'s orders');
 
   const repToken = await login(appPhone);
   const me = await call('GET', '/rep/me', { token: repToken });
   assert.strictEqual(me.status, 200, JSON.stringify(me.body));
-  assert.strictEqual(me.body.stats.ownCommissionRate, 1, 'the rep is told their own 1%, not the warehouse\'s 2%');
+  assert.strictEqual(me.body.stats.ownCommissionRate, 0.5, 'the rep is told their own 0.5%, not the warehouse\'s 2%');
   assert.strictEqual(me.body.stats.commissionRate, undefined);
-  assert.strictEqual(me.body.stats.monthCommissionAmount, 600, 'the rep sees only their own half');
+  assert.strictEqual(me.body.stats.monthCommissionAmount, 300, 'the rep sees only their own quarter');
   assert.strictEqual(me.body.stats.feniqAmount, undefined, 'Feniq\'s and the warehouse\'s shares are not the rep\'s business');
 });
 
@@ -368,19 +391,19 @@ test('a credited return takes its proportion back from the rep\'s and Feniq\'s s
   };
 
   let now = await totals();
-  assert.deepStrictEqual(now.row, { repAmount: 600, feniqAmount: 300, savingAmount: 300 }, 'a pending return changes nothing');
-  assert.strictEqual(now.mine, 600);
+  assert.deepStrictEqual(now.row, { repAmount: 300, feniqAmount: 300, pharmacyAmount: 300, savingAmount: 300 }, 'a pending return changes nothing');
+  assert.strictEqual(now.mine, 300);
 
   // Half of the order is credited back.
   await Return.updateOne({ _id: returnRequest._id }, { $set: { status: 'approved', creditSyp: 30000 } });
   now = await totals();
-  assert.deepStrictEqual(now.row, { repAmount: 300, feniqAmount: 150, savingAmount: 150 });
-  assert.strictEqual(now.mine, 300);
+  assert.deepStrictEqual(now.row, { repAmount: 150, feniqAmount: 150, pharmacyAmount: 150, savingAmount: 150 });
+  assert.strictEqual(now.mine, 150);
 
   // A credit larger than the order can never push the commission below zero.
   await Return.updateOne({ _id: returnRequest._id }, { $set: { creditSyp: 90000 } });
   now = await totals();
-  assert.deepStrictEqual(now.row, { repAmount: 0, feniqAmount: 0, savingAmount: 0 });
+  assert.deepStrictEqual(now.row, { repAmount: 0, feniqAmount: 0, pharmacyAmount: 0, savingAmount: 0 });
   assert.strictEqual(now.mine, 0);
 });
 

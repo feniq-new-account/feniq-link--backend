@@ -13,6 +13,11 @@ const assert = require('node:assert');
 const path = require('node:path');
 const mongoose = require('mongoose');
 const { startMemoryMongo, stopMemoryMongo } = require('./helpers/mongo');
+// The seal photo is switched off for now (src/config/features.js); this file
+// tests the feature itself, so it switches it back on.
+const { FEATURES } = require('../src/config/features');
+
+FEATURES.deliverySealPhoto = true;
 
 const emitted = [];
 
@@ -306,4 +311,35 @@ test('attachDeliverySealPhoto is scoped to the owning pharmacy (IDOR)', async ()
     withCode('ORDER_NOT_FOUND')
   );
   assert.strictEqual((await Order.findById(order._id)).deliverySealPhoto, null);
+});
+
+// While the switch is off (the shipped default): no order asks for the photo
+// and an order that asked for it before is not held back.
+test('switched off: a new order never requires the seal photo, and an old one that did can still be delivered', async () => {
+  FEATURES.deliverySealPhoto = false;
+  try {
+    const warehouseOrderService = require('../src/services/warehouseOrder.service');
+    const Order = require('../src/models/order.model');
+    const order = await Order.findOne({ status: { $nin: ['delivered', 'cancelled'] } });
+    if (order) {
+      order.requiresDeliverySealPhoto = true;
+      order.deliverySealPhoto = null;
+      await order.save();
+      let current = order.status;
+      for (let step = 0; step < 4 && current !== 'delivered'; step += 1) {
+        const advanced = await warehouseOrderService.advanceOrderStatus(order._id, order.warehouseId, new mongoose.Types.ObjectId());
+        current = advanced.status;
+      }
+      assert.strictEqual(current, 'delivered');
+    }
+    const { toWarehouseOrderDetailResponse } = require('../src/viewmodels/warehouseOrder.viewmodel');
+    const view = toWarehouseOrderDetailResponse({
+      order: { _id: 'x', requiresDeliverySealPhoto: true, finalPrice: 0, commissionAmount: 0, statusHistory: [] },
+      items: [],
+      pharmacy: null,
+    });
+    assert.strictEqual(view.order.requiresDeliverySealPhoto, false);
+  } finally {
+    FEATURES.deliverySealPhoto = true;
+  }
 });

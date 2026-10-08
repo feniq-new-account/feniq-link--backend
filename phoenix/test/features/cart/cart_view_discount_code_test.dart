@@ -199,6 +199,36 @@ void main() {
     expect(textOf(tester, 'cartPlatformDiscount'), '- 800 SYP');
     expect(textOf(tester, 'cartTotal'), '19,200 SYP');
     expect(find.byKey(const Key('discountCodeAmount')), findsNothing);
+    expect(find.byKey(const Key('cartLoyaltyDiscount')), findsNothing);
+    expect(find.byKey(const Key('cartCreditUsed')), findsNothing);
+  });
+
+  testWidgets('the warehouse loyalty discount and the pharmacy\'s credit show as their own lines', (tester) async {
+    when(
+      () => orderRepo.quoteCart(
+        warehouseId: any(named: 'warehouseId'),
+        items: any(named: 'items'),
+        code: any(named: 'code'),
+      ),
+    ).thenAnswer(
+      (_) async => const CartQuote(
+        subtotalSyp: 20000,
+        platformDiscountSyp: 0,
+        loyaltyDiscountSyp: 2000,
+        creditBalanceSyp: 500,
+        creditUsedSyp: 500,
+        preCodeSyp: 17500,
+        finalSyp: 17500,
+        usdToSyp: 1000,
+      ),
+    );
+    await pumpCart(tester);
+    expect(find.text('Warehouse loyalty discount'), findsOneWidget);
+    expect(textOf(tester, 'cartLoyaltyDiscount'), '- 2,000 SYP');
+    expect(find.text('From your credit with the warehouse'), findsOneWidget);
+    expect(textOf(tester, 'cartCreditUsed'), '- 500 SYP');
+    expect(textOf(tester, 'cartTotal'), '17,500 SYP');
+    expect(find.byKey(const Key('cartPlatformDiscount')), findsNothing);
   });
 
   testWidgets('applying a code shows the server\'s breakdown: subtotal, discount, code, total', (tester) async {

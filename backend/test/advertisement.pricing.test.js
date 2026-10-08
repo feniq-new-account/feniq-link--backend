@@ -356,6 +356,10 @@ test('rollUpOrderMoney is the single definition both paths share', () => {
     warehouseNetSyp: 380160,
     // No rep on the order: nothing to split.
     repCommission: null,
+    // No loyalty tiers and no credit: nothing off.
+    loyaltyDiscountAmount: 0,
+    loyaltyTier: null,
+    creditUsedSyp: 0,
   });
 });
 

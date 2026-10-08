@@ -87,6 +87,8 @@ class Endpoints {
   static const String warehouseBalances = '/warehouse/balances';
   static String warehouseBalance(String pharmacyId) => '/warehouse/balances/$pharmacyId';
   static const String warehousePayments = '/warehouse/payments';
+  static const String warehouseSettings = '/warehouse/settings';
+  static const String warehouseLoyalty = '/warehouse/settings/loyalty';
   static const String warehouseReturns = '/warehouse/returns';
   static String warehouseReturn(String returnId) => '/warehouse/returns/$returnId';
   static String warehouseReturnPreview(String returnId) => '/warehouse/returns/$returnId/credit-preview';

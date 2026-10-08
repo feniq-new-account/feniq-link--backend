@@ -17,6 +17,8 @@ class SavingsSummary {
     required this.advertisementSyp,
     required this.platformDiscountSyp,
     this.discountCodeSyp = 0,
+    this.loyaltySyp = 0,
+    this.creditSyp = 0,
     required this.totalSavingsSyp,
     required this.totalSavingsUsd,
   });
@@ -33,6 +35,11 @@ class SavingsSummary {
 
   /// Discount codes used on the pharmacy's orders (already inside the total).
   final num discountCodeSyp;
+
+  /// Warehouses' loyalty discounts, and the pharmacy's own credit (its share
+  /// of earlier rep commissions) used on its orders - both already inside the total.
+  final num loyaltySyp;
+  final num creditSyp;
 
   /// The headline: everything the pharmacy did not pay.
   final num totalSavingsSyp;
@@ -53,6 +60,8 @@ class SavingsSummary {
     advertisementSyp: (json['advertisementSyp'] as num?) ?? 0,
     platformDiscountSyp: (json['platformDiscountSyp'] as num?) ?? 0,
     discountCodeSyp: (json['discountCodeSyp'] as num?) ?? 0,
+    loyaltySyp: (json['loyaltySyp'] as num?) ?? 0,
+    creditSyp: (json['creditSyp'] as num?) ?? 0,
     totalSavingsSyp: (json['totalSavingsSyp'] as num?) ?? 0,
     totalSavingsUsd: (json['totalSavingsUsd'] as num?) ?? 0,
   );

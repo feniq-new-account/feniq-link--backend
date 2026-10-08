@@ -66,13 +66,24 @@ async function loadWarehouseRepOrThrow(warehouseId, repId) {
   return rep;
 }
 
+// Whether the warehouse gives this rep its own quarter (utils/repCommission.js).
+// null when the request does not say.
+function readShareToRep(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'boolean') {
+    throw ApiError.badRequest('warehouseShareToRep must be true or false.', undefined, 'INVALID_SHARE_TO_REP');
+  }
+  return value;
+}
+
 // A rep's login, born active - the warehouse is vouching for its own employee,
 // there is no approval step. The password is a temporary one the warehouse
 // hands over, so the app makes the rep choose their own on first sign-in
 // (mustChangePassword, same as an admin reset).
-async function createRep(warehouseId, { name, phone, password, commissionRate }) {
+async function createRep(warehouseId, { name, phone, password, commissionRate, warehouseShareToRep }) {
   const repName = cleanName(name);
   const rate = readCommissionRate(commissionRate);
+  const shareToRep = readShareToRep(warehouseShareToRep);
   const cleanPhone = normalizePhone(typeof phone === 'string' ? phone : '');
   if (!isValidPhone(cleanPhone)) {
     throw ApiError.badRequest('Please enter a valid phone number.', undefined, 'INVALID_PHONE_FORMAT');
@@ -105,7 +116,16 @@ async function createRep(warehouseId, { name, phone, password, commissionRate })
         { session }
       );
       const [rep] = await Rep.create(
-        [{ userId: user._id, warehouseId, name: repName, phone: appPhone, commissionRate: rate ?? 0 }],
+        [
+          {
+            userId: user._id,
+            warehouseId,
+            name: repName,
+            phone: appPhone,
+            commissionRate: rate ?? 0,
+            warehouseShareToRep: shareToRep ?? false,
+          },
+        ],
         { session }
       );
       return rep;
@@ -121,10 +141,14 @@ async function createRep(warehouseId, { name, phone, password, commissionRate })
 // Rename, or switch on/off. Switching off blocks the login and ends every
 // session at once, so a rep who left cannot keep using a phone that is still
 // signed in. Their pharmacies stay assigned until the warehouse moves them.
-async function updateRep(warehouseId, repId, { name, isActive, commissionRate } = {}) {
+async function updateRep(warehouseId, repId, { name, isActive, commissionRate, warehouseShareToRep } = {}) {
   const rep = await loadWarehouseRepOrThrow(warehouseId, repId);
   const userUpdate = {};
   const rate = readCommissionRate(commissionRate);
+  const shareToRep = readShareToRep(warehouseShareToRep);
+  // The warehouse's own quarter, kept or given to this rep - also for orders
+  // placed from now on only.
+  if (shareToRep !== null) rep.warehouseShareToRep = shareToRep;
   // Only orders placed from now on carry the new rate: each order froze the
   // rate it was placed under (order.model.js's repCommission).
   if (rate !== null) rep.commissionRate = rate;
@@ -288,6 +312,7 @@ async function listReps(warehouseId, now = new Date()) {
       monthCommission: {
         repAmount: commissionByRep.get(key)?.repAmount ?? 0,
         feniqAmount: commissionByRep.get(key)?.feniqAmount ?? 0,
+        pharmacyAmount: commissionByRep.get(key)?.pharmacyAmount ?? 0,
         savingAmount: commissionByRep.get(key)?.savingAmount ?? 0,
       },
     };

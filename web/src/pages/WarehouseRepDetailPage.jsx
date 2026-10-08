@@ -182,9 +182,10 @@ export function WarehouseRepDetailPage() {
               {t('reps.commissionRate')}: <span className="wh-num">{formatPercent(rep.commissionRate)}</span>
               {' — '}
               {t('reps.commissionSplit', {
-                rep: formatPercent(commissionSplit(rep.commissionRate).rep),
-                feniq: formatPercent(commissionSplit(rep.commissionRate).feniq),
-                saving: formatPercent(commissionSplit(rep.commissionRate).saving),
+                feniq: formatPercent(commissionSplit(rep.commissionRate, rep.warehouseShareToRep).feniq),
+                pharmacy: formatPercent(commissionSplit(rep.commissionRate, rep.warehouseShareToRep).pharmacy),
+                rep: formatPercent(commissionSplit(rep.commissionRate, rep.warehouseShareToRep).rep),
+                saving: formatPercent(commissionSplit(rep.commissionRate, rep.warehouseShareToRep).saving),
               })}
             </p>
           ) : (
