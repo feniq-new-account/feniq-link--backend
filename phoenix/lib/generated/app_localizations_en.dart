@@ -2761,4 +2761,54 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get warehouseAccountPayFailed =>
       'The payment wasn\'t saved. Try again.';
+
+  @override
+  String get warehouseVoiceTitle => 'Record a payment by voice';
+
+  @override
+  String get warehouseVoiceHint =>
+      'Say, in Arabic, for example: Al-Noor pharmacy paid fifty thousand, or Al-Amal paid the full amount.';
+
+  @override
+  String get warehouseVoiceSpeak => 'Tap and speak';
+
+  @override
+  String get warehouseVoiceStop => 'Stop';
+
+  @override
+  String get warehouseVoiceHeard => 'What was heard (you can edit it)';
+
+  @override
+  String get warehouseVoiceNoMic =>
+      'Voice isn\'t available on this phone. Type the sentence in the box.';
+
+  @override
+  String get warehouseVoiceNotUnderstood =>
+      'I did not understand. Try: pharmacy name + paid + the amount.';
+
+  @override
+  String get warehouseVoiceNoPharmacy =>
+      'No pharmacy found for that name. Edit the name.';
+
+  @override
+  String warehouseVoiceOwes(String amount) {
+    return 'owes $amount';
+  }
+
+  @override
+  String warehouseVoiceWillRecord(String amount) {
+    return 'A payment of $amount will be recorded';
+  }
+
+  @override
+  String warehouseVoiceLeftAfter(String amount) {
+    return 'It will still owe $amount';
+  }
+
+  @override
+  String get warehouseVoiceCannotRecord =>
+      'That amount does not fit this pharmacy\'s account (zero, or more than it owes).';
+
+  @override
+  String get warehouseVoiceConfirm => 'OK, record it';
 }

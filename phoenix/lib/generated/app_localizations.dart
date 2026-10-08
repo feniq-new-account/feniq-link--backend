@@ -4669,6 +4669,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The payment wasn\'t saved. Try again.'**
   String get warehouseAccountPayFailed;
+
+  /// No description provided for @warehouseVoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a payment by voice'**
+  String get warehouseVoiceTitle;
+
+  /// No description provided for @warehouseVoiceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Say, in Arabic, for example: Al-Noor pharmacy paid fifty thousand, or Al-Amal paid the full amount.'**
+  String get warehouseVoiceHint;
+
+  /// No description provided for @warehouseVoiceSpeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap and speak'**
+  String get warehouseVoiceSpeak;
+
+  /// No description provided for @warehouseVoiceStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get warehouseVoiceStop;
+
+  /// No description provided for @warehouseVoiceHeard.
+  ///
+  /// In en, this message translates to:
+  /// **'What was heard (you can edit it)'**
+  String get warehouseVoiceHeard;
+
+  /// No description provided for @warehouseVoiceNoMic.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice isn\'t available on this phone. Type the sentence in the box.'**
+  String get warehouseVoiceNoMic;
+
+  /// No description provided for @warehouseVoiceNotUnderstood.
+  ///
+  /// In en, this message translates to:
+  /// **'I did not understand. Try: pharmacy name + paid + the amount.'**
+  String get warehouseVoiceNotUnderstood;
+
+  /// No description provided for @warehouseVoiceNoPharmacy.
+  ///
+  /// In en, this message translates to:
+  /// **'No pharmacy found for that name. Edit the name.'**
+  String get warehouseVoiceNoPharmacy;
+
+  /// No description provided for @warehouseVoiceOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'owes {amount}'**
+  String warehouseVoiceOwes(String amount);
+
+  /// No description provided for @warehouseVoiceWillRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'A payment of {amount} will be recorded'**
+  String warehouseVoiceWillRecord(String amount);
+
+  /// No description provided for @warehouseVoiceLeftAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'It will still owe {amount}'**
+  String warehouseVoiceLeftAfter(String amount);
+
+  /// No description provided for @warehouseVoiceCannotRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'That amount does not fit this pharmacy\'s account (zero, or more than it owes).'**
+  String get warehouseVoiceCannotRecord;
+
+  /// No description provided for @warehouseVoiceConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'OK, record it'**
+  String get warehouseVoiceConfirm;
 }
 
 class _AppLocalizationsDelegate

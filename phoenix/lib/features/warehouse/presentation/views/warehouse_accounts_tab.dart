@@ -16,6 +16,7 @@ import 'package:feniq/features/warehouse/presentation/managers/warehouse_account
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_order_labels.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_paged_list.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/account_payment.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/voice_payment_sheet.dart';
 import 'package:feniq/routes/route_names.dart';
 
 /// Where every pharmacy's account stands with the warehouse, largest balance
@@ -61,15 +62,26 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(AppSizes.spacingMedium, AppSizes.spacingSmall, AppSizes.spacingMedium, 0),
-          child: TextField(
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search),
-              hintText: l10n.warehouseAccountsSearch,
-              isDense: true,
-            ),
-            onChanged: (text) => _debouncer.run(() {
-              if (mounted) context.read<WarehouseAccountsCubit>().setSearch(text);
-            }),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: l10n.warehouseAccountsSearch,
+                    isDense: true,
+                  ),
+                  onChanged: (text) => _debouncer.run(() {
+                    if (mounted) context.read<WarehouseAccountsCubit>().setSearch(text);
+                  }),
+                ),
+              ),
+              IconButton(
+                tooltip: l10n.warehouseVoiceTitle,
+                icon: const Icon(Icons.mic),
+                onPressed: () => showVoicePaymentSheet(context),
+              ),
+            ],
           ),
         ),
         Expanded(

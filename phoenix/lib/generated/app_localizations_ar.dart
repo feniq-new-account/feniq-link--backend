@@ -2754,4 +2754,53 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseAccountPayFailed => 'الدفعة ما انحفظت. جرّب مرة تانية.';
+
+  @override
+  String get warehouseVoiceTitle => 'تسجيل دفعة بالصوت';
+
+  @override
+  String get warehouseVoiceHint =>
+      'احكي مثلاً: «صيدلية النور دفعت خمسين ألف» أو «صيدلية الأمل دفعت المبلغ كامل».';
+
+  @override
+  String get warehouseVoiceSpeak => 'اضغط واحكي';
+
+  @override
+  String get warehouseVoiceStop => 'وقّف';
+
+  @override
+  String get warehouseVoiceHeard => 'اللي انسمع (بتقدر تعدّله)';
+
+  @override
+  String get warehouseVoiceNoMic =>
+      'الصوت مو متاح بهالموبايل. اكتب الجملة بالخانة.';
+
+  @override
+  String get warehouseVoiceNotUnderstood =>
+      'ما فهمت الجملة. جرّب: اسم الصيدلية + دفعت + المبلغ.';
+
+  @override
+  String get warehouseVoiceNoPharmacy => 'ما لقيت هالصيدلية. عدّل الاسم.';
+
+  @override
+  String warehouseVoiceOwes(String amount) {
+    return 'عليها $amount';
+  }
+
+  @override
+  String warehouseVoiceWillRecord(String amount) {
+    return 'رح تنسجّل دفعة $amount';
+  }
+
+  @override
+  String warehouseVoiceLeftAfter(String amount) {
+    return 'بيضل عليها $amount';
+  }
+
+  @override
+  String get warehouseVoiceCannotRecord =>
+      'المبلغ ما بيركب مع حساب هالصيدلية (يا صفر، يا أكبر من المطلوب).';
+
+  @override
+  String get warehouseVoiceConfirm => 'تمام، سجّل';
 }

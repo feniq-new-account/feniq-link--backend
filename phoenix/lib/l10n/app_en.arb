@@ -1394,5 +1394,21 @@
   "warehouseAccountPayInvalid": "Enter an amount above zero and below the amount owed.",
   "warehouseAccountPayRecorded": "Recorded a payment of {amount}",
   "@warehouseAccountPayRecorded": {"placeholders": {"amount": {"type": "String"}}},
-  "warehouseAccountPayFailed": "The payment wasn't saved. Try again."
+  "warehouseAccountPayFailed": "The payment wasn't saved. Try again.",
+  "warehouseVoiceTitle": "Record a payment by voice",
+  "warehouseVoiceHint": "Say, in Arabic, for example: Al-Noor pharmacy paid fifty thousand, or Al-Amal paid the full amount.",
+  "warehouseVoiceSpeak": "Tap and speak",
+  "warehouseVoiceStop": "Stop",
+  "warehouseVoiceHeard": "What was heard (you can edit it)",
+  "warehouseVoiceNoMic": "Voice isn't available on this phone. Type the sentence in the box.",
+  "warehouseVoiceNotUnderstood": "I did not understand. Try: pharmacy name + paid + the amount.",
+  "warehouseVoiceNoPharmacy": "No pharmacy found for that name. Edit the name.",
+  "warehouseVoiceOwes": "owes {amount}",
+  "@warehouseVoiceOwes": {"placeholders": {"amount": {"type": "String"}}},
+  "warehouseVoiceWillRecord": "A payment of {amount} will be recorded",
+  "@warehouseVoiceWillRecord": {"placeholders": {"amount": {"type": "String"}}},
+  "warehouseVoiceLeftAfter": "It will still owe {amount}",
+  "@warehouseVoiceLeftAfter": {"placeholders": {"amount": {"type": "String"}}},
+  "warehouseVoiceCannotRecord": "That amount does not fit this pharmacy's account (zero, or more than it owes).",
+  "warehouseVoiceConfirm": "OK, record it"
 }
