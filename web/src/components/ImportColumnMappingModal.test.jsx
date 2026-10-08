@@ -41,6 +41,6 @@ describe('the column-mapping step', () => {
   it('keeps the warehouse import on name, price and company (required) plus its optional columns', () => {
     expect(WAREHOUSE_IMPORT_COLUMNS.required).toEqual(['name', 'price', 'manufacturer']);
     const html = render({ details: { headers } });
-    expect([...new Set(optionValues(html))]).toEqual(['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus']);
+    expect([...new Set(optionValues(html))]).toEqual(['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus', 'productionDate', 'expiryDate']);
   });
 });

@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 // IMPORT_COLUMN_SETS), and the server sends them with the refusal. `columns`
 // is only the fallback for a refusal that carried none.
 export const WAREHOUSE_IMPORT_COLUMNS = {
-  fields: ['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus'],
+  fields: ['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus', 'productionDate', 'expiryDate'],
   required: ['name', 'price', 'manufacturer'],
 };
 // The central catalog has no price - a price belongs to a warehouse's product.

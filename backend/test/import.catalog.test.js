@@ -104,7 +104,7 @@ test('the warehouse import still requires a price column', async () => {
       assert.strictEqual(err.code, 'IMPORT_COLUMNS_UNRECOGNIZED');
       assert.deepStrictEqual(err.details.missing, ['price']);
       assert.deepStrictEqual(err.details.required, ['name', 'price', 'manufacturer']);
-      assert.deepStrictEqual(err.details.fields, ['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus']);
+      assert.deepStrictEqual(err.details.fields, ['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus', 'productionDate', 'expiryDate']);
       return true;
     }
   );

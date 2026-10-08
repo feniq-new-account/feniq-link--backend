@@ -35,6 +35,17 @@ const FIELD_SYNONYMS = {
   strength: ['العيار', 'التركيز', 'القوة', 'strength', 'dose strength'],
   form: ['الشكل الدوائي', 'dosage form', 'pharmaceutical form'],
   bonus: ['البونص', 'بونص', 'العرض', 'عرض', 'الهدية', 'bonus', 'free'],
+  // Warehouse import only: the batch on the shelf. Production date is optional.
+  productionDate: [
+    'تاريخ الانتاج', 'تاريخ التصنيع', 'تاريخ الإنتاج', 'تاريخ التعبئة', 'الانتاج', 'انتاج', 'التصنيع', 'تصنيع',
+    'production date', 'production', 'manufacture date', 'manufacturing date', 'mfg date', 'mfg', 'mfd', 'prod date',
+  ],
+  expiryDate: [
+    'تاريخ الانتهاء', 'تاريخ انتهاء الصلاحية', 'تاريخ الصلاحية', 'انتهاء الصلاحية', 'تاريخ نهاية الصلاحية',
+    'الانتهاء', 'انتهاء', 'الصلاحية', 'صلاحية', 'تاريخ الانقضاء', 'نهاية الصلاحية',
+    'expiry date', 'expiration date', 'expire date', 'exp date', 'expiry', 'expiration', 'expires', 'expire', 'exp',
+    'best before',
+  ],
 };
 
 const IMPORT_FIELDS = Object.keys(FIELD_SYNONYMS);
@@ -53,7 +64,7 @@ const IMPORT_COLUMN_SETS = {
   // The warehouse's price list: its products, prices, units and bonuses. The
   // category is the catalog's, so a category column is ignored here.
   warehouse: {
-    fields: ['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus'],
+    fields: ['name', 'price', 'manufacturer', 'unit', 'currency', 'bonus', 'productionDate', 'expiryDate'],
     required: ['name', 'price', 'manufacturer'],
   },
   // The admin's central catalog: the medicines, their companies and, optionally,
