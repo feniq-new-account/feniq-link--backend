@@ -138,6 +138,20 @@
     "rateStars_other": "تقييم {{count}} نجوم",
     "orderNumber": "طلب رقم {{number}}"
   },
+  "collect": {
+    "title": "تسليم الطلبية رقم {{number}} - قبضت؟",
+    "total": "المبلغ: {{amount}}",
+    "full": "كامل",
+    "partial": "جزء",
+    "later": "بعدين",
+    "paidLabel": "دفع هلق (ل.س)",
+    "left": "ضل: {{amount}}",
+    "save": "سلّم واحفظ",
+    "partialInvalid": "اكتب مبلغ أكبر من صفر وأصغر من المبلغ كله.",
+    "recorded": "تم التسليم، وانسجّل {{amount}} مدفوع",
+    "failed": "تم التسليم، بس الدفعة ما انحفظت - سجّلها من الحسابات.",
+    "note": "دفعة عند تسليم الطلبية رقم {{number}}"
+  },
   "orderDetail": {
     "backToOrders": "رجوع للطلبات",
     "returnRequestExists": "يوجد طلب إرجاع",
