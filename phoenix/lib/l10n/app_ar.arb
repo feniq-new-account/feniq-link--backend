@@ -1147,5 +1147,17 @@
   "warehouseCollectPartialInvalid": "اكتب مبلغ أكبر من صفر وأصغر من المبلغ كله.",
   "warehouseCollectRecorded": "تم التسليم، وانسجّل {amount} مدفوع",
   "warehouseCollectFailed": "تم التسليم، بس الدفعة ما انحفظت - سجّلها من الحسابات.",
-  "warehouseCollectNote": "دفعة عند تسليم الطلبية رقم {number}"
+  "warehouseCollectNote": "دفعة عند تسليم الطلبية رقم {number}",
+  "warehouseAccountPurchases": "اشترت {amount}",
+  "warehouseAccountPaid": "دفعت {amount}",
+  "warehouseAccountLastPayment": "آخر دفعة {date}",
+  "warehouseAccountNoPayment": "ما دفعت لسا",
+  "warehouseAccountPayFull": "دفع كامل",
+  "warehouseAccountPayPartial": "دفعة جزئية",
+  "warehouseAccountPayFullConfirm": "تسجّل دفعة نقدية {amount}؟",
+  "warehouseAccountPayOwes": "عليها: {amount}",
+  "warehouseAccountPaySave": "سجّل الدفعة",
+  "warehouseAccountPayInvalid": "اكتب مبلغ أكبر من صفر وأصغر من المبلغ المطلوب.",
+  "warehouseAccountPayRecorded": "انسجّلت دفعة {amount}",
+  "warehouseAccountPayFailed": "الدفعة ما انحفظت. جرّب مرة تانية."
 }

@@ -375,6 +375,23 @@
     "statusPending": "Pending review",
     "linkedProduct": "Linked product"
   },
+  "quickPay": {
+    "fullTitle": "Pay in full",
+    "partialTitle": "Part payment",
+    "fullConfirm": "Record a cash payment of {{amount}}?",
+    "owes": "Owes: {{amount}}",
+    "paidLabel": "Paid now (SYP)",
+    "left": "Left: {{amount}}",
+    "save": "Record payment",
+    "partialInvalid": "Enter an amount above zero and below the amount owed.",
+    "recorded": "Recorded a payment of {{amount}}",
+    "fullButton": "Pay in full",
+    "partialButton": "Part payment",
+    "purchases": "Purchases",
+    "paid": "Paid",
+    "left_col": "Left",
+    "lastPayment": "Last payment"
+  },
   "debts": {
     "searchPlaceholder": "Search by pharmacy name...",
     "noMatchingDebts": "No pharmacies match this search.",

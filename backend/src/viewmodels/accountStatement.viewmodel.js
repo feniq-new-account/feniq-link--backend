@@ -91,6 +91,9 @@ function toWarehouseAccountsResponse({ rows }) {
       outstandingDebtSyp: Math.max(0, row.balanceSyp),
       creditBalanceSyp: Math.max(0, -row.balanceSyp),
       lastActivityAt: row.lastActivityAt,
+      purchasesSyp: row.purchasesSyp ?? 0,
+      paidSyp: row.paidSyp ?? 0,
+      lastPaymentAt: row.lastPaymentAt ?? null,
     })),
   };
 }
