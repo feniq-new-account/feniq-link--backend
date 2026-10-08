@@ -55,7 +55,7 @@ AdvertisementModel advertisement({
 }) {
   return AdvertisementModel.fromJson({
     'id': id,
-    'titleAr': 'باقة $id',
+    'titleAr': 'سلة $id',
     'titleEn': titleEn,
     'warehouseId': warehouseId,
     'warehouseNameAr': 'مستودع $warehouseId',
