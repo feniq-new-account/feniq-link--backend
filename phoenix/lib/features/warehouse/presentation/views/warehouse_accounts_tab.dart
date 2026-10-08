@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
+import 'package:feniq/core/utils/date_formatter.dart';
 import 'package:feniq/core/error/error_translator.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
@@ -14,6 +15,7 @@ import 'package:feniq/features/warehouse/data/models/warehouse_management_models
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_accounts_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_order_labels.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_paged_list.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/account_payment.dart';
 import 'package:feniq/routes/route_names.dart';
 
 /// Where every pharmacy's account stands with the warehouse, largest balance
@@ -58,12 +60,7 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSizes.spacingMedium,
-            AppSizes.spacingSmall,
-            AppSizes.spacingMedium,
-            0,
-          ),
+          padding: const EdgeInsets.fromLTRB(AppSizes.spacingMedium, AppSizes.spacingSmall, AppSizes.spacingMedium, 0),
           child: TextField(
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search),
@@ -93,18 +90,59 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                 emptyIcon: Icons.account_balance_wallet_outlined,
                 itemBuilder: (context, index) {
                   final row = state.accounts[index];
+                  final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
+                  final suffix = l10n.currencySuffix;
                   return CustomCard(
                     onTap: () => _open(row),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            warehouseLocalName(context, row.nameAr, row.nameEn),
-                            style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                warehouseLocalName(context, row.nameAr, row.nameEn),
+                                style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            const SizedBox(width: AppSizes.spacingSmall),
+                            WarehouseBalanceText(balanceSyp: row.balanceSyp),
+                          ],
                         ),
-                        const SizedBox(width: AppSizes.spacingSmall),
-                        WarehouseBalanceText(balanceSyp: row.balanceSyp),
+                        const SizedBox(height: AppSizes.spacingSmall),
+                        Text(
+                          '${l10n.warehouseAccountPurchases(formatSyp(row.purchasesSyp, suffix))} · '
+                          '${l10n.warehouseAccountPaid(formatSyp(row.paidSyp, suffix))}',
+                          style: muted,
+                        ),
+                        Text(
+                          row.lastPaymentAt == null
+                              ? l10n.warehouseAccountNoPayment
+                              : l10n.warehouseAccountLastPayment(
+                                  DateFormatter.formatDate(row.lastPaymentAt!.toLocal()),
+                                ),
+                          style: muted,
+                        ),
+                        if (row.balanceSyp > 0) ...[
+                          const SizedBox(height: AppSizes.spacingSmall),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: FilledButton(
+                                  onPressed: () => payAccountInFull(context, row),
+                                  child: Text(l10n.warehouseAccountPayFull),
+                                ),
+                              ),
+                              const SizedBox(width: AppSizes.spacingSmall),
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => payAccountPartly(context, row),
+                                  child: Text(l10n.warehouseAccountPayPartial),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   );
