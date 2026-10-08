@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/error/failure.dart';
+import 'package:feniq/core/offline/offline_syncable.dart';
 import 'package:feniq/core/session/session_scope.dart';
 import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_repository.dart';
 
@@ -14,14 +17,20 @@ class WarehouseSelectionCubit extends Cubit<WarehouseSelectionState> implements 
   WarehouseSelectionCubit({
     required WarehouseRepository warehouseRepository,
     SessionScope? sessionScope,
+    OfflineSyncable? offlineCatalogs,
   }) : _warehouseRepository = warehouseRepository,
        _sessionScope = sessionScope,
+       _offlineCatalogs = offlineCatalogs,
        super(const WarehouseSelectionState()) {
     _sessionScope?.register(this);
   }
 
   final WarehouseRepository _warehouseRepository;
   final SessionScope? _sessionScope;
+  // Keeps every listed warehouse's catalog on the phone, so the pharmacist
+  // can browse and search all of them with no connection - not only the ones
+  // already opened. Only the warehouses on Feniq: nothing else is downloaded.
+  final OfflineSyncable? _offlineCatalogs;
 
   // Bumped by every sign-out, so a list requested for the previous account
   // can't land after the reset.
@@ -53,6 +62,18 @@ class WarehouseSelectionCubit extends Cubit<WarehouseSelectionState> implements 
     return _load(onlyMyCity: onlyMyCity, keepCurrentList: true);
   }
 
+  // One warehouse at a time, in the background: the screen never waits on it.
+  // A catalog saved today is skipped (syncForOffline's own daily check), and a
+  // failed download keeps the previous copy. Stops if the pharmacist signs out.
+  Future<void> _keepCatalogsOffline(List<String> warehouseIds, int session) async {
+    final sync = _offlineCatalogs;
+    if (sync == null) return;
+    for (final id in warehouseIds) {
+      if (session != _session || isClosed) return;
+      await sync.syncForOffline(id);
+    }
+  }
+
   Future<void> _load({required bool onlyMyCity, bool keepCurrentList = false}) async {
     emit(
       state.copyWith(
@@ -80,6 +101,7 @@ class WarehouseSelectionCubit extends Cubit<WarehouseSelectionState> implements 
           isChangingScope: false,
         ),
       );
+      unawaited(_keepCatalogsOffline(result.warehouses.map((w) => w.id).toList(), session));
     } on Failure catch (f) {
       if (session != _session) return;
       emit(
