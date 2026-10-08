@@ -7,6 +7,8 @@ import { useExchangeRate } from '../context/ExchangeRateContext';
 import { formatSyp, formatUsd, remainingPaymentAmountFromSyp } from '../utils/currency';
 import { PAYMENT_METHODS, PAYMENT_CURRENCIES as CURRENCIES, createIdempotencyKeys } from '../utils/payments';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
+import { QuickPaymentModal } from '../components/QuickPaymentModal';
+import { displayName } from '../utils/displayName';
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -593,6 +595,9 @@ export function WarehouseDebtsPage() {
   const [selectedPharmacyId, setSelectedPharmacyId] = useState(null);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  // A row's "pay in full" / "part payment" open this: { mode, row }.
+  const [paying, setPaying] = useState(null);
+  const [payMessage, setPayMessage] = useState(null);
 
   // Debounced the same 300ms as every other search box in the panel, so
   // typing doesn't fire a request per keystroke.
@@ -660,6 +665,21 @@ export function WarehouseDebtsPage() {
       </div>
 
       {error && <p className="error-text">{error}</p>}
+      {payMessage && <p className="hint">{payMessage}</p>}
+      {paying && (
+        <QuickPaymentModal
+          mode={paying.mode}
+          pharmacyId={paying.row.pharmacyId}
+          pharmacyName={displayName(paying.row.nameEn, paying.row.nameAr)}
+          owedSyp={paying.row.balanceSyp}
+          onClose={() => setPaying(null)}
+          onDone={(amount) => {
+            setPaying(null);
+            setPayMessage(t('quickPay.recorded', { amount: formatSyp(amount) }));
+            reset();
+          }}
+        />
+      )}
 
       {isLoading ? (
         <p className="hint">{t('common.loading')}</p>
@@ -675,9 +695,11 @@ export function WarehouseDebtsPage() {
               <thead>
                 <tr>
                   <th>{t('debts.pharmacy')}</th>
-                  <th>{t('debts.phone')}</th>
-                  <th>{t('debts.lastActivity')}</th>
-                  <th>{t('debts.balance')}</th>
+                  <th>{t('quickPay.purchases')}</th>
+                  <th>{t('quickPay.paid')}</th>
+                  <th>{t('quickPay.left_col')}</th>
+                  <th>{t('quickPay.lastPayment')}</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -687,15 +709,45 @@ export function WarehouseDebtsPage() {
                     className="clickable-row"
                     onClick={() => setSelectedPharmacyId(row.pharmacyId)}
                   >
-                    <td>{row.nameEn}</td>
-                    <td className="wh-num"><span dir="ltr" style={{ unicodeBidi: 'isolate' }}>{row.phone}</span></td>
-                    <td className="wh-num">
-                      {row.lastActivityAt
-                        ? new Date(row.lastActivityAt).toLocaleDateString()
-                        : '—'}
+                    <td>
+                      {displayName(row.nameEn, row.nameAr)}
+                      <div className="wh-table-sub">
+                        <span dir="ltr" style={{ unicodeBidi: 'isolate' }}>{row.phone}</span>
+                      </div>
                     </td>
+                    <td className="wh-num">{formatSyp(row.purchasesSyp)}</td>
+                    <td className="wh-num">{formatSyp(row.paidSyp)}</td>
                     <td className="wh-num">
                       <BalanceAmount balanceSyp={row.balanceSyp} />
+                    </td>
+                    <td className="wh-num">
+                      {row.lastPaymentAt ? new Date(row.lastPaymentAt).toLocaleDateString() : '—'}
+                    </td>
+                    <td className="wh-num">
+                      {row.balanceSyp > 0 && (
+                        <div className="wh-order-actions">
+                          <button
+                            type="button"
+                            className="wh-row-action"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setPaying({ mode: 'full', row });
+                            }}
+                          >
+                            {t('quickPay.fullButton')}
+                          </button>
+                          <button
+                            type="button"
+                            className="wh-row-action wh-row-action-secondary"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setPaying({ mode: 'partial', row });
+                            }}
+                          >
+                            {t('quickPay.partialButton')}
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
