@@ -331,6 +331,7 @@ class MyApp extends StatelessWidget {
             create: (context) => WarehouseSelectionCubit(
               warehouseRepository: warehouseRepository,
               sessionScope: sessionScope,
+              offlineCatalogs: catalogRepository,
             ),
           ),
           BlocProvider(
