@@ -2711,4 +2711,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String warehouseCollectNote(int number) {
     return 'Paid on delivery of order #$number';
   }
+
+  @override
+  String warehouseAccountPurchases(String amount) {
+    return 'Bought $amount';
+  }
+
+  @override
+  String warehouseAccountPaid(String amount) {
+    return 'Paid $amount';
+  }
+
+  @override
+  String warehouseAccountLastPayment(String date) {
+    return 'Last payment $date';
+  }
+
+  @override
+  String get warehouseAccountNoPayment => 'No payments yet';
+
+  @override
+  String get warehouseAccountPayFull => 'Pay in full';
+
+  @override
+  String get warehouseAccountPayPartial => 'Part payment';
+
+  @override
+  String warehouseAccountPayFullConfirm(String amount) {
+    return 'Record a cash payment of $amount?';
+  }
+
+  @override
+  String warehouseAccountPayOwes(String amount) {
+    return 'Owes: $amount';
+  }
+
+  @override
+  String get warehouseAccountPaySave => 'Record payment';
+
+  @override
+  String get warehouseAccountPayInvalid =>
+      'Enter an amount above zero and below the amount owed.';
+
+  @override
+  String warehouseAccountPayRecorded(String amount) {
+    return 'Recorded a payment of $amount';
+  }
+
+  @override
+  String get warehouseAccountPayFailed =>
+      'The payment wasn\'t saved. Try again.';
 }

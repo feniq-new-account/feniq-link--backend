@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const LedgerAccount = require('../models/ledgerAccount.model');
+const LedgerEntry = require('../models/ledgerEntry.model');
 const Pharmacy = require('../models/pharmacy.model');
 const Warehouse = require('../models/warehouse.model');
 const ledger = require('./ledger.service');
@@ -332,6 +333,47 @@ async function listAccountsForWarehouse(
     .lean();
   const pharmacyById = new Map(pharmacies.map((p) => [String(p._id), p]));
 
+  // What each pharmacy bought and paid, from the ledger: delivered charges
+  // (less reversed ones) and payments (less reversed ones), plus the date of
+  // the latest payment.
+  const totals = await LedgerEntry.aggregate([
+    {
+      $match: {
+        accountId: { $in: page.map((a) => a._id) },
+        kind: { $in: ['charge', 'charge_reversal', 'payment', 'payment_reversal'] },
+      },
+    },
+    {
+      $group: {
+        _id: '$accountId',
+        purchasesSyp: {
+          $sum: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$kind', 'charge'] }, then: '$amountSyp' },
+                { case: { $eq: ['$kind', 'charge_reversal'] }, then: { $multiply: ['$amountSyp', -1] } },
+              ],
+              default: 0,
+            },
+          },
+        },
+        paidSyp: {
+          $sum: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$kind', 'payment'] }, then: '$amountSyp' },
+                { case: { $eq: ['$kind', 'payment_reversal'] }, then: { $multiply: ['$amountSyp', -1] } },
+              ],
+              default: 0,
+            },
+          },
+        },
+        lastPaymentAt: { $max: { $cond: [{ $eq: ['$kind', 'payment'] }, '$effectiveAt', null] } },
+      },
+    },
+  ]);
+  const totalsByAccount = new Map(totals.map((t) => [String(t._id), t]));
+
   const rows = page
     .map((account) => ({
       accountId: account._id,
@@ -340,6 +382,9 @@ async function listAccountsForWarehouse(
       balanceSyp: account.balanceCache.syp,
       balanceUsd: round2(account.balanceCache.usd),
       lastActivityAt: account.lastActivityAt,
+      purchasesSyp: totalsByAccount.get(String(account._id))?.purchasesSyp ?? 0,
+      paidSyp: totalsByAccount.get(String(account._id))?.paidSyp ?? 0,
+      lastPaymentAt: totalsByAccount.get(String(account._id))?.lastPaymentAt ?? null,
     }))
     .filter((row) => row.pharmacy !== null);
 

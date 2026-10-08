@@ -2705,4 +2705,53 @@ class AppLocalizationsAr extends AppLocalizations {
   String warehouseCollectNote(int number) {
     return 'دفعة عند تسليم الطلبية رقم $number';
   }
+
+  @override
+  String warehouseAccountPurchases(String amount) {
+    return 'اشترت $amount';
+  }
+
+  @override
+  String warehouseAccountPaid(String amount) {
+    return 'دفعت $amount';
+  }
+
+  @override
+  String warehouseAccountLastPayment(String date) {
+    return 'آخر دفعة $date';
+  }
+
+  @override
+  String get warehouseAccountNoPayment => 'ما دفعت لسا';
+
+  @override
+  String get warehouseAccountPayFull => 'دفع كامل';
+
+  @override
+  String get warehouseAccountPayPartial => 'دفعة جزئية';
+
+  @override
+  String warehouseAccountPayFullConfirm(String amount) {
+    return 'تسجّل دفعة نقدية $amount؟';
+  }
+
+  @override
+  String warehouseAccountPayOwes(String amount) {
+    return 'عليها: $amount';
+  }
+
+  @override
+  String get warehouseAccountPaySave => 'سجّل الدفعة';
+
+  @override
+  String get warehouseAccountPayInvalid =>
+      'اكتب مبلغ أكبر من صفر وأصغر من المبلغ المطلوب.';
+
+  @override
+  String warehouseAccountPayRecorded(String amount) {
+    return 'انسجّلت دفعة $amount';
+  }
+
+  @override
+  String get warehouseAccountPayFailed => 'الدفعة ما انحفظت. جرّب مرة تانية.';
 }

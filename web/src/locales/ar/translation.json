@@ -391,6 +391,23 @@
     "statusPending": "قيد المراجعة",
     "linkedProduct": "المنتج المرتبط"
   },
+  "quickPay": {
+    "fullTitle": "دفع كامل",
+    "partialTitle": "دفعة جزئية",
+    "fullConfirm": "تسجيل دفعة نقدية {{amount}}؟",
+    "owes": "عليها: {{amount}}",
+    "paidLabel": "دفعت هلق (ل.س)",
+    "left": "بيضل: {{amount}}",
+    "save": "سجّل الدفعة",
+    "partialInvalid": "اكتب مبلغ أكبر من صفر وأصغر من المبلغ المطلوب.",
+    "recorded": "تم تسجيل دفعة {{amount}}",
+    "fullButton": "دفع كامل",
+    "partialButton": "دفعة جزئية",
+    "purchases": "المشتريات",
+    "paid": "المدفوع",
+    "left_col": "الباقي",
+    "lastPayment": "آخر دفعة"
+  },
   "debts": {
     "searchPlaceholder": "ابحث باسم الصيدلية...",
     "noMatchingDebts": "لا توجد صيدليات مطابقة لهذا البحث.",

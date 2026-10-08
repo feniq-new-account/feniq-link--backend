@@ -96,6 +96,28 @@ class WarehouseAccountsCubit extends Cubit<WarehouseAccountsState> {
     }
   }
 
+  /// Records a cash payment from a pharmacy straight from the list, then
+  /// reloads it. True when the server took it. [idempotencyKey] stays the
+  /// same for one payment, so a resend never credits the pharmacy twice.
+  Future<bool> recordPayment({
+    required String pharmacyId,
+    required double amountSyp,
+    required String idempotencyKey,
+  }) async {
+    try {
+      await _repository.recordPayment(
+        pharmacyId: pharmacyId,
+        amountSyp: amountSyp,
+        method: 'cash',
+        idempotencyKey: idempotencyKey,
+      );
+    } on Failure {
+      return false;
+    }
+    if (!isClosed) await load();
+    return true;
+  }
+
   WarehouseAccountsState _copy({required bool isLoadingMore}) => WarehouseAccountsState(
     status: state.status,
     search: state.search,
