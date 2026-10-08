@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // يبذر قاعدة بيانات محلية فاضية بـ«مستودع تجريبي» لتصوير الملف العام:
-// مستودع واحد بأصناف وصور وعروض وبونص وباقة وكود حسم، ست صيدليات وهمية، مندوبان
+// مستودع واحد بأصناف وصور وعروض وبونص وسلة وكود حسم، ست صيدليات وهمية، مندوبان
 // بصيدلياتهم وزياراتهم، وطلبيات بكل الحالات.
 //
 // يستعمل نفس خدمات السيرفر الحقيقية (طلبات، مندوبين، زيارات) ونفس بيانات
@@ -69,7 +69,7 @@ const PHARMACIES = [
 // أصناف لا نعرضها بمادة تسويقية: مخدّرة أو نفسية أو أدوية صرع. تُحذف من المستودع التجريبي قبل أي طلبية.
 const HIDDEN_INGREDIENTS = /TRAMADOL|BROMAZEPAM|DIAZEPAM|PREGABALIN|VALPROIC/i;
 
-// العروض والباقة والبانر: أصناف عادية (اسم المادة الفعالة → نسبة الحسم).
+// العروض والسلة والبانر: أصناف عادية (اسم المادة الفعالة → نسبة الحسم).
 const OFFER_INGREDIENTS = [
   ['ASCORBIC ACID', 15], ['PARACETAMOL', 10], ['OMEPRAZOLE', 12], ['METFORMIN', 8],
   ['LORATADINE', 20], ['FOLIC ACID', 10], ['AMBROXOL', 15], ['LANSOPRAZOLE', 12],
@@ -87,7 +87,7 @@ async function hideSensitiveProducts() {
   return deletedCount;
 }
 
-// نفس العروض والباقة والبانر اللي يبذرها السيرفر، لكن على أصناف عادية نختارها.
+// نفس العروض والسلة والبانر اللي يبذرها السيرفر، لكن على أصناف عادية نختارها.
 async function curatePromotions(warehouseId, warehouseUserId) {
   await Offer.deleteMany({ warehouseId });
   await Banner.deleteMany({ warehouseId });
@@ -139,7 +139,7 @@ async function curatePromotions(warehouseId, warehouseUserId) {
   if (picks.length === PACKAGE_INGREDIENTS.length) {
     const listPrice = picks.reduce((sum, { product }) => sum + product.price * 5, 0);
     const ad = await warehouseAdService.createAdvertisement(warehouseId, {
-      titleAr: 'باقة الأمراض المزمنة',
+      titleAr: 'سلة الأمراض المزمنة',
       titleEn: 'Chronic care package',
       items: picks.map(({ product }) => ({ productId: product._id.toString(), quantity: 5 })),
       totalPriceUsd: Math.round(listPrice * 0.85 * 100) / 100,
@@ -185,6 +185,7 @@ async function main() {
   demo.DEMO_ORDERS.splice(0, demo.DEMO_ORDERS.length,
     [0, 'pending', [['Paracetamol 500mg', 20], ['Omeprazole 20mg', 10]]],
     [0, 'pending', [['Amoxicillin 500mg', 15], ['Vitamin C 1000mg', 12]]],
+    [0, 'confirmed', [['Paracetamol 500mg', 15], ['Vitamin C 1000mg', 10]]],
     [0, 'out_for_delivery', [['Vitamin D 50000 IU', 10], ['Metformin 850mg', 25]]],
     [0, 'out_for_delivery', [['Ibuprofen 400mg', 30], ['Azithromycin 250mg', 8]]],
     [0, 'delivered', [['Amlodipine 5mg', 20], ['Atorvastatin 20mg', 10], ['Sunscreen SPF 50', 5]]]

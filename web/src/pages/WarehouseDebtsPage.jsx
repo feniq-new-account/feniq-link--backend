@@ -664,7 +664,7 @@ export function WarehouseDebtsPage() {
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
-        <button type="button" className="btn-secondary" onClick={() => setVoiceOpen(true)}>
+        <button type="button" className="btn-secondary wh-voice-btn" onClick={() => setVoiceOpen(true)}>
           {t('voicePay.title')}
         </button>
       </div>

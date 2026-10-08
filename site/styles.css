@@ -448,3 +448,24 @@ h2 { font-weight: 800; font-size: clamp(1.7rem, 1.2rem + 2vw, 2.6rem); letter-sp
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+
+/* ── فيديو التعريف: يظهر فقط لما يكون الملف موجوداً (app.js) ───────── */
+.vid { padding: clamp(56px, 8vw, 100px) 0; background: var(--ground); }
+.vid[hidden] { display: none; }
+.vid h2 { color: #fff; }
+.vid .sec-lede { color: var(--on-dark-soft); }
+.vid__frame { margin-top: 32px; max-width: 960px; border-radius: 6px; overflow: hidden; background: #000; box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); }
+.vid__frame video { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 656; background: #000; }
+
+/* ── لقطات لوحة المستودع ──────────────────────────────── */
+.screens { padding: clamp(64px, 9vw, 120px) 0; background: var(--paper); color: var(--ink); border-top: 1px solid #E3E7EC; }
+.shots { margin-top: 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 3vw, 40px); }
+.shots figure { margin: 0; }
+.shots img { width: 100%; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px #DCE1E7, 0 20px 40px -24px rgba(14,26,44,.45); }
+.shots .wide { grid-column: 1 / -1; }
+.shots figcaption { margin-top: 14px; font-size: 1rem; color: var(--ink-soft); max-width: 52ch; }
+.shots figcaption b { color: var(--ink); }
+@media (max-width: 720px) { .shots { grid-template-columns: 1fr; } }
+
+.deck-link { margin-top: 28px; }

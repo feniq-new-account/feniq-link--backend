@@ -4909,3 +4909,11 @@ input[type='month'] {
   gap: 8px;
   padding: 6px 0;
 }
+
+/* the voice-payment button sits beside the search box, not across the page */
+.wh-filters .wh-voice-btn {
+  width: auto;
+  margin-top: 0;
+  min-height: 40px;
+  padding: 0 16px;
+}

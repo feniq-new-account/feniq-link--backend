@@ -27,6 +27,7 @@
     </a>
     <nav class="bar__nav" aria-label="أقسام الصفحة">
       <a href="#sides">للصيدليات والمستودعات</a>
+      <a href="#screens">لوحة المستودع</a>
       <a href="#start">كيف نبدأ</a>
       <a href="#contact">تواصل</a>
     </nav>
@@ -78,13 +79,23 @@
         <button type="button" class="btn btn--pull btn--block" id="send" disabled>أرسل الطلبية للمستودع</button>
         <ol class="track" id="track" hidden aria-live="polite">
           <li data-s="0">وصلت للمستودع</li>
-          <li data-s="1">قيد التجهيز</li>
+          <li data-s="1">قبلها المستودع</li>
           <li data-s="2">بالطريق</li>
           <li data-s="3">تم التسليم</li>
         </ol>
       </div>
     </div>
     <p class="demo-note" id="demo-note">تجربة فقط: أسماء الأصناف من سجل وزارة الصحة السورية، ولا شيء يُرسل فعلاً.</p>
+  </div>
+</section>
+
+<section class="vid" id="video" aria-labelledby="vid-h" hidden>
+  <div class="wrap">
+    <h2 id="vid-h">فينيق بدقيقة.</h2>
+    <p class="sec-lede">شاهد كيف تصل الطلبية من الصيدلية إلى مستودعك، وكيف تتابع حسابك.</p>
+    <div class="vid__frame">
+      <video id="vid-el" controls playsinline preload="none"></video>
+    </div>
   </div>
 </section>
 
@@ -137,19 +148,19 @@
         <details class="d"><summary><span class="side-tag">الصيدلية</span>بحث سريع بالأصناف</summary>
           <p>كل أصناف المستودع مع السعر والتوفر، تصل إليها بكتابة أول حروف الاسم.</p></details>
         <details class="d"><summary><span class="side-tag">المستودع</span>طلبات مبوّبة حسب الحالة</summary>
-          <p>كل طلبية تصل مصنّفة حسب مرحلتها: جديدة، مؤكدة، قيد التجهيز، بالطريق، مُسلَّمة. لا شيء يضيع بين الرسائل.</p></details>
+          <p>كل طلبية تصل مصنّفة حسب مرحلتها: جديدة، مقبولة، بالطريق، تم التسليم. تقبلها بكبسة، وتنقلها للمرحلة التالية بكبسة. لا شيء يضيع بين الرسائل.</p></details>
       </div>
       <div class="pair">
         <details class="d"><summary><span class="side-tag">الصيدلية</span>طلب مباشر وتتبّع</summary>
           <p>ترسل الطلبية بنقرة وتتابع حالتها خطوة بخطوة حتى تصل.</p></details>
         <details class="d"><summary><span class="side-tag">المستودع</span>الأصناف والأسعار بيدك</summary>
-          <p>تحدّث الأسعار والكميات والتوفر متى شئت، أو ترفع الكتالوج كاملاً من ملف إكسل.</p></details>
+          <p>تحدّث الأسعار والكميات والتوفر متى شئت، أو ترفع الكتالوج كاملاً من ملف إكسل، مع تاريخ الإنتاج وتاريخ الانتهاء لكل صنف.</p></details>
       </div>
       <div class="pair">
         <details class="d"><summary><span class="side-tag">الصيدلية</span>أرشيف وإعادة طلب</summary>
           <p>كل طلبياتك السابقة محفوظة، وتعيد طلب أي منها بسهولة.</p></details>
         <details class="d"><summary><span class="side-tag">المستودع</span>حسابات الصيدليات</summary>
-          <p>ترى رصيد كل صيدلية وما دفعته وما بقي عليها، مع فاتورة رقمية لكل طلبية.</p></details>
+          <p>لكل صيدلية سطر: مشترياتها، ما دفعته، ما بقي عليها، وآخر دفعة. دفع كامل بكبسة، أو دفعة جزئية، أو سجّلها بصوتك.</p></details>
       </div>
       <div class="pair">
         <details class="d"><summary><span class="side-tag">الصيدلية</span>مرتجعات منظّمة</summary>
@@ -174,6 +185,31 @@
     <div class="rep__body">
       <p>المندوب يكمل عمله في الميدان ويبني العلاقة مع الصيادلة. التطبيق يأخذ عنه الطلبيات الروتينية المتكررة، فيتفرغ لما لا يقدر عليه غيره.</p>
       <p>والمستودع يصل إلى صيدليات المنطقة كلها، أوسع وأسرع مما تسمح به الجولات وحدها.</p>
+    </div>
+  </div>
+</section>
+
+<section class="screens" id="screens" aria-labelledby="screens-h">
+  <div class="wrap">
+    <h2 id="screens-h">لوحة المستودع: ما تراه كل يوم.</h2>
+    <p class="sec-lede">لقطات من لوحة التحكم ببيانات تجريبية: «مستودع تجريبي» والصيدليات والأسعار توضيحية.</p>
+    <div class="shots">
+      <figure class="wide">
+        <img src="img/screen-orders.webp" width="1280" height="720" alt="لوحة الطلبات بحالاتها: جديدة ومقبولة وبالطريق وتم التسليم" loading="lazy">
+        <figcaption><b>طلبياتك مرتّبة.</b> جديدة، مقبولة، بالطريق، تم التسليم. زر واحد ينقل الطلبية للمرحلة التالية.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/screen-collect.webp" width="1000" height="562" alt="سؤال قبضت؟ مع ثلاثة أزرار: كامل، جزء، بعدين" loading="lazy">
+        <figcaption><b>«قبضت؟»</b> عند التسليم: كامل، جزء، أو بعدين. والدفعة تنسجّل لحالها على حساب الصيدلية.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/screen-voice.webp" width="1000" height="562" alt="تسجيل دفعة بالصوت مع بطاقة تأكيد قبل الحفظ" loading="lazy">
+        <figcaption><b>سجّل بصوتك.</b> قل «صيدلية الياسمين دفعت ثلاثة آلاف»، فتظهر بطاقة تأكيد قبل أي حفظ. أو اكتب الجملة.</figcaption>
+      </figure>
+      <figure class="wide">
+        <img src="img/screen-accounts.webp" width="1280" height="721" alt="جدول حسابات الصيدليات: المشتريات والمدفوع والباقي وآخر دفعة" loading="lazy">
+        <figcaption><b>حسابات واضحة.</b> لكل صيدلية: مشترياتها، ما دفعته، الباقي، وآخر دفعة. دفع كامل بكبسة أو دفعة جزئية.</figcaption>
+      </figure>
     </div>
   </div>
 </section>
@@ -220,6 +256,7 @@
   <div class="wrap contact__in">
     <h2 id="contact-h">نزوركم في المستودع.</h2>
     <p class="sec-lede">نشرح فينيق عملياً في زيارة قصيرة ونتفق معكم على طريقة التعاون المناسبة. نعمل حالياً في اللاذقية.</p>
+    <p class="deck-link"><a class="btn btn--plate" href="feniq-warehouses.pdf" download>حمّل عرض المستودعات (PDF)</a></p>
     <div class="phones">
       <div class="phone">
         <a class="phone__num" href="tel:+963982001415" dir="ltr">0982-001415</a>

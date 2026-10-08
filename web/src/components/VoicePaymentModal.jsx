@@ -121,18 +121,20 @@ export function VoicePaymentModal({ onClose, onDone }) {
           </button>
         )}
 
-        <label>
-          {t('voicePay.heard')}
-          <input
-            type="text"
-            value={text}
-            placeholder={t('voicePay.placeholder')}
-            onChange={(e) => {
-              setText(e.target.value);
-              setChosenId(null);
-            }}
-          />
-        </label>
+        <div className="product-form">
+          <label>
+            {t('voicePay.heard')}
+            <input
+              type="text"
+              value={text}
+              placeholder={t('voicePay.placeholder')}
+              onChange={(e) => {
+                setText(e.target.value);
+                setChosenId(null);
+              }}
+            />
+          </label>
+        </div>
 
         {nothingUnderstood && <p className="error-text">{t('voicePay.notUnderstood')}</p>}
 

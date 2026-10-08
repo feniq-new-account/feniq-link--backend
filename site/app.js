@@ -212,4 +212,17 @@
       $("apk-label").textContent = "اطلب رابط التطبيق على واتساب";
       meta.textContent = "رابط التنزيل المباشر يُضاف قريباً.";
     });
+
+  // ── فيديو التعريف ───────────────────────────────────────
+  // القسم مخفي حتى يوجد الملف: ضع الفيديو في site/video/feniq.mp4 (H.264 + AAC، أقل من ~10 ميغا) وبيظهر لحاله.
+  const videoSection = $("video");
+  if (videoSection) {
+    fetch("video/feniq.mp4", { method: "HEAD", cache: "no-store" })
+      .then((r) => {
+        if (!r.ok || !/video/.test(r.headers.get("content-type") || "")) return;
+        $("vid-el").src = "video/feniq.mp4";
+        videoSection.hidden = false;
+      })
+      .catch(() => {});
+  }
 })();
