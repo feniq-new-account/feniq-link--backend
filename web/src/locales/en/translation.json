@@ -126,6 +126,20 @@
     "rateStars_other": "Rate {{count}} stars",
     "orderNumber": "Order #{{number}}"
   },
+  "collect": {
+    "title": "Deliver order #{{number}} - did you collect?",
+    "total": "Amount: {{amount}}",
+    "full": "All",
+    "partial": "Part",
+    "later": "Later",
+    "paidLabel": "Paid now (SYP)",
+    "left": "Left: {{amount}}",
+    "save": "Deliver and save",
+    "partialInvalid": "Enter an amount above zero and below the full amount.",
+    "recorded": "Delivered, and {{amount}} recorded as paid",
+    "failed": "Delivered, but the payment was not saved - record it from the accounts.",
+    "note": "Payment on delivery of order #{{number}}"
+  },
   "orderDetail": {
     "backToOrders": "Back to orders",
     "returnRequestExists": "Return request exists",

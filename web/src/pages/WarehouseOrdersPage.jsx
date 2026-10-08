@@ -7,6 +7,8 @@ import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
 import { formatSyp } from '../utils/currency';
+import { CollectPaymentModal } from '../components/CollectPaymentModal';
+import { recordCollectedPayment } from '../utils/collectPayment';
 import { isEditable, mergeAdvancedOrders, nextStatusOf, rememberAdvanced, syncAdvancedWithRows } from './warehouseOrdersList';
 
 const PAGE_SIZE = 20;
@@ -25,6 +27,9 @@ export function WarehouseOrdersPage() {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState('pending');
   const [actionError, setActionError] = useState(null);
+  // The order whose "delivered" is asking "قبضت؟", and the result message.
+  const [collecting, setCollecting] = useState(null);
+  const [collectMessage, setCollectMessage] = useState(null);
   // Orders that arrived over the socket since the operator last acknowledged
   // them - the list itself is always refreshed, this is just the "look here"
   // cue so an arrival isn't missed while working another tab.
@@ -102,7 +107,7 @@ export function WarehouseOrdersPage() {
   const pendingByOrder = useRef(new Map());
   const handleAdvance = (order, currentStatus) => {
     const next = nextStatusOf(currentStatus);
-    if (!next) return;
+    if (!next) return Promise.resolve(false);
     setActionError(null);
     setAdvanced((current) => rememberAdvanced(current, order, next));
     const previous = pendingByOrder.current.get(order.id) ?? Promise.resolve();
@@ -114,7 +119,28 @@ export function WarehouseOrdersPage() {
         reset();
         throw err;
       });
-    pendingByOrder.current.set(order.id, request.catch(() => {}));
+    const settled = request.then(
+      () => true,
+      () => false
+    );
+    pendingByOrder.current.set(order.id, settled.then(() => {}));
+    return settled;
+  };
+
+  // "Delivered" asks "قبضت؟" first: all, part, or later. Closing the sheet
+  // leaves the order on its way.
+  const handleCollectChoice = async (collected) => {
+    const order = collecting;
+    setCollecting(null);
+    setCollectMessage(null);
+    const advanced = await handleAdvance(order, order.status);
+    if (!advanced || collected <= 0) return;
+    const saved = await recordCollectedPayment(api, {
+      pharmacyId: order.pharmacy?.id,
+      amountSyp: collected,
+      note: t('collect.note', { number: order.orderNumber }),
+    });
+    setCollectMessage(saved ? t('collect.recorded', { amount: formatSyp(collected) }) : t('collect.failed'));
   };
 
   const openOrder = (order) => navigate(`/warehouse/orders/${order.id}`);
@@ -129,7 +155,8 @@ export function WarehouseOrdersPage() {
           className={`wh-row-action wh-advance-to-${nextStatusOf(order.status)}`}
           onClick={(event) => {
             event.stopPropagation();
-            handleAdvance(order, order.status);
+            if (order.status === 'out_for_delivery') setCollecting(order);
+            else handleAdvance(order, order.status);
           }}
         >
           {t(ADVANCE_KEYS[order.status])}
@@ -189,6 +216,15 @@ export function WarehouseOrdersPage() {
       )}
 
       {(error || actionError) && <p className="error-text">{error || actionError}</p>}
+      {collectMessage && <p className="hint">{collectMessage}</p>}
+      {collecting && (
+        <CollectPaymentModal
+          orderNumber={collecting.orderNumber}
+          totalSyp={collecting.finalPrice}
+          onChoose={handleCollectChoice}
+          onClose={() => setCollecting(null)}
+        />
+      )}
 
       {isLoading ? (
         <p className="hint">{t('common.loading')}</p>

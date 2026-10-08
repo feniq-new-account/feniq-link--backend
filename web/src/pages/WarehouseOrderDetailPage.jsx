@@ -10,6 +10,8 @@ import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { formatUsdAsSyp, formatSyp, formatMoneyFromUsd, remainingPaymentAmountFromSyp } from '../utils/currency';
 import { PAYMENT_METHODS, PAYMENT_CURRENCIES as CURRENCIES, createIdempotencyKeys } from '../utils/payments';
 import { mayAdvance } from './orderStatusFlow';
+import { CollectPaymentModal } from '../components/CollectPaymentModal';
+import { recordCollectedPayment } from '../utils/collectPayment';
 import { isEditable } from './warehouseOrdersList';
 import { realtimeBatchMatchesOrder } from './warehouseOrderDetailRealtime';
 import { FEATURES } from '../config/features';
@@ -571,6 +573,7 @@ export function WarehouseOrderDetailPage() {
   const [returnBusy, setReturnBusy] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showCollect, setShowCollect] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState(null);
   // Replaces the dialog that used to acknowledge every status change: the
   // operator gets told what happened without having to dismiss anything.
@@ -651,6 +654,21 @@ export function WarehouseOrderDetailPage() {
     }
   );
 
+  // "Delivered" asks "قبضت؟" first; closing the sheet leaves the order on its way.
+  const handleCollectChoice = async (collected) => {
+    setShowCollect(false);
+    const advanced = await handleAdvance();
+    if (!advanced || collected <= 0) return;
+    const saved = await recordCollectedPayment(api, {
+      pharmacyId: order.pharmacy?.id,
+      amountSyp: collected,
+      note: t('collect.note', { number: order.orderNumber }),
+    });
+    setStatusMessage(
+      saved ? t('collect.recorded', { amount: formatSyp(collected) }) : t('collect.failed')
+    );
+  };
+
   const handleAdvance = async () => {
     // Only leaving 'preparing' still asks - see orderStatusFlow.js. Every
     // other step applies on click and reports itself below the button.
@@ -658,7 +676,7 @@ export function WarehouseOrderDetailPage() {
       confirm: () =>
         window.confirm(t('orderDetail.confirmAdvance', { action: t(ADVANCE_KEYS[order.status]) })),
     });
-    if (!proceed) return;
+    if (!proceed) return false;
 
     setIsAdvancing(true);
     setError(null);
@@ -674,8 +692,10 @@ export function WarehouseOrderDetailPage() {
       // next status: the backend owns the progression, and a realtime event
       // or a second operator could have moved it further in between.
       if (updated) setStatusMessage(t('orderDetail.statusAdvanced', { status: statusLabel(updated.status) }));
+      return true;
     } catch (err) {
       setError(err.message);
+      return false;
     } finally {
       setIsAdvancing(false);
     }
@@ -1064,7 +1084,11 @@ export function WarehouseOrderDetailPage() {
 
             <div className="wh-detail-actions" style={{ marginTop: 'auto' }}>
               {ADVANCE_KEYS[order.status] && (
-                <button className="btn-primary" disabled={isAdvancing} onClick={handleAdvance}>
+                <button
+                  className="btn-primary"
+                  disabled={isAdvancing}
+                  onClick={order.status === 'out_for_delivery' ? () => setShowCollect(true) : handleAdvance}
+                >
                   {isAdvancing ? t('orders.updating') : t(ADVANCE_KEYS[order.status])}
                 </button>
               )}
@@ -1091,6 +1115,14 @@ export function WarehouseOrderDetailPage() {
         </div>
       )}
 
+      {showCollect && order && (
+        <CollectPaymentModal
+          orderNumber={order.orderNumber}
+          totalSyp={order.finalPrice}
+          onChoose={handleCollectChoice}
+          onClose={() => setShowCollect(false)}
+        />
+      )}
       {showPaymentModal && order && (
         <RecordPaymentModal
           pharmacyId={order.pharmacy.id}
