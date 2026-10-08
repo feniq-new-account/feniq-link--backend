@@ -603,7 +603,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get advertisementsSectionTitle => 'سلة خاصة';
+  String get advertisementsSectionTitle => 'سلات خاصة';
 
   @override
   String get advertisementPackageTotal => 'سعر السلة';
@@ -692,13 +692,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'حذف منتج يُنهي سعر السلة. المنتجات المتبقية صار سعرها عادي.';
 
   @override
-  String get advertisementsLoading => 'جارٍ تحميل السلة...';
+  String get advertisementsLoading => 'جارٍ تحميل السلات...';
 
   @override
-  String get advertisementsEmpty => 'لا توجد سلة متاحة حالياً.';
+  String get advertisementsEmpty => 'لا توجد سلات متاحة حالياً.';
 
   @override
-  String get advertisementsError => 'تعذّر تحميل السلة.';
+  String get advertisementsError => 'تعذّر تحميل السلات.';
 
   @override
   String get notificationsTitle => 'الإشعارات';
@@ -1693,7 +1693,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get promotionsAllTitle => 'كل العروض الاستثنائية والسلة';
+  String get promotionsAllTitle => 'كل العروض الاستثنائية والسلات';
 
   @override
   String get promotionsFilterAllTypes => 'الكل';
@@ -1702,7 +1702,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get promotionsFilterOffers => 'عروض استثنائية';
 
   @override
-  String get promotionsFilterPackages => 'السلة';
+  String get promotionsFilterPackages => 'السلات';
 
   @override
   String get promotionsAllWarehouses => 'كل المستودعات';
@@ -1718,7 +1718,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get promotionsEmptyMessage =>
-      'ستظهر هنا العروض والسلة من المستودعات.';
+      'ستظهر هنا العروض والسلات من المستودعات.';
 
   @override
   String get promotionsNoFilterResults => 'لا يوجد شيء يطابق هذه التصفية.';
