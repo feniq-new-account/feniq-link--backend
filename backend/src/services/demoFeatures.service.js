@@ -276,7 +276,7 @@ async function addPackages({ warehouses, admin }) {
     const listPrice = products.reduce((sum, p) => sum + p.price * 5, 0);
     const now = Date.now();
     const ad = await warehouseAdvertisementService.createAdvertisement(warehouseId, {
-      titleAr: ['باقة الشتاء', 'باقة الأمراض المزمنة', 'باقة الصيدلية الجديدة'][w % 3],
+      titleAr: ['سلة الشتاء', 'سلة الأمراض المزمنة', 'سلة الصيدلية الجديدة'][w % 3],
       titleEn: ['Winter package', 'Chronic care package', 'New pharmacy package'][w % 3],
       items: chosen.map((c) => ({ productId: c.productId.toString(), quantity: 5 })),
       totalPriceUsd: Math.round(listPrice * 0.85 * 100) / 100,

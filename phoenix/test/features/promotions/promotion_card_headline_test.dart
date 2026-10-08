@@ -54,7 +54,7 @@ void main() {
   testWidgets('a package keeps its title and has no offer badge', (tester) async {
     final promotion = PackagePromotion(advertisement());
     await pump(tester, PromotionListCard(promotion: promotion, onTap: () {}));
-    expect(find.text('باقة a1'), findsOneWidget);
+    expect(find.text('سلة a1'), findsOneWidget);
     expect(find.byType(OfferBadge), findsNothing);
   });
 }

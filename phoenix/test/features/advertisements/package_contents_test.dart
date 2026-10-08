@@ -32,7 +32,7 @@ void main() {
               child: TextButton(
                 onPressed: () => showPackageContentsSheet(
                   context,
-                  title: 'باقة الشتاء',
+                  title: 'سلة الشتاء',
                   entries: [PackageContentEntry.fromItem(item)],
                   onAdd: onAdd,
                 ),
@@ -49,23 +49,23 @@ void main() {
 
   testWidgets('every medicine in full, with its quantity', (tester) async {
     await pumpSheet(tester);
-    expect(find.text('محتوى الباقة'), findsOneWidget);
+    expect(find.text('محتوى السلة'), findsOneWidget);
     expect(find.text('PREGABALIN BAHRI-75 CAP. (14 CAP)'), findsOneWidget);
     expect(find.text('Bahri'), findsOneWidget);
     expect(find.text('\u206675 MG\u2069  •  محافظ'), findsOneWidget);
     expect(find.text('× 3'), findsOneWidget);
-    expect(find.textContaining('الباقة ثابتة'), findsOneWidget);
+    expect(find.textContaining('السلة ثابتة'), findsOneWidget);
     // Read-only without an add action (a package already in the cart).
-    expect(find.text('إضافة الباقة إلى السلة'), findsNothing);
+    expect(find.text('إضافة إلى السلة'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('the add action closes the sheet and adds the package', (tester) async {
     var added = 0;
     await pumpSheet(tester, onAdd: () => added++);
-    await tester.tap(find.text('إضافة الباقة إلى السلة'));
+    await tester.tap(find.text('إضافة إلى السلة'));
     await tester.pumpAndSettle();
     expect(added, 1);
-    expect(find.text('محتوى الباقة'), findsNothing);
+    expect(find.text('محتوى السلة'), findsNothing);
   });
 }

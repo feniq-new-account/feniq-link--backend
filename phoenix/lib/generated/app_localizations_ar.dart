@@ -603,10 +603,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get advertisementsSectionTitle => 'باقات خاصة';
+  String get advertisementsSectionTitle => 'سلال خاصة';
 
   @override
-  String get advertisementPackageTotal => 'سعر الباقة';
+  String get advertisementPackageTotal => 'سعر السلة';
 
   @override
   String advertisementSavingPercent(int percent) {
@@ -632,40 +632,40 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get packageBadge => 'باقة';
+  String get packageBadge => 'سلة';
 
   @override
-  String get packageCopiesLabel => 'نسخة من الباقة';
+  String get packageCopiesLabel => 'نسخة من السلة';
 
   @override
-  String get advertisementDiscountLabel => 'حسم الباقة';
+  String get advertisementDiscountLabel => 'حسم السلة';
 
   @override
   String get advertisementTotalToPay => 'المبلغ المطلوب';
 
   @override
-  String get advertisementAddToCartButton => 'أضف الباقة للسلة';
+  String get advertisementAddToCartButton => 'أضف للسلة';
 
   @override
   String get advertisementReplaceCartTitle => 'استبدال السلة؟';
 
   @override
   String get advertisementReplaceCartMessage =>
-      'سيتم استبدال سلتك الحالية بهذه الباقة. يمكنك تعديل كل شيء قبل إتمام الطلب.';
+      'سيتم استبدال محتوى سلتك الحالية بمحتوى هذه السلة الجاهزة. يمكنك تعديل كل شيء قبل إتمام الطلب.';
 
   @override
   String get advertisementReplaceCartConfirm => 'استبدال السلة';
 
   @override
-  String get advertisementUnavailableTitle => 'الباقة غير متاحة';
+  String get advertisementUnavailableTitle => 'السلة غير متاحة';
 
   @override
   String get advertisementUnavailableMessage =>
-      'لم تعد هذه الباقة متاحة. ربما انتهت مدتها أو تم سحبها.';
+      'لم تعد هذه السلة متاحة. ربما انتهت مدتها أو تم سحبها.';
 
   @override
   String get packageUnavailableBanner =>
-      'هذه الباقة لم تعد متاحة، لن تتمكن من إتمام الطلب بها.';
+      'هذه السلة لم تعد متاحة، لن تتمكن من إتمام الطلب بها.';
 
   @override
   String packageUnavailableCheckoutMessage(String names) {
@@ -673,7 +673,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get errorPackageUnavailable => 'هذه الباقة لم تعد متاحة.';
+  String get errorPackageUnavailable => 'هذه السلة لم تعد متاحة.';
 
   @override
   String get errorIdempotencyKeyReused =>
@@ -684,21 +684,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String advertisementIncompleteMessage(String names) {
-    return 'بعض منتجات هذه الباقة لم يعد المستودع يبيعها، لذلك لا يمكن إضافتها: $names';
+    return 'بعض منتجات هذه السلة لم يعد المستودع يبيعها، لذلك لا يمكن إضافتها: $names';
   }
 
   @override
   String get advertisementPackageBrokenMessage =>
-      'حذف منتج يُنهي سعر الباقة. المنتجات المتبقية صار سعرها عادي.';
+      'حذف منتج يُنهي سعر السلة. المنتجات المتبقية صار سعرها عادي.';
 
   @override
-  String get advertisementsLoading => 'جارٍ تحميل الباقات...';
+  String get advertisementsLoading => 'جارٍ تحميل السلال...';
 
   @override
-  String get advertisementsEmpty => 'لا توجد باقات متاحة حالياً.';
+  String get advertisementsEmpty => 'لا توجد سلال متاحة حالياً.';
 
   @override
-  String get advertisementsError => 'تعذّر تحميل الباقات.';
+  String get advertisementsError => 'تعذّر تحميل السلال.';
 
   @override
   String get notificationsTitle => 'الإشعارات';
@@ -1693,7 +1693,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get promotionsAllTitle => 'كل العروض الاستثنائية والباقات';
+  String get promotionsAllTitle => 'كل العروض الاستثنائية والسلال';
 
   @override
   String get promotionsFilterAllTypes => 'الكل';
@@ -1702,7 +1702,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get promotionsFilterOffers => 'عروض استثنائية';
 
   @override
-  String get promotionsFilterPackages => 'الباقات';
+  String get promotionsFilterPackages => 'السلال';
 
   @override
   String get promotionsAllWarehouses => 'كل المستودعات';
@@ -1711,14 +1711,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get promotionsWarehouseFilterTitle => 'تصفية حسب المستودع';
 
   @override
-  String get promotionsPackageBadge => 'باقة';
+  String get promotionsPackageBadge => 'سلة';
 
   @override
   String get promotionsEmptyTitle => 'لا توجد عروض استثنائية حالياً';
 
   @override
   String get promotionsEmptyMessage =>
-      'ستظهر هنا العروض والباقات من المستودعات.';
+      'ستظهر هنا العروض والسلال من المستودعات.';
 
   @override
   String get promotionsNoFilterResults => 'لا يوجد شيء يطابق هذه التصفية.';
@@ -1906,17 +1906,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get exceptionalOfferBadge => 'عرض استثنائي';
 
   @override
-  String get packageContentsTitle => 'محتوى الباقة';
+  String get packageContentsTitle => 'محتوى السلة';
 
   @override
   String get packageFixedNote =>
-      'الباقة ثابتة: تُطلب كاملة كما حدّدها المستودع، ويمكنك اختيار عدد النسخ فقط.';
+      'السلة ثابتة: تُطلب كاملة كما حدّدها المستودع، ويمكنك اختيار عدد النسخ فقط.';
 
   @override
-  String get packageShowContents => 'عرض محتوى الباقة';
+  String get packageShowContents => 'عرض محتوى السلة';
 
   @override
-  String get packageAddToCart => 'إضافة الباقة إلى السلة';
+  String get packageAddToCart => 'إضافة إلى السلة';
 
   @override
   String get repNavPharmacies => 'صيدلياتي';
