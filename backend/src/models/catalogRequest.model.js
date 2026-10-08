@@ -36,6 +36,9 @@ const catalogRequestSchema = new Schema(
     unit: { type: String, enum: [...UNIT_CODES, null], default: null },
     priceUsd: { type: Number, required: true, min: 0 },
     bonuses: { type: [bonusTierSchema], default: [] },
+    // From the import row that raised the request; applied to the product on approval.
+    productionDate: { type: Date, default: null },
+    expiryDate: { type: Date, default: null },
     status: {
       type: String,
       enum: ['pending', 'approved', 'merged', 'rejected'],

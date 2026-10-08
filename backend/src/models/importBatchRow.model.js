@@ -9,7 +9,7 @@ const { Schema, model } = require('mongoose');
 //   blocked        - the product exists but is disabled by the admin or its
 //                    catalog item was withdrawn; nothing was changed
 //   review         - needs the warehouse: not matched, duplicate in the file,
-//                    an unparseable bonus, an unknown unit or currency
+//                    an unparseable bonus or date, an unknown unit or currency
 //   resolved       - was in review, and the warehouse has since resolved it
 //   error          - unreadable (no name, no price)
 const IMPORT_ROW_BUCKETS = ['added', 'updated', 'added_disabled', 'blocked', 'review', 'resolved', 'error'];
@@ -19,6 +19,7 @@ const REVIEW_REASONS = [
   'unknown_manufacturer',
   'duplicate_in_file',
   'bad_bonus',
+  'bad_date',
   'unknown_unit',
   'unknown_currency',
   'missing_currency',
@@ -55,6 +56,8 @@ const importBatchRowSchema = new Schema(
       currency: { type: String, default: null },
       unit: { type: String, default: null },
       bonus: { type: String, default: null },
+      productionDate: { type: String, default: null },
+      expiryDate: { type: String, default: null },
     },
     // What could be parsed out of it. Null fields could not be parsed.
     parsed: {
@@ -65,6 +68,9 @@ const importBatchRowSchema = new Schema(
       // True when the bonus cell was present (an empty cell clears the bonus,
       // a missing column leaves it untouched).
       bonusGiven: { type: Boolean, default: false },
+      // Null: the cell was empty or unreadable - the product keeps its date.
+      productionDate: { type: Date, default: null },
+      expiryDate: { type: Date, default: null },
     },
     reasons: { type: [{ type: String, enum: REVIEW_REASONS }], default: [] },
     // For 'blocked': CATALOG_ITEM_WITHDRAWN or PRODUCT_DISABLED_BY_ADMIN.

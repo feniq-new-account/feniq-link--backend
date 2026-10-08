@@ -435,3 +435,131 @@ test('an English manufacturer name shared by two companies resolves to neither',
   const [row] = await rowsOf(report.batchId, 'review');
   assert.deepStrictEqual(row.reasons, ['unknown_manufacturer']);
 });
+
+// ---------------------------------------------------------------------------
+// Production and expiry dates in the warehouse file
+// ---------------------------------------------------------------------------
+
+const HEADERS_WITH_DATES = ['اسم المادة', 'الشركة', 'السعر', 'العملة', 'تاريخ الإنتاج', 'تاريخ الانتهاء'];
+const ymd = (date) => (date ? new Date(date).toISOString().slice(0, 10) : null);
+
+test('production and expiry dates are read in any shape and saved on the products', async () => {
+  const { userId, warehouseId } = await makeWarehouse();
+  const file = await xlsx([
+    HEADERS_WITH_DATES,
+    ['بنادول اكسترا', 'جي اس كي', 1000, 'SYP', '2025-03-01', '15/3/2027'],
+    ['أموكسيسيلين 500', 'ابن سينا', 2000, 'SYP', '', '03/2027'],
+    ['فولتارين 50', 'نوفارتس', 3000, 'SYP', new Date(Date.UTC(2025, 5, 10)), '١٠/١١/٢٠٢٨'],
+  ]);
+  const report = await importProductsFromExcel(warehouseId, userId, file);
+  assert.strictEqual(report.counts.added, 3);
+
+  const products = await Product.find({ warehouseId }).lean();
+  const byName = (nameAr) => products.find((p) => p.masterProductId.equals(ids[nameAr]._id));
+  assert.strictEqual(ymd(byName('panadol').productionDate), '2025-03-01');
+  assert.strictEqual(ymd(byName('panadol').expiryDate), '2027-03-15');
+  assert.strictEqual(ymd(byName('amox').productionDate), null);
+  assert.strictEqual(ymd(byName('amox').expiryDate), '2027-03-31');
+  assert.strictEqual(ymd(byName('voltaren').productionDate), '2025-06-10');
+  assert.strictEqual(ymd(byName('voltaren').expiryDate), '2028-11-10');
+});
+
+test('English and shortened date headers are recognised too', async () => {
+  const { userId, warehouseId } = await makeWarehouse();
+  const file = await xlsx([
+    ['Product Name', 'Company', 'Price', 'Currency', 'MFG', 'EXP'],
+    ['بنادول اكسترا', 'جي اس كي', 1000, 'SYP', '2025-01-02', 'Mar-27'],
+  ]);
+  const report = await importProductsFromExcel(warehouseId, userId, file);
+  assert.strictEqual(report.counts.added, 1);
+  const product = await Product.findOne({ warehouseId }).lean();
+  assert.strictEqual(ymd(product.productionDate), '2025-01-02');
+  assert.strictEqual(ymd(product.expiryDate), '2027-03-31');
+});
+
+test('an empty date cell leaves the product\'s dates alone when the file is imported again', async () => {
+  const { userId, warehouseId } = await makeWarehouse();
+  await importProductsFromExcel(
+    warehouseId,
+    userId,
+    await xlsx([HEADERS_WITH_DATES, ['بنادول اكسترا', 'جي اس كي', 1000, 'SYP', '2025-03-01', '2027-03-01']])
+  );
+  await importProductsFromExcel(
+    warehouseId,
+    userId,
+    await xlsx([HEADERS_WITH_DATES, ['بنادول اكسترا', 'جي اس كي', 1200, 'SYP', '', '']])
+  );
+  const product = await Product.findOne({ warehouseId }).lean();
+  assert.strictEqual(ymd(product.productionDate), '2025-03-01');
+  assert.strictEqual(ymd(product.expiryDate), '2027-03-01');
+  // A new date in the file replaces it.
+  await importProductsFromExcel(
+    warehouseId,
+    userId,
+    await xlsx([HEADERS_WITH_DATES, ['بنادول اكسترا', 'جي اس كي', 1200, 'SYP', '', '2028-01-31']])
+  );
+  const again = await Product.findOne({ warehouseId }).lean();
+  assert.strictEqual(ymd(again.expiryDate), '2028-01-31');
+});
+
+test('a date that cannot be read holds the row for review, and can be fixed there', async () => {
+  const { userId, warehouseId } = await makeWarehouse();
+  const file = await xlsx([
+    HEADERS_WITH_DATES,
+    ['بنادول اكسترا', 'جي اس كي', 1000, 'SYP', '2025-03-01', 'قريباً'],
+    ['أموكسيسيلين 500', 'ابن سينا', 2000, 'SYP', '2027-01-01', '2026-01-01'], // expires before it was made
+  ]);
+  const report = await importProductsFromExcel(warehouseId, userId, file);
+  assert.strictEqual(report.counts.review, 2);
+  const review = await rowsOf(report.batchId, 'review');
+  assert.deepStrictEqual(review[0].reasons, ['bad_date']);
+  assert.deepStrictEqual(review[1].reasons, ['bad_date']);
+  assert.strictEqual(await Product.countDocuments({ warehouseId }), 0);
+
+  await importService.resolveImportRow(warehouseId, userId, report.batchId, review[0]._id, {
+    masterProductId: ids.panadol._id,
+    expiryDate: '31/12/2027',
+  });
+  const product = await Product.findOne({ warehouseId }).lean();
+  assert.strictEqual(ymd(product.productionDate), '2025-03-01');
+  assert.strictEqual(ymd(product.expiryDate), '2027-12-31');
+
+  // Still unreadable when typed in: refused.
+  await assert.rejects(
+    importService.resolveImportRow(warehouseId, userId, report.batchId, review[1]._id, {
+      masterProductId: ids.amox._id,
+      expiryDate: 'soon',
+    }),
+    expectCode('INVALID_DATE')
+  );
+});
+
+test('a file without date columns still imports as before', async () => {
+  const { userId, warehouseId } = await makeWarehouse();
+  const report = await importProductsFromExcel(
+    warehouseId,
+    userId,
+    await xlsx([['اسم المادة', 'الشركة', 'السعر', 'العملة'], ['بنادول اكسترا', 'جي اس كي', 1000, 'SYP']])
+  );
+  assert.strictEqual(report.counts.added, 1);
+  const product = await Product.findOne({ warehouseId }).lean();
+  assert.strictEqual(product.expiryDate, null);
+});
+
+test('the warehouse template has the two date columns and reads back', async () => {
+  const buffer = await catalogService.generateWarehouseTemplateBuffer();
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+  const header = workbook.worksheets[0].getRow(2).values.slice(1);
+  assert.ok(header.includes('تاريخ الإنتاج'));
+  assert.ok(header.includes('تاريخ الانتهاء'));
+  // The examples in the template read through the same importer.
+  const { rows } = await catalogService.readImportWorkbook(
+    { buffer, originalname: 'my-products-template.xlsx' },
+    { columnSet: require('../src/config/importSynonyms').IMPORT_COLUMN_SETS.warehouse }
+  );
+  assert.strictEqual(rows.length, 3);
+  assert.deepStrictEqual(rows.map((r) => ymd(r.expiryDate)), ['2027-03-01', '2027-06-15', '2027-12-31']);
+  assert.deepStrictEqual(rows.map((r) => ymd(r.productionDate)), ['2025-03-01', '2025-06-15', null]);
+  assert.ok(rows.every((r) => r.problems.length === 0));
+});

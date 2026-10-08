@@ -18,6 +18,7 @@ const { UNITS, resolveUnit } = require('../config/units');
 const { fieldForHeader, IMPORT_COLUMN_SETS } = require('../config/importSynonyms');
 const { parsePriceCell, resolveRowCurrency } = require('../utils/importValues');
 const { parseBonus } = require('../utils/bonus');
+const { parseDateCell } = require('../utils/dateCell');
 const { categoryResolverForImport } = require('./category.service');
 const { loadSavedMapping, parseExplicitMapping, saveMapping } = require('./importMapping.service');
 
@@ -689,7 +690,7 @@ async function deactivateCatalogItem(id) {
 const TABLE_INSTRUCTION = 'جدول عادي: صف عناوين ثم صنف في كل صف. ترتيب الأعمدة غير مهم.';
 // The central catalog has no price - a price belongs to a warehouse's product.
 const INSTRUCTION_TEXT = `${TABLE_INSTRUCTION}\nالفئة اختيارية: تُطابق الفئات الموجودة، والفئة غير الموجودة تُنشأ تلقائياً. لا سعر في القائمة المركزية: السعر يضعه كل مستودع لمنتجه.`;
-const WAREHOUSE_INSTRUCTION_TEXT = `${TABLE_INSTRUCTION}\nالعملة إجبارية لكل سعر: SYP = ليرة سورية (تتحوّل للدولار حسب سعر الصرف الحالي)، USD = دولار\nالبونص مثل 10+1 (أو 10+1، 20+3). الوحدة من القائمة.`;
+const WAREHOUSE_INSTRUCTION_TEXT = `${TABLE_INSTRUCTION}\nالعملة إجبارية لكل سعر: SYP = ليرة سورية (تتحوّل للدولار حسب سعر الصرف الحالي)، USD = دولار\nالبونص مثل 10+1 (أو 10+1، 20+3). الوحدة من القائمة.\nتاريخ الإنتاج والانتهاء اختياريان وبأي شكل: 2027-03-15 أو 15/3/2027 أو 03/2027 (شهر وسنة فقط تعني آخر الشهر للانتهاء).`;
 const TEMPLATE_VALIDATION_LAST_ROW = 2000;
 
 async function buildTemplateWorkbook({ headers, instruction, examples, lists = {} }) {
@@ -729,9 +730,9 @@ async function buildTemplateWorkbook({ headers, instruction, examples, lists = {
 }
 
 const TEMPLATE_EXAMPLES = [
-  { name: 'باراسيتامول 500 ملغ', manufacturer: 'شركة الشرق للأدوية', price: 13000, currency: 'SYP', unit: 'علبة', bonus: '10+1' },
-  { name: 'أموكسيسيلين 250 ملغ', manufacturer: 'شركة الشرق للأدوية', price: 2.5, currency: 'USD', unit: 'علبة', bonus: '' },
-  { name: 'فولتارين 50 ملغ', manufacturer: 'شركة سوريا فارم', price: 15000, currency: 'SYP', unit: 'شريط', bonus: '20+3' },
+  { name: 'باراسيتامول 500 ملغ', manufacturer: 'شركة الشرق للأدوية', price: 13000, currency: 'SYP', unit: 'علبة', bonus: '10+1', productionDate: '2025-03-01', expiryDate: '2027-03-01' },
+  { name: 'أموكسيسيلين 250 ملغ', manufacturer: 'شركة الشرق للأدوية', price: 2.5, currency: 'USD', unit: 'علبة', bonus: '', productionDate: '15/06/2025', expiryDate: '15/06/2027' },
+  { name: 'فولتارين 50 ملغ', manufacturer: 'شركة سوريا فارم', price: 15000, currency: 'SYP', unit: 'شريط', bonus: '20+3', productionDate: '', expiryDate: '12/2027' },
 ];
 
 const CATALOG_TEMPLATE_EXAMPLES = [
@@ -767,6 +768,8 @@ async function generateWarehouseTemplateBuffer() {
       { key: 'currency', text: 'العملة', width: 10 },
       { key: 'unit', text: 'الوحدة', width: 12 },
       { key: 'bonus', text: 'البونص', width: 14 },
+      { key: 'productionDate', text: 'تاريخ الإنتاج', width: 16 },
+      { key: 'expiryDate', text: 'تاريخ الانتهاء', width: 16 },
     ],
     instruction: WAREHOUSE_INSTRUCTION_TEXT,
     examples: TEMPLATE_EXAMPLES,
@@ -794,6 +797,13 @@ async function generateWarehouseTemplateBuffer() {
 
 const HEADER_SCAN_ROWS = 20;
 const MIN_USD_PRICE = 0.01;
+
+// 'mm/yyyy', 'mmm-yy': a date cell formatted without a day stands for the
+// whole month.
+function isMonthOnlyFormat(cell) {
+  const format = cell && cell.numFmt;
+  return typeof format === 'string' && /m/i.test(format) && !/d/i.test(format);
+}
 
 function cellText(cell) {
   if (!cell || cell.value == null) return '';
@@ -889,7 +899,7 @@ function columnsNeedMapping(located, missing, columnSet) {
 // Every returned row: { rowNumber, raw, name, manufacturer, category, price, priceEmpty,
 // currency, unit, unitGiven, bonuses, bonusGiven, problems[] }. `problems`
 // holds what the row itself got wrong - 'missing_name', 'invalid_price',
-// 'missing_currency', 'unknown_currency', 'unknown_unit', 'bad_bonus'.
+// 'missing_currency', 'unknown_currency', 'unknown_unit', 'bad_bonus', 'bad_date'.
 async function readImportWorkbook(file, { explicitMapping = null, savedMapping = null, columnSet } = {}) {
   if (!columnSet) throw new Error('readImportWorkbook needs the import\'s column set');
   if (!file) {
@@ -951,6 +961,8 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
       currency: col('currency') ? cellText(row.getCell(col('currency'))) : '',
       unit: col('unit') ? cellText(row.getCell(col('unit'))) : '',
       bonus: col('bonus') ? cellText(row.getCell(col('bonus'))) : '',
+      productionDate: col('productionDate') ? cellText(row.getCell(col('productionDate'))) : '',
+      expiryDate: col('expiryDate') ? cellText(row.getCell(col('expiryDate'))) : '',
     };
 
     const parsedRow = {
@@ -969,6 +981,10 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
       unitGiven: false,
       bonuses: undefined,
       bonusGiven: Boolean(col('bonus')),
+      // undefined: the cell was empty or there is no such column - an
+      // existing product keeps its date.
+      productionDate: undefined,
+      expiryDate: undefined,
       problems: [],
     };
 
@@ -998,6 +1014,30 @@ async function readImportWorkbook(file, { explicitMapping = null, savedMapping =
       const bonus = parseBonus(raw.bonus);
       if (bonus.ok) parsedRow.bonuses = bonus.tiers;
       else parsedRow.problems.push('bad_bonus');
+    }
+
+    for (const [field, kind] of [['productionDate', 'production'], ['expiryDate', 'expiry']]) {
+      if (!col(field)) continue;
+      const cell = row.getCell(col(field));
+      const parsed = parseDateCell(cell.value, { kind, monthOnlyFormat: isMonthOnlyFormat(cell) });
+      if (parsed.empty) continue;
+      if (parsed.date === null) {
+        if (!parsedRow.problems.includes('bad_date')) parsedRow.problems.push('bad_date');
+      } else {
+        parsedRow[field] = parsed.date;
+      }
+    }
+    if (
+      parsedRow.productionDate &&
+      parsedRow.expiryDate &&
+      parsedRow.expiryDate < parsedRow.productionDate &&
+      !parsedRow.problems.includes('bad_date')
+    ) {
+      // Expires before it was made: one of them is wrong and nothing says
+      // which, so neither is kept.
+      parsedRow.problems.push('bad_date');
+      parsedRow.productionDate = undefined;
+      parsedRow.expiryDate = undefined;
     }
 
     rows.push(parsedRow);

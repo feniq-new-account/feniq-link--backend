@@ -5,6 +5,7 @@ const { normalizeText } = require('../utils/normalizeText');
 const { trigramSimilarity } = require('../utils/fuzzy');
 const { normalizeBonusTiers } = require('../utils/bonus');
 const { parsePriceCell } = require('../utils/importValues');
+const { parseDateCell } = require('../utils/dateCell');
 const { UNIT_CODES, unitNameAr, unitNameEn } = require('../config/units');
 const Product = require('../models/product.model');
 const ProductCatalog = require('../models/productCatalog.model');
@@ -42,7 +43,7 @@ const SUGGESTION_CANDIDATES = 300;
 const SUGGESTION_ROWS_UP_FRONT = 500;
 
 const ERROR_REASONS = new Set(['missing_name', 'invalid_price']);
-const REVIEW_PROBLEMS = new Set(['missing_currency', 'unknown_currency', 'unknown_unit', 'bad_bonus']);
+const REVIEW_PROBLEMS = new Set(['missing_currency', 'unknown_currency', 'unknown_unit', 'bad_bonus', 'bad_date']);
 
 // ---------------------------------------------------------------------------
 // Suggestions (Phase 4.4)
@@ -182,6 +183,8 @@ function buildProductWrite({
   unitGiven = false,
   bonuses,
   bonusGiven = false,
+  productionDate,
+  expiryDate,
   now = new Date(),
 }) {
   if (existing && existing.isActive === false) {
@@ -192,9 +195,15 @@ function buildProductWrite({
   const zeroPrice = priceUsd === 0;
   const unitFields = unitGiven && unit ? { unit, unitAr: unitNameAr(unit), unitEn: unitNameEn(unit) } : {};
   const bonusFields = bonusGiven ? { bonuses: bonuses ?? [] } : {};
+  // A date is only set when the file gave one: an empty cell leaves the
+  // product's own date alone.
+  const dateFields = {
+    ...(productionDate ? { productionDate } : {}),
+    ...(expiryDate ? { expiryDate } : {}),
+  };
 
   if (existing) {
-    const set = { ...unitFields, ...bonusFields };
+    const set = { ...unitFields, ...bonusFields, ...dateFields };
     const update = {};
     if (priceUsd !== existing.price) {
       set.price = priceUsd;
@@ -245,6 +254,7 @@ function buildProductWrite({
           categoryId: catalogItem.categoryId ?? null,
           price: priceUsd,
           ...unitFields,
+          ...dateFields,
           bonuses: bonuses ?? [],
           manuallyDisabled: zeroPrice,
           isAvailable: !zeroPrice,
@@ -280,6 +290,8 @@ function rowRecord(batchId, warehouseId, row, extra) {
       unit: row.unit ?? null,
       bonuses: row.bonuses,
       bonusGiven: row.bonusGiven,
+      productionDate: row.productionDate ?? null,
+      expiryDate: row.expiryDate ?? null,
     },
     ...extra,
   };
@@ -466,6 +478,8 @@ async function importWarehouseFile(warehouseId, userId, file, { mapping = null }
       unitGiven: row.unitGiven,
       bonuses: row.bonuses,
       bonusGiven: row.bonusGiven,
+      productionDate: row.productionDate,
+      expiryDate: row.expiryDate,
       now,
     });
     if (write.blockedCode) {
@@ -640,7 +654,20 @@ async function resolutionValues(row, body) {
     bonusGiven = true;
   }
 
-  return { priceUsd, exchangeRateUsed, unit, unitGiven, bonuses, bonusGiven };
+  // The dates the warehouse typed in to fix an unreadable one, else what the
+  // row parsed (an unreadable date was left out, never guessed).
+  const dateFor = (field, kind) => {
+    if (body[field] !== undefined) {
+      const parsed = parseDateCell(body[field], { kind });
+      if (parsed.date === null) throw ApiError.badRequest(`Invalid ${field}.`, undefined, 'INVALID_DATE');
+      return parsed.empty ? undefined : parsed.date;
+    }
+    return row.parsed[field] ?? undefined;
+  };
+  const productionDate = dateFor('productionDate', 'production');
+  const expiryDate = dateFor('expiryDate', 'expiry');
+
+  return { priceUsd, exchangeRateUsed, unit, unitGiven, bonuses, bonusGiven, productionDate, expiryDate };
 }
 
 async function adjustBatchCounts(batchId, resolvedCount, session) {
@@ -775,6 +802,8 @@ async function requestCatalogItemFromRow(warehouseId, userId, batchId, rowId, bo
           unit: values.unitGiven ? values.unit : null,
           priceUsd: values.priceUsd,
           bonuses: values.bonusGiven ? values.bonuses : [],
+          productionDate: values.productionDate ?? null,
+          expiryDate: values.expiryDate ?? null,
           importBatchId: batchId,
           importRowId: fresh._id,
           requestedBy: userId,
