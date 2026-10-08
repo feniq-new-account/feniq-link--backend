@@ -6,16 +6,17 @@ import 'package:feniq/generated/app_localizations.dart';
 //
 // Where an order stands now (badge, highlight card):
 //   pending          -> Waiting for approval / بانتظار الموافقة
+//   confirmed        -> Accepted / انقبلت
 //   out_for_delivery -> On the way / بالطريق
 //   delivered        -> Delivered / تم التسليم
-// 'confirmed' / 'preparing' are no longer reached (the warehouse approves
-// straight into "on the way"); an older order in one reads as waiting.
+// 'preparing' is no longer reached; an older order in it reads as accepted.
 String orderStatusLabel(AppLocalizations l10n, String status) {
   switch (status) {
     case 'pending':
+      return l10n.stageUnderReview;
     case 'confirmed':
     case 'preparing':
-      return l10n.stageUnderReview;
+      return l10n.stageAccepted;
     case 'out_for_delivery':
       return l10n.stageOutForDelivery;
     case 'delivered':
@@ -39,8 +40,6 @@ String orderHistoryLabel(AppLocalizations l10n, String status) {
   switch (status) {
     case 'pending':
       return l10n.stageSent;
-    case 'preparing':
-      return l10n.stagePreparing;
     default:
       return orderStatusLabel(l10n, status);
   }
@@ -50,7 +49,7 @@ String orderHistoryLabel(AppLocalizations l10n, String status) {
 String orderStageLabel(AppLocalizations l10n, OrderStage stage) => switch (stage) {
   OrderStage.sent => l10n.stageSent,
   OrderStage.modified => l10n.stageModified,
-  OrderStage.awaitingApproval => l10n.stageUnderReview,
+  OrderStage.accepted => l10n.stageAccepted,
   OrderStage.outForDelivery => l10n.stageOutForDelivery,
   OrderStage.delivered => l10n.stageDelivered,
 };
@@ -61,9 +60,10 @@ String orderStageLabel(AppLocalizations l10n, OrderStage stage) => switch (stage
 String? orderStatusDescription(AppLocalizations l10n, String status) {
   switch (status) {
     case 'pending':
+      return l10n.stageUnderReviewDesc;
     case 'confirmed':
     case 'preparing':
-      return l10n.stageUnderReviewDesc;
+      return l10n.stageAcceptedDesc;
     case 'out_for_delivery':
       return l10n.stageOutForDeliveryDesc;
     case 'delivered':

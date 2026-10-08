@@ -10,9 +10,9 @@ import { formatSyp } from '../utils/currency';
 import { isEditable, mergeAdvancedOrders, nextStatusOf, rememberAdvanced, syncAdvancedWithRows } from './warehouseOrdersList';
 
 const PAGE_SIZE = 20;
-// Three stages for the warehouse: awaiting approval -> on the way -> delivered
-// (approving sends the order out), plus the pharmacy's cancellations.
-const STATUS_VALUES = ['pending', 'out_for_delivery', 'delivered', 'cancelled'];
+// Three stages for the warehouse: new -> accepted -> on the way -> delivered,
+// plus the pharmacy's cancellations.
+const STATUS_VALUES = ['pending', 'confirmed', 'out_for_delivery', 'delivered', 'cancelled'];
 const ADVANCE_KEYS = {
   pending: 'orders.advancePending',
   confirmed: 'orders.advanceConfirmed',

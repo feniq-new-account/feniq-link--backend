@@ -341,7 +341,7 @@ test('the warehouse\'s Reps page and the rep\'s own app total the commission on 
   const pending = await placeOrder(ph, wh, 5); // 100,000, never delivered
   const deliveredId = String(delivered._id || delivered.id);
   // Approve (= on its way), then deliver.
-  for (let step = 0; step < 2; step += 1) {
+  for (let step = 0; step < 3; step += 1) {
     await warehouseOrderService.advanceOrderStatus(deliveredId, wh.warehouse._id, wh.user._id);
   }
   assert.strictEqual((await Order.findById(deliveredId).lean()).status, 'delivered');
@@ -372,7 +372,7 @@ test('a credited return takes its proportion back from the rep\'s and Feniq\'s s
 
   const order = await placeOrder(ph, wh, 3); // 60,000 SYP -> 600 / 300 / 300
   const orderId = String(order._id || order.id);
-  for (let step = 0; step < 2; step += 1) {
+  for (let step = 0; step < 3; step += 1) {
     await warehouseOrderService.advanceOrderStatus(orderId, wh.warehouse._id, wh.user._id);
   }
   const item = await OrderItem.findOne({ orderId }).lean();

@@ -169,6 +169,7 @@ async function start() {
   });
 
   startKeepAlive();
+  startAutoDelivery();
 }
 
 // Render's free plan puts the service to sleep after 15 minutes without
@@ -184,6 +185,23 @@ function startKeepAlive() {
   setInterval(() => {
     fetch(`${baseUrl}/api/health`).catch(() => {});
   }, KEEP_ALIVE_INTERVAL_MS).unref();
+}
+
+// An order on the road for a day without anyone marking it delivered is closed
+// on its own (warehouseOrder.service.js's autoDeliverStaleOrders). Hourly;
+// AUTO_DELIVERY=false turns it off.
+const AUTO_DELIVERY_INTERVAL_MS = 60 * 60 * 1000;
+
+function startAutoDelivery() {
+  if (process.env.AUTO_DELIVERY === 'false') return;
+  const { autoDeliverStaleOrders } = require('./services/warehouseOrder.service');
+  const run = () =>
+    autoDeliverStaleOrders().catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error('Auto-delivery run failed.', err.message);
+    });
+  setInterval(run, AUTO_DELIVERY_INTERVAL_MS).unref();
+  run();
 }
 
 start();

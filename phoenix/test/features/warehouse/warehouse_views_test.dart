@@ -78,10 +78,10 @@ void main() {
       expect(find.text('All'), findsOneWidget);
       expect(find.text('Order #7'), findsOneWidget);
       expect(find.text('Al-Yasmin Pharmacy'), findsOneWidget);
-      expect(find.text('Approve & send'), findsOneWidget);
+      expect(find.text('Accept'), findsOneWidget);
     });
 
-    testWidgets('the forward step asks first, then advances', (tester) async {
+    testWidgets('accepting is one tap, with no question', (tester) async {
       when(() => cubit.advance('o1')).thenAnswer((_) async => true);
       await pump(
         tester,
@@ -90,12 +90,28 @@ void main() {
           orders: [WarehouseOrderSummary(id: 'o1', orderNumber: 7, status: 'pending', finalPrice: 1000, itemCount: 1)],
         ),
       );
-      await tester.tap(find.widgetWithText(FilledButton, 'Approve & send'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Accept'));
       await tester.pumpAndSettle();
-      expect(find.text('Approve and send this order?'), findsOneWidget);
+      verify(() => cubit.advance('o1')).called(1);
+    });
+
+    testWidgets('sending it on its way asks first, then advances', (tester) async {
+      when(() => cubit.advance('o1')).thenAnswer((_) async => true);
+      await pump(
+        tester,
+        const WarehouseOrdersState(
+          status: RepLoadStatus.loaded,
+          orders: [
+            WarehouseOrderSummary(id: 'o1', orderNumber: 7, status: 'confirmed', finalPrice: 1000, itemCount: 1),
+          ],
+        ),
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Send on its way'));
+      await tester.pumpAndSettle();
+      expect(find.text('Send this order on its way?'), findsOneWidget);
       verifyNever(() => cubit.advance(any()));
 
-      await tester.tap(find.widgetWithText(TextButton, 'Approve & send').last);
+      await tester.tap(find.widgetWithText(TextButton, 'Send on its way').last);
       await tester.pumpAndSettle();
       verify(() => cubit.advance('o1')).called(1);
     });
@@ -148,7 +164,7 @@ void main() {
       await tester.scrollUntilVisible(find.text('You keep'), 100);
       expect(find.text('You keep'), findsOneWidget);
       expect(find.widgetWithText(OutlinedButton, 'Edit items'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Approve & send'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Accept'), findsOneWidget);
     });
 
     testWidgets('editing shows a stepper and a remove button per line', (tester) async {

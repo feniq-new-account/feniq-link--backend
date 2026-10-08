@@ -128,7 +128,7 @@ function preview({ pharmacyId = ids.pharmacyA, warehouseId = ids.warehouseA, ite
 
 async function deliver(order) {
   // Two clicks: waiting for approval -> on the way -> delivered.
-  for (let i = 0; i < 2; i += 1) {
+  for (let i = 0; i < 3; i += 1) {
     await warehouseOrderService.advanceOrderStatus(order._id, order.warehouseId, ids.whUserA);
   }
   return Order.findById(order._id).lean();

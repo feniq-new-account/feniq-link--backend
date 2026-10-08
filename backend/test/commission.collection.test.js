@@ -78,7 +78,7 @@ async function deliverOrder(quantity = 1) {
   });
   let current = order;
   // Two clicks: waiting for approval -> on the way -> delivered.
-  for (let i = 0; i < 2; i += 1) {
+  for (let i = 0; i < 3; i += 1) {
     current = await warehouseOrderService.advanceOrderStatus(
       current._id.toString(), ids.warehouseA, ids.whAUser
     );

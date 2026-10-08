@@ -48,9 +48,9 @@ describe('syncAdvancedWithRows', () => {
 });
 
 describe('nextStatusOf', () => {
-  it('approving sends the order out; an older stage moves straight on too', () => {
+  it('accept, then on the way, then delivered', () => {
     const { nextStatusOf } = require('./warehouseOrdersList');
-    expect(nextStatusOf('pending')).toBe('out_for_delivery');
+    expect(nextStatusOf('pending')).toBe('confirmed');
     expect(nextStatusOf('confirmed')).toBe('out_for_delivery');
     expect(nextStatusOf('preparing')).toBe('out_for_delivery');
     expect(nextStatusOf('out_for_delivery')).toBe('delivered');

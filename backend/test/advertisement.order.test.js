@@ -508,7 +508,7 @@ test('the charge posted on delivery is the discounted finalPrice', async () => {
   // by the code that actually posts it.
   let current = order;
   // Two clicks: waiting for approval -> on the way -> delivered.
-  for (let i = 0; i < 2; i += 1) {
+  for (let i = 0; i < 3; i += 1) {
     current = await warehouseOrderService.advanceOrderStatus(
       current._id.toString(), ids.warehouse, ids.whUser
     );

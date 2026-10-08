@@ -6,7 +6,7 @@ import 'package:feniq/generated/app_localizations.dart';
 
 /// The pill tone of an order status, the same on the list and the detail.
 StatusBadgeTone warehouseStatusTone(String status) {
-  if (isAwaitingApproval(status)) return StatusBadgeTone.pending;
+  if (status == 'pending') return StatusBadgeTone.pending;
   return switch (status) {
     'delivered' => StatusBadgeTone.success,
     'cancelled' => StatusBadgeTone.danger,
@@ -22,17 +22,20 @@ String warehouseFilterLabel(AppLocalizations l10n, String? filter) =>
 /// there is no step left.
 String? warehouseAdvanceLabel(AppLocalizations l10n, String status) {
   final next = nextWarehouseStatus(status);
-  if (next == 'out_for_delivery') return l10n.warehouseApproveAndSend;
+  if (next == 'confirmed') return l10n.warehouseAccept;
+  if (next == 'out_for_delivery') return l10n.warehouseSendOnWay;
   if (next == 'delivered') return l10n.warehouseMarkDelivered;
   return null;
 }
 
-/// The confirmation shown before the forward step: (title, body).
-(String, String) warehouseAdvanceConfirm(AppLocalizations l10n, String status, int orderNumber) {
-  if (nextWarehouseStatus(status) == 'delivered') {
-    return (l10n.warehouseConfirmDeliveredTitle, l10n.warehouseConfirmDeliveredBody(orderNumber));
-  }
-  return (l10n.warehouseConfirmApproveTitle, l10n.warehouseConfirmApproveBody(orderNumber));
+/// The confirmation shown before the forward step: (title, body), or null
+/// when the step needs none - accepting is one tap, and "delivered" asks
+/// whether it was paid instead (collect_payment_sheet.dart).
+(String, String)? warehouseAdvanceConfirm(AppLocalizations l10n, String status, int orderNumber) {
+  return switch (nextWarehouseStatus(status)) {
+    'out_for_delivery' => (l10n.warehouseConfirmApproveTitle, l10n.warehouseConfirmApproveBody(orderNumber)),
+    _ => null,
+  };
 }
 
 /// A rate without trailing zeros: 2 -> "2", 1.5 -> "1.5".

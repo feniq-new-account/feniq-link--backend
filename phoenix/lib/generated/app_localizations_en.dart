@@ -2177,25 +2177,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get warehouseFilterAll => 'All';
 
   @override
-  String get warehouseApproveAndSend => 'Approve & send';
-
-  @override
   String get warehouseMarkDelivered => 'Mark as delivered';
 
   @override
-  String get warehouseConfirmApproveTitle => 'Approve and send this order?';
+  String get warehouseConfirmApproveTitle => 'Send this order on its way?';
 
   @override
   String warehouseConfirmApproveBody(int number) {
-    return 'Order #$number goes out to the pharmacy, and its items can no longer be changed.';
-  }
-
-  @override
-  String get warehouseConfirmDeliveredTitle => 'Mark as delivered?';
-
-  @override
-  String warehouseConfirmDeliveredBody(int number) {
-    return 'Has order #$number reached the pharmacy?';
+    return 'Order #$number leaves for the pharmacy, and its items can no longer be changed.';
   }
 
   @override
@@ -2660,4 +2649,66 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorLoyaltyTiersRequired =>
       'Add at least one tier before turning the loyalty discount on.';
+
+  @override
+  String get stageAccepted => 'Accepted';
+
+  @override
+  String get stageAcceptedDesc => 'The warehouse accepted your order';
+
+  @override
+  String get warehouseAccept => 'Accept';
+
+  @override
+  String get warehouseSendOnWay => 'Send on its way';
+
+  @override
+  String warehouseCollectTitle(int number) {
+    return 'Delivering order #$number - did you collect?';
+  }
+
+  @override
+  String warehouseCollectTotal(String amount) {
+    return 'Amount: $amount';
+  }
+
+  @override
+  String get warehouseCollectFull => 'All of it';
+
+  @override
+  String get warehouseCollectPartial => 'Part';
+
+  @override
+  String get warehouseCollectLater => 'Later';
+
+  @override
+  String warehouseCollectPaidLabel(String currency) {
+    return 'Paid now ($currency)';
+  }
+
+  @override
+  String warehouseCollectLeft(String amount) {
+    return 'Left: $amount';
+  }
+
+  @override
+  String get warehouseCollectSave => 'Deliver and save';
+
+  @override
+  String get warehouseCollectPartialInvalid =>
+      'Enter an amount above zero and below the total.';
+
+  @override
+  String warehouseCollectRecorded(String amount) {
+    return 'Delivered, and $amount recorded as paid';
+  }
+
+  @override
+  String get warehouseCollectFailed =>
+      'Delivered, but the payment wasn\'t saved - record it from Accounts.';
+
+  @override
+  String warehouseCollectNote(int number) {
+    return 'Paid on delivery of order #$number';
+  }
 }

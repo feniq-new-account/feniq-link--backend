@@ -70,8 +70,9 @@ void main() {
       expect(page.nextCursor, '5');
     });
 
-    test('the stages: an older waiting stage counts as awaiting approval', () {
-      expect(nextWarehouseStatus('pending'), 'out_for_delivery');
+    test('the stages: accept, on the way, delivered; an older preparing counts as accepted', () {
+      expect(nextWarehouseStatus('pending'), 'confirmed');
+      expect(nextWarehouseStatus('confirmed'), 'out_for_delivery');
       expect(nextWarehouseStatus('preparing'), 'out_for_delivery');
       expect(nextWarehouseStatus('out_for_delivery'), 'delivered');
       expect(nextWarehouseStatus('delivered'), isNull);

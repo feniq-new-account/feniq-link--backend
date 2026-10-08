@@ -2176,25 +2176,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseFilterAll => 'الكل';
 
   @override
-  String get warehouseApproveAndSend => 'موافقة وإرسال';
-
-  @override
   String get warehouseMarkDelivered => 'تم التسليم';
 
   @override
-  String get warehouseConfirmApproveTitle => 'موافقة وإرسال الطلبية؟';
+  String get warehouseConfirmApproveTitle => 'الطلبية طلعت ع الطريق؟';
 
   @override
   String warehouseConfirmApproveBody(int number) {
     return 'الطلبية رقم $number رح تطلع للصيدلية، وبعدها ما عاد فيك تعدّل أصنافها.';
-  }
-
-  @override
-  String get warehouseConfirmDeliveredTitle => 'تأكيد التسليم؟';
-
-  @override
-  String warehouseConfirmDeliveredBody(int number) {
-    return 'الطلبية رقم $number وصلت للصيدلية؟';
   }
 
   @override
@@ -2654,4 +2643,66 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get errorLoyaltyTiersRequired =>
       'ضيف شريحة وحدة ع الأقل قبل ما تشغّل حسم الولاء.';
+
+  @override
+  String get stageAccepted => 'انقبلت';
+
+  @override
+  String get stageAcceptedDesc => 'المستودع قبل طلبيتك';
+
+  @override
+  String get warehouseAccept => 'قبول';
+
+  @override
+  String get warehouseSendOnWay => 'طلعت ع الطريق';
+
+  @override
+  String warehouseCollectTitle(int number) {
+    return 'تسليم الطلبية رقم $number - قبضت؟';
+  }
+
+  @override
+  String warehouseCollectTotal(String amount) {
+    return 'المبلغ: $amount';
+  }
+
+  @override
+  String get warehouseCollectFull => 'كامل';
+
+  @override
+  String get warehouseCollectPartial => 'جزء';
+
+  @override
+  String get warehouseCollectLater => 'بعدين';
+
+  @override
+  String warehouseCollectPaidLabel(String currency) {
+    return 'دفع هلق ($currency)';
+  }
+
+  @override
+  String warehouseCollectLeft(String amount) {
+    return 'ضل: $amount';
+  }
+
+  @override
+  String get warehouseCollectSave => 'سلّم واحفظ';
+
+  @override
+  String get warehouseCollectPartialInvalid =>
+      'اكتب مبلغ أكبر من صفر وأصغر من المبلغ كله.';
+
+  @override
+  String warehouseCollectRecorded(String amount) {
+    return 'تم التسليم، وانسجّل $amount مدفوع';
+  }
+
+  @override
+  String get warehouseCollectFailed =>
+      'تم التسليم، بس الدفعة ما انحفظت - سجّلها من الحسابات.';
+
+  @override
+  String warehouseCollectNote(int number) {
+    return 'دفعة عند تسليم الطلبية رقم $number';
+  }
 }
