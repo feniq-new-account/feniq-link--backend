@@ -10,10 +10,11 @@ abstract class WarehouseManagementRepository {
     required String phone,
     required String password,
     required double commissionRate,
+    bool warehouseShareToRep = false,
   });
 
   /// Changes what is given; the rest stays.
-  Future<WarehouseRep> updateRep(String repId, {double? commissionRate, bool? isActive});
+  Future<WarehouseRep> updateRep(String repId, {double? commissionRate, bool? isActive, bool? warehouseShareToRep});
 
   Future<void> resetRepPassword(String repId, String password);
 
@@ -35,6 +36,11 @@ abstract class WarehouseManagementRepository {
     required String idempotencyKey,
     String? note,
   });
+
+  // Loyalty discount
+  Future<WarehouseLoyalty> getLoyalty();
+
+  Future<WarehouseLoyalty> updateLoyalty({required bool enabled, required List<LoyaltyTier> tiers});
 
   // Returns
   Future<WarehouseReturnsPage> getReturns({String? status, String? after});

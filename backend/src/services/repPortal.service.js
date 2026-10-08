@@ -7,7 +7,7 @@ const Order = require('../models/order.model');
 const Warehouse = require('../models/warehouse.model');
 const { ApiError } = require('../utils/ApiError');
 const { startOfBusinessMonth } = require('../utils/businessTime');
-const { REP_SHARE } = require('../utils/repCommission');
+const { repRateFor } = require('../utils/repCommission');
 const { sumRepCommission } = require('./repCommissionTotals.service');
 const { distanceMeters, isValidCoordinate } = require('../utils/geo');
 const { pharmacyActivity } = require('./rep.service');
@@ -67,10 +67,10 @@ async function getMe(rep, now = new Date()) {
       visitsLast7Days: weekVisits,
       monthOrdersCount: monthOrders[0]?.count ?? 0,
       monthOrdersTotal: monthOrders[0]?.total ?? 0,
-      // What the rep earns, as a percentage of their orders: their half of the
-      // warehouse's rate. The warehouse's own rate and Feniq's share are not
+      // What the rep earns, as a percentage of their orders: their quarter of
+      // the warehouse's rate, or half when the warehouse gives them its own. The warehouse's own rate and Feniq's share are not
       // the rep's business, so they are never sent here.
-      ownCommissionRate: Math.round((rep.commissionRate ?? 0) * REP_SHARE * 10000) / 10000,
+      ownCommissionRate: repRateFor(rep.commissionRate ?? 0, rep.warehouseShareToRep ?? false),
       monthCommissionAmount: monthCommission[0]?.repAmount ?? 0,
     },
   };

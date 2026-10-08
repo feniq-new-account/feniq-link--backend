@@ -180,26 +180,34 @@ class WarehouseOrdersPage {
   }
 }
 
-/// The rep's commission on this order, frozen when it was placed: half to the
-/// rep, a quarter to Feniq, the rest saved by the warehouse.
+/// The rep's commission on this order, frozen when it was placed, in four
+/// quarters: Feniq, the pharmacy (as credit), the rep, and the warehouse's own
+/// quarter - which it keeps ([savingAmount]) or gives to the rep
+/// ([warehouseShareToRep], then inside [repAmount]).
 class WarehouseRepCommission {
   const WarehouseRepCommission({
     required this.rate,
     required this.repAmount,
     required this.feniqAmount,
     required this.savingAmount,
+    this.pharmacyAmount = 0,
+    this.warehouseShareToRep = false,
   });
 
   final double rate;
   final double repAmount;
   final double feniqAmount;
   final double savingAmount;
+  final double pharmacyAmount;
+  final bool warehouseShareToRep;
 
   factory WarehouseRepCommission.fromJson(Map<String, dynamic> json) => WarehouseRepCommission(
     rate: _double(json['rate']),
     repAmount: _double(json['repAmount']),
     feniqAmount: _double(json['feniqAmount']),
     savingAmount: _double(json['savingAmount']),
+    pharmacyAmount: _double(json['pharmacyAmount']),
+    warehouseShareToRep: json['warehouseShareToRep'] == true,
   );
 }
 
@@ -251,6 +259,8 @@ class WarehouseOrderDetail {
     this.finalPrice = 0,
     this.warehouseNetSyp = 0,
     this.repCommission,
+    this.loyaltyDiscountAmount = 0,
+    this.creditUsedSyp = 0,
     this.packages = const [],
     this.statusHistory = const [],
     this.notes,
@@ -276,6 +286,10 @@ class WarehouseOrderDetail {
   // What the warehouse keeps, once Feniq's share comes off.
   final double warehouseNetSyp;
   final WarehouseRepCommission? repCommission;
+  // The warehouse's loyalty discount on this order, and the pharmacy credit
+  // it used - both already off finalPrice.
+  final double loyaltyDiscountAmount;
+  final double creditUsedSyp;
   final List<WarehouseOrderPackage> packages;
   final List<WarehouseOrderHistoryEntry> statusHistory;
   final String? notes;
@@ -308,6 +322,8 @@ class WarehouseOrderDetail {
     finalPrice: finalPrice,
     warehouseNetSyp: warehouseNetSyp,
     repCommission: repCommission,
+    loyaltyDiscountAmount: loyaltyDiscountAmount,
+    creditUsedSyp: creditUsedSyp,
     packages: packages,
     statusHistory: history.isEmpty ? statusHistory : history,
     notes: notes,
@@ -336,6 +352,8 @@ class WarehouseOrderDetail {
       finalPrice: _double(order['finalPrice']),
       warehouseNetSyp: _double(order['warehouseNetSyp']),
       repCommission: rep is Map<String, dynamic> ? WarehouseRepCommission.fromJson(rep) : null,
+      loyaltyDiscountAmount: _double(order['loyaltyDiscountAmount']),
+      creditUsedSyp: _double(order['creditUsedSyp']),
       packages: _maps(order['packageGroups']).map(WarehouseOrderPackage.fromJson).toList(),
       statusHistory: _maps(order['statusHistory']).map(WarehouseOrderHistoryEntry.fromJson).toList(),
       notes: _strOrNull(order['notes']),

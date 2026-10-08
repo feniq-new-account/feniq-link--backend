@@ -93,7 +93,8 @@
   .split-card { background: var(--drawer); border-radius: 6px; border-bottom: 6px solid var(--orange); padding: 40px 44px 44px; }
   .split-bar { display: flex; height: 120px; border-radius: 4px; overflow: hidden; margin: 26px 0 22px; direction: rtl; }
   .split-bar > div { display: grid; place-items: center; font-family: "Reem Kufi", sans-serif; font-weight: 700; font-size: 42px; }
-  .split-bar .rep { flex: 50; background: #fff; color: var(--navy); }
+  .split-bar .rep { flex: 25; background: #fff; color: var(--navy); }
+  .split-bar .pharm { flex: 25; background: #5B8FD9; color: #fff; }
   .split-bar .feniq { flex: 25; background: var(--orange); color: #1A1206; }
   .split-bar .save { flex: 25; background: #2E7D4F; color: #fff; }
   .legend { display: grid; gap: 10px; font-size: 27px; }
@@ -289,19 +290,21 @@
       <span class="plate plate--orange" style="font-size:26px">مثال</span>
       <p style="font-size:30px; margin-top:16px; line-height:1.5">عمولة المندوب المعتادة <span class="ltr">2%</span> على طلبية تمر عبر فينيق:</p>
       <div class="split-bar">
-        <div class="rep"><span class="ltr">1%</span></div>
+        <div class="rep"><span class="ltr">0.5%</span></div>
+        <div class="pharm"><span class="ltr">0.5%</span></div>
         <div class="feniq"><span class="ltr">0.5%</span></div>
         <div class="save"><span class="ltr">0.5%</span></div>
       </div>
       <div class="legend">
-        <div><span>المندوب: النصف</span><b class="ltr">1%</b></div>
-        <div><span>فينيق: الربع</span><b class="ltr">0.5%</b></div>
-        <div><span>يوفّره المستودع: الربع</span><b class="ltr">0.5%</b></div>
+        <div><span>المندوب: ربع</span><b class="ltr">0.5%</b></div>
+        <div><span>الصيدلية: ربع (رصيد من طلبيتها التالية عندك)</span><b class="ltr">0.5%</b></div>
+        <div><span>فينيق: ربع</span><b class="ltr">0.5%</b></div>
+        <div><span>المستودع: ربع (تحتفظ به أو تعطيه للمندوب)</span><b class="ltr">0.5%</b></div>
       </div>
     </div>
   </div>
   <div class="foot"><span>الصيدليات الجديدة التي يجلبها فريق فينيق تُسلَّم لمناديبك، ولا يأخذ فينيق حصة المندوب منها</span><img src="assets/mark-dark.png" alt=""></div>
-  <aside class="notes">الكلفة ثلاث نقاط. الأولى: التطبيق مجاني للصيدليات. الثانية: اشتراك المستودع يبدأ من مئتي ألف ليرة شهرياً بالعملة القديمة، أي ألفا ليرة بالجديدة، ومجاني حتى نهاية 2026. الثالثة: فينيق يأخذ ربع عمولة المندوب على الطلبيات التي تمر عبره فقط، وليست نسبة ثابتة. المثال: إذا كانت عمولة المندوب المعتادة اثنين بالمئة، يأخذ المندوب النصف أي واحد بالمئة، ويأخذ فينيق الربع أي نصف بالمئة، ويوفّر المستودع الربع الباقي. والصيدليات التي يجلبها فريق فينيق نعطيها لمناديب المستودع، ولا نأخذ حصة المندوب منها.</aside>
+  <aside class="notes">الكلفة ثلاث نقاط. الأولى: التطبيق مجاني للصيدليات. الثانية: اشتراك المستودع يبدأ من مئتي ألف ليرة شهرياً بالعملة القديمة، أي ألفا ليرة بالجديدة، ومجاني حتى نهاية 2026. الثالثة: فينيق يأخذ ربع عمولة المندوب على الطلبيات التي تمر عبره فقط، وليست نسبة ثابتة. المثال: إذا كانت عمولة المندوب المعتادة اثنين بالمئة، تُقسم أرباعاً، كل ربع نصف بالمئة: ربع لفينيق، وربع للصيدلية يصير رصيداً يُخصم تلقائياً من طلبيتها التالية عندكم فتبقى تطلب منكم، وربع للمندوب، والربع الأخير للمستودع: يحتفظ به أو يعطيه للمندوب، والخيار له لكل مندوب. والصيدليات التي يجلبها فريق فينيق نعطيها لمناديب المستودع، ولا نأخذ حصة المندوب منها.</aside>
 </section>
 
 <!-- 11 -->

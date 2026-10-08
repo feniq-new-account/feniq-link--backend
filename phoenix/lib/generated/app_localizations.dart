@@ -3020,6 +3020,18 @@ abstract class AppLocalizations {
   /// **'Discount code ({code})'**
   String discountCodeLine(String code);
 
+  /// No description provided for @loyaltyDiscountLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse loyalty discount'**
+  String get loyaltyDiscountLine;
+
+  /// No description provided for @creditUsedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'From your credit with the warehouse'**
+  String get creditUsedLine;
+
   /// No description provided for @discountCodeUpdating.
   ///
   /// In en, this message translates to:
@@ -4363,6 +4375,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This return was already resolved. Refresh the page.'**
   String get errorReturnAlreadyResolved;
+
+  /// No description provided for @warehouseLoyaltyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Loyalty discount'**
+  String get warehouseLoyaltyTitle;
+
+  /// No description provided for @warehouseLoyaltyIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'A fixed amount off an order by its size. You set the tiers and you pay for it; Feniq takes its share of what is left.'**
+  String get warehouseLoyaltyIntro;
+
+  /// No description provided for @warehouseLoyaltyEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn the loyalty discount on'**
+  String get warehouseLoyaltyEnabled;
+
+  /// No description provided for @warehouseLoyaltyMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Order from'**
+  String get warehouseLoyaltyMin;
+
+  /// No description provided for @warehouseLoyaltyDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get warehouseLoyaltyDiscount;
+
+  /// No description provided for @warehouseLoyaltyAddTier.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a tier'**
+  String get warehouseLoyaltyAddTier;
+
+  /// No description provided for @warehouseLoyaltySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the loyalty discount'**
+  String get warehouseLoyaltySave;
+
+  /// No description provided for @warehouseLoyaltySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Loyalty discount saved.'**
+  String get warehouseLoyaltySaved;
+
+  /// No description provided for @warehouseLoyaltyExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Example: an order of 100,000 or more -> 2,000 off.'**
+  String get warehouseLoyaltyExample;
+
+  /// No description provided for @warehouseLoyaltyTierError.
+  ///
+  /// In en, this message translates to:
+  /// **'Each tier needs an order value above zero and a smaller discount.'**
+  String get warehouseLoyaltyTierError;
+
+  /// No description provided for @warehouseLoyaltyOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get warehouseLoyaltyOff;
+
+  /// No description provided for @warehouseLoyaltyOnTiers.
+  ///
+  /// In en, this message translates to:
+  /// **'On · {count} tiers'**
+  String warehouseLoyaltyOnTiers(int count);
+
+  /// No description provided for @warehouseLoyaltyLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Loyalty discount'**
+  String get warehouseLoyaltyLine;
+
+  /// No description provided for @warehouseCreditUsedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'From the pharmacy\'s credit'**
+  String get warehouseCreditUsedLine;
+
+  /// No description provided for @warehouseRepPharmacyShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy credit'**
+  String get warehouseRepPharmacyShare;
+
+  /// No description provided for @warehouseRepWarehouseShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Your quarter'**
+  String get warehouseRepWarehouseShare;
+
+  /// No description provided for @warehouseRepWarehouseShareToRep.
+  ///
+  /// In en, this message translates to:
+  /// **'Your quarter (to the rep)'**
+  String get warehouseRepWarehouseShareToRep;
+
+  /// No description provided for @warehouseRepShareToRep.
+  ///
+  /// In en, this message translates to:
+  /// **'Give my quarter to the rep'**
+  String get warehouseRepShareToRep;
+
+  /// No description provided for @warehouseRepShareToRepOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your quarter now goes to the rep on new orders.'**
+  String get warehouseRepShareToRepOn;
+
+  /// No description provided for @warehouseRepShareToRepOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Your quarter is yours again on new orders.'**
+  String get warehouseRepShareToRepOff;
+
+  /// No description provided for @warehouseRepShareGiven.
+  ///
+  /// In en, this message translates to:
+  /// **'Your quarter to the rep'**
+  String get warehouseRepShareGiven;
+
+  /// No description provided for @warehouseRepQuartersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A quarter to Feniq, a quarter as pharmacy credit, a quarter to the rep, and the last quarter yours or the rep\'s. Between 0 and 10.'**
+  String get warehouseRepQuartersHint;
+
+  /// No description provided for @errorInvalidLoyaltyTiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Each tier needs an order value above zero and a smaller discount, with no two on the same value.'**
+  String get errorInvalidLoyaltyTiers;
+
+  /// No description provided for @errorLoyaltyTiersRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one tier before turning the loyalty discount on.'**
+  String get errorLoyaltyTiersRequired;
 }
 
 class _AppLocalizationsDelegate

@@ -49,7 +49,7 @@ const save = (page, name, options = {}) =>
 
   // المناديب وصفحة المندوب
   await open('/warehouse/reps');
-  await save(page, 'd5-reps.jpg', { clip: { x: 0, y: 0, width: 1440, height: 470 } });
+  await save(page, 'd5-reps.jpg', { clip: { x: 0, y: 0, width: 1440, height: 660 } });
   await page.click('a.wh-link >> nth=1');
   await page.waitForTimeout(2000);
   await save(page, 'd6-rep.jpg');

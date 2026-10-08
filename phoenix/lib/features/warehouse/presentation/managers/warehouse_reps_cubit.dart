@@ -87,17 +87,30 @@ class WarehouseRepsCubit extends Cubit<WarehouseRepsState> {
     required String phone,
     required String password,
     required double commissionRate,
+    bool warehouseShareToRep = false,
   }) async {
     final ok = await _save(
-      () => _repository.createRep(name: name, phone: phone, password: password, commissionRate: commissionRate),
+      () => _repository.createRep(
+        name: name,
+        phone: phone,
+        password: password,
+        commissionRate: commissionRate,
+        warehouseShareToRep: warehouseShareToRep,
+      ),
     );
     // The list's numbers come from the server; a fresh rep starts at zero.
     if (ok) await load();
     return ok;
   }
 
-  Future<bool> updateRep(String repId, {double? commissionRate, bool? isActive}) => _save(() async {
-    final updated = await _repository.updateRep(repId, commissionRate: commissionRate, isActive: isActive);
+  Future<bool> updateRep(String repId, {double? commissionRate, bool? isActive, bool? warehouseShareToRep}) =>
+      _save(() async {
+    final updated = await _repository.updateRep(
+      repId,
+      commissionRate: commissionRate,
+      isActive: isActive,
+      warehouseShareToRep: warehouseShareToRep,
+    );
     if (isClosed) return;
     emit(state.copyWith(reps: [for (final r in state.reps) r.id == repId ? r.withAccount(updated) : r]));
   });

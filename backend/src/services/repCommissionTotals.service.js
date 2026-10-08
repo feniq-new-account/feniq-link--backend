@@ -39,6 +39,7 @@ async function sumRepCommission(match, { byRep = false } = {}) {
         _id: byRep ? '$repId' : null,
         repAmount: { $sum: { $multiply: ['$repCommission.repAmount', '$keptShare'] } },
         feniqAmount: { $sum: { $multiply: ['$repCommission.feniqAmount', '$keptShare'] } },
+        pharmacyAmount: { $sum: { $multiply: [{ $ifNull: ['$repCommission.pharmacyAmount', 0] }, '$keptShare'] } },
         savingAmount: { $sum: { $multiply: ['$repCommission.savingAmount', '$keptShare'] } },
       },
     },
@@ -46,6 +47,7 @@ async function sumRepCommission(match, { byRep = false } = {}) {
       $project: {
         repAmount: { $round: ['$repAmount', 0] },
         feniqAmount: { $round: ['$feniqAmount', 0] },
+        pharmacyAmount: { $round: ['$pharmacyAmount', 0] },
         savingAmount: { $round: ['$savingAmount', 0] },
       },
     },

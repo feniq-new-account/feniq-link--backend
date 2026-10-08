@@ -330,13 +330,15 @@ class WarehouseOrderDetailView extends StatelessWidget {
 
   Widget _moneyCard(BuildContext context, WarehouseOrderDetail order) {
     final l10n = context.l10n;
-    final discounts = order.totalPrice - order.finalPrice;
     final rep = order.repCommission;
+    // Discounts other than the two named lines below (offers, packages, codes).
+    final otherDiscounts = order.totalPrice - order.finalPrice - order.loyaltyDiscountAmount - order.creditUsedSyp;
+    final anyDiscount = order.totalPrice > order.finalPrice;
     return _section(context, l10n.warehouseSectionMoney, [
-      if (discounts > 0) ...[
-        _moneyRow(context, l10n.warehouseSubtotal, order.totalPrice),
-        _moneyRow(context, l10n.warehouseDiscounts, -discounts),
-      ],
+      if (anyDiscount) _moneyRow(context, l10n.warehouseSubtotal, order.totalPrice),
+      if (otherDiscounts > 0) _moneyRow(context, l10n.warehouseDiscounts, -otherDiscounts),
+      if (order.loyaltyDiscountAmount > 0) _moneyRow(context, l10n.warehouseLoyaltyLine, -order.loyaltyDiscountAmount),
+      if (order.creditUsedSyp > 0) _moneyRow(context, l10n.warehouseCreditUsedLine, -order.creditUsedSyp),
       _moneyRow(context, l10n.warehousePharmacyPays, order.finalPrice, strong: true),
       if (rep != null) ...[
         const Divider(height: AppSizes.spacingMedium),
@@ -345,8 +347,15 @@ class WarehouseOrderDetailView extends StatelessWidget {
           style: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         _moneyRow(context, l10n.warehouseRepShare, rep.repAmount),
+        _moneyRow(context, l10n.warehouseRepPharmacyShare, rep.pharmacyAmount),
         _moneyRow(context, l10n.warehouseFeniqShare, rep.feniqAmount),
-        _moneyRow(context, l10n.warehouseRepSaving, rep.savingAmount),
+        if (rep.warehouseShareToRep)
+          Text(
+            l10n.warehouseRepShareGiven,
+            style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
+          )
+        else
+          _moneyRow(context, l10n.warehouseRepWarehouseShare, rep.savingAmount),
       ],
       if (order.commissionAmount > 0 || order.platformCompensationSyp > 0) ...[
         const Divider(height: AppSizes.spacingMedium),

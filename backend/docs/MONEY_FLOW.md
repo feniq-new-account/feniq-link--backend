@@ -104,18 +104,22 @@ commission            = round((finalPrice + compensation)
 ```
 
 > **Feniq's profit policy (owner's decision, October 2026).** The warehouse
-> `discountRate` and `commissionRate` now default to **0** - the old 4% / 1% were
-> placeholders, and warehouses still carrying exactly 4 / 1 are zeroed once at
-> boot (`platformRatesPolicy.service.js`). Feniq's only cut of an order is a
-> quarter of the **rep's commission** on it. With a rep rate `r` (set per rep by
-> the warehouse, 0-10%): the rep takes half (`r/2`), Feniq a quarter (`r/4`, added
-> to `commission` above) and the warehouse keeps the other quarter as a saving.
-> The split is frozen on the order (`order.repCommission`, `utils/repCommission.js`),
-> re-derived from the frozen rate when the warehouse edits the order, and
-> counted - for the rep, the warehouse's Reps page and Feniq - on **delivered**
-> orders only, less any approved return in the same proportion as the
-> clawback in §4 (`repCommissionTotals.service.js`). The 4% / 1% example below
-> just pins the arithmetic with arbitrary rates.
+> `discountRate` and `commissionRate` default to **0** (the old 4% / 1% were
+> placeholders; warehouses still on exactly 4 / 1 are zeroed once at boot -
+> `platformRatesPolicy.service.js`). Before any commission, two more discounts
+> come off, both paid by the warehouse: its own **loyalty** tier for the order's
+> size (`utils/loyalty.js`, tiers frozen on the order) and the pharmacy's
+> **credit** at this warehouse (`pharmacyCredit.service.js`, taken automatically).
+> Every commission is then taken on what is left. Feniq's only cut is a quarter
+> of the **rep's commission** `r` (set per rep, 0-10%), which is split in four
+> quarters (`utils/repCommission.js`): Feniq `r/4` (added to `commission`), the
+> pharmacy `r/4` (credited when the order is delivered, off its next order),
+> the rep `r/4`, and the warehouse `r/4` - kept, or given to the rep
+> (`rep.warehouseShareToRep`, the warehouse's choice per rep). The split is
+> frozen on the order (`order.repCommission`), re-derived from the frozen rate on
+> an edit, and counted on **delivered** orders only, less approved returns in the
+> same proportion as the clawback in §4 (`repCommissionTotals.service.js`).
+> The 4% / 1% example below just pins the arithmetic with arbitrary rates.
 
 **The warehouse's effective cut off its own advertised price is therefore
 predictable:**

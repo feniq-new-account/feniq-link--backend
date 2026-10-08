@@ -39,22 +39,29 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
     required String phone,
     required String password,
     required double commissionRate,
+    bool warehouseShareToRep = false,
   }) async {
     final data = await _run(
       (dio) => dio.post(
         Endpoints.warehouseReps,
-        data: {'name': name, 'phone': phone, 'password': password, 'commissionRate': commissionRate},
+        data: {
+          'name': name,
+          'phone': phone,
+          'password': password,
+          'commissionRate': commissionRate,
+          'warehouseShareToRep': warehouseShareToRep,
+        },
       ),
     );
     return _rep(data);
   }
 
   @override
-  Future<WarehouseRep> updateRep(String repId, {double? commissionRate, bool? isActive}) async {
+  Future<WarehouseRep> updateRep(String repId, {double? commissionRate, bool? isActive, bool? warehouseShareToRep}) async {
     final data = await _run(
       (dio) => dio.patch(
         Endpoints.warehouseRep(repId),
-        data: {'commissionRate': ?commissionRate, 'isActive': ?isActive},
+        data: {'commissionRate': ?commissionRate, 'isActive': ?isActive, 'warehouseShareToRep': ?warehouseShareToRep},
       ),
     );
     return _rep(data);
@@ -123,6 +130,21 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
       ),
     );
   }
+
+  @override
+  Future<WarehouseLoyalty> getLoyalty() async =>
+      WarehouseLoyalty.fromSettingsJson(await _run((dio) => dio.get(Endpoints.warehouseSettings)));
+
+  @override
+  Future<WarehouseLoyalty> updateLoyalty({required bool enabled, required List<LoyaltyTier> tiers}) async =>
+      WarehouseLoyalty.fromSettingsJson(
+        await _run(
+          (dio) => dio.put(
+            Endpoints.warehouseLoyalty,
+            data: {'enabled': enabled, 'tiers': [for (final tier in tiers) tier.toJson()]},
+          ),
+        ),
+      );
 
   @override
   Future<WarehouseReturnsPage> getReturns({String? status, String? after}) async {

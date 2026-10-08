@@ -26,6 +26,8 @@ class OrderInvoiceSection extends StatelessWidget {
     required this.totalPrice,
     required this.discountAmount,
     this.advertisementDiscountAmount = 0,
+    this.loyaltyDiscountAmount = 0,
+    this.creditUsedSyp = 0,
     this.discountCode,
     required this.finalPrice,
   });
@@ -38,6 +40,9 @@ class OrderInvoiceSection extends StatelessWidget {
   // platform's rate-derived cut). 0 on a normal order, which is how every
   // order placed before packages existed reads.
   final num advertisementDiscountAmount;
+  // The warehouse's loyalty discount and the pharmacy's credit this order took.
+  final num loyaltyDiscountAmount;
+  final num creditUsedSyp;
   // The discount code the order used, if any - taken off after every other
   // discount above, so it is the last line before the total.
   final OrderDiscountCode? discountCode;
@@ -69,6 +74,10 @@ class OrderInvoiceSection extends StatelessWidget {
               label: l10n.advertisementDiscountLabel,
               amount: -advertisementDiscountAmount,
             ),
+          if (loyaltyDiscountAmount > 0)
+            _TotalsRow(label: l10n.loyaltyDiscountLine, amount: -loyaltyDiscountAmount),
+          if (creditUsedSyp > 0)
+            _TotalsRow(label: l10n.creditUsedLine, amount: -creditUsedSyp),
           if (discountCode != null && discountCode!.discountSyp > 0)
             _TotalsRow(
               label: l10n.discountCodeLine(discountCode!.code),

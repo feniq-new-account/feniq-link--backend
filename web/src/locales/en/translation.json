@@ -189,9 +189,13 @@
       "rate": "Rate",
       "rep": "To the rep",
       "feniq": "To Feniq",
-      "saving": "Warehouse saves",
-      "pending": "Counted in the rep's totals once the order is delivered."
-    }
+      "saving": "Warehouse keeps",
+      "pending": "Counted in the rep's totals once the order is delivered.",
+      "pharmacy": "To the pharmacy (credit)",
+      "shareToRep": "The warehouse's quarter went to the rep"
+    },
+    "loyaltyDiscountLabel": "Loyalty discount",
+    "creditUsedLabel": "From the pharmacy's credit"
   },
   "returns": {
     "filterAll": "All",
@@ -806,7 +810,22 @@
     "minMustBeBelowMax": "The minimum order must be lower than the maximum.",
     "rateRequired": "The exchange rate hasn't loaded yet — order limits can't be changed until an admin has configured it.",
     "requireSealPhotoLabel": "Require a seal photo on delivery confirmation (default for new orders)",
-    "requireSealPhotoHint": "Sets the default for orders placed from now on - each order can still be changed individually from its detail page. When required, an order can't be marked delivered until the pharmacy uploads a photo of the shipment seal."
+    "requireSealPhotoHint": "Sets the default for orders placed from now on - each order can still be changed individually from its detail page. When required, an order can't be marked delivered until the pharmacy uploads a photo of the shipment seal.",
+    "loyalty": {
+      "title": "Loyalty discount",
+      "intro": "A fixed discount you give a pharmacy on an order, by the order's value, on tiers you set and pay for. The pharmacy sees it in the cart and on the invoice. Feniq pays none of it and takes its share of what is left.",
+      "enabled": "Turn on the loyalty discount",
+      "minLabel": "Order of at least",
+      "discountLabel": "Discount",
+      "addTier": "Add tier",
+      "removeTier": "Remove",
+      "save": "Save loyalty discount",
+      "saving": "Saving...",
+      "saved": "Loyalty discount saved.",
+      "example": "Example: an order of 100,000 or more -> 2,000 off; 200,000 or more -> 5,000 off.",
+      "errorTier": "Each tier needs an order value above zero and a discount below it, in whole numbers.",
+      "errorEmpty": "Add at least one tier before turning it on."
+    }
   },
   "settlement": {
     "from": "From",
@@ -1256,18 +1275,26 @@
       "commission": "The commission must be a number from 0 to {{max}}% (at most two decimals)."
     },
     "commissionRate": "Rep commission (% of orders)",
-    "commissionHint": "A percentage of the value of orders from the rep's pharmacies placed through Feniq. Half goes to the rep, a quarter to Feniq, and the rest stays with the warehouse as a saving. Leave it at 0 for no commission. A change applies to new orders only.",
-    "commissionSplit": "Per order: rep {{rep}}, Feniq {{feniq}}, warehouse saves {{saving}}",
+    "commissionHint": "A percentage of the value of orders from the rep's pharmacies placed through Feniq, split in quarters: Feniq, the pharmacy (credit off its next order with you), the rep, and the last quarter is yours - keep it or give it to the rep. Leave it at 0 for no commission. A change applies to new orders only.",
+    "commissionSplit": "Per order: Feniq {{feniq}}, pharmacy {{pharmacy}}, rep {{rep}}, you keep {{saving}}",
     "commission": "Commission",
     "monthCommission": "This month's commission",
     "commissionRep": "Rep: {{amount}}",
     "commissionFeniq": "Feniq: {{amount}}",
-    "commissionSaving": "Warehouse saves: {{amount}}",
+    "commissionSaving": "Warehouse keeps: {{amount}}",
     "commissionNone": "No commission",
     "editCommission": "Edit commission",
     "editCommissionPrompt": "{{name}}'s commission on their orders (0 to {{max}}%). A change applies to new orders only:",
     "commissionUpdated": "{{name}}'s commission is now {{rate}}. It applies to new orders.",
-    "commissionCountsDelivered": "Commissions are counted from delivered orders only, less any approved returns."
+    "commissionCountsDelivered": "Commissions are counted from delivered orders only, less any approved returns.",
+    "commissionPharmacy": "Pharmacy: {{amount}}",
+    "shareToRep": "Give the warehouse's quarter to the rep",
+    "shareToRepHint": "When on, the rep takes half of the commission and the warehouse keeps none of it.",
+    "shareToRepOn": "Your quarter goes to the rep",
+    "shareToRepOff": "Your quarter is yours",
+    "toggleShareToRep": "Warehouse quarter",
+    "shareToRepUpdatedOn": "The warehouse's quarter now goes to {{name}} on new orders.",
+    "shareToRepUpdatedOff": "The warehouse's quarter is yours again on {{name}}'s new orders."
   },
   "registration": {
     "approval": {

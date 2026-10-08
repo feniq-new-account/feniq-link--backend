@@ -32,4 +32,13 @@ const update = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { get, update };
+const updateLoyalty = asyncHandler(async (req, res) => {
+  const warehouse = await loadWarehouseOrThrow(req.user._id);
+  const updated = await settingsService.updateLoyalty(warehouse._id, {
+    enabled: req.body?.enabled,
+    tiers: req.body?.tiers,
+  });
+  res.json({ success: true, message: 'Loyalty updated.', ...settingsViewModel.toWarehouseSettingsResponse(updated) });
+});
+
+module.exports = { get, update, updateLoyalty };

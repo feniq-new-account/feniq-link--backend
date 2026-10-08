@@ -45,7 +45,7 @@ class WarehouseRepsTab extends StatelessWidget {
       builder: (_) => _TextDialog(
         title: l10n.warehouseRepEditRate,
         label: l10n.warehouseRepRate,
-        hint: l10n.warehouseRepEditRateHint,
+        hint: '${l10n.warehouseRepQuartersHint}\n${l10n.warehouseRepEditRateHint}',
         initial: warehouseRate(rep.commissionRate),
         number: true,
       ),
@@ -54,6 +54,18 @@ class WarehouseRepsTab extends StatelessWidget {
     if (rate == null) return;
     if (await cubit.updateRep(rep.id, commissionRate: rate)) {
       messenger.showSnackBar(SnackBar(content: Text(l10n.warehouseRepSaved)));
+    }
+  }
+
+  Future<void> _toggleShare(BuildContext context, WarehouseRep rep) async {
+    final cubit = context.read<WarehouseRepsCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    final give = !rep.warehouseShareToRep;
+    if (await cubit.updateRep(rep.id, warehouseShareToRep: give)) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(give ? l10n.warehouseRepShareToRepOn : l10n.warehouseRepShareToRepOff)),
+      );
     }
   }
 
@@ -105,6 +117,7 @@ class WarehouseRepsTab extends StatelessWidget {
                 extra: rep.name,
               ),
               onEditRate: () => _editRate(context, rep),
+              onToggleShare: () => _toggleShare(context, rep),
               onToggle: () => context.read<WarehouseRepsCubit>().updateRep(rep.id, isActive: !rep.isActive),
               onResetPassword: () => _resetPassword(context, rep),
             );
@@ -115,13 +128,14 @@ class WarehouseRepsTab extends StatelessWidget {
   }
 }
 
-enum _RepAction { rate, toggle, password }
+enum _RepAction { rate, share, toggle, password }
 
 class _RepCard extends StatelessWidget {
   const _RepCard({
     required this.rep,
     required this.onTap,
     required this.onEditRate,
+    required this.onToggleShare,
     required this.onToggle,
     required this.onResetPassword,
   });
@@ -129,6 +143,7 @@ class _RepCard extends StatelessWidget {
   final WarehouseRep rep;
   final VoidCallback onTap;
   final VoidCallback onEditRate;
+  final VoidCallback onToggleShare;
   final VoidCallback onToggle;
   final VoidCallback onResetPassword;
 
@@ -155,6 +170,10 @@ class _RepCard extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSizes.spacingSmall),
                     StatusBadge(label: '${warehouseRate(rep.commissionRate)}%', tone: StatusBadgeTone.info),
+                    if (rep.warehouseShareToRep) ...[
+                      const SizedBox(width: AppSizes.spacingSmall),
+                      StatusBadge(label: l10n.warehouseRepShareGiven, tone: StatusBadgeTone.success),
+                    ],
                     if (!rep.isActive) ...[
                       const SizedBox(width: AppSizes.spacingSmall),
                       StatusBadge(label: l10n.warehouseRepInactive, tone: StatusBadgeTone.danger),
@@ -177,11 +196,17 @@ class _RepCard extends StatelessWidget {
           PopupMenuButton<_RepAction>(
             onSelected: (action) => switch (action) {
               _RepAction.rate => onEditRate(),
+              _RepAction.share => onToggleShare(),
               _RepAction.toggle => onToggle(),
               _RepAction.password => onResetPassword(),
             },
             itemBuilder: (_) => [
               PopupMenuItem(value: _RepAction.rate, child: Text(l10n.warehouseRepEditRate)),
+              CheckedPopupMenuItem(
+                value: _RepAction.share,
+                checked: rep.warehouseShareToRep,
+                child: Text(l10n.warehouseRepShareToRep),
+              ),
               PopupMenuItem(
                 value: _RepAction.toggle,
                 child: Text(rep.isActive ? l10n.warehouseRepDeactivate : l10n.warehouseRepActivate),
@@ -273,6 +298,7 @@ class _AddRepSheetState extends State<_AddRepSheet> {
   final _phone = TextEditingController();
   final _password = TextEditingController();
   final _rate = TextEditingController(text: '2');
+  bool _shareToRep = false;
 
   @override
   void dispose() {
@@ -291,6 +317,7 @@ class _AddRepSheetState extends State<_AddRepSheet> {
       phone: _phone.text.trim(),
       password: _password.text,
       commissionRate: double.parse(_rate.text.trim().replaceAll(',', '.')),
+      warehouseShareToRep: _shareToRep,
     );
     if (ok && navigator.mounted) navigator.pop(true);
   }
@@ -340,13 +367,19 @@ class _AddRepSheetState extends State<_AddRepSheet> {
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
                     decoration: InputDecoration(
                       labelText: l10n.warehouseRepRate,
-                      helperText: l10n.warehouseRepRateHint,
+                      helperText: l10n.warehouseRepQuartersHint,
                       helperMaxLines: 3,
                     ),
                     validator: (value) {
                       final rate = double.tryParse((value ?? '').trim().replaceAll(',', '.'));
                       return rate == null || rate < 0 || rate > 10 ? l10n.errorInvalidCommissionRate : null;
                     },
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.warehouseRepShareToRep),
+                    value: _shareToRep,
+                    onChanged: (value) => setState(() => _shareToRep = value),
                   ),
                   if (state.actionErrorCode != null) ...[
                     const SizedBox(height: AppSizes.spacingSmall),

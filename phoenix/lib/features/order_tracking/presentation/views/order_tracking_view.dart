@@ -284,6 +284,8 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
               totalPrice: order.totalPrice,
               discountAmount: order.discountAmount,
               advertisementDiscountAmount: order.advertisementDiscountAmount,
+              loyaltyDiscountAmount: order.loyaltyDiscountAmount,
+              creditUsedSyp: order.creditUsedSyp,
               discountCode: order.discountCode,
               finalPrice: order.finalPrice,
             ),

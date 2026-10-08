@@ -15,7 +15,7 @@ import {
 } from '../utils/reps';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 
-const EMPTY_FORM = { name: '', phone: '', password: '', commissionRate: '' };
+const EMPTY_FORM = { name: '', phone: '', password: '', commissionRate: '', shareToRep: false };
 
 // The warehouse's field reps: who they are, how many pharmacies each covers,
 // how often they visited them, and this month's orders placed under them.
@@ -51,7 +51,7 @@ export function WarehouseRepsPage() {
   useRealtimeSync([REALTIME_EVENTS.REP_VISIT_CREATED], () => load());
 
   const formRate = parseCommissionInput(form.commissionRate);
-  const commissionPreview = formRate ? commissionSplit(formRate) : null;
+  const commissionPreview = formRate ? commissionSplit(formRate, form.shareToRep) : null;
 
   const lastSeen = (value) => {
     const { key, count } = lastSeenKey(value);
@@ -74,6 +74,7 @@ export function WarehouseRepsPage() {
         phone: normalizePhoneInput(form.phone),
         password: form.password,
         commissionRate: parseCommissionInput(form.commissionRate),
+        warehouseShareToRep: form.shareToRep,
       });
       setNotice(t('reps.created', { name: rep.name, phone: toLocalPhone(rep.phone) }));
       setForm(EMPTY_FORM);
@@ -113,6 +114,20 @@ export function WarehouseRepsPage() {
     try {
       await api.updateWarehouseRep(rep.id, { commissionRate: rate });
       setNotice(t('reps.commissionUpdated', { name: rep.name, rate: formatPercent(rate) }));
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // The warehouse's own quarter of the commission: kept, or given to this rep.
+  const toggleShareToRep = async (rep) => {
+    const next = !rep.warehouseShareToRep;
+    setError(null);
+    setNotice(null);
+    try {
+      await api.updateWarehouseRep(rep.id, { warehouseShareToRep: next });
+      setNotice(t(next ? 'reps.shareToRepUpdatedOn' : 'reps.shareToRepUpdatedOff', { name: rep.name }));
       await load();
     } catch (err) {
       setError(err.message);
@@ -197,11 +212,21 @@ export function WarehouseRepsPage() {
               />
             </label>
             <p className="hint">{t('reps.commissionHint')}</p>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={form.shareToRep}
+                onChange={(e) => setForm({ ...form, shareToRep: e.target.checked })}
+              />
+              {t('reps.shareToRep')}
+            </label>
+            <p className="hint">{t('reps.shareToRepHint')}</p>
             {commissionPreview && (
               <p className="hint">
                 {t('reps.commissionSplit', {
-                  rep: formatPercent(commissionPreview.rep),
                   feniq: formatPercent(commissionPreview.feniq),
+                  pharmacy: formatPercent(commissionPreview.pharmacy),
+                  rep: formatPercent(commissionPreview.rep),
                   saving: formatPercent(commissionPreview.saving),
                 })}
               </p>
@@ -265,7 +290,13 @@ export function WarehouseRepsPage() {
                           {t('reps.commissionFeniq', { amount: formatSyp(rep.monthCommission?.feniqAmount ?? 0) })}
                         </div>
                         <div className="wh-table-sub wh-num">
+                          {t('reps.commissionPharmacy', { amount: formatSyp(rep.monthCommission?.pharmacyAmount ?? 0) })}
+                        </div>
+                        <div className="wh-table-sub wh-num">
                           {t('reps.commissionSaving', { amount: formatSyp(rep.monthCommission?.savingAmount ?? 0) })}
+                        </div>
+                        <div className="wh-table-sub">
+                          {t(rep.warehouseShareToRep ? 'reps.shareToRepOn' : 'reps.shareToRepOff')}
                         </div>
                       </>
                     ) : (
@@ -278,6 +309,9 @@ export function WarehouseRepsPage() {
                       <Link to={`/warehouse/reps/${rep.id}`}>{t('reps.open')}</Link>
                       <button type="button" onClick={() => editCommission(rep)}>
                         {t('reps.editCommission')}
+                      </button>
+                      <button type="button" onClick={() => toggleShareToRep(rep)}>
+                        {t('reps.toggleShareToRep')}: {t(rep.warehouseShareToRep ? 'reps.shareToRepOn' : 'reps.shareToRepOff')}
                       </button>
                       <button type="button" onClick={() => resetPassword(rep)}>
                         {t('reps.resetPassword')}

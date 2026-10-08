@@ -1771,6 +1771,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get loyaltyDiscountLine => 'حسم الولاء من المستودع';
+
+  @override
+  String get creditUsedLine => 'من رصيدك عند المستودع';
+
+  @override
   String get discountCodeUpdating => 'جارٍ تحديث الخصم';
 
   @override
@@ -2567,4 +2573,85 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorReturnAlreadyResolved => 'هالمرتجع انحسم قبل. حدّث الصفحة.';
+
+  @override
+  String get warehouseLoyaltyTitle => 'حسم الولاء';
+
+  @override
+  String get warehouseLoyaltyIntro =>
+      'حسم ثابت بتعطيه للصيدلية على الطلبية حسب قيمتها. إنت بتحدد الشرائح وإنت بتدفعه، وفينيق بتاخد حصتها من الباقي بعد الحسم.';
+
+  @override
+  String get warehouseLoyaltyEnabled => 'شغّل حسم الولاء';
+
+  @override
+  String get warehouseLoyaltyMin => 'إذا الطلبية من';
+
+  @override
+  String get warehouseLoyaltyDiscount => 'الحسم';
+
+  @override
+  String get warehouseLoyaltyAddTier => 'إضافة شريحة';
+
+  @override
+  String get warehouseLoyaltySave => 'حفظ حسم الولاء';
+
+  @override
+  String get warehouseLoyaltySaved => 'انحفظ حسم الولاء.';
+
+  @override
+  String get warehouseLoyaltyExample =>
+      'مثال: طلبية بـ 100,000 أو أكتر ← حسم 2,000.';
+
+  @override
+  String get warehouseLoyaltyTierError =>
+      'كل شريحة بدها قيمة طلبية أكبر من صفر وحسم أصغر منها.';
+
+  @override
+  String get warehouseLoyaltyOff => 'مطفي';
+
+  @override
+  String warehouseLoyaltyOnTiers(int count) {
+    return 'شغّال · $count شرائح';
+  }
+
+  @override
+  String get warehouseLoyaltyLine => 'حسم الولاء';
+
+  @override
+  String get warehouseCreditUsedLine => 'من رصيد الصيدلية';
+
+  @override
+  String get warehouseRepPharmacyShare => 'رصيد للصيدلية';
+
+  @override
+  String get warehouseRepWarehouseShare => 'ربع المستودع';
+
+  @override
+  String get warehouseRepWarehouseShareToRep => 'ربع المستودع (للمندوب)';
+
+  @override
+  String get warehouseRepShareToRep => 'أعطي ربعي للمندوب';
+
+  @override
+  String get warehouseRepShareToRepOn =>
+      'ربعك صار للمندوب على الطلبيات الجديدة.';
+
+  @override
+  String get warehouseRepShareToRepOff => 'ربعك رجع إلك على الطلبيات الجديدة.';
+
+  @override
+  String get warehouseRepShareGiven => 'ربعك للمندوب';
+
+  @override
+  String get warehouseRepQuartersHint =>
+      'ربع لفينيق، ربع رصيد للصيدلية، ربع للمندوب، والربع الأخير إلك أو للمندوب. بين 0 و10.';
+
+  @override
+  String get errorInvalidLoyaltyTiers =>
+      'كل شريحة بدها قيمة طلبية أكبر من صفر وحسم أصغر منها، ولا شريحتين بنفس القيمة.';
+
+  @override
+  String get errorLoyaltyTiersRequired =>
+      'ضيف شريحة وحدة ع الأقل قبل ما تشغّل حسم الولاء.';
 }

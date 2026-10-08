@@ -1770,6 +1770,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get loyaltyDiscountLine => 'Warehouse loyalty discount';
+
+  @override
+  String get creditUsedLine => 'From your credit with the warehouse';
+
+  @override
   String get discountCodeUpdating => 'Updating the discount';
 
   @override
@@ -2572,4 +2578,86 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorReturnAlreadyResolved =>
       'This return was already resolved. Refresh the page.';
+
+  @override
+  String get warehouseLoyaltyTitle => 'Loyalty discount';
+
+  @override
+  String get warehouseLoyaltyIntro =>
+      'A fixed amount off an order by its size. You set the tiers and you pay for it; Feniq takes its share of what is left.';
+
+  @override
+  String get warehouseLoyaltyEnabled => 'Turn the loyalty discount on';
+
+  @override
+  String get warehouseLoyaltyMin => 'Order from';
+
+  @override
+  String get warehouseLoyaltyDiscount => 'Discount';
+
+  @override
+  String get warehouseLoyaltyAddTier => 'Add a tier';
+
+  @override
+  String get warehouseLoyaltySave => 'Save the loyalty discount';
+
+  @override
+  String get warehouseLoyaltySaved => 'Loyalty discount saved.';
+
+  @override
+  String get warehouseLoyaltyExample =>
+      'Example: an order of 100,000 or more -> 2,000 off.';
+
+  @override
+  String get warehouseLoyaltyTierError =>
+      'Each tier needs an order value above zero and a smaller discount.';
+
+  @override
+  String get warehouseLoyaltyOff => 'Off';
+
+  @override
+  String warehouseLoyaltyOnTiers(int count) {
+    return 'On · $count tiers';
+  }
+
+  @override
+  String get warehouseLoyaltyLine => 'Loyalty discount';
+
+  @override
+  String get warehouseCreditUsedLine => 'From the pharmacy\'s credit';
+
+  @override
+  String get warehouseRepPharmacyShare => 'Pharmacy credit';
+
+  @override
+  String get warehouseRepWarehouseShare => 'Your quarter';
+
+  @override
+  String get warehouseRepWarehouseShareToRep => 'Your quarter (to the rep)';
+
+  @override
+  String get warehouseRepShareToRep => 'Give my quarter to the rep';
+
+  @override
+  String get warehouseRepShareToRepOn =>
+      'Your quarter now goes to the rep on new orders.';
+
+  @override
+  String get warehouseRepShareToRepOff =>
+      'Your quarter is yours again on new orders.';
+
+  @override
+  String get warehouseRepShareGiven => 'Your quarter to the rep';
+
+  @override
+  String get warehouseRepQuartersHint =>
+      'A quarter to Feniq, a quarter as pharmacy credit, a quarter to the rep, and the last quarter yours or the rep\'s. Between 0 and 10.';
+
+  @override
+  String get errorInvalidLoyaltyTiers =>
+      'Each tier needs an order value above zero and a smaller discount, with no two on the same value.';
+
+  @override
+  String get errorLoyaltyTiersRequired =>
+      'Add at least one tier before turning the loyalty discount on.';
 }

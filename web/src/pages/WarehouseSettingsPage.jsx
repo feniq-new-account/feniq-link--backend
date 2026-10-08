@@ -5,6 +5,8 @@ import { useExchangeRate, useExchangeRateActions } from '../context/ExchangeRate
 import { RateChangedNotice } from '../components/RateChangedNotice';
 import { sypFromUsd } from '../utils/currency';
 import { submitWithRateCheck, withRateUsed } from '../utils/exchangeRate';
+import { FEATURES } from '../config/features';
+import { LoyaltySettingsCard } from '../components/LoyaltySettingsCard';
 
 // Section: the warehouse's own order-size limits. Both are opt-in - an empty
 // minimum means "no minimum" (stored as 0) and an empty maximum means "no
@@ -197,15 +199,19 @@ export function WarehouseSettingsPage() {
               />
             </label>
 
-            <label className="checkbox-row">
-              <input
-                type="checkbox"
-                checked={requireSealPhoto}
-                onChange={(e) => setRequireSealPhoto(e.target.checked)}
-              />
-              {t('warehouseSettings.requireSealPhotoLabel')}
-            </label>
-            <p className="hint wh-settings-hint">{t('warehouseSettings.requireSealPhotoHint')}</p>
+            {FEATURES.deliverySealPhoto && (
+              <>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={requireSealPhoto}
+                    onChange={(e) => setRequireSealPhoto(e.target.checked)}
+                  />
+                  {t('warehouseSettings.requireSealPhotoLabel')}
+                </label>
+                <p className="hint wh-settings-hint">{t('warehouseSettings.requireSealPhotoHint')}</p>
+              </>
+            )}
 
             <RateChangedNotice rateChange={rateChange} />
             {error && <p className="error-text">{error}</p>}
@@ -221,6 +227,7 @@ export function WarehouseSettingsPage() {
           </form>
         </div>
       )}
+      {!isLoading && <LoyaltySettingsCard />}
     </div>
   );
 }

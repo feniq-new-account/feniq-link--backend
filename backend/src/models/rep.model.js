@@ -20,9 +20,12 @@ const repSchema = new Schema(
     isActive: { type: Boolean, default: true },
     // The commission (percent of what the warehouse earns on an order) this
     // warehouse pays the rep on their pharmacies' orders - set by the
-    // warehouse. On an order through Feniq it is split: half to the rep, a
-    // quarter to Feniq, the rest saved (utils/repCommission.js). 0 = none.
+    // warehouse. On an order through Feniq it is split in quarters: Feniq, the
+    // pharmacy, the rep, and the warehouse (utils/repCommission.js). 0 = none.
     commissionRate: { type: Number, default: 0, min: 0, max: 10 },
+    // The warehouse's own quarter: kept (false) or given to this rep (true),
+    // the warehouse's choice per rep. Applies to orders placed from then on.
+    warehouseShareToRep: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

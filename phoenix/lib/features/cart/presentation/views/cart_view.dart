@@ -761,6 +761,20 @@ class _QuoteSummary extends StatelessWidget {
             '- ${formatSyp(quote.platformDiscountSyp, l10n.currencySuffix)}',
             key: const Key('cartPlatformDiscount'),
           ),
+        if (quote != null && quote.loyaltyDiscountSyp > 0)
+          row(
+            l10n.loyaltyDiscountLine,
+            '- ${formatSyp(quote.loyaltyDiscountSyp, l10n.currencySuffix)}',
+            style: positive,
+            key: const Key('cartLoyaltyDiscount'),
+          ),
+        if (quote != null && quote.creditUsedSyp > 0)
+          row(
+            l10n.creditUsedLine,
+            '- ${formatSyp(quote.creditUsedSyp, l10n.currencySuffix)}',
+            style: positive,
+            key: const Key('cartCreditUsed'),
+          ),
         if (state.hasDiscountCode)
           row(
             l10n.discountCodeLine(state.discountCode!),

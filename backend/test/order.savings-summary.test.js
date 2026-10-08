@@ -107,6 +107,8 @@ test('returns a fully zeroed breakdown for a pharmacy that has never ordered', a
     advertisementSyp: 0,
     platformDiscountSyp: 0,
     discountCodeSyp: 0,
+    loyaltySyp: 0,
+    creditSyp: 0,
     totalSavingsSyp: 0,
     totalSavingsUsd: 0,
   });

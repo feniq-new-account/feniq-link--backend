@@ -1,16 +1,22 @@
-// The rep programme's money rule (owner's decision, HANDOFF.md):
+// The rep programme's money rule (owner's decision, October 2026 - HANDOFF.md):
 //
 // A warehouse pays its rep a commission on the orders of the rep's pharmacies
 // (the "rep commission rate", e.g. 2%). On an order that goes through Feniq
-// that commission is split three ways:
+// that commission is split in four quarters:
 //
-//   the rep      takes HALF of it     (REP_SHARE)
-//   Feniq        takes a QUARTER of it (FENIQ_SHARE) - Feniq's only cut of an order
-//   the warehouse keeps the REST      (what it saves against paying the rep in full)
+//   Feniq         a QUARTER (FENIQ_SHARE) - Feniq's only cut of an order
+//   the pharmacy  a QUARTER (PHARMACY_SHARE) - credit at this warehouse, taken
+//                 off its next order automatically (pharmacyCredit.service.js)
+//   the rep       a QUARTER (REP_SHARE)
+//   the warehouse the last QUARTER - it keeps it, or gives it to the rep
+//                 (rep.warehouseShareToRep, the warehouse's choice per rep)
 //
-// An order with no rep has no rep commission and so no Feniq commission.
-const REP_SHARE = 0.5;
+// An order with no rep has no rep commission, and so no Feniq commission and
+// no pharmacy credit.
 const FENIQ_SHARE = 0.25;
+const PHARMACY_SHARE = 0.25;
+const REP_SHARE = 0.25;
+const WAREHOUSE_SHARE = 0.25;
 
 // The most a rep commission rate may be, in percent. A guard against a typo
 // (20 instead of 2), not a business limit.
@@ -27,20 +33,41 @@ function feniqRateFor(repCommissionRate) {
   return roundRate((Number(repCommissionRate) || 0) * FENIQ_SHARE);
 }
 
-// The three amounts, in SYP, for an order the warehouse earns `revenueSyp` on.
+// The rep's own part of the rate: a quarter, or half when the warehouse gives
+// the rep its quarter too.
+function repShareFor(warehouseShareToRep) {
+  return warehouseShareToRep ? REP_SHARE + WAREHOUSE_SHARE : REP_SHARE;
+}
+
+function repRateFor(repCommissionRate, warehouseShareToRep = false) {
+  return roundRate((Number(repCommissionRate) || 0) * repShareFor(warehouseShareToRep));
+}
+
+// The four amounts, in SYP, for an order the warehouse earns `revenueSyp` on.
 // `feniqAmount` is computed exactly the way the order's platform commission is
-// (round(revenue x feniqRate / 100)), so the two always agree; the warehouse's
-// saving is whatever of the whole commission is left, never negative.
-function splitRepCommission(revenueSyp, repCommissionRate) {
+// (round(revenue x feniqRate / 100)), so the two always agree; what the
+// warehouse keeps is whatever of the whole commission is left, never negative.
+function splitRepCommission(revenueSyp, repCommissionRate, { warehouseShareToRep = false } = {}) {
   const rate = Number(repCommissionRate) || 0;
+  const giveToRep = Boolean(warehouseShareToRep);
   if (!(rate > 0) || !(revenueSyp > 0)) {
-    return { rate, totalAmount: 0, repAmount: 0, feniqAmount: 0, savingAmount: 0 };
+    return {
+      rate,
+      warehouseShareToRep: giveToRep,
+      totalAmount: 0,
+      repAmount: 0,
+      feniqAmount: 0,
+      pharmacyAmount: 0,
+      savingAmount: 0,
+    };
   }
+  const amountAt = (share) => Math.round((revenueSyp * roundRate(rate * share)) / 100);
   const totalAmount = Math.round((revenueSyp * rate) / 100);
-  const feniqAmount = Math.round((revenueSyp * feniqRateFor(rate)) / 100);
-  const repAmount = Math.round((revenueSyp * roundRate(rate * REP_SHARE)) / 100);
-  const savingAmount = Math.max(0, totalAmount - feniqAmount - repAmount);
-  return { rate, totalAmount, repAmount, feniqAmount, savingAmount };
+  const feniqAmount = amountAt(FENIQ_SHARE);
+  const pharmacyAmount = amountAt(PHARMACY_SHARE);
+  const repAmount = amountAt(repShareFor(giveToRep));
+  const savingAmount = Math.max(0, totalAmount - feniqAmount - pharmacyAmount - repAmount);
+  return { rate, warehouseShareToRep: giveToRep, totalAmount, repAmount, feniqAmount, pharmacyAmount, savingAmount };
 }
 
 // Reads a rate from a request: a number (or numeric string) from 0 to the
@@ -55,10 +82,13 @@ function parseRepCommissionRate(value) {
 }
 
 module.exports = {
-  REP_SHARE,
   FENIQ_SHARE,
+  PHARMACY_SHARE,
+  REP_SHARE,
+  WAREHOUSE_SHARE,
   MAX_REP_COMMISSION_RATE,
   feniqRateFor,
+  repRateFor,
   splitRepCommission,
   parseRepCommissionRate,
 };

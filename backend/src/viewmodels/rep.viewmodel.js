@@ -8,6 +8,7 @@ function toRep(rep) {
     phone: rep.phone,
     isActive: rep.isActive,
     commissionRate: rep.commissionRate ?? 0,
+    warehouseShareToRep: rep.warehouseShareToRep ?? false,
     createdAt: rep.createdAt,
   };
 }
@@ -30,7 +31,7 @@ function toRepRow({
     lastVisitAt,
     monthOrdersCount,
     monthOrdersTotal,
-    monthCommission: monthCommission ?? { repAmount: 0, feniqAmount: 0, savingAmount: 0 },
+    monthCommission: monthCommission ?? { repAmount: 0, feniqAmount: 0, pharmacyAmount: 0, savingAmount: 0 },
   };
 }
 
