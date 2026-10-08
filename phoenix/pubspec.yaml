@@ -76,6 +76,8 @@ dependencies:
   uuid: ^4.6.0
   mobile_scanner: ^7.4.2
   qr_flutter: ^4.1.0
+  # Payments by voice (warehouse accounts): Android's own recognizer, free.
+  speech_to_text: ^7.0.0
 
 dev_dependencies:
   flutter_test:

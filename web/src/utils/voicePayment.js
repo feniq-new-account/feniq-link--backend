@@ -256,10 +256,13 @@ export function matchPharmacies(name, accounts) {
 }
 
 // What to record, given the pharmacy's balance: { paid, left } in whole liras,
-// or null when the words don't add up to a payment (nothing said, or more than
-// is owed for "all"/"left").
+// or null when the words don't add up to a payment: nothing said, or a sum
+// above what is owed (a misheard "fifty thousand" must not become "fifty
+// million" - the card refuses it and the operator corrects the sentence).
 export function paymentFor(parsed, balanceSyp) {
-  if (parsed.kind === 'amount') return { paid: parsed.paid, left: Math.max(0, balanceSyp - parsed.paid) };
+  if (parsed.kind === 'amount') {
+    return parsed.paid <= balanceSyp ? { paid: parsed.paid, left: balanceSyp - parsed.paid } : null;
+  }
   if (parsed.kind === 'full' && balanceSyp > 0) return { paid: balanceSyp, left: 0 };
   if (parsed.kind === 'left' && balanceSyp > parsed.left) {
     return { paid: balanceSyp - parsed.left, left: parsed.left };

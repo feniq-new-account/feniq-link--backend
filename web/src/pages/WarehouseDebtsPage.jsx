@@ -8,6 +8,7 @@ import { formatSyp, formatUsd, remainingPaymentAmountFromSyp } from '../utils/cu
 import { PAYMENT_METHODS, PAYMENT_CURRENCIES as CURRENCIES, createIdempotencyKeys } from '../utils/payments';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { QuickPaymentModal } from '../components/QuickPaymentModal';
+import { VoicePaymentModal } from '../components/VoicePaymentModal';
 import { displayName } from '../utils/displayName';
 
 const PAGE_SIZE = 20;
@@ -598,6 +599,7 @@ export function WarehouseDebtsPage() {
   // A row's "pay in full" / "part payment" open this: { mode, row }.
   const [paying, setPaying] = useState(null);
   const [payMessage, setPayMessage] = useState(null);
+  const [voiceOpen, setVoiceOpen] = useState(false);
 
   // Debounced the same 300ms as every other search box in the panel, so
   // typing doesn't fire a request per keystroke.
@@ -662,7 +664,21 @@ export function WarehouseDebtsPage() {
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
+        <button type="button" className="btn-secondary" onClick={() => setVoiceOpen(true)}>
+          {t('voicePay.title')}
+        </button>
       </div>
+
+      {voiceOpen && (
+        <VoicePaymentModal
+          onClose={() => setVoiceOpen(false)}
+          onDone={({ name, amount }) => {
+            setVoiceOpen(false);
+            setPayMessage(`${name}: ${t('quickPay.recorded', { amount: formatSyp(amount) })}`);
+            reset();
+          }}
+        />
+      )}
 
       {error && <p className="error-text">{error}</p>}
       {payMessage && <p className="hint">{payMessage}</p>}

@@ -26,6 +26,10 @@ describe('paymentFor', () => {
   it('takes the sum said and what is left after it', () => {
     expect(paymentFor({ kind: 'amount', paid: 40000, left: null }, 100000)).toEqual({ paid: 40000, left: 60000 });
   });
+  it('a sum above what is owed is refused', () => {
+    expect(paymentFor({ kind: 'amount', paid: 150000, left: null }, 100000)).toBeNull();
+    expect(paymentFor({ kind: 'amount', paid: 100000, left: null }, 100000)).toEqual({ paid: 100000, left: 0 });
+  });
   it('"all" pays the balance, but only when something is owed', () => {
     expect(paymentFor({ kind: 'full' }, 100000)).toEqual({ paid: 100000, left: 0 });
     expect(paymentFor({ kind: 'full' }, 0)).toBeNull();

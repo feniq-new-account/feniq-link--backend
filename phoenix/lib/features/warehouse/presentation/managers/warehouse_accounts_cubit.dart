@@ -96,6 +96,19 @@ class WarehouseAccountsCubit extends Cubit<WarehouseAccountsState> {
     }
   }
 
+  /// Every pharmacy account (all pages) - what a spoken name is matched against.
+  Future<List<WarehouseAccountRow>> allAccounts() async {
+    final all = <WarehouseAccountRow>[];
+    String? cursor;
+    for (var page = 0; page < 25; page++) {
+      final result = await _repository.getAccounts(after: cursor);
+      all.addAll(result.accounts);
+      if (!result.hasMore || result.nextCursor == null) break;
+      cursor = result.nextCursor;
+    }
+    return all;
+  }
+
   /// Records a cash payment from a pharmacy straight from the list, then
   /// reloads it. True when the server took it. [idempotencyKey] stays the
   /// same for one payment, so a resend never credits the pharmacy twice.

@@ -1159,5 +1159,18 @@
   "warehouseAccountPaySave": "سجّل الدفعة",
   "warehouseAccountPayInvalid": "اكتب مبلغ أكبر من صفر وأصغر من المبلغ المطلوب.",
   "warehouseAccountPayRecorded": "انسجّلت دفعة {amount}",
-  "warehouseAccountPayFailed": "الدفعة ما انحفظت. جرّب مرة تانية."
+  "warehouseAccountPayFailed": "الدفعة ما انحفظت. جرّب مرة تانية.",
+  "warehouseVoiceTitle": "تسجيل دفعة بالصوت",
+  "warehouseVoiceHint": "احكي مثلاً: «صيدلية النور دفعت خمسين ألف» أو «صيدلية الأمل دفعت المبلغ كامل».",
+  "warehouseVoiceSpeak": "اضغط واحكي",
+  "warehouseVoiceStop": "وقّف",
+  "warehouseVoiceHeard": "اللي انسمع (بتقدر تعدّله)",
+  "warehouseVoiceNoMic": "الصوت مو متاح بهالموبايل. اكتب الجملة بالخانة.",
+  "warehouseVoiceNotUnderstood": "ما فهمت الجملة. جرّب: اسم الصيدلية + دفعت + المبلغ.",
+  "warehouseVoiceNoPharmacy": "ما لقيت هالصيدلية. عدّل الاسم.",
+  "warehouseVoiceOwes": "عليها {amount}",
+  "warehouseVoiceWillRecord": "رح تنسجّل دفعة {amount}",
+  "warehouseVoiceLeftAfter": "بيضل عليها {amount}",
+  "warehouseVoiceCannotRecord": "المبلغ ما بيركب مع حساب هالصيدلية (يا صفر، يا أكبر من المطلوب).",
+  "warehouseVoiceConfirm": "تمام، سجّل"
 }

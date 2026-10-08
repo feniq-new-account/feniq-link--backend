@@ -375,6 +375,23 @@
     "statusPending": "Pending review",
     "linkedProduct": "Linked product"
   },
+  "voicePay": {
+    "title": "Record a payment by voice",
+    "hint": "Say, in Arabic, for example: Al-Noor pharmacy paid fifty thousand, or Al-Amal paid the full amount.",
+    "speak": "Tap and speak",
+    "stop": "Stop",
+    "heard": "What was heard (you can edit it)",
+    "placeholder": "صيدلية النور دفعت خمسين ألف",
+    "micError": "The microphone failed ({{code}}). Type the sentence in the box.",
+    "notUnderstood": "I did not understand. Try: pharmacy name + paid + the amount.",
+    "noPharmacy": "No pharmacy found for that name. Edit the name.",
+    "owes": "owes {{amount}}",
+    "willRecord": "A payment of {{amount}} will be recorded",
+    "leftAfter": "It will still owe {{amount}}",
+    "cannotRecord": "That amount does not fit this pharmacy's account (zero, or more than it owes).",
+    "confirm": "OK, record it",
+    "note": "Payment recorded by voice"
+  },
   "quickPay": {
     "fullTitle": "Pay in full",
     "partialTitle": "Part payment",
