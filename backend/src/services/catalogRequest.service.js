@@ -91,6 +91,8 @@ async function fulfil(request, catalogItem, adminId, session) {
     unitGiven: Boolean(request.unit),
     bonuses: request.bonuses.map((tier) => ({ buy: tier.buy, free: tier.free })),
     bonusGiven: true,
+    productionDate: request.productionDate ?? undefined,
+    expiryDate: request.expiryDate ?? undefined,
   });
   if (write.blockedCode) {
     throw ApiError.conflict(

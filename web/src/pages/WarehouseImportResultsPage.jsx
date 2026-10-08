@@ -162,6 +162,8 @@ function ReviewRow({ batchId, row, units, onResolved }) {
   const [suggestions, setSuggestions] = useState(row.suggestions ?? []);
   const [unit, setUnit] = useState(row.parsed.unit ?? '');
   const [bonus, setBonus] = useState(row.raw.bonus ?? '');
+  const [productionDate, setProductionDate] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
   const [currency, setCurrency] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -170,6 +172,7 @@ function ReviewRow({ batchId, row, units, onResolved }) {
 
   const needsUnit = row.reasons.includes('unknown_unit');
   const needsBonus = row.reasons.includes('bad_bonus');
+  const needsDate = row.reasons.includes('bad_date');
   const needsCurrency = row.reasons.includes('missing_currency') || row.reasons.includes('unknown_currency');
   const isDuplicate = row.reasons.includes('duplicate_in_file');
 
@@ -195,6 +198,9 @@ function ReviewRow({ batchId, row, units, onResolved }) {
     const body = {};
     if (needsUnit && unit) body.unit = unit;
     if (needsBonus) body.bonus = bonus;
+    // A date left empty keeps whatever the file gave (an unreadable one was left out).
+    if (needsDate && productionDate) body.productionDate = productionDate;
+    if (needsDate && expiryDate) body.expiryDate = expiryDate;
     if (needsCurrency && currency) body.currency = currency;
     return body;
   };
@@ -226,6 +232,8 @@ function ReviewRow({ batchId, row, units, onResolved }) {
         {row.raw.name} — {row.raw.manufacturer} — {row.raw.price} {row.raw.currency}
         {row.raw.unit && ` — ${row.raw.unit}`}
         {row.raw.bonus && ` — ${t('importResults.bonus')} ${row.raw.bonus}`}
+        {row.raw.productionDate && ` — ${t('importResults.productionDate')} ${row.raw.productionDate}`}
+        {row.raw.expiryDate && ` — ${t('importResults.expiryDate')} ${row.raw.expiryDate}`}
       </p>
       <p className="hint">{row.reasons.map((reason) => t(`importResults.reason.${reason}`)).join('، ')}</p>
 
@@ -249,6 +257,18 @@ function ReviewRow({ batchId, row, units, onResolved }) {
               {t('importResults.bonus')}
               <input value={bonus} onChange={(e) => setBonus(e.target.value)} placeholder="10+1" />
             </label>
+          )}
+          {needsDate && (
+            <>
+              <label>
+                {t('importResults.productionDate')}
+                <input type="date" value={productionDate} onChange={(e) => setProductionDate(e.target.value)} />
+              </label>
+              <label>
+                {t('importResults.expiryDate')}
+                <input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+              </label>
+            </>
           )}
           {needsCurrency && (
             <label>
