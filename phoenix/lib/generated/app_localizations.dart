@@ -4597,6 +4597,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paid on delivery of order #{number}'**
   String warehouseCollectNote(int number);
+
+  /// No description provided for @warehouseAccountPurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Bought {amount}'**
+  String warehouseAccountPurchases(String amount);
+
+  /// No description provided for @warehouseAccountPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {amount}'**
+  String warehouseAccountPaid(String amount);
+
+  /// No description provided for @warehouseAccountLastPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Last payment {date}'**
+  String warehouseAccountLastPayment(String date);
+
+  /// No description provided for @warehouseAccountNoPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments yet'**
+  String get warehouseAccountNoPayment;
+
+  /// No description provided for @warehouseAccountPayFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay in full'**
+  String get warehouseAccountPayFull;
+
+  /// No description provided for @warehouseAccountPayPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Part payment'**
+  String get warehouseAccountPayPartial;
+
+  /// No description provided for @warehouseAccountPayFullConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a cash payment of {amount}?'**
+  String warehouseAccountPayFullConfirm(String amount);
+
+  /// No description provided for @warehouseAccountPayOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes: {amount}'**
+  String warehouseAccountPayOwes(String amount);
+
+  /// No description provided for @warehouseAccountPaySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Record payment'**
+  String get warehouseAccountPaySave;
+
+  /// No description provided for @warehouseAccountPayInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount above zero and below the amount owed.'**
+  String get warehouseAccountPayInvalid;
+
+  /// No description provided for @warehouseAccountPayRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded a payment of {amount}'**
+  String warehouseAccountPayRecorded(String amount);
+
+  /// No description provided for @warehouseAccountPayFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The payment wasn\'t saved. Try again.'**
+  String get warehouseAccountPayFailed;
 }
 
 class _AppLocalizationsDelegate

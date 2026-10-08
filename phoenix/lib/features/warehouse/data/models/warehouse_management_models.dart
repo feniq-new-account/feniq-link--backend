@@ -214,6 +214,9 @@ class WarehouseAccountRow {
     this.phone,
     this.balanceSyp = 0,
     this.lastActivityAt,
+    this.purchasesSyp = 0,
+    this.paidSyp = 0,
+    this.lastPaymentAt,
   });
 
   final String pharmacyId;
@@ -223,6 +226,10 @@ class WarehouseAccountRow {
   // Positive: the pharmacy owes. Negative: it is in credit.
   final double balanceSyp;
   final DateTime? lastActivityAt;
+  // What it bought (delivered orders) and paid, and when it last paid.
+  final double purchasesSyp;
+  final double paidSyp;
+  final DateTime? lastPaymentAt;
 
   double get outstandingDebtSyp => balanceSyp > 0 ? balanceSyp : 0;
   double get creditBalanceSyp => balanceSyp < 0 ? -balanceSyp : 0;
@@ -234,6 +241,9 @@ class WarehouseAccountRow {
     phone: _strOrNull(json['phone']),
     balanceSyp: _double(json['balanceSyp']),
     lastActivityAt: _date(json['lastActivityAt']),
+    purchasesSyp: _double(json['purchasesSyp']),
+    paidSyp: _double(json['paidSyp']),
+    lastPaymentAt: _date(json['lastPaymentAt']),
   );
 }
 
