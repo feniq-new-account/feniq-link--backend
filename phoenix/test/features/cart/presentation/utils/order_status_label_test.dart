@@ -98,12 +98,6 @@ void main() {
       expect(orderWith('preparing').currentStage, OrderStage.accepted);
     });
 
-    test('"received" shows only while on the way and no seal photo is owed', () {
-      expect(orderWith('out_for_delivery').canConfirmReceived, isTrue);
-      expect(orderWith('confirmed').canConfirmReceived, isFalse);
-      expect(orderWith('delivered').canConfirmReceived, isFalse);
-    });
-
     test('an order the warehouse edited gets an "edited" step', () {
       final order = orderWith(
         'pending',

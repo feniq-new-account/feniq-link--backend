@@ -29,8 +29,6 @@ router.get(
 );
 router.get('/:id', authenticate, authorize('pharmacy'), requireActiveStatus, controller.getOne);
 router.post('/:id/cancel', authenticate, authorize('pharmacy'), requireActiveStatus, controller.cancel);
-// The pharmacist confirms an order on its way arrived: it becomes delivered.
-router.post('/:id/received', authenticate, authorize('pharmacy'), requireActiveStatus, controller.confirmReceived);
 // Section: optional delivery seal photo - multipart, single `image` field.
 // Records the photo on the order; never changes the order status.
 router.post(

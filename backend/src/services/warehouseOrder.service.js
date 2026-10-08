@@ -33,10 +33,10 @@ const pharmacyCredit = require('./pharmacyCredit.service');
 // Section 7/13b: the warehouse only ever moves an order forward, one stage at
 // a time - no skipping, no picking an arbitrary status. Three stages, one
 // notification each (the owner's call, October 2026): accepted ('confirmed')
-// -> on the way ('out_for_delivery') -> delivered. The warehouse taps twice;
-// delivered normally comes from the pharmacy tapping "received"
-// (confirmReceivedByPharmacy), or on its own a day after it left
-// (autoDeliverStaleOrders) - the warehouse can still mark it itself.
+// -> on the way ('out_for_delivery') -> delivered. The pharmacist taps
+// nothing: the warehouse marks it delivered (when it collects the money), or
+// it closes on its own a day after it left (autoDeliverStaleOrders) - as a
+// delivered order whose amount is owed, never as paid.
 // 'preparing' is no longer reached; an older order left in it moves straight
 // on to the road. 'cancelled' isn't part of it: only the pharmacist can cancel
 // (order.service.js), and only before 'out_for_delivery'.
@@ -167,7 +167,7 @@ async function advanceOrderStatus(orderId, warehouseId, userId) {
   }
 
   if (next === 'delivered') {
-    return deliverOrder(order, { userId, source: 'warehouse' });
+    return deliverOrder(order, { userId });
   }
 
   const now = new Date();
@@ -230,42 +230,14 @@ async function notifyPharmacyOfStage(order, status) {
   }
 }
 
-// The warehouse's push when the pharmacy itself confirms it received the order.
-async function notifyWarehouseOfReceipt(order) {
-  try {
-    const [warehouse, pharmacy] = await Promise.all([
-      Warehouse.findById(order.warehouseId, 'userId').lean(),
-      Pharmacy.findById(order.pharmacyId, 'nameAr nameEn').lean(),
-    ]);
-    if (!warehouse?.userId) return;
-    const nameAr = pharmacy?.nameAr || pharmacy?.nameEn || 'الصيدلية';
-    const nameEn = pharmacy?.nameEn || pharmacy?.nameAr || 'The pharmacy';
-    await notificationService.sendToUser(warehouse.userId, {
-      titleAr: 'تم التسليم',
-      titleEn: 'Delivered',
-      bodyAr: `${nameAr} استلمت الطلبية رقم ${order.orderNumber}`,
-      bodyEn: `${nameEn} received order #${order.orderNumber}`,
-      type: 'order_update',
-      relatedOrderId: order._id,
-    });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to send order received notification.', err.message);
-  }
-}
-
-// out_for_delivery -> delivered, whoever triggers it: the warehouse, the
-// pharmacy tapping "received", or the day-old automatic close. One
+// out_for_delivery -> delivered, whoever triggers it: the warehouse or the
+// day-old automatic close. One
 // transaction: the status move (a compare-and-swap, so it can never be
 // delivered twice), the pharmacy's credit, and the ledger charge - an order
 // cannot end up delivered without its charge.
-async function deliverOrder(order, { userId, source, note = null }) {
+async function deliverOrder(order, { userId, note = null }) {
   if (order.status !== 'out_for_delivery') {
-    throw ApiError.badRequest(
-      'This order is not on its way.',
-      undefined,
-      source === 'pharmacy' ? 'ORDER_NOT_ON_THE_WAY' : 'ORDER_NOT_ADVANCEABLE'
-    );
+    throw ApiError.badRequest('This order is not on its way.', undefined, 'ORDER_NOT_ADVANCEABLE');
   }
   // Section: optional proof-of-delivery (switched off by FEATURES today).
   if (FEATURES.deliverySealPhoto && order.requiresDeliverySealPhoto && !order.deliverySealPhoto) {
@@ -309,25 +281,8 @@ async function deliverOrder(order, { userId, source, note = null }) {
     warehouseId: delivered.warehouseId.toString(),
     status: 'delivered',
   });
-  if (source === 'pharmacy') {
-    await notifyWarehouseOfReceipt(delivered);
-  } else {
-    await notifyPharmacyOfStage(delivered, 'delivered');
-  }
+  await notifyPharmacyOfStage(delivered, 'delivered');
   return delivered;
-}
-
-// The pharmacist taps "received" on an order on its way: it is delivered.
-// Scoped to the pharmacy's own orders (IDOR guard).
-async function confirmReceivedByPharmacy(orderId, pharmacyId, userId) {
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
-    throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
-  }
-  const order = await Order.findOne({ _id: orderId, pharmacyId });
-  if (!order) {
-    throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
-  }
-  return deliverOrder(order, { userId, source: 'pharmacy' });
 }
 
 // An order on the road for a day without anyone marking it counts as
@@ -345,7 +300,7 @@ async function autoDeliverStaleOrders(now = new Date()) {
       // Recorded against the warehouse's own account, marked as automatic.
       const warehouse = await Warehouse.findById(order.warehouseId, 'userId').lean();
       if (!warehouse?.userId) continue;
-      await deliverOrder(order, { userId: warehouse.userId, source: 'auto', note: 'auto' });
+      await deliverOrder(order, { userId: warehouse.userId, note: 'auto' });
       closed += 1;
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -887,7 +842,6 @@ async function setDeliverySealRequirement(orderId, warehouseId, requiresDelivery
 module.exports = {
   listOrdersForWarehouse,
   advanceOrderStatus,
-  confirmReceivedByPharmacy,
   autoDeliverStaleOrders,
   AUTO_DELIVER_AFTER_MS,
   getOrderDetailForWarehouse,

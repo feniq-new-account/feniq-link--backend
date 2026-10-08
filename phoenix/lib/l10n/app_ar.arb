@@ -1137,9 +1137,5 @@
   "stageAccepted": "انقبلت",
   "stageAcceptedDesc": "المستودع قبل طلبيتك",
   "warehouseAccept": "قبول",
-  "warehouseSendOnWay": "طلعت ع الطريق",
-  "orderReceivedButton": "استلمت الطلبية",
-  "orderReceivedConfirmTitle": "وصلتك الطلبية؟",
-  "orderReceivedConfirmBody": "الطلبية بتتسكّر كمستلمة وبيوصل خبر للمستودع.",
-  "errorOrderNotOnTheWay": "الطلبية لسا ما طلعت ع الطريق."
+  "warehouseSendOnWay": "طلعت ع الطريق"
 }

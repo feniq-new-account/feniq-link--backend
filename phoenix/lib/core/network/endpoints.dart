@@ -36,8 +36,6 @@ class Endpoints {
   static const String orders = '/orders';
   static String orderDetail(String orderId) => '/orders/$orderId';
   static String cancelOrder(String orderId) => '/orders/$orderId/cancel';
-  // The pharmacist's "I received it" tap on an order on its way.
-  static String orderReceived(String orderId) => '/orders/$orderId/received';
   // Optional delivery seal photo - multipart, single `image` field. Records the
   // photo on the order; does not change the order status.
   static String confirmDelivery(String orderId) => '/orders/$orderId/confirm-delivery';

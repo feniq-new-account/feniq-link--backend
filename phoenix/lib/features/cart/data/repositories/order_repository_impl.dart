@@ -122,17 +122,6 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<OrderModel> confirmReceived(String orderId) async {
-    try {
-      final response = await _apiClient.dio.post(Endpoints.orderReceived(orderId));
-      final data = response.data as Map<String, dynamic>;
-      return OrderModel.fromJson(data['order'] as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw ServerFailure.fromDioError(e);
-    }
-  }
-
-  @override
   Future<OrderModel> cancelOrder(String orderId) async {
     try {
       final response = await _apiClient.dio.post(Endpoints.cancelOrder(orderId));

@@ -269,31 +269,6 @@ test('accepting notifies the pharmacist that the order was accepted', async () =
   assert.match(notifications[0].bodyEn, /accepted/);
 });
 
-test('the pharmacist tapping "received" delivers the order and tells the warehouse', async () => {
-  const order = await makeOrder('out_for_delivery');
-  const delivered = await warehouseOrderService.confirmReceivedByPharmacy(
-    order._id.toString(), ids.pharmacy, ids.pharmacyUser
-  );
-  assert.strictEqual(delivered.status, 'delivered');
-  assert.ok((await Order.findById(order._id)).invoiceNumber);
-  assert.strictEqual(notifications.length, 1);
-  assert.strictEqual(notifications[0].userId, String(ids.warehouseUser));
-  assert.match(notifications[0].bodyEn, /received order/);
-});
-
-test('"received" only works on an order on its way, and only on the pharmacy\'s own', async () => {
-  const pending = await makeOrder('pending');
-  await assert.rejects(
-    () => warehouseOrderService.confirmReceivedByPharmacy(pending._id.toString(), ids.pharmacy, ids.pharmacyUser),
-    withCode('ORDER_NOT_ON_THE_WAY')
-  );
-  const onTheWay = await makeOrder('out_for_delivery');
-  await assert.rejects(
-    () => warehouseOrderService.confirmReceivedByPharmacy(onTheWay._id.toString(), new mongoose.Types.ObjectId(), ids.pharmacyUser),
-    withCode('ORDER_NOT_FOUND')
-  );
-});
-
 test('an order on the road for a day closes on its own; a fresher one stays', async () => {
   const old = await makeOrder('out_for_delivery');
   await Order.updateOne({ _id: old._id }, { $set: { 'statusHistory.0.changedAt': new Date(Date.now() - 25 * 3600 * 1000) } });
@@ -303,6 +278,9 @@ test('an order on the road for a day closes on its own; a fresher one stays', as
   const oldNow = await Order.findById(old._id);
   assert.strictEqual(oldNow.status, 'delivered');
   assert.strictEqual(oldNow.statusHistory.at(-1).note, 'auto');
+  // Closed as delivered with its charge posted - the amount is owed, not paid.
+  assert.ok(oldNow.invoiceNumber);
+  assert.ok(oldNow.chargeEntryId);
   assert.strictEqual((await Order.findById(fresh._id)).status, 'out_for_delivery');
   // The pharmacist is told it was delivered.
   assert.ok(notifications.some((n) => n.userId === String(ids.pharmacyUser) && /delivered/.test(n.bodyEn)));

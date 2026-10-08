@@ -240,10 +240,6 @@ class OrderModel {
   // Only while the order is genuinely in transit, only if the warehouse opted
   // in, and only until a photo has actually been attached. Mirrors the
   // backend gate in warehouseOrder.service.js.
-  // The pharmacist's "I received it" tap: only while the order is on its way,
-  // and not while a seal photo is still owed (that comes first).
-  bool get canConfirmReceived => status == 'out_for_delivery' && !needsDeliverySealConfirmation;
-
   bool get needsDeliverySealConfirmation =>
       status == 'out_for_delivery' && requiresDeliverySealPhoto && deliverySealPhotoUrl == null;
 

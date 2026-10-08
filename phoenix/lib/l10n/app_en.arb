@@ -1361,9 +1361,5 @@
   "stageAccepted": "Accepted",
   "stageAcceptedDesc": "The warehouse accepted your order",
   "warehouseAccept": "Accept",
-  "warehouseSendOnWay": "Send on its way",
-  "orderReceivedButton": "I received the order",
-  "orderReceivedConfirmTitle": "Did the order arrive?",
-  "orderReceivedConfirmBody": "The order closes as delivered and the warehouse is told.",
-  "errorOrderNotOnTheWay": "This order isn't on its way yet."
+  "warehouseSendOnWay": "Send on its way"
 }

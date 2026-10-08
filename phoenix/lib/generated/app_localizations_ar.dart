@@ -2663,17 +2663,4 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseSendOnWay => 'طلعت ع الطريق';
-
-  @override
-  String get orderReceivedButton => 'استلمت الطلبية';
-
-  @override
-  String get orderReceivedConfirmTitle => 'وصلتك الطلبية؟';
-
-  @override
-  String get orderReceivedConfirmBody =>
-      'الطلبية بتتسكّر كمستلمة وبيوصل خبر للمستودع.';
-
-  @override
-  String get errorOrderNotOnTheWay => 'الطلبية لسا ما طلعت ع الطريق.';
 }

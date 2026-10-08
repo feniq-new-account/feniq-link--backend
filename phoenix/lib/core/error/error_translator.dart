@@ -213,8 +213,6 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
       return l10n.errorOrderAlreadyAdvanced;
     case 'ORDER_NOT_ADVANCEABLE':
       return l10n.errorOrderNotAdvanceable;
-    case 'ORDER_NOT_ON_THE_WAY':
-      return l10n.errorOrderNotOnTheWay;
     case 'ORDER_NOT_EDITABLE':
       return l10n.errorOrderNotEditable;
     case 'PACKAGE_ITEMS_LOCKED':

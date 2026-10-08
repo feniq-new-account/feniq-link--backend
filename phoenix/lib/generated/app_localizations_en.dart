@@ -2669,17 +2669,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseSendOnWay => 'Send on its way';
-
-  @override
-  String get orderReceivedButton => 'I received the order';
-
-  @override
-  String get orderReceivedConfirmTitle => 'Did the order arrive?';
-
-  @override
-  String get orderReceivedConfirmBody =>
-      'The order closes as delivered and the warehouse is told.';
-
-  @override
-  String get errorOrderNotOnTheWay => 'This order isn\'t on its way yet.';
 }

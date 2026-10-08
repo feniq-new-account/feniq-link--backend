@@ -4537,30 +4537,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send on its way'**
   String get warehouseSendOnWay;
-
-  /// No description provided for @orderReceivedButton.
-  ///
-  /// In en, this message translates to:
-  /// **'I received the order'**
-  String get orderReceivedButton;
-
-  /// No description provided for @orderReceivedConfirmTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Did the order arrive?'**
-  String get orderReceivedConfirmTitle;
-
-  /// No description provided for @orderReceivedConfirmBody.
-  ///
-  /// In en, this message translates to:
-  /// **'The order closes as delivered and the warehouse is told.'**
-  String get orderReceivedConfirmBody;
-
-  /// No description provided for @errorOrderNotOnTheWay.
-  ///
-  /// In en, this message translates to:
-  /// **'This order isn\'t on its way yet.'**
-  String get errorOrderNotOnTheWay;
 }
 
 class _AppLocalizationsDelegate

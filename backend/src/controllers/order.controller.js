@@ -5,7 +5,6 @@ const { getRate } = require('../services/exchangeRate.service');
 const { ApiError } = require('../utils/ApiError');
 const Pharmacy = require('../models/pharmacy.model');
 const orderService = require('../services/order.service');
-const warehouseOrderService = require('../services/warehouseOrder.service');
 const orderViewModel = require('../viewmodels/order.viewmodel');
 const discountCodeViewModel = require('../viewmodels/discountCode.viewmodel');
 const { verifyImageMagicBytes } = require('../middlewares/upload.middleware');
@@ -257,21 +256,6 @@ const cancel = asyncHandler(async (req, res) => {
   });
 });
 
-// The pharmacist taps "received" on an order on its way: it is delivered, the
-// charge is posted, and the warehouse is told. Answers with the order as the
-// tracking screen reads it.
-const confirmReceived = asyncHandler(async (req, res) => {
-  const pharmacy = await loadPharmacyOrThrow(req.user._id);
-  await warehouseOrderService.confirmReceivedByPharmacy(req.params.id, pharmacy._id, req.user._id);
-  const { order, warehouse, items, returnRequest, myReview, complaints } =
-    await orderService.getOrderForPharmacy(req.params.id, pharmacy._id);
-  res.json({
-    success: true,
-    message: 'Order received.',
-    ...orderViewModel.toOrderDetailResponse(order, warehouse, items, returnRequest, myReview, complaints),
-  });
-});
-
 // Section: optional delivery seal photo. multipart/form-data with a single
 // `image` field (deliverySealPhotoUpload middleware). The photo is uploaded to
 // Cloudinary first, then recorded on the order in the same request - if
@@ -369,7 +353,6 @@ module.exports = {
   getOne,
   cancel,
   confirmDelivery,
-  confirmReceived,
   reorder,
   previewDiscountCode,
 };
