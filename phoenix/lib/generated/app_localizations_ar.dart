@@ -2325,4 +2325,246 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorPackageItemsLocked => 'أصناف العرض بتتعدّل من لوحة المستودع.';
+
+  @override
+  String get warehouseNavReturns => 'المرتجعات';
+
+  @override
+  String get warehouseNavAccounts => 'الحسابات';
+
+  @override
+  String get warehouseNavReps => 'المناديب';
+
+  @override
+  String warehouseReturnTitle(int number) {
+    return 'مرتجع على الطلبية #$number';
+  }
+
+  @override
+  String get warehouseReturnNoOrder => 'مرتجع';
+
+  @override
+  String warehouseReturnUnits(int count) {
+    return '$count قطعة';
+  }
+
+  @override
+  String get warehouseNoReturnsTitle => 'ما في مرتجعات هون';
+
+  @override
+  String get warehouseNoReturnsSubtitle =>
+      'طلبات الإرجاع من الصيدليات بتطلع هون.';
+
+  @override
+  String get warehouseReturnPhotos => 'الصور';
+
+  @override
+  String get warehouseReturnPharmacyNotes => 'ملاحظات الصيدلية';
+
+  @override
+  String warehouseReturnCreditPreview(String amount) {
+    return 'إذا وافقت، بينضاف لحساب الصيدلية: $amount';
+  }
+
+  @override
+  String warehouseReturnCredited(String amount) {
+    return 'انضاف لحساب الصيدلية: $amount';
+  }
+
+  @override
+  String get warehouseReturnApprove => 'موافقة';
+
+  @override
+  String get warehouseReturnReject => 'رفض';
+
+  @override
+  String get warehouseReturnApproveTitle => 'الموافقة على المرتجع؟';
+
+  @override
+  String get warehouseReturnApproveBody =>
+      'رح ينضاف المبلغ لحساب الصيدلية، وما بتنعكس من التطبيق.';
+
+  @override
+  String get warehouseReturnRejectTitle => 'رفض المرتجع';
+
+  @override
+  String get warehouseReturnRejectHint => 'اكتب سبب الرفض، بيوصل للصيدلية.';
+
+  @override
+  String warehouseReturnResolved(String status) {
+    return 'صار المرتجع: $status';
+  }
+
+  @override
+  String get warehouseNoAccountsTitle => 'ما في حسابات بعد';
+
+  @override
+  String get warehouseNoAccountsSubtitle =>
+      'أول ما تتسلّم طلبية لصيدلية، بيطلع حسابها هون.';
+
+  @override
+  String get warehouseAccountsSearch => 'دوّر باسم الصيدلية أو الرقم';
+
+  @override
+  String warehouseAccountOwes(String amount) {
+    return 'عليها $amount';
+  }
+
+  @override
+  String warehouseAccountInCredit(String amount) {
+    return 'إلها $amount';
+  }
+
+  @override
+  String get warehouseAccountSettled => 'الحساب مسكّر';
+
+  @override
+  String get warehouseRecordPayment => 'سجّل دفعة';
+
+  @override
+  String get warehouseRecordPaymentTitle => 'دفعة من الصيدلية';
+
+  @override
+  String warehousePaymentAmount(String currency) {
+    return 'المبلغ ($currency)';
+  }
+
+  @override
+  String get warehousePaymentMethod => 'طريقة الدفع';
+
+  @override
+  String get warehousePaymentMethodCash => 'كاش';
+
+  @override
+  String get warehousePaymentMethodBank => 'تحويل';
+
+  @override
+  String get warehousePaymentMethodCheque => 'شيك';
+
+  @override
+  String get warehousePaymentMethodOther => 'غير';
+
+  @override
+  String get warehousePaymentNote => 'ملاحظة (اختياري)';
+
+  @override
+  String warehousePaymentConfirm(String amount, String pharmacy) {
+    return 'تسجيل $amount من $pharmacy؟';
+  }
+
+  @override
+  String get warehousePaymentRecorded => 'انسجّلت الدفعة.';
+
+  @override
+  String get warehousePaymentReverseHint => 'لعكس دفعة غلط، من لوحة المستودع.';
+
+  @override
+  String get warehouseNoRepsTitle => 'ما في مناديب بعد';
+
+  @override
+  String get warehouseNoRepsSubtitle =>
+      'ضيف مندوب، وبيفوت على تطبيق Feniq برقمه وكلمة السر.';
+
+  @override
+  String get warehouseAddRep => 'إضافة مندوب';
+
+  @override
+  String get warehouseRepName => 'الاسم';
+
+  @override
+  String get warehouseRepPhone => 'رقم الموبايل';
+
+  @override
+  String get warehouseRepPassword => 'كلمة السر (8 أحرف أو أكتر)';
+
+  @override
+  String get warehouseRepRate => 'نسبة العمولة (%)';
+
+  @override
+  String get warehouseRepRateHint =>
+      'نصها للمندوب، ربعها لفينيق، والباقي توفير إلك. بين 0 و10.';
+
+  @override
+  String get warehouseRepInactive => 'موقوف';
+
+  @override
+  String warehouseRepStats(int pharmacies, int visits) {
+    return '$pharmacies صيدلية · $visits زيارة بآخر 30 يوم';
+  }
+
+  @override
+  String warehouseRepMonth(int orders, String amount) {
+    return 'هالشهر: $orders طلبية · عمولته $amount';
+  }
+
+  @override
+  String get warehouseRepEditRate => 'تعديل العمولة';
+
+  @override
+  String get warehouseRepEditRateHint => 'بتنطبق على الطلبيات الجديدة بس.';
+
+  @override
+  String get warehouseRepDeactivate => 'إيقاف المندوب';
+
+  @override
+  String get warehouseRepActivate => 'تشغيل المندوب';
+
+  @override
+  String get warehouseRepResetPassword => 'كلمة سر جديدة';
+
+  @override
+  String get warehouseRepPasswordReset =>
+      'تغيّرت كلمة السر. بلّغ المندوب فيها.';
+
+  @override
+  String get warehouseRepSaved => 'تم الحفظ.';
+
+  @override
+  String get warehouseRepPharmacies => 'صيدلياته';
+
+  @override
+  String get warehouseRepNoPharmacies =>
+      'ما في صيدليات معه. توزيع الصيدليات من لوحة المستودع.';
+
+  @override
+  String get warehouseRepVisits => 'زياراته';
+
+  @override
+  String get warehouseRepNoVisits => 'ما سجّل زيارات بعد.';
+
+  @override
+  String warehouseRepLastVisit(String date) {
+    return 'آخر زيارة: $date';
+  }
+
+  @override
+  String get warehouseRepNeverVisited => 'ما انزارت';
+
+  @override
+  String get warehouseFieldRequired => 'هالحقل مطلوب';
+
+  @override
+  String get warehouseInvalidNumber => 'اكتب رقم صحيح';
+
+  @override
+  String get errorInvalidCommissionRate => 'نسبة العمولة لازم تكون بين 0 و10.';
+
+  @override
+  String get errorInvalidPaymentAmount => 'المبلغ مو صحيح.';
+
+  @override
+  String get errorInvalidPhoneFormat => 'رقم الموبايل مو صحيح.';
+
+  @override
+  String get errorInvalidRepName => 'اكتب اسم المندوب.';
+
+  @override
+  String get errorNoTradingRelationship =>
+      'ما في تعامل بينك وبين هالصيدلية لسا.';
+
+  @override
+  String get errorRepNotFound => 'ما لقينا المندوب.';
+
+  @override
+  String get errorReturnAlreadyResolved => 'هالمرتجع انحسم قبل. حدّث الصفحة.';
 }

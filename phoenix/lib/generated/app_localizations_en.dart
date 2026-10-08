@@ -2328,4 +2328,248 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorPackageItemsLocked =>
       'A package\'s items are changed in the warehouse panel.';
+
+  @override
+  String get warehouseNavReturns => 'Returns';
+
+  @override
+  String get warehouseNavAccounts => 'Accounts';
+
+  @override
+  String get warehouseNavReps => 'Reps';
+
+  @override
+  String warehouseReturnTitle(int number) {
+    return 'Return on order #$number';
+  }
+
+  @override
+  String get warehouseReturnNoOrder => 'Return';
+
+  @override
+  String warehouseReturnUnits(int count) {
+    return '$count units';
+  }
+
+  @override
+  String get warehouseNoReturnsTitle => 'No returns here';
+
+  @override
+  String get warehouseNoReturnsSubtitle =>
+      'Return requests from pharmacies show up here.';
+
+  @override
+  String get warehouseReturnPhotos => 'Photos';
+
+  @override
+  String get warehouseReturnPharmacyNotes => 'Pharmacy\'s notes';
+
+  @override
+  String warehouseReturnCreditPreview(String amount) {
+    return 'If you approve, the pharmacy is credited: $amount';
+  }
+
+  @override
+  String warehouseReturnCredited(String amount) {
+    return 'Credited to the pharmacy: $amount';
+  }
+
+  @override
+  String get warehouseReturnApprove => 'Approve';
+
+  @override
+  String get warehouseReturnReject => 'Reject';
+
+  @override
+  String get warehouseReturnApproveTitle => 'Approve this return?';
+
+  @override
+  String get warehouseReturnApproveBody =>
+      'The amount is credited to the pharmacy\'s account, and can\'t be undone from the app.';
+
+  @override
+  String get warehouseReturnRejectTitle => 'Reject the return';
+
+  @override
+  String get warehouseReturnRejectHint => 'Write why - the pharmacy sees it.';
+
+  @override
+  String warehouseReturnResolved(String status) {
+    return 'The return is now: $status';
+  }
+
+  @override
+  String get warehouseNoAccountsTitle => 'No accounts yet';
+
+  @override
+  String get warehouseNoAccountsSubtitle =>
+      'A pharmacy\'s account shows up here after its first delivered order.';
+
+  @override
+  String get warehouseAccountsSearch => 'Search by pharmacy name or phone';
+
+  @override
+  String warehouseAccountOwes(String amount) {
+    return 'Owes $amount';
+  }
+
+  @override
+  String warehouseAccountInCredit(String amount) {
+    return 'In credit $amount';
+  }
+
+  @override
+  String get warehouseAccountSettled => 'Settled';
+
+  @override
+  String get warehouseRecordPayment => 'Record a payment';
+
+  @override
+  String get warehouseRecordPaymentTitle => 'Payment from the pharmacy';
+
+  @override
+  String warehousePaymentAmount(String currency) {
+    return 'Amount ($currency)';
+  }
+
+  @override
+  String get warehousePaymentMethod => 'Method';
+
+  @override
+  String get warehousePaymentMethodCash => 'Cash';
+
+  @override
+  String get warehousePaymentMethodBank => 'Transfer';
+
+  @override
+  String get warehousePaymentMethodCheque => 'Cheque';
+
+  @override
+  String get warehousePaymentMethodOther => 'Other';
+
+  @override
+  String get warehousePaymentNote => 'Note (optional)';
+
+  @override
+  String warehousePaymentConfirm(String amount, String pharmacy) {
+    return 'Record $amount from $pharmacy?';
+  }
+
+  @override
+  String get warehousePaymentRecorded => 'Payment recorded.';
+
+  @override
+  String get warehousePaymentReverseHint =>
+      'To reverse a wrong payment, use the warehouse panel.';
+
+  @override
+  String get warehouseNoRepsTitle => 'No reps yet';
+
+  @override
+  String get warehouseNoRepsSubtitle =>
+      'Add a rep - they sign in to the Feniq app with their number and password.';
+
+  @override
+  String get warehouseAddRep => 'Add a rep';
+
+  @override
+  String get warehouseRepName => 'Name';
+
+  @override
+  String get warehouseRepPhone => 'Mobile number';
+
+  @override
+  String get warehouseRepPassword => 'Password (8+ characters)';
+
+  @override
+  String get warehouseRepRate => 'Commission rate (%)';
+
+  @override
+  String get warehouseRepRateHint =>
+      'Half to the rep, a quarter to Feniq, the rest you save. Between 0 and 10.';
+
+  @override
+  String get warehouseRepInactive => 'Switched off';
+
+  @override
+  String warehouseRepStats(int pharmacies, int visits) {
+    return '$pharmacies pharmacies · $visits visits in 30 days';
+  }
+
+  @override
+  String warehouseRepMonth(int orders, String amount) {
+    return 'This month: $orders orders · commission $amount';
+  }
+
+  @override
+  String get warehouseRepEditRate => 'Edit commission';
+
+  @override
+  String get warehouseRepEditRateHint => 'Applies to new orders only.';
+
+  @override
+  String get warehouseRepDeactivate => 'Switch the rep off';
+
+  @override
+  String get warehouseRepActivate => 'Switch the rep on';
+
+  @override
+  String get warehouseRepResetPassword => 'New password';
+
+  @override
+  String get warehouseRepPasswordReset => 'Password changed. Tell the rep.';
+
+  @override
+  String get warehouseRepSaved => 'Saved.';
+
+  @override
+  String get warehouseRepPharmacies => 'Their pharmacies';
+
+  @override
+  String get warehouseRepNoPharmacies =>
+      'No pharmacies yet. Pharmacies are assigned in the warehouse panel.';
+
+  @override
+  String get warehouseRepVisits => 'Their visits';
+
+  @override
+  String get warehouseRepNoVisits => 'No visits logged yet.';
+
+  @override
+  String warehouseRepLastVisit(String date) {
+    return 'Last visit: $date';
+  }
+
+  @override
+  String get warehouseRepNeverVisited => 'Never visited';
+
+  @override
+  String get warehouseFieldRequired => 'This field is required';
+
+  @override
+  String get warehouseInvalidNumber => 'Enter a valid number';
+
+  @override
+  String get errorInvalidCommissionRate =>
+      'The commission rate must be between 0 and 10.';
+
+  @override
+  String get errorInvalidPaymentAmount => 'That amount isn\'t valid.';
+
+  @override
+  String get errorInvalidPhoneFormat => 'That mobile number isn\'t valid.';
+
+  @override
+  String get errorInvalidRepName => 'Enter the rep\'s name.';
+
+  @override
+  String get errorNoTradingRelationship =>
+      'You have no dealings with this pharmacy yet.';
+
+  @override
+  String get errorRepNotFound => 'That rep wasn\'t found.';
+
+  @override
+  String get errorReturnAlreadyResolved =>
+      'This return was already resolved. Refresh the page.';
 }

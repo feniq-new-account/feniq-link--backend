@@ -49,3 +49,27 @@ String warehousePharmacyName(BuildContext context, WarehouseOrderPharmacy? pharm
   if (preferred.trim().isNotEmpty) return preferred;
   return arabic ? pharmacy.nameEn : pharmacy.nameAr;
 }
+
+/// A name in the reader's language, falling back to the other.
+String warehouseLocalName(BuildContext context, String? nameAr, String? nameEn) {
+  final ar = nameAr ?? '';
+  final en = nameEn ?? '';
+  final arabic = Localizations.localeOf(context).languageCode == 'ar';
+  final preferred = arabic ? ar : en;
+  if (preferred.trim().isNotEmpty) return preferred;
+  return arabic ? en : ar;
+}
+
+/// The pill tone of a return status.
+StatusBadgeTone warehouseReturnTone(String status) => switch (status) {
+  'approved' => StatusBadgeTone.success,
+  'rejected' => StatusBadgeTone.danger,
+  _ => StatusBadgeTone.pending,
+};
+
+String warehousePaymentMethodLabel(AppLocalizations l10n, String method) => switch (method) {
+  'cash' => l10n.warehousePaymentMethodCash,
+  'bank_transfer' => l10n.warehousePaymentMethodBank,
+  'cheque' => l10n.warehousePaymentMethodCheque,
+  _ => l10n.warehousePaymentMethodOther,
+};

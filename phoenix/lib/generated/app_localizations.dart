@@ -3943,6 +3943,426 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A package\'s items are changed in the warehouse panel.'**
   String get errorPackageItemsLocked;
+
+  /// No description provided for @warehouseNavReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns'**
+  String get warehouseNavReturns;
+
+  /// No description provided for @warehouseNavAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get warehouseNavAccounts;
+
+  /// No description provided for @warehouseNavReps.
+  ///
+  /// In en, this message translates to:
+  /// **'Reps'**
+  String get warehouseNavReps;
+
+  /// No description provided for @warehouseReturnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Return on order #{number}'**
+  String warehouseReturnTitle(int number);
+
+  /// No description provided for @warehouseReturnNoOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Return'**
+  String get warehouseReturnNoOrder;
+
+  /// No description provided for @warehouseReturnUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} units'**
+  String warehouseReturnUnits(int count);
+
+  /// No description provided for @warehouseNoReturnsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No returns here'**
+  String get warehouseNoReturnsTitle;
+
+  /// No description provided for @warehouseNoReturnsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Return requests from pharmacies show up here.'**
+  String get warehouseNoReturnsSubtitle;
+
+  /// No description provided for @warehouseReturnPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get warehouseReturnPhotos;
+
+  /// No description provided for @warehouseReturnPharmacyNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy\'s notes'**
+  String get warehouseReturnPharmacyNotes;
+
+  /// No description provided for @warehouseReturnCreditPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'If you approve, the pharmacy is credited: {amount}'**
+  String warehouseReturnCreditPreview(String amount);
+
+  /// No description provided for @warehouseReturnCredited.
+  ///
+  /// In en, this message translates to:
+  /// **'Credited to the pharmacy: {amount}'**
+  String warehouseReturnCredited(String amount);
+
+  /// No description provided for @warehouseReturnApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get warehouseReturnApprove;
+
+  /// No description provided for @warehouseReturnReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get warehouseReturnReject;
+
+  /// No description provided for @warehouseReturnApproveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve this return?'**
+  String get warehouseReturnApproveTitle;
+
+  /// No description provided for @warehouseReturnApproveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount is credited to the pharmacy\'s account, and can\'t be undone from the app.'**
+  String get warehouseReturnApproveBody;
+
+  /// No description provided for @warehouseReturnRejectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject the return'**
+  String get warehouseReturnRejectTitle;
+
+  /// No description provided for @warehouseReturnRejectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write why - the pharmacy sees it.'**
+  String get warehouseReturnRejectHint;
+
+  /// No description provided for @warehouseReturnResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'The return is now: {status}'**
+  String warehouseReturnResolved(String status);
+
+  /// No description provided for @warehouseNoAccountsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No accounts yet'**
+  String get warehouseNoAccountsTitle;
+
+  /// No description provided for @warehouseNoAccountsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A pharmacy\'s account shows up here after its first delivered order.'**
+  String get warehouseNoAccountsSubtitle;
+
+  /// No description provided for @warehouseAccountsSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by pharmacy name or phone'**
+  String get warehouseAccountsSearch;
+
+  /// No description provided for @warehouseAccountOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes {amount}'**
+  String warehouseAccountOwes(String amount);
+
+  /// No description provided for @warehouseAccountInCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'In credit {amount}'**
+  String warehouseAccountInCredit(String amount);
+
+  /// No description provided for @warehouseAccountSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled'**
+  String get warehouseAccountSettled;
+
+  /// No description provided for @warehouseRecordPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a payment'**
+  String get warehouseRecordPayment;
+
+  /// No description provided for @warehouseRecordPaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment from the pharmacy'**
+  String get warehouseRecordPaymentTitle;
+
+  /// No description provided for @warehousePaymentAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount ({currency})'**
+  String warehousePaymentAmount(String currency);
+
+  /// No description provided for @warehousePaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get warehousePaymentMethod;
+
+  /// No description provided for @warehousePaymentMethodCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get warehousePaymentMethodCash;
+
+  /// No description provided for @warehousePaymentMethodBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get warehousePaymentMethodBank;
+
+  /// No description provided for @warehousePaymentMethodCheque.
+  ///
+  /// In en, this message translates to:
+  /// **'Cheque'**
+  String get warehousePaymentMethodCheque;
+
+  /// No description provided for @warehousePaymentMethodOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get warehousePaymentMethodOther;
+
+  /// No description provided for @warehousePaymentNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get warehousePaymentNote;
+
+  /// No description provided for @warehousePaymentConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Record {amount} from {pharmacy}?'**
+  String warehousePaymentConfirm(String amount, String pharmacy);
+
+  /// No description provided for @warehousePaymentRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment recorded.'**
+  String get warehousePaymentRecorded;
+
+  /// No description provided for @warehousePaymentReverseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'To reverse a wrong payment, use the warehouse panel.'**
+  String get warehousePaymentReverseHint;
+
+  /// No description provided for @warehouseNoRepsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No reps yet'**
+  String get warehouseNoRepsTitle;
+
+  /// No description provided for @warehouseNoRepsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a rep - they sign in to the Feniq app with their number and password.'**
+  String get warehouseNoRepsSubtitle;
+
+  /// No description provided for @warehouseAddRep.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a rep'**
+  String get warehouseAddRep;
+
+  /// No description provided for @warehouseRepName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get warehouseRepName;
+
+  /// No description provided for @warehouseRepPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile number'**
+  String get warehouseRepPhone;
+
+  /// No description provided for @warehouseRepPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password (8+ characters)'**
+  String get warehouseRepPassword;
+
+  /// No description provided for @warehouseRepRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Commission rate (%)'**
+  String get warehouseRepRate;
+
+  /// No description provided for @warehouseRepRateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Half to the rep, a quarter to Feniq, the rest you save. Between 0 and 10.'**
+  String get warehouseRepRateHint;
+
+  /// No description provided for @warehouseRepInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Switched off'**
+  String get warehouseRepInactive;
+
+  /// No description provided for @warehouseRepStats.
+  ///
+  /// In en, this message translates to:
+  /// **'{pharmacies} pharmacies · {visits} visits in 30 days'**
+  String warehouseRepStats(int pharmacies, int visits);
+
+  /// No description provided for @warehouseRepMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month: {orders} orders · commission {amount}'**
+  String warehouseRepMonth(int orders, String amount);
+
+  /// No description provided for @warehouseRepEditRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit commission'**
+  String get warehouseRepEditRate;
+
+  /// No description provided for @warehouseRepEditRateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies to new orders only.'**
+  String get warehouseRepEditRateHint;
+
+  /// No description provided for @warehouseRepDeactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch the rep off'**
+  String get warehouseRepDeactivate;
+
+  /// No description provided for @warehouseRepActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch the rep on'**
+  String get warehouseRepActivate;
+
+  /// No description provided for @warehouseRepResetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get warehouseRepResetPassword;
+
+  /// No description provided for @warehouseRepPasswordReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed. Tell the rep.'**
+  String get warehouseRepPasswordReset;
+
+  /// No description provided for @warehouseRepSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved.'**
+  String get warehouseRepSaved;
+
+  /// No description provided for @warehouseRepPharmacies.
+  ///
+  /// In en, this message translates to:
+  /// **'Their pharmacies'**
+  String get warehouseRepPharmacies;
+
+  /// No description provided for @warehouseRepNoPharmacies.
+  ///
+  /// In en, this message translates to:
+  /// **'No pharmacies yet. Pharmacies are assigned in the warehouse panel.'**
+  String get warehouseRepNoPharmacies;
+
+  /// No description provided for @warehouseRepVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Their visits'**
+  String get warehouseRepVisits;
+
+  /// No description provided for @warehouseRepNoVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'No visits logged yet.'**
+  String get warehouseRepNoVisits;
+
+  /// No description provided for @warehouseRepLastVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Last visit: {date}'**
+  String warehouseRepLastVisit(String date);
+
+  /// No description provided for @warehouseRepNeverVisited.
+  ///
+  /// In en, this message translates to:
+  /// **'Never visited'**
+  String get warehouseRepNeverVisited;
+
+  /// No description provided for @warehouseFieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get warehouseFieldRequired;
+
+  /// No description provided for @warehouseInvalidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number'**
+  String get warehouseInvalidNumber;
+
+  /// No description provided for @errorInvalidCommissionRate.
+  ///
+  /// In en, this message translates to:
+  /// **'The commission rate must be between 0 and 10.'**
+  String get errorInvalidCommissionRate;
+
+  /// No description provided for @errorInvalidPaymentAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'That amount isn\'t valid.'**
+  String get errorInvalidPaymentAmount;
+
+  /// No description provided for @errorInvalidPhoneFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'That mobile number isn\'t valid.'**
+  String get errorInvalidPhoneFormat;
+
+  /// No description provided for @errorInvalidRepName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the rep\'s name.'**
+  String get errorInvalidRepName;
+
+  /// No description provided for @errorNoTradingRelationship.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no dealings with this pharmacy yet.'**
+  String get errorNoTradingRelationship;
+
+  /// No description provided for @errorRepNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'That rep wasn\'t found.'**
+  String get errorRepNotFound;
+
+  /// No description provided for @errorReturnAlreadyResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'This return was already resolved. Refresh the page.'**
+  String get errorReturnAlreadyResolved;
 }
 
 class _AppLocalizationsDelegate
