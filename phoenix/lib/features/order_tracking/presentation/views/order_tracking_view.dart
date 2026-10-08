@@ -157,6 +157,19 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
     );
   }
 
+  Future<void> _confirmReceived() async {
+    final l10n = context.l10n;
+    final cubit = context.read<OrderTrackingCubit>();
+
+    await AppDialog.show(
+      context: context,
+      title: l10n.orderReceivedConfirmTitle,
+      content: l10n.orderReceivedConfirmBody,
+      actionLabel: l10n.orderReceivedButton,
+      onAction: () => cubit.confirmReceived(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -270,6 +283,16 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
               (order.needsDeliverySealConfirmation || order.deliverySealPhotoUrl != null)) ...[
             const SizedBox(height: AppSizes.spacingMedium),
             DeliverySealSection(order: order, isConfirming: state.isConfirmingDelivery),
+          ],
+          // One tap closes the order as delivered; if the pharmacist never
+          // taps it, the server closes it 24 hours after it left.
+          if (order.canConfirmReceived) ...[
+            const SizedBox(height: AppSizes.spacingMedium),
+            PrimaryButton(
+              label: l10n.orderReceivedButton,
+              isLoading: state.isConfirmingReceipt,
+              onPressed: _confirmReceived,
+            ),
           ],
           const SizedBox(height: AppSizes.spacingXLarge),
           StatusHistoryList(entries: order.statusHistory),

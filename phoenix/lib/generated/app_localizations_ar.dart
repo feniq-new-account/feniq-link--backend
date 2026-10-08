@@ -2176,13 +2176,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseFilterAll => 'الكل';
 
   @override
-  String get warehouseApproveAndSend => 'موافقة وإرسال';
-
-  @override
   String get warehouseMarkDelivered => 'تم التسليم';
 
   @override
-  String get warehouseConfirmApproveTitle => 'موافقة وإرسال الطلبية؟';
+  String get warehouseConfirmApproveTitle => 'الطلبية طلعت ع الطريق؟';
 
   @override
   String warehouseConfirmApproveBody(int number) {
@@ -2654,4 +2651,29 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get errorLoyaltyTiersRequired =>
       'ضيف شريحة وحدة ع الأقل قبل ما تشغّل حسم الولاء.';
+
+  @override
+  String get stageAccepted => 'انقبلت';
+
+  @override
+  String get stageAcceptedDesc => 'المستودع قبل طلبيتك';
+
+  @override
+  String get warehouseAccept => 'قبول';
+
+  @override
+  String get warehouseSendOnWay => 'طلعت ع الطريق';
+
+  @override
+  String get orderReceivedButton => 'استلمت الطلبية';
+
+  @override
+  String get orderReceivedConfirmTitle => 'وصلتك الطلبية؟';
+
+  @override
+  String get orderReceivedConfirmBody =>
+      'الطلبية بتتسكّر كمستلمة وبيوصل خبر للمستودع.';
+
+  @override
+  String get errorOrderNotOnTheWay => 'الطلبية لسا ما طلعت ع الطريق.';
 }

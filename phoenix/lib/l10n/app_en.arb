@@ -1200,10 +1200,9 @@
   "warehouseNavOrders": "Orders",
   "warehouseNavAccount": "Account",
   "warehouseFilterAll": "All",
-  "warehouseApproveAndSend": "Approve & send",
   "warehouseMarkDelivered": "Mark as delivered",
-  "warehouseConfirmApproveTitle": "Approve and send this order?",
-  "warehouseConfirmApproveBody": "Order #{number} goes out to the pharmacy, and its items can no longer be changed.",
+  "warehouseConfirmApproveTitle": "Send this order on its way?",
+  "warehouseConfirmApproveBody": "Order #{number} leaves for the pharmacy, and its items can no longer be changed.",
   "@warehouseConfirmApproveBody": {"placeholders": {"number": {"type": "int"}}},
   "warehouseConfirmDeliveredTitle": "Mark as delivered?",
   "warehouseConfirmDeliveredBody": "Has order #{number} reached the pharmacy?",
@@ -1358,5 +1357,13 @@
   "warehouseRepShareGiven": "Your quarter to the rep",
   "warehouseRepQuartersHint": "A quarter to Feniq, a quarter as pharmacy credit, a quarter to the rep, and the last quarter yours or the rep's. Between 0 and 10.",
   "errorInvalidLoyaltyTiers": "Each tier needs an order value above zero and a smaller discount, with no two on the same value.",
-  "errorLoyaltyTiersRequired": "Add at least one tier before turning the loyalty discount on."
+  "errorLoyaltyTiersRequired": "Add at least one tier before turning the loyalty discount on.",
+  "stageAccepted": "Accepted",
+  "stageAcceptedDesc": "The warehouse accepted your order",
+  "warehouseAccept": "Accept",
+  "warehouseSendOnWay": "Send on its way",
+  "orderReceivedButton": "I received the order",
+  "orderReceivedConfirmTitle": "Did the order arrive?",
+  "orderReceivedConfirmBody": "The order closes as delivered and the warehouse is told.",
+  "errorOrderNotOnTheWay": "This order isn't on its way yet."
 }

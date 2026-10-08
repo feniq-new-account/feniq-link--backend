@@ -53,21 +53,27 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
     final l10n = context.l10n;
     final cubit = context.read<WarehouseOrdersCubit>();
     final messenger = ScaffoldMessenger.of(context);
-    final (title, body) = warehouseAdvanceConfirm(l10n, order.status, order.orderNumber);
+    Future<void> advance() async {
+      final next = nextWarehouseStatus(order.status);
+      final ok = await cubit.advance(order.id);
+      if (ok && next != null) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.warehouseOrderAdvanced(order.orderNumber, orderStatusLabel(l10n, next)))),
+        );
+      }
+    }
+
+    final confirm = warehouseAdvanceConfirm(l10n, order.status, order.orderNumber);
+    if (confirm == null) {
+      advance();
+      return;
+    }
     AppDialog.show(
       context: context,
-      title: title,
-      content: body,
+      title: confirm.$1,
+      content: confirm.$2,
       actionLabel: warehouseAdvanceLabel(l10n, order.status),
-      onAction: () async {
-        final next = nextWarehouseStatus(order.status);
-        final ok = await cubit.advance(order.id);
-        if (ok && next != null) {
-          messenger.showSnackBar(
-            SnackBar(content: Text(l10n.warehouseOrderAdvanced(order.orderNumber, orderStatusLabel(l10n, next)))),
-          );
-        }
-      },
+      onAction: advance,
     );
   }
 

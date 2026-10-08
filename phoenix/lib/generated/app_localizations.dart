@@ -3692,12 +3692,6 @@ abstract class AppLocalizations {
   /// **'All'**
   String get warehouseFilterAll;
 
-  /// No description provided for @warehouseApproveAndSend.
-  ///
-  /// In en, this message translates to:
-  /// **'Approve & send'**
-  String get warehouseApproveAndSend;
-
   /// No description provided for @warehouseMarkDelivered.
   ///
   /// In en, this message translates to:
@@ -3707,13 +3701,13 @@ abstract class AppLocalizations {
   /// No description provided for @warehouseConfirmApproveTitle.
   ///
   /// In en, this message translates to:
-  /// **'Approve and send this order?'**
+  /// **'Send this order on its way?'**
   String get warehouseConfirmApproveTitle;
 
   /// No description provided for @warehouseConfirmApproveBody.
   ///
   /// In en, this message translates to:
-  /// **'Order #{number} goes out to the pharmacy, and its items can no longer be changed.'**
+  /// **'Order #{number} leaves for the pharmacy, and its items can no longer be changed.'**
   String warehouseConfirmApproveBody(int number);
 
   /// No description provided for @warehouseConfirmDeliveredTitle.
@@ -4519,6 +4513,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add at least one tier before turning the loyalty discount on.'**
   String get errorLoyaltyTiersRequired;
+
+  /// No description provided for @stageAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get stageAccepted;
+
+  /// No description provided for @stageAcceptedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'The warehouse accepted your order'**
+  String get stageAcceptedDesc;
+
+  /// No description provided for @warehouseAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get warehouseAccept;
+
+  /// No description provided for @warehouseSendOnWay.
+  ///
+  /// In en, this message translates to:
+  /// **'Send on its way'**
+  String get warehouseSendOnWay;
+
+  /// No description provided for @orderReceivedButton.
+  ///
+  /// In en, this message translates to:
+  /// **'I received the order'**
+  String get orderReceivedButton;
+
+  /// No description provided for @orderReceivedConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Did the order arrive?'**
+  String get orderReceivedConfirmTitle;
+
+  /// No description provided for @orderReceivedConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The order closes as delivered and the warehouse is told.'**
+  String get orderReceivedConfirmBody;
+
+  /// No description provided for @errorOrderNotOnTheWay.
+  ///
+  /// In en, this message translates to:
+  /// **'This order isn\'t on its way yet.'**
+  String get errorOrderNotOnTheWay;
 }
 
 class _AppLocalizationsDelegate

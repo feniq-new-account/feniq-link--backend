@@ -6,9 +6,8 @@ import 'package:feniq/features/cart/presentation/utils/order_status_label.dart';
 import 'package:feniq/generated/app_localizations.dart';
 
 // The pharmacist follows an order through: sent, (edited by the warehouse,
-// only when it was), waiting for approval, on the way, delivered. The
-// warehouse approves straight into "on the way"; 'confirmed' / 'preparing' are
-// no longer reached, and an older order left in one reads as waiting.
+// only when it was), accepted, on the way, delivered. 'preparing' is no longer
+// reached, and an older order left in it reads as accepted.
 void main() {
   late AppLocalizations en;
   late AppLocalizations ar;
@@ -21,8 +20,8 @@ void main() {
   group('orderStatusLabel - where the order stands now', () {
     test('English', () {
       expect(orderStatusLabel(en, 'pending'), 'Waiting for Approval');
-      expect(orderStatusLabel(en, 'confirmed'), 'Waiting for Approval');
-      expect(orderStatusLabel(en, 'preparing'), 'Waiting for Approval');
+      expect(orderStatusLabel(en, 'confirmed'), 'Accepted');
+      expect(orderStatusLabel(en, 'preparing'), 'Accepted');
       expect(orderStatusLabel(en, 'out_for_delivery'), 'On the Way');
       expect(orderStatusLabel(en, 'delivered'), 'Delivered');
       expect(orderStatusLabel(en, 'cancelled'), 'Cancelled');
@@ -30,7 +29,8 @@ void main() {
 
     test('Arabic', () {
       expect(orderStatusLabel(ar, 'pending'), 'بانتظار الموافقة');
-      expect(orderStatusLabel(ar, 'preparing'), 'بانتظار الموافقة');
+      expect(orderStatusLabel(ar, 'confirmed'), 'انقبلت');
+      expect(orderStatusLabel(ar, 'preparing'), 'انقبلت');
       expect(orderStatusLabel(ar, 'out_for_delivery'), 'بالطريق');
       expect(orderStatusLabel(ar, 'delivered'), 'تم التسليم');
       expect(orderStatusLabel(ar, 'modified'), 'تم تعديل الطلب');
@@ -42,7 +42,7 @@ void main() {
       expect(orderHistoryLabel(ar, 'pending'), 'تم الإرسال');
       expect(orderHistoryLabel(ar, 'modified'), 'تم تعديل الطلب');
       expect(orderHistoryLabel(ar, 'out_for_delivery'), 'بالطريق');
-      expect(orderHistoryLabel(ar, 'preparing'), 'قيد التحضير');
+      expect(orderHistoryLabel(ar, 'confirmed'), 'انقبلت');
     });
   });
 
@@ -53,7 +53,7 @@ void main() {
       expect(orderStatusDescription(en, 'delivered'), 'You received the order');
 
       expect(orderStatusDescription(ar, 'pending'), 'وصل طلبك إلى المستودع');
-      expect(orderStatusDescription(ar, 'confirmed'), 'وصل طلبك إلى المستودع');
+      expect(orderStatusDescription(ar, 'confirmed'), 'المستودع قبل طلبيتك');
       expect(orderStatusDescription(ar, 'out_for_delivery'), 'طلبك طلع من المستودع');
       expect(orderStatusDescription(ar, 'delivered'), 'استلمت الطلب');
     });
@@ -77,24 +77,31 @@ void main() {
       statusHistory: history,
     );
 
-    test('four steps; a new order is past "sent" and waiting for approval', () {
+    test('four steps; a new order is at "sent"', () {
       final order = orderWith('pending');
       expect(order.trackedStages, [
         OrderStage.sent,
-        OrderStage.awaitingApproval,
+        OrderStage.accepted,
         OrderStage.outForDelivery,
         OrderStage.delivered,
       ]);
-      expect(order.stageIndex, 1);
+      expect(order.stageIndex, 0);
+      expect(orderWith('confirmed').stageIndex, 1);
       expect(orderWith('out_for_delivery').stageIndex, 2);
       expect(orderWith('delivered').stageIndex, 3);
       expect(orderWith('cancelled').stageIndex, -1);
       expect(orderWith('cancelled').currentStage, isNull);
     });
 
-    test('an older order left in confirmed / preparing reads as waiting for approval', () {
-      expect(orderWith('confirmed').currentStage, OrderStage.awaitingApproval);
-      expect(orderWith('preparing').currentStage, OrderStage.awaitingApproval);
+    test('an older order left in preparing reads as accepted', () {
+      expect(orderWith('confirmed').currentStage, OrderStage.accepted);
+      expect(orderWith('preparing').currentStage, OrderStage.accepted);
+    });
+
+    test('"received" shows only while on the way and no seal photo is owed', () {
+      expect(orderWith('out_for_delivery').canConfirmReceived, isTrue);
+      expect(orderWith('confirmed').canConfirmReceived, isFalse);
+      expect(orderWith('delivered').canConfirmReceived, isFalse);
     });
 
     test('an order the warehouse edited gets an "edited" step', () {
@@ -108,18 +115,18 @@ void main() {
       expect(order.trackedStages, [
         OrderStage.sent,
         OrderStage.modified,
-        OrderStage.awaitingApproval,
+        OrderStage.accepted,
         OrderStage.outForDelivery,
         OrderStage.delivered,
       ]);
-      expect(order.stageIndex, 2);
+      expect(order.stageIndex, 1);
     });
 
     test('every step has a label', () {
       expect(OrderStage.values.map((stage) => orderStageLabel(ar, stage)), [
         'تم الإرسال',
         'تم تعديل الطلب',
-        'بانتظار الموافقة',
+        'انقبلت',
         'بالطريق',
         'تم التسليم',
       ]);

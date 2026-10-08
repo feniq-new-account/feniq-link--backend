@@ -51,6 +51,10 @@ abstract class OrderRepository {
 
   Future<OrderModel> cancelOrder(String orderId);
 
+  // The pharmacist received an order that is on its way: it becomes delivered
+  // and the warehouse is told. Returns the refreshed order.
+  Future<OrderModel> confirmReceived(String orderId);
+
   // Section: optional delivery seal photo. Uploads [sealPhoto] and records it
   // on the order in one request; the order status is unchanged. Returns the
   // refreshed order. Throws [Failure] on upload/validation errors - the order

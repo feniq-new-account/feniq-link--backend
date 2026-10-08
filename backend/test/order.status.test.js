@@ -133,8 +133,8 @@ test('a new order model defaults to the "Sent" stage (status: pending)', () => {
 
 test('the warehouse advances an order one stage at a time through the whole flow', async () => {
   const order = await makeOrder('pending');
-  // Waiting for approval -> on the way -> delivered: approving sends it out.
-  const sequence = ['out_for_delivery', 'delivered'];
+  // Accepted -> on the way -> delivered: one tap per stage.
+  const sequence = ['confirmed', 'out_for_delivery', 'delivered'];
 
   for (const expected of sequence) {
     const updated = await warehouseOrderService.advanceOrderStatus(
@@ -154,7 +154,7 @@ test('each advance emits one order.status.updated to the owning warehouse, carry
   assert.strictEqual(emitted[0].room, `warehouse:${ids.warehouse}`);
   assert.strictEqual(emitted[0].event, 'order.status.updated');
   // Internal enum value is unchanged - the realtime payload is untouched.
-  assert.strictEqual(emitted[0].payload.status, 'out_for_delivery');
+  assert.strictEqual(emitted[0].payload.status, 'confirmed');
 });
 
 // --- Rejected transitions --------------------------------------------------
@@ -236,20 +236,74 @@ test('advancing to Delivered notifies the pharmacist', async () => {
 });
 
 test('an older order left in a stage no longer used moves straight on to On the way', async () => {
-  for (const legacy of ['confirmed', 'preparing']) {
+  for (const legacy of ['preparing']) {
     const order = await makeOrder(legacy);
     const updated = await warehouseOrderService.advanceOrderStatus(order._id.toString(), ids.warehouse, ids.warehouseUser);
     assert.strictEqual(updated.status, 'out_for_delivery', legacy);
   }
 });
 
-test("the warehouse's waiting-for-approval tab also lists an order left in an older stage", async () => {
+test("the warehouse's accepted tab also lists an order left in an older stage; waiting holds only new ones", async () => {
   const pending = await makeOrder('pending');
+  const accepted = await makeOrder('confirmed');
   const legacy = await makeOrder('preparing');
   const onTheWay = await makeOrder('out_for_delivery');
-  const { rows } = await warehouseOrderService.listOrdersForWarehouse(ids.warehouse, 'pending', { limit: 100 });
-  const listed = new Set(rows.map(({ order }) => order._id.toString()));
-  assert.ok(listed.has(pending._id.toString()));
-  assert.ok(listed.has(legacy._id.toString()));
-  assert.ok(!listed.has(onTheWay._id.toString()));
+  const ids_ = async (status) =>
+    new Set((await warehouseOrderService.listOrdersForWarehouse(ids.warehouse, status, { limit: 100 })).rows
+      .map(({ order }) => order._id.toString()));
+  const waiting = await ids_('pending');
+  assert.ok(waiting.has(pending._id.toString()));
+  assert.ok(!waiting.has(accepted._id.toString()));
+  const acceptedTab = await ids_('confirmed');
+  assert.ok(acceptedTab.has(accepted._id.toString()));
+  assert.ok(acceptedTab.has(legacy._id.toString()));
+  assert.ok(!acceptedTab.has(onTheWay._id.toString()));
+});
+
+test('accepting notifies the pharmacist that the order was accepted', async () => {
+  const order = await makeOrder('pending');
+  await warehouseOrderService.advanceOrderStatus(order._id.toString(), ids.warehouse, ids.warehouseUser);
+  assert.strictEqual(notifications.length, 1);
+  assert.strictEqual(notifications[0].userId, String(ids.pharmacyUser));
+  assert.match(notifications[0].bodyAr, /انقبلت/);
+  assert.match(notifications[0].bodyEn, /accepted/);
+});
+
+test('the pharmacist tapping "received" delivers the order and tells the warehouse', async () => {
+  const order = await makeOrder('out_for_delivery');
+  const delivered = await warehouseOrderService.confirmReceivedByPharmacy(
+    order._id.toString(), ids.pharmacy, ids.pharmacyUser
+  );
+  assert.strictEqual(delivered.status, 'delivered');
+  assert.ok((await Order.findById(order._id)).invoiceNumber);
+  assert.strictEqual(notifications.length, 1);
+  assert.strictEqual(notifications[0].userId, String(ids.warehouseUser));
+  assert.match(notifications[0].bodyEn, /received order/);
+});
+
+test('"received" only works on an order on its way, and only on the pharmacy\'s own', async () => {
+  const pending = await makeOrder('pending');
+  await assert.rejects(
+    () => warehouseOrderService.confirmReceivedByPharmacy(pending._id.toString(), ids.pharmacy, ids.pharmacyUser),
+    withCode('ORDER_NOT_ON_THE_WAY')
+  );
+  const onTheWay = await makeOrder('out_for_delivery');
+  await assert.rejects(
+    () => warehouseOrderService.confirmReceivedByPharmacy(onTheWay._id.toString(), new mongoose.Types.ObjectId(), ids.pharmacyUser),
+    withCode('ORDER_NOT_FOUND')
+  );
+});
+
+test('an order on the road for a day closes on its own; a fresher one stays', async () => {
+  const old = await makeOrder('out_for_delivery');
+  await Order.updateOne({ _id: old._id }, { $set: { 'statusHistory.0.changedAt': new Date(Date.now() - 25 * 3600 * 1000) } });
+  const fresh = await makeOrder('out_for_delivery');
+  const closed = await warehouseOrderService.autoDeliverStaleOrders();
+  assert.ok(closed >= 1);
+  const oldNow = await Order.findById(old._id);
+  assert.strictEqual(oldNow.status, 'delivered');
+  assert.strictEqual(oldNow.statusHistory.at(-1).note, 'auto');
+  assert.strictEqual((await Order.findById(fresh._id)).status, 'out_for_delivery');
+  // The pharmacist is told it was delivered.
+  assert.ok(notifications.some((n) => n.userId === String(ids.pharmacyUser) && /delivered/.test(n.bodyEn)));
 });

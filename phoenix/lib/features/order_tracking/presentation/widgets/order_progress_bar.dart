@@ -19,7 +19,7 @@ class OrderProgressBar extends StatefulWidget {
   static IconData iconFor(OrderStage stage) => switch (stage) {
     OrderStage.sent => Icons.send_outlined,
     OrderStage.modified => Icons.edit_note_outlined,
-    OrderStage.awaitingApproval => Icons.fact_check_outlined,
+    OrderStage.accepted => Icons.thumb_up_alt_outlined,
     OrderStage.outForDelivery => Icons.local_shipping_outlined,
     OrderStage.delivered => Icons.check_circle_outline,
   };

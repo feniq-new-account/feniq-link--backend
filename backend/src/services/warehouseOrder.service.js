@@ -31,20 +31,25 @@ const { FEATURES } = require('../config/features');
 const pharmacyCredit = require('./pharmacyCredit.service');
 
 // Section 7/13b: the warehouse only ever moves an order forward, one stage at
-// a time - no skipping, no picking an arbitrary status. Three stages (the
-// owner's call, to keep it to as few clicks as possible): waiting for approval
-// ('pending') -> on the way ('out_for_delivery') -> delivered. Approving IS
-// sending it out. 'confirmed' and 'preparing' are no longer reached; an older
-// order still in one counts as waiting for approval and moves straight on.
-// 'cancelled' isn't part of it: only the pharmacist can cancel
+// a time - no skipping, no picking an arbitrary status. Three stages, one
+// notification each (the owner's call, October 2026): accepted ('confirmed')
+// -> on the way ('out_for_delivery') -> delivered. The warehouse taps twice;
+// delivered normally comes from the pharmacy tapping "received"
+// (confirmReceivedByPharmacy), or on its own a day after it left
+// (autoDeliverStaleOrders) - the warehouse can still mark it itself.
+// 'preparing' is no longer reached; an older order left in it moves straight
+// on to the road. 'cancelled' isn't part of it: only the pharmacist can cancel
 // (order.service.js), and only before 'out_for_delivery'.
 const AWAITING_APPROVAL = ['pending', 'confirmed', 'preparing'];
 const NEXT_STATUS = {
-  pending: 'out_for_delivery',
+  pending: 'confirmed',
   confirmed: 'out_for_delivery',
   preparing: 'out_for_delivery',
   out_for_delivery: 'delivered',
 };
+
+// How long an order may sit on the road before it counts as delivered.
+const AUTO_DELIVER_AFTER_MS = 24 * 60 * 60 * 1000;
 
 function nextStatus(current) {
   return NEXT_STATUS[current] ?? null;
@@ -68,9 +73,9 @@ async function listOrdersForWarehouse(
     if (!Order.schema.path('status').enumValues.includes(status)) {
       throw ApiError.badRequest('Invalid status filter.', undefined, 'INVALID_STATUS_FILTER');
     }
-    // The "waiting for approval" tab also holds any older order left in a
+    // The "accepted" tab also holds any older order left in 'preparing', a
     // stage the warehouse no longer uses.
-    filter.status = status === 'pending' ? { $in: AWAITING_APPROVAL } : status;
+    filter.status = status === 'confirmed' ? { $in: ['confirmed', 'preparing'] } : status;
   }
   if (after !== null) {
     filter.orderNumber = { $gt: after };
@@ -131,7 +136,7 @@ async function advanceOrderStatus(orderId, warehouseId, userId) {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }
-  let order = await Order.findOne({ _id: orderId, warehouseId });
+  const order = await Order.findOne({ _id: orderId, warehouseId });
   if (!order) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }
@@ -161,108 +166,193 @@ async function advanceOrderStatus(orderId, warehouseId, userId) {
     );
   }
 
+  if (next === 'delivered') {
+    return deliverOrder(order, { userId, source: 'warehouse' });
+  }
+
   const now = new Date();
+  // A compare-and-swap on the CURRENT status rather than a read-then-save:
+  // two operators tapping at the same moment can never both move it.
+  const advanced = await Order.findOneAndUpdate(
+    { _id: order._id, warehouseId, status: order.status },
+    {
+      $set: { status: next },
+      $push: { statusHistory: { status: next, changedBy: userId, changedAt: now } },
+    },
+    { new: true }
+  );
+  if (!advanced) {
+    throw ApiError.conflict('This order was already advanced by someone else.', 'ORDER_ALREADY_ADVANCED');
+  }
 
-  // Resolved before the transaction opens, never inside it: creating an
-  // account is an upsert, and an upsert that also has to create the
-  // collection or wait on Mongoose's lazy index build inside a transaction
-  // produces write conflicts that burn the retry budget for no reason.
-  const account =
-    next === 'delivered'
-      ? await ledgerService.resolveAccount(order.pharmacyId, order.warehouseId)
-      : null;
-
-  // Money-Flow V2. The whole transition is one transaction, and the move is a
-  // compare-and-swap on the CURRENT status rather than a read-then-save.
-  //
-  // Two operators clicking "advance" at the same moment used to both read
-  // 'preparing', both write 'out_for_delivery', and both push a history entry.
-  // Now the second one matches zero documents and gets a clean conflict, so an
-  // order can never skip a stage or be delivered twice.
-  //
-  // On 'delivered' the charge is posted inside this same transaction: an order
-  // cannot end up delivered without its charge, and a charge cannot exist for
-  // an order that is not delivered.
-  const advanced = await runInTransaction(async (session) => {
-    const moved = await Order.findOneAndUpdate(
-      { _id: order._id, warehouseId, status: order.status },
-      {
-        $set: { status: next },
-        $push: { statusHistory: { status: next, changedBy: userId, changedAt: now } },
-      },
-      { new: true, session }
-    );
-
-    if (!moved) {
-      throw ApiError.conflict(
-        'This order was already advanced by someone else.',
-        'ORDER_ALREADY_ADVANCED'
-      );
-    }
-
-    if (next !== 'delivered') return moved;
-
-    // The pharmacy's quarter of this order's rep commission becomes its credit
-    // at this warehouse, in the same transaction as the delivery.
-    await pharmacyCredit.earnForDelivery(moved, session);
-
-    const { entry, alreadyPosted } = await orderLedger.postChargeForDelivery(
-      { order: moved, userId, deliveredAt: now, account },
-      session
-    );
-    // postChargeForDelivery sets invoiceNumber / deliveredAt / chargeEntryId
-    // on the document; persist them in the same transaction as the entry.
-    await moved.save({ session });
-    await orderLedger.auditDelivery({ order: moved, entry, userId, alreadyPosted }, session);
-
-    return moved;
-  });
-
-  // Everything below is post-commit and best-effort: a realtime emit, a legacy
-  // cache refresh or a push notification failing must never undo a transition
-  // that already succeeded.
   emitToWarehouse(advanced.warehouseId, EVENTS.ORDER_STATUS_UPDATED, {
     orderId: advanced._id.toString(),
     orderNumber: advanced.orderNumber,
     warehouseId: advanced.warehouseId.toString(),
     status: next,
   });
+  await notifyPharmacyOfStage(advanced, next);
+  return advanced;
+}
 
-  // The notification block below (and the caller) reads pharmacyId /
-  // orderNumber off `order`; point it at the committed document.
-  order = advanced;
+// The pharmacist's push for each of the three stages - one each, no more.
+// Never blocks or undoes the change that triggered it.
+async function notifyPharmacyOfStage(order, status) {
+  const text = {
+    confirmed: {
+      ar: `انقبلت طلبيتك رقم ${order.orderNumber}`,
+      en: `Your order #${order.orderNumber} was accepted`,
+    },
+    out_for_delivery: {
+      ar: `طلبك رقم ${order.orderNumber} بالطريق إليك`,
+      en: `Your order #${order.orderNumber} is on the way`,
+    },
+    delivered: {
+      ar: `تم تسليم طلبك رقم ${order.orderNumber}`,
+      en: `Your order #${order.orderNumber} has been delivered`,
+    },
+  }[status];
+  if (!text) return;
+  try {
+    const pharmacy = await Pharmacy.findById(order.pharmacyId, 'userId');
+    if (!pharmacy) return;
+    await notificationService.sendToUser(pharmacy.userId, {
+      titleAr: 'تحديث طلبك',
+      titleEn: 'Order Update',
+      bodyAr: text.ar,
+      bodyEn: text.en,
+      type: 'order_update',
+      relatedOrderId: order._id,
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to send order status notification.', err.message);
+  }
+}
 
-  // Push the pharmacist a status update for the two stages they'd actually
-  // want to be pinged for (on the way / delivered) - not every stage,
-  // same as sendToUser/sendToAll below, this must never block or undo the
-  // status change above if it fails. Wording tracks the user-facing status
-  // terminology ('out_for_delivery' -> "On the Way" / "بالطريق").
-  if (next === 'out_for_delivery' || next === 'delivered') {
-    try {
-      const pharmacy = await Pharmacy.findById(order.pharmacyId, 'userId');
-      if (pharmacy) {
-        await notificationService.sendToUser(pharmacy.userId, {
-          titleAr: 'تحديث طلبك',
-          titleEn: 'Order Update',
-          bodyAr:
-            next === 'out_for_delivery'
-              ? `طلبك رقم ${order.orderNumber} بالطريق إليك`
-              : `تم تسليم طلبك رقم ${order.orderNumber}`,
-          bodyEn:
-            next === 'out_for_delivery'
-              ? `Your order #${order.orderNumber} is on the way`
-              : `Your order #${order.orderNumber} has been delivered`,
-          type: 'order_update',
-          relatedOrderId: order._id,
-        });
-      }
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to send order status notification.', err.message);
-    }
+// The warehouse's push when the pharmacy itself confirms it received the order.
+async function notifyWarehouseOfReceipt(order) {
+  try {
+    const [warehouse, pharmacy] = await Promise.all([
+      Warehouse.findById(order.warehouseId, 'userId').lean(),
+      Pharmacy.findById(order.pharmacyId, 'nameAr nameEn').lean(),
+    ]);
+    if (!warehouse?.userId) return;
+    const nameAr = pharmacy?.nameAr || pharmacy?.nameEn || 'الصيدلية';
+    const nameEn = pharmacy?.nameEn || pharmacy?.nameAr || 'The pharmacy';
+    await notificationService.sendToUser(warehouse.userId, {
+      titleAr: 'تم التسليم',
+      titleEn: 'Delivered',
+      bodyAr: `${nameAr} استلمت الطلبية رقم ${order.orderNumber}`,
+      bodyEn: `${nameEn} received order #${order.orderNumber}`,
+      type: 'order_update',
+      relatedOrderId: order._id,
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to send order received notification.', err.message);
+  }
+}
+
+// out_for_delivery -> delivered, whoever triggers it: the warehouse, the
+// pharmacy tapping "received", or the day-old automatic close. One
+// transaction: the status move (a compare-and-swap, so it can never be
+// delivered twice), the pharmacy's credit, and the ledger charge - an order
+// cannot end up delivered without its charge.
+async function deliverOrder(order, { userId, source, note = null }) {
+  if (order.status !== 'out_for_delivery') {
+    throw ApiError.badRequest(
+      'This order is not on its way.',
+      undefined,
+      source === 'pharmacy' ? 'ORDER_NOT_ON_THE_WAY' : 'ORDER_NOT_ADVANCEABLE'
+    );
+  }
+  // Section: optional proof-of-delivery (switched off by FEATURES today).
+  if (FEATURES.deliverySealPhoto && order.requiresDeliverySealPhoto && !order.deliverySealPhoto) {
+    throw ApiError.badRequest('A seal photo is required to confirm delivery.', undefined, 'DELIVERY_SEAL_PHOTO_REQUIRED');
   }
 
-  return order;
+  const now = new Date();
+  // Resolved before the transaction opens: creating an account is an upsert,
+  // and an upsert inside a transaction burns the retry budget on conflicts.
+  const account = await ledgerService.resolveAccount(order.pharmacyId, order.warehouseId);
+
+  const delivered = await runInTransaction(async (session) => {
+    const moved = await Order.findOneAndUpdate(
+      { _id: order._id, status: 'out_for_delivery' },
+      {
+        $set: { status: 'delivered' },
+        $push: { statusHistory: { status: 'delivered', changedBy: userId, changedAt: now, note } },
+      },
+      { new: true, session }
+    );
+    if (!moved) {
+      throw ApiError.conflict('This order was already advanced by someone else.', 'ORDER_ALREADY_ADVANCED');
+    }
+    // The pharmacy's quarter of this order's rep commission becomes its credit
+    // at this warehouse, in the same transaction as the delivery.
+    await pharmacyCredit.earnForDelivery(moved, session);
+    const { entry, alreadyPosted } = await orderLedger.postChargeForDelivery(
+      { order: moved, userId, deliveredAt: now, account },
+      session
+    );
+    // postChargeForDelivery sets invoiceNumber / deliveredAt / chargeEntryId.
+    await moved.save({ session });
+    await orderLedger.auditDelivery({ order: moved, entry, userId, alreadyPosted }, session);
+    return moved;
+  });
+
+  // Post-commit and best-effort.
+  emitToWarehouse(delivered.warehouseId, EVENTS.ORDER_STATUS_UPDATED, {
+    orderId: delivered._id.toString(),
+    orderNumber: delivered.orderNumber,
+    warehouseId: delivered.warehouseId.toString(),
+    status: 'delivered',
+  });
+  if (source === 'pharmacy') {
+    await notifyWarehouseOfReceipt(delivered);
+  } else {
+    await notifyPharmacyOfStage(delivered, 'delivered');
+  }
+  return delivered;
+}
+
+// The pharmacist taps "received" on an order on its way: it is delivered.
+// Scoped to the pharmacy's own orders (IDOR guard).
+async function confirmReceivedByPharmacy(orderId, pharmacyId, userId) {
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
+  }
+  const order = await Order.findOne({ _id: orderId, pharmacyId });
+  if (!order) {
+    throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
+  }
+  return deliverOrder(order, { userId, source: 'pharmacy' });
+}
+
+// An order on the road for a day without anyone marking it counts as
+// delivered (the owner's rule). Run every hour from server.js; each order is
+// closed on its own, so one failure never stops the rest. Returns how many.
+async function autoDeliverStaleOrders(now = new Date()) {
+  const cutoff = new Date(now.getTime() - AUTO_DELIVER_AFTER_MS);
+  const stale = await Order.find({
+    status: 'out_for_delivery',
+    statusHistory: { $elemMatch: { status: 'out_for_delivery', changedAt: { $lte: cutoff } } },
+  }).limit(200);
+  let closed = 0;
+  for (const order of stale) {
+    try {
+      // Recorded against the warehouse's own account, marked as automatic.
+      const warehouse = await Warehouse.findById(order.warehouseId, 'userId').lean();
+      if (!warehouse?.userId) continue;
+      await deliverOrder(order, { userId: warehouse.userId, source: 'auto', note: 'auto' });
+      closed += 1;
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(`Auto-delivery of order ${order.orderNumber} failed.`, err.message);
+    }
+  }
+  return closed;
 }
 
 // IDOR guard: scoped to warehouseId, same pattern as advanceOrderStatus
@@ -797,6 +887,9 @@ async function setDeliverySealRequirement(orderId, warehouseId, requiresDelivery
 module.exports = {
   listOrdersForWarehouse,
   advanceOrderStatus,
+  confirmReceivedByPharmacy,
+  autoDeliverStaleOrders,
+  AUTO_DELIVER_AFTER_MS,
   getOrderDetailForWarehouse,
   updateOrderItems,
   setDeliverySealRequirement,

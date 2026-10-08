@@ -132,6 +132,28 @@ class OrderTrackingCubit extends Cubit<OrderTrackingState> {
     }
   }
 
+  // The pharmacist received the order: it becomes delivered. On a conflict
+  // (the warehouse delivered it meanwhile, or 24 hours closed it) the order
+  // is reloaded so the button goes away.
+  Future<bool> confirmReceived() async {
+    emit(state.copyWith(isConfirmingReceipt: true, clearError: true));
+    try {
+      final order = await _orderRepository.confirmReceived(_orderId);
+      if (isClosed) return true;
+      emit(state.copyWith(isConfirmingReceipt: false, order: order));
+      return true;
+    } on Failure catch (f) {
+      if (isClosed) return false;
+      emit(state.copyWith(isConfirmingReceipt: false, errorMessage: f.errMessage, errorCode: f.code));
+      await load();
+      return false;
+    } catch (e) {
+      if (isClosed) return false;
+      emit(state.copyWith(isConfirmingReceipt: false, errorMessage: 'Unexpected error', errorCode: 'UNEXPECTED_ERROR'));
+      return false;
+    }
+  }
+
   // Rates the warehouse for this (delivered) order. On success the loaded
   // order is patched in place with the new myReview rather than re-fetched -
   // the tracking screen should flip to the "thanks" display immediately,

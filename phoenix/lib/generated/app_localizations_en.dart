@@ -2177,17 +2177,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get warehouseFilterAll => 'All';
 
   @override
-  String get warehouseApproveAndSend => 'Approve & send';
-
-  @override
   String get warehouseMarkDelivered => 'Mark as delivered';
 
   @override
-  String get warehouseConfirmApproveTitle => 'Approve and send this order?';
+  String get warehouseConfirmApproveTitle => 'Send this order on its way?';
 
   @override
   String warehouseConfirmApproveBody(int number) {
-    return 'Order #$number goes out to the pharmacy, and its items can no longer be changed.';
+    return 'Order #$number leaves for the pharmacy, and its items can no longer be changed.';
   }
 
   @override
@@ -2660,4 +2657,29 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorLoyaltyTiersRequired =>
       'Add at least one tier before turning the loyalty discount on.';
+
+  @override
+  String get stageAccepted => 'Accepted';
+
+  @override
+  String get stageAcceptedDesc => 'The warehouse accepted your order';
+
+  @override
+  String get warehouseAccept => 'Accept';
+
+  @override
+  String get warehouseSendOnWay => 'Send on its way';
+
+  @override
+  String get orderReceivedButton => 'I received the order';
+
+  @override
+  String get orderReceivedConfirmTitle => 'Did the order arrive?';
+
+  @override
+  String get orderReceivedConfirmBody =>
+      'The order closes as delivered and the warehouse is told.';
+
+  @override
+  String get errorOrderNotOnTheWay => 'This order isn\'t on its way yet.';
 }

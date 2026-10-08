@@ -997,9 +997,8 @@
   "warehouseNavOrders": "الطلبيات",
   "warehouseNavAccount": "الحساب",
   "warehouseFilterAll": "الكل",
-  "warehouseApproveAndSend": "موافقة وإرسال",
   "warehouseMarkDelivered": "تم التسليم",
-  "warehouseConfirmApproveTitle": "موافقة وإرسال الطلبية؟",
+  "warehouseConfirmApproveTitle": "الطلبية طلعت ع الطريق؟",
   "warehouseConfirmApproveBody": "الطلبية رقم {number} رح تطلع للصيدلية، وبعدها ما عاد فيك تعدّل أصنافها.",
   "warehouseConfirmDeliveredTitle": "تأكيد التسليم؟",
   "warehouseConfirmDeliveredBody": "الطلبية رقم {number} وصلت للصيدلية؟",
@@ -1134,5 +1133,13 @@
   "warehouseRepShareGiven": "ربعك للمندوب",
   "warehouseRepQuartersHint": "ربع لفينيق، ربع رصيد للصيدلية، ربع للمندوب، والربع الأخير إلك أو للمندوب. بين 0 و10.",
   "errorInvalidLoyaltyTiers": "كل شريحة بدها قيمة طلبية أكبر من صفر وحسم أصغر منها، ولا شريحتين بنفس القيمة.",
-  "errorLoyaltyTiersRequired": "ضيف شريحة وحدة ع الأقل قبل ما تشغّل حسم الولاء."
+  "errorLoyaltyTiersRequired": "ضيف شريحة وحدة ع الأقل قبل ما تشغّل حسم الولاء.",
+  "stageAccepted": "انقبلت",
+  "stageAcceptedDesc": "المستودع قبل طلبيتك",
+  "warehouseAccept": "قبول",
+  "warehouseSendOnWay": "طلعت ع الطريق",
+  "orderReceivedButton": "استلمت الطلبية",
+  "orderReceivedConfirmTitle": "وصلتك الطلبية؟",
+  "orderReceivedConfirmBody": "الطلبية بتتسكّر كمستلمة وبيوصل خبر للمستودع.",
+  "errorOrderNotOnTheWay": "الطلبية لسا ما طلعت ع الطريق."
 }

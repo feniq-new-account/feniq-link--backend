@@ -23,12 +23,12 @@ export function mergeAdvancedOrders(rows, advanced) {
   return merged.sort((a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0));
 }
 
-// The warehouse's three stages: awaiting approval -> on the way -> delivered
-// (approving sends the order out). 'confirmed' / 'preparing' are no longer
-// reached; an older order left in one counts as awaiting approval.
+// The warehouse's three stages: accept -> on the way -> delivered (the
+// pharmacy's "received" tap or 24 hours close it too). 'preparing' is no
+// longer reached; an older order left in it counts as accepted.
 export const AWAITING_APPROVAL = ['pending', 'confirmed', 'preparing'];
-const RANK = { pending: 0, confirmed: 0, preparing: 0, out_for_delivery: 1, delivered: 2 };
-const NEXT = { pending: 'out_for_delivery', confirmed: 'out_for_delivery', preparing: 'out_for_delivery', out_for_delivery: 'delivered' };
+const RANK = { pending: 0, confirmed: 1, preparing: 1, out_for_delivery: 2, delivered: 3 };
+const NEXT = { pending: 'confirmed', confirmed: 'out_for_delivery', preparing: 'out_for_delivery', out_for_delivery: 'delivered' };
 
 // The stage a click moves an order to; null past the last one (or cancelled).
 export function nextStatusOf(status) {

@@ -16,9 +16,10 @@ String? _strOrNull(Object? value) => value is String && value.isNotEmpty ? value
 List<Map<String, dynamic>> _maps(Object? value) =>
     value is List ? value.whereType<Map>().map(Map<String, dynamic>.from).toList() : const [];
 
-/// The warehouse's three stages: awaiting approval -> on the way ->
-/// delivered (approving sends the order out). 'confirmed' / 'preparing' are
-/// no longer reached; an older order left in one counts as awaiting approval.
+/// The warehouse's three stages: accept -> on the way -> delivered (the
+/// pharmacy's "received" tap, or 24 hours on the way, close it too). Items can
+/// change until the order leaves. 'preparing' is no longer reached; an older
+/// order left in it counts as accepted.
 /// Mirrors NEXT_STATUS in backend/src/services/warehouseOrder.service.js.
 const List<String> kAwaitingApproval = ['pending', 'confirmed', 'preparing'];
 
@@ -26,13 +27,21 @@ bool isAwaitingApproval(String status) => kAwaitingApproval.contains(status);
 
 /// The stage one tap moves an order to; null past the last one (or cancelled).
 String? nextWarehouseStatus(String status) {
-  if (isAwaitingApproval(status)) return 'out_for_delivery';
+  if (status == 'pending') return 'confirmed';
+  if (status == 'confirmed' || status == 'preparing') return 'out_for_delivery';
   if (status == 'out_for_delivery') return 'delivered';
   return null;
 }
 
 /// The status filters of the orders list, in tab order. Null is "all".
-const List<String?> kWarehouseOrderFilters = [null, 'pending', 'out_for_delivery', 'delivered', 'cancelled'];
+const List<String?> kWarehouseOrderFilters = [
+  null,
+  'pending',
+  'confirmed',
+  'out_for_delivery',
+  'delivered',
+  'cancelled',
+];
 
 class WarehouseOrderPharmacy {
   const WarehouseOrderPharmacy({
