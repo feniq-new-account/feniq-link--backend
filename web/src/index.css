@@ -4888,3 +4888,13 @@ input[type='month'] {
 .reg-min-score select {
   min-width: 120px;
 }
+
+/* "قبضت؟" - three choices side by side */
+.collect-choices {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+.collect-choices > button {
+  flex: 1;
+}
