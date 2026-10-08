@@ -4898,3 +4898,14 @@ input[type='month'] {
 .collect-choices > button {
   flex: 1;
 }
+
+/* recording a payment by voice */
+.voice-card {
+  margin: 12px 0;
+}
+.voice-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
