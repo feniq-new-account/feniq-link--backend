@@ -54,9 +54,25 @@ const save = (page, name, options = {}) =>
   await page.waitForTimeout(2000);
   await save(page, 'd6-rep.jpg');
 
-  // أرصدة الصيدليات
+  // جدول الحسابات: مشتريات، مدفوع، باقي، آخر دفعة
   await open('/warehouse/debts');
   await save(page, 'd7-balances.jpg');
+
+  // «قبضت؟» عند «تم التسليم»: كامل / جزء / بعدين
+  await open('/warehouse/orders');
+  await page.click('button.wh-pill:has-text("بالطريق")');
+  await page.waitForTimeout(1500);
+  await page.click('.wh-row-action.wh-advance-to-delivered >> nth=0');
+  await page.waitForTimeout(800);
+  await save(page, 'd8-collect.jpg');
+
+  // تسجيل دفعة بالصوت: الجملة المسموعة تتحول لبطاقة تأكيد
+  await open('/warehouse/debts');
+  await page.click('button.wh-voice-btn');
+  await page.waitForTimeout(1200);
+  await page.fill('.modal input[type="text"]', 'صيدلية الياسمين دفعت ثلاثة آلاف');
+  await page.waitForTimeout(600);
+  await save(page, 'd9-voice.jpg');
 
   await browser.close();
   console.log('saved to', OUT);
