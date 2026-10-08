@@ -526,7 +526,7 @@
       "pendingTab": "بانتظار المراجعة",
       "approvedTab": "المعتمدة",
       "approvedCountLabel": "المعتمدة ({{count}})",
-      "noApprovedAdvertisements": "لا توجد سلة معتمدة بعد.",
+      "noApprovedAdvertisements": "لا توجد سلات معتمدة بعد.",
       "availabilityColumn": "الإتاحة",
       "availabilityHint": "الإيقاف المؤقت يخفي السلة عن الصيدليات دون إلغاء اعتمادها. المستودع أو الأدمن يستطيع إعادة تفعيل سلة متوقفة.",
       "pause": "إيقاف مؤقت",
@@ -540,7 +540,7 @@
       "rejectionNoteRequired": "يجب ذكر سبب الرفض.",
       "rejectedTab": "المرفوضة",
       "rejectedCountLabel": "المرفوضة ({{count}})",
-      "noRejectedAdvertisements": "لا توجد سلة مرفوضة.",
+      "noRejectedAdvertisements": "لا توجد سلات مرفوضة.",
       "rejectedHint": "السلة المرفوضة تبقى محفوظة مع ملاحظة الرفض، مخفية عن الصيدليات. يمكنك تعديل محتواها مباشرة أو حذفها — التعديل لا يغيّر حالتها."
     }
   },
