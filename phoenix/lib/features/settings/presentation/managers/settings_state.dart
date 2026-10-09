@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class SettingsState {
   const SettingsState({
-    this.themeMode = ThemeMode.system,
+    this.themeMode = ThemeMode.dark,
     this.locale,
     this.fontScale = 1.0,
     this.notificationsEnabled = true,

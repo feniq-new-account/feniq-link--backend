@@ -194,7 +194,9 @@ Future<String> _currentAppVersion() async {
 Future<SettingsState> _loadInitialSettings(
   StorageService storageService,
 ) async {
-  const defaultThemeMode = ThemeMode.system;
+  // Dark by default (the owner's call, 2026-10-09): the navy brand reads best there. A
+  // choice the user already made in the profile still wins.
+  const defaultThemeMode = ThemeMode.dark;
   final storedTheme = storageService.getString('settings.theme_mode');
   final storedLocale = storageService.getString('settings.locale');
 
