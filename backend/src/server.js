@@ -15,6 +15,7 @@ const { seedDemoBonuses, turnOffDemoSealPhoto, seedDemoAdminIfNone, seedDemoData
 const { seedDemoCatalogImages } = require('./services/demoCatalogImages.service');
 const { zeroLegacyPlatformRates } = require('./services/platformRatesPolicy.service');
 const { seedDemoFeatures } = require('./services/demoFeatures.service');
+const { applyDemoBranding } = require('./services/demoBranding.service');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
 // not 'production':
@@ -135,6 +136,18 @@ async function start() {
       if (bonuses) {
         // eslint-disable-next-line no-console
         console.log(`Demo bonus offers on ${bonuses} products.`);
+      }
+      // Not fatal: an upload failure (no Cloudinary or MEDIA_DIR) leaves the old
+      // logos and banners and is retried on the next boot.
+      try {
+        const branding = await applyDemoBranding();
+        if (branding) {
+          // eslint-disable-next-line no-console
+          console.log(`Demo branding: ${JSON.stringify(branding)}`);
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Demo branding failed:', err.message);
       }
       if (seededOrders && seededOrders.orders) {
         // eslint-disable-next-line no-console
