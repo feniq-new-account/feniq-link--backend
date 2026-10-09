@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>فينيق بصفحة — للمستودعات</title>
+<link rel="stylesheet" href="brand.css">
+<style>
+  /* هوية مختلفة عن العرض: ورقي دافئ، برتقالي طاغٍ، زوايا مدوّرة، بلا كحلي ثقيل */
+  @page { size: A4; margin: 0; }
+  :root { --cream: #FFF6EC; --sun: #F2760A; --sun-deep: #C85A00; --ink: #2A1A0A; --ink-2: #6B4F36; }
+  html, body { background: #fff; }
+  body { color: var(--ink); }
+  .page { width: 210mm; height: 297mm; background: var(--cream); position: relative; overflow: hidden; padding: 0 14mm; }
+  .top { position: absolute; inset: 0 0 auto 0; height: 78mm; background: var(--sun); border-radius: 0 0 36mm 36mm; }
+  .top::after { content: ""; position: absolute; left: -18mm; top: -22mm; width: 70mm; height: 70mm; border-radius: 50%; background: rgba(255,255,255,.16); }
+  .head { position: relative; padding-top: 14mm; display: grid; grid-template-columns: 1fr 34mm; gap: 8mm; align-items: center; }
+  .head h1 { font-size: 27pt; line-height: 1.25; font-weight: 800; color: #fff; }
+  .head p { margin-top: 3mm; font-size: 12pt; color: #FFEBD6; line-height: 1.55; }
+  .head img { width: 34mm; background: #fff; border-radius: 8mm; padding: 4mm; }
+  .steps { position: relative; margin-top: 17mm; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
+  .step { background: #fff; border-radius: 6mm; padding: 5mm 5mm 4mm; box-shadow: 0 2mm 5mm rgba(120,60,0,.12); }
+  .step .n { width: 9mm; height: 9mm; border-radius: 50%; background: var(--sun); color: #fff; font-weight: 800; font-size: 13pt; display: grid; place-items: center; }
+  .step b { display: block; margin-top: 2.5mm; font-size: 13pt; }
+  .step span { display: block; margin-top: 1mm; font-size: 9.6pt; color: var(--ink-2); line-height: 1.5; }
+  .shots { margin-top: 7mm; display: grid; grid-template-columns: 1.55fr 1fr; gap: 5mm; align-items: stretch; }
+  .shot { background: #fff; border-radius: 5mm; overflow: hidden; box-shadow: 0 2mm 5mm rgba(120,60,0,.12); display: flex; flex-direction: column; }
+  .shot img { width: 100%; display: block; flex: 1; object-fit: cover; object-position: top; min-height: 0; }
+  .shot small { display: block; padding: 2mm 4mm; font-size: 8.6pt; color: var(--ink-2); }
+  h2 { margin-top: 8mm; font-size: 15pt; font-weight: 800; }
+  h2::before { content: ""; display: inline-block; width: 6mm; height: 2.2mm; background: var(--sun); border-radius: 1mm; margin-left: 3mm; vertical-align: middle; }
+  .grid { margin-top: 3mm; display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm; }
+  .grid div { font-size: 10.4pt; line-height: 1.5; padding-right: 5mm; position: relative; }
+  .grid div::before { content: "✓"; position: absolute; right: 0; color: var(--sun-deep); font-weight: 800; }
+  .grid b { font-weight: 700; }
+  .cta { position: absolute; left: 14mm; right: 14mm; bottom: 12mm; background: var(--ink); color: #fff; border-radius: 7mm; padding: 5.5mm 8mm; display: grid; grid-template-columns: 1fr auto; gap: 6mm; align-items: center; }
+  .cta b { font-size: 14pt; display: block; }
+  .cta span { font-size: 9.6pt; color: #E8D3BD; }
+  .cta .tel { direction: ltr; text-align: left; font-weight: 800; font-size: 13pt; line-height: 1.55; color: #FFC58A; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top"></div>
+  <div class="head">
+    <div>
+      <h1>الطلبية توصلك مكتوبة،<br>وحسابك مضبوط.</h1>
+      <p>فينيق: الصيدلية تطلب من تطبيق على موبايلها، وأنت تستلم الطلبية على لوحة بالمستودع. اللاذقية.</p>
+    </div>
+    <img src="assets/logo-light.png" alt="فينيق">
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="n">١</div><b>قبول</b><span>كبسة وحدة بلا أي سؤال، والصيدلية يوصلها إشعار.</span></div>
+    <div class="step"><div class="n">٢</div><b>طلعت ع الطريق</b><span>تأكيد صغير، وإشعار ثاني للصيدلية.</span></div>
+    <div class="step"><div class="n">٣</div><b>تم التسليم</b><span>سؤال واحد: «قبضت؟» كامل أو جزء أو بعدين. والدفعة تنسجّل لحالها.</span></div>
+  </div>
+
+  <div class="shots">
+    <div class="shot"><img src="assets/shots/d1-orders.jpg" alt=""><small>لوحة المستودع: كل الطلبيات حسب الحالة. بيانات تجريبية.</small></div>
+    <div class="shot"><img src="assets/shots/d8-collect-zoom.jpg" alt=""><small>«قبضت؟» عند التسليم. بيانات تجريبية.</small></div>
+  </div>
+
+  <h2>شو بتاخد</h2>
+  <div class="grid">
+    <div><b>الصيدلي ما بيكبس شي:</b> بتوصله ثلاثة إشعارات بس.</div>
+    <div><b>حسابات الصيدليات:</b> مشتريات ومدفوع وباقي لكل صيدلية، والدفعة بكبسة أو بصوتك.</div>
+    <div><b>أصنافك بإيدك:</b> ارفع الكتالوج من إكسل، مع تاريخ الإنتاج والانتهاء بأي شكل.</div>
+    <div><b>عروض وبونص وسلات</b> بتظهر للصيدليات داخل التطبيق.</div>
+    <div><b>حساب لكل مندوب</b> يشوف فيه صيدلياته وزياراته.</div>
+    <div><b>الدفع عند التسليم</b> متل اليوم، لا بطاقات ولا دفع إلكتروني.</div>
+  </div>
+
+  <div class="cta">
+    <div><b>نزوركم في المستودع ونشرح عملياً.</b><span>زيارة قصيرة، وبنتفق معكم على طريقة التعاون المناسبة.</span></div>
+    <div class="tel">0982-001415<br>0956-634694</div>
+  </div>
+</div>
+</body>
+</html>

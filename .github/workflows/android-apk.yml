@@ -156,11 +156,15 @@ jobs:
       # branch ever replaces it.
       - name: Build phone APK (arm64)
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        run: >
-          flutter build apk --release
-          --target-platform android-arm64
-          --build-number=${{ github.run_number }}
-          --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
+        # The first build's Gradle daemon still holds its 8 GB heap; a second
+        # daemon on top of it made the runner run out of memory and shut the
+        # job down ("received a shutdown signal"). Stop it first.
+        run: |
+          (cd android && ./gradlew --stop) || true
+          flutter build apk --release \
+            --target-platform android-arm64 \
+            --build-number=${{ github.run_number }} \
+            --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
 
       - name: Publish to the test-latest release
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
