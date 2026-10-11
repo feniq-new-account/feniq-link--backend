@@ -1,6 +1,6 @@
-# نسخة احتياطية يومية لقاعدة البيانات (Atlas المجاني بلا نسخ احتياطية).
+# نسخة احتياطية لقاعدة البيانات كل 3 أيام (Atlas المجاني بلا نسخ احتياطية).
 #
-# كل يوم 03:23 بتوقيت دمشق (00:23 UTC)، أو يدوياً: Actions ← Database backup ← Run workflow.
+# كل 3 أيام 03:23 بتوقيت دمشق (00:23 UTC)، واللابتوب بينزّلها لـ D:Feniq_backupsdb. أو يدوياً: Actions ← Database backup ← Run workflow.
 #   1. mongodump لقاعدة الإنتاج (سر MONGODB_URI) ← مضغوط ← مشفّر بـ GPG/AES-256
 #      بكلمة السر BACKUP_ENCRYPTION_KEY. لا تُكتب نسخة غير مشفّرة على القرص.
 #   2. تجربة استرجاع فعلية: تُفك النسخة وتُسترجع في MongoDB مؤقت داخل التشغيل،
@@ -18,7 +18,7 @@ name: Database backup
 
 on:
   schedule:
-    - cron: '23 0 * * *'
+    - cron: '23 0 */3 * *'
   workflow_dispatch:
 
 permissions:
@@ -97,7 +97,7 @@ jobs:
         with:
           name: ${{ steps.dump.outputs.name }}
           path: backups/
-          retention-days: ${{ vars.BACKUP_RETENTION_DAYS || 90 }}
+          retention-days: ${{ vars.BACKUP_RETENTION_DAYS || 30 }}
           if-no-files-found: error
           # Already compressed and encrypted - zipping it again gains nothing.
           compression-level: 0
