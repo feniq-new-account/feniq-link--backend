@@ -1,11 +1,11 @@
 # نسخة احتياطية لقاعدة البيانات كل 3 أيام (Atlas المجاني بلا نسخ احتياطية).
 #
-# كل 3 أيام 03:23 بتوقيت دمشق (00:23 UTC)، واللابتوب بينزّلها لـ D:Feniq_backupsdb. أو يدوياً: Actions ← Database backup ← Run workflow.
+# كل 3 أيام 03:23 بتوقيت دمشق (00:23 UTC)، واللابتوب بينزّلها لـ D:/Feniq/_backups/db. أو يدوياً: Actions ← Database backup ← Run workflow.
 #   1. mongodump لقاعدة الإنتاج (سر MONGODB_URI) ← مضغوط ← مشفّر بـ GPG/AES-256
 #      بكلمة السر BACKUP_ENCRYPTION_KEY. لا تُكتب نسخة غير مشفّرة على القرص.
 #   2. تجربة استرجاع فعلية: تُفك النسخة وتُسترجع في MongoDB مؤقت داخل التشغيل،
 #      وتُقارن المجموعات بالأصل. إذا فشل الاسترجاع يفشل التشغيل (وتصل رسالة من GitHub).
-#   3. تُحفظ كـ Artifact باسم feniq-db-<التاريخ> لمدة 90 يوماً
+#   3. تُحفظ كـ Artifact باسم feniq-db-<التاريخ> لمدة 30 يوماً
 #      (أو BACKUP_RETENTION_DAYS من متغيرات المستودع).
 #
 # الأسرار (Settings ← Secrets and variables ← Actions):
