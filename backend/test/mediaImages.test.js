@@ -135,6 +135,41 @@ test('without MEDIA_DIR the linking refuses to run', async () => {
   Object.assign(env.media, saved);
 });
 
+test('--confidence links only the chosen match levels, one upload per shared picture', async () => {
+  await ProductCatalog.create([
+    { nameAr: 'CONF EXACT A (10 TAB)', manufacturerAr: 'بحري' },
+    { nameAr: 'CONF EXACT B (20 TAB)', manufacturerAr: 'بحري' },
+    { nameAr: 'CONF FUZZY (10 TAB)', manufacturerAr: 'بحري' },
+  ]);
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'feniq-pack-conf-'));
+  await fs.mkdir(path.join(dir, 'images'));
+  await fs.writeFile(path.join(dir, 'images', 'shared.webp'), webp('s'));
+  await fs.writeFile(
+    path.join(dir, 'manifest.json'),
+    JSON.stringify([
+      { nameAr: 'CONF EXACT A (10 TAB)', manufacturerAr: 'بحري', file: 'shared.webp', confidence: 'exact' },
+      { nameAr: 'CONF EXACT B (20 TAB)', manufacturerAr: 'بحري', file: 'shared.webp', confidence: 'brand' },
+      { nameAr: 'CONF FUZZY (10 TAB)', manufacturerAr: 'بحري', file: 'shared.webp', confidence: 'fuzzy' },
+    ])
+  );
+  const uploads = [];
+  const store = {
+    save: async (buffer, file) => {
+      uploads.push(file);
+      return `https://res.cloudinary.example/feniq/catalog/${file}`;
+    },
+    previewUrl: (file) => `preview:${file}`,
+  };
+
+  const report = await linkImages(dir, { confidence: ['exact', 'brand'], store });
+  assert.strictEqual(report.rows, 3);
+  assert.strictEqual(report.considered, 2);
+  assert.strictEqual(report.linked, 2);
+  assert.deepStrictEqual(uploads, ['shared.webp'], 'a picture shared by two items is stored once');
+  const fuzzy = await ProductCatalog.findOne({ nameAr: 'CONF FUZZY (10 TAB)' }).lean();
+  assert.ok(!fuzzy.imageUrl, 'fuzzy matches wait for review');
+});
+
 test('the app serves the stored pictures, cacheable and embeddable from the web panel', async () => {
   const url = await media.saveImage(webp('served'), 'catalog');
   const app = require('../src/app');
