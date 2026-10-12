@@ -96,10 +96,14 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > android/key.properties
 
+      # Version code = run number + 1000: this repo started counting runs at 1 when
+      # it moved accounts (2026-10-11), but phones already carry builds up to ~100+
+      # from the old repo, and Android refuses to install a lower version code
+      # over a higher one ("App not installed").
       - name: Build APK
         run: >
           flutter build apk --release
-          --build-number=${{ github.run_number }}
+          --build-number=$((GITHUB_RUN_NUMBER + 1000))
           --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
 
       # What the owner checks to know an update will install over the previous
@@ -160,7 +164,7 @@ jobs:
           (cd android && ./gradlew --stop) || true
           flutter build apk --release \
             --target-platform android-arm64 \
-            --build-number=${{ github.run_number }} \
+            --build-number=$((GITHUB_RUN_NUMBER + 1000)) \
             --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
 
       - name: Publish to the test-latest release
@@ -169,7 +173,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp build/app/outputs/flutter-apk/app-release.apk feniq-test.apk
-          notes="آخر نسخة تجريبية من main (بناء رقم ${{ github.run_number }}، ${GITHUB_SHA::7}). احذف التطبيق القديم قبل التثبيت إذا كانت نسخة تجريبية."
+          notes="آخر نسخة تجريبية من main (بناء رقم $((GITHUB_RUN_NUMBER + 1000))، ${GITHUB_SHA::7}). احذف التطبيق القديم قبل التثبيت إذا كانت نسخة تجريبية."
           if gh release view test-latest >/dev/null 2>&1; then
             gh release upload test-latest feniq-test.apk --clobber
             gh release edit test-latest --notes "$notes"
