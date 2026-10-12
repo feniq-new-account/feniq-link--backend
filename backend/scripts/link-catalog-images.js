@@ -137,6 +137,35 @@ async function linkImages(packDir, { dryRun = false, overwrite = false, confiden
   return report;
 }
 
+// Read-only: why did rows miss? Same name under another manufacturer spelling,
+// or a catalog that simply does not carry them (and what its names look like).
+async function explainMisses(packDir, missedNames) {
+  const all = JSON.parse(await fs.readFile(path.join(packDir, 'manifest.json'), 'utf8'));
+  const missed = new Set(missedNames);
+  const rows = all.filter((row) => missed.has(row.nameAr));
+  const total = await ProductCatalog.countDocuments();
+  const noKey = await ProductCatalog.countDocuments({ identityKey: null });
+  console.log(`Catalog: ${total} items, ${noKey} without an identity key.`);
+
+  const nameKeys = [...new Set(rows.map((row) => searchKey(row.nameAr)))];
+  const sameName = await ProductCatalog.find({ nameKey: { $in: nameKeys } })
+    .select('nameKey manufacturerAr')
+    .lean();
+  const makersByName = new Map();
+  for (const item of sameName) makersByName.set(item.nameKey, item.manufacturerAr);
+  const pairs = rows.filter((row) => makersByName.has(searchKey(row.nameAr)));
+  console.log(`Same name, other manufacturer: ${pairs.length} of ${rows.length}.`);
+  for (const row of pairs.slice(0, 15)) {
+    console.log(`  ${row.nameAr} | pack: ${row.manufacturerAr} | catalog: ${makersByName.get(searchKey(row.nameAr))}`);
+  }
+
+  const makers = [...new Set(rows.map((row) => row.manufacturerAr))].slice(0, 5);
+  for (const maker of makers) {
+    const sample = await ProductCatalog.find({ manufacturerKey: searchKey(maker) }).select('nameAr').limit(5).lean();
+    console.log(`  catalog names for ${maker}: ${sample.map((item) => item.nameAr).join(' ; ') || '(none)'}`);
+  }
+}
+
 async function main() {
   const [packDir, ...flags] = process.argv.slice(2);
   if (!packDir) {
@@ -159,7 +188,10 @@ async function main() {
       `${flags.includes('--dry-run') ? '[dry run] ' : ''}rows ${report.rows} | considered ${report.considered}${confidence ? ` (${confidence.join(',')})` : ''} | linked ${report.linked} | already had a picture ${report.alreadyHadImage} | not in catalog ${report.notInCatalog.length} | missing file ${report.missingFile.length} | failed ${report.failed}`
     );
     if (report.failed > 0) process.exitCode = 1;
-    if (report.notInCatalog.length > 0) console.log('Not in the catalog (first 15):', report.notInCatalog.slice(0, 15).join(' ; '));
+    if (report.notInCatalog.length > 0) {
+      console.log('Not in the catalog (first 15):', report.notInCatalog.slice(0, 15).join(' ; '));
+      await explainMisses(packDir, report.notInCatalog);
+    }
   } finally {
     await mongoose.disconnect();
   }
