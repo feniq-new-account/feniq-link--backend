@@ -246,87 +246,99 @@ export function WarehouseRepsPage() {
           <div className="wh-empty-state-title">{t('reps.noReps')}</div>
         </div>
       ) : (
-        <div className="wh-card" style={{ overflowX: 'auto' }}>
-          <table className="wh-table">
-            <thead>
-              <tr>
-                <th>{t('reps.name')}</th>
-                <th>{t('reps.pharmacies')}</th>
-                <th>{t('reps.visits30d')}</th>
-                <th>{t('reps.lastVisit')}</th>
-                <th>{t('reps.monthOrders')}</th>
-                <th>{t('reps.monthCommission')}</th>
-                <th>{t('reps.status')}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {reps.map((rep) => (
-                <tr key={rep.id}>
-                  <td>
-                    <Link className="wh-link" to={`/warehouse/reps/${rep.id}`}>{rep.name}</Link>
+        <>
+          {/* One card per rep instead of a wide table: the actions used to sit
+              in the table's last column, off-screen behind a sideways scroll,
+              so warehouse owners never found them. Here every action is a
+              labelled button in plain sight under the rep's numbers. */}
+          <div className="wh-rep-grid">
+            {reps.map((rep) => (
+              <article key={rep.id} className={`wh-rep-card${rep.isActive ? '' : ' is-inactive'}`}>
+                <header className="wh-rep-card-head">
+                  <div>
+                    <Link className="wh-rep-card-name" to={`/warehouse/reps/${rep.id}`}>{rep.name}</Link>
                     <div className="wh-table-sub wh-num" dir="ltr">{toLocalPhone(rep.phone)}</div>
-                  </td>
-                  <td className="wh-num">{rep.pharmacyCount}</td>
-                  <td>
-                    <span className="wh-num">{rep.visits30d}</span>
+                  </div>
+                  <span className={`wh-rep-status${rep.isActive ? ' is-active' : ''}`}>
+                    {rep.isActive ? t('reps.active') : t('reps.inactive')}
+                  </span>
+                </header>
+
+                <dl className="wh-rep-stats">
+                  <div>
+                    <dt>{t('reps.pharmacies')}</dt>
+                    <dd className="wh-num">{rep.pharmacyCount}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('reps.visits30d')}</dt>
+                    <dd className="wh-num">{rep.visits30d}</dd>
                     {rep.unverifiedVisits30d > 0 && (
                       <div className="wh-table-sub">{t('reps.unverified', { count: rep.unverifiedVisits30d })}</div>
                     )}
-                  </td>
-                  <td>{lastSeen(rep.lastVisitAt)}</td>
-                  <td>
-                    <span className="wh-num">{rep.monthOrdersCount}</span>
+                  </div>
+                  <div>
+                    <dt>{t('reps.monthOrders')}</dt>
+                    <dd className="wh-num">{rep.monthOrdersCount}</dd>
                     <div className="wh-table-sub wh-num">{formatSyp(rep.monthOrdersTotal)}</div>
-                  </td>
-                  <td>
-                    {rep.commissionRate > 0 ? (
-                      <>
-                        <span className="wh-num">{formatPercent(rep.commissionRate)}</span>
-                        <div className="wh-table-sub wh-num">
-                          {t('reps.commissionRep', { amount: formatSyp(rep.monthCommission?.repAmount ?? 0) })}
-                        </div>
-                        <div className="wh-table-sub wh-num">
-                          {t('reps.commissionFeniq', { amount: formatSyp(rep.monthCommission?.feniqAmount ?? 0) })}
-                        </div>
-                        <div className="wh-table-sub wh-num">
-                          {t('reps.commissionPharmacy', { amount: formatSyp(rep.monthCommission?.pharmacyAmount ?? 0) })}
-                        </div>
-                        <div className="wh-table-sub wh-num">
-                          {t('reps.commissionSaving', { amount: formatSyp(rep.monthCommission?.savingAmount ?? 0) })}
-                        </div>
-                        <div className="wh-table-sub">
-                          {t(rep.warehouseShareToRep ? 'reps.shareToRepOn' : 'reps.shareToRepOff')}
-                        </div>
-                      </>
-                    ) : (
-                      <span className="wh-table-sub">{t('reps.commissionNone')}</span>
-                    )}
-                  </td>
-                  <td>{rep.isActive ? t('reps.active') : t('reps.inactive')}</td>
-                  <td>
-                    <div className="wh-row-actions">
-                      <Link to={`/warehouse/reps/${rep.id}`}>{t('reps.open')}</Link>
-                      <button type="button" onClick={() => editCommission(rep)}>
-                        {t('reps.editCommission')}
-                      </button>
-                      <button type="button" onClick={() => toggleShareToRep(rep)}>
-                        {t('reps.toggleShareToRep')}: {t(rep.warehouseShareToRep ? 'reps.shareToRepOn' : 'reps.shareToRepOff')}
-                      </button>
-                      <button type="button" onClick={() => resetPassword(rep)}>
-                        {t('reps.resetPassword')}
-                      </button>
-                      <button type="button" onClick={() => toggleActive(rep)}>
-                        {rep.isActive ? t('reps.deactivate') : t('reps.activate')}
-                      </button>
+                  </div>
+                  <div>
+                    <dt>{t('reps.lastVisit')}</dt>
+                    <dd className="wh-rep-stat-text">{lastSeen(rep.lastVisitAt)}</dd>
+                  </div>
+                </dl>
+
+                <div className="wh-rep-commission">
+                  <div className="wh-rep-commission-head">
+                    <span>{t('reps.monthCommission')}</span>
+                    <strong className="wh-num">
+                      {rep.commissionRate > 0 ? formatPercent(rep.commissionRate) : t('reps.commissionNone')}
+                    </strong>
+                  </div>
+                  {rep.commissionRate > 0 && (
+                    <div className="wh-rep-commission-split wh-num">
+                      <span>{t('reps.commissionRep', { amount: formatSyp(rep.monthCommission?.repAmount ?? 0) })}</span>
+                      <span>{t('reps.commissionFeniq', { amount: formatSyp(rep.monthCommission?.feniqAmount ?? 0) })}</span>
+                      <span>{t('reps.commissionPharmacy', { amount: formatSyp(rep.monthCommission?.pharmacyAmount ?? 0) })}</span>
+                      <span>{t('reps.commissionSaving', { amount: formatSyp(rep.monthCommission?.savingAmount ?? 0) })}</span>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="hint" style={{ padding: '8px 16px' }}>{t('reps.commissionCountsDelivered')}</p>
-        </div>
+                  )}
+                  <div className="wh-rep-commission-actions">
+                    <button type="button" className="wh-rep-btn" onClick={() => editCommission(rep)}>
+                      {t('reps.editCommission')}
+                    </button>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={rep.warehouseShareToRep}
+                      className={`wh-rep-switch${rep.warehouseShareToRep ? ' is-on' : ''}`}
+                      onClick={() => toggleShareToRep(rep)}
+                    >
+                      <span className="wh-rep-switch-track" aria-hidden="true"><span /></span>
+                      {t('reps.toggleShareToRep')}: {t(rep.warehouseShareToRep ? 'reps.shareToRepOn' : 'reps.shareToRepOff')}
+                    </button>
+                  </div>
+                </div>
+
+                <footer className="wh-rep-actions">
+                  <Link className="wh-rep-btn wh-rep-btn-primary" to={`/warehouse/reps/${rep.id}`}>
+                    {t('reps.open')}
+                  </Link>
+                  <button type="button" className="wh-rep-btn" onClick={() => resetPassword(rep)}>
+                    {t('reps.resetPassword')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`wh-rep-btn${rep.isActive ? ' wh-rep-btn-danger' : ' wh-rep-btn-ok'}`}
+                    onClick={() => toggleActive(rep)}
+                  >
+                    {rep.isActive ? t('reps.deactivate') : t('reps.activate')}
+                  </button>
+                </footer>
+              </article>
+            ))}
+          </div>
+          <p className="hint">{t('reps.commissionCountsDelivered')}</p>
+        </>
       )}
     </div>
   );
