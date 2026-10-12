@@ -11,6 +11,10 @@
 name: Link catalog images
 
 on:
+  # The sweep: every 3 days, link pictures to catalog items added since the
+  # last run (exact,brand only, never overwriting an existing picture).
+  schedule:
+    - cron: '0 3 */3 * *'
   workflow_dispatch:
     inputs:
       confidence:
@@ -43,8 +47,9 @@ jobs:
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
-          CONFIDENCE: ${{ inputs.confidence }}
-          DRY_RUN: ${{ inputs.dry_run }}
+          # A scheduled run has no inputs: it links for real, exact,brand only.
+          CONFIDENCE: ${{ inputs.confidence || 'exact,brand' }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
           # The script loads the server config, which insists on a secret it
           # does not use here; a throwaway value satisfies the check.
           JWT_SECRET: ${{ github.run_id }}-${{ github.run_attempt }}-link-images-only-not-used-for-tokens
