@@ -4,7 +4,7 @@
 #
 # للتجربة من الموبايل: كل بناء على main يضع آخر نسخة على رابط ثابت (أسرع من
 # Artifacts، ملف APK مباشر بدون zip، وبنصف الحجم لأنه للمعالجات الحديثة فقط):
-# https://github.com/phoenixxx-dev/feniq-backend/releases/download/test-latest/feniq-test.apk
+# https://github.com/mothabermothaber-svg/feniq-link--backend/releases/download/test-latest/feniq-test.apk
 #
 # التوقيع: من أسرار المستودع ANDROID_KEYSTORE_BASE64 و ANDROID_KEYSTORE_PASSWORD
 # و ANDROID_KEY_ALIAS و ANDROID_KEY_PASSWORD (المفتاح الدائم — انظر
