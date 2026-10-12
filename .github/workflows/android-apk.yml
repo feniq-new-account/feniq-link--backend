@@ -1,8 +1,10 @@
-# يبني تطبيق الصيدليات (APK) تلقائياً مع كل تعديل على phoenix/ في main،
-# أو يدوياً من تبويب Actions ← Build Android APK ← Run workflow.
+# يبني تطبيق الصيدليات (APK) يدوياً فقط (من 2026-10-12، بطلب صاحب المشروع):
+# تبويب Actions ← Build Android APK ← Run workflow (أو من الكمبيوتر:
+# gh workflow run android-apk.yml --ref main). الـ Pull Requests بتنفحص تلقائياً
+# بس ما بتنشر شي.
 # الملف الناتج: صفحة التشغيل ← Artifacts ← feniq-apk.
 #
-# للتجربة من الموبايل: كل بناء على main يضع آخر نسخة على رابط ثابت (أسرع من
+# للتجربة من الموبايل: كل بناء يدوي على main يضع آخر نسخة على رابط ثابت (أسرع من
 # Artifacts، ملف APK مباشر بدون zip، وبنصف الحجم لأنه للمعالجات الحديثة فقط):
 # https://github.com/mothabermothaber-svg/feniq-link--backend/releases/download/test-latest/feniq-test.apk
 #
@@ -18,11 +20,6 @@
 name: Build Android APK
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'phoenix/**'
-      - '.github/workflows/android-apk.yml'
   # Builds (and tests) every PR that touches the app, so a broken Gradle or
   # Dart change shows up before merge. site-deploy.yml only ever takes APKs
   # from main.
