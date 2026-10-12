@@ -78,6 +78,7 @@ dependencies:
   qr_flutter: ^4.1.0
   # Payments by voice (warehouse accounts): Android's own recognizer, free.
   speech_to_text: ^7.0.0
+  lottie: ^3.6.1
 
 dev_dependencies:
   flutter_test:
@@ -122,6 +123,9 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    # Splash intro (Lottie, from Claude Design; sparks and its own background
+    # removed - SplashView paints the background).
+    - assets/animations/
 
   # Same two faces as the FENIQ website, so app and site read as one brand
   # (SIL OFL, see assets/fonts/OFL-*.txt). Readex Pro carries titles, buttons,

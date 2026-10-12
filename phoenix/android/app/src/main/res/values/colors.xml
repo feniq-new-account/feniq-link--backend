@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The splash ground (AppColors.navyOf): the window the OS shows while the
-         app starts is painted in it, so it flows straight into the Flutter
-         splash with the large logo instead of flashing a different screen. -->
-    <color name="splash_navy">#0E1A2C</color>
+    <!-- The splash ground: the outer colour of the Flutter splash animation
+         (SplashView's radial gradient), the same in day and night. The window
+         the OS shows while the app starts is painted in it, so it flows
+         straight into the animation instead of flashing a different screen. -->
+    <color name="splash_navy">#030814</color>
 </resources>

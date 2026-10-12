@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/features/auth/data/models/user_model.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
@@ -67,15 +68,21 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
       ),
     );
-    // Never pumpAndSettle here: the logo breathes on a repeating controller,
-    // so the splash screen never reaches a settled frame by design.
+    // Never pumpAndSettle here: the bird breathes on a repeating controller
+    // once the intro ends, so the splash never reaches a settled frame.
     await tester.pump();
   }
 
-  testWidgets('shows only the logo - no connectivity error UI', (tester) async {
+  // Plays the intro out - the splash never routes away before it ends.
+  Future<void> finishIntro(WidgetTester tester) async {
+    await tester.pump(splashIntroDuration);
+    await tester.pump();
+  }
+
+  testWidgets('shows only the animation - no connectivity error UI', (tester) async {
     await pumpSplash(tester);
 
-    expect(find.byType(Image), findsOneWidget);
+    expect(find.byType(LottieBuilder), findsOneWidget);
     // The old offline gate: a wifi-off glyph over a "no connection" message
     // with a Retry button. None of it should exist any more.
     expect(find.byIcon(Icons.wifi_off_rounded), findsNothing);
@@ -92,10 +99,28 @@ void main() {
     );
 
     await pumpSplash(tester);
-    await tester.pump();
+    await finishIntro(tester);
 
     expect(find.text('WAREHOUSES PAGE'), findsOneWidget);
     expect(find.byIcon(Icons.wifi_off_rounded), findsNothing);
+  });
+
+  testWidgets('a session answered early still waits for the intro to end', (tester) async {
+    when(() => authCubit.state)
+        .thenReturn(const AuthState(sessionStatus: SessionStatus.unauthenticated));
+    whenListen(
+      authCubit,
+      Stream.value(const AuthState(sessionStatus: SessionStatus.unauthenticated)),
+      initialState: const AuthState(),
+    );
+
+    await pumpSplash(tester);
+    await tester.pump(splashIntroDuration - const Duration(milliseconds: 100));
+    expect(find.text('LOGIN PAGE'), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+    expect(find.text('LOGIN PAGE'), findsOneWidget);
   });
 
   const repUser = UserModel(
@@ -117,7 +142,7 @@ void main() {
     when(() => authCubit.state).thenReturn(next);
     controller.add(next);
     await tester.pump();
-    await tester.pump();
+    await finishIntro(tester);
   }
 
   testWidgets('a rep goes to the rep screens, not the warehouse list', (tester) async {
@@ -157,8 +182,17 @@ void main() {
       .opacity
       .value;
 
-  testWidgets('the logo runs a repeating animation', (tester) async {
+  testWidgets('the bird holds still during the intro', (tester) async {
     await pumpSplash(tester);
+    await tester.pump(const Duration(milliseconds: 700));
+
+    expect(scaleValue(tester), 1.0);
+    expect(opacityValue(tester), 1.0);
+  });
+
+  testWidgets('after the intro the bird breathes on a repeating animation', (tester) async {
+    await pumpSplash(tester);
+    await finishIntro(tester);
 
     final firstScale = scaleValue(tester);
     final firstOpacity = opacityValue(tester);
@@ -180,6 +214,7 @@ void main() {
 
   testWidgets('the pulse stays subtle', (tester) async {
     await pumpSplash(tester);
+    await finishIntro(tester);
 
     // At the far end of its travel: a 4% grow and a 15% fade, nothing louder.
     await tester.pump(const Duration(milliseconds: 900));

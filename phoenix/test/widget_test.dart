@@ -132,7 +132,8 @@ void main() {
     final appRouter = await _pumpApp(tester);
 
     // No stored token -> checkSession resolves to unauthenticated -> the
-    // splash routes us to the login screen.
+    // splash routes us to the login screen once its intro has played.
+    await tester.pump(splashIntroDuration);
     await tester.pumpAndSettle();
     expect(find.byType(PasswordLoginView), findsOneWidget);
     expect(find.byType(SplashView), findsNothing);
