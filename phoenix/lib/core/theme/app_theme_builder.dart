@@ -95,7 +95,7 @@ class AppThemeBuilder {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: text,
-          side: BorderSide(color: border),
+          side: BorderSide(color: isDark ? border : AppColors.navySurface.withValues(alpha: 0.35)),
           shape: pill,
           padding: AppPadding.button,
           textStyle: buttonText,
@@ -120,7 +120,7 @@ class AppThemeBuilder {
         shape: StadiumBorder(side: BorderSide(color: border)),
         side: BorderSide(color: border),
         backgroundColor: surfaceElevated,
-        selectedColor: primary.withValues(alpha: isDark ? 0.22 : 0.12),
+        selectedColor: isDark ? primary.withValues(alpha: 0.22) : AppColors.navySurface.withValues(alpha: 0.12),
         labelStyle: AppTextTheme.style(fontSize: 13, fontWeight: AppTextTheme.medium, color: text),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       ),
@@ -172,14 +172,18 @@ class AppThemeBuilder {
       navigationBarTheme: NavigationBarThemeData(
         height: 68,
         elevation: 0,
-        backgroundColor: surfaceElevated,
+        // Light mode closes the screen with a navy bar to match the header,
+        // so the white page sits inside a navy frame.
+        backgroundColor: isDark ? surfaceElevated : AppColors.navySurface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: primary.withValues(alpha: isDark ? 0.20 : 0.13),
+        indicatorColor: isDark ? primary.withValues(alpha: 0.20) : Colors.white.withValues(alpha: 0.10),
         indicatorShape: const StadiumBorder(),
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
             size: 24,
-            color: states.contains(WidgetState.selected) ? primary : textSecondary,
+            color: states.contains(WidgetState.selected)
+                ? (isDark ? primary : AppColors.onNavyAccent)
+                : (isDark ? textSecondary : AppColors.onNavyMuted),
           ),
         ),
         // 10, not 11: the longest label ("سجل الحسابات" / "Account History")
@@ -189,7 +193,9 @@ class AppThemeBuilder {
           (states) => AppTextTheme.style(
             fontSize: 10,
             fontWeight: states.contains(WidgetState.selected) ? AppTextTheme.semiBold : AppTextTheme.medium,
-            color: states.contains(WidgetState.selected) ? primary : textSecondary,
+            color: states.contains(WidgetState.selected)
+                ? (isDark ? primary : AppColors.onNavyAccent)
+                : (isDark ? textSecondary : AppColors.onNavyMuted),
           ),
         ),
       ),

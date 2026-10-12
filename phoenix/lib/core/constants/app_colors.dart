@@ -26,9 +26,9 @@ class AppColors {
   static const Color _lightPrimary = _brandOrange; // orange - CTAs
   static const Color _lightSecondary = Color(0xFF2E7D32); // green - medical/positive
   static const Color _lightNavy = _brandNavy; // navy - headers
-  static const Color _lightBackground = Color(0xFFF7F7F8);
-  static const Color _lightSurface = Color(0xFFF1F2F5);
-  static const Color _lightBorder = Color(0xFFE3E6EB);
+  static const Color _lightBackground = Color(0xFFF3F5F9);
+  static const Color _lightSurface = Color(0xFFEEF1F6);
+  static const Color _lightBorder = Color(0xFFDCE3EE);
   static const Color _lightError = Color(0xFFC62828); // red - warnings/danger
   static const Color _lightText = _brandNavy;
   static const Color _lightTextSecondary = Color(0xFF5C6B7F);
@@ -67,6 +67,12 @@ class AppColors {
   /// The deep navy of the FENIQ website's header and hero, used for the app's
   /// own headers in both modes - the bird's night ground.
   static const Color header = _brandNavyDark;
+
+  /// Light mode's navy surfaces (bottom bar, summary cards): the brand navy
+  /// with a warm orange for the current item and a misty blue for the rest.
+  static const Color navySurface = _brandNavy;
+  static const Color onNavyAccent = Color(0xFFFFA94D);
+  static const Color onNavyMuted = Color(0xFFAFC0D6);
 
   static Color get lightPrimary => _lightPrimary;
   static Color get lightSecondary => _lightSecondary;

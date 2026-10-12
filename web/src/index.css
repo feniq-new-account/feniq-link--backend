@@ -57,9 +57,9 @@
   --color-primary: var(--brand-orange);
   --color-secondary: #1e8e5a;
   --color-navy: var(--brand-navy);
-  --color-background: #f6f7f9;
-  --color-surface: #f1f2f5;
-  --color-border: #e3e6eb;
+  --color-background: #f3f5f9;
+  --color-surface: #eef1f6;
+  --color-border: #dce3ee;
   --color-error: #d32f2f;
   --color-text: var(--brand-navy);
   --color-text-secondary: #5c6b7f;
