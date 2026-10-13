@@ -120,7 +120,7 @@ class _SplashLogo extends StatefulWidget {
 }
 
 class _SplashLogoState extends State<_SplashLogo>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   // The animation's own ground: a radial glow from its centre (690px radius
   // on its 1080x1920 canvas) out to near-black navy - the same outer colour as
   // the Android launch window (splash_navy), so start-up shows no seam. It is
@@ -131,11 +131,23 @@ class _SplashLogoState extends State<_SplashLogo>
   static const Size _canvas = Size(1080, 1920);
   static const double _glowRadius = 690;
 
+  // Drives the Lottie intro. Flutter's default (AnimationBehavior.normal)
+  // finishes every animation in a few milliseconds when the phone has
+  // animations switched off - Android's "remove animations", or the power
+  // saver modes that set it - so the intro was skipped straight to its last
+  // frame and the bird just sat there. The intro is the brand moment and lasts
+  // 1.5s, so it ignores that switch (`preserve`).
+  late final AnimationController _intro = AnimationController(
+    vsync: this,
+    animationBehavior: AnimationBehavior.preserve,
+  );
+
   // One breath in, one out - ~1.8s per full cycle. Calm enough to read as
   // "alive, still working", never as an animation asking to be looked at.
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 900),
+    animationBehavior: AnimationBehavior.preserve,
   );
 
   late final Animation<double> _curve = CurvedAnimation(
@@ -169,6 +181,7 @@ class _SplashLogoState extends State<_SplashLogo>
 
   @override
   void dispose() {
+    _intro.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -180,16 +193,20 @@ class _SplashLogoState extends State<_SplashLogo>
       body: LayoutBuilder(
         builder: (context, constraints) {
           final size = constraints.biggest;
-          // BoxFit.cover scale, so the painted glow lines up with the
-          // animation drawn over it on any screen shape.
-          final cover = math.max(
+          // BoxFit.contain scale, so the painted glow lines up with the
+          // animation drawn over it on any screen shape. Contain, not cover:
+          // the bird ends 125% scaled and spans ~86% of the canvas width, so
+          // on a tall phone (narrower than the 9:16 canvas) cover cropped the
+          // wings and the beak off the screen's sides. The ground is painted
+          // here, so contain leaves no empty bars.
+          final fit = math.min(
             size.width / _canvas.width,
             size.height / _canvas.height,
           );
           return DecoratedBox(
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                radius: _glowRadius * cover / size.shortestSide,
+                radius: _glowRadius * fit / size.shortestSide,
                 colors: const [_glow, _ground],
               ),
             ),
@@ -204,8 +221,15 @@ class _SplashLogoState extends State<_SplashLogo>
                 child: SizedBox.expand(
                   child: Lottie.asset(
                     'assets/animations/phoenix_splash.json',
-                    repeat: false,
-                    fit: BoxFit.cover,
+                    controller: _intro,
+                    onLoaded: (composition) {
+                      // Play from the first frame once the file is decoded, so
+                      // a slow load never starts the intro half way through.
+                      _intro
+                        ..duration = composition.duration
+                        ..forward(from: 0);
+                    },
+                    fit: BoxFit.contain,
                     // A broken or missing animation still leaves the logo.
                     errorBuilder: (_, __, ___) => const Center(
                       child: BrandLogo.onDark(width: 200),

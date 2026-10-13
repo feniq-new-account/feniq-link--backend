@@ -90,6 +90,18 @@ void main() {
     expect(find.text('Retry'), findsNothing);
   });
 
+  testWidgets('the intro plays even when the phone has animations switched off, '
+      'and shows the whole bird rather than a cropped zoom', (tester) async {
+    await pumpSplash(tester);
+
+    final lottie = tester.widget<LottieBuilder>(find.byType(LottieBuilder));
+    // `normal` would finish the intro in milliseconds on such a phone, leaving
+    // the bird frozen on its last frame.
+    expect(lottie.controller?.animationBehavior, AnimationBehavior.preserve);
+    // `cover` cropped the wings and beak off a tall screen's sides.
+    expect(lottie.fit, BoxFit.contain);
+  });
+
   testWidgets('an unreachable server on launch does not strand the user - it '
       'carries on into the app', (tester) async {
     whenListen(
