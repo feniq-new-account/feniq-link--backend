@@ -97,7 +97,11 @@ void main() {
     final lottie = tester.widget<LottieBuilder>(find.byType(LottieBuilder));
     // `normal` would finish the intro in milliseconds on such a phone, leaving
     // the bird frozen on its last frame.
-    expect(lottie.controller?.animationBehavior, AnimationBehavior.preserve);
+    expect(lottie.controller, isA<AnimationController>());
+    expect(
+      (lottie.controller! as AnimationController).animationBehavior,
+      AnimationBehavior.preserve,
+    );
     // `cover` cropped the wings and beak off a tall screen's sides.
     expect(lottie.fit, BoxFit.contain);
   });
