@@ -26,6 +26,13 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('every dosage form paints without error', (tester) async {
+    for (final form in ['', 'أقراص ملبسة', 'محافظ', 'محلول للحقن/حبابات', 'شراب', 'قطرة عينية', 'كريم', 'تحاميل', 'ظروف', 'بخاخ أنفي']) {
+      await pumpPlaceholder(tester, SizedBox(width: 120, height: 90, child: MedicinePlaceholder(dosageForm: form)));
+      expect(tester.takeException(), isNull, reason: form);
+    }
+  });
+
   testWidgets('paints in the dark theme too', (tester) async {
     await pumpPlaceholder(
       tester,

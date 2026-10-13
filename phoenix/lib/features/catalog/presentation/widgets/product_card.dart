@@ -121,7 +121,7 @@ class _GridCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.vertical(top: AppRadius.large.topLeft),
-                child: _ProductImage(url: product.image, aspectRatio: 1.6),
+                child: _ProductImage(url: product.image, dosageForm: product.dosageForm, aspectRatio: 1.6),
               ),
               PositionedDirectional(
                 top: AppSizes.spacingXSmall + 2,
@@ -246,7 +246,7 @@ class _ListRow extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: AppRadius.medium,
-                child: _ProductImage(url: product.image, size: 60),
+                child: _ProductImage(url: product.image, dosageForm: product.dosageForm, size: 60),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -467,9 +467,11 @@ class _PriceDisplay extends StatelessWidget {
 }
 
 class _ProductImage extends StatelessWidget {
-  const _ProductImage({required this.url, this.aspectRatio, this.size});
+  const _ProductImage({required this.url, this.dosageForm, this.aspectRatio, this.size});
 
   final String? url;
+  // Picks the drawing that stands in for a missing picture (see MedicinePlaceholder).
+  final String? dosageForm;
   final double? aspectRatio;
   final double? size;
 
@@ -478,9 +480,9 @@ class _ProductImage extends StatelessWidget {
     // `product.image` is the effective image the server resolves (the
     // warehouse's override, else the catalog's central one - catalog overhaul
     // Phase 9), always on Cloudinary or the server's own disk; AppNetworkImage
-    // right-sizes and caches it. A medicine with no picture shows a capsule and
-    // a tablet (never a company's initial, which read as a mistake) rather than
-    // a blank box, so a catalog that is only partly photographed still looks
+    // right-sizes and caches it. A medicine with no picture shows a drawing of
+    // its dosage form (never a company's initial, which read as a mistake)
+    // rather than a blank box, so a catalog that is only partly photographed still looks
     // finished.
     //
     // Every picture sits in the same white tile with the same margin, trimmed
@@ -496,11 +498,11 @@ class _ProductImage extends StatelessWidget {
                 url: url,
                 fit: BoxFit.contain,
                 framed: true,
-                fallback: const MedicinePlaceholder(),
+                fallback: MedicinePlaceholder(dosageForm: dosageForm),
               ),
             ),
           )
-        : const MedicinePlaceholder();
+        : MedicinePlaceholder(dosageForm: dosageForm);
 
     if (size != null) {
       return SizedBox(width: size, height: size, child: image);

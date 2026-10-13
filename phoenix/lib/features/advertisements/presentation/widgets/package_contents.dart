@@ -79,7 +79,7 @@ class PackageContentRow extends StatelessWidget {
               height: 44,
               fit: BoxFit.contain,
               framed: true,
-              fallback: const MedicinePlaceholder(size: 44),
+              fallback: MedicinePlaceholder(dosageForm: entry.dosageForm, size: 44),
             ),
           ),
           const SizedBox(width: AppSizes.spacingSmall),
