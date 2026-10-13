@@ -8,6 +8,7 @@ import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/core/widgets/app_dialog.dart';
 import 'package:feniq/core/widgets/app_network_image.dart';
+import 'package:feniq/core/widgets/medicine_placeholder.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
@@ -259,7 +260,7 @@ class _ItemImage extends StatelessWidget {
       fit: BoxFit.contain,
       framed: true,
       borderRadius: AppRadius.medium,
-      fallbackIcon: Icons.medication_outlined,
+      fallback: const MedicinePlaceholder(size: 72),
     );
   }
 }

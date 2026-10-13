@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
+import 'package:feniq/core/widgets/medicine_placeholder.dart';
 import 'package:feniq/core/widgets/offer_badge.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
+import 'package:feniq/features/catalog/presentation/widgets/manufacturer_avatar.dart';
 import 'package:feniq/features/catalog/presentation/widgets/product_card.dart';
 import 'package:feniq/features/exchange_rate/data/models/exchange_rate_model.dart';
 import 'package:feniq/features/exchange_rate/data/repositories/exchange_rate_repository.dart';
@@ -221,12 +223,12 @@ void main() {
     });
   });
 
-  testWidgets('a medicine with no picture shows its company\'s initial instead of a blank box', (tester) async {
+  testWidgets('a medicine with no picture shows a medicine placeholder, not a letter or a blank box', (tester) async {
     for (final grid in [true, false]) {
       await pumpCard(tester, isGrid: grid);
-      // _product's company is shown as 'Co' (its English name); the avatar
-      // draws its first letter.
-      expect(find.text('C'), findsOneWidget, reason: grid ? 'grid' : 'list');
+      expect(find.byType(MedicinePlaceholder), findsOneWidget, reason: grid ? 'grid' : 'list');
+      // The company's initial used to stand in here and read as a mistake.
+      expect(find.byType(ManufacturerAvatar), findsNothing, reason: grid ? 'grid' : 'list');
       expect(tester.takeException(), isNull);
     }
   });

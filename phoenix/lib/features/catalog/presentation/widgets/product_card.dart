@@ -9,11 +9,11 @@ import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/core/widgets/add_to_cart_button.dart';
 import 'package:feniq/core/widgets/app_network_image.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
+import 'package:feniq/core/widgets/medicine_placeholder.dart';
 import 'package:feniq/core/widgets/quantity_stepper.dart';
 import 'package:feniq/core/widgets/status_badge.dart';
 import 'package:feniq/features/catalog/data/models/bonus_tier.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
-import 'package:feniq/features/catalog/presentation/widgets/manufacturer_avatar.dart';
 import 'package:feniq/features/catalog/presentation/widgets/quantity_picker_sheet.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/core/widgets/offer_badge.dart';
@@ -121,7 +121,7 @@ class _GridCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.vertical(top: AppRadius.large.topLeft),
-                child: _ProductImage(url: product.image, manufacturer: product.displayManufacturer, aspectRatio: 1.6),
+                child: _ProductImage(url: product.image, aspectRatio: 1.6),
               ),
               PositionedDirectional(
                 top: AppSizes.spacingXSmall + 2,
@@ -246,7 +246,7 @@ class _ListRow extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: AppRadius.medium,
-                child: _ProductImage(url: product.image, manufacturer: product.displayManufacturer, size: 60),
+                child: _ProductImage(url: product.image, size: 60),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -467,11 +467,9 @@ class _PriceDisplay extends StatelessWidget {
 }
 
 class _ProductImage extends StatelessWidget {
-  const _ProductImage({required this.url, required this.manufacturer, this.aspectRatio, this.size});
+  const _ProductImage({required this.url, this.aspectRatio, this.size});
 
   final String? url;
-  // Whose medicine it is: stands in for the picture when there is none.
-  final String manufacturer;
   final double? aspectRatio;
   final double? size;
 
@@ -480,9 +478,10 @@ class _ProductImage extends StatelessWidget {
     // `product.image` is the effective image the server resolves (the
     // warehouse's override, else the catalog's central one - catalog overhaul
     // Phase 9), always on Cloudinary or the server's own disk; AppNetworkImage
-    // right-sizes and caches it. A medicine with no picture shows its company's
-    // coloured initial (the same one the company list uses) rather than a blank
-    // box, so a catalog that is only partly photographed still looks finished.
+    // right-sizes and caches it. A medicine with no picture shows a capsule and
+    // a tablet (never a company's initial, which read as a mistake) rather than
+    // a blank box, so a catalog that is only partly photographed still looks
+    // finished.
     //
     // Every picture sits in the same white tile with the same margin, trimmed
     // and fitted (never cropped) by Cloudinary to exactly that size, so all
@@ -497,36 +496,16 @@ class _ProductImage extends StatelessWidget {
                 url: url,
                 fit: BoxFit.contain,
                 framed: true,
-                fallback: _CompanyTile(name: manufacturer, size: size),
+                fallback: const MedicinePlaceholder(),
               ),
             ),
           )
-        : _CompanyTile(name: manufacturer, size: size);
+        : const MedicinePlaceholder();
 
     if (size != null) {
       return SizedBox(width: size, height: size, child: image);
     }
     return AspectRatio(aspectRatio: aspectRatio!, child: image);
-  }
-}
-
-class _CompanyTile extends StatelessWidget {
-  const _CompanyTile({required this.name, this.size});
-
-  final String name;
-  final double? size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      color: AppColors.surfaceOf(context),
-      alignment: Alignment.center,
-      child: name.trim().isEmpty
-          ? Icon(Icons.medication_outlined, color: AppColors.textSecondaryOf(context))
-          : ManufacturerAvatar(name: name),
-    );
   }
 }
 
