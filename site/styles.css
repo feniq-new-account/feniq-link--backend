@@ -531,3 +531,9 @@ p, h1, h2, h3, figcaption { overflow-wrap: anywhere; }
   .drawer .plate { padding-inline: .3em; }
   .track { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 }
+
+.item--pictured { grid-template-columns: 64px minmax(0, 1fr) auto; }
+.item__image { grid-column: 1; grid-row: 1 / span 2; width: 64px; height: 64px; object-fit: contain; background: #fff; border: 1px solid #E2E6EB; border-radius: 4px; }
+.item--pictured .item__name, .item--pictured .item__meta { grid-column: 2; }
+.item--pictured .add { grid-column: 3; }
+@media (max-width: 400px) { .item--pictured { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 4px 8px; } .item__image { width: 48px; height: 56px; } .add { padding-inline: 10px; } }

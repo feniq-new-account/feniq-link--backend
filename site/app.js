@@ -96,7 +96,8 @@
       .map((it) => {
         const inOrder = order.has(it.n);
         const pack = it.p ? ` · عبوة ${it.p}` : "";
-        return `<li class="item">
+        return `<li class="item${it.image ? " item--pictured" : ""}">
+          ${it.image ? `<img class="item__image" src="${esc(it.image)}" alt="علبة ${esc(it.n)}" width="80" height="80" loading="lazy">` : ""}
           <span class="item__name">${esc(it.n)}</span>
           <span class="item__meta">${esc(it.f)}${pack} · ${esc(it.m)}<br><bdi>${esc(it.c)} ${esc(it.s)}</bdi></span>
           <button type="button" class="add" data-n="${esc(it.n)}" aria-pressed="${inOrder}">${inOrder ? "أُضيف" : "أضف"}</button>
