@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +39,10 @@ void main() {
   });
 
   Future<void> pumpSplash(WidgetTester tester, {AssetBundle? animationBundle}) async {
+    if (animationBundle == null) {
+      // Decode embedded image assets outside the fake-clock test zone.
+      await tester.runAsync(() => AssetLottie('assets/animations/phoenix_splash.json').load());
+    }
     final router = GoRouter(
       initialLocation: RoutePaths.splash,
       routes: [
@@ -80,11 +86,6 @@ void main() {
     );
     // Never pumpAndSettle here: the bird breathes on a repeating controller
     // once the intro ends, so the splash never reaches a settled frame.
-    if (animationBundle == null) {
-      // Asset decoding (including embedded images) uses real asynchronous IO.
-      // Wait for it before advancing the fake animation clock.
-      await tester.runAsync(() => tester.widget<LottieBuilder>(find.byType(LottieBuilder)).lottie.load());
-    }
     await tester.pump();
     await tester.pump();
   }
@@ -131,13 +132,16 @@ void main() {
 
   testWidgets('a delayed asset still plays the full intro before navigation', (tester) async {
     final bundle = DeferredSplashBundle();
-    final bytes = await tester.runAsync(() => rootBundle.load('assets/animations/phoenix_splash.json'));
+    // A valid 1.5s composition without platform image decoding: only its
+    // delivery is deferred, so fake time measures playback precisely.
+    final bytes = ByteData.sublistView(Uint8List.fromList(utf8.encode(
+      '{"v":"5.7.4","fr":60,"ip":0,"op":90,"w":1080,"h":1920,"layers":[]}',
+    )));
     when(() => authCubit.state).thenReturn(const AuthState(sessionStatus: SessionStatus.unauthenticated));
     await pumpSplash(tester, animationBundle: bundle);
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('LOGIN PAGE'), findsNothing);
-    bundle.animation.complete(bytes!);
-    await tester.runAsync(() => tester.widget<LottieBuilder>(find.byType(LottieBuilder)).lottie.load());
+    bundle.animation.complete(bytes);
     await tester.pump();
     await tester.pump();
     await tester.pump(splashIntroDuration - const Duration(milliseconds: 100));
@@ -153,13 +157,6 @@ void main() {
     when(() => authCubit.state).thenReturn(const AuthState(sessionStatus: SessionStatus.unauthenticated));
     await pumpSplash(tester, animationBundle: bundle);
     bundle.animation.complete(ByteData(0));
-    await tester.runAsync(() async {
-      try {
-        await tester.widget<LottieBuilder>(find.byType(LottieBuilder)).lottie.load();
-      } catch (_) {
-        // The production errorBuilder handles the corrupt asset.
-      }
-    });
     await tester.pump();
     await tester.pump();
     await tester.pump();
