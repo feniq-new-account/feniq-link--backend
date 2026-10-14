@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -83,6 +84,9 @@ Future<AppRouter> _pumpApp(
     currentVersion: '1.0.0',
   );
 
+  // The splash now waits for actual playback, so decode its image assets
+  // before advancing the fake-clock widget test.
+  await tester.runAsync(() => AssetLottie('assets/animations/phoenix_splash.json').load());
   await tester.pumpWidget(
     MyApp(
       initialState: const SettingsState(),
@@ -109,6 +113,8 @@ Future<AppRouter> _pumpApp(
     ),
   );
 
+  await tester.pump();
+  await tester.pump();
   return appRouter;
 }
 
@@ -133,7 +139,7 @@ void main() {
 
     // No stored token -> checkSession resolves to unauthenticated -> the
     // splash routes us to the login screen once its intro has played.
-    await tester.pump(splashIntroDuration);
+    await tester.pump(splashIntroDuration + const Duration(milliseconds: 1));
     await tester.pumpAndSettle();
     expect(find.byType(PasswordLoginView), findsOneWidget);
     expect(find.byType(SplashView), findsNothing);
@@ -309,3 +315,4 @@ void main() {
     expect(cartCubit.state.minOrderAmountUsd, 7);
   });
 }
+

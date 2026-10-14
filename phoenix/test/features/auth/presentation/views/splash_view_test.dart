@@ -93,6 +93,8 @@ void main() {
   // Plays the intro out - the splash never routes away before it ends.
   Future<void> finishIntro(WidgetTester tester) async {
     await tester.pump(splashIntroDuration);
+    // AnimationController completes on the first tick past the endpoint.
+    await tester.pump(const Duration(milliseconds: 1));
     await tester.pump();
     await tester.pump();
   }
@@ -147,6 +149,7 @@ void main() {
     await tester.pump(splashIntroDuration - const Duration(milliseconds: 100));
     expect(find.text('LOGIN PAGE'), findsNothing);
     await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 1));
     await tester.pump();
     await tester.pump();
     expect(find.text('LOGIN PAGE'), findsOneWidget);
@@ -203,6 +206,7 @@ void main() {
     expect(find.text('LOGIN PAGE'), findsNothing);
 
     await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 1));
     await tester.pump();
     await tester.pump();
     expect(find.text('LOGIN PAGE'), findsOneWidget);
