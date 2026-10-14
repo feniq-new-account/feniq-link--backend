@@ -80,12 +80,19 @@ void main() {
     );
     // Never pumpAndSettle here: the bird breathes on a repeating controller
     // once the intro ends, so the splash never reaches a settled frame.
+    if (animationBundle == null) {
+      // Asset decoding (including embedded images) uses real asynchronous IO.
+      // Wait for it before advancing the fake animation clock.
+      await tester.runAsync(() => tester.widget<LottieBuilder>(find.byType(LottieBuilder)).lottie.load());
+    }
+    await tester.pump();
     await tester.pump();
   }
 
   // Plays the intro out - the splash never routes away before it ends.
   Future<void> finishIntro(WidgetTester tester) async {
     await tester.pump(splashIntroDuration);
+    await tester.pump();
     await tester.pump();
   }
 
@@ -130,11 +137,13 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('LOGIN PAGE'), findsNothing);
     bundle.animation.complete(bytes!);
+    await tester.runAsync(() => tester.widget<LottieBuilder>(find.byType(LottieBuilder)).lottie.load());
     await tester.pump();
     await tester.pump();
     await tester.pump(splashIntroDuration - const Duration(milliseconds: 100));
     expect(find.text('LOGIN PAGE'), findsNothing);
     await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
     await tester.pump();
     expect(find.text('LOGIN PAGE'), findsOneWidget);
   });
@@ -144,6 +153,14 @@ void main() {
     when(() => authCubit.state).thenReturn(const AuthState(sessionStatus: SessionStatus.unauthenticated));
     await pumpSplash(tester, animationBundle: bundle);
     bundle.animation.complete(ByteData(0));
+    await tester.runAsync(() async {
+      try {
+        await tester.widget<LottieBuilder>(find.byType(LottieBuilder)).lottie.load();
+      } catch (_) {
+        // The production errorBuilder handles the corrupt asset.
+      }
+    });
+    await tester.pump();
     await tester.pump();
     await tester.pump();
     await tester.pump();
@@ -189,6 +206,7 @@ void main() {
     expect(find.text('LOGIN PAGE'), findsNothing);
 
     await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
     await tester.pump();
     expect(find.text('LOGIN PAGE'), findsOneWidget);
   });
