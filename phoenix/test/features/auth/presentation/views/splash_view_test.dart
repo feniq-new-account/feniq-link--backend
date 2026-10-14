@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,15 @@ import 'package:feniq/routes/route_paths.dart';
 
 class MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
+class DeferredSplashBundle extends CachingAssetBundle {
+  final Completer<ByteData> animation = Completer<ByteData>();
+
+  @override
+  Future<ByteData> load(String key) => key == 'assets/animations/phoenix_splash.json'
+      ? animation.future
+      : rootBundle.load(key);
+}
+
 void main() {
   late MockAuthCubit authCubit;
 
@@ -26,7 +36,7 @@ void main() {
     when(() => authCubit.checkSession()).thenAnswer((_) async {});
   });
 
-  Future<void> pumpSplash(WidgetTester tester) async {
+  Future<void> pumpSplash(WidgetTester tester, {AssetBundle? animationBundle}) async {
     final router = GoRouter(
       initialLocation: RoutePaths.splash,
       routes: [
@@ -35,7 +45,7 @@ void main() {
           name: RouteNames.splash,
           builder: (context, state) => BlocProvider<AuthCubit>.value(
             value: authCubit,
-            child: const SplashView(),
+            child: SplashView(animationBundle: animationBundle),
           ),
         ),
         GoRoute(
@@ -92,6 +102,9 @@ void main() {
 
   testWidgets('the intro plays even when the phone has animations switched off, '
       'and shows the whole bird rather than a cropped zoom', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue);
     await pumpSplash(tester);
 
     final lottie = tester.widget<LottieBuilder>(find.byType(LottieBuilder));
@@ -104,6 +117,47 @@ void main() {
     );
     // `cover` cropped the wings and beak off a tall screen's sides.
     expect(lottie.fit, BoxFit.contain);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(lottie.controller!.value, greaterThan(0));
+    expect(lottie.controller!.value, lessThan(1));
+  });
+
+  testWidgets('a delayed asset still plays the full intro before navigation', (tester) async {
+    final bundle = DeferredSplashBundle();
+    final bytes = await tester.runAsync(() => rootBundle.load('assets/animations/phoenix_splash.json'));
+    when(() => authCubit.state).thenReturn(const AuthState(sessionStatus: SessionStatus.unauthenticated));
+    await pumpSplash(tester, animationBundle: bundle);
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('LOGIN PAGE'), findsNothing);
+    bundle.animation.complete(bytes!);
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(splashIntroDuration - const Duration(milliseconds: 100));
+    expect(find.text('LOGIN PAGE'), findsNothing);
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+    expect(find.text('LOGIN PAGE'), findsOneWidget);
+  });
+
+  testWidgets('a broken asset falls back and allows navigation', (tester) async {
+    final bundle = DeferredSplashBundle();
+    when(() => authCubit.state).thenReturn(const AuthState(sessionStatus: SessionStatus.unauthenticated));
+    await pumpSplash(tester, animationBundle: bundle);
+    bundle.animation.complete(ByteData(0));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('LOGIN PAGE'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a stalled asset times out and does not block navigation', (tester) async {
+    final bundle = DeferredSplashBundle();
+    when(() => authCubit.state).thenReturn(const AuthState(sessionStatus: SessionStatus.unauthenticated));
+    await pumpSplash(tester, animationBundle: bundle);
+    await tester.pump(splashLoadTimeout);
+    await tester.pump();
+    expect(find.text('LOGIN PAGE'), findsOneWidget);
   });
 
   testWidgets('an unreachable server on launch does not strand the user - it '
@@ -239,3 +293,4 @@ void main() {
     expect(opacityValue(tester), closeTo(0.85, 0.001));
   });
 }
+

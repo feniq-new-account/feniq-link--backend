@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
@@ -21,27 +22,23 @@ const Key splashLogoScaleKey = ValueKey('splashLogoScale');
 /// bird is always seen whole; a session check that takes longer keeps the bird
 /// breathing until it answers.
 const Duration splashIntroDuration = Duration(milliseconds: 1500);
+const Duration splashLoadTimeout = Duration(seconds: 5);
 
 class SplashView extends StatefulWidget {
-  const SplashView({super.key});
+  const SplashView({super.key, this.animationBundle});
+
+  final AssetBundle? animationBundle;
 
   @override
   State<SplashView> createState() => _SplashViewState();
 }
 
 class _SplashViewState extends State<SplashView> {
-  late final Timer _introTimer;
   bool _introDone = false;
 
   @override
   void initState() {
     super.initState();
-    _introTimer = Timer(splashIntroDuration, () {
-      if (!mounted) return;
-      setState(() => _introDone = true);
-      // The check may have answered while the intro was still playing.
-      _routeFor(context, context.read<AuthCubit>().state.sessionStatus);
-    });
     // TEMP DIAGNOSTIC (router-lifecycle) - remove after verifying.
     debugPrint('ROUTER_DEBUG: SplashView.initState()');
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -54,14 +51,14 @@ class _SplashViewState extends State<SplashView> {
     });
   }
 
-  @override
-  void dispose() {
-    _introTimer.cancel();
-    super.dispose();
+  void _finishIntro() {
+    if (!mounted || _introDone) return;
+    setState(() => _introDone = true);
+    _routeFor(context, context.read<AuthCubit>().state.sessionStatus);
   }
 
   void _routeFor(BuildContext context, SessionStatus status) {
-    // Let the intro finish first - the timer above routes when it ends.
+    // Let the animation finish, including any time spent loading its asset.
     if (!_introDone) return;
     // TEMP DIAGNOSTIC (router-lifecycle) - remove after verifying.
     debugPrint('ROUTER_DEBUG: SplashView listener -> navigating for $status');
@@ -104,16 +101,22 @@ class _SplashViewState extends State<SplashView> {
         return previous.sessionStatus != current.sessionStatus;
       },
       listener: (context, state) => _routeFor(context, state.sessionStatus),
-      child: _SplashLogo(breathing: _introDone),
+      child: _SplashLogo(
+        breathing: _introDone,
+        onIntroComplete: _finishIntro,
+        animationBundle: widget.animationBundle,
+      ),
     );
   }
 }
 
 class _SplashLogo extends StatefulWidget {
-  const _SplashLogo({required this.breathing});
+  const _SplashLogo({required this.breathing, required this.onIntroComplete, this.animationBundle});
 
   /// False while the intro plays; then the bird breathes until we route away.
   final bool breathing;
+  final VoidCallback onIntroComplete;
+  final AssetBundle? animationBundle;
 
   @override
   State<_SplashLogo> createState() => _SplashLogoState();
@@ -121,6 +124,10 @@ class _SplashLogo extends StatefulWidget {
 
 class _SplashLogoState extends State<_SplashLogo>
     with TickerProviderStateMixin {
+  late final Timer _loadTimer;
+  bool _loadFailed = false;
+  bool _introStarted = false;
+  bool _completionReported = false;
   // The animation's own ground: a radial glow from its centre (690px radius
   // on its 1080x1920 canvas) out to near-black navy - the same outer colour as
   // the Android launch window (splash_navy), so start-up shows no seam. It is
@@ -168,7 +175,26 @@ class _SplashLogoState extends State<_SplashLogo>
   @override
   void initState() {
     super.initState();
+    _intro.addStatusListener((status) {
+      if (status == AnimationStatus.completed) _notifyComplete();
+    });
+    // A missing, corrupt or stalled asset must not block session navigation.
+    // Cancel this watchdog when playback starts; it never truncates playback.
+    _loadTimer = Timer(splashLoadTimeout, _failLoading);
     if (widget.breathing) _controller.repeat(reverse: true);
+  }
+
+  void _notifyComplete() {
+    if (!mounted || _completionReported) return;
+    _completionReported = true;
+    widget.onIntroComplete();
+  }
+
+  void _failLoading() {
+    if (!mounted || _loadFailed || _introStarted) return;
+    _loadTimer.cancel();
+    setState(() => _loadFailed = true);
+    _notifyComplete();
   }
 
   @override
@@ -181,6 +207,7 @@ class _SplashLogoState extends State<_SplashLogo>
 
   @override
   void dispose() {
+    _loadTimer.cancel();
     _intro.dispose();
     _controller.dispose();
     super.dispose();
@@ -219,10 +246,16 @@ class _SplashLogoState extends State<_SplashLogo>
                 key: splashLogoScaleKey,
                 scale: _scale,
                 child: SizedBox.expand(
-                  child: Lottie.asset(
+                  child: _loadFailed
+                      ? const Center(child: BrandLogo.onDark(width: 200))
+                      : Lottie.asset(
                     'assets/animations/phoenix_splash.json',
+                    bundle: widget.animationBundle,
                     controller: _intro,
                     onLoaded: (composition) {
+                      if (!mounted || _loadFailed || _introStarted) return;
+                      _introStarted = true;
+                      _loadTimer.cancel();
                       // Play from the first frame once the file is decoded, so
                       // a slow load never starts the intro half way through.
                       _intro
@@ -231,9 +264,11 @@ class _SplashLogoState extends State<_SplashLogo>
                     },
                     fit: BoxFit.contain,
                     // A broken or missing animation still leaves the logo.
-                    errorBuilder: (_, __, ___) => const Center(
-                      child: BrandLogo.onDark(width: 200),
-                    ),
+                    errorBuilder: (_, __, ___) {
+                      // errorBuilder runs during build, so finish afterwards.
+                      WidgetsBinding.instance.addPostFrameCallback((_) => _failLoading());
+                      return const Center(child: BrandLogo.onDark(width: 200));
+                    },
                   ),
                 ),
               ),
@@ -244,3 +279,4 @@ class _SplashLogoState extends State<_SplashLogo>
     );
   }
 }
+
