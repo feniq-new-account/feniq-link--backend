@@ -1,7 +1,7 @@
 # يبني تطبيق الصيدليات (APK) يدوياً فقط (من 2026-10-12، بطلب صاحب المشروع):
 # تبويب Actions ← Build Android APK ← Run workflow (أو من الكمبيوتر:
 # gh workflow run android-apk.yml --ref main). الـ Pull Requests بتنفحص تلقائياً
-# بس ما بتنشر شي.
+# بس ما بتبني APK وما بتنشر شي.
 # الملف الناتج: صفحة التشغيل ← Artifacts ← feniq-apk.
 #
 # للتجربة من الموبايل: كل بناء يدوي على main يضع آخر نسخة على رابط ثابت (أسرع من
@@ -20,9 +20,8 @@
 name: Build Android APK
 
 on:
-  # Builds (and tests) every PR that touches the app, so a broken Gradle or
-  # Dart change shows up before merge. site-deploy.yml only ever takes APKs
-  # from main.
+  # PRs run Flutter tests only. APK creation requires a manual request.
+  # site-deploy.yml only ever takes APKs from main.
   pull_request:
     paths:
       - 'phoenix/**'
@@ -42,7 +41,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: phoenix
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.35.x
+          cache: true
+      - run: flutter pub get
+      - run: flutter test
+
   build:
+    # Ammar: never create an APK automatically; wait for an explicit request.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
