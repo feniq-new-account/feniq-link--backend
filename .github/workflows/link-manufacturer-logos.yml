@@ -1,0 +1,65 @@
+# يعطي شركات الأدوية لوغوهاتها (data/manufacturer-logos) في قاعدة الإنتاج: يرفع كل لوغو
+# مرة وحدة إلى Cloudinary (feniq/manufacturers) ويحفظ رابطه في logoUrl للشركة.
+# ما بيلمس شركة إلها لوغو أصلاً (يلي رفعه الأدمن)، وما بيخلق شركات جديدة.
+# آمن تعيد تشغيله.
+#
+# الأسرار نفسها يلي بيستعملها «Link catalog images»:
+#   MONGODB_URI, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+# شغّله أولاً بتجربة (dry run)، وبعدها فعلياً.
+name: Link manufacturer logos
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'تجربة فقط بدون كتابة'
+        type: boolean
+        default: true
+      overwrite:
+        description: 'استبدال لوغو موجود (بيمسح لوغوهات الأدمن!)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: link-manufacturer-logos
+  cancel-in-progress: false
+
+jobs:
+  link:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci --omit=dev
+      - name: Link the logos
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          OVERWRITE: ${{ inputs.overwrite }}
+          # The script loads the server config, which insists on a secret it
+          # does not use here; a throwaway value satisfies the check.
+          JWT_SECRET: ${{ github.run_id }}-${{ github.run_attempt }}-link-logos-only-not-used-for-tokens
+        run: |
+          if [ -z "$MONGODB_URI" ] || [ -z "$CLOUDINARY_CLOUD_NAME" ] || [ -z "$CLOUDINARY_API_KEY" ] || [ -z "$CLOUDINARY_API_SECRET" ]; then
+            echo "::error::Add the MONGODB_URI and CLOUDINARY_* repository secrets first."
+            exit 1
+          fi
+          FLAGS=""
+          if [ "$DRY_RUN" = "true" ]; then FLAGS="$FLAGS --dry-run"; fi
+          if [ "$OVERWRITE" = "true" ]; then FLAGS="$FLAGS --overwrite"; fi
+          node scripts/link-manufacturer-logos.js ../data/manufacturer-logos $FLAGS
+
