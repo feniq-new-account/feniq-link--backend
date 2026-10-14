@@ -29,6 +29,24 @@
   let openIdx = -1;
   const order = new Map(); // name -> {item, qty}
 
+  // Arabic aliases apply only to this demonstration catalog, never to live orders.
+  const normalizeSearch = (value) => String(value).normalize("NFKC")
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي")
+    .toLowerCase().replace(/\s+/g, " ").trim();
+  const aliases = [
+    ["باراسيتامول", "باراسيتامول", "paracetamol"],
+    ["باراسيتامول", "باراسيتامول", "acetaminophen"],
+    ["اموكسيسيلين", "اموكسيسيلين", "amoxicillin"],
+    ["اموكسيلين", "اموكسيسيلين", "amoxicillin"],
+    ["فيتامين د", "فيتامين د", "vitamin d3"],
+    ["ايبوبروفين", "ايبوبروفين", "ibuprofen"],
+    ["سالبوتامول", "سالبوتامول", "salbutamol"]
+  ];
+  const matchesSearch = (item, term) => {
+    const text = normalizeSearch([item.n, item.c, item.m].join(" "));
+    return text.includes(term) || aliases.some(([ar, , en]) => ar.includes(term) && normalizeSearch(item.c).includes(en));
+  };
+
   const loadCatalog = () => {
     if (catalog) return Promise.resolve(catalog);
     if (!loading) {
@@ -118,25 +136,31 @@
 
   let t;
   const search = () => {
-    const term = q.value.trim().toUpperCase();
+    const term = normalizeSearch(q.value);
     if (term.length < 2) {
       if (!term) closeDrawer();
       return;
     }
     loadCatalog().then(() => {
-      const hits = catalog.filter(
-        (it) => it.n.toUpperCase().includes(term) || it.c.toUpperCase().includes(term)
-      );
-      hits.sort((a, b) => (b.n.toUpperCase().startsWith(term) ? 1 : 0) - (a.n.toUpperCase().startsWith(term) ? 1 : 0));
+      if (normalizeSearch(q.value) !== term) return;
+      const hits = catalog.filter((it) => matchesSearch(it, term));
+      hits.sort((a, b) => (normalizeSearch(b.n).startsWith(term) ? 1 : 0) - (normalizeSearch(a.n).startsWith(term) ? 1 : 0));
       setOpen(hits.length ? hits[0].g : -1);
       outLabel.textContent = hits.length ? items(hits.length) : "لا نتائج";
-      renderItems(hits, "لا يوجد صنف بهذا الاسم في التجربة. جرّب PARA أو AMOX.");
+      renderItems(hits, "ما لقينا هالاسم بالكتالوج التجريبي المحدود. جرّب أحد الأسماء الجاهزة فوق، أو الاسم بالإنجليزية.");
       showOut();
     });
   };
   q.addEventListener("input", () => {
     clearTimeout(t);
     t = setTimeout(search, 160);
+  });
+  document.querySelectorAll("[data-search]").forEach((button) => {
+    button.addEventListener("click", () => {
+      clearTimeout(t);
+      q.value = button.dataset.search;
+      search();
+    });
   });
   q.addEventListener("focus", loadCatalog, { once: true });
   $("labeler").addEventListener("submit", (e) => {

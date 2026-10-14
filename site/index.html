@@ -7,7 +7,7 @@
 <meta name="description" content="فينيق يربط مستودعات الأدوية بالصيدليات: الصيدلية تطلب من التطبيق، والمستودع يستلم الطلبية مرتبة على لوحة تحكم. مرحلة الإطلاق في اللاذقية.">
 <meta name="theme-color" content="#0E1A2C">
 <meta property="og:title" content="فينيق | طلب الأدوية بين المستودعات والصيدليات">
-<meta property="og:description" content="كل أصناف المستودع، بدرج واحد بجيبتك.">
+<meta property="og:description" content="طلبيات الصيدليات، مرتّبة من أول صنف لحد التسليم.">
 <meta property="og:image" content="img/og.jpg">
 <meta property="og:locale" content="ar_SY">
 <link rel="icon" href="img/favicon-32.png" sizes="32x32">
@@ -39,23 +39,75 @@
 
 <section class="hero" id="top">
   <div class="hero__copy">
-    <h1>كل أصناف المستودع، بدرج واحد بجيبتك.</h1>
-    <p class="lede">فينيق يربط مستودعات الأدوية بالصيدليات. الصيدلية تبحث عن الصنف وتطلبه من التطبيق، والمستودع يستلم الطلبية مرتبة على لوحة تحكم، بلا مكالمات ولا تدوين.</p>
+    <p class="eyebrow">فينيق · للصيدليات ومستودعات الأدوية</p>
+    <h1>طلبيات الصيدليات، مرتّبة من أول صنف لحد التسليم.</h1>
+    <p class="lede">الصيدلية تبحث وتطلب وتتابع. والمستودع يجمع طلبياته وحساباته بمكان واحد، إلى جانب طريقة شغله الحالية.</p>
     <div class="actions">
       <a class="btn btn--pull" href="#download">نزّل تطبيق الصيدلية</a>
-      <a class="btn btn--plate" href="#contact">سجّل مستودعك</a>
+      <a class="btn btn--plate" href="#contact">احجز زيارة لمستودعك</a>
     </div>
     <p class="where"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>مرحلة الإطلاق: اللاذقية</p>
   </div>
 
-  <div class="cabinet-wrap">
+  <figure class="hero-preview">
+    <div class="hero-preview__label"><span class="status-dot"></span>لوحة مستودعك · كل طلبية بمرحلتها</div>
+    <img src="img/screen-orders.webp" width="1280" height="720" alt="واجهة فينيق لعرض الطلبيات حسب حالتها" fetchpriority="high">
+    <figcaption>لقطة فعلية من اللوحة ببيانات تجريبية.</figcaption>
+    <a href="#demo">جرّب كيف بتمشي الطلبية ←</a>
+  </figure>
+</section>
+
+<section class="vid" id="video" aria-labelledby="vid-h" hidden>
+  <div class="wrap">
+    <h2 id="vid-h">فينيق بدقيقة.</h2>
+    <p class="sec-lede">شاهد كيف تصل الطلبية من الصيدلية إلى مستودعك، وكيف تتابع حسابك.</p>
+    <div class="vid__frame">
+      <video id="vid-el" controls playsinline preload="none"></video>
+    </div>
+  </div>
+</section>
+
+
+
+<section class="sides" id="sides" aria-labelledby="sides-h">
+  <div class="wrap">
+    <h2 id="sides-h">للصيدلية والمستودع، كل واحد إله مساحة شغله.</h2>
+    <p class="sec-lede">من البحث عن الصنف لحد متابعة الطلبية والحساب.</p>
+    <div class="audiences">
+      <article class="audience">
+        <p class="eyebrow">للصيدلية · تطبيق Android</p>
+        <h3>اطلب وتابع من موبايلك.</h3>
+        <ul><li><b>الأصناف قدامك.</b> أسعار وتوفر وعروض وبونص، مع بدائل للأصناف.</li><li><b>طلبية واضحة.</b> اختار الكميات وتابع الحالة والإشعارات.</li><li><b>سجلك محفوظ.</b> طلبيات سابقة وإعادة طلب ومرتجعات ورصيدك عند كل مستودع.</li></ul>
+        <a class="btn btn--pull" href="#download">نزّل تطبيق الصيدلية</a>
+      </article>
+      <article class="audience">
+        <p class="eyebrow">للمستودع · لوحة تحكم على الويب</p>
+        <h3>الطلبيات والحسابات بمكان واحد.</h3>
+        <ul><li><b>طلبيات مرتّبة.</b> استقبل الطلبات وتابع مراحلها، وحدّث الأصناف والأسعار من اللوحة أو Excel.</li><li><b>حسابات واضحة.</b> مشتريات ودفعات وأرصدة وفواتير، مع تسجيل الدفعة بالصوت أو الكتابة.</li><li><b>أدوات لمندوبك.</b> حساب لكل مندوب، صيدلياته وزياراته وطلبياته وعمولته.</li></ul>
+        <a class="btn btn--plate" href="#contact">احجز زيارة لمستودعك</a>
+      </article>
+    </div>
+    <p class="pay">الدفع عند التسليم. التطبيق ما بيطلب بطاقات أو دفع إلكتروني.</p>
+  </div>
+</section>
+
+
+
+<section class="demo" id="demo" aria-labelledby="demo-h">
+  <div class="wrap demo__in"><div>
+    <p class="eyebrow">كل أصناف المستودع، بدرج واحد بجيبتك.</p>
+    <h2 id="demo-h">جرّب طلبية، بدون تسجيل.</h2>
+    <p class="sec-lede">ابحث عن دواء أو افتح درج، أضف صنف، وبعدين جرّب إرسال الطلبية وشوف مراحلها.</p>
+    <p class="demo-help">هاي محاكاة للتعريف بفينيق. ما فيها أسعار، وما بينبعت منها أي طلب حقيقي.</p>
+  </div>  <div class="cabinet-wrap">
     <div class="cabinet" id="cabinet">
       <form class="labeler" role="search" id="labeler" autocomplete="off">
         <label for="q" class="labeler__label">جرّب: اكتب اسم دواء</label>
         <div class="labeler__strip">
           <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
-          <input id="q" name="q" type="search" dir="ltr" inputmode="search" placeholder="AMOXI…" aria-describedby="demo-note" aria-controls="drawer-out">
+          <input id="q" name="q" type="search" dir="auto" inputmode="search" placeholder="مثلاً: باراسيتامول أو PARA" aria-describedby="demo-note" aria-controls="drawer-out">
         </div>
+      <div class="examples" aria-label="أمثلة للبحث"><span>جرّب اسم جاهز:</span><button type="button" data-search="باراسيتامول">باراسيتامول</button><button type="button" data-search="أموكسيسيلين">أموكسيسيلين</button><button type="button" data-search="فيتامين د">فيتامين د</button></div>
       </form>
 
       <div class="drawers" id="drawers" role="group" aria-label="أدراج الأصناف حسب الحرف الأول"></div>
@@ -86,109 +138,12 @@
       </div>
     </div>
     <p class="demo-note" id="demo-note">تجربة فقط: أسماء الأصناف من سجل وزارة الصحة السورية، ولا شيء يُرسل فعلاً.</p>
-  </div>
+  </div></div>
 </section>
-
-<section class="vid" id="video" aria-labelledby="vid-h" hidden>
-  <div class="wrap">
-    <h2 id="vid-h">فينيق بدقيقة.</h2>
-    <p class="sec-lede">شاهد كيف تصل الطلبية من الصيدلية إلى مستودعك، وكيف تتابع حسابك.</p>
-    <div class="vid__frame">
-      <video id="vid-el" controls playsinline preload="none"></video>
-    </div>
-  </div>
-</section>
-
-<section class="old" aria-labelledby="old-h">
-  <div class="wrap">
-    <h2 id="old-h">الطلبية نفسها، بطريقتين.</h2>
-    <p class="sec-lede">اليوم تمر الطلبية بمكالمة أو رسالة واتساب، ثم يدوّنها أحد باليد. هكذا يتغير كل شيء حين تمر من فينيق.</p>
-    <div class="compare" role="table" aria-label="مقارنة بين الطلب التقليدي والطلب عبر فينيق">
-      <div class="compare__row compare__row--head" role="row">
-        <span role="columnheader">&nbsp;</span>
-        <span role="columnheader">بالهاتف والواتساب</span>
-        <span role="columnheader">عبر فينيق</span>
-      </div>
-      <div class="compare__row" role="row">
-        <span class="plate" role="rowheader">إرسال الطلب</span>
-        <span role="cell">مكالمات، وتأخير في الرد والتدوين</span>
-        <span role="cell">طلب مباشر من التطبيق بثوانٍ</span>
-      </div>
-      <div class="compare__row" role="row">
-        <span class="plate" role="rowheader">دقة الطلبية</span>
-        <span role="cell">أخطاء بالأصناف والكميات من الكلام الشفهي</span>
-        <span role="cell">كل صنف وكمية مكتوبين كما طلبتهما الصيدلية</span>
-      </div>
-      <div class="compare__row" role="row">
-        <span class="plate" role="rowheader">المرتجعات</span>
-        <span role="cell">تسجيل يدوي يصعب تتبعه</span>
-        <span role="cell">طلب إرجاع منظّم وموثّق</span>
-      </div>
-      <div class="compare__row" role="row">
-        <span class="plate" role="rowheader">الوصول للصيدليات</span>
-        <span role="cell">محدود بالاتصالات وجولات المندوبين</span>
-        <span role="cell">كل صيدليات الشبكة تطلب منك في أي وقت</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="sides" id="sides" aria-labelledby="sides-h">
-  <div class="wrap">
-    <h2 id="sides-h">درجان متقابلان: واحد للصيدلية، وواحد للمستودع.</h2>
-    <p class="sec-lede">كل ما تربحه الصيدلية يقابله ما يربحه المستودع في الصف نفسه. اسحب أي درج لترى التفاصيل.</p>
-
-    <div class="pair-cab">
-      <div class="pair-cab__heads" aria-hidden="true">
-        <span class="plate plate--head">الصيدلية <small>تطبيق Android</small></span>
-        <span class="plate plate--head">المستودع <small>لوحة تحكم على الويب</small></span>
-      </div>
-
-      <div class="pair">
-        <details class="d"><summary><span class="side-tag">الصيدلية</span>بحث سريع بالأصناف</summary>
-          <p>كل أصناف المستودع مع السعر والتوفر، تصل إليها بكتابة أول حروف الاسم.</p></details>
-        <details class="d"><summary><span class="side-tag">المستودع</span>طلبات مبوّبة حسب الحالة</summary>
-          <p>كل طلبية تصل مصنّفة حسب مرحلتها: جديدة، مقبولة، بالطريق، تم التسليم. تقبلها بكبسة، وتنقلها للمرحلة التالية بكبسة. لا شيء يضيع بين الرسائل.</p></details>
-      </div>
-      <div class="pair">
-        <details class="d"><summary><span class="side-tag">الصيدلية</span>طلب مباشر وتتبّع</summary>
-          <p>ترسل الطلبية بنقرة وتتابع حالتها خطوة بخطوة حتى تصل.</p></details>
-        <details class="d"><summary><span class="side-tag">المستودع</span>الأصناف والأسعار بيدك</summary>
-          <p>تحدّث الأسعار والكميات والتوفر متى شئت، أو ترفع الكتالوج كاملاً من ملف إكسل، مع تاريخ الإنتاج وتاريخ الانتهاء لكل صنف.</p></details>
-      </div>
-      <div class="pair">
-        <details class="d"><summary><span class="side-tag">الصيدلية</span>أرشيف وإعادة طلب</summary>
-          <p>كل طلبياتك السابقة محفوظة، وتعيد طلب أي منها بسهولة.</p></details>
-        <details class="d"><summary><span class="side-tag">المستودع</span>حسابات الصيدليات</summary>
-          <p>لكل صيدلية سطر: مشترياتها، ما دفعته، ما بقي عليها، وآخر دفعة. دفع كامل بكبسة، أو دفعة جزئية، أو سجّلها بصوتك.</p></details>
-      </div>
-      <div class="pair">
-        <details class="d"><summary><span class="side-tag">الصيدلية</span>مرتجعات منظّمة</summary>
-          <p>ترسل طلب الإرجاع من التطبيق موثّقاً بالأصناف، وتعرف أين وصل.</p></details>
-        <details class="d"><summary><span class="side-tag">المستودع</span>أخطاء أقل</summary>
-          <p>لا مكالمات تُنسى ولا أرقام تُكتب خطأ. الطلبية مكتوبة كما أرادتها الصيدلية.</p></details>
-      </div>
-      <div class="pair">
-        <details class="d"><summary><span class="side-tag">الصيدلية</span>عروض وأكواد حسم</summary>
-          <p>ترى عروض المستودعات وحسوماتها داخل التطبيق وتستعملها عند الطلب.</p></details>
-        <details class="d"><summary><span class="side-tag">المستودع</span>قناة بيع إضافية</summary>
-          <p>صيدليات أكثر تطلب منك على مدار الساعة، إلى جانب طريقة عملك الحالية.</p></details>
-      </div>
-      <p class="pay">الدفع عند التسليم فقط. لا بطاقات ولا دفع إلكتروني.</p>
-    </div>
-  </div>
-</section>
-
-<section class="rep" aria-labelledby="rep-h">
-  <div class="wrap rep__in">
-    <h2 id="rep-h">هل يستبدل فينيق المندوب؟ <span class="no">لا.</span></h2>
-    <div class="rep__body">
-      <p>المندوب يكمل عمله في الميدان ويبني العلاقة مع الصيادلة. التطبيق يأخذ عنه الطلبيات الروتينية المتكررة، فيتفرغ لما لا يقدر عليه غيره.</p>
-      <p>والمستودع يصل إلى صيدليات المنطقة كلها، أوسع وأسرع مما تسمح به الجولات وحدها.</p>
-    </div>
-  </div>
-</section>
-
+<section class="launch" aria-labelledby="launch-h"><div class="wrap launch__in">
+  <div><p class="eyebrow">عم نبدأ من اللاذقية</p><h2 id="launch-h">منجهّز البداية معكم، خطوة بخطوة.</h2></div>
+  <p>فينيق بمرحلة الإطلاق. فريقنا بيسجّل المستودعات، بيساعد بإعداد الأصناف، وبيعرّف الصيدليات على المنصة. منعرض عليكم التطبيق واللوحة بشكل مباشر، ومنطوّر التجربة من ملاحظاتكم.</p>
+</div></section>
 <section class="screens" id="screens" aria-labelledby="screens-h">
   <div class="wrap">
     <h2 id="screens-h">لوحة المستودع: ما تراه كل يوم.</h2>
@@ -217,10 +172,10 @@
 <section class="start" id="start" aria-labelledby="start-h">
   <div class="wrap">
     <h2 id="start-h">كيف نبدأ مع مستودعك</h2>
-    <p class="sec-lede">فريق فينيق يزوركم ويتولى الإعداد معكم. أربع خطوات:</p>
+    <p class="sec-lede">فريق فينيق بيسجّل مستودعك وبيرتّب البداية معك:</p>
     <ol class="steps">
-      <li><span class="num" aria-hidden="true">1</span><h3>الأصناف والأسعار</h3><p>ندخل بيانات أصنافكم وأسعاركم بالتنسيق مع فريقكم. ملف إكسل من برنامج المحاسبة يكفي.</p></li>
-      <li><span class="num" aria-hidden="true">2</span><h3>التعريف بمستودعكم</h3><p>فريق فينيق يعرّف الصيدليات بمستودعكم ويشجعها على الطلب منه.</p></li>
+      <li><span class="num" aria-hidden="true">1</span><h3>حساب المستودع</h3><p>فريقنا بينشئ الحساب وبيعطيكم الدخول للوحة التحكم.</p></li>
+      <li><span class="num" aria-hidden="true">2</span><h3>الأصناف والأسعار</h3><p>منساعدكم بأول رفع للأصناف من ملف Excel، ومنعرّف الصيدليات بمستودعكم.</p></li>
       <li><span class="num" aria-hidden="true">3</span><h3>استقبال الطلبيات</h3><p>تبدأ الطلبيات بالوصول إلى لوحة التحكم، وتجهزونها بالطريقة التي نتفق عليها.</p></li>
       <li><span class="num" aria-hidden="true">4</span><h3>متابعة وتطوير</h3><p>دعم فني مستمر، ونحسّن التجربة بناءً على ملاحظاتكم.</p></li>
     </ol>
@@ -252,6 +207,18 @@
   </div>
 </section>
 
+<section class="faq" id="faq" aria-labelledby="faq-h"><div class="wrap">
+<h2 id="faq-h">قبل ما تبدأ، يمكن عم تسأل…</h2>
+<div class="faq__list">
+<details><summary>كيف بسجّل مستودعي؟</summary><p>تواصل مع فريق فينيق لحجز زيارة. فريقنا بينشئ حساب المستودع وبيساعدك بإعداد الأصناف والدخول للوحة.</p></details>
+<details><summary>مين بيشوف أسعار المستودع؟</summary><p>الصيدليات المسجّلة والمفعّلة داخل التطبيق. الأسعار مو منشورة للعامة على هالموقع؛ والتجربة هون بدون أسعار.</p></details>
+<details><summary>مين بيشوف طلبياتي وحساباتي؟</summary><p>البيانات مو متاحة للعامة. الوصول حسب صلاحيات الحساب: أطراف التعامل والمستخدمون المخوّلون، ومشرفو المنصة لأغراض التشغيل والدعم. التفاصيل موجودة بسياسة الخصوصية داخل التطبيق.</p></details>
+<details><summary>هل فينيق بيستبدل المندوب؟</summary><p>لا. المندوب بيكمل علاقته مع الصيدليات، ومعه أدوات لمتابعة صيدلياته وزياراته وطلبياته وعمولته.</p></details>
+<details><summary>شو الكلفة؟</summary><p>التطبيق مجاني للصيدليات. اشتراك المستودع مجاني حتى نهاية 2026. تفاصيل الاشتراك والعمولة موجودة بعرض المستودعات، وفريقنا بيشرحها معك قبل البدء.</p></details>
+<details><summary>شو الأجهزة اللي بحتاجها؟</summary><p>تطبيق الصيدلية والمندوب بيشتغل على Android. لوحة المستودع بتفتح من متصفح اللابتوب. نسخة iPhone مو متوفرة حالياً.</p></details>
+<details><summary>إذا نفد صنف أو صار في مشكلة بطلبية؟</summary><p>المستودع بيقدر يخفي الصنف من الكتالوج، والتطبيق بيعرض بدائل حسب المادة الفعالة والعيار. وللمتابعة في تواصل مع المستودع وطلبات إرجاع، وشكاوى بتوصل للإدارة.</p></details>
+</div></div></section>
+
 <section class="contact" id="contact" aria-labelledby="contact-h">
   <div class="wrap contact__in">
     <h2 id="contact-h">نزوركم في المستودع.</h2>
@@ -276,6 +243,7 @@
   <div class="wrap foot__in">
     <a class="brand" href="#top"><img src="img/mark-dark.webp" width="28" height="34" alt=""><span>فينيق</span></a>
     <a href="https://feniq-connect-web.onrender.com">دخول المستودعات</a>
+    <a href="#faq">أسئلة وخصوصية</a>
     <small>© 2026 فينيق</small>
   </div>
 </footer>
