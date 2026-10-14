@@ -26,6 +26,12 @@ function fakeStore() {
 }
 
 let packDir;
+const manifest = [
+  { manufacturerAr: 'آسيا', file: 'aaaa.webp' },
+  { manufacturerAr: 'ابن الهيثم', file: 'bbbb.webp' },
+  { manufacturerAr: 'شركة مجهولة', file: 'aaaa.webp' },
+  { manufacturerAr: 'بحري', file: 'aaaa.webp' },
+];
 
 test.before(async () => {
   await startMemoryMongo({ dbName: 'feniq-manufacturer-logos-test' });
@@ -51,6 +57,7 @@ test.after(async () => {
 });
 
 test.beforeEach(async () => {
+  await fs.writeFile(path.join(packDir, 'manifest.json'), JSON.stringify(manifest));
   await Manufacturer.deleteMany({});
   await Manufacturer.create([
     // A spelling variant (hamza) of the name in the pack still finds the company.
@@ -65,7 +72,7 @@ test('a company without a logo gets it, found through the normalized name', asyn
   const report = await linkLogos(packDir, { store });
 
   assert.strictEqual((await Manufacturer.findOne({ nameAr: 'اسيا' }).lean()).logoUrl, 'https://cdn.example/manufacturers/aaaa.webp');
-  assert.strictEqual(report.linked, 1);
+  assert.strictEqual(report.linked, 2);
 });
 
 test("an admin's logo is never replaced unless asked", async () => {
@@ -81,11 +88,11 @@ test("an admin's logo is never replaced unless asked", async () => {
   assert.strictEqual((await Manufacturer.findOne({ nameAr: 'ابن الهيثم' }).lean()).logoUrl, 'https://cdn.example/manufacturers/bbbb.webp');
 });
 
-test('an unknown company is reported and not created; a missing file is reported', async () => {
+test('an unknown company is reported and not created', async () => {
   const report = await linkLogos(packDir, { store: fakeStore() });
 
   assert.deepStrictEqual(report.notInDatabase, ['شركة مجهولة']);
-  assert.deepStrictEqual(report.missingFile, ['gone.webp']);
+  assert.deepStrictEqual(report.missingFile, []);
   assert.strictEqual(await Manufacturer.countDocuments(), 3);
 });
 
@@ -93,7 +100,7 @@ test('a dry run writes nothing and stores nothing', async () => {
   const store = fakeStore();
   const report = await linkLogos(packDir, { store, dryRun: true });
 
-  assert.strictEqual(report.linked, 1);
+  assert.strictEqual(report.linked, 2);
   assert.deepStrictEqual(store.saved, []);
   assert.strictEqual((await Manufacturer.findOne({ nameAr: 'اسيا' }).lean()).logoUrl, null);
 });
@@ -101,3 +108,47 @@ test('a dry run writes nothing and stores nothing', async () => {
 test('without anywhere to store the logos it refuses to run', async () => {
   await assert.rejects(linkLogos(packDir, { store: null }), /MEDIA_DIR/);
 });
+
+test('an incomplete pack aborts before any upload or database write, including dry run', async () => {
+  await fs.writeFile(path.join(packDir, 'manifest.json'), JSON.stringify([
+    ...manifest,
+    { manufacturerAr: 'شركة مجهولة أخرى', file: 'gone.webp' },
+  ]));
+  for (const dryRun of [false, true]) {
+    const store = fakeStore();
+    const report = await linkLogos(packDir, { store, dryRun });
+    assert.deepStrictEqual(report.missingFile, ['gone.webp']);
+    assert.strictEqual(report.linked, 0);
+    assert.deepStrictEqual(store.saved, []);
+    assert.strictEqual((await Manufacturer.findOne({ nameAr: 'اسيا' }).lean()).logoUrl, null);
+  }
+});
+
+test('an admin upload during storage wins when overwrite is false', async () => {
+  const store = fakeStore();
+  const save = store.save;
+  store.save = async (buffer, file) => {
+    if (file === 'aaaa.webp') {
+      await Manufacturer.updateOne({ nameAr: 'اسيا' }, { $set: { logoUrl: 'https://cdn.example/admin-new.webp' } });
+    }
+    return save(buffer, file);
+  };
+  const report = await linkLogos(packDir, { store });
+  assert.strictEqual((await Manufacturer.findOne({ nameAr: 'اسيا' }).lean()).logoUrl, 'https://cdn.example/admin-new.webp');
+  assert.strictEqual(report.changedDuringRun, 1);
+  assert.strictEqual(report.linked, 1);
+});
+
+test('a company deleted during storage is not recreated or counted as linked', async () => {
+  const store = fakeStore();
+  const save = store.save;
+  store.save = async (buffer, file) => {
+    await Manufacturer.deleteOne({ nameAr: 'اسيا' });
+    return save(buffer, file);
+  };
+  const report = await linkLogos(packDir, { store });
+  assert.strictEqual(await Manufacturer.countDocuments({ nameAr: 'اسيا' }), 0);
+  assert.strictEqual(report.changedDuringRun, 1);
+  assert.strictEqual(report.linked, 1);
+});
+

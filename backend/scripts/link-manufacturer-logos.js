@@ -67,7 +67,22 @@ async function linkLogos(packDir, { dryRun = false, overwrite = false, store = d
     );
   }
   const manifest = JSON.parse(await fs.readFile(path.join(packDir, 'manifest.json'), 'utf8'));
-  const report = { rows: manifest.length, linked: 0, alreadyHadLogo: 0, notInDatabase: [], missingFile: [], failed: 0 };
+  const report = { rows: manifest.length, linked: 0, alreadyHadLogo: 0, changedDuringRun: 0, notInDatabase: [], missingFile: [], failed: 0 };
+
+  // Validate the entire pack before the first upload or database write. Even a
+  // missing image for an unknown company means the pack is incomplete.
+  const buffers = new Map();
+  for (const row of manifest) {
+    const file = path.basename(row.file);
+    if (buffers.has(file)) continue;
+    try {
+      buffers.set(file, await fs.readFile(path.join(packDir, 'images', file)));
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+      report.missingFile.push(row.file);
+    }
+  }
+  if (report.missingFile.length > 0) return report;
 
   for (const row of manifest) {
     const manufacturer = await Manufacturer.findOne({ key: normalizeText(row.manufacturerAr) }).select('logoUrl').lean();
@@ -80,16 +95,24 @@ async function linkLogos(packDir, { dryRun = false, overwrite = false, store = d
       continue;
     }
     const file = path.basename(row.file);
-    let buffer;
-    try {
-      buffer = await fs.readFile(path.join(packDir, 'images', file));
-    } catch {
-      report.missingFile.push(row.file);
-      continue;
-    }
+    const buffer = buffers.get(file);
     try {
       const url = dryRun ? store.previewUrl(file) : await store.save(buffer, file);
-      if (!dryRun) await Manufacturer.updateOne({ _id: manufacturer._id }, { $set: { logoUrl: url } });
+      if (!dryRun) {
+        // Compare-and-set: an admin's upload between findOne and upload must
+        // still win. Explicit overwrite is the only exception.
+        const filter = { _id: manufacturer._id };
+        if (!overwrite) filter.$or = [{ logoUrl: null }, { logoUrl: '' }];
+        const result = await Manufacturer.updateOne(filter, { $set: { logoUrl: url } });
+        if (result.matchedCount === 0) {
+          report.changedDuringRun += 1;
+          continue;
+        }
+        if (result.modifiedCount === 0) {
+          report.alreadyHadLogo += 1;
+          continue;
+        }
+      }
       report.linked += 1;
     } catch (err) {
       report.failed += 1;
@@ -111,10 +134,11 @@ async function main() {
   try {
     const report = await linkLogos(packDir, { dryRun, overwrite: flags.includes('--overwrite') });
     console.log(
-      `${dryRun ? '[dry run] ' : ''}rows ${report.rows} | linked ${report.linked} | already had a logo ${report.alreadyHadLogo} | not in the database ${report.notInDatabase.length} | missing file ${report.missingFile.length} | failed ${report.failed}`
+      `${dryRun ? '[dry run] ' : ''}rows ${report.rows} | linked ${report.linked} | already had a logo ${report.alreadyHadLogo} | changed during run ${report.changedDuringRun} | not in the database ${report.notInDatabase.length} | missing file ${report.missingFile.length} | failed ${report.failed}`
     );
     if (report.notInDatabase.length > 0) console.log('Not in the database:', report.notInDatabase.join(' ; '));
-    if (report.failed > 0) process.exitCode = 1;
+    if (report.missingFile.length > 0) console.error('Incomplete pack; no logos were written. Missing files:', report.missingFile.join(' ; '));
+    if (report.failed > 0 || report.missingFile.length > 0) process.exitCode = 1;
   } finally {
     await mongoose.disconnect();
   }
@@ -128,3 +152,4 @@ if (require.main === module) {
     process.exitCode = 1;
   });
 }
+
