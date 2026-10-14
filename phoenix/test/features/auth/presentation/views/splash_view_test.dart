@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +20,15 @@ import 'package:feniq/routes/route_paths.dart';
 
 class MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
+class DeferredSplashBundle extends CachingAssetBundle {
+  final Completer<ByteData> animation = Completer<ByteData>();
+
+  @override
+  Future<ByteData> load(String key) => key == 'assets/animations/phoenix_splash.json'
+      ? animation.future
+      : rootBundle.load(key);
+}
+
 void main() {
   late MockAuthCubit authCubit;
 
@@ -26,7 +38,11 @@ void main() {
     when(() => authCubit.checkSession()).thenAnswer((_) async {});
   });
 
-  Future<void> pumpSplash(WidgetTester tester) async {
+  Future<void> pumpSplash(WidgetTester tester, {AssetBundle? animationBundle}) async {
+    if (animationBundle == null) {
+      // Decode embedded image assets outside the fake-clock test zone.
+      await tester.runAsync(() => AssetLottie('assets/animations/phoenix_splash.json').load());
+    }
     final router = GoRouter(
       initialLocation: RoutePaths.splash,
       routes: [
@@ -35,7 +51,7 @@ void main() {
           name: RouteNames.splash,
           builder: (context, state) => BlocProvider<AuthCubit>.value(
             value: authCubit,
-            child: const SplashView(),
+            child: SplashView(animationBundle: animationBundle),
           ),
         ),
         GoRoute(
@@ -71,11 +87,15 @@ void main() {
     // Never pumpAndSettle here: the bird breathes on a repeating controller
     // once the intro ends, so the splash never reaches a settled frame.
     await tester.pump();
+    await tester.pump();
   }
 
   // Plays the intro out - the splash never routes away before it ends.
   Future<void> finishIntro(WidgetTester tester) async {
     await tester.pump(splashIntroDuration);
+    // AnimationController completes on the first tick past the endpoint.
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump();
     await tester.pump();
   }
 
@@ -88,6 +108,73 @@ void main() {
     expect(find.byIcon(Icons.wifi_off_rounded), findsNothing);
     expect(find.byType(ElevatedButton), findsNothing);
     expect(find.text('Retry'), findsNothing);
+  });
+
+  testWidgets('the intro plays even when the phone has animations switched off, '
+      'and shows the whole bird rather than a cropped zoom', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    await pumpSplash(tester);
+
+    final lottie = tester.widget<LottieBuilder>(find.byType(LottieBuilder));
+    // `normal` would finish the intro in milliseconds on such a phone, leaving
+    // the bird frozen on its last frame.
+    expect(lottie.controller, isA<AnimationController>());
+    expect(
+      (lottie.controller! as AnimationController).animationBehavior,
+      AnimationBehavior.preserve,
+    );
+    // `cover` cropped the wings and beak off a tall screen's sides.
+    expect(lottie.fit, BoxFit.contain);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(lottie.controller!.value, greaterThan(0));
+    expect(lottie.controller!.value, lessThan(1));
+  });
+
+  testWidgets('a delayed asset still plays the full intro before navigation', (tester) async {
+    final bundle = DeferredSplashBundle();
+    // A valid 1.5s composition without platform image decoding: only its
+    // delivery is deferred, so fake time measures playback precisely.
+    final bytes = ByteData.sublistView(Uint8List.fromList(utf8.encode(
+      '{"v":"5.7.4","fr":60,"ip":0,"op":90,"w":1080,"h":1920,"layers":[]}',
+    )));
+    when(() => authCubit.state).thenReturn(const AuthState(sessionStatus: SessionStatus.unauthenticated));
+    await pumpSplash(tester, animationBundle: bundle);
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('LOGIN PAGE'), findsNothing);
+    bundle.animation.complete(bytes);
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(splashIntroDuration - const Duration(milliseconds: 100));
+    expect(find.text('LOGIN PAGE'), findsNothing);
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('LOGIN PAGE'), findsOneWidget);
+  });
+
+  testWidgets('a broken asset falls back and allows navigation', (tester) async {
+    final bundle = DeferredSplashBundle();
+    when(() => authCubit.state).thenReturn(const AuthState(sessionStatus: SessionStatus.unauthenticated));
+    await pumpSplash(tester, animationBundle: bundle);
+    bundle.animation.complete(ByteData(0));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('LOGIN PAGE'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a stalled asset times out and does not block navigation', (tester) async {
+    final bundle = DeferredSplashBundle();
+    when(() => authCubit.state).thenReturn(const AuthState(sessionStatus: SessionStatus.unauthenticated));
+    await pumpSplash(tester, animationBundle: bundle);
+    await tester.pump(splashLoadTimeout);
+    await tester.pump();
+    expect(find.text('LOGIN PAGE'), findsOneWidget);
   });
 
   testWidgets('an unreachable server on launch does not strand the user - it '
@@ -119,6 +206,8 @@ void main() {
     expect(find.text('LOGIN PAGE'), findsNothing);
 
     await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump();
     await tester.pump();
     expect(find.text('LOGIN PAGE'), findsOneWidget);
   });
@@ -223,3 +312,4 @@ void main() {
     expect(opacityValue(tester), closeTo(0.85, 0.001));
   });
 }
+

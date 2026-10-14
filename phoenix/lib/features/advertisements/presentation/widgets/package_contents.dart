@@ -5,6 +5,7 @@ import 'package:feniq/core/constants/app_sizes.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/utils/display_name.dart';
 import 'package:feniq/core/widgets/app_network_image.dart';
+import 'package:feniq/core/widgets/medicine_placeholder.dart';
 import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/advertisements/data/models/advertisement_model.dart';
 import 'package:feniq/features/cart/data/models/cart_item.dart';
@@ -78,7 +79,7 @@ class PackageContentRow extends StatelessWidget {
               height: 44,
               fit: BoxFit.contain,
               framed: true,
-              fallbackIcon: Icons.medication_outlined,
+              fallback: MedicinePlaceholder(dosageForm: entry.dosageForm, size: 44),
             ),
           ),
           const SizedBox(width: AppSizes.spacingSmall),
