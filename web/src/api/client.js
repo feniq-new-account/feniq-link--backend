@@ -937,6 +937,16 @@ export const api = {
     return request(`/warehouse/balances${qs ? `?${qs}` : ''}`);
   },
   warehouseBalanceDetail: (pharmacyId) => request(`/warehouse/balances/${pharmacyId}`),
+  // The owner's at-a-glance summary: today / week / month (or a custom
+  // from-to) sales, collections, returns, plus outstanding debt right now.
+  warehouseSummary: ({ period, from, to } = {}) => {
+    const params = new URLSearchParams();
+    if (period) params.set('period', period);
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    const qs = params.toString();
+    return request(`/warehouse/balances/summary${qs ? `?${qs}` : ''}`);
+  },
   // Money-Flow V2: commission owed to the platform for a period, and what the
   // warehouse nets after it. Read-only.
   warehouseSettlement: ({ from, to } = {}) => {

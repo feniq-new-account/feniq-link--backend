@@ -8,6 +8,7 @@ import { formatSyp, formatUsd, remainingPaymentAmountFromSyp } from '../utils/cu
 import { PAYMENT_METHODS, PAYMENT_CURRENCIES as CURRENCIES, createIdempotencyKeys } from '../utils/payments';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { QuickPaymentModal } from '../components/QuickPaymentModal';
+import { WarehouseSummaryCard } from '../components/WarehouseSummaryCard';
 import { VoicePaymentModal } from '../components/VoicePaymentModal';
 import { displayName } from '../utils/displayName';
 
@@ -655,6 +656,8 @@ export function WarehouseDebtsPage() {
       <div className="wh-page-head">
         <h1>{t('nav.debts')}</h1>
       </div>
+
+      <WarehouseSummaryCard />
 
       <div className="wh-filters">
         <input
