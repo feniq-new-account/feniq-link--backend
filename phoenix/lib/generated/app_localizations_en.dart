@@ -2811,4 +2811,80 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseVoiceConfirm => 'OK, record it';
+
+  @override
+  String get warehouseSummaryTitle => 'Warehouse summary';
+
+  @override
+  String get warehouseSummaryToday => 'Today';
+
+  @override
+  String get warehouseSummaryWeek => 'Last 7 days';
+
+  @override
+  String get warehouseSummaryMonth => 'This month';
+
+  @override
+  String get warehouseSummarySales => 'Sales';
+
+  @override
+  String get warehouseSummaryCollections => 'Collected';
+
+  @override
+  String get warehouseSummaryReturns => 'Returns';
+
+  @override
+  String get warehouseSummaryTotalDebts => 'Total debts';
+
+  @override
+  String warehouseSummaryInvoices(int count) {
+    return '$count invoices';
+  }
+
+  @override
+  String warehouseSummaryPayments(int count) {
+    return '$count payments';
+  }
+
+  @override
+  String warehouseSummaryDebtors(int count) {
+    return '$count pharmacies owe you';
+  }
+
+  @override
+  String warehouseSummaryCreditHeld(String amount) {
+    return 'Credit held for pharmacies: $amount';
+  }
+
+  @override
+  String warehouseSummaryChangeUp(int percent) {
+    return '▲ $percent% vs previous period';
+  }
+
+  @override
+  String warehouseSummaryChangeDown(int percent) {
+    return '▼ $percent% vs previous period';
+  }
+
+  @override
+  String get warehouseSummaryChangeFlat => 'Same as the previous period';
+
+  @override
+  String get warehouseSummaryChangeNew => 'Nothing in the previous period';
+
+  @override
+  String get warehouseSummaryTopBuyers => 'Top buyers';
+
+  @override
+  String get warehouseSummaryTopDebtors => 'Biggest debts';
+
+  @override
+  String get warehouseSummaryNoBuyers => 'No sales in this period.';
+
+  @override
+  String get warehouseSummaryNoDebtors => 'No outstanding debts.';
+
+  @override
+  String get warehouseSummaryDeliveredNote =>
+      'Sales count delivered orders only.';
 }

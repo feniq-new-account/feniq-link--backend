@@ -27,6 +27,9 @@ abstract class WarehouseManagementRepository {
 
   Future<WarehouseStatement> getStatement(String pharmacyId);
 
+  /// The owner's summary for [period]: 'today', 'week' or 'month'.
+  Future<WarehouseSummary> getSummary({String period = 'today'});
+
   /// Money received from a pharmacy, in SYP. [idempotencyKey] makes a retry
   /// safe: the same key never credits the pharmacy twice.
   Future<void> recordPayment({

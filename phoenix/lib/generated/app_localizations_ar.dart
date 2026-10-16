@@ -2803,4 +2803,80 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseVoiceConfirm => 'تمام، سجّل';
+
+  @override
+  String get warehouseSummaryTitle => 'ملخص المستودع';
+
+  @override
+  String get warehouseSummaryToday => 'اليوم';
+
+  @override
+  String get warehouseSummaryWeek => 'آخر 7 أيام';
+
+  @override
+  String get warehouseSummaryMonth => 'هذا الشهر';
+
+  @override
+  String get warehouseSummarySales => 'المبيعات';
+
+  @override
+  String get warehouseSummaryCollections => 'التحصيل';
+
+  @override
+  String get warehouseSummaryReturns => 'المرتجعات';
+
+  @override
+  String get warehouseSummaryTotalDebts => 'إجمالي الديون';
+
+  @override
+  String warehouseSummaryInvoices(int count) {
+    return '$count فاتورة';
+  }
+
+  @override
+  String warehouseSummaryPayments(int count) {
+    return '$count دفعة';
+  }
+
+  @override
+  String warehouseSummaryDebtors(int count) {
+    return '$count صيدلية عليها دين';
+  }
+
+  @override
+  String warehouseSummaryCreditHeld(String amount) {
+    return 'رصيد للصيدليات عندك: $amount';
+  }
+
+  @override
+  String warehouseSummaryChangeUp(int percent) {
+    return '▲ $percent% عن الفترة السابقة';
+  }
+
+  @override
+  String warehouseSummaryChangeDown(int percent) {
+    return '▼ $percent% عن الفترة السابقة';
+  }
+
+  @override
+  String get warehouseSummaryChangeFlat => 'متل الفترة السابقة';
+
+  @override
+  String get warehouseSummaryChangeNew => 'ما كان في شي بالفترة السابقة';
+
+  @override
+  String get warehouseSummaryTopBuyers => 'أكتر الصيدليات شراءً';
+
+  @override
+  String get warehouseSummaryTopDebtors => 'أكبر الديون';
+
+  @override
+  String get warehouseSummaryNoBuyers => 'ما في مبيعات بهالفترة.';
+
+  @override
+  String get warehouseSummaryNoDebtors => 'ما في ديون.';
+
+  @override
+  String get warehouseSummaryDeliveredNote =>
+      'المبيعات بتحسب الطلبيات المتسلَّمة بس.';
 }

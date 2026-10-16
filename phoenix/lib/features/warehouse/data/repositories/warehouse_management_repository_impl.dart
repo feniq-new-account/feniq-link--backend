@@ -108,6 +108,12 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
   }
 
   @override
+  Future<WarehouseSummary> getSummary({String period = 'today'}) async {
+    final data = await _run((dio) => dio.get(Endpoints.warehouseBalancesSummary, queryParameters: {'period': period}));
+    return WarehouseSummary.fromJson(data);
+  }
+
+  @override
   Future<void> recordPayment({
     required String pharmacyId,
     required double amountSyp,

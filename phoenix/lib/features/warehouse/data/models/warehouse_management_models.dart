@@ -264,6 +264,117 @@ class WarehouseAccountsPage {
   }
 }
 
+/// What a period added up to: delivered sales, money collected, returns.
+class SummaryTotals {
+  const SummaryTotals({
+    this.salesSyp = 0,
+    this.collectionsSyp = 0,
+    this.returnsSyp = 0,
+    this.invoiceCount = 0,
+    this.paymentCount = 0,
+  });
+
+  final double salesSyp;
+  final double collectionsSyp;
+  final double returnsSyp;
+  final int invoiceCount;
+  final int paymentCount;
+
+  factory SummaryTotals.fromJson(Map<String, dynamic>? json) => SummaryTotals(
+    salesSyp: _double(json?['salesSyp']),
+    collectionsSyp: _double(json?['collectionsSyp']),
+    returnsSyp: _double(json?['returnsSyp']),
+    invoiceCount: _int(json?['invoiceCount']),
+    paymentCount: _int(json?['paymentCount']),
+  );
+}
+
+/// A pharmacy next to one amount - a top buyer's sales or a top debtor's debt.
+class SummaryPharmacyAmount {
+  const SummaryPharmacyAmount({
+    required this.pharmacyId,
+    required this.nameAr,
+    required this.nameEn,
+    required this.amountSyp,
+  });
+
+  final String pharmacyId;
+  final String nameAr;
+  final String nameEn;
+  final double amountSyp;
+
+  factory SummaryPharmacyAmount.fromJson(Map<String, dynamic> json, {required String amountKey}) {
+    final pharmacy = _map(json['pharmacy']);
+    return SummaryPharmacyAmount(
+      pharmacyId: _str(pharmacy?['id']),
+      nameAr: _str(pharmacy?['nameAr']),
+      nameEn: _str(pharmacy?['nameEn']),
+      amountSyp: _double(json[amountKey]),
+    );
+  }
+}
+
+/// Where the warehouse stands right now, whatever the period chosen.
+class SummaryOutstanding {
+  const SummaryOutstanding({
+    this.totalDebtSyp = 0,
+    this.totalCreditSyp = 0,
+    this.debtorCount = 0,
+    this.topDebtors = const [],
+  });
+
+  final double totalDebtSyp;
+  // What the warehouse holds for pharmacies that paid ahead.
+  final double totalCreditSyp;
+  final int debtorCount;
+  final List<SummaryPharmacyAmount> topDebtors;
+
+  factory SummaryOutstanding.fromJson(Map<String, dynamic>? json) => SummaryOutstanding(
+    totalDebtSyp: _double(json?['totalDebtSyp']),
+    totalCreditSyp: _double(json?['totalCreditSyp']),
+    debtorCount: _int(json?['debtorCount']),
+    topDebtors: _maps(
+      json?['topDebtors'],
+    ).map((r) => SummaryPharmacyAmount.fromJson(r, amountKey: 'balanceSyp')).toList(),
+  );
+}
+
+/// The owner's summary (GET /warehouse/balances/summary): the chosen period
+/// next to the previous one of equal length, the top buyers, and the debts.
+/// Sales count delivered orders only.
+class WarehouseSummary {
+  const WarehouseSummary({
+    this.current = const SummaryTotals(),
+    this.previous = const SummaryTotals(),
+    this.topBuyers = const [],
+    this.outstanding = const SummaryOutstanding(),
+  });
+
+  final SummaryTotals current;
+  final SummaryTotals previous;
+  final List<SummaryPharmacyAmount> topBuyers;
+  final SummaryOutstanding outstanding;
+
+  factory WarehouseSummary.fromJson(Map<String, dynamic> json) {
+    final summary = _map(json['summary']);
+    return WarehouseSummary(
+      current: SummaryTotals.fromJson(_map(summary?['current'])),
+      previous: SummaryTotals.fromJson(_map(summary?['previous'])),
+      topBuyers: _maps(
+        summary?['topBuyers'],
+      ).map((r) => SummaryPharmacyAmount.fromJson(r, amountKey: 'salesSyp')).toList(),
+      outstanding: SummaryOutstanding.fromJson(_map(summary?['outstanding'])),
+    );
+  }
+}
+
+/// Percent change against the previous period, or null when it was empty
+/// (nothing to compare with).
+int? summaryPercentChange(double current, double previous) {
+  if (previous == 0) return null;
+  return ((current - previous) / previous * 100).round();
+}
+
 /// One pharmacy's account statement, from the warehouse's side.
 class WarehouseStatement {
   const WarehouseStatement({

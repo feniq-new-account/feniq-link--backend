@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_load_status.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_management_models.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_accounts_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_summary_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_accounts_tab.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/account_payment.dart';
 import 'package:feniq/generated/app_localizations.dart';
@@ -13,6 +14,9 @@ import 'package:feniq/generated/app_localizations.dart';
 // The accounts table: one row per pharmacy with what it bought, paid and
 // still owes, and "pay in full" / "part payment" right on the row.
 class MockAccountsCubit extends MockCubit<WarehouseAccountsState> implements WarehouseAccountsCubit {}
+
+// The summary card above the rows has its own cubit; here it only has to exist.
+class MockSummaryCubit extends MockCubit<WarehouseSummaryState> implements WarehouseSummaryCubit {}
 
 final _row = WarehouseAccountRow(
   pharmacyId: 'p1',
@@ -28,9 +32,16 @@ final _sheetField = find.descendant(of: find.byType(AccountPartPaymentSheet), ma
 
 void main() {
   late MockAccountsCubit cubit;
+  late MockSummaryCubit summaryCubit;
 
   setUp(() {
     cubit = MockAccountsCubit();
+    summaryCubit = MockSummaryCubit();
+    whenListen(
+      summaryCubit,
+      const Stream<WarehouseSummaryState>.empty(),
+      initialState: const WarehouseSummaryState(status: RepLoadStatus.loaded, summary: WarehouseSummary()),
+    );
     when(() => cubit.load()).thenAnswer((_) async {});
     when(() => cubit.loadMore()).thenAnswer((_) async {});
     when(
@@ -43,6 +54,11 @@ void main() {
   });
 
   Future<void> open(WidgetTester tester, WarehouseAccountRow row) async {
+    // The summary card sits above the rows, so the default 800x600 screen
+    // would push the pay buttons out of reach.
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     whenListen(
       cubit,
       const Stream<WarehouseAccountsState>.empty(),
@@ -54,7 +70,13 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
-          body: BlocProvider<WarehouseAccountsCubit>.value(value: cubit, child: const WarehouseAccountsTab()),
+          body: MultiBlocProvider(
+            providers: [
+              BlocProvider<WarehouseAccountsCubit>.value(value: cubit),
+              BlocProvider<WarehouseSummaryCubit>.value(value: summaryCubit),
+            ],
+            child: const WarehouseAccountsTab(),
+          ),
         ),
       ),
     );
