@@ -3,6 +3,7 @@ const { ApiError } = require('../utils/ApiError');
 const mongoose = require('mongoose');
 const Order = require('../models/order.model');
 const statementService = require('../services/accountStatement.service');
+const summaryService = require('../services/warehouseSummary.service');
 const statementViewModel = require('../viewmodels/accountStatement.viewmodel');
 const paymentService = require('../services/payment.service');
 const paymentViewModel = require('../viewmodels/payment.viewmodel');
@@ -55,6 +56,18 @@ const list = asyncHandler(async (req, res) => {
   });
 });
 
+// The owner's at-a-glance view: sales, collections, returns and outstanding
+// debt for today / this week / this month (or a custom range).
+const summary = asyncHandler(async (req, res) => {
+  const warehouse = await loadWarehouseOrThrow(req.user._id);
+  const data = await summaryService.getWarehouseSummary(warehouse._id, {
+    period: typeof req.query.period === 'string' ? req.query.period : undefined,
+    from: req.query.from,
+    to: req.query.to,
+  });
+  res.json({ success: true, ...statementViewModel.toWarehouseSummaryResponse(data) });
+});
+
 // The per-pharmacy account: the chronological statement, plus the payment rows
 // the panel needs in order to offer a reversal on each one.
 const getOne = asyncHandler(async (req, res) => {
@@ -97,4 +110,4 @@ const invoice = asyncHandler(async (req, res) => {
   res.json({ success: true, ...invoiceViewModel.toInvoiceResponse(data, 'warehouse') });
 });
 
-module.exports = { list, getOne, invoice };
+module.exports = { list, summary, getOne, invoice };
