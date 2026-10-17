@@ -145,11 +145,14 @@ class _LoyaltyFormState extends State<_LoyaltyForm> {
               Text(l10n.warehouseLoyaltyIntro, style: context.textTheme.bodyMedium),
               const SizedBox(height: AppSizes.spacingSmall),
               Text(l10n.warehouseLoyaltyExample, style: muted),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.warehouseLoyaltyEnabled),
-                value: _enabled,
-                onChanged: (value) => setState(() => _enabled = value),
+              Material(
+                type: MaterialType.transparency,
+                child: SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.warehouseLoyaltyEnabled),
+                  value: _enabled,
+                  onChanged: (value) => setState(() => _enabled = value),
+                ),
               ),
             ],
           ),
