@@ -247,6 +247,52 @@ test('another warehouse\'s entries and accounts never leak in', async () => {
   assert.strictEqual(outstanding.debtorCount, 1);
 });
 
+test('a warehouse holding only credit has no debtors and reports the credit', async () => {
+  await seed('دائن١', -150000);
+  await seed('دائن٢', -50000);
+
+  const { outstanding } = await getWarehouseSummary(WAREHOUSE_ID, { period: 'today' }, NOW);
+  assert.strictEqual(outstanding.totalDebtSyp, 0);
+  assert.strictEqual(outstanding.totalCreditSyp, 200000);
+  assert.strictEqual(outstanding.debtorCount, 0);
+  assert.deepStrictEqual(outstanding.topDebtors, []);
+});
+
+test('reversing an earlier period\'s charge today nets today\'s sales below zero', async () => {
+  const account = await seed('الأمل', 0);
+  await post(account, 'charge', 40000, new Date('2026-10-15T08:00:00Z')); // yesterday
+  await post(account, 'charge_reversal', 40000, new Date('2026-10-16T08:00:00Z')); // today
+
+  const { current, previous, topBuyers } = await getWarehouseSummary(
+    WAREHOUSE_ID,
+    { period: 'today' },
+    NOW
+  );
+  assert.strictEqual(current.salesSyp, -40000);
+  assert.strictEqual(current.invoiceCount, -1);
+  // The previous window is the 13h just before today began - it holds the charge.
+  assert.strictEqual(previous.salesSyp, 40000);
+  assert.deepStrictEqual(topBuyers, []); // nobody bought anything net today
+});
+
+test('very large amounts sum exactly', async () => {
+  const big = 900_000_000_000; // 900 billion SYP per entry
+  const a = await seed('كبير', 4_000_000_000_000);
+  const at = new Date('2026-10-16T08:00:00Z');
+  for (let i = 0; i < 5; i += 1) await post(a, 'charge', big, at);
+  await post(a, 'payment', big, at);
+
+  const { current, topBuyers, outstanding } = await getWarehouseSummary(
+    WAREHOUSE_ID,
+    { period: 'today' },
+    NOW
+  );
+  assert.strictEqual(current.salesSyp, 4_500_000_000_000);
+  assert.strictEqual(current.collectionsSyp, big);
+  assert.strictEqual(topBuyers[0].salesSyp, 4_500_000_000_000);
+  assert.strictEqual(outstanding.totalDebtSyp, 4_000_000_000_000);
+});
+
 test('the response view shapes period, comparison and standing for the clients', async () => {
   const account = await seed('الأمل', 25000);
   await post(account, 'charge', 25000, new Date('2026-10-16T08:00:00Z'));
