@@ -58,6 +58,15 @@ describe('percentChange', () => {
     expect(percentChange(500, 0)).toBeNull();
     expect(percentChange(0, 0)).toBeNull();
   });
+
+  it('never calls a rise a fall when the previous period netted below zero', () => {
+    // Yesterday's net sales were -50 (a reversal of an older charge); today 100.
+    expect(percentChange(100, -50)).toBeNull();
+  });
+
+  it('handles very large amounts without losing precision', () => {
+    expect(percentChange(3_000_000_000_000, 1_000_000_000_000)).toBe(200);
+  });
 });
 
 describe('SummaryFigures', () => {

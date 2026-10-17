@@ -77,6 +77,12 @@ void main() {
       expect(summaryPercentChange(100, 100), 0);
       expect(summaryPercentChange(100, 300), -67);
     });
+
+    test('a previous period that netted below zero has nothing to compare', () {
+      // A rise from -50 to 100 must not be shown as a fall.
+      expect(summaryPercentChange(100, -50), isNull);
+      expect(summaryPercentChange(3e12, 1e12), 200);
+    });
   });
 
   group('WarehouseSummaryCubit', () {

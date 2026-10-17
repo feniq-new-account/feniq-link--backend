@@ -371,7 +371,9 @@ class WarehouseSummary {
 /// Percent change against the previous period, or null when it was empty
 /// (nothing to compare with).
 int? summaryPercentChange(double current, double previous) {
-  if (previous == 0) return null;
+  // A previous period that netted to zero or below has no meaningful base:
+  // dividing by a negative flips the sign and would call a rise a fall.
+  if (previous <= 0) return null;
   return ((current - previous) / previous * 100).round();
 }
 

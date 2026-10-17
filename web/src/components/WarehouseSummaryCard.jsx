@@ -15,9 +15,11 @@ const PERIODS = [
 ];
 
 // Percent change against the previous period of equal length, or null when
-// there is nothing to compare with (previous period empty).
+// there is nothing to compare with. A previous period that netted to zero or
+// below (reversals of still-earlier charges) has no meaningful base: dividing
+// by a negative flips the sign and would call a rise a fall.
 export function percentChange(current, previous) {
-  if (!previous) return null;
+  if (!(previous > 0)) return null;
   return Math.round(((current - previous) / previous) * 100);
 }
 
