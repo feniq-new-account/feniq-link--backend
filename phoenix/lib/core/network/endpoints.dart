@@ -85,6 +85,7 @@ class Endpoints {
   static String warehouseRepPharmacies(String repId) => '/warehouse/reps/$repId/pharmacies';
   static const String warehouseRepVisits = '/warehouse/reps/visits';
   static const String warehouseBalances = '/warehouse/balances';
+  static const String warehouseBalancesSummary = '/warehouse/balances/summary';
   static String warehouseBalance(String pharmacyId) => '/warehouse/balances/$pharmacyId';
   static const String warehousePayments = '/warehouse/payments';
   static const String warehouseSettings = '/warehouse/settings';

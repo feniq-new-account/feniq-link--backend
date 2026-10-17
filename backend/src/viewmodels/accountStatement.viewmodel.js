@@ -98,8 +98,29 @@ function toWarehouseAccountsResponse({ rows }) {
   };
 }
 
+// The warehouse owner's summary: the chosen period's sales, collections and
+// returns next to the previous period of equal length, plus where the
+// warehouse stands right now. SYP only - every figure is a frozen ledger sum.
+function toWarehouseSummaryResponse({ period, current, previous, topBuyers, outstanding }) {
+  return {
+    summary: {
+      period: { kind: period.period, from: period.from, to: period.to },
+      current,
+      previous,
+      topBuyers: topBuyers.map((row) => ({ pharmacy: row.pharmacy, salesSyp: row.salesSyp })),
+      outstanding: {
+        totalDebtSyp: outstanding.totalDebtSyp,
+        totalCreditSyp: outstanding.totalCreditSyp,
+        debtorCount: outstanding.debtorCount,
+        topDebtors: outstanding.topDebtors,
+      },
+    },
+  };
+}
+
 module.exports = {
   toStatementResponse,
   toPharmacyAccountsResponse,
   toWarehouseAccountsResponse,
+  toWarehouseSummaryResponse,
 };

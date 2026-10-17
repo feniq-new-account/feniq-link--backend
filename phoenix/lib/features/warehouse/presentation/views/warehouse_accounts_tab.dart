@@ -13,9 +13,11 @@ import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_load_status.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_management_models.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_accounts_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_summary_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_order_labels.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_paged_list.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/account_payment.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/warehouse_summary_card.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/voice_payment_sheet.dart';
 import 'package:feniq/routes/route_names.dart';
 
@@ -85,80 +87,95 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
           ),
         ),
         Expanded(
-          child: BlocBuilder<WarehouseAccountsCubit, WarehouseAccountsState>(
-            builder: (context, state) => AppRefreshIndicator(
-              onRefresh: () => context.read<WarehouseAccountsCubit>().load(),
-              child: WarehousePagedList(
-                controller: _controller,
-                itemCount: state.accounts.length,
-                isLoading: state.status == RepLoadStatus.initial || state.status == RepLoadStatus.loading,
-                isLoadingMore: state.isLoadingMore,
-                errorMessage: state.status == RepLoadStatus.error && state.accounts.isEmpty
-                    ? translateErrorCode(l10n, state.errorCode, state.errorMessage ?? '')
-                    : null,
-                onRetry: () => context.read<WarehouseAccountsCubit>().load(),
-                emptyTitle: l10n.warehouseNoAccountsTitle,
-                emptySubtitle: l10n.warehouseNoAccountsSubtitle,
-                emptyIcon: Icons.account_balance_wallet_outlined,
-                itemBuilder: (context, index) {
-                  final row = state.accounts[index];
-                  final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
-                  final suffix = l10n.currencySuffix;
-                  return CustomCard(
-                    onTap: () => _open(row),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                warehouseLocalName(context, row.nameAr, row.nameEn),
-                                style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            const SizedBox(width: AppSizes.spacingSmall),
-                            WarehouseBalanceText(balanceSyp: row.balanceSyp),
-                          ],
-                        ),
-                        const SizedBox(height: AppSizes.spacingSmall),
-                        Text(
-                          '${l10n.warehouseAccountPurchases(formatSyp(row.purchasesSyp, suffix))} · '
-                          '${l10n.warehouseAccountPaid(formatSyp(row.paidSyp, suffix))}',
-                          style: muted,
-                        ),
-                        Text(
-                          row.lastPaymentAt == null
-                              ? l10n.warehouseAccountNoPayment
-                              : l10n.warehouseAccountLastPayment(
-                                  DateFormatter.formatDate(row.lastPaymentAt!.toLocal()),
-                                ),
-                          style: muted,
-                        ),
-                        if (row.balanceSyp > 0) ...[
-                          const SizedBox(height: AppSizes.spacingSmall),
+          // A pull to refresh or a recorded payment reloads the accounts; the
+          // summary's figures move with them. The first load is skipped
+          // (nothing listed yet): the router already started the summary.
+          child: BlocListener<WarehouseAccountsCubit, WarehouseAccountsState>(
+            listenWhen: (previous, current) =>
+                previous.status == RepLoadStatus.loading &&
+                current.status == RepLoadStatus.loaded &&
+                previous.accounts.isNotEmpty &&
+                previous.search == current.search,
+            listener: (context, _) => context.read<WarehouseSummaryCubit>().load(),
+            child: BlocBuilder<WarehouseAccountsCubit, WarehouseAccountsState>(
+              builder: (context, state) => AppRefreshIndicator(
+                onRefresh: () => context.read<WarehouseAccountsCubit>().load(),
+                child: WarehousePagedList(
+                  header: const Padding(
+                    padding: EdgeInsets.only(bottom: AppSizes.spacingSmall),
+                    child: WarehouseSummaryCard(),
+                  ),
+                  controller: _controller,
+                  itemCount: state.accounts.length,
+                  isLoading: state.status == RepLoadStatus.initial || state.status == RepLoadStatus.loading,
+                  isLoadingMore: state.isLoadingMore,
+                  errorMessage: state.status == RepLoadStatus.error && state.accounts.isEmpty
+                      ? translateErrorCode(l10n, state.errorCode, state.errorMessage ?? '')
+                      : null,
+                  onRetry: () => context.read<WarehouseAccountsCubit>().load(),
+                  emptyTitle: l10n.warehouseNoAccountsTitle,
+                  emptySubtitle: l10n.warehouseNoAccountsSubtitle,
+                  emptyIcon: Icons.account_balance_wallet_outlined,
+                  itemBuilder: (context, index) {
+                    final row = state.accounts[index];
+                    final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
+                    final suffix = l10n.currencySuffix;
+                    return CustomCard(
+                      onTap: () => _open(row),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Row(
                             children: [
                               Expanded(
-                                child: FilledButton(
-                                  onPressed: () => payAccountInFull(context, row),
-                                  child: Text(l10n.warehouseAccountPayFull),
+                                child: Text(
+                                  warehouseLocalName(context, row.nameAr, row.nameEn),
+                                  style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                                 ),
                               ),
                               const SizedBox(width: AppSizes.spacingSmall),
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: () => payAccountPartly(context, row),
-                                  child: Text(l10n.warehouseAccountPayPartial),
-                                ),
-                              ),
+                              WarehouseBalanceText(balanceSyp: row.balanceSyp),
                             ],
                           ),
+                          const SizedBox(height: AppSizes.spacingSmall),
+                          Text(
+                            '${l10n.warehouseAccountPurchases(formatSyp(row.purchasesSyp, suffix))} · '
+                            '${l10n.warehouseAccountPaid(formatSyp(row.paidSyp, suffix))}',
+                            style: muted,
+                          ),
+                          Text(
+                            row.lastPaymentAt == null
+                                ? l10n.warehouseAccountNoPayment
+                                : l10n.warehouseAccountLastPayment(
+                                    DateFormatter.formatDate(row.lastPaymentAt!.toLocal()),
+                                  ),
+                            style: muted,
+                          ),
+                          if (row.balanceSyp > 0) ...[
+                            const SizedBox(height: AppSizes.spacingSmall),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: FilledButton(
+                                    onPressed: () => payAccountInFull(context, row),
+                                    child: Text(l10n.warehouseAccountPayFull),
+                                  ),
+                                ),
+                                const SizedBox(width: AppSizes.spacingSmall),
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () => payAccountPartly(context, row),
+                                    child: Text(l10n.warehouseAccountPayPartial),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),

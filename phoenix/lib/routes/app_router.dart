@@ -68,6 +68,7 @@ import 'package:feniq/features/panel/panel_home_view.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_management_repository.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_orders_repository.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_accounts_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_summary_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_loyalty_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_loyalty_view.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_rep_detail_cubit.dart';
@@ -433,6 +434,10 @@ class AppRouter {
               BlocProvider(
                 create: (context) =>
                     WarehouseAccountsCubit(repository: context.read<WarehouseManagementRepository>())..load(),
+              ),
+              BlocProvider(
+                create: (context) =>
+                    WarehouseSummaryCubit(repository: context.read<WarehouseManagementRepository>())..load(),
               ),
               BlocProvider(
                 create: (context) =>

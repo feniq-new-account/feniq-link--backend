@@ -2521,6 +2521,120 @@ a.wh-detail-back {
   color: var(--wh-green);
 }
 
+.wh-invoice-stat-value.is-debt {
+  color: var(--wh-red);
+}
+
+/* Warehouse summary card at the top of the Invoices tab. Reuses the invoice
+   stat tiles; only the 4-up grid, the header row and the top-3 lists are new. */
+.wh-summary {
+  margin-bottom: 22px;
+}
+
+.wh-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 12px;
+}
+
+.wh-summary-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: var(--font-weight-subheading);
+}
+
+/* .wh-pills carries its own bottom rule and margin for page-level tabs; inside
+   the card header it is just the period switch. */
+.wh-summary-pills {
+  margin: 0;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.wh-summary-stats {
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 14px;
+}
+
+.wh-summary-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--wh-text-secondary);
+}
+
+.wh-summary-change {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--wh-text-secondary);
+}
+
+.wh-summary-change.is-up {
+  color: var(--wh-green);
+}
+
+.wh-summary-change.is-down {
+  color: var(--wh-red);
+}
+
+.wh-summary-lists {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.wh-summary-list ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wh-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--wh-border);
+}
+
+.wh-summary-row:first-child {
+  border-top: 0;
+}
+
+.wh-summary-rank {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--wh-bg);
+  font-size: 12px;
+  font-weight: var(--font-weight-subheading);
+}
+
+.wh-summary-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .wh-summary-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .wh-summary-lists {
+    grid-template-columns: 1fr;
+  }
+}
+
 .wh-invoice-main {
   display: flex;
   flex-direction: column;

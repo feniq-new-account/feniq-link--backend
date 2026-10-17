@@ -4747,6 +4747,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OK, record it'**
   String get warehouseVoiceConfirm;
+
+  /// No description provided for @warehouseSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse summary'**
+  String get warehouseSummaryTitle;
+
+  /// No description provided for @warehouseSummaryToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get warehouseSummaryToday;
+
+  /// No description provided for @warehouseSummaryWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get warehouseSummaryWeek;
+
+  /// No description provided for @warehouseSummaryMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get warehouseSummaryMonth;
+
+  /// No description provided for @warehouseSummarySales.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales'**
+  String get warehouseSummarySales;
+
+  /// No description provided for @warehouseSummaryCollections.
+  ///
+  /// In en, this message translates to:
+  /// **'Collected'**
+  String get warehouseSummaryCollections;
+
+  /// No description provided for @warehouseSummaryReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns'**
+  String get warehouseSummaryReturns;
+
+  /// No description provided for @warehouseSummaryTotalDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Total debts'**
+  String get warehouseSummaryTotalDebts;
+
+  /// No description provided for @warehouseSummaryInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invoices'**
+  String warehouseSummaryInvoices(int count);
+
+  /// No description provided for @warehouseSummaryPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} payments'**
+  String warehouseSummaryPayments(int count);
+
+  /// No description provided for @warehouseSummaryDebtors.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pharmacies owe you'**
+  String warehouseSummaryDebtors(int count);
+
+  /// No description provided for @warehouseSummaryCreditHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit held for pharmacies: {amount}'**
+  String warehouseSummaryCreditHeld(String amount);
+
+  /// No description provided for @warehouseSummaryChangeUp.
+  ///
+  /// In en, this message translates to:
+  /// **'▲ {percent}% vs previous period'**
+  String warehouseSummaryChangeUp(int percent);
+
+  /// No description provided for @warehouseSummaryChangeDown.
+  ///
+  /// In en, this message translates to:
+  /// **'▼ {percent}% vs previous period'**
+  String warehouseSummaryChangeDown(int percent);
+
+  /// No description provided for @warehouseSummaryChangeFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as the previous period'**
+  String get warehouseSummaryChangeFlat;
+
+  /// No description provided for @warehouseSummaryChangeNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing in the previous period'**
+  String get warehouseSummaryChangeNew;
+
+  /// No description provided for @warehouseSummaryTopBuyers.
+  ///
+  /// In en, this message translates to:
+  /// **'Top buyers'**
+  String get warehouseSummaryTopBuyers;
+
+  /// No description provided for @warehouseSummaryTopDebtors.
+  ///
+  /// In en, this message translates to:
+  /// **'Biggest debts'**
+  String get warehouseSummaryTopDebtors;
+
+  /// No description provided for @warehouseSummaryNoBuyers.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales in this period.'**
+  String get warehouseSummaryNoBuyers;
+
+  /// No description provided for @warehouseSummaryNoDebtors.
+  ///
+  /// In en, this message translates to:
+  /// **'No outstanding debts.'**
+  String get warehouseSummaryNoDebtors;
+
+  /// No description provided for @warehouseSummaryDeliveredNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales count delivered orders only.'**
+  String get warehouseSummaryDeliveredNote;
 }
 
 class _AppLocalizationsDelegate
