@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -172,9 +173,42 @@ class _BannerMedia extends StatelessWidget {
       return _BannerVideo(url: banner.imageUrl, isActive: isActive);
     }
     if (banner.isGif) {
-      return _BannerGifImage(url: banner.imageUrl);
+      return _WholeAd(
+        background: _BannerGifImage(url: banner.imageUrl, fit: BoxFit.cover),
+        foreground: _BannerGifImage(url: banner.imageUrl, fit: BoxFit.contain),
+      );
     }
-    return AppNetworkImage(url: banner.imageUrl, fit: BoxFit.cover, width: double.infinity);
+    return _WholeAd(
+      background: AppNetworkImage(url: banner.imageUrl, fit: BoxFit.cover, width: double.infinity),
+      foreground: AppNetworkImage(url: banner.imageUrl, fit: BoxFit.contain, width: double.infinity),
+    );
+  }
+}
+
+// Ads come in any shape and the slider is a fixed 160-high strip, so a
+// covered image lost its top and bottom (owner's report, 2026-10-19). The
+// whole ad is drawn contained; the space around it is the same picture,
+// covered and blurred, so there are no empty bars beside it.
+class _WholeAd extends StatelessWidget {
+  const _WholeAd({required this.background, required this.foreground});
+
+  final Widget background;
+  final Widget foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ClipRect(
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: background,
+          ),
+        ),
+        foreground,
+      ],
+    );
   }
 }
 
@@ -184,15 +218,16 @@ class _BannerMedia extends StatelessWidget {
 // GIF into a single static frame. A plain Image.network sidesteps both, so
 // the GIF's animation is guaranteed to survive.
 class _BannerGifImage extends StatelessWidget {
-  const _BannerGifImage({required this.url});
+  const _BannerGifImage({required this.url, required this.fit});
 
   final String url;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
     return Image.network(
       url,
-      fit: BoxFit.cover,
+      fit: fit,
       width: double.infinity,
       loadingBuilder: (context, child, progress) =>
           progress == null ? child : Container(color: AppColors.surfaceOf(context)),
@@ -275,13 +310,18 @@ class _BannerVideoState extends State<_BannerVideo> {
     if (controller == null || !_isReady) {
       return Container(color: AppColors.surfaceOf(context));
     }
-    return FittedBox(
-      fit: BoxFit.cover,
-      clipBehavior: Clip.hardEdge,
-      child: SizedBox(
-        width: controller.value.size.width,
-        height: controller.value.size.height,
-        child: VideoPlayer(controller),
+    // Contained like the pictures, on a dark strip - a blurred second video
+    // would mean decoding it twice.
+    return ColoredBox(
+      color: Colors.black,
+      child: FittedBox(
+        fit: BoxFit.contain,
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          width: controller.value.size.width,
+          height: controller.value.size.height,
+          child: VideoPlayer(controller),
+        ),
       ),
     );
   }
