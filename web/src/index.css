@@ -5058,6 +5058,27 @@ input[type='month'] {
   text-align: left;
 }
 
+/* The empty-field placeholder itself is Chrome's, in the browser's own UI
+   language, and an Arabic Chrome draws it letter-reversed and unjoined
+   (موي/رهش/قنس) whatever the page's direction, lang or segment styles - so
+   it is hidden while the field is empty and unfocused and a hint drawn by us
+   shows instead. React keeps the value attribute in step with a controlled
+   input, which is what [value=''] reads; focused, the native fields come back
+   so typed digits stay visible. 38px clears the calendar icon. */
+input[type='date'][value='']:not(:focus)::-webkit-datetime-edit {
+  color: transparent;
+}
+
+input[type='date'][value='']:not(:focus) {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='20'><text x='0' y='15' font-family='Tahoma, Segoe UI, sans-serif' font-size='14' fill='%235c6b7f'>يوم / شهر / سنة</text></svg>");
+  background-repeat: no-repeat;
+  background-position: left 38px center;
+}
+
+:lang(en) input[type='date'][value='']:not(:focus) {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='20'><text x='0' y='15' font-family='Tahoma, Segoe UI, sans-serif' font-size='14' fill='%235c6b7f'>dd / mm / yyyy</text></svg>");
+}
+
 /* — registration approval page (AdminRegistrationPage.jsx) and the
    syndicate-list badge on the Accounts list — */
 
