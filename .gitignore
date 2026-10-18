@@ -2,6 +2,8 @@
 **/.claude/*
 !/.claude/settings.json
 !/.claude/hooks/
+!/.claude/agents/
+!/.claude/skills/
 
 # Dependencies
 **/node_modules/
