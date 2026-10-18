@@ -1,6 +1,7 @@
-# Claude Code local settings
-.claude/
-**/.claude/
+# Claude Code local settings (the shared cloud-session hook is tracked)
+**/.claude/*
+!/.claude/settings.json
+!/.claude/hooks/
 
 # Dependencies
 **/node_modules/
