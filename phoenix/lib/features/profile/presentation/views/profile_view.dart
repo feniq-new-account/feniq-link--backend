@@ -698,6 +698,7 @@ class _DeleteAccountDialog extends StatefulWidget {
 class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
   final _controller = TextEditingController();
   bool _submitting = false;
+  bool _revealed = false;
   String? _error;
 
   @override
@@ -762,13 +763,20 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           const SizedBox(height: AppSizes.spacingMedium),
           TextField(
             controller: _controller,
-            obscureText: true,
+            obscureText: !_revealed,
             enabled: !_submitting,
             autofillHints: const [AutofillHints.password],
             decoration: InputDecoration(
               labelText: l10n.deleteAccountPasswordLabel,
               errorText: _error,
               border: const OutlineInputBorder(),
+              suffixIcon: IconButton(
+                onPressed: () => setState(() => _revealed = !_revealed),
+                icon: Icon(
+                  _revealed ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: AppColors.textSecondaryOf(context),
+                ),
+              ),
             ),
             onSubmitted: _submitting ? null : (_) => _submit(),
           ),

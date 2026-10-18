@@ -7,13 +7,21 @@ import '../constants/app_radius.dart';
 import '../constants/app_sizes.dart';
 import '../extensions/build_context_extensions.dart';
 
+/// The eye button a password [AppTextField] shows; tests find it by this key.
+const appTextFieldVisibilityToggleKey = Key('appTextField.visibilityToggle');
+
 // Label sits above the field (not floating inside its border, Material's
 // default) - every field in the reference design uses this shape, and it
 // reads more clearly in Arabic than a floating label does. `hint` is the
 // grey example text shown inside the empty field itself (e.g. "مثال: ...") -
 // optional, so existing call sites that don't pass one just render label +
 // plain field, same behavior as before.
-class AppTextField extends StatelessWidget {
+//
+// A password field (obscureText) gets an eye button at its end that shows and
+// hides what was typed, so a mistyped password can be seen before submitting.
+// A caller that passes its own suffixIcon keeps it and manages visibility
+// itself (registration_view.dart does).
+class AppTextField extends StatefulWidget {
   const AppTextField({
     super.key,
     required this.label,
@@ -42,12 +50,32 @@ class AppTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
 
   @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  bool _revealed = false;
+
+  @override
   Widget build(BuildContext context) {
+    final obscured = widget.obscureText && !_revealed;
+    final suffixIcon = widget.suffixIcon ??
+        (widget.obscureText
+            ? IconButton(
+                key: appTextFieldVisibilityToggleKey,
+                onPressed: () => setState(() => _revealed = !_revealed),
+                icon: Icon(
+                  _revealed ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: AppColors.textSecondaryOf(context),
+                ),
+              )
+            : null);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          widget.label,
           style: context.textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.textSecondaryOf(context),
@@ -55,20 +83,20 @@ class AppTextField extends StatelessWidget {
         ),
         const SizedBox(height: AppSizes.spacingXSmall),
         TextFormField(
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          validator: validator,
-          onChanged: onChanged,
-          maxLines: obscureText ? 1 : maxLines,
+          controller: widget.controller,
+          obscureText: obscured,
+          keyboardType: widget.keyboardType,
+          inputFormatters: widget.inputFormatters,
+          validator: widget.validator,
+          onChanged: widget.onChanged,
+          maxLines: widget.obscureText ? 1 : widget.maxLines,
           style: context.textTheme.bodyMedium,
           decoration: InputDecoration(
-            hintText: hint,
+            hintText: widget.hint,
             hintStyle: context.textTheme.bodyMedium?.copyWith(
               color: AppColors.textSecondaryOf(context).withValues(alpha: 0.7),
             ),
-            prefixIcon: prefixIcon,
+            prefixIcon: widget.prefixIcon,
             suffixIcon: suffixIcon,
             isDense: true,
             // Same content padding and minHeight floor regardless of
