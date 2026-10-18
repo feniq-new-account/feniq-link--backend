@@ -1879,9 +1879,9 @@ a.adm-pill {
 }
 
 .wh-table-thumb {
-  width: 64px;
-  height: 40px;
-  object-fit: cover;
+  width: 96px;
+  height: 54px;
+  object-fit: contain;
   border-radius: 8px;
   background: var(--wh-border);
 }
@@ -3496,10 +3496,28 @@ a.wh-detail-back {
 }
 
 .adm-table-thumb {
-  width: 64px;
-  height: 44px;
-  object-fit: cover;
+  width: 96px;
+  height: 54px;
+  /* An ad has no fixed shape - the whole picture, never a cropped middle. */
+  object-fit: contain;
   background: var(--adm-border);
+}
+
+/* General ads table (AdminBannersPage.jsx) sits beside the 320px "new ad"
+   card, so it gets less room than a full-width table: tighter cells, and the
+   row's buttons stack instead of running off the side as one long row. */
+.adm-banners-table {
+  min-width: 0;
+}
+
+.adm-banners-table th,
+.adm-banners-table td {
+  padding: 10px 8px;
+}
+
+.adm-banners-table .adm-row-actions {
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .adm-row-actions {

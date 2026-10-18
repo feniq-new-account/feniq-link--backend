@@ -115,7 +115,7 @@ function CreateBannerModal({ editingBanner, onClose, onCreated, onSaved }) {
                 className="return-photo-thumb"
                 src={editingBanner.imageUrl}
                 alt={editingBanner.title}
-                style={{ width: 96, height: 96 }}
+                style={{ width: 96, height: 96, objectFit: 'contain' }}
               />
             )
           ) : (

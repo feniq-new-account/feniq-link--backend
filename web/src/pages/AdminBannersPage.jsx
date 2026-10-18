@@ -37,9 +37,9 @@ function BannerFilePreview({ file }) {
   if (!previewUrl) return null;
 
   return file.type.startsWith('video/') ? (
-    <video className="return-photo-thumb" src={previewUrl} style={{ width: 96, height: 96 }} muted loop autoPlay playsInline />
+    <video className="return-photo-thumb" src={previewUrl} style={{ width: 96, height: 96, objectFit: 'contain' }} muted loop autoPlay playsInline />
   ) : (
-    <img className="return-photo-thumb" src={previewUrl} alt="" style={{ width: 96, height: 96 }} />
+    <img className="return-photo-thumb" src={previewUrl} alt="" style={{ width: 96, height: 96, objectFit: 'contain' }} />
   );
 }
 
@@ -220,7 +220,7 @@ function EditBannerModal({ banner, onClose, onSaved }) {
               <video
                 className="return-photo-thumb"
                 src={banner.imageUrl}
-                style={{ width: 96, height: 96 }}
+                style={{ width: 96, height: 96, objectFit: 'contain' }}
                 muted
                 loop
                 autoPlay
@@ -231,7 +231,7 @@ function EditBannerModal({ banner, onClose, onSaved }) {
                 className="return-photo-thumb"
                 src={banner.imageUrl}
                 alt={banner.title}
-                style={{ width: 96, height: 96 }}
+                style={{ width: 96, height: 96, objectFit: 'contain' }}
               />
             ))}
           <label>
@@ -405,7 +405,7 @@ export function AdminBannersPage() {
             ) : (
               <>
                 <div className="adm-card table-scroll">
-                  <table className="adm-table">
+                  <table className="adm-table adm-banners-table">
                     <thead>
                       <tr>
                         <th>{t('banners.admin.numberColumn')}</th>
