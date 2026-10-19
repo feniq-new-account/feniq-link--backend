@@ -427,6 +427,7 @@ class _PasswordVisibilityToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
+      tooltip: obscured ? context.l10n.showPassword : context.l10n.hidePassword,
       onPressed: onToggle,
       icon: Icon(
         obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -469,7 +470,7 @@ class _TermsCheckbox extends StatelessWidget {
                     color: agreed ? AppColors.primaryOf(context) : Colors.transparent,
                   ),
                   child: agreed
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
+                      ? Icon(Icons.check, color: AppColors.onPrimaryOf(context), size: 16)
                       : null,
                 ),
                 const SizedBox(width: AppSizes.spacingSmall),

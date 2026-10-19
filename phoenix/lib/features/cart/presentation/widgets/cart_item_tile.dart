@@ -186,6 +186,7 @@ class CartItemTile extends StatelessWidget {
               // The same remove action, on a soft tinted square so it reads as
               // a button at a glance without shouting over the line itself.
               IconButton(
+                tooltip: context.l10n.removeButton,
                 icon: Icon(Icons.delete_outline, color: AppColors.errorOf(context)),
                 onPressed: () => _confirmRemoval(context),
                 style: IconButton.styleFrom(

@@ -384,11 +384,13 @@ class _ReturnItemTile extends StatelessWidget {
                       Text(l10n.returnQuantityLabel, style: context.textTheme.bodyMedium),
                       const Spacer(),
                       IconButton(
+                        tooltip: l10n.decreaseQuantity,
                         onPressed: quantity > 1 ? () => onQuantityChanged(quantity - 1) : null,
                         icon: const Icon(Icons.remove_circle_outline),
                       ),
                       Text('$quantity', style: context.textTheme.titleMedium),
                       IconButton(
+                        tooltip: l10n.increaseQuantity,
                         onPressed: quantity < item.quantity ? () => onQuantityChanged(quantity + 1) : null,
                         icon: const Icon(Icons.add_circle_outline),
                       ),

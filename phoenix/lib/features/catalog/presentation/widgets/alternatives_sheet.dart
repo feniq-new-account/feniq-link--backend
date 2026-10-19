@@ -306,12 +306,12 @@ class _ElsewhereTile extends StatelessWidget {
               ),
               NameText(
                 product.displayManufacturer,
-                style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 11),
+                style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 12),
               ),
               if (details.isNotEmpty)
                 Text(
                   details,
-                  style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 11),
+                  style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context), fontSize: 12),
                 ),
               const SizedBox(height: AppSizes.spacingSmall),
               Row(

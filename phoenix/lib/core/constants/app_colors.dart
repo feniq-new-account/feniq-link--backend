@@ -123,6 +123,21 @@ class AppColors {
       ? darkPrimary
       : lightPrimary;
 
+  /// Text and icons drawn on an orange (primary) fill. White on the brand
+  /// orange is only 2.85:1, so both modes use a near-black ink instead
+  /// (6.5:1 on #F2760A, 11:1 on #FFA94D) - the same pairing as the website.
+  static const Color onPrimary = Color(0xFF1A1206);
+  static Color onPrimaryOf(BuildContext context) => onPrimary;
+
+  /// Orange used as text or an icon on a light surface (text buttons, links):
+  /// the brand orange is 2.6:1 there, this deeper one is 5.2:1. Night mode
+  /// keeps the light orange, which already reads at 7.8:1 on navy.
+  static const Color lightPrimaryText = Color(0xFFA84B00);
+  static Color primaryTextOf(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? darkPrimary
+      : lightPrimaryText;
+
   static Color secondaryOf(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
       ? darkSecondary

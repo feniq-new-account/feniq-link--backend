@@ -188,7 +188,7 @@ class _AdvertisementCardState extends State<AdvertisementCard> {
                   onPressed: _busy ? null : _onTap,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primaryOf(context),
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onPrimaryOf(context),
                     shape: const RoundedRectangleBorder(borderRadius: AppRadius.medium),
                   ),
                   child: _busy

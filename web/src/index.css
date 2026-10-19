@@ -43,6 +43,11 @@
   --brand-orange: #f2760a;
   --brand-orange-light: #ffa94d;
   --brand-orange-deep: #e8600a;
+  /* On or as text with the orange (Apple HIG contrast, 4.5:1 for body text):
+     white on #f2760a is only 2.85:1, so fills carry a near-black ink (6.5:1),
+     and orange words on a light surface use a deeper orange (5.2:1). */
+  --brand-on-orange: #1a1206;
+  --brand-orange-text: #a84b00;
   --brand-navy: #16283f;
   /* Channels only, for translucent washes: rgb(var(--brand-navy-rgb) / 0.5). */
   --brand-navy-rgb: 22 40 63;
@@ -276,7 +281,7 @@ h2 {
 
 .btn-primary {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--brand-on-orange);
 }
 
 .btn-secondary {
@@ -463,7 +468,7 @@ h2 {
   display: inline-block;
   background: var(--color-navy);
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: var(--font-weight-subheading);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -567,13 +572,13 @@ h2 {
 .order-price {
   font-size: 15px;
   font-weight: var(--font-weight-subheading);
-  color: var(--color-primary);
+  color: var(--brand-orange-text);
 }
 
 .status-badge {
   flex-shrink: 0;
   display: inline-block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: var(--font-weight-subheading);
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -823,7 +828,7 @@ h2 {
 
 .availability-badge {
   display: inline-block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: var(--font-weight-subheading);
   padding: 4px 10px;
   border-radius: 999px;
@@ -1158,7 +1163,7 @@ h2 {
   --wh-border: #dcdfe5;
   --wh-text: var(--brand-navy);
   --wh-text-secondary: #5c6b7f;
-  --wh-text-muted: #8b97a8;
+  --wh-text-muted: #5c6b7f;
   --wh-sidebar-width: 232px;
 
   min-height: 100svh;
@@ -1208,7 +1213,7 @@ h2 {
 }
 
 .wh-sidebar-subtitle {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.3;
   color: #9fa8da;
 }
@@ -1231,7 +1236,7 @@ h2 {
 
 .wh-nav-link.active {
   background: var(--wh-orange);
-  color: #fff;
+  color: var(--brand-on-orange);
   font-weight: var(--font-weight-subheading);
 }
 
@@ -1606,7 +1611,7 @@ a.adm-pill {
   border-radius: 999px;
   background: #c62828;
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: var(--font-weight-subheading);
   line-height: 18px;
   text-align: center;
@@ -1665,7 +1670,7 @@ a.adm-pill {
   border-radius: 999px;
   border: 1px solid var(--wh-orange);
   background: rgba(245, 124, 0, 0.08);
-  color: var(--wh-orange);
+  color: var(--brand-orange-text);
   font-family: inherit;
   font-size: 13px;
   font-weight: var(--font-weight-subheading);
@@ -1740,8 +1745,8 @@ a.adm-pill {
   padding: 2px 8px;
   border-radius: 999px;
   background: rgba(245, 124, 0, 0.12);
-  color: var(--wh-orange);
-  font-size: 11px;
+  color: var(--brand-orange-text);
+  font-size: 12px;
   font-weight: var(--font-weight-subheading);
 }
 
@@ -1860,7 +1865,7 @@ a.adm-pill {
   padding: 8px 16px;
   border-radius: var(--radius-sm);
   background: var(--wh-orange);
-  color: #fff;
+  color: var(--brand-on-orange);
   border: none;
   font-family: inherit;
   font-weight: var(--font-weight-subheading);
@@ -1991,7 +1996,7 @@ a.adm-pill {
 }
 
 .wh-rep-stats dt {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--wh-text-secondary);
 }
 
@@ -2123,7 +2128,7 @@ a.adm-pill {
   flex: 1 1 100%;
   background: var(--wh-orange);
   border-color: var(--wh-orange);
-  color: #fff;
+  color: var(--brand-on-orange);
   font-size: 14px;
 }
 
@@ -2300,7 +2305,7 @@ a.wh-detail-back {
 }
 
 .wh-summary-total .wh-num {
-  color: var(--wh-orange);
+  color: var(--brand-orange-text);
 }
 
 .wh-savings-banner {
@@ -2465,7 +2470,7 @@ a.wh-detail-back {
 
 .wh-invoice-balance-label {
   font-weight: var(--font-weight-subheading);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--wh-text-secondary);
@@ -2829,7 +2834,7 @@ a.wh-detail-back {
 }
 
 .wh-review-bar-row-clickable.active .wh-review-bar-label {
-  color: var(--wh-orange);
+  color: var(--brand-orange-text);
 }
 
 .wh-review-filter-clear {
@@ -2839,7 +2844,7 @@ a.wh-detail-back {
   border: none;
   padding: 0;
   font-size: 12px;
-  color: var(--wh-orange);
+  color: var(--brand-orange-text);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -2980,7 +2985,7 @@ a.wh-detail-back {
   --adm-border: #dcdfe5;
   --adm-text: var(--brand-navy);
   --adm-text-secondary: #5c6b7f;
-  --adm-text-muted: #8b97a8;
+  --adm-text-muted: #5c6b7f;
   --adm-sidebar-width: 240px;
 
   min-height: 100svh;
@@ -3030,7 +3035,7 @@ a.wh-detail-back {
 }
 
 .adm-sidebar-subtitle {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.3;
   color: #9fa8da;
 }
@@ -3254,7 +3259,7 @@ a.wh-detail-back {
 }
 
 .adm-stat-card.adm-stat-pending .adm-stat-value {
-  color: var(--adm-orange);
+  color: var(--brand-orange-text);
 }
 
 .adm-stat-card.adm-stat-info {
@@ -3813,7 +3818,7 @@ a.wh-detail-back {
 
 .adm-offer-discount {
   font-weight: var(--font-weight-subheading);
-  color: var(--adm-orange);
+  color: var(--brand-orange-text);
 }
 
 /* — advertisements: the admin moderation queue — */
@@ -3931,7 +3936,7 @@ a.wh-detail-back {
 }
 
 .wh-ad-price-caption {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--wh-text-secondary);
 }
 
@@ -3945,7 +3950,7 @@ a.wh-detail-back {
 }
 
 .wh-ad-warn {
-  color: var(--wh-orange);
+  color: var(--brand-orange-text);
   font-size: 13px;
   margin: 4px 0 0;
 }
@@ -4046,7 +4051,7 @@ a.wh-detail-back {
   padding: 2px 8px;
   border-radius: 999px;
   font-weight: var(--font-weight-subheading);
-  font-size: 10px;
+  font-size: 12px;
   background: #e8eaf6;
   color: var(--adm-navy);
   white-space: nowrap;
@@ -4503,8 +4508,8 @@ a.wh-detail-back {
   margin-inline-end: 6px;
   border-radius: 999px;
   background: var(--wh-orange);
-  color: var(--wh-white);
-  font-size: 0.72rem;
+  color: var(--brand-on-orange);
+  font-size: 12px;
   font-weight: var(--font-weight-subheading);
   vertical-align: middle;
 }
@@ -4517,7 +4522,7 @@ a.wh-detail-back {
 }
 
 .wh-package-locked {
-  font-size: 0.72rem;
+  font-size: 12px;
   font-weight: 400;
   color: var(--wh-text-muted);
 }
@@ -5230,7 +5235,7 @@ input[type='date'][value='']:not(:focus) {
 }
 
 .reg-badge-off {
-  color: var(--adm-orange);
+  color: var(--brand-orange-text);
 }
 
 .reg-badge-detail {

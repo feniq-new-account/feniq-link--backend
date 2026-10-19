@@ -48,12 +48,12 @@ Future<void> _pump(WidgetTester tester, {Locale? locale}) async {
 }
 
 void main() {
-  testWidgets('Test 1: the third tab reads "Account History", not "Returns"', (tester) async {
+  testWidgets('Test 1: the third tab reads "Accounts", not "Returns"', (tester) async {
     await _pump(tester);
 
     final bar = find.byType(NavigationBar);
     expect(bar, findsOneWidget);
-    expect(find.descendant(of: bar, matching: find.text('Account History')), findsOneWidget);
+    expect(find.descendant(of: bar, matching: find.text('Accounts')), findsOneWidget);
     expect(find.descendant(of: bar, matching: find.text('Returns')), findsNothing);
   });
 
@@ -61,7 +61,7 @@ void main() {
     await _pump(tester, locale: const Locale('ar'));
 
     expect(
-      find.descendant(of: find.byType(NavigationBar), matching: find.text('سجل الحسابات')),
+      find.descendant(of: find.byType(NavigationBar), matching: find.text('الحسابات')),
       findsOneWidget,
     );
     expect(
@@ -70,16 +70,16 @@ void main() {
     );
   });
 
-  testWidgets('tapping the Account History tab activates its branch', (tester) async {
+  testWidgets('tapping the Accounts tab activates its branch', (tester) async {
     await _pump(tester);
 
-    await tester.tap(find.text('Account History'));
+    await tester.tap(find.text('Accounts'));
     await tester.pumpAndSettle();
 
     expect(find.text('A'), findsOneWidget);
   });
 
-  testWidgets('the second tab is Offers, between Warehouses and My Orders', (tester) async {
+  testWidgets('the second tab is Offers, between Warehouses and Orders', (tester) async {
     await _pump(tester);
 
     final bar = find.byType(NavigationBar);
@@ -90,7 +90,7 @@ void main() {
         .map((destination) => destination.label)
         .toList();
 
-    expect(labels, ['Warehouses', 'Offers', 'My Orders', 'Account History', 'Profile']);
+    expect(labels, ['Warehouses', 'Offers', 'Orders', 'Accounts', 'Profile']);
   });
 
   testWidgets('the Offers tab label is localized to Arabic', (tester) async {

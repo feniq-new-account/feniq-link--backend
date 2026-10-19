@@ -153,7 +153,7 @@ class WarehouseOffersView extends StatelessWidget {
                 FullText(
                   warehouseName.isEmpty ? count : '$warehouseName · $count',
                   style: const TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.normal,
                     color: Colors.white70,
                   ), minScale: 0.6),

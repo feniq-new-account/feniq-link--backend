@@ -62,7 +62,7 @@ class AppTextTheme {
     bodySmall: style(fontSize: 12, fontWeight: regular, height: 1.5, color: primaryColor, reading: true),
     labelLarge: style(fontSize: 14.5, fontWeight: semiBold, color: primaryColor),
     labelMedium: style(fontSize: 12.5, fontWeight: medium, color: primaryColor),
-    labelSmall: style(fontSize: 11, fontWeight: medium, color: primaryColor),
+    labelSmall: style(fontSize: 12, fontWeight: medium, color: primaryColor),
   );
 
   static TextTheme light() => _scale(AppColors.lightText);

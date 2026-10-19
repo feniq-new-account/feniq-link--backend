@@ -258,7 +258,7 @@ class _MyReturnsViewState extends State<MyReturnsView> with SingleTickerProvider
                 FullText(l10n.returnsTitle, minScale: 0.6),
                 FullText(
                   l10n.returnsCountSubtitle(state.returns.length),
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },
@@ -278,7 +278,7 @@ class _MyReturnsViewState extends State<MyReturnsView> with SingleTickerProvider
           return FloatingActionButton.extended(
             onPressed: () => _startReturnFromFab(context),
             backgroundColor: AppColors.primaryOf(context),
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.onPrimaryOf(context),
             icon: const Icon(Icons.assignment_return_rounded),
             label: Text(l10n.requestReturnAction),
           );
@@ -482,7 +482,7 @@ class _EmptyReturns extends StatelessWidget {
                       label: Text(l10n.requestReturnAction),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primaryOf(context),
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.onPrimaryOf(context),
                         shape: const RoundedRectangleBorder(borderRadius: AppRadius.medium),
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSizes.spacingLarge,
@@ -701,10 +701,9 @@ class _ReturnableOrderCard extends StatelessWidget {
                     label: Text(l10n.returnableRequestButton),
                     style: ElevatedButton.styleFrom(
                       // Navy by day. At night navy is the card's own fill, so the button
-                      // takes the brand orange - white label either way, as on
-                      // PrimaryButton.
+                      // takes the brand orange with the dark ink that reads on it.
                       backgroundColor: context.isDarkMode ? AppColors.primaryOf(context) : AppColors.navyOf(context),
-                      foregroundColor: Colors.white,
+                      foregroundColor: context.isDarkMode ? AppColors.onPrimaryOf(context) : Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: const RoundedRectangleBorder(borderRadius: AppRadius.small),

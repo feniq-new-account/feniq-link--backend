@@ -771,6 +771,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
               errorText: _error,
               border: const OutlineInputBorder(),
               suffixIcon: IconButton(
+                tooltip: _revealed ? l10n.hidePassword : l10n.showPassword,
                 onPressed: () => setState(() => _revealed = !_revealed),
                 icon: Icon(
                   _revealed ? Icons.visibility_off_outlined : Icons.visibility_outlined,

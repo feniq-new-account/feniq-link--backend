@@ -194,7 +194,7 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
                             (isArabic ? order.warehouseNameAr : order.warehouseNameEn)!,
                           if (order.createdAt != null) DateFormatter.formatDate(order.createdAt!),
                         ].join(' · '),
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
                     ],
                   ),
             actions: [

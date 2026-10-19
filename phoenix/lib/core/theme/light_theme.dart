@@ -13,7 +13,7 @@ class LightTheme {
     // the app is required to use, not a seed for Material 3 to approximate.
     colorScheme: ColorScheme.light(
       primary: AppColors.lightPrimary,
-      onPrimary: Colors.white,
+      onPrimary: AppColors.onPrimary,
       secondary: AppColors.lightSecondary,
       onSecondary: Colors.white,
       error: AppColors.lightError,

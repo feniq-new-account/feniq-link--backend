@@ -21,7 +21,9 @@ class PromotionHeroCard extends StatelessWidget {
   final Promotion promotion;
   final VoidCallback onTap;
 
-  static const double height = 176;
+  // 208, not 176: room for the badges, meta and price lines at the 12 pt
+  // floor every small label now keeps (they wrapped and overflowed at 176).
+  static const double height = 208;
 
   @override
   Widget build(BuildContext context) {

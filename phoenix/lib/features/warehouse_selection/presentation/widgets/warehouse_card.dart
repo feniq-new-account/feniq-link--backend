@@ -220,7 +220,7 @@ class _CityPill extends StatelessWidget {
               style: context.textTheme.labelSmall?.copyWith(
                 color: AppColors.textSecondaryOf(context),
                 fontWeight: AppTextTheme.semiBold,
-                fontSize: 11,
+                fontSize: 12,
               )),
           ),
         ],

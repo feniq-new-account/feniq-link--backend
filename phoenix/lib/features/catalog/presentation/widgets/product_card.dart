@@ -332,7 +332,7 @@ class _IngredientLine extends StatelessWidget {
         text,
         style: context.textTheme.bodySmall?.copyWith(
           color: AppColors.textSecondaryOf(context),
-          fontSize: 10.5,
+          fontSize: 12,
           letterSpacing: 0.2,
           height: 1.3,
         ),
@@ -367,7 +367,7 @@ class _AlternativesLink extends StatelessWidget {
               style: context.textTheme.bodySmall?.copyWith(
                 color: AppColors.primaryOf(context),
                 fontWeight: FontWeight.w600,
-                fontSize: 11.5,
+                fontSize: 12,
               ),
             ),
           ],
@@ -404,7 +404,7 @@ class _PriceDisplay extends StatelessWidget {
           style: context.textTheme.bodySmall?.copyWith(
             color: AppColors.secondaryOf(context),
             fontWeight: FontWeight.w600,
-            fontSize: 11,
+            fontSize: 12,
           ),
         ),
       ],
@@ -453,7 +453,7 @@ class _PriceDisplay extends StatelessWidget {
                 style: TextStyle(
                   decoration: TextDecoration.lineThrough,
                   color: AppColors.textSecondaryOf(context),
-                  fontSize: 11,
+                  fontSize: 12,
                 ),
               ),
             if (badge) const OfferBadge(compact: true),
@@ -544,7 +544,7 @@ class _ManufacturerText extends StatelessWidget {
       style: context.textTheme.bodySmall?.copyWith(
         color: emphasized ? AppColors.primaryOf(context) : AppColors.textSecondaryOf(context),
         fontWeight: emphasized ? FontWeight.w600 : null,
-        fontSize: 11,
+        fontSize: 12,
       ),
     );
   }
@@ -572,7 +572,7 @@ class _CornerChip extends StatelessWidget {
         label,
         textDirection: _isLatin(label) ? TextDirection.ltr : null,
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: textColor, height: 1.25),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: textColor, height: 1.25),
       ),
     );
   }
@@ -595,7 +595,7 @@ class _BatchDates extends StatelessWidget {
     final expires = product.expiryDate;
     if (produced == null && expires == null) return const SizedBox.shrink();
     final l10n = context.l10n;
-    final base = context.textTheme.bodySmall?.copyWith(fontSize: 10.5, color: AppColors.textSecondaryOf(context));
+    final base = context.textTheme.bodySmall?.copyWith(fontSize: 12, color: AppColors.textSecondaryOf(context));
     final expiresSoon = expires != null && expires.isBefore(DateTime.now().add(const Duration(days: 183)));
     // Each date is one unbreakable piece ("انتهاء 08/2027"): when both do not
     // fit on one line the expiry moves to the next line whole - a date is
