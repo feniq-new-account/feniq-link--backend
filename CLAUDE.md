@@ -50,5 +50,6 @@ cd web && npx vitest run
 - `.claude/hooks/session-start.sh`: بالجلسات السحابية بينزّل مكتبات السيرفر والويب وFlutter 3.35.7.
 - `.claude/hooks/lint-edited-file.sh`: بعد كل تعديل بيفحص الملف اللي تعدّل بس (oxlint للويب، `node --check` للسيرفر، `dart analyze` للموبايل)، وبيرجّع الأخطاء لتنصلّح فوراً.
 - الوكيل `money-reviewer`: لازم يراجع أي تعديل بيلمس المصاري (ledger، payment، order، returns، discount، commission، كشف الحساب) قبل الدمج.
+- السكيل `apple-design`: مراجعة التصميم حسب قواعد أبل (HIG)، للتطبيق والويب والموقع. أول تقرير بـ `design-reviews/`.
 - `/test-all`: بيشغّل الاختبارات التلاتة وبيعطي النتيجة بسطرين. `/handoff`: سطر التسليم بـ HANDOFF.md وبذاكرة My-mind.
 - `.mcp.json`: موصل `context7` لشرح المكتبات، وموصل `mongodb` للقراءة بس. الموصل التاني بيقرأ المتغيّر `MDB_MCP_CONNECTION_STRING` من إعدادات البيئة، وبلاه بيشتغل بس ما بيوصل لقاعدة.
