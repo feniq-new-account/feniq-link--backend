@@ -6,6 +6,7 @@ import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
+import { formatBusinessDate } from '../utils/businessDate';
 
 const PAGE_SIZE = 20;
 
@@ -142,10 +143,10 @@ export function AdminComplaintsPage() {
                           </span>
                         </td>
                         <td className="adm-num">
-                          {new Date(complaint.createdAt).toLocaleDateString()}
+                          {formatBusinessDate(complaint.createdAt)}
                         </td>
                         <td className="adm-num">
-                          {new Date(complaint.updatedAt).toLocaleDateString()}
+                          {formatBusinessDate(complaint.updatedAt)}
                         </td>
                       </tr>
                     ))}

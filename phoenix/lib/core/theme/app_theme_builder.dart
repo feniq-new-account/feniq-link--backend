@@ -75,7 +75,7 @@ class AppThemeBuilder {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
-          foregroundColor: isDark ? Colors.black : Colors.white,
+          foregroundColor: isDark ? Colors.black : AppColors.onPrimary,
           shape: pill,
           minimumSize: minButton,
           padding: AppPadding.button,
@@ -86,7 +86,7 @@ class AppThemeBuilder {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: primary,
-          foregroundColor: isDark ? Colors.black : Colors.white,
+          foregroundColor: isDark ? Colors.black : AppColors.onPrimary,
           shape: pill,
           padding: AppPadding.button,
           textStyle: buttonText,
@@ -103,14 +103,14 @@ class AppThemeBuilder {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primary,
+          foregroundColor: isDark ? primary : AppColors.lightPrimaryText,
           shape: pill,
           textStyle: AppTextTheme.style(fontSize: 14, fontWeight: AppTextTheme.semiBold),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: primary,
-        foregroundColor: isDark ? Colors.black : Colors.white,
+        foregroundColor: isDark ? Colors.black : AppColors.onPrimary,
         elevation: 2,
         highlightElevation: 4,
         shape: pill,
@@ -186,12 +186,13 @@ class AppThemeBuilder {
                 : (isDark ? textSecondary : AppColors.onNavyMuted),
           ),
         ),
-        // 10, not 11: the longest label ("سجل الحسابات" / "Account History")
-        // has to fit a fifth of a 360dp phone on one line, which the icon
-        // alignment depends on.
+        // 12: the tab labels are single words ("الحسابات" / "Accounts"), so
+        // they fit a fifth of a 360dp phone on one line - which the icon
+        // alignment depends on - and stay above the 11 pt legibility floor
+        // after the app-wide 0.93 text scale.
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => AppTextTheme.style(
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: states.contains(WidgetState.selected) ? AppTextTheme.semiBold : AppTextTheme.medium,
             color: states.contains(WidgetState.selected)
                 ? (isDark ? primary : AppColors.onNavyAccent)

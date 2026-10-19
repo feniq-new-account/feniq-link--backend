@@ -8,6 +8,7 @@ import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
 import { OFFER_FILTERS, isInReview } from './offersFilters';
 import { offerValueLabel } from '../utils/offerValue';
+import { formatBusinessDate } from '../utils/businessDate';
 
 const PAGE_SIZE = 20;
 const FILTER_DEBOUNCE_MS = 300;
@@ -128,7 +129,7 @@ export function AdminOffersPage() {
   const periodText = (o) =>
     o.isPermanent
       ? t('offers.warehouse.permanentLabel')
-      : `${new Date(o.startDate).toLocaleDateString()} — ${new Date(o.endDate).toLocaleDateString()}`;
+      : `${formatBusinessDate(o.startDate)} — ${formatBusinessDate(o.endDate)}`;
 
   const handleSaved = () => {
     setEditing(null);
@@ -233,12 +234,12 @@ export function AdminOffersPage() {
                             </div>
                           )}
                         </td>
-                        <td className="adm-num">{new Date(offer.startDate).toLocaleDateString()}</td>
+                        <td className="adm-num">{formatBusinessDate(offer.startDate)}</td>
                         <td className="adm-num">
                           {offer.isPermanent ? (
                             <span className="adm-badge-permanent">{t('offers.warehouse.permanentLabel')}</span>
                           ) : (
-                            new Date(offer.endDate).toLocaleDateString()
+                            formatBusinessDate(offer.endDate)
                           )}
                           {u && (
                             <div className="adm-offer-proposed">

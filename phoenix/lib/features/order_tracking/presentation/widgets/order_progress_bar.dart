@@ -117,7 +117,7 @@ class _OrderProgressBarState extends State<OrderProgressBar>
                     labels[index],
                     textAlign: TextAlign.center,
                     style: context.textTheme.bodyMedium?.copyWith(
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: index == widget.currentStageIndex
                           ? FontWeight.bold
                           : FontWeight.normal,
@@ -152,7 +152,7 @@ class _StageDot extends StatelessWidget {
       iconColor = Colors.white;
     } else if (current) {
       backgroundColor = AppColors.primaryOf(context);
-      iconColor = Colors.white;
+      iconColor = AppColors.onPrimaryOf(context);
     } else {
       backgroundColor = AppColors.surfaceOf(context);
       iconColor = AppColors.textSecondaryOf(context);

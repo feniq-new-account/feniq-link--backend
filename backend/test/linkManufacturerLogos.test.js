@@ -152,3 +152,20 @@ test('a company deleted during storage is not recreated or counted as linked', a
   assert.strictEqual(report.linked, 1);
 });
 
+
+test('a company spelled differently in the database is found through the row\'s aliases', async () => {
+  await fs.writeFile(
+    path.join(packDir, 'manifest.json'),
+    JSON.stringify([{ manufacturerAr: 'ابن حيان', aliases: ['ابن حيان للصناعات الدوائية'], file: 'aaaa.webp' }])
+  );
+  await Manufacturer.create({ nameAr: 'ابن حيان للصناعات الدوائية' });
+
+  const report = await linkLogos(packDir, { store: fakeStore() });
+
+  assert.strictEqual(report.linked, 1);
+  assert.deepStrictEqual(report.notInDatabase, []);
+  assert.strictEqual(
+    (await Manufacturer.findOne({ nameAr: 'ابن حيان للصناعات الدوائية' }).lean()).logoUrl,
+    'https://cdn.example/manufacturers/aaaa.webp'
+  );
+});

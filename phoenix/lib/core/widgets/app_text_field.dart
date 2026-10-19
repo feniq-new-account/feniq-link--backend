@@ -6,6 +6,7 @@ import '../constants/app_padding.dart';
 import '../constants/app_radius.dart';
 import '../constants/app_sizes.dart';
 import '../extensions/build_context_extensions.dart';
+import 'package:feniq/generated/app_localizations.dart';
 
 /// The eye button a password [AppTextField] shows; tests find it by this key.
 const appTextFieldVisibilityToggleKey = Key('appTextField.visibilityToggle');
@@ -63,6 +64,11 @@ class _AppTextFieldState extends State<AppTextField> {
         (widget.obscureText
             ? IconButton(
                 key: appTextFieldVisibilityToggleKey,
+                // Read without `!`: the field is also used outside the app's
+                // localizations (tests, previews), where it has no label.
+                tooltip: _revealed
+                    ? AppLocalizations.of(context)?.hidePassword
+                    : AppLocalizations.of(context)?.showPassword,
                 onPressed: () => setState(() => _revealed = !_revealed),
                 icon: Icon(
                   _revealed ? Icons.visibility_off_outlined : Icons.visibility_outlined,

@@ -26,7 +26,8 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !isLoading;
-    final onColor = context.isDarkMode ? Colors.black : Colors.white;
+    // Dark ink in both modes: white on the orange gradient is under 3:1.
+    final onColor = context.isDarkMode ? Colors.black : AppColors.onPrimary;
     return PressScale(
       // A plain Container: animating between the gradient and the disabled
       // flat colour asserts on older Flutter (ShapeDecoration can't lerp a

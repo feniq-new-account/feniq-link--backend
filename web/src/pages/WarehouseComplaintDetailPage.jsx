@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
+import { formatBusinessDateTime } from '../utils/businessDate';
 
 function statusBadgeClass(status) {
   if (status === 'resolved') return 'status-delivered';
@@ -68,7 +69,7 @@ export function WarehouseComplaintDetailPage() {
               <div className="wh-detail-timestamp">
                 <span className="wh-reason-badge">{t(`complaints.context.${complaint.contextType}`)}</span>
                 {' · '}
-                {t('complaints.detail.filedOn', { date: new Date(complaint.createdAt).toLocaleString() })}
+                {t('complaints.detail.filedOn', { date: formatBusinessDateTime(complaint.createdAt) })}
               </div>
             </div>
 
@@ -121,7 +122,7 @@ export function WarehouseComplaintDetailPage() {
                   <div className="wh-detail-timestamp">
                     {t('complaints.detail.respondedMeta', {
                       name: complaint.respondedBy?.name ?? '—',
-                      date: complaint.respondedAt ? new Date(complaint.respondedAt).toLocaleString() : '—',
+                      date: complaint.respondedAt ? formatBusinessDateTime(complaint.respondedAt) : '—',
                     })}
                   </div>
                 </>

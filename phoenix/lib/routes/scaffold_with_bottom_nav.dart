@@ -92,12 +92,12 @@ class ScaffoldWithBottomNav extends StatelessWidget {
     NavigationDestination(
       icon: const Icon(Icons.receipt_long_outlined),
       selectedIcon: Icon(Icons.receipt_long, color: AppColors.primaryOf(context)),
-      label: l10n.myOrdersTitle,
+      label: l10n.navOrders,
     ),
     NavigationDestination(
       icon: const Icon(Icons.account_balance_wallet_outlined),
       selectedIcon: Icon(Icons.account_balance_wallet, color: AppColors.primaryOf(context)),
-      label: l10n.accountHistoryTitle,
+      label: l10n.navAccounts,
     ),
     NavigationDestination(
       icon: const Icon(Icons.person_outline),

@@ -205,7 +205,7 @@ class _NotificationTile extends StatelessWidget {
                     DateFormatter.formatDateTime(notification.receivedAt),
                     style: context.textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondaryOf(context),
-                      fontSize: 11,
+                      fontSize: 12,
                     ),
                   ),
                 ],

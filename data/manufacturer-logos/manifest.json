@@ -93,7 +93,10 @@
   "manufacturerAr": "ابن حيان",
   "file": "fadc21d35354aa2f.webp",
   "generated": true,
-  "source": null
+  "source": null,
+  "aliases": [
+   "ابن حيان للصناعات الدوائية"
+  ]
  },
  {
   "manufacturerAr": "ميديكو",
@@ -111,7 +114,10 @@
   "manufacturerAr": "ألفا",
   "file": "51c116d73d6c5f3b.webp",
   "generated": true,
-  "source": null
+  "source": null,
+  "aliases": [
+   "شركة ألفا للأدوية"
+  ]
  },
  {
   "manufacturerAr": "أفاميا",
@@ -135,7 +141,10 @@
   "manufacturerAr": "الوطنية",
   "file": "6c6a05c781bd979c.webp",
   "generated": true,
-  "source": null
+  "source": null,
+  "aliases": [
+   "شركة الأدوية الوطنية"
+  ]
  },
  {
   "manufacturerAr": "الرازي",
@@ -267,7 +276,10 @@
   "manufacturerAr": "الشرق",
   "file": "92a45e76fae4a6a9.webp",
   "generated": true,
-  "source": null
+  "source": null,
+  "aliases": [
+   "شركة الشرق للأدوية"
+  ]
  },
  {
   "manufacturerAr": "عمريت",
@@ -393,7 +405,10 @@
   "manufacturerAr": "حياة فارما",
   "file": "e71aa5e82331ba69.webp",
   "generated": true,
-  "source": null
+  "source": null,
+  "aliases": [
+   "شركة الحياة للأدوية"
+  ]
  },
  {
   "manufacturerAr": "اليوسف",

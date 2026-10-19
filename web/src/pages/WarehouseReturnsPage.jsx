@@ -6,6 +6,7 @@ import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { formatSyp } from '../utils/currency';
+import { formatBusinessDateTime } from '../utils/businessDate';
 
 const PAGE_SIZE = 15;
 const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected'];
@@ -172,7 +173,7 @@ export function WarehouseReturnsPage() {
                       </span>
                     </td>
                     <td className="wh-num wh-table-date">
-                      {returnRequest.createdAt ? new Date(returnRequest.createdAt).toLocaleString() : ''}
+                      {returnRequest.createdAt ? formatBusinessDateTime(returnRequest.createdAt) : ''}
                     </td>
                     <td>
                       {returnRequest.status === 'pending' && (

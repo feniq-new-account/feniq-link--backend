@@ -537,3 +537,17 @@ p, h1, h2, h3, figcaption { overflow-wrap: anywhere; }
 .item--pictured .item__name, .item--pictured .item__meta { grid-column: 2; }
 .item--pictured .add { grid-column: 3; }
 @media (max-width: 400px) { .item--pictured { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 4px 8px; } .item__image { width: 48px; height: 56px; } .add { padding-inline: 10px; } }
+
+/* Touch targets (Apple HIG, accessibility.md › Mobility: 44 x 44 pt by default):
+   the text links people tap on a phone get a full-height hit area. */
+.hero-preview > a,
+.foot__in > a:not(.brand),
+.phone__num { display: inline-flex; align-items: center; min-height: 44px; }
+/* The empty demo search reads right to left like the page (dir="auto" alone
+   lays the hint out left to right). */
+#q:placeholder-shown { direction: rtl; }
+/* On a phone the whole orders table shrinks to ~340px and its text is
+   unreadable; show its readable start (order, pharmacy, status side) instead. */
+@media (max-width: 560px) {
+  .hero-preview img { aspect-ratio: 4 / 3; object-fit: cover; object-position: right top; }
+}

@@ -1154,6 +1154,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navWarehouses => 'المستودعات';
 
   @override
+  String get navAccounts => 'الحسابات';
+
+  @override
+  String get showPassword => 'إظهار كلمة المرور';
+
+  @override
+  String get hidePassword => 'إخفاء كلمة المرور';
+
+  @override
+  String get increaseQuantity => 'زيادة الكمية';
+
+  @override
+  String get decreaseQuantity => 'إنقاص الكمية';
+
+  @override
+  String get navOrders => 'طلباتي';
+
+  @override
   String get profileTitle => 'البروفايل';
 
   @override

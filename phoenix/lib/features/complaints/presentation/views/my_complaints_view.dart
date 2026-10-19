@@ -101,7 +101,7 @@ class _MyComplaintsViewState extends State<MyComplaintsView> {
                 FullText(
                   l10n.complaintsCountSubtitle(state.complaints.length),
                   style: const TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.normal,
                     color: Colors.white70,
                   ), minScale: 0.6),

@@ -104,7 +104,7 @@ class _PromotionsViewState extends State<PromotionsView> {
                 FullText(l10n.offersAndAdsTitle, minScale: 0.6),
                 FullText(
                   l10n.promotionsCountSubtitle(state.totalCount),
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },

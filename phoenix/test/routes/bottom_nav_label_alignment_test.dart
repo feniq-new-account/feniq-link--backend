@@ -18,8 +18,8 @@ import 'package:feniq/routes/scaffold_with_bottom_nav.dart';
 // These pin the fix from both ends: every label stays one line, and every icon
 // therefore resolves to the same vertical offset.
 
-const _arabicLabels = ['المستودعات', 'العروض', 'طلباتي', 'سجل الحسابات', 'البروفايل'];
-const _englishLabels = ['Warehouses', 'Offers', 'My Orders', 'Account History', 'Profile'];
+const _arabicLabels = ['المستودعات', 'العروض', 'طلباتي', 'الحسابات', 'البروفايل'];
+const _englishLabels = ['Warehouses', 'Offers', 'Orders', 'Accounts', 'Profile'];
 
 // The real face matters here - this is a measurement test, and the stand-in
 // font flutter_test ships is fixed-width, which would make every label wrap.
@@ -117,7 +117,7 @@ void main() {
     }
   }
 
-  testWidgets('the Account History label is not truncated at 360dp in Arabic', (tester) async {
+  testWidgets('the Accounts label is not truncated at 360dp in Arabic', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -126,7 +126,7 @@ void main() {
 
     // didExceedMaxLines is what an ellipsis is drawn from, so this is the
     // difference between "fits" and "fits because it was cut short".
-    final paragraph = tester.renderObject<RenderParagraph>(find.text('سجل الحسابات'));
+    final paragraph = tester.renderObject<RenderParagraph>(find.text('الحسابات'));
     expect(paragraph.didExceedMaxLines, isFalse);
   });
 

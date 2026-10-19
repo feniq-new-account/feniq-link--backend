@@ -180,6 +180,7 @@ class _LoyaltyFormState extends State<_LoyaltyForm> {
                   ),
                 ),
                 IconButton(
+                  tooltip: l10n.removeButton,
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () => setState(() => _rows.removeAt(i).dispose()),
                 ),

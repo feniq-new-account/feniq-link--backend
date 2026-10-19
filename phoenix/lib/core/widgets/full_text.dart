@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+/// The smallest nominal size any text is drawn at, before the app-wide
+/// text scale (kAppTextScale): 12 x 0.93 lands just above the 11 pt minimum that the
+/// platform guidelines set for legible text on a phone.
+const double kMinReadableFontSize = 12;
+
 /// Text that is always shown in full - never cut off with "...".
 ///
 /// For the spots that should stay on one line (an app bar title, a button
@@ -46,8 +51,13 @@ class FullText extends StatelessWidget {
           }
 
           if (!fits(1)) {
-            scale = minScale;
-            for (var s = 0.96; s > minScale; s -= 0.04) {
+            // Never shrink below [kMinReadableFontSize]: past that it wraps
+            // instead, so a long title stays readable on a small phone.
+            final nominal = base.fontSize ?? 14;
+            final floor = (kMinReadableFontSize / nominal).clamp(0.0, 1.0);
+            final lowest = minScale < floor ? floor : minScale;
+            scale = lowest;
+            for (var s = 0.96; s > lowest; s -= 0.04) {
               if (fits(s)) {
                 scale = s;
                 break;

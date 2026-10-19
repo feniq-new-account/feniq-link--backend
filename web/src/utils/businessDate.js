@@ -38,17 +38,44 @@ export function startOfBusinessMonthInputValue(instant = new Date()) {
   return `${year}-${month}-01`;
 }
 
+// Every date the panels show reads the same way on every device: day/month/
+// year with Western digits ("19/10/2026"), never the browser's locale (which
+// gave "10/19/2026, 3:11:14 PM" on an English phone and reversed it in RTL).
+const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+  timeZone: BUSINESS_TIME_ZONE,
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+const timeFormatter = new Intl.DateTimeFormat('en-GB', {
+  timeZone: BUSINESS_TIME_ZONE,
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
+function toDate(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 // A stored date shown as the Damascus day it belongs to.
 export function formatBusinessDate(value) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString(undefined, { timeZone: BUSINESS_TIME_ZONE });
+  const date = toDate(value);
+  return date ? dateFormatter.format(date) : '';
+}
+
+// A recorded-at stamp: the Damascus day and the time, without seconds
+// ("19/10/2026 · 15:11").
+export function formatBusinessDateTime(value) {
+  const date = toDate(value);
+  return date ? `${dateFormatter.format(date)} · ${timeFormatter.format(date)}` : '';
 }
 
 // ...and the time of day, for a recorded-at stamp.
 export function formatBusinessTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: BUSINESS_TIME_ZONE });
+  return timeFormatter.format(date);
 }

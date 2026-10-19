@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { LoadMoreControl } from './LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
+import { formatBusinessDateTime } from '../utils/businessDate';
 
 const HISTORY_PAGE_SIZE = 20;
 
@@ -140,14 +141,14 @@ export function ExchangeRateCard({ rate, onChanged }) {
           )}
           {rate.lastUpdated && (
             <span className="adm-rate-updated adm-num">
-              {t('admin.exchangeRate.lastUpdated', { date: new Date(rate.lastUpdated).toLocaleString() })}
+              {t('admin.exchangeRate.lastUpdated', { date: formatBusinessDateTime(rate.lastUpdated) })}
             </span>
           )}
         </div>
 
         {rate.manualOverride && (
           <div className="adm-rate-warning">
-            {t('admin.exchangeRate.manualWarning', { date: new Date(rate.lastUpdated).toLocaleString() })}
+            {t('admin.exchangeRate.manualWarning', { date: formatBusinessDateTime(rate.lastUpdated) })}
           </div>
         )}
 
@@ -155,7 +156,7 @@ export function ExchangeRateCard({ rate, onChanged }) {
           <div className="adm-rate-warning adm-rate-warning-stale">
             {t('admin.exchangeRate.staleWarning', {
               hours: staleHours,
-              date: new Date(rate.lastUpdated).toLocaleString(),
+              date: formatBusinessDateTime(rate.lastUpdated),
             })}
           </div>
         )}
@@ -207,7 +208,7 @@ export function ExchangeRateCard({ rate, onChanged }) {
                 <tbody>
                   {history.map((row) => (
                     <tr key={row.id}>
-                      <td>{new Date(row.effectiveFrom).toLocaleString()}</td>
+                      <td>{formatBusinessDateTime(row.effectiveFrom)}</td>
                       <td className="adm-num">{row.usdToSyp.toLocaleString()}</td>
                       <td className="adm-num">{row.previousUsdToSyp != null ? row.previousUsdToSyp.toLocaleString() : '—'}</td>
                       <td>

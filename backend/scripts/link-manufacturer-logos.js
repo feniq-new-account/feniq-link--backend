@@ -85,7 +85,10 @@ async function linkLogos(packDir, { dryRun = false, overwrite = false, store = d
   if (report.missingFile.length > 0) return report;
 
   for (const row of manifest) {
-    const manufacturer = await Manufacturer.findOne({ key: normalizeText(row.manufacturerAr) }).select('logoUrl').lean();
+    // `aliases`: other spellings of the same company as the database has it
+    // ("ابن حيان فارما" for "ابن حيان"). The first one that exists wins.
+    const keys = [row.manufacturerAr, ...(row.aliases || [])].map((name) => normalizeText(name));
+    const manufacturer = await Manufacturer.findOne({ key: { $in: keys } }).select('logoUrl').lean();
     if (!manufacturer) {
       report.notInDatabase.push(row.manufacturerAr);
       continue;
@@ -138,6 +141,10 @@ async function main() {
     );
     if (report.notInDatabase.length > 0) console.log('Not in the database:', report.notInDatabase.join(' ; '));
     if (report.missingFile.length > 0) console.error('Incomplete pack; no logos were written. Missing files:', report.missingFile.join(' ; '));
+    // The companies the app still draws as a letter, so a missing spelling can
+    // be added to the pack as an alias.
+    const bare = await Manufacturer.find({ $or: [{ logoUrl: null }, { logoUrl: '' }] }).select('nameAr nameEn').sort({ nameAr: 1 }).lean();
+    console.log(`Still without a logo (${bare.length}):`, bare.map((m) => (m.nameEn ? `${m.nameAr} | ${m.nameEn}` : m.nameAr)).join(' ; '));
     if (report.failed > 0 || report.missingFile.length > 0) process.exitCode = 1;
   } finally {
     await mongoose.disconnect();

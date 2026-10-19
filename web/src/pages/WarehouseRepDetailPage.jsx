@@ -17,6 +17,7 @@ import {
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
+import { formatBusinessDateTime } from '../utils/businessDate';
 
 const VISITS_PAGE_SIZE = 20;
 const TONE_STYLE = {
@@ -322,7 +323,7 @@ export function WarehouseRepDetailPage() {
                   <tbody>
                     {visits.data.map((visit) => (
                       <tr key={visit.id}>
-                        <td className="wh-num">{new Date(visit.scannedAt).toLocaleString()}</td>
+                        <td className="wh-num">{formatBusinessDateTime(visit.scannedAt)}</td>
                         <td>{visit.pharmacy ? pharmacyName(visit.pharmacy) : ''}</td>
                         <td style={TONE_STYLE[visitStatusTone(visit.status)]}>{t(visitStatusKey(visit.status))}</td>
                         <td className="wh-num">

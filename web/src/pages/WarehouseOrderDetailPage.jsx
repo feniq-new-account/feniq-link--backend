@@ -15,6 +15,7 @@ import { recordCollectedPayment } from '../utils/collectPayment';
 import { isEditable } from './warehouseOrdersList';
 import { realtimeBatchMatchesOrder } from './warehouseOrderDetailRealtime';
 import { FEATURES } from '../config/features';
+import { formatBusinessDateTime } from '../utils/businessDate';
 
 function statusKeySuffix(status) {
   return status
@@ -785,7 +786,7 @@ export function WarehouseOrderDetailPage() {
                   <span className="status-badge status-pending">{t('orderDetail.returnRequestExists')}</span>
                 )}
               </div>
-              <div className="wh-detail-timestamp wh-num">{new Date(order.createdAt).toLocaleString()}</div>
+              <div className="wh-detail-timestamp wh-num">{formatBusinessDateTime(order.createdAt)}</div>
               {/* Rating the pharmacy, once the order is delivered - here on the
                   order page rather than in the orders list. */}
               {order.status === 'delivered' &&
@@ -909,7 +910,7 @@ export function WarehouseOrderDetailPage() {
                 {order.deliverySealConfirmedAt && (
                   <p className="hint" style={{ marginTop: 8, marginBottom: 0 }}>
                     {t('orderDetail.deliverySealConfirmedAt', {
-                      date: new Date(order.deliverySealConfirmedAt).toLocaleString(),
+                      date: formatBusinessDateTime(order.deliverySealConfirmedAt),
                     })}
                   </p>
                 )}
@@ -1048,7 +1049,7 @@ export function WarehouseOrderDetailPage() {
                   <div className="wh-timeline-dot" />
                   <div>
                     <div className="wh-timeline-label">{statusLabel(entry.status)}</div>
-                    <div className="wh-timeline-at wh-num">{new Date(entry.changedAt).toLocaleString()}</div>
+                    <div className="wh-timeline-at wh-num">{formatBusinessDateTime(entry.changedAt)}</div>
                   </div>
                 </div>
               ))}

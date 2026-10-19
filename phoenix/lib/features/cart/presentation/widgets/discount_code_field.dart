@@ -112,7 +112,7 @@ class _DiscountCodeFieldState extends State<DiscountCodeField> {
                       onPressed: _applying ? null : _apply,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primaryOf(context),
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.onPrimaryOf(context),
                         shape: const RoundedRectangleBorder(borderRadius: AppRadius.medium),
                       ),
                       child: _applying

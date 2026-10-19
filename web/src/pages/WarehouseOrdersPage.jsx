@@ -10,6 +10,7 @@ import { formatSyp } from '../utils/currency';
 import { CollectPaymentModal } from '../components/CollectPaymentModal';
 import { recordCollectedPayment } from '../utils/collectPayment';
 import { isEditable, mergeAdvancedOrders, nextStatusOf, rememberAdvanced, syncAdvancedWithRows } from './warehouseOrdersList';
+import { formatBusinessDateTime } from '../utils/businessDate';
 
 const PAGE_SIZE = 20;
 // Three stages for the warehouse: new -> accepted -> on the way -> delivered,
@@ -260,7 +261,7 @@ export function WarehouseOrdersPage() {
                     <td className="wh-num">{order.items.length}</td>
                     <td className="wh-num wh-table-total">{formatSyp(order.finalPrice)}</td>
                     <td className="wh-num wh-table-date">
-                      {order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}
+                      {order.createdAt ? formatBusinessDateTime(order.createdAt) : ''}
                     </td>
                     <td>
                       <span className={`status-badge status-${order.status}`}>{statusLabel(order.status)}</span>
@@ -301,7 +302,7 @@ export function WarehouseOrdersPage() {
                     {t('orders.itemCountColumn')}: <span className="wh-num">{order.items.length}</span>
                   </span>
                   <span className="wh-num wh-table-date">
-                    {order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}
+                    {order.createdAt ? formatBusinessDateTime(order.createdAt) : ''}
                   </span>
                 </div>
                 {renderActions(order)}

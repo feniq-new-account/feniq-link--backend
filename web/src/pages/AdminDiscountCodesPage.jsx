@@ -17,6 +17,7 @@ import {
   statusBadgeClass,
   usageText,
 } from './discountCodesFilters';
+import { formatBusinessDate } from '../utils/businessDate';
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -136,7 +137,7 @@ export function AdminDiscountCodesPage() {
       : displayName(code.warehouse?.nameEn, code.warehouse?.nameAr);
 
   const periodText = (terms) =>
-    `${new Date(terms.startDate).toLocaleDateString()} — ${new Date(terms.endDate).toLocaleDateString()}`;
+    `${formatBusinessDate(terms.startDate)} — ${formatBusinessDate(terms.endDate)}`;
 
   return (
     <div>

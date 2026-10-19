@@ -1153,6 +1153,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navWarehouses => 'Warehouses';
 
   @override
+  String get navAccounts => 'Accounts';
+
+  @override
+  String get showPassword => 'Show password';
+
+  @override
+  String get hidePassword => 'Hide password';
+
+  @override
+  String get increaseQuantity => 'Increase quantity';
+
+  @override
+  String get decreaseQuantity => 'Decrease quantity';
+
+  @override
+  String get navOrders => 'Orders';
+
+  @override
   String get profileTitle => 'Profile';
 
   @override

@@ -11,6 +11,7 @@ import { QuickPaymentModal } from '../components/QuickPaymentModal';
 import { WarehouseSummaryCard } from '../components/WarehouseSummaryCard';
 import { VoicePaymentModal } from '../components/VoicePaymentModal';
 import { displayName } from '../utils/displayName';
+import { formatBusinessDate, formatBusinessTime } from '../utils/businessDate';
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -261,9 +262,9 @@ function PaymentRow({ payment, onReverse }) {
   return (
     <tr>
       <td>
-        <div>{paidAt.toLocaleDateString()}</div>
+        <div>{formatBusinessDate(paidAt)}</div>
         <div className="wh-table-sub">
-          {paidAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {formatBusinessTime(paidAt)}
         </div>
       </td>
       <td className="wh-num wh-table-total">
@@ -376,7 +377,7 @@ function StatementTable({ statement }) {
           {/* The opening balance is a row of its own so the running total in
               the last column starts from something the reader can see. */}
           <tr className="wh-statement-opening">
-            <td className="wh-num">{new Date(statement.period.from).toLocaleDateString()}</td>
+            <td className="wh-num">{formatBusinessDate(statement.period.from)}</td>
             <td>{t('statement.opening')}</td>
             <td />
             <td className="wh-num" />
@@ -385,7 +386,7 @@ function StatementTable({ statement }) {
           </tr>
           {statement.rows.map((row) => (
             <tr key={row.id}>
-              <td className="wh-num">{new Date(row.effectiveAt).toLocaleDateString()}</td>
+              <td className="wh-num">{formatBusinessDate(row.effectiveAt)}</td>
               <td>
                 <div>{t(STATEMENT_KIND_KEYS[row.kind] ?? 'statement.kindOther')}</div>
                 {/* Mandatory on adjustments and reversals - it is the whole
@@ -740,7 +741,7 @@ export function WarehouseDebtsPage() {
                       <BalanceAmount balanceSyp={row.balanceSyp} />
                     </td>
                     <td className="wh-num">
-                      {row.lastPaymentAt ? new Date(row.lastPaymentAt).toLocaleDateString() : '—'}
+                      {row.lastPaymentAt ? formatBusinessDate(row.lastPaymentAt) : '—'}
                     </td>
                     <td className="wh-num">
                       {row.balanceSyp > 0 && (

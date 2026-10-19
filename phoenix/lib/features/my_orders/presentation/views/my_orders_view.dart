@@ -68,7 +68,7 @@ class _MyOrdersViewState extends State<MyOrdersView> {
                 FullText(l10n.myOrdersTitle, minScale: 0.6),
                 FullText(
                   l10n.myOrdersCountSubtitle(state.orders.length),
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.white70), minScale: 0.6),
               ],
             );
           },
@@ -263,7 +263,7 @@ class _EmptyOrders extends StatelessWidget {
                       onPressed: onBrowse,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primaryOf(context),
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.onPrimaryOf(context),
                         shape: const RoundedRectangleBorder(borderRadius: AppRadius.medium),
                         padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingLarge, vertical: 14),
                       ),

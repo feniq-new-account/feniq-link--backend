@@ -5,6 +5,7 @@ import { LoadMoreControl } from '../components/LoadMoreControl';
 import { CatalogItemPicker, ManufacturerPicker } from '../components/CatalogPickers';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { formatBonusTiers } from '../components/ProductFormModal';
+import { formatBusinessDateTime } from '../utils/businessDate';
 
 const PAGE_SIZE = 30;
 const STATUSES = ['pending', 'approved', 'merged', 'rejected', 'all'];
@@ -142,7 +143,7 @@ function RequestCard({ request, categories, isOpen, onToggle, onDone }) {
         {request.bonuses.length > 0 && ` — ${t('importResults.bonus')} ${formatBonusTiers(request.bonuses)}`}
       </p>
       <p className="hint">
-        {request.warehouseNameAr ?? request.warehouseNameEn} · {new Date(request.createdAt).toLocaleString()} ·{' '}
+        {request.warehouseNameAr ?? request.warehouseNameEn} · {formatBusinessDateTime(request.createdAt)} ·{' '}
         {t(`catalogRequests.status.${request.status}`)}
         {request.rejectReason && ` · ${request.rejectReason}`}
       </p>
