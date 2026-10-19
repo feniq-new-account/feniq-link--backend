@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { isFeatureShown } from '../config/features';
@@ -25,6 +25,7 @@ import { AdminExchangeRatePage } from './AdminExchangeRatePage';
 import { AdminNotificationsPage } from './AdminNotificationsPage';
 import { AdminComplaintsPage } from './AdminComplaintsPage';
 import { AdminComplaintDetailPage } from './AdminComplaintDetailPage';
+import { useStackedTableLabels } from '../hooks/useStackedTableLabels';
 
 function navLinkClassName({ isActive }) {
   return `adm-nav-link${isActive ? ' active' : ''}`;
@@ -76,9 +77,12 @@ export function AdminPanel() {
   // "back" navigation - anything that changes the URL while the mobile
   // drawer happens to be open.
   const closeSidebar = () => setIsSidebarOpen(false);
+  // Phone-width tables become cards whose cells name their column.
+  const shellRef = useRef(null);
+  useStackedTableLabels(shellRef);
 
   return (
-    <div className="admin-shell">
+    <div className="admin-shell" ref={shellRef}>
       <div
         className={`adm-sidebar-backdrop${isSidebarOpen ? ' adm-sidebar-open' : ''}`}
         onClick={closeSidebar}

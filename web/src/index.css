@@ -4095,6 +4095,7 @@ a.wh-detail-back {
 
 .adm-filters-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -5317,4 +5318,48 @@ input[type='date'][value='']:not(:focus) {
   margin-top: 0;
   min-height: 40px;
   padding: 0 16px;
+}
+
+/* — stacked tables (phone) —
+   Apple HIG layout.md: the layout follows the space available, with the same
+   functions at every size. Below 640px each admin table row becomes a card
+   and each cell is preceded by its column name (data-label, filled in by
+   hooks/useStackedTableLabels.js), instead of a 640px table cut off at the
+   screen edge. */
+@media (max-width: 640px) {
+  .admin-shell .adm-table {
+    min-width: 0;
+  }
+  .admin-shell .adm-table thead {
+    display: none;
+  }
+  .admin-shell .adm-table,
+  .admin-shell .adm-table tbody {
+    display: block;
+  }
+  .admin-shell .adm-table tbody tr {
+    display: block;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--adm-border);
+  }
+  .admin-shell .adm-table tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: none;
+    text-align: end;
+  }
+  .admin-shell .adm-table tbody td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 12px;
+    font-weight: var(--font-weight-body);
+    color: var(--adm-text-secondary);
+    text-align: start;
+  }
+  .admin-shell .adm-table tbody td[data-label='']::before {
+    content: none;
+  }
 }
