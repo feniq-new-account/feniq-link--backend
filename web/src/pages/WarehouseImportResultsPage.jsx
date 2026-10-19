@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
+import { formatBusinessDateTime } from '../utils/businessDate';
 
 const PAGE_SIZE = 50;
 
@@ -84,7 +85,7 @@ export function WarehouseImportResultsPage() {
       <div className="wh-page-head">
         <h1>{t('importResults.title')}</h1>
         <span className="wh-page-head-meta">
-          {batch.fileName ?? ''} · {new Date(batch.createdAt).toLocaleString()}
+          {batch.fileName ?? ''} · {formatBusinessDateTime(batch.createdAt)}
           {batch.exchangeRateUsed != null && ` · ${t('products.importConvertedRate', { rate: batch.exchangeRateUsed })}`}
         </span>
       </div>
@@ -381,7 +382,7 @@ export function WarehouseImportsPage() {
             <tbody>
               {imports.map((batch) => (
                 <tr key={batch.id}>
-                  <td>{new Date(batch.createdAt).toLocaleString()}</td>
+                  <td>{formatBusinessDateTime(batch.createdAt)}</td>
                   <td>{batch.fileName ?? '-'}</td>
                   <td>{batch.counts.added + batch.counts.addedDisabled}</td>
                   <td>{batch.counts.updated}</td>
@@ -447,7 +448,7 @@ function MyCatalogRequests() {
             <tbody>
               {requests.map((request) => (
                 <tr key={request.id}>
-                  <td>{new Date(request.createdAt).toLocaleString()}</td>
+                  <td>{formatBusinessDateTime(request.createdAt)}</td>
                   <td>{request.nameAr}</td>
                   <td>{request.manufacturerAr}</td>
                   <td>{t(`catalogRequests.status.${request.status}`)}</td>

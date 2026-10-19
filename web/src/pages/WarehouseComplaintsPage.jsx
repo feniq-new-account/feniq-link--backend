@@ -7,6 +7,7 @@ import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
+import { formatBusinessDateTime } from '../utils/businessDate';
 
 const PAGE_SIZE = 15;
 const FILTERS = ['all', 'pending', 'in_review', 'resolved', 'closed'];
@@ -129,7 +130,7 @@ export function WarehouseComplaintsPage() {
                       </span>
                     </td>
                     <td className="wh-num wh-table-date">
-                      {new Date(complaint.createdAt).toLocaleString()}
+                      {formatBusinessDateTime(complaint.createdAt)}
                     </td>
                   </tr>
                 ))}

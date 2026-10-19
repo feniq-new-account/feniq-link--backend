@@ -7,6 +7,7 @@ import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { AdvertisementsSubNav } from '../components/AdvertisementsSubNav';
 import { displayName } from '../utils/displayName';
+import { formatBusinessDate } from '../utils/businessDate';
 
 const PAGE_SIZE = 20;
 
@@ -452,8 +453,8 @@ export function AdminBannersPage() {
                             )}
                           </td>
                           <td className="adm-num">
-                            {new Date(banner.startDate).toLocaleDateString()} &ndash;{' '}
-                            {new Date(banner.endDate).toLocaleDateString()}
+                            {formatBusinessDate(banner.startDate)} &ndash;{' '}
+                            {formatBusinessDate(banner.endDate)}
                           </td>
                           <td>
                             <span className={`status-badge ${bannerStatusBadgeClass(banner)}`}>

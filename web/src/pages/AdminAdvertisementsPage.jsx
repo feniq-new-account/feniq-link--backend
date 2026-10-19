@@ -9,6 +9,7 @@ import { formatMoneyFromUsd } from '../utils/currency';
 import { AdvertisementsSubNav } from '../components/AdvertisementsSubNav';
 import { AdvertisementFormModal } from '../components/AdvertisementFormModal';
 import { displayName } from '../utils/displayName';
+import { formatBusinessDate } from '../utils/businessDate';
 
 const PAGE_SIZE = 20;
 
@@ -262,8 +263,8 @@ export function AdminAdvertisementsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="adm-num">{new Date(advertisement.startDate).toLocaleDateString()}</td>
-                    <td className="adm-num">{new Date(advertisement.endDate).toLocaleDateString()}</td>
+                    <td className="adm-num">{formatBusinessDate(advertisement.startDate)}</td>
+                    <td className="adm-num">{formatBusinessDate(advertisement.endDate)}</td>
                     {/* Shown on the pending tab too: a package its warehouse
                         paused stays paused through approval, and the admin
                         should see that before approving it. */}

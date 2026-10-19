@@ -8,6 +8,7 @@ import { OFFER_FILTERS, filterOffers, offerEditSource, reviewCount } from './off
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { offerValueLabel } from '../utils/offerValue';
+import { formatBusinessDate } from '../utils/businessDate';
 
 const searchOfferProducts = (q) =>
   api.searchWarehouseProducts({ q, limit: 20 }).then((data) => data.products);
@@ -93,7 +94,7 @@ export function WarehouseOffersPage() {
     offer.isPermanent ? (
       <span className="wh-badge-permanent">{t('offers.warehouse.permanentLabel')}</span>
     ) : (
-      new Date(offer.endDate).toLocaleDateString()
+      formatBusinessDate(offer.endDate)
     );
 
   return (
@@ -186,7 +187,7 @@ export function WarehouseOffersPage() {
                   <td className="wh-num" style={{ color: 'var(--wh-orange)', fontWeight: 700 }}>
                     {offerValueLabel(offer, t)}
                   </td>
-                  <td className="wh-num wh-table-date">{new Date(offer.startDate).toLocaleDateString()}</td>
+                  <td className="wh-num wh-table-date">{formatBusinessDate(offer.startDate)}</td>
                   <td className="wh-num wh-table-date">{periodCell(offer)}</td>
                   <td>
                     <span

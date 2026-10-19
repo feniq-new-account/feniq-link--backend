@@ -4616,7 +4616,8 @@ a.wh-detail-back {
 .warehouse-shell .btn-primary,
 .admin-shell .btn-primary {
   background: var(--brand-gradient);
-  color: #fff;
+  /* Dark ink: white on the orange gradient is under 3:1. */
+  color: var(--brand-on-orange);
   box-shadow: var(--shadow-glow);
 }
 

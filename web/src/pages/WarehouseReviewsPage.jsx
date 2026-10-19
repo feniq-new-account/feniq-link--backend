@@ -6,6 +6,7 @@ import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
+import { formatBusinessDate } from '../utils/businessDate';
 
 const PAGE_SIZE = 15;
 
@@ -134,7 +135,7 @@ export function WarehouseReviewsPage() {
                           <span className="wh-review-row-name">{reviewerName}</span>
                           <StarRating value={review.rating} size={14} />
                           <span className="wh-review-row-date wh-num">
-                            {new Date(review.createdAt).toLocaleDateString()}
+                            {formatBusinessDate(review.createdAt)}
                           </span>
                         </div>
                         {review.comment && <div className="wh-review-row-comment">&ldquo;{review.comment}&rdquo;</div>}

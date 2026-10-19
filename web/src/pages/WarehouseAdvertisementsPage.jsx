@@ -10,6 +10,7 @@ import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
 import { contactAdminOnWhatsApp } from '../utils/whatsapp';
+import { formatBusinessDate } from '../utils/businessDate';
 
 // Step 2 of the request flow, mirroring the banner's BannerRequestSuccessModal
 // - shown right after an advertisement is submitted (never on error). Payment
@@ -253,10 +254,10 @@ export function WarehouseAdvertisementsPage() {
                     )}
                   </td>
                   <td className="wh-num wh-table-date">
-                    {new Date(advertisement.startDate).toLocaleDateString()}
+                    {formatBusinessDate(advertisement.startDate)}
                   </td>
                   <td className="wh-num wh-table-date">
-                    {new Date(advertisement.endDate).toLocaleDateString()}
+                    {formatBusinessDate(advertisement.endDate)}
                   </td>
                   <td>
                     {statusBadge(advertisement.status)}

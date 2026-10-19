@@ -10,6 +10,7 @@ import { AdvertisementsSubNav } from '../components/AdvertisementsSubNav';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { displayName } from '../utils/displayName';
 import { contactAdminOnWhatsApp } from '../utils/whatsapp';
+import { formatBusinessDate } from '../utils/businessDate';
 
 const PAGE_SIZE = 15;
 const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected'];
@@ -371,8 +372,8 @@ export function WarehouseBannersPage() {
                         </div>
                       )}
                     </td>
-                    <td className="wh-num wh-table-date">{new Date(banner.startDate).toLocaleDateString()}</td>
-                    <td className="wh-num wh-table-date">{new Date(banner.endDate).toLocaleDateString()}</td>
+                    <td className="wh-num wh-table-date">{formatBusinessDate(banner.startDate)}</td>
+                    <td className="wh-num wh-table-date">{formatBusinessDate(banner.endDate)}</td>
                     <td>
                       <span className={`status-badge ${bannerStatusBadgeClass(banner)}`}>
                         {bannerStatusLabel(banner)}

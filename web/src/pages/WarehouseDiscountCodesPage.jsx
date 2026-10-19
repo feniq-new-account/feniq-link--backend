@@ -18,6 +18,7 @@ import {
   statusBadgeClass,
   usageText,
 } from './discountCodesFilters';
+import { formatBusinessDate } from '../utils/businessDate';
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -169,7 +170,7 @@ export function WarehouseDiscountCodesPage() {
                         : t('discountCodes.scope.general')}
                     </td>
                     <td className="wh-num wh-table-date">
-                      {new Date(code.startDate).toLocaleDateString()} — {new Date(code.endDate).toLocaleDateString()}
+                      {formatBusinessDate(code.startDate)} — {formatBusinessDate(code.endDate)}
                     </td>
                     <td className="wh-num">
                       {usageText(code)}

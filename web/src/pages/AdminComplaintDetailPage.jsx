@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
+import { formatBusinessDateTime } from '../utils/businessDate';
 
 const STATUSES = ['pending', 'in_review', 'resolved', 'closed'];
 
@@ -115,7 +116,7 @@ export function AdminComplaintDetailPage() {
               </p>
               <p className="adm-detail-card-title" style={{ marginTop: 12 }}>{complaint.subject}</p>
               <p className="adm-detail-card-hint">
-                {t('complaints.detail.filedOn', { date: new Date(complaint.createdAt).toLocaleString() })}
+                {t('complaints.detail.filedOn', { date: formatBusinessDateTime(complaint.createdAt) })}
               </p>
               <p className="order-notes" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{complaint.description}</p>
               {complaint.extraDetails && (
@@ -154,7 +155,7 @@ export function AdminComplaintDetailPage() {
                   {complaint.relatedOrderSealConfirmedAt && (
                     <p className="adm-detail-card-hint" style={{ marginBottom: 0 }}>
                       {t('complaints.detail.deliverySealConfirmedAt', {
-                        date: new Date(complaint.relatedOrderSealConfirmedAt).toLocaleString(),
+                        date: formatBusinessDateTime(complaint.relatedOrderSealConfirmedAt),
                       })}
                     </p>
                   )}
@@ -204,7 +205,7 @@ export function AdminComplaintDetailPage() {
                 <p className="adm-detail-card-hint" style={{ margin: 0 }}>
                   {t('complaints.detail.respondedMeta', {
                     name: complaint.respondedBy?.name ?? '—',
-                    date: complaint.respondedAt ? new Date(complaint.respondedAt).toLocaleString() : '—',
+                    date: complaint.respondedAt ? formatBusinessDateTime(complaint.respondedAt) : '—',
                   })}
                 </p>
               </div>

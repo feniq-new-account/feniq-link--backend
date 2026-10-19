@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { formatBusinessDate } from '../utils/businessDate';
 
 // Everything that decides what happens when a pharmacy signs up: the approval
 // switch, the pharmacists' syndicate list new names are checked against, a
@@ -168,7 +169,7 @@ function SyndicateListCard({ registry, onChanged }) {
             <span className="reg-sub">
               {' '}
               {t('registration.list.lastImport', {
-                date: new Date(last.importedAt).toLocaleDateString(),
+                date: formatBusinessDate(last.importedAt),
                 name: last.importedBy || '—',
               })}
             </span>

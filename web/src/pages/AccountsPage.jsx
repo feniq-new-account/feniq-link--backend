@@ -11,6 +11,7 @@ import {
   passwordPolicyError,
 } from '../utils/passwordPolicy';
 import { ACCOUNT_TYPES, coerceStatusForType, statusOptionsForType } from './accountsFilters';
+import { formatBusinessDate } from '../utils/businessDate';
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -744,7 +745,7 @@ export function AccountsPage() {
                     </td>
                     <td className="adm-num">
                       {account.user.createdAt
-                        ? new Date(account.user.createdAt).toLocaleDateString()
+                        ? formatBusinessDate(account.user.createdAt)
                         : '—'}
                     </td>
                     <td>{renderActions(account)}</td>
