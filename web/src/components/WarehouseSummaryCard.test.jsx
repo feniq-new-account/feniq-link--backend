@@ -120,4 +120,18 @@ describe('SummaryFigures', () => {
     const first = { ...summary, previous: { ...summary.previous, salesSyp: 0 } };
     expect(render(<SummaryFigures summary={first} />, EN)).toContain('Nothing in the previous period');
   });
+
+  it('does not call a previous period that netted below zero empty', () => {
+    // Yesterday: -40,000 net (a reversal of an older charge); today: 100,000.
+    const reversed = {
+      ...summary,
+      current: { ...summary.current, salesSyp: 100000 },
+      previous: { ...summary.previous, salesSyp: -40000 },
+    };
+    const html = render(<SummaryFigures summary={reversed} />, EN);
+    expect(html).not.toContain('Nothing in the previous period');
+    // Only collections (40,000 vs 80,000) still gets a comparison line.
+    expect(html.match(/wh-summary-change/g)).toHaveLength(1);
+    expect(html).toContain('▼ 50% vs previous period');
+  });
 });

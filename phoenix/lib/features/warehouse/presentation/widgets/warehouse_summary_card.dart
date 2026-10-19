@@ -188,7 +188,7 @@ class _Stat extends StatelessWidget {
 }
 
 /// "▲ 50% vs previous period" in green, "▼ 50%" in red, nothing when both
-/// periods are empty.
+/// periods are empty or the previous one netted below zero.
 class _Change extends StatelessWidget {
   const _Change({required this.current, required this.previous});
 
@@ -202,7 +202,9 @@ class _Change extends StatelessWidget {
     final String text;
     Color? color = AppColors.textSecondaryOf(context);
     if (percent == null) {
-      if (current <= 0) return const SizedBox.shrink();
+      // "Nothing in the previous period" only when it really was empty; a
+      // previous period that netted below zero had activity, just no usable base.
+      if (current <= 0 || previous != 0) return const SizedBox.shrink();
       text = l10n.warehouseSummaryChangeNew;
     } else if (percent == 0) {
       text = l10n.warehouseSummaryChangeFlat;

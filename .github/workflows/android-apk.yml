@@ -4,9 +4,10 @@
 # بس ما بتبني APK وما بتنشر شي.
 # الملف الناتج: صفحة التشغيل ← Artifacts ← feniq-apk.
 #
-# للتجربة من الموبايل: كل بناء يدوي على main يضع آخر نسخة على رابط ثابت (أسرع من
-# Artifacts، ملف APK مباشر بدون zip، وبنصف الحجم لأنه للمعالجات الحديثة فقط):
-# https://github.com/mothabermothaber-svg/feniq-link--backend/releases/download/test-latest/feniq-test.apk
+# للتجربة: كل بناء يدوي على main يضع آخر نسختين على روابط ثابتة (أسرع من
+# Artifacts، ملف APK مباشر بدون zip):
+#   الموبايل (arm64):  https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-test.apk
+#   المحاكي (x86_64): https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-emulator.apk
 #
 # التوقيع: من أسرار المستودع ANDROID_KEYSTORE_BASE64 و ANDROID_KEYSTORE_PASSWORD
 # و ANDROID_KEY_ALIAS و ANDROID_KEY_PASSWORD (المفتاح الدائم — انظر
@@ -184,17 +185,29 @@ jobs:
             --target-platform android-arm64 \
             --build-number=$((GITHUB_RUN_NUMBER + 1000)) \
             --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
+          cp build/app/outputs/flutter-apk/app-release.apk feniq-test.apk
+
+      # Same app for the Android Studio emulator, which runs x86_64 images and
+      # cannot install the arm64-only phone build.
+      - name: Build emulator APK (x86_64)
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          (cd android && ./gradlew --stop) || true
+          flutter build apk --release \
+            --target-platform android-x64 \
+            --build-number=$((GITHUB_RUN_NUMBER + 1000)) \
+            --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
+          cp build/app/outputs/flutter-apk/app-release.apk feniq-emulator.apk
 
       - name: Publish to the test-latest release
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp build/app/outputs/flutter-apk/app-release.apk feniq-test.apk
-          notes="آخر نسخة تجريبية من main (بناء رقم $((GITHUB_RUN_NUMBER + 1000))، ${GITHUB_SHA::7}). احذف التطبيق القديم قبل التثبيت إذا كانت نسخة تجريبية."
+          notes="آخر نسخة تجريبية من main (بناء رقم $((GITHUB_RUN_NUMBER + 1000))، ${GITHUB_SHA::7}). feniq-test.apk للموبايل، feniq-emulator.apk للمحاكي. احذف التطبيق القديم قبل التثبيت إذا كانت نسخة تجريبية."
           if gh release view test-latest >/dev/null 2>&1; then
-            gh release upload test-latest feniq-test.apk --clobber
+            gh release upload test-latest feniq-test.apk feniq-emulator.apk --clobber
             gh release edit test-latest --notes "$notes"
           else
-            gh release create test-latest feniq-test.apk --prerelease --title "Feniq - آخر نسخة تجريبية" --notes "$notes" --target "$GITHUB_SHA"
+            gh release create test-latest feniq-test.apk feniq-emulator.apk --prerelease --title "Feniq - آخر نسخة تجريبية" --notes "$notes" --target "$GITHUB_SHA"
           fi

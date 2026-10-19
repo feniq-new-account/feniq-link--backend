@@ -27,7 +27,9 @@ function Change({ current, previous }) {
   const { t } = useTranslation();
   const percent = percentChange(current, previous);
   if (percent === null) {
-    return current > 0 ? <div className="wh-summary-change">{t('whSummary.changeNew')}</div> : null;
+    // "Nothing in the previous period" only when it really was empty; a
+    // previous period that netted below zero had activity, just no usable base.
+    return current > 0 && previous === 0 ? <div className="wh-summary-change">{t('whSummary.changeNew')}</div> : null;
   }
   if (percent === 0) return <div className="wh-summary-change">{t('whSummary.changeFlat')}</div>;
   const up = percent > 0;

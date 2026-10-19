@@ -177,6 +177,30 @@ void main() {
       expect(find.text('Al Nour'), findsOneWidget);
     });
 
+    testWidgets('a previous period that netted below zero is not called empty', (tester) async {
+      // Yesterday: -40,000 net sales (a reversal of an older charge); today: 150,000.
+      final json = {
+        ..._json['summary']!,
+        'previous': {'salesSyp': -40000, 'collectionsSyp': 90000, 'returnsSyp': 0, 'invoiceCount': 1, 'paymentCount': 2},
+      };
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: SummaryFigures(summary: WarehouseSummary.fromJson({'summary': json})),
+            ),
+          ),
+        ),
+      );
+      final l10n = AppLocalizations.of(tester.element(find.byType(SummaryFigures)))!;
+      expect(find.text(l10n.warehouseSummaryChangeNew), findsNothing);
+      // Collections are flat (90,000 both times), so that line still shows.
+      expect(find.text(l10n.warehouseSummaryChangeFlat), findsOneWidget);
+    });
+
     testWidgets('an empty summary says there is nobody to list', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
