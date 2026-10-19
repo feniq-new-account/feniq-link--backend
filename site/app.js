@@ -58,6 +58,13 @@
           const counts = GROUPS.map((_, i) => catalog.filter((it) => it.g === i).length);
           drawersEl.querySelectorAll(".drawer").forEach((d, i) => {
             d.classList.toggle("is-empty", counts[i] === 0);
+            // The drawer front shows a real box from inside it.
+            const pictured = catalog.find((it) => it.g === i && it.image);
+            const photo = d.querySelector(".drawer__photo");
+            if (pictured && photo) {
+              photo.style.backgroundImage = `url("${pictured.image}")`;
+              d.classList.add("has-photo");
+            }
             d.setAttribute("aria-label", `درج ${GROUPS[i]}، ${counts[i] ? items(counts[i]) : "فارغ"}`);
           });
           return catalog;
@@ -72,7 +79,7 @@
     b.className = "drawer";
     b.setAttribute("aria-expanded", "false");
     b.setAttribute("aria-controls", "drawer-out");
-    b.innerHTML = `<span class="plate">${g}</span>`;
+    b.innerHTML = `<span class="drawer__photo" aria-hidden="true"></span><span class="drawer__label">${g}</span>`;
     b.addEventListener("click", () => {
       if (openIdx === i) return closeDrawer();
       q.value = "";
@@ -176,6 +183,14 @@
         if (openIdx === -1 && !q.value) openDrawer(0);
       });
     }, { threshold: 0.25 });
+    // Fetch the catalog a little before the demo arrives, so the drawer
+    // photos are already in place when it scrolls into view.
+    const early = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      early.disconnect();
+      loadCatalog();
+    }, { rootMargin: "600px 0px" });
+    early.observe(demoEl);
     peek.observe(demoEl);
   }
 
