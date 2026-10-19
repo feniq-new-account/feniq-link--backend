@@ -164,6 +164,21 @@
     });
   });
   q.addEventListener("focus", loadCatalog, { once: true });
+  // The first drawer opens by itself when the demo scrolls into view, so a
+  // visitor sees the boxes and photos without having to guess that the
+  // drawers open. Only if nothing has been opened or searched yet.
+  const demoEl = $("demo");
+  if (demoEl && "IntersectionObserver" in window) {
+    const peek = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      peek.disconnect();
+      loadCatalog().then(() => {
+        if (openIdx === -1 && !q.value) openDrawer(0);
+      });
+    }, { threshold: 0.25 });
+    peek.observe(demoEl);
+  }
+
   $("labeler").addEventListener("submit", (e) => {
     e.preventDefault();
     search();
