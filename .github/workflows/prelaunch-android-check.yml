@@ -33,6 +33,8 @@ jobs:
           flutter-version: '3.35.7'
           channel: stable
           cache: true
+      - name: Prepare Android SDK and NDK licenses
+        run: bash android/install-ci-sdk.sh
       - run: flutter pub get --enforce-lockfile
       - run: flutter analyze --no-fatal-infos
       - name: Configure existing signing credential

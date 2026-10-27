@@ -86,7 +86,7 @@ jobs:
       # The app pins an NDK the runner doesn't have; Gradle installs it only
       # once the SDK licenses are accepted.
       - name: Accept Android SDK licenses
-        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+        run: bash android/install-ci-sdk.sh
 
       - run: flutter pub get
 
