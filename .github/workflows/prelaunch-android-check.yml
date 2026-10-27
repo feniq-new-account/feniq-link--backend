@@ -60,7 +60,6 @@ jobs:
       - name: Compile ARM64 release APK
         run: >
           flutter build apk --release --target-platform android-arm64 --no-pub
-          --build-number=$((GITHUB_RUN_NUMBER + 100000))
           --dart-define="API_BASE_URL=$API_BASE_URL"
       - name: Verify Android artifact
         env:
@@ -73,6 +72,8 @@ jobs:
           [ "$app_id" = 'com.feniq.link' ] || { echo '::error::Unexpected Android application ID.'; exit 1; }
           cert=$("$tools/apksigner" verify --print-certs "$apk" | sed -n 's/^.*certificate SHA-256 digest: //p' | head -1 | tr 'a-f' 'A-F')
           [ -n "$cert" ] || { echo '::error::Missing signing certificate.'; exit 1; }
+          # Keep pubspec's version code for this isolated validation artifact;
+          # never mint a high code that could block later production updates.
           verification=TEST-ONLY
           if [ "$KIND" = signed ]; then
             if [ -n "$EXPECTED_SHA256" ]; then
