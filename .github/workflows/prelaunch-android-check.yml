@@ -89,10 +89,12 @@ jobs:
           fi
           mkdir -p build/prelaunch
           cp "$apk" build/prelaunch/feniq-prelaunch-arm64.apk
-          sha256sum build/prelaunch/feniq-prelaunch-arm64.apk > build/prelaunch/SHA256SUMS
+          (cd build/prelaunch && sha256sum feniq-prelaunch-arm64.apk > SHA256SUMS)
           jq -n --arg verification "$verification" --arg cert "$cert" --arg api "$API_BASE_URL" \
             --arg commit "$GITHUB_SHA" --arg id "$app_id" \
             '{verification:$verification,certificateSha256:$cert,apiBaseUrl:$api,commit:$commit,applicationId:$id,publication:false}' > build/prelaunch/validation.json
+          cat build/prelaunch/validation.json
+          cat build/prelaunch/SHA256SUMS
           { echo '### Android prelaunch validation'; echo "- $verification"; echo "- applicationId: $app_id"; echo "- Commit: $GITHUB_SHA"; echo '- Review artifact only; no website publication.'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
