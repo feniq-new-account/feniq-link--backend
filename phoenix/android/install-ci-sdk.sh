@@ -22,4 +22,4 @@ accept_and_run --licenses > /dev/null
 # Firebase and notification/permission plugins compile against SDK 34 and 35;
 # AGP's desugaring tasks also select Build Tools 35 with compileSdk 36.
 # Install every required version instead of relying on a hosted runner's cache.
-accept_and_run 'platform-tools' 'platforms;android-34' 'platforms;android-35' 'platforms;android-36' 'build-tools;35.0.0' 'build-tools;36.0.0' "ndk;$ndk_version"
+accept_and_run 'platform-tools' 'platforms;android-34' 'platforms;android-35' 'platforms;android-36' 'build-tools;35.0.0' 'build-tools;36.0.0' 'cmake;3.22.1' "ndk;$ndk_version"
