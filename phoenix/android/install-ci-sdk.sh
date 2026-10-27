@@ -19,4 +19,6 @@ accept_and_run() {
   return "$result"
 }
 accept_and_run --licenses > /dev/null
-accept_and_run 'platform-tools' 'platforms;android-36' 'build-tools;36.0.0' "ndk;$ndk_version"
+# AGP's desugaring tasks still select Build Tools 35 even with compileSdk 36.
+# Install both explicitly instead of relying on the hosted runner's cache.
+accept_and_run 'platform-tools' 'platforms;android-36' 'build-tools;35.0.0' 'build-tools;36.0.0' "ndk;$ndk_version"
