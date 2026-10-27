@@ -1,3 +1,4 @@
+import { useModalSafety } from '../hooks/useModalSafety';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -15,6 +16,7 @@ export function QuickPaymentModal({ mode, pharmacyId, pharmacyName, owedSyp, onC
   const [amount, setAmount] = useState('');
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const modalSafety = useModalSafety(saving, onClose);
 
   const paid = mode === 'full' ? owedSyp : parseWholeLiras(amount);
 
@@ -45,8 +47,8 @@ export function QuickPaymentModal({ mode, pharmacyId, pharmacyName, owedSyp, onC
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
+    <div className="modal-overlay" {...modalSafety.overlayProps}>
+      <div className="modal" {...modalSafety.dialogProps}>
         <h2>{mode === 'full' ? t('quickPay.fullTitle') : t('quickPay.partialTitle')}</h2>
         <p>{pharmacyName}</p>
         <form onSubmit={submit} className="product-form">
@@ -76,7 +78,7 @@ export function QuickPaymentModal({ mode, pharmacyId, pharmacyName, owedSyp, onC
             <button type="submit" className="btn-primary" disabled={saving}>
               {saving ? t('common.loading') : t('quickPay.save')}
             </button>
-            <button type="button" className="btn-secondary" onClick={onClose}>
+            <button type="button" className="btn-secondary" onClick={modalSafety.close} disabled={saving}>
               {t('common.cancel')}
             </button>
           </div>

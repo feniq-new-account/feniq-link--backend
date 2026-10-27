@@ -26,11 +26,13 @@ class AuthCubit extends Cubit<AuthState> {
     required FcmService fcmService,
     required NotificationRepository notificationRepository,
     SessionScope? sessionScope,
+    Future<void> Function(String? token)? onSessionToken,
   }) : _authRepository = authRepository,
        _secureStorage = secureStorage,
        _fcmService = fcmService,
        _notificationRepository = notificationRepository,
        _sessionScope = sessionScope,
+       _onSessionToken = onSessionToken,
        super(const AuthState()) {
     // A single app-wide place reacts to "an authenticated request got 401"
     // (emitted by AuthInterceptor). Re-entrancy is guarded inside
@@ -54,6 +56,7 @@ class AuthCubit extends Cubit<AuthState> {
   // place as the inbox for the same reason. Optional so a test can build this
   // cubit without one.
   final SessionScope? _sessionScope;
+  final Future<void> Function(String? token)? _onSessionToken;
 
   late final StreamSubscription<void> _unauthorizedSubscription;
 
@@ -104,6 +107,7 @@ class AuthCubit extends Cubit<AuthState> {
       _log('[AUTH] Session check started (resume: $isResume)');
       final token = await _secureStorage.read(StorageKeys.authToken);
       storedToken = token;
+      await _onSessionToken?.call(token);
       if (token == null || token.isEmpty) {
         _log('[AUTH] No token - unauthenticated');
         _isHandlingUnauthorized = false;
@@ -465,6 +469,7 @@ class AuthCubit extends Cubit<AuthState> {
   // without bouncing the user to the login screen.
   Future<void> _persistSession(AuthResponse result) async {
     await _secureStorage.write(StorageKeys.authToken, result.token);
+    await _onSessionToken?.call(result.token);
     final refreshToken = result.refreshToken;
     if (refreshToken != null && refreshToken.isNotEmpty) {
       await _secureStorage.write(StorageKeys.refreshToken, refreshToken);

@@ -1,3 +1,4 @@
+import 'package:feniq/core/services/pending_payment_journal.dart';
 import 'package:dio/dio.dart';
 import 'package:feniq/core/error/failure.dart';
 import 'package:feniq/core/network/api_client.dart';
@@ -10,6 +11,7 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
   WarehouseManagementRepositoryImpl({required ApiClient apiClient}) : _apiClient = apiClient;
 
   final ApiClient _apiClient;
+  final PendingPaymentJournal _payments = PendingPaymentJournal();
 
   Future<Map<String, dynamic>> _run(Future<Response<dynamic>> Function(Dio dio) call) async {
     try {
@@ -120,21 +122,43 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
     required String method,
     required String idempotencyKey,
     String? note,
+    String? deliveryOrderId,
   }) async {
     final text = note?.trim();
-    await _run(
-      (dio) => dio.post(
-        Endpoints.warehousePayments,
-        data: {
-          'pharmacyId': pharmacyId,
-          'amount': amountSyp,
-          'currency': 'SYP',
-          'method': method,
-          'idempotencyKey': idempotencyKey,
-          if (text != null && text.isNotEmpty) 'note': text,
-        },
-      ),
-    );
+    final ownerId = await _apiClient.currentAccountId();
+    if (ownerId == null) throw ServerFailure('Session expired', code: 'HTTP_401');
+    final payload = <String, Object?>{
+      if (deliveryOrderId != null) 'deliveryOrderId': deliveryOrderId,
+      'pharmacyId': pharmacyId,
+      'amount': amountSyp,
+      'currency': 'SYP',
+      'method': method,
+      if (text != null && text.isNotEmpty) 'note': text,
+    };
+    try {
+      await _payments.run(ownerId: ownerId, payload: payload, proposedKey: idempotencyKey,
+        send: (key) async {
+          if (await _apiClient.currentAccountId() != ownerId) {
+            throw ServerFailure('Session changed. Sign in to the original account to resume.', code: 'HTTP_401');
+          }
+          if (deliveryOrderId != null) {
+            await _run((dio) => dio.post(Endpoints.warehouseOrderAdvance(deliveryOrderId),
+              data: {'expectedStatus': 'out_for_delivery', 'targetStatus': 'delivered'}));
+          }
+          final payment = {...payload, 'idempotencyKey': key}..remove('deliveryOrderId');
+          await _run((dio) => dio.post(Endpoints.warehousePayments, data: payment));
+        });
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw ServerFailure('Payment could not be confirmed. Retry the same payment.', code: 'PAYMENT_UNCONFIRMED');
+    }
+  }
+
+  @override
+  Future<List<PendingPaymentRecord>> getPendingPayments() async {
+    final ownerId = await _apiClient.currentAccountId();
+    return ownerId == null ? [] : _payments.read(ownerId);
   }
 
   @override

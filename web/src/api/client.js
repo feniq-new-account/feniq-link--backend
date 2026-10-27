@@ -1,5 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api';
 
+function messageForLanguage(arabic, english) {
+  let language = typeof document === 'undefined' ? null : document.documentElement.lang;
+  try { language ||= localStorage.getItem('phoenix_lang'); } catch { /* Storage may be disabled. */ }
+  return language === 'en' ? english : arabic;
+}
+
 // Why the access token lives in localStorage, and why that is not changing
 // yet (audit F-05).
 //
@@ -129,12 +135,12 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   } catch (err) {
     if (err?.name === 'AbortError') {
       throw new ApiError(
-        'The request took too long and was cancelled. Check your connection and try again.',
+        messageForLanguage('انتهت مهلة الاتصال. قد تكون العملية وصلت إلى الخادم؛ أعد المحاولة بنفس البيانات لتأكيد النتيجة.', 'The request timed out. It may have reached the server; retry with the same details to confirm the result.'),
         0,
         'REQUEST_TIMEOUT'
       );
     }
-    throw err;
+    throw new ApiError(messageForLanguage('تعذّر الاتصال بالخادم. تحقّق من اتصالك وأعد المحاولة.', 'Unable to reach the server. Check your connection and retry.'), 0, 'NETWORK_UNAVAILABLE');
   } finally {
     clearTimeout(timer);
   }
@@ -161,17 +167,20 @@ async function performRefresh() {
       },
       DEFAULT_TIMEOUT_MS
     );
+    if (response.status >= 500 || response.status === 429) {
+      throw new ApiError(messageForLanguage('تعذّر تجديد الجلسة مؤقتاً. جلستك محفوظة؛ أعد المحاولة.', 'Session renewal is temporarily unavailable. Your session is saved; retry.'), response.status, 'SESSION_REFRESH_UNAVAILABLE');
+    }
     if (!response.ok) return false;
 
     const data = await response.json().catch(() => null);
-    if (!data?.token) return false;
+    if (!data?.token) throw new ApiError(messageForLanguage('تعذّر تأكيد تجديد الجلسة. أعد المحاولة.', 'Unable to confirm session renewal. Retry.'), 503, 'SESSION_REFRESH_UNAVAILABLE');
 
     setSession({ token: data.token, refreshToken: data.refreshToken });
     return true;
-  } catch {
+  } catch (error) {
     // Offline, DNS, CORS - "could not refresh", never "session is over".
     // Nothing is cleared here; that decision belongs to the caller.
-    return false;
+    throw error;
   }
 }
 
@@ -216,7 +225,7 @@ async function request(path, { method = 'GET', body, _retried = false } = {}) {
 
   if (!response.ok) {
     throw new ApiError(
-      data?.message ?? 'Something went wrong. Please try again.',
+      data?.message ?? messageForLanguage('تعذّرت العملية. أعد المحاولة.', 'Something went wrong. Please try again.'),
       response.status,
       data?.code ?? null,
       data?.details ?? null
@@ -428,12 +437,12 @@ export const api = {
     return request(`/warehouse/orders${qs ? `?${qs}` : ''}`);
   },
   warehouseOrderDetail: (orderId) => request(`/warehouse/orders/${orderId}`),
-  advanceOrderStatus: (orderId) =>
-    request(`/warehouse/orders/${orderId}/advance-status`, { method: 'POST' }),
-  updateOrderItems: (orderId, { addItems, removeItems, updateItems }) =>
+  advanceOrderStatus: (orderId, transition) =>
+    request(`/warehouse/orders/${orderId}/advance-status`, { method: 'POST', body: transition }),
+  updateOrderItems: (orderId, { addItems, removeItems, updateItems, updatePackages, removePackages }) =>
     request(`/warehouse/orders/${orderId}/items`, {
       method: 'PATCH',
-      body: { addItems, removeItems, updateItems },
+      body: { addItems, removeItems, updateItems, updatePackages, removePackages },
     }),
   // Per-order proof-of-delivery toggle - flips just order.requiresDeliverySealPhoto.
   setOrderDeliverySealRequirement: (orderId, requiresDeliverySealPhoto) =>

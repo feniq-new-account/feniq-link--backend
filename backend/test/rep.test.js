@@ -153,6 +153,8 @@ test('a warehouse creates a rep who signs in from the app and must pick a passwo
   const me = await call('GET', '/rep/me', { token: signedIn.body.token });
   assert.strictEqual(me.status, 200);
   assert.strictEqual(me.body.rep.name, 'سامر');
+  assert.strictEqual(Object.hasOwn(me.body.rep, 'commissionRate'), false);
+  assert.strictEqual(Object.hasOwn(me.body.rep, 'warehouseShareToRep'), false);
   assert.strictEqual(me.body.warehouse.nameEn, 'Warehouse A');
   assert.deepStrictEqual(me.body.stats, {
     pharmacyCount: 0,

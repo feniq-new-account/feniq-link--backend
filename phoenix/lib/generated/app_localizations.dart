@@ -4625,7 +4625,7 @@ abstract class AppLocalizations {
   /// No description provided for @warehouseCollectFailed.
   ///
   /// In en, this message translates to:
-  /// **'Delivered, but the payment wasn\'t saved - record it from Accounts.'**
+  /// **'Delivery succeeded, but collection is unconfirmed. Retry the payment from the warehouse alert.'**
   String get warehouseCollectFailed;
 
   /// No description provided for @warehouseCollectNote.
@@ -4703,7 +4703,7 @@ abstract class AppLocalizations {
   /// No description provided for @warehouseAccountPayFailed.
   ///
   /// In en, this message translates to:
-  /// **'The payment wasn\'t saved. Try again.'**
+  /// **'Payment is unconfirmed. Retry to confirm the same payment safely.'**
   String get warehouseAccountPayFailed;
 
   /// No description provided for @warehouseVoiceTitle.
@@ -4909,6 +4909,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sales count delivered orders only.'**
   String get warehouseSummaryDeliveredNote;
+
+  /// No description provided for @paymentUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment is unconfirmed. Retry to confirm the same payment safely.'**
+  String get paymentUnconfirmed;
 }
 
 class _AppLocalizationsDelegate

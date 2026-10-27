@@ -7,7 +7,8 @@ import 'package:feniq/features/warehouse/data/models/warehouse_order_models.dart
 import 'warehouse_orders_repository.dart';
 
 class WarehouseOrdersRepositoryImpl implements WarehouseOrdersRepository {
-  WarehouseOrdersRepositoryImpl({required ApiClient apiClient}) : _apiClient = apiClient;
+  WarehouseOrdersRepositoryImpl({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
@@ -18,7 +19,9 @@ class WarehouseOrdersRepositoryImpl implements WarehouseOrdersRepository {
         Endpoints.warehouseOrders,
         queryParameters: {'status': ?status, 'after': ?after},
       );
-      return WarehouseOrdersPage.fromJson(response.data as Map<String, dynamic>);
+      return WarehouseOrdersPage.fromJson(
+        response.data as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw ServerFailure.fromDioError(e);
     }
@@ -27,18 +30,34 @@ class WarehouseOrdersRepositoryImpl implements WarehouseOrdersRepository {
   @override
   Future<WarehouseOrderDetail> getOrder(String orderId) async {
     try {
-      final response = await _apiClient.dio.get(Endpoints.warehouseOrder(orderId));
-      return WarehouseOrderDetail.fromJson(response.data as Map<String, dynamic>);
+      final response = await _apiClient.dio.get(
+        Endpoints.warehouseOrder(orderId),
+      );
+      return WarehouseOrderDetail.fromJson(
+        response.data as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw ServerFailure.fromDioError(e);
     }
   }
 
   @override
-  Future<AdvancedOrderStatus> advance(String orderId) async {
+  Future<AdvancedOrderStatus> advance(
+    String orderId, {
+    String? expectedStatus,
+    String? targetStatus,
+  }) async {
     try {
-      final response = await _apiClient.dio.post(Endpoints.warehouseOrderAdvance(orderId));
-      return AdvancedOrderStatus.fromJson(response.data as Map<String, dynamic>);
+      final response = await _apiClient.dio.post(
+        Endpoints.warehouseOrderAdvance(orderId),
+        data: {
+          if (expectedStatus != null) 'expectedStatus': expectedStatus,
+          if (targetStatus != null) 'targetStatus': targetStatus,
+        },
+      );
+      return AdvancedOrderStatus.fromJson(
+        response.data as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw ServerFailure.fromDioError(e);
     }
@@ -55,12 +74,15 @@ class WarehouseOrdersRepositoryImpl implements WarehouseOrdersRepository {
         Endpoints.warehouseOrderItems(orderId),
         data: {
           'updateItems': [
-            for (final entry in quantities.entries) {'orderItemId': entry.key, 'quantity': entry.value},
+            for (final entry in quantities.entries)
+              {'orderItemId': entry.key, 'quantity': entry.value},
           ],
           'removeItems': removals,
         },
       );
-      return WarehouseOrderDetail.fromJson(response.data as Map<String, dynamic>);
+      return WarehouseOrderDetail.fromJson(
+        response.data as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw ServerFailure.fromDioError(e);
     }

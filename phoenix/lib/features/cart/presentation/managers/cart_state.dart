@@ -201,6 +201,8 @@ class CartState {
   num get amountToReachMinimum => isBelowMinimum ? minOrderAmountUsd - subtotalUsd : 0;
   num get amountOverMaximum => isAboveMaximum ? subtotalUsd - maxOrderAmountUsd! : 0;
   bool get canSubmit =>
+      !isSubmitting &&
+      !isSubmittingAll &&
       !isEmpty &&
       !isBelowMinimum &&
       !isAboveMaximum &&

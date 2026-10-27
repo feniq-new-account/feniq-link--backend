@@ -12,8 +12,8 @@ enum AppUpdateStatus { none, optional, mandatory }
 // `mandatory`.
 //
 // Two independent "at most once per 24h" guards:
-//   1. this class records the last check time in local storage and returns
-//      `none` immediately (NO Remote Config fetch) when < 24h have passed;
+//   1. this class records the last fetch attempt in local storage and skips
+//      fetching when < 24h have passed; a cached mandatory update still applies;
 //   2. Remote Config's own `minimumFetchInterval` (24h) means even the fetch
 //      inside [refresh] won't touch the network more than once a day.
 class AppUpdateService {
@@ -50,14 +50,14 @@ class AppUpdateService {
 
   /// The whole flow from the requirement's diagram. Never throws.
   ///
-  ///   < 24h since last check           -> none  (and no fetch at all)
+  ///   < 24h since last check           -> cached mandatory or none (no fetch)
   ///   >= 24h -> fetch, then:
   ///     current < min_version          -> mandatory
   ///     current < latest_version       -> optional
   ///     otherwise                      -> none
   Future<AppUpdateStatus> checkForUpdate() async {
     try {
-      if (!_dueForCheck) return AppUpdateStatus.none;
+      if (!_dueForCheck) return _cachedMandatoryUpdate();
 
       // Record the attempt up front, so a fetch that fails (offline, plugin
       // error) still counts as "checked" and we don't retry every launch -
@@ -68,6 +68,19 @@ class AppUpdateService {
       return _evaluate();
     } catch (e) {
       _logger.info('AppUpdateService.checkForUpdate skipped: $e');
+      return _cachedMandatoryUpdate();
+    }
+  }
+
+  // Closing and reopening the app must not bypass a minimum supported
+  // version we already know about. Optional prompts still respect the daily
+  // interval. Reading cached values never needs another network request.
+  AppUpdateStatus _cachedMandatoryUpdate() {
+    try {
+      return AppVersion.isLessThan(_currentVersion, _remoteConfig.minVersion)
+          ? AppUpdateStatus.mandatory
+          : AppUpdateStatus.none;
+    } catch (_) {
       return AppUpdateStatus.none;
     }
   }
@@ -77,11 +90,10 @@ class AppUpdateService {
     if (AppVersion.parse(_currentVersion) == null) return AppUpdateStatus.none;
 
     final minVersion = _remoteConfig.minVersion;
-    final latestVersion = _remoteConfig.latestVersion;
-
     if (AppVersion.isLessThan(_currentVersion, minVersion)) {
       return AppUpdateStatus.mandatory;
     }
+    final latestVersion = _remoteConfig.latestVersion;
     if (AppVersion.isLessThan(_currentVersion, latestVersion)) {
       return AppUpdateStatus.optional;
     }

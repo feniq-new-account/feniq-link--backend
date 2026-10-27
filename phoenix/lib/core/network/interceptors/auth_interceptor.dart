@@ -86,7 +86,19 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
-    final refreshed = await _refreshSession();
+    final bool refreshed;
+    try {
+      refreshed = await _refreshSession();
+    } on DioException catch (refreshError) {
+      // A timeout or server outage says nothing about whether the session is
+      // valid. Propagate that temporary failure instead of the original 401,
+      // which AuthCubit correctly treats as a reason to clear the account.
+      handler.next(refreshError);
+      return;
+    } catch (error) {
+      handler.next(DioException(requestOptions: options, error: error));
+      return;
+    }
     if (!refreshed) {
       AuthEventBus.instance.emitUnauthorized();
       handler.next(err);
@@ -107,12 +119,10 @@ class AuthInterceptor extends Interceptor {
     final existing = _inFlightRefresh;
     if (existing != null) return existing;
 
-    final attempt = _performRefresh();
-    _inFlightRefresh = attempt;
-    attempt.whenComplete(() {
-      // Guard against clearing a newer attempt if one somehow started first.
-      if (identical(_inFlightRefresh, attempt)) _inFlightRefresh = null;
+    final attempt = _performRefresh().whenComplete(() {
+      _inFlightRefresh = null;
     });
+    _inFlightRefresh = attempt;
     return attempt;
   }
 
@@ -127,10 +137,16 @@ class AuthInterceptor extends Interceptor {
       );
 
       final data = response.data;
-      if (data is! Map) return false;
+      if (data is! Map) {
+        throw DioException(requestOptions: response.requestOptions, response: response,
+          error: 'Invalid refresh response');
+      }
 
       final newToken = data['token'];
-      if (newToken is! String || newToken.isEmpty) return false;
+      if (newToken is! String || newToken.isEmpty) {
+        throw DioException(requestOptions: response.requestOptions, response: response,
+          error: 'Invalid refresh response');
+      }
 
       await _secureStorage.write(StorageKeys.authToken, newToken);
 
@@ -145,12 +161,10 @@ class AuthInterceptor extends Interceptor {
         );
       }
       return true;
-    } catch (_) {
-      // Any failure here - offline, 5xx, a rejected refresh token - is
-      // reported as "could not refresh". The caller decides what that means;
-      // notably it does NOT delete anything, so a refresh attempted while the
-      // network is down leaves the session intact to try again later.
-      return false;
+    } on DioException catch (error) {
+      final status = error.response?.statusCode;
+      if (status == 401 || status == 403) return false;
+      rethrow;
     }
   }
 

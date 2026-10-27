@@ -66,6 +66,7 @@ Future<void> showVoicePaymentSheet(BuildContext context, {SpeechListener? listen
     return;
   }
   if (!context.mounted) return;
+  final keys = <String, String>{};
   final done = await showModalBottomSheet<({String name, double amount})>(
     context: context,
     isScrollControlled: true,
@@ -73,7 +74,7 @@ Future<void> showVoicePaymentSheet(BuildContext context, {SpeechListener? listen
       accounts: accounts,
       listener: listener ?? DeviceSpeechListener(),
       onRecord: (pharmacyId, amount) =>
-          cubit.recordPayment(pharmacyId: pharmacyId, amountSyp: amount, idempotencyKey: const Uuid().v4()),
+          cubit.recordPayment(pharmacyId: pharmacyId, amountSyp: amount, idempotencyKey: keys.putIfAbsent('$pharmacyId:$amount', () => const Uuid().v4())),
     ),
   );
   if (done == null) return;

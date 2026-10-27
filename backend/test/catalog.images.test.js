@@ -121,7 +121,7 @@ test.beforeEach(() => {
 
 // --- URL validation ---------------------------------------------------------
 
-test('only a Cloudinary URL on our own cloud is accepted', () => {
+test('new image URLs require a trusted upload; clients may keep their current image', () => {
   assert.strictEqual(isOwnCloudinaryUrl(OURS('a')), true);
   for (const url of [
     'https://res.cloudinary.com/someone-else/image/upload/v1/a.png',
@@ -137,9 +137,42 @@ test('only a Cloudinary URL on our own cloud is accepted', () => {
   assert.strictEqual(imageUrlInput(undefined), undefined);
   assert.strictEqual(imageUrlInput(null), null);
   assert.strictEqual(imageUrlInput('  '), null);
-  assert.strictEqual(imageUrlInput(` ${OURS('a')} `), OURS('a'));
+  assert.strictEqual(imageUrlInput(` ${OURS('a')} `, { trustedUpload: true }), OURS('a'));
+  assert.strictEqual(imageUrlInput(OURS('a'), { currentUrl: OURS('a') }), OURS('a'));
+  assert.throws(() => imageUrlInput(OURS('a')), (err) => err.code === 'INVALID_IMAGE_URL');
   assert.throws(() => imageUrlInput('https://example.com/a.png'), (err) => err.code === 'INVALID_IMAGE_URL' && err.statusCode === 400);
   assert.throws(() => imageUrlInput({ url: OURS('a') }), (err) => err.code === 'INVALID_IMAGE_URL');
+});
+
+test('PATCH refuses copied images from our cloud, including query-string aliases', async () => {
+  const central = 'https://res.cloudinary.com/feniq-test/image/upload/v1/catalog/protected.png';
+  const { product } = await makeProduct({ catalogImage: central, image: OURS('own-image') });
+  for (const url of [central, `${central}?copied=1`, OURS('another-warehouse')]) {
+    const res = await call('PATCH', `/warehouse/products/${product._id}`, { body: { image: url } });
+    assert.strictEqual(res.status, 400);
+    assert.strictEqual(res.body.code, 'INVALID_IMAGE_URL');
+  }
+  assert.strictEqual((await Product.findById(product._id).lean()).image, OURS('own-image'));
+  assert.deepStrictEqual(deleted, []);
+});
+
+test('POST refuses a copied image from our cloud', async () => {
+  const catalog = await ProductCatalog.create({ nameAr: 'دواء دون صورة منسوخة', manufacturerAr: 'شركة الصور' });
+  const res = await call('POST', '/warehouse/products', {
+    body: { masterProductId: String(catalog._id), categoryId: String(ids.category), priceUsd: 2, unit: 'box', rateUsed: 1, image: OURS('someone-else') },
+  });
+  assert.strictEqual(res.status, 400);
+  assert.strictEqual(res.body.code, 'INVALID_IMAGE_URL');
+  assert.strictEqual(await Product.countDocuments({ masterProductId: catalog._id }), 0);
+});
+
+test('PATCH can keep the current image without treating it as a new upload', async () => {
+  const image = OURS('keep-existing');
+  const { product } = await makeProduct({ image });
+  const res = await call('PATCH', `/warehouse/products/${product._id}`, { body: { image, description: 'updated' } });
+  assert.strictEqual(res.status, 200, JSON.stringify(res.body));
+  assert.strictEqual((await Product.findById(product._id).lean()).image, image);
+  assert.deepStrictEqual(deleted, []);
 });
 
 test('PATCH with a foreign image URL is a 400 and changes nothing', async () => {
@@ -191,6 +224,14 @@ test('a cleared image still referenced elsewhere is not deleted from Cloudinary'
   const shared = OURS('shared');
   const { product } = await makeProduct({ image: shared });
   await makeProduct({ image: shared });
+  const res = await call('PATCH', `/warehouse/products/${product._id}`, { body: { image: null } });
+  assert.strictEqual(res.status, 200);
+  assert.deepStrictEqual(deleted, []);
+});
+
+test('clearing a legacy query alias cannot delete the central catalog image', async () => {
+  const shared = OURS('shared-query');
+  const { product } = await makeProduct({ image: `${shared}?copied=1`, catalogImage: shared });
   const res = await call('PATCH', `/warehouse/products/${product._id}`, { body: { image: null } });
   assert.strictEqual(res.status, 200);
   assert.deepStrictEqual(deleted, []);

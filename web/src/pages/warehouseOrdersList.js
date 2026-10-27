@@ -9,7 +9,7 @@
 // with it: a listed order takes its newer status, and an advanced order the
 // reload no longer contains is put back. The result is in orderNumber order,
 // oldest first - the same order the server pages in.
-export function mergeAdvancedOrders(rows, advanced) {
+export function mergeAdvancedOrders(rows, advanced, newestFirst = false) {
   if (!advanced || advanced.size === 0) return rows;
   const seen = new Set();
   const merged = rows.map((row) => {
@@ -20,7 +20,7 @@ export function mergeAdvancedOrders(rows, advanced) {
   for (const [id, entry] of advanced) {
     if (!seen.has(id)) merged.push({ ...entry.order, status: entry.status });
   }
-  return merged.sort((a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0));
+  return merged.sort((a, b) => ((a.orderNumber ?? 0) - (b.orderNumber ?? 0)) * (newestFirst ? -1 : 1));
 }
 
 // The warehouse's three stages: accept -> on the way -> delivered (the

@@ -2717,7 +2717,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseCollectFailed =>
-      'تم التسليم، بس الدفعة ما انحفظت - سجّلها من الحسابات.';
+      'تم التسليم، لكن لم نتأكد من تسجيل المقبوض. أعد تأكيد الدفعة من التنبيه في لوحة المستودع.';
 
   @override
   String warehouseCollectNote(int number) {
@@ -2771,7 +2771,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get warehouseAccountPayFailed => 'الدفعة ما انحفظت. جرّب مرة تانية.';
+  String get warehouseAccountPayFailed =>
+      'لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان.';
 
   @override
   String get warehouseVoiceTitle => 'تسجيل دفعة بالصوت';
@@ -2897,4 +2898,8 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get warehouseSummaryDeliveredNote =>
       'المبيعات بتحسب الطلبيات المتسلَّمة بس.';
+
+  @override
+  String get paymentUnconfirmed =>
+      'لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان.';
 }

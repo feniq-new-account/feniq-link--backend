@@ -20,6 +20,10 @@ const refreshTokenSchema = new Schema(
     // every outstanding session on every refresh.
     tokenHash: { type: String, required: true, unique: true },
 
+    // Bind the session to the password/account version that authenticated it.
+    // An in-flight refresh cannot revive a session after a version bump.
+    tokenVersion: { type: Number, default: 0 },
+
     expiresAt: { type: Date, required: true },
   },
   { timestamps: true }

@@ -4,8 +4,10 @@
 //
 // Every statement here was written against what the app and backend actually
 // do as of the "last updated" date below - it is not a generic template.
-// Items still awaiting confirmation from the project owner are marked with a
-// bracketed placeholder ([ ... ]) both here and in the delivery report.
+// Only describe implemented behavior and published support details. Do not
+// invent a legal entity, retention deadline, or infrastructure region.
+
+import 'package:feniq/core/utils/whatsapp_launcher.dart';
 
 /// One heading + its ordered content blocks.
 class PrivacyPolicySection {
@@ -44,7 +46,7 @@ class PrivacyPolicyContent {
 
   /// The date this policy text was last revised. Bump this whenever the
   /// wording below changes.
-  static final DateTime lastUpdated = DateTime.utc(2026, 8, 27);
+  static final DateTime lastUpdated = DateTime.utc(2026, 10, 27);
 
   // Levantine month names - Syria uses these rather than the MSA set.
   static const List<String> _arMonths = [
@@ -77,7 +79,7 @@ class PrivacyPolicyContent {
     'December',
   ];
 
-  /// "27 آب 2026" / "August 27, 2026" - no dependency on intl locale data
+  /// Localized date without a dependency on intl locale data
   /// being initialised.
   static String formattedLastUpdated({required bool isArabic}) {
     final d = lastUpdated;
@@ -140,8 +142,8 @@ class PrivacyPolicyContent {
         ]),
         PolicySubheading('2.2 بيانات تُجمع تلقائياً'),
         PolicyBullets([
-          'رمز الإشعارات (FCM token) الخاص بجهازك ونوع النظام (Android أو iOS) '
-              '— فقط بعد منحك إذن الإشعارات.',
+          'رمز الإشعارات (FCM token) الخاص بجهازك ونوع النظام. يمكنك منع عرض '
+              'الإشعارات من إعدادات الجهاز؛ قد يبقى الرمز مسجّلاً لتوصيلها.',
           'بيانات تقنية عن كل طلب تُرسله إلى الخادم: عنوان IP، والتاريخ والوقت، '
               'ومسار الطلب، ومُعرِّف التطبيق/نظام التشغيل (user-agent)؛ تُسجَّل في '
               'سجلّات الخادم لأغراض الأمان ومنع الإساءة وحلّ المشكلات.',
@@ -154,7 +156,14 @@ class PrivacyPolicyContent {
         PolicyParagraph(
           'لا يستخدم التطبيق أدوات تحليلات (analytics) أو تتبّع أعطال '
           '(crash reporting)، ولا يتتبّعك عبر تطبيقات أو مواقع أخرى، ولا يجمع '
-          'جهات الاتصال أو التقويم أو الميكروفون، ولا يصل إلى موقعك في الخلفية.',
+          'جهات الاتصال أو التقويم، ولا يصل إلى موقعك في الخلفية.',
+        ),
+        PolicyParagraph(
+          'عند اختيار المستودع إدخال دفعة بالصوت فقط، يطلب التطبيق إذن '
+          'الميكروفون ويستخدم خدمة التعرّف على الكلام في الجهاز لتحويل الصوت '
+          'إلى نص. بحسب الخدمة وإعداداتها قد تعالج الجهة المزوّدة الصوت عبر '
+          'الإنترنت. لا نسجّل ملفاً صوتياً على خوادم فينيق؛ تُرسل بيانات الدفعة '
+          'المؤكّدة بعد مراجعتها.',
         ),
       ],
     ),
@@ -191,10 +200,10 @@ class PrivacyPolicyContent {
           'الحساب عبر المراجعة اليدوية من قِبل الإدارة.',
         ),
         PolicyParagraph(
-          'يُحفظ رمز جلسة (JWT) بصلاحية سبعة أيام تقريباً في التخزين الآمن على '
-          'جهازك (Keychain على iOS و Keystore على Android). أمّا لوحة الويب '
-          'للمستودعات والإدارة فتحفظ الرمز في تخزين المتصفّح المحلي '
-          '(localStorage).',
+          'تُحفظ رموز تسجيل الدخول وتجديد الجلسة في التخزين الآمن على جهازك '
+          '(Keychain على iOS و Keystore على Android). أمّا لوحة الويب '
+          'للمستودعات والإدارة فتستخدم تخزين المتصفّح المحلي '
+          '(localStorage) ووسيلة تجديد الجلسة التي يوفّرها الخادم.',
         ),
       ],
     ),
@@ -220,9 +229,10 @@ class PrivacyPolicyContent {
       title: '6. الإشعارات (Push Notifications)',
       blocks: [
         PolicyParagraph(
-          'إذا سمحت بالإشعارات، نسجّل لدى خادمنا رمز إشعارات (FCM token) خاصاً '
-          'بجهازك، ونستخدم خدمة Google Firebase Cloud Messaging لإرسال '
-          'الرسائل إليك (تحديثات الطلبات، العروض، إعلانات الإدارة).',
+          'نسجّل لدى خادمنا رمز إشعارات (FCM token) خاصاً بجهازك، ونستخدم '
+          'خدمة Google Firebase Cloud Messaging لإرسال الرسائل إليك '
+          '(تحديثات الطلبات، العروض، إعلانات الإدارة). يتحكّم إذن الإشعارات '
+          'في الجهاز بعرض التنبيهات.',
         ),
         PolicyParagraph(
           'يمرّ محتوى الإشعار وحمولة بيانات صغيرة (النوع، ومُعرِّف الطلب المرتبط '
@@ -259,14 +269,14 @@ class PrivacyPolicyContent {
           'في تلك اللحظة فقط.',
         ),
         PolicyParagraph(
-          'تُخزَّن صور الإرجاع على مساحة تخزين خادمنا، ويمكن الوصول إليها عبر '
-          'رابط يحتوي مُعرِّفاً عشوائياً يصعب تخمينه، وتُشارَك مع المستودع الذي '
-          'يعالج طلب الإرجاع ومع الإدارة.',
+          'تُخزَّن صور الإرجاع لدى خدمة Cloudinary أو على مساحة تخزين الخادم '
+          'بحسب إعداد الخدمة، وتُعرض عبر روابط الوسائط، وتُشارَك مع المستودع '
+          'الذي يعالج طلب الإرجاع ومع الإدارة.',
         ),
         PolicyParagraph(
           'تُحذف الصور عند إزالتها من طلب إرجاع ما زال «قيد المراجعة» أو عند '
-          'حذف ذلك الطلب؛ وفي غير ذلك تبقى مرتبطة بسجلّ الإرجاع. '
-          '[مدّة الاحتفاظ بها بعد إغلاق الحساب — بانتظار التأكيد.]',
+          'حذف ذلك الطلب؛ وفي غير ذلك تبقى مرتبطة بسجلّ الإرجاع. إغلاق '
+          'الحساب لا يحذف هذه الصور تلقائياً؛ يمكن طلب مراجعة حذفها عبر الدعم.',
         ),
         PolicyParagraph(
           'ملفات Excel الخاصة بقوائم الأدوية يرفعها مستخدمو المستودعات والإدارة '
@@ -278,14 +288,19 @@ class PrivacyPolicyContent {
       title: '9. بيانات الموقع',
       blocks: [
         PolicyParagraph(
-          'أثناء التسجيل فقط، يعرض التطبيق خريطة لتضع دبوس موقع صيدليتك. '
+          'أثناء التسجيل، يعرض التطبيق خريطة لتضع دبوس موقع صيدليتك. '
           'وبعد إذنك يمكنه توسيط الخريطة على موقعك الحالي عبر GPS، كما يمكنك '
           'تحريك الدبوس يدوياً.',
         ),
         PolicyParagraph(
-          'نحفظ إحداثيات الدبوس ونصّ العنوان الناتج عنها. لا يُطلب الموقع إلا في '
-          'تلك الشاشة، ولا يُطلب أبداً في الخلفية. إذا رفضت إذن الموقع يمكنك '
-          'وضع الدبوس يدوياً.',
+          'نحفظ إحداثيات الدبوس ونصّ العنوان الناتج عنها. إذا رفضت إذن الموقع '
+          'أثناء التسجيل يمكنك وضع الدبوس يدوياً.',
+        ),
+        PolicyParagraph(
+          'عندما يمسح المندوب رمز زيارة الصيدلية، يطلب التطبيق موقع الجهاز '
+          'في تلك اللحظة ويرسل الإحداثيات ودقّة الموقع وما إذا كان الجهاز '
+          'يبلّغ عن موقع وهمي، للتحقّق من الزيارة. لا يُطلب الموقع في الخلفية '
+          'ولا تُتتبّع حركة المندوب باستمرار.',
         ),
         PolicyParagraph(
           'تُحمَّل بلاطات الخريطة من OpenStreetMap، ويتم تحويل الإحداثيات إلى '
@@ -298,8 +313,9 @@ class PrivacyPolicyContent {
       title: '10. الكوكيز والتخزين المحلي',
       blocks: [
         PolicyParagraph(
-          'لا يستخدم تطبيق الهاتف أي كوكيز. يخزّن على جهازك فقط: تفضيلات اللغة '
-          'والمظهر، ورمز جلستك في التخزين الآمن.',
+          'لا يستخدم تطبيق الهاتف كوكيز إعلانية. يخزّن على جهازك تفضيلات '
+          'اللغة والمظهر، والإشعارات، وبيانات مؤقتة مثل سعر الصرف وموعد '
+          'فحص التحديث، ورموز جلستك في التخزين الآمن.',
         ),
         PolicyParagraph(
           'لوحة الويب للمستودعات والإدارة (لا تستخدمها الصيدليات) تخزّن رمز '
@@ -314,14 +330,18 @@ class PrivacyPolicyContent {
         PolicyBullets([
           'Google Firebase Cloud Messaging — تسليم الإشعارات (يستقبل رمز '
               'جهازك ومحتوى الرسالة).',
+          'Google Firebase Remote Config — الحصول على إعدادات إصدار التطبيق '
+              'والتحديثات.',
           'OpenStreetMap و Nominatim — بلاطات الخريطة وتحويل الإحداثيات إلى '
               'عنوان أثناء التسجيل (يستقبلان الإحداثيات وعنوان IP).',
           'LiraScope — أسعار صرف العملات؛ لا تُرسَل أي بيانات شخصية.',
-          'Google Fonts — يُنزّل التطبيق خط «Cairo» وقت التشغيل من خوادم '
-              'Google، والتي تستقبل عنوان IP لجهازك.',
-          'مزوّد قاعدة البيانات ومزوّد استضافة الخادم — بنية تحتية تخزّن '
-              'البيانات وتعالج الطلبات نيابةً عنّا. '
-              '[أسماء المزوّدين والمنطقة الجغرافية — بانتظار التأكيد.]',
+          'خدمة التعرّف على الكلام في جهازك — عند استخدام إدخال الدفعة بالصوت '
+              'فقط، وبحسب إعدادات الخدمة. الخطوط مضمّنة داخل التطبيق ولا '
+              'تُنزّل من Google Fonts عند التشغيل.',
+          'Render ومزوّد استضافة قاعدة بيانات MongoDB — استضافة الخادم '
+              'وقاعدة البيانات ومعالجة الطلبات بحسب إعداد الخدمة.',
+          'Cloudinary — تخزين الصور والوسائط وتوصيلها عندما تكون خدمة '
+              'تخزين الوسائط الخارجية مفعّلة.',
           'واتساب — فقط إذا ضغطت زر «التواصل عبر واتساب»، فيُفتح واتساب على '
               'محادثة جاهزة؛ ما ترسله يخضع لسياسة واتساب.',
         ]),
@@ -355,8 +375,8 @@ class PrivacyPolicyContent {
       blocks: [
         PolicyParagraph(
           'تُخزَّن البيانات في قاعدة بيانات MongoDB وعلى مساحة تخزين الملفات '
-          'الخاصة بالخادم، لدى مزوّدي البنية التحتية والاستضافة. '
-          '[المنطقة الجغرافية للتخزين — بانتظار التأكيد.]',
+          'الخاصة بالخادم أو لدى Cloudinary، بحسب إعداد الخدمة. يستضيف '
+          'مزوّدو البنية التحتية هذه البيانات وقد تُعالج خارج سوريا.',
         ),
         PolicyParagraph('من إجراءات الحماية المطبَّقة في المنصّة:'),
         PolicyBullets([
@@ -386,10 +406,14 @@ class PrivacyPolicyContent {
           'صور الإرجاع: انظر القسم 8.',
           'رموز التحقّق لمرة واحدة (في حال تفعيل التحقّق عبر SMS مستقبلاً) '
               'تنتهي صلاحيتها وتُحذف تلقائياً خلال دقائق.',
-          'سجلّات الخادم يحتفظ بها مزوّد الاستضافة لمدة قصيرة ومتجدّدة.',
+          'تخضع سجلّات الخادم والنسخ الاحتياطية لإعدادات الاحتفاظ لدى '
+              'مزوّدي الاستضافة.',
         ]),
         PolicyParagraph(
-          '[مدد الاحتفاظ المحدّدة بعد إغلاق الحساب — بانتظار التأكيد.]',
+          'لا يوجد حالياً حذف تلقائي لجميع البيانات بعد مدّة ثابتة من إغلاق '
+          'الحساب. إغلاقه يوقف استخدامه، وتبقى السجلّات المرتبطة به، بما '
+          'فيها المعاملات مع الأطراف الأخرى. يمكنك التواصل مع الدعم لطلب '
+          'مراجعة البيانات التي يمكن حذفها أو إخفاء هويتها.',
         ),
       ],
     ),
@@ -445,8 +469,7 @@ class PrivacyPolicyContent {
       blocks: [
         PolicyParagraph(
           'فينيق أداة عمل موجّهة للصيدليات المرخّصة وموظّفيها المخوّلين، وليست '
-          'موجّهة للأطفال. الاستخدام مخصّص لمن أعمارهم 18 عاماً فأكثر. لا نجمع '
-          'عن قصد بيانات من الأطفال. [شرط العمر — بانتظار التأكيد.]',
+          'موجّهة للأطفال. لا نجمع عن قصد بيانات من الأطفال.',
         ),
       ],
     ),
@@ -469,12 +492,9 @@ class PrivacyPolicyContent {
           'بالخصوصية:',
         ),
         PolicyBullets([
-          'الجهة المشغّلة للتطبيق: [الاسم القانوني — بانتظار التأكيد].',
-          'البريد الإلكتروني للتواصل: [بانتظار التأكيد].',
-          'البريد الإلكتروني لطلبات الخصوصية: [بانتظار التأكيد].',
-          'الهاتف / واتساب: [بانتظار التأكيد].',
-          'العنوان: [بانتظار التأكيد، إن لزم].',
-          'نطاق التشغيل: سوريا (اللاذقية بدايةً). [بانتظار التأكيد.]',
+          'جهة التواصل: فريق فينيق.',
+          'الهاتف / واتساب للدعم وطلبات الخصوصية: $supportWhatsAppPhone.',
+          'نطاق التشغيل: سوريا (اللاذقية بدايةً).',
         ]),
         PolicyParagraph(
           'كما يمكنك استخدام خيار التواصل مع الدعم المتاح داخل التطبيق.',
@@ -532,8 +552,9 @@ class PrivacyPolicyContent {
         ]),
         PolicySubheading('2.2 Information collected automatically'),
         PolicyBullets([
-          'Your device push token (FCM token) and platform (Android or iOS) — '
-              'only after you grant notification permission.',
+          'Your device push token (FCM token) and platform. You can disable '
+              'notification display in device settings; the token may remain '
+              'registered for delivery.',
           'Technical data for each request to our server: IP address, date and '
               'time, request path, and app/OS user-agent; recorded in server '
               'logs for security, abuse prevention, and troubleshooting.',
@@ -546,8 +567,16 @@ class PrivacyPolicyContent {
         PolicyParagraph(
           'The app uses no analytics or crash-reporting tools, does not track '
           'you across other apps or websites, does not collect your contacts, '
-          'calendar, or microphone, and never accesses your location in the '
+          'or calendar, and never accesses your location in the '
           'background.',
+        ),
+        PolicyParagraph(
+          'Only when a warehouse chooses voice payment entry, the app requests '
+          'microphone permission and uses the device speech recognition '
+          'service to convert speech into text. Depending on that service and '
+          'its settings, its provider may process audio over the internet. '
+          'Feniq does not save an audio recording on its servers; confirmed '
+          'payment details are sent after review.',
         ),
       ],
     ),
@@ -587,10 +616,11 @@ class PrivacyPolicyContent {
           'account verification is done by manual administrator review.',
         ),
         PolicyParagraph(
-          'A session token (JWT), valid for about seven days, is stored in '
-          'secure storage on your device (Keychain on iOS, Keystore on '
-          'Android). The warehouse/admin web panel stores the token in the '
-          "browser's local storage (localStorage).",
+          'Sign-in and session renewal tokens are stored in secure storage on '
+          'your device (Keychain on iOS, Keystore on Android). The '
+          'warehouse/admin web panel uses browser local storage '
+          '(localStorage) and the session renewal mechanism provided by the '
+          'server.',
         ),
       ],
     ),
@@ -618,10 +648,11 @@ class PrivacyPolicyContent {
       title: '6. Push Notifications',
       blocks: [
         PolicyParagraph(
-          'If you allow notifications, we register a push token (FCM token) '
-          'for your device with our server and use Google Firebase Cloud '
+          'We register a push token (FCM token) for your device with our '
+          'server and use Google Firebase Cloud '
           'Messaging to deliver messages to you (order updates, offers, admin '
-          'announcements).',
+          'announcements). Device notification permission controls whether '
+          'alerts are displayed.',
         ),
         PolicyParagraph(
           "The notification content and a small data payload (the type, and "
@@ -662,16 +693,16 @@ class PrivacyPolicyContent {
           'camera/photo access only at that moment.',
         ),
         PolicyParagraph(
-          "Return photos are stored on our server’s file storage and are "
-          'accessible through a link that contains a random, hard-to-guess '
-          'identifier. They are shared with the warehouse handling the return '
-          'and with administrators.',
+          'Return photos are stored with Cloudinary or on server storage, '
+          'depending on the service configuration, and displayed through '
+          'media links. They are shared with the warehouse handling the '
+          'return and with administrators.',
         ),
         PolicyParagraph(
           'Photos are deleted when you remove them from a still-pending return '
           'or delete that return; otherwise they remain attached to the return '
-          'record. [Retention beyond that, after account closure — pending '
-          'confirmation.]',
+          'record. Closing your account does not automatically delete these '
+          'photos; you can ask support to review their deletion.',
         ),
         PolicyParagraph(
           'Excel product-list files are uploaded only by warehouse and admin '
@@ -683,16 +714,22 @@ class PrivacyPolicyContent {
       title: '9. Location Data',
       blocks: [
         PolicyParagraph(
-          "During registration only, the app shows a map so you can place your "
+          "During registration, the app shows a map so you can place your "
           "pharmacy’s location pin. With your permission it can center the "
           'map on your current GPS location; you can also move the pin '
           'manually.',
         ),
         PolicyParagraph(
           'We store the pin coordinates and the address text derived from '
-          'them. Location is requested only on that screen and never in the '
-          'background. If you deny location permission you can still place the '
-          'pin manually.',
+          'them. If you deny location permission during registration, you can '
+          'still place the pin manually.',
+        ),
+        PolicyParagraph(
+          'When a representative scans a pharmacy visit code, the app requests '
+          'the device location at that moment and sends its coordinates, '
+          'accuracy, and whether the device reports a mocked location to '
+          'verify the visit. Location is not requested in the background and '
+          'representatives are not continuously tracked.',
         ),
         PolicyParagraph(
           'Map tiles are loaded from OpenStreetMap, and coordinates are turned '
@@ -706,9 +743,10 @@ class PrivacyPolicyContent {
       title: '10. Cookies and Local Storage',
       blocks: [
         PolicyParagraph(
-          'The mobile app uses no cookies. It stores on your device only your '
-          'language and theme preferences and your session token (in secure '
-          'storage).',
+          'The mobile app uses no advertising cookies. It stores language and '
+          'theme preferences, notifications, temporary data such as exchange '
+          'rates and update check times, and session tokens (in secure '
+          'storage) on your device.',
         ),
         PolicyParagraph(
           'The warehouse/admin web panel (not used by pharmacies) stores the '
@@ -724,15 +762,19 @@ class PrivacyPolicyContent {
         PolicyBullets([
           'Google Firebase Cloud Messaging — notification delivery (receives '
               'your device token and the message content).',
+          'Google Firebase Remote Config — app version and update settings.',
           'OpenStreetMap and Nominatim — map tiles and address lookup during '
               'registration (receive coordinates and IP address).',
           'LiraScope — currency exchange rates; no personal data is sent.',
-          'Google Fonts — the app downloads the "Cairo" font at runtime from '
-              "Google’s servers, which receive your device’s IP "
-              'address.',
-          'Our database provider and server hosting provider — infrastructure '
-              'that stores data and processes requests on our behalf. '
-              '[Provider names and region — pending confirmation.]',
+          'Your device speech recognition service — only for voice payment '
+              'entry and subject to the service settings. Fonts are bundled '
+              'with the app and are not downloaded from Google Fonts at '
+              'runtime.',
+          'Render and the MongoDB database hosting provider — server and '
+              'database hosting and request processing, depending on the '
+              'service configuration.',
+          'Cloudinary — image and media storage and delivery when external '
+              'media storage is enabled.',
           'WhatsApp — only if you tap a "contact via WhatsApp" button, which '
               'opens WhatsApp with a prefilled chat; what you send is governed '
               "by WhatsApp’s policy.",
@@ -769,9 +811,9 @@ class PrivacyPolicyContent {
       title: '13. Data Storage and Security',
       blocks: [
         PolicyParagraph(
-          "Data is stored in a MongoDB database and on the server’s file "
-          'storage, with our infrastructure and hosting providers. [Storage '
-          'region — pending confirmation.]',
+          'Data is stored in a MongoDB database and on server storage or with '
+          'Cloudinary, depending on the service configuration. Infrastructure '
+          'providers host this data, which may be processed outside Syria.',
         ),
         PolicyParagraph('Security measures in place on the platform include:'),
         PolicyBullets([
@@ -802,12 +844,15 @@ class PrivacyPolicyContent {
           'Return photos: see Section 8.',
           'One-time verification codes (if SMS verification is enabled in the '
               'future) expire and are deleted automatically within minutes.',
-          'Server logs are retained by the hosting provider on a short, '
-              'rolling basis.',
+          'Server logs and backups follow the retention settings of the '
+              'hosting providers.',
         ]),
         PolicyParagraph(
-          '[Specific retention periods after account closure — pending '
-          'confirmation.]',
+          'There is currently no automatic deletion of all data after a fixed '
+          'period following account closure. Closing the account stops its '
+          'use; associated records remain, including transactions with other '
+          'parties. You can contact support to request a review of data that '
+          'can be deleted or anonymized.',
         ),
       ],
     ),
@@ -867,9 +912,8 @@ class PrivacyPolicyContent {
       blocks: [
         PolicyParagraph(
           'Feniq is a business tool intended for licensed pharmacies and their '
-          'authorized staff, and is not directed to children. It is intended '
-          'for users aged 18 or older. We do not knowingly collect data from '
-          'children. [Age requirement — pending confirmation.]',
+          'authorized staff, and is not directed to children. We do not '
+          'knowingly collect data from children.',
         ),
       ],
     ),
@@ -893,12 +937,9 @@ class PrivacyPolicyContent {
           'privacy-related request:',
         ),
         PolicyBullets([
-          'App operator: [legal name — pending confirmation].',
-          'Contact email: [pending confirmation].',
-          'Privacy-requests email: [pending confirmation].',
-          'Phone / WhatsApp: [pending confirmation].',
-          'Address: [pending confirmation, if applicable].',
-          'Operating region: Syria (Latakia initially). [pending confirmation.]',
+          'Contact: the Feniq team.',
+          'Phone / WhatsApp for support and privacy requests: $supportWhatsAppPhone.',
+          'Operating region: Syria (Latakia initially).',
         ]),
         PolicyParagraph(
           'You can also use the in-app support contact option.',

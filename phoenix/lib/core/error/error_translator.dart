@@ -62,6 +62,10 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
     // Auth. Before F-01/F-02 the backend sent no `code` on any auth error,
     // so every one of these fell through to `default` and an Arabic-locale
     // pharmacist read the raw English sentence off the wire.
+    case 'PASSWORD_RECOVERY_SUPPORT_REQUIRED':
+      return l10n.forgotPasswordSupportLink;
+    case 'PAYMENT_UNCONFIRMED':
+      return l10n.paymentUnconfirmed;
     case 'INVALID_CREDENTIALS':
       return l10n.errorInvalidCredentials;
     case 'ACCOUNT_BLOCKED':

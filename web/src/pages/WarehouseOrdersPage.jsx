@@ -8,9 +8,10 @@ import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { displayName } from '../utils/displayName';
 import { formatSyp } from '../utils/currency';
 import { CollectPaymentModal } from '../components/CollectPaymentModal';
-import { recordCollectedPayment } from '../utils/collectPayment';
+import { useDeliveryCollections } from '../components/DeliveryCollections';
 import { isEditable, mergeAdvancedOrders, nextStatusOf, rememberAdvanced, syncAdvancedWithRows } from './warehouseOrdersList';
 import { formatBusinessDateTime } from '../utils/businessDate';
+import { ConnectionStatus } from '../components/ConnectionStatus';
 
 const PAGE_SIZE = 20;
 // Three stages for the warehouse: new -> accepted -> on the way -> delivered,
@@ -26,6 +27,7 @@ const ADVANCE_KEYS = {
 export function WarehouseOrdersPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { collect } = useDeliveryCollections();
   const [statusFilter, setStatusFilter] = useState('pending');
   const [actionError, setActionError] = useState(null);
   // The order whose "delivered" is asking "قبضت؟", and the result message.
@@ -39,6 +41,7 @@ export function WarehouseOrdersPage() {
   // status and the next stage's button, until the tab changes
   // (warehouseOrdersList.js).
   const [advanced, setAdvanced] = useState(() => new Map());
+  const [updatedAt, setUpdatedAt] = useState(null);
 
   const statusLabel = useCallback((status) => t(`orders.status${statusKeySuffix(status)}`), [t]);
 
@@ -46,11 +49,10 @@ export function WarehouseOrdersPage() {
     (cursor) =>
       api
         .warehouseOrders({ status: statusFilter || undefined, limit: PAGE_SIZE, after: cursor })
-        .then((data) => ({
-          rows: data.orders,
-          hasMore: data.pagination.hasMore,
-          nextCursor: data.pagination.nextCursor,
-        })),
+        .then((data) => {
+          setUpdatedAt(Date.now());
+          return { rows: data.orders, hasMore: data.pagination.hasMore, nextCursor: data.pagination.nextCursor };
+        }),
     [statusFilter]
   );
 
@@ -67,8 +69,7 @@ export function WarehouseOrdersPage() {
     setAdvanced((current) => syncAdvancedWithRows(current, loadedOrders));
   }, [loadedOrders]);
 
-  const listed = mergeAdvancedOrders(loadedOrders, advanced);
-  const orders = statusFilter === 'pending' || statusFilter === '' ? listed : listed.slice().reverse();
+  const orders = mergeAdvancedOrders(loadedOrders, advanced, Boolean(statusFilter && statusFilter !== 'pending'));
 
   useEffect(() => {
     setAdvanced(new Map());
@@ -106,26 +107,26 @@ export function WarehouseOrdersPage() {
   // stages, in order. A refused step puts the order back where the server
   // says it is.
   const pendingByOrder = useRef(new Map());
-  const handleAdvance = (order, currentStatus) => {
+  const [busyOrders, setBusyOrders] = useState(new Set());
+  const handleAdvance = async (order, currentStatus) => {
+    if (pendingByOrder.current.has(order.id)) return false;
     const next = nextStatusOf(currentStatus);
-    if (!next) return Promise.resolve(false);
+    if (!next) return false;
+    pendingByOrder.current.set(order.id, true);
+    setBusyOrders((current) => new Set(current).add(order.id));
     setActionError(null);
-    setAdvanced((current) => rememberAdvanced(current, order, next));
-    const previous = pendingByOrder.current.get(order.id) ?? Promise.resolve();
-    const request = previous
-      .then(() => api.advanceOrderStatus(order.id))
-      .catch((err) => {
-        setActionError(err.message);
-        setAdvanced((current) => rememberAdvanced(current, order, currentStatus));
-        reset();
-        throw err;
-      });
-    const settled = request.then(
-      () => true,
-      () => false
-    );
-    pendingByOrder.current.set(order.id, settled.then(() => {}));
-    return settled;
+    try {
+      const data = await api.advanceOrderStatus(order.id, { expectedStatus: currentStatus, targetStatus: next });
+      setAdvanced((current) => rememberAdvanced(current, order, data.order.status));
+      return true;
+    } catch (err) {
+      await reset();
+      setActionError(err.message);
+      return false;
+    } finally {
+      pendingByOrder.current.delete(order.id);
+      setBusyOrders((current) => { const next = new Set(current); next.delete(order.id); return next; });
+    }
   };
 
   // "Delivered" asks "قبضت؟" first: all, part, or later. Closing the sheet
@@ -134,14 +135,13 @@ export function WarehouseOrdersPage() {
     const order = collecting;
     setCollecting(null);
     setCollectMessage(null);
-    const advanced = await handleAdvance(order, order.status);
-    if (!advanced || collected <= 0) return;
-    const saved = await recordCollectedPayment(api, {
-      pharmacyId: order.pharmacy?.id,
-      amountSyp: collected,
-      note: t('collect.note', { number: order.orderNumber }),
-    });
-    setCollectMessage(saved ? t('collect.recorded', { amount: formatSyp(collected) }) : t('collect.failed'));
+    try {
+      await collect(order, collected, t('collect.note', { number: order.orderNumber }));
+      setAdvanced((current) => rememberAdvanced(current, order, 'delivered'));
+      if (collected > 0) setCollectMessage(t('collect.recorded', { amount: formatSyp(collected) }));
+    } catch {
+      setCollectMessage(t('collect.pendingNotice'));
+    } finally { reset(); }
   };
 
   const openOrder = (order) => navigate(`/warehouse/orders/${order.id}`);
@@ -153,6 +153,7 @@ export function WarehouseOrdersPage() {
     <div className="wh-order-actions">
       {ADVANCE_KEYS[order.status] && (
         <button
+          disabled={busyOrders.has(order.id)}
           className={`wh-row-action wh-advance-to-${nextStatusOf(order.status)}`}
           onClick={(event) => {
             event.stopPropagation();
@@ -201,6 +202,7 @@ export function WarehouseOrdersPage() {
           </button>
         ))}
       </div>
+      <ConnectionStatus updatedAt={updatedAt} onRefresh={reset} busy={isLoading} />
 
       {newOrderCount > 0 && (
         <button

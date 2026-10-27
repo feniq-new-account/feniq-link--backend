@@ -1198,22 +1198,52 @@
   "pharmacyVisitCodeIntro": "Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy.",
   "panelHomeTitle": "Warehouse account",
   "panelHomeGreeting": "Hello {name}",
-  "@panelHomeGreeting": {"placeholders": {"name": {"type": "String"}}},
+  "@panelHomeGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "panelHomeBody": "The warehouse screens inside the app are on their way. For now, orders, products and reps are in the warehouse panel.",
   "panelHomeOpenPanel": "Open the warehouse panel",
   "panelHomeOpenFailed": "Could not open the panel. Open {url} in your browser.",
-  "@panelHomeOpenFailed": {"placeholders": {"url": {"type": "String"}}},
+  "@panelHomeOpenFailed": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseNavOrders": "Orders",
   "warehouseNavAccount": "Account",
   "warehouseFilterAll": "All",
   "warehouseMarkDelivered": "Mark as delivered",
   "warehouseConfirmApproveTitle": "Send this order on its way?",
   "warehouseConfirmApproveBody": "Order #{number} leaves for the pharmacy, and its items can no longer be changed.",
-  "@warehouseConfirmApproveBody": {"placeholders": {"number": {"type": "int"}}},
+  "@warehouseConfirmApproveBody": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseOrderTitle": "Order #{number}",
-  "@warehouseOrderTitle": {"placeholders": {"number": {"type": "int"}}},
+  "@warehouseOrderTitle": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseOrderItemsCount": "Items: {count}",
-  "@warehouseOrderItemsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@warehouseOrderItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseNoOrdersTitle": "No orders here",
   "warehouseNoOrdersSubtitle": "New orders show up here as soon as they arrive, with a notification.",
   "warehouseSectionPharmacy": "Pharmacy",
@@ -1223,7 +1253,13 @@
   "warehouseSectionNotes": "Pharmacy's notes",
   "warehouseCall": "Call",
   "warehouseFreeUnits": "+{count} free",
-  "@warehouseFreeUnits": {"placeholders": {"count": {"type": "int"}}},
+  "@warehouseFreeUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "warehousePackageLine": "In a package",
   "warehouseSubtotal": "Subtotal",
   "warehouseDiscounts": "Discounts",
@@ -1231,7 +1267,13 @@
   "warehouseFeniqShare": "Feniq's share",
   "warehouseYouKeep": "You keep",
   "warehouseRepCommissionTitle": "Rep commission ({rate}%)",
-  "@warehouseRepCommissionTitle": {"placeholders": {"rate": {"type": "String"}}},
+  "@warehouseRepCommissionTitle": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseRepShare": "To the rep",
   "warehouseRepSaving": "Your saving",
   "warehouseEditItems": "Edit items",
@@ -1245,10 +1287,25 @@
   "warehouseWaitingSeal": "Waiting for the pharmacy's seal photo before delivery.",
   "warehouseHasReturn": "Has a return",
   "warehouseCancelReason": "Cancel reason: {reason}",
-  "@warehouseCancelReason": {"placeholders": {"reason": {"type": "String"}}},
+  "@warehouseCancelReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseAccountPanelHint": "Products, offers, reps and reports are in the warehouse panel.",
   "warehouseOrderAdvanced": "Order #{number} is now: {status}",
-  "@warehouseOrderAdvanced": {"placeholders": {"number": {"type": "int"}, "status": {"type": "String"}}},
+  "@warehouseOrderAdvanced": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "errorCannotRemoveLastItem": "You can't remove the order's last item.",
   "errorOrderAlreadyAdvanced": "The order already moved on. Refresh the page.",
   "errorOrderNotAdvanceable": "This order can't move to another stage.",
@@ -1258,18 +1315,42 @@
   "warehouseNavAccounts": "Accounts",
   "warehouseNavReps": "Reps",
   "warehouseReturnTitle": "Return on order #{number}",
-  "@warehouseReturnTitle": {"placeholders": {"number": {"type": "int"}}},
+  "@warehouseReturnTitle": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseReturnNoOrder": "Return",
   "warehouseReturnUnits": "{count} units",
-  "@warehouseReturnUnits": {"placeholders": {"count": {"type": "int"}}},
+  "@warehouseReturnUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseNoReturnsTitle": "No returns here",
   "warehouseNoReturnsSubtitle": "Return requests from pharmacies show up here.",
   "warehouseReturnPhotos": "Photos",
   "warehouseReturnPharmacyNotes": "Pharmacy's notes",
   "warehouseReturnCreditPreview": "If you approve, the pharmacy is credited: {amount}",
-  "@warehouseReturnCreditPreview": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseReturnCreditPreview": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseReturnCredited": "Credited to the pharmacy: {amount}",
-  "@warehouseReturnCredited": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseReturnCredited": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseReturnApprove": "Approve",
   "warehouseReturnReject": "Reject",
   "warehouseReturnApproveTitle": "Approve this return?",
@@ -1277,19 +1358,43 @@
   "warehouseReturnRejectTitle": "Reject the return",
   "warehouseReturnRejectHint": "Write why - the pharmacy sees it.",
   "warehouseReturnResolved": "The return is now: {status}",
-  "@warehouseReturnResolved": {"placeholders": {"status": {"type": "String"}}},
+  "@warehouseReturnResolved": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseNoAccountsTitle": "No accounts yet",
   "warehouseNoAccountsSubtitle": "A pharmacy's account shows up here after its first delivered order.",
   "warehouseAccountsSearch": "Search by pharmacy name or phone",
   "warehouseAccountOwes": "Owes {amount}",
-  "@warehouseAccountOwes": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseAccountOwes": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseAccountInCredit": "In credit {amount}",
-  "@warehouseAccountInCredit": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseAccountInCredit": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseAccountSettled": "Settled",
   "warehouseRecordPayment": "Record a payment",
   "warehouseRecordPaymentTitle": "Payment from the pharmacy",
   "warehousePaymentAmount": "Amount ({currency})",
-  "@warehousePaymentAmount": {"placeholders": {"currency": {"type": "String"}}},
+  "@warehousePaymentAmount": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
   "warehousePaymentMethod": "Method",
   "warehousePaymentMethodCash": "Cash",
   "warehousePaymentMethodBank": "Transfer",
@@ -1297,7 +1402,16 @@
   "warehousePaymentMethodOther": "Other",
   "warehousePaymentNote": "Note (optional)",
   "warehousePaymentConfirm": "Record {amount} from {pharmacy}?",
-  "@warehousePaymentConfirm": {"placeholders": {"amount": {"type": "String"}, "pharmacy": {"type": "String"}}},
+  "@warehousePaymentConfirm": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "pharmacy": {
+        "type": "String"
+      }
+    }
+  },
   "warehousePaymentRecorded": "Payment recorded.",
   "warehousePaymentReverseHint": "To reverse a wrong payment, use the warehouse panel.",
   "warehouseNoRepsTitle": "No reps yet",
@@ -1310,9 +1424,27 @@
   "warehouseRepRateHint": "Half to the rep, a quarter to Feniq, the rest you save. Between 0 and 10.",
   "warehouseRepInactive": "Switched off",
   "warehouseRepStats": "{pharmacies} pharmacies · {visits} visits in 30 days",
-  "@warehouseRepStats": {"placeholders": {"pharmacies": {"type": "int"}, "visits": {"type": "int"}}},
+  "@warehouseRepStats": {
+    "placeholders": {
+      "pharmacies": {
+        "type": "int"
+      },
+      "visits": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseRepMonth": "This month: {orders} orders · commission {amount}",
-  "@warehouseRepMonth": {"placeholders": {"orders": {"type": "int"}, "amount": {"type": "String"}}},
+  "@warehouseRepMonth": {
+    "placeholders": {
+      "orders": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseRepEditRate": "Edit commission",
   "warehouseRepEditRateHint": "Applies to new orders only.",
   "warehouseRepDeactivate": "Switch the rep off",
@@ -1325,7 +1457,13 @@
   "warehouseRepVisits": "Their visits",
   "warehouseRepNoVisits": "No visits logged yet.",
   "warehouseRepLastVisit": "Last visit: {date}",
-  "@warehouseRepLastVisit": {"placeholders": {"date": {"type": "String"}}},
+  "@warehouseRepLastVisit": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseRepNeverVisited": "Never visited",
   "warehouseFieldRequired": "This field is required",
   "warehouseInvalidNumber": "Enter a valid number",
@@ -1348,7 +1486,13 @@
   "warehouseLoyaltyTierError": "Each tier needs an order value above zero and a smaller discount.",
   "warehouseLoyaltyOff": "Off",
   "warehouseLoyaltyOnTiers": "On · {count} tiers",
-  "@warehouseLoyaltyOnTiers": {"placeholders": {"count": {"type": "int"}}},
+  "@warehouseLoyaltyOnTiers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseLoyaltyLine": "Loyalty discount",
   "warehouseCreditUsedLine": "From the pharmacy's credit",
   "warehouseRepPharmacyShare": "Pharmacy credit",
@@ -1375,32 +1519,104 @@
   "warehouseCollectSave": "Deliver and save",
   "warehouseCollectPartialInvalid": "Enter an amount above zero and below the total.",
   "warehouseCollectRecorded": "Delivered, and {amount} recorded as paid",
-  "warehouseCollectFailed": "Delivered, but the payment wasn't saved - record it from Accounts.",
+  "warehouseCollectFailed": "Delivery succeeded, but collection is unconfirmed. Retry the payment from the warehouse alert.",
   "warehouseCollectNote": "Paid on delivery of order #{number}",
-  "@warehouseCollectTitle": {"placeholders": {"number": {"type": "int"}}},
-  "@warehouseCollectTotal": {"placeholders": {"amount": {"type": "String"}}},
-  "@warehouseCollectPaidLabel": {"placeholders": {"currency": {"type": "String"}}},
-  "@warehouseCollectLeft": {"placeholders": {"amount": {"type": "String"}}},
-  "@warehouseCollectRecorded": {"placeholders": {"amount": {"type": "String"}}},
-  "@warehouseCollectNote": {"placeholders": {"number": {"type": "int"}}},
+  "@warehouseCollectTitle": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "@warehouseCollectTotal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@warehouseCollectPaidLabel": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "@warehouseCollectLeft": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@warehouseCollectRecorded": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@warehouseCollectNote": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseAccountPurchases": "Bought {amount}",
-  "@warehouseAccountPurchases": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseAccountPurchases": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseAccountPaid": "Paid {amount}",
-  "@warehouseAccountPaid": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseAccountPaid": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseAccountLastPayment": "Last payment {date}",
-  "@warehouseAccountLastPayment": {"placeholders": {"date": {"type": "String"}}},
+  "@warehouseAccountLastPayment": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseAccountNoPayment": "No payments yet",
   "warehouseAccountPayFull": "Pay in full",
   "warehouseAccountPayPartial": "Part payment",
   "warehouseAccountPayFullConfirm": "Record a cash payment of {amount}?",
-  "@warehouseAccountPayFullConfirm": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseAccountPayFullConfirm": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseAccountPayOwes": "Owes: {amount}",
-  "@warehouseAccountPayOwes": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseAccountPayOwes": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseAccountPaySave": "Record payment",
   "warehouseAccountPayInvalid": "Enter an amount above zero and below the amount owed.",
   "warehouseAccountPayRecorded": "Recorded a payment of {amount}",
-  "@warehouseAccountPayRecorded": {"placeholders": {"amount": {"type": "String"}}},
-  "warehouseAccountPayFailed": "The payment wasn't saved. Try again.",
+  "@warehouseAccountPayRecorded": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseAccountPayFailed": "Payment is unconfirmed. Retry to confirm the same payment safely.",
   "warehouseVoiceTitle": "Record a payment by voice",
   "warehouseVoiceHint": "Say, in Arabic, for example: Al-Noor pharmacy paid fifty thousand, or Al-Amal paid the full amount.",
   "warehouseVoiceSpeak": "Tap and speak",
@@ -1410,11 +1626,29 @@
   "warehouseVoiceNotUnderstood": "I did not understand. Try: pharmacy name + paid + the amount.",
   "warehouseVoiceNoPharmacy": "No pharmacy found for that name. Edit the name.",
   "warehouseVoiceOwes": "owes {amount}",
-  "@warehouseVoiceOwes": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseVoiceOwes": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseVoiceWillRecord": "A payment of {amount} will be recorded",
-  "@warehouseVoiceWillRecord": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseVoiceWillRecord": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseVoiceLeftAfter": "It will still owe {amount}",
-  "@warehouseVoiceLeftAfter": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseVoiceLeftAfter": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseVoiceCannotRecord": "That amount does not fit this pharmacy's account (zero, or more than it owes).",
   "warehouseVoiceConfirm": "OK, record it",
   "warehouseSummaryTitle": "Warehouse summary",
@@ -1426,22 +1660,59 @@
   "warehouseSummaryReturns": "Returns",
   "warehouseSummaryTotalDebts": "Total debts",
   "warehouseSummaryInvoices": "{count} invoices",
-  "@warehouseSummaryInvoices": {"placeholders": {"count": {"type": "int"}}},
+  "@warehouseSummaryInvoices": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseSummaryPayments": "{count} payments",
-  "@warehouseSummaryPayments": {"placeholders": {"count": {"type": "int"}}},
+  "@warehouseSummaryPayments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseSummaryDebtors": "{count} pharmacies owe you",
-  "@warehouseSummaryDebtors": {"placeholders": {"count": {"type": "int"}}},
+  "@warehouseSummaryDebtors": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseSummaryCreditHeld": "Credit held for pharmacies: {amount}",
-  "@warehouseSummaryCreditHeld": {"placeholders": {"amount": {"type": "String"}}},
+  "@warehouseSummaryCreditHeld": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "warehouseSummaryChangeUp": "▲ {percent}% vs previous period",
-  "@warehouseSummaryChangeUp": {"placeholders": {"percent": {"type": "int"}}},
+  "@warehouseSummaryChangeUp": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseSummaryChangeDown": "▼ {percent}% vs previous period",
-  "@warehouseSummaryChangeDown": {"placeholders": {"percent": {"type": "int"}}},
+  "@warehouseSummaryChangeDown": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "warehouseSummaryChangeFlat": "Same as the previous period",
   "warehouseSummaryChangeNew": "Nothing in the previous period",
   "warehouseSummaryTopBuyers": "Top buyers",
   "warehouseSummaryTopDebtors": "Biggest debts",
   "warehouseSummaryNoBuyers": "No sales in this period.",
   "warehouseSummaryNoDebtors": "No outstanding debts.",
-  "warehouseSummaryDeliveredNote": "Sales count delivered orders only."
+  "warehouseSummaryDeliveredNote": "Sales count delivered orders only.",
+  "paymentUnconfirmed": "Payment is unconfirmed. Retry to confirm the same payment safely."
 }

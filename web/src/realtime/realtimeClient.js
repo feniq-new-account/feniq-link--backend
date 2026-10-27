@@ -16,7 +16,7 @@ const SOCKET_URL = import.meta.env?.VITE_SOCKET_URL ?? deriveSocketUrl();
 // the one value that's already configured rather than adding a second env var
 // that could drift from it.
 function deriveSocketUrl() {
-  const apiBase = import.meta.env?.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
+  const apiBase = import.meta.env?.VITE_API_BASE_URL ?? 'http://localhost:5000/api';
   return apiBase.replace(/\/api\/?$/, '');
 }
 

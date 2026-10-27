@@ -15,6 +15,7 @@ const { emitToAdmins, EVENTS } = require('../realtime');
 const syndicateRegistry = require('./syndicateRegistry.service');
 const platformSettings = require('./platformSettings.service');
 const telegram = require('./telegram.service');
+const { getSmsProvider } = require('./sms');
 
 const BCRYPT_SALT_ROUNDS = 10;
 
@@ -104,6 +105,7 @@ async function issueTokenPair(user) {
   await RefreshToken.create({
     userId: user._id,
     tokenHash: hashRefreshToken(refreshToken),
+    tokenVersion: user.tokenVersion ?? 0,
     expiresAt: new Date(Date.now() + env.refreshTokenTtlDays * 24 * 60 * 60 * 1000),
   });
   return { token: issueToken(user), refreshToken };
@@ -115,6 +117,10 @@ async function issueTokenPair(user) {
 // hydrated user document pass it so the bump lands in their own .save().
 async function revokeAllSessions(userId) {
   await RefreshToken.deleteMany({ userId });
+  // Existing realtime handshakes carry the old access token. Stop them now,
+  // rather than waiting for a future HTTP request or socket reconnect.
+  const { disconnectUser } = require('../realtime');
+  if (typeof disconnectUser === 'function') disconnectUser(userId);
 }
 
 // Exchanges a refresh token for a fresh pair, rotating as it goes: the row
@@ -128,18 +134,25 @@ async function refreshSession(rawToken) {
     throw ApiError.unauthorized('Invalid or expired session.', 'INVALID_REFRESH_TOKEN');
   }
 
-  const existing = await RefreshToken.findOne({ tokenHash: hashRefreshToken(rawToken) });
-  if (!existing || existing.expiresAt.getTime() <= Date.now()) {
+  // A single database operation consumes the credential. Separate find/delete
+  // calls let concurrent requests spend the same refresh token twice.
+  const existing = await RefreshToken.findOneAndDelete({
+    tokenHash: hashRefreshToken(rawToken),
+    expiresAt: { $gt: new Date() },
+  });
+  if (!existing) {
     throw ApiError.unauthorized('Invalid or expired session.', 'INVALID_REFRESH_TOKEN');
   }
-
-  // Consume it before anything else can go wrong, so a token cannot be spent
-  // twice even if the work below throws.
-  await RefreshToken.deleteOne({ _id: existing._id });
 
   const user = await User.findById(existing.userId).select(AUTH_USER_FIELDS);
   if (!user) {
     throw ApiError.unauthorized('Invalid or expired session.', 'INVALID_REFRESH_TOKEN');
+  }
+  // A refresh already in flight when a password changes may finish after
+  // revokeAllSessions deletes the old rows. It must not adopt the new account
+  // version and resurrect the revoked session. Legacy rows belong to version 0.
+  if ((existing.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+    throw ApiError.unauthorized('Session has been revoked. Please sign in again.', 'INVALID_REFRESH_TOKEN');
   }
   if (user.status === 'blocked') {
     throw ApiError.forbidden(
@@ -640,6 +653,14 @@ async function adminResetPassword(userId, newPassword, { actorId = null, reason 
 // still applies - but only to numbers that actually get a code, so it cannot
 // be used as an oracle either.
 async function forgotPassword({ phone }) {
+  if (!getSmsProvider().canDeliver) {
+    throw new ApiError(
+      503,
+      'Password recovery by SMS is unavailable. Please contact support to reset your password.',
+      { recoveryMethod: 'support' },
+      'PASSWORD_RECOVERY_SUPPORT_REQUIRED'
+    );
+  }
   const user = await User.findOne({ phone }).select('_id status').lean();
 
   if (user && user.status !== 'blocked' && user.status !== 'deleted') {
@@ -667,6 +688,7 @@ async function resetPassword({ phone, otpCode, password }) {
   assertPasswordPolicy(password, { role: user.role, code: 'INVALID_PASSWORD' });
 
   user.password = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+  user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   // The user chose this password themselves, so an outstanding forced change
   // from an earlier admin reset is satisfied too.
   user.mustChangePassword = false;
@@ -676,6 +698,7 @@ async function resetPassword({ phone, otpCode, password }) {
   user.failedLoginAttempts = 0;
   user.lockedUntil = null;
   await user.save();
+  await revokeAllSessions(user._id);
 }
 
 // Self-service account deletion.

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { formatSyp } from '../utils/currency';
@@ -38,22 +38,26 @@ export function WarehouseSettlementPage() {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const latestRequest = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++latestRequest.current;
     setIsLoading(true);
     setError(null);
+    setData(null);
     try {
       const response = await api.warehouseSettlement({ from, to });
-      setData(response.settlement);
+      if (requestId === latestRequest.current) setData(response.settlement);
     } catch (err) {
-      setError(err.message);
+      if (requestId === latestRequest.current) setError(err.message);
     } finally {
-      setIsLoading(false);
+      if (requestId === latestRequest.current) setIsLoading(false);
     }
   }, [from, to]);
 
   useEffect(() => {
     load();
+    return () => { latestRequest.current += 1; };
   }, [load]);
 
   const totals = data?.totals;

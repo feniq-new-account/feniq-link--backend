@@ -2723,7 +2723,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseCollectFailed =>
-      'Delivered, but the payment wasn\'t saved - record it from Accounts.';
+      'Delivery succeeded, but collection is unconfirmed. Retry the payment from the warehouse alert.';
 
   @override
   String warehouseCollectNote(int number) {
@@ -2778,7 +2778,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseAccountPayFailed =>
-      'The payment wasn\'t saved. Try again.';
+      'Payment is unconfirmed. Retry to confirm the same payment safely.';
 
   @override
   String get warehouseVoiceTitle => 'Record a payment by voice';
@@ -2905,4 +2905,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get warehouseSummaryDeliveredNote =>
       'Sales count delivered orders only.';
+
+  @override
+  String get paymentUnconfirmed =>
+      'Payment is unconfirmed. Retry to confirm the same payment safely.';
 }

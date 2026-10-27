@@ -47,7 +47,8 @@ const advance = asyncHandler(async (req, res) => {
   const order = await warehouseOrderService.advanceOrderStatus(
     req.params.id,
     warehouse._id,
-    req.user._id
+    req.user._id,
+    req.body ?? {}
   );
   res.json({
     success: true,

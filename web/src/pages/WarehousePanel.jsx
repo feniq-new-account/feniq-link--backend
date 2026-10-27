@@ -30,6 +30,7 @@ import { WarehouseSettlementPage } from './WarehouseSettlementPage';
 import { WarehouseImportResultsPage, WarehouseImportsPage } from './WarehouseImportResultsPage';
 import { WarehouseRepsPage } from './WarehouseRepsPage';
 import { WarehouseRepDetailPage } from './WarehouseRepDetailPage';
+import { DeliveryCollectionsNotice, DeliveryCollectionsProvider } from '../components/DeliveryCollections';
 
 // Section 13b: the warehouse side of the shared React panel. Real routes
 // (not component state) - each tab gets its own bookmarkable/refreshable
@@ -43,6 +44,11 @@ import { WarehouseRepDetailPage } from './WarehouseRepDetailPage';
 // utils/warehouseNav.js for the model and WarehouseGroupSubNav for the second
 // row of pills the grouped pages render.
 export function WarehousePanel() {
+  const { user } = useAuth();
+  return <DeliveryCollectionsProvider key={user.id}><WarehousePanelContent /></DeliveryCollectionsProvider>;
+}
+
+function WarehousePanelContent() {
   const { t } = useTranslation();
   const { user, warehouse, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -129,6 +135,7 @@ export function WarehousePanel() {
         </header>
 
         <div className="wh-content">
+          <DeliveryCollectionsNotice />
           <Routes>
             <Route path="/warehouse/orders" element={<WarehouseOrdersPage />} />
             <Route path="/warehouse/orders/:orderId" element={<WarehouseOrderDetailPage />} />

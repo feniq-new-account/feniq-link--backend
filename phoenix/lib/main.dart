@@ -31,6 +31,7 @@ import 'package:feniq/features/banners/data/repositories/banners_repository.dart
 import 'package:feniq/features/banners/data/repositories/banners_repository_impl.dart';
 import 'package:feniq/features/banners/presentation/managers/banners_cubit.dart';
 import 'package:feniq/features/cart/data/repositories/order_repository.dart';
+import 'package:feniq/features/cart/data/repositories/cart_draft_store.dart';
 import 'package:feniq/features/cart/data/repositories/order_repository_impl.dart';
 import 'package:feniq/features/cart/presentation/managers/cart_cubit.dart';
 import 'package:feniq/features/catalog/data/repositories/catalog_repository.dart';
@@ -319,7 +320,16 @@ class MyApp extends StatelessWidget {
             ),
           ),
           BlocProvider(
+            create: (context) => CartCubit(
+              orderRepository: orderRepository,
+              warehouseRepository: warehouseRepository,
+              sessionScope: sessionScope,
+              draftStore: CartDraftStore(storageService),
+            ),
+          ),
+          BlocProvider(
             create: (context) => AuthCubit(
+              onSessionToken: context.read<CartCubit>().restoreForToken,
               authRepository: authRepository,
               secureStorage: secureStorage,
               fcmService: fcmService,
@@ -334,13 +344,6 @@ class MyApp extends StatelessWidget {
               warehouseRepository: warehouseRepository,
               sessionScope: sessionScope,
               offlineCatalogs: catalogRepository,
-            ),
-          ),
-          BlocProvider(
-            create: (context) => CartCubit(
-              orderRepository: orderRepository,
-              warehouseRepository: warehouseRepository,
-              sessionScope: sessionScope,
             ),
           ),
           BlocProvider(

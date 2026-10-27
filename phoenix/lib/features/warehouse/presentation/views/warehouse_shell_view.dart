@@ -1,3 +1,4 @@
+import 'package:feniq/features/warehouse/presentation/widgets/pending_payments_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
@@ -65,10 +66,13 @@ class _WarehouseShellViewState extends State<WarehouseShellView> {
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _index,
-        children: [for (var i = 0; i < _tabs.length; i++) _opened.contains(i) ? _tabs[i] : const SizedBox.shrink()],
-      ),
+      body: Column(children: [
+        const PendingPaymentsBar(),
+        Expanded(child: IndexedStack(
+          index: _index,
+          children: [for (var i = 0; i < _tabs.length; i++) _opened.contains(i) ? _tabs[i] : const SizedBox.shrink()],
+        )),
+      ]),
       floatingActionButton: _index == 3
           ? Builder(
               builder: (context) => FloatingActionButton.extended(

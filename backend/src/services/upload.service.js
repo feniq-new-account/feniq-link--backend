@@ -1,5 +1,6 @@
 const cloudinary = require('../config/cloudinary');
 const mediaStorage = require('./mediaStorage.service');
+const { hasMediaReferences } = require('./mediaReferences.service');
 
 // Uploads one file buffer to Cloudinary under `folder` (e.g. 'banners',
 // 'returns') and resolves to its permanent https delivery URL. Rejects on
@@ -70,11 +71,19 @@ function resourceTypeFromUrl(url) {
 
 // Convenience wrapper for the call sites that only ever hold the URL.
 async function deleteImageByUrl(url) {
-  if (mediaStorage.isOwnMediaUrl(url)) {
-    await mediaStorage.deleteByUrl(url);
-    return;
+  if (!url) return;
+  try {
+    if (await hasMediaReferences(url)) return;
+    if (mediaStorage.isOwnMediaUrl(url)) {
+      await mediaStorage.deleteByUrl(url);
+      return;
+    }
+    await deleteImage(publicIdFromUrl(url), resourceTypeFromUrl(url));
+  } catch (err) {
+    // Cleanup never jeopardizes the edit, and a failed reference lookup must
+    // preserve the asset rather than risk deleting media another record uses.
+    console.error('Media cleanup failed:', err.message);
   }
-  await deleteImage(publicIdFromUrl(url), resourceTypeFromUrl(url));
 }
 
 module.exports = { uploadImage, uploadMedia, deleteImage, deleteImageByUrl, publicIdFromUrl };

@@ -471,7 +471,9 @@ class _CartViewState extends State<CartView> {
           String limitText(num usdAmount) =>
               formatMoneyFromUsd(usdAmount, usdToSyp, l10n.currencySuffix);
 
-          return LayoutBuilder(
+          return AbsorbPointer(
+            absorbing: state.isSubmitting || state.isSubmittingAll,
+            child: LayoutBuilder(
             builder: (context, box) => Column(
             children: [
               Expanded(
@@ -702,6 +704,7 @@ class _CartViewState extends State<CartView> {
               ),
               ),
             ],
+          ),
           ),
           );
         },

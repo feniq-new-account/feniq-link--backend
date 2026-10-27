@@ -1,3 +1,4 @@
+import 'package:feniq/core/services/pending_payment_journal.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_management_models.dart';
 
 /// A warehouse account's reps, pharmacy accounts and returns.
@@ -38,7 +39,11 @@ abstract class WarehouseManagementRepository {
     required String method,
     required String idempotencyKey,
     String? note,
+    String? deliveryOrderId,
   });
+
+  /// Payments with an unconfirmed result, recoverable with their original key.
+  Future<List<PendingPaymentRecord>> getPendingPayments();
 
   // Loyalty discount
   Future<WarehouseLoyalty> getLoyalty();

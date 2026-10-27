@@ -62,5 +62,9 @@ fi
 echo "Decrypting and restoring into '$to_db' ..."
 gpg --batch --quiet --pinentry-mode loopback --decrypt \
     --passphrase-fd 3 "$file" 3<<<"$BACKUP_ENCRYPTION_KEY" \
-  | mongo_tool mongorestore "${args[@]}"
+  | if [[ "$file" == *.snapshot.jsonl.gz.gpg ]]; then
+      RESTORE_MONGODB_URI="$target_uri" RESTORE_DB="$to_db" RESTORE_DROP="$drop" node "$script_dir/snapshot.js" restore
+    else
+      mongo_tool mongorestore "${args[@]}"
+    fi
 echo "OK: restored into '$to_db'."

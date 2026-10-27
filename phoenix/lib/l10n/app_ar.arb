@@ -1152,7 +1152,7 @@
   "warehouseCollectSave": "سلّم واحفظ",
   "warehouseCollectPartialInvalid": "اكتب مبلغ أكبر من صفر وأصغر من المبلغ كله.",
   "warehouseCollectRecorded": "تم التسليم، وانسجّل {amount} مدفوع",
-  "warehouseCollectFailed": "تم التسليم، بس الدفعة ما انحفظت - سجّلها من الحسابات.",
+  "warehouseCollectFailed": "تم التسليم، لكن لم نتأكد من تسجيل المقبوض. أعد تأكيد الدفعة من التنبيه في لوحة المستودع.",
   "warehouseCollectNote": "دفعة عند تسليم الطلبية رقم {number}",
   "warehouseAccountPurchases": "اشترت {amount}",
   "warehouseAccountPaid": "دفعت {amount}",
@@ -1165,7 +1165,7 @@
   "warehouseAccountPaySave": "سجّل الدفعة",
   "warehouseAccountPayInvalid": "اكتب مبلغ أكبر من صفر وأصغر من المبلغ المطلوب.",
   "warehouseAccountPayRecorded": "انسجّلت دفعة {amount}",
-  "warehouseAccountPayFailed": "الدفعة ما انحفظت. جرّب مرة تانية.",
+  "warehouseAccountPayFailed": "لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان.",
   "warehouseVoiceTitle": "تسجيل دفعة بالصوت",
   "warehouseVoiceHint": "احكي مثلاً: «صيدلية النور دفعت خمسين ألف» أو «صيدلية الأمل دفعت المبلغ كامل».",
   "warehouseVoiceSpeak": "اضغط واحكي",
@@ -1199,5 +1199,6 @@
   "warehouseSummaryTopDebtors": "أكبر الديون",
   "warehouseSummaryNoBuyers": "ما في مبيعات بهالفترة.",
   "warehouseSummaryNoDebtors": "ما في ديون.",
-  "warehouseSummaryDeliveredNote": "المبيعات بتحسب الطلبيات المتسلَّمة بس."
+  "warehouseSummaryDeliveredNote": "المبيعات بتحسب الطلبيات المتسلَّمة بس.",
+  "paymentUnconfirmed": "لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان."
 }

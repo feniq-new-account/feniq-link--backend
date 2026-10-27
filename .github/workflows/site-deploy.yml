@@ -14,6 +14,7 @@ on:
     paths:
       - 'site/**'
       - '.github/workflows/site-deploy.yml'
+      - '.github/scripts/assemble-site.py'
   workflow_run:
     workflows: ['Build Android APK']
     types: [completed]
@@ -38,20 +39,33 @@ jobs:
         with:
           ref: main
 
-      - name: Find the latest successful APK build
+      - name: Preserve the currently published download
+        run: |
+          mkdir previous
+          previous_ref=$(git ls-remote --heads origin site-dist)
+          if [ -n "$previous_ref" ]; then
+            git fetch --depth=1 origin site-dist
+            if git cat-file -e FETCH_HEAD:feniq.apk 2>/dev/null; then
+              git show FETCH_HEAD:feniq.apk > previous/feniq.apk
+              git show FETCH_HEAD:version.json > previous/version.json
+            fi
+          fi
+
+      - name: Find the latest available signed production artifact
         id: apk
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          run=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow android-apk.yml --branch main \
-                --status success --limit 1 --json databaseId,number,createdAt --jq '.[0] // empty')
-          if [ -z "$run" ]; then
-            echo "::warning::No successful APK build yet - the site will offer WhatsApp instead of a download."
-            exit 0
-          fi
-          echo "id=$(jq -r .databaseId <<<"$run")" >> "$GITHUB_OUTPUT"
-          echo "build=$(jq -r .number <<<"$run")" >> "$GITHUB_OUTPUT"
-          echo "date=$(jq -r '.createdAt[0:10]' <<<"$run")" >> "$GITHUB_OUTPUT"
+          runs=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow android-apk.yml --branch main \
+                --event workflow_dispatch --status success --limit 20 --json databaseId --jq '.[].databaseId')
+          for run_id in $runs; do
+            count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts" \
+              --jq '[.artifacts[] | select(.name == "feniq-apk" and .expired == false)] | length')
+            if [ "$count" -gt 0 ]; then
+              echo "id=$run_id" >> "$GITHUB_OUTPUT"
+              break
+            fi
+          done
 
       # Artifacts expire after 30 days (android-apk.yml); a missing one is not fatal.
       - name: Download APK
@@ -66,19 +80,10 @@ jobs:
 
       - name: Assemble
         env:
-          BUILD: ${{ steps.apk.outputs.build }}
-          DATE: ${{ steps.apk.outputs.date }}
+          EXPECTED_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
         run: |
-          mkdir dist
-          cp -r site/. dist/
-          if [ -f apk/app-release.apk ]; then
-            mv apk/app-release.apk dist/feniq.apk
-            size=$(stat -c %s dist/feniq.apk)
-            jq -n --arg b "$BUILD" --arg d "$DATE" --argjson s "$size" \
-              '{apk: true, build: $b, date: $d, size: $s}' > dist/version.json
-          else
-            echo '{"apk": false}' > dist/version.json
-          fi
+          python3 .github/scripts/assemble-site.py --source site --apk apk \
+            --previous previous --output dist --expected-cert "$EXPECTED_SHA256"
           cat dist/version.json
 
       # One orphan commit each time, force-pushed, so the APKs never pile up in history.

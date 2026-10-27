@@ -100,13 +100,24 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          EXPECTED_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
             echo "::warning::No signing key in repository secrets - this APK is signed with a temporary debug key, uploaded as feniq-apk-TEST-ONLY and never published. See phoenix/android/README.md."
             echo "artifact=feniq-apk-TEST-ONLY" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "artifact=feniq-apk" >> "$GITHUB_OUTPUT"
+          # A signed staging build must never replace the public production APK.
+          if [ "$GITHUB_REF" = refs/heads/main ] && \
+             [ "$API_BASE_URL" = 'https://feniq-connect-api.onrender.com/api' ]; then
+            if [ -z "$EXPECTED_SHA256" ]; then
+              echo "::error::ANDROID_CERT_SHA256 is required for production publication."
+              exit 1
+            fi
+            echo "artifact=feniq-apk" >> "$GITHUB_OUTPUT"
+          else
+            echo "artifact=feniq-apk-TEST-ONLY" >> "$GITHUB_OUTPUT"
+          fi
           echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
           {
             echo "storeFile=upload-keystore.jks"
@@ -123,7 +134,7 @@ jobs:
         run: >
           flutter build apk --release
           --build-number=$((GITHUB_RUN_NUMBER + 1000))
-          --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
+          --dart-define="API_BASE_URL=$API_BASE_URL"
 
       # What the owner checks to know an update will install over the previous
       # version: the same application id and the same certificate fingerprint.
@@ -162,11 +173,19 @@ jobs:
             fi
             echo "Fingerprint matches ANDROID_CERT_SHA256."
           fi
+          digest=$(sha256sum "$apk" | cut -d ' ' -f 1)
+          jq -n --arg api "$API_BASE_URL" --arg id "$app_id" --arg cert "$cert" \
+            --arg sha "$digest" --arg commit "$GITHUB_SHA" \
+            --arg build "$((GITHUB_RUN_NUMBER + 1000))" --arg date "$(date -u +%F)" \
+            '{apiBaseUrl:$api, applicationId:$id, certificateSha256:$cert, sha256:$sha, commit:$commit, build:$build, date:$date}' \
+            > build/app/outputs/flutter-apk/release.json
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.signing.outputs.artifact }}
-          path: phoenix/build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            phoenix/build/app/outputs/flutter-apk/app-release.apk
+            phoenix/build/app/outputs/flutter-apk/release.json
           retention-days: 30
 
       # The fixed download link for trying the app on a phone: a release asset
@@ -184,7 +203,7 @@ jobs:
           flutter build apk --release \
             --target-platform android-arm64 \
             --build-number=$((GITHUB_RUN_NUMBER + 1000)) \
-            --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
+            --dart-define="API_BASE_URL=$API_BASE_URL"
           cp build/app/outputs/flutter-apk/app-release.apk feniq-test.apk
 
       # Same app for the Android Studio emulator, which runs x86_64 images and
@@ -196,7 +215,7 @@ jobs:
           flutter build apk --release \
             --target-platform android-x64 \
             --build-number=$((GITHUB_RUN_NUMBER + 1000)) \
-            --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
+            --dart-define="API_BASE_URL=$API_BASE_URL"
           cp build/app/outputs/flutter-apk/app-release.apk feniq-emulator.apk
 
       - name: Publish to the test-latest release

@@ -1,12 +1,13 @@
 import { BrowserRouter } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { LoginPage } from './auth/LoginPage';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { UnreadBadgesProvider } from './realtime/UnreadBadgesProvider';
-import { AdminPanel } from './pages/AdminPanel';
-import { WarehousePanel } from './pages/WarehousePanel';
+const AdminPanel = lazy(() => import('./pages/AdminPanel').then((module) => ({ default: module.AdminPanel })));
+const WarehousePanel = lazy(() => import('./pages/WarehousePanel').then((module) => ({ default: module.WarehousePanel })));
 
 // Section 13b: one React app, role-based menus - admin and warehouse
 // accounts each see only their own pages, each with real (bookmarkable,
@@ -60,7 +61,9 @@ function Gate() {
     <ExchangeRateProvider>
       <RealtimeProvider>
         <UnreadBadgesProvider>
-          {user?.role === 'warehouse' ? <WarehousePanel /> : <AdminPanel />}
+          <Suspense fallback={<p className="hint">{t('common.loading')}</p>}>
+            {user?.role === 'warehouse' ? <WarehousePanel /> : <AdminPanel />}
+          </Suspense>
         </UnreadBadgesProvider>
       </RealtimeProvider>
     </ExchangeRateProvider>

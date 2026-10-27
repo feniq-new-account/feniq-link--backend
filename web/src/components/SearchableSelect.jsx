@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -17,11 +18,15 @@ export function SearchableSelect({
   allLabel,
   loadingLabel,
   noMatchesLabel,
+  errorLabel,
 }) {
+  const { t } = useTranslation();
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState(value || '');
   const [options, setOptions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
   const containerRef = useRef(null);
 
   // The visible text follows the committed value whenever it changes from
@@ -35,10 +40,16 @@ export function SearchableSelect({
     if (!isOpen) return undefined;
     let cancelled = false;
     setIsSearching(true);
+    setSearchError(null);
     const timeout = setTimeout(() => {
-      fetchOptions(input.trim()).then((rows) => {
+      Promise.resolve().then(() => fetchOptions(input.trim())).then((rows) => {
         if (cancelled) return;
         setOptions(rows);
+        setIsSearching(false);
+      }).catch((error) => {
+        if (cancelled) return;
+        setOptions([]);
+        setSearchError(errorLabel || t('common.loadFailed', { defaultValue: 'تعذّر تحميل الخيارات. أعد المحاولة.' }));
         setIsSearching(false);
       });
     }, SEARCH_DEBOUNCE_MS);
@@ -46,7 +57,7 @@ export function SearchableSelect({
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [input, isOpen, fetchOptions]);
+  }, [input, isOpen, fetchOptions, errorLabel, retryAttempt, t]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -95,6 +106,8 @@ export function SearchableSelect({
           </button>
           {isSearching ? (
             <div className="adm-searchable-select-hint">{loadingLabel}</div>
+          ) : searchError ? (
+            <div className="error-text" role="alert">{searchError} <button type="button" onClick={() => setRetryAttempt((n) => n + 1)}>{t('common.retry')}</button></div>
           ) : options.length === 0 ? (
             <div className="adm-searchable-select-hint">{noMatchesLabel}</div>
           ) : (

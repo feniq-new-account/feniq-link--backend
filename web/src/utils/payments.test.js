@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createIdempotencyKeys, newIdempotencyKey, paymentRequestFingerprint } from './payments';
 
 // The panel used to mint a fresh idempotency key inside every submit, so a
@@ -276,4 +276,24 @@ describe('newIdempotencyKey', () => {
   it('mints a different key every call', () => {
     expect(newIdempotencyKey()).not.toBe(newIdempotencyKey());
   });
+});
+
+
+it('unconfirmed payment keys survive a reopened form and stay scoped to the account', async () => {
+  const rows = new Map();
+  vi.stubGlobal('localStorage', { getItem: k => rows.get(k) ?? null, setItem: (k,v) => rows.set(k,v), removeItem: k => rows.delete(k) });
+  const token = sub => 'x.'+btoa(JSON.stringify({sub}))+'.x';
+  try {
+    localStorage.setItem('phoenix.admin.token',token('warehouse-a'));
+    const original = createIdempotencyKeys(); const body = paymentBody();
+    const firstKey = original.keyFor(body);
+    const otherBody = paymentBody({amount: 35000}); const otherKey = original.keyFor(otherBody);
+    const reopened = createIdempotencyKeys();
+    expect(reopened.keyFor(body)).toBe(firstKey);
+    await reopened.submit(body, async () => ({}));
+    expect(createIdempotencyKeys().keyFor(body)).not.toBe(firstKey);
+    expect(createIdempotencyKeys().keyFor(otherBody)).toBe(otherKey);
+    localStorage.setItem('phoenix.admin.token',token('warehouse-b'));
+    expect(createIdempotencyKeys().keyFor(otherBody)).not.toBe(otherKey);
+  } finally { vi.unstubAllGlobals(); }
 });

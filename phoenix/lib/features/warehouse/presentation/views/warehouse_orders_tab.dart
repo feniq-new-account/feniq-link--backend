@@ -1,3 +1,4 @@
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -61,23 +62,19 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
     final messenger = ScaffoldMessenger.of(context);
     final collected = await showCollectPaymentSheet(context, orderNumber: order.orderNumber, totalSyp: order.finalPrice);
     if (collected == null) return;
-    if (!await cubit.advance(order.id)) return;
     var message = l10n.warehouseOrderAdvanced(order.orderNumber, orderStatusLabel(l10n, 'delivered'));
     if (collected > 0) {
       final pharmacyId = order.pharmacy?.id;
-      final saved =
-          pharmacyId != null &&
-          await recordCollectedPayment(
-            payments,
-            pharmacyId: pharmacyId,
-            amountSyp: collected,
-            orderNumber: order.orderNumber,
-            note: l10n.warehouseCollectNote(order.orderNumber),
-          );
-      message = saved
-          ? l10n.warehouseCollectRecorded(formatSyp(collected, l10n.currencySuffix))
-          : l10n.warehouseCollectFailed;
-    }
+      if (pharmacyId == null) return;
+      try {
+        // The journal is durable before delivery as well as before payment.
+        await payments.recordPayment(pharmacyId: pharmacyId, amountSyp: collected,
+          method: 'cash', idempotencyKey: const Uuid().v4(), deliveryOrderId: order.id,
+          note: l10n.warehouseCollectNote(order.orderNumber));
+        message = l10n.warehouseCollectRecorded(formatSyp(collected, l10n.currencySuffix));
+      } catch (_) { message = l10n.paymentUnconfirmed; }
+      await cubit.load();
+    } else if (!await cubit.advance(order.id)) { return; }
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 

@@ -138,7 +138,10 @@
     "partialInvalid": "Enter an amount above zero and below the full amount.",
     "recorded": "Delivered, and {{amount}} recorded as paid",
     "failed": "Delivered, but the payment was not saved - record it from the accounts.",
-    "note": "Payment on delivery of order #{{number}}"
+    "note": "Payment on delivery of order #{{number}}",
+    "pendingNotice": "Delivery or collection is not confirmed yet. Your attempt is saved; retry here with the same details instead of entering a new payment.",
+    "pendingDelivery": "Order {{number}}: awaiting delivery confirmation, then recording {{amount}}.",
+    "pendingPayment": "Order {{number}}: delivery confirmed; awaiting confirmation of the {{amount}} payment."
   },
   "orderDetail": {
     "backToOrders": "Back to orders",
@@ -1452,5 +1455,14 @@
     "mismatch": "The two new passwords do not match.",
     "wrongCurrent": "The current password is wrong.",
     "done": "Password changed ✓ Any other device signed in to this account was signed out."
+  },
+  "connection": {
+    "live": "Live updates connected",
+    "offline": "Live updates disconnected; displayed data may be old.",
+    "updated": "Last successful update: {{time}}",
+    "refresh": "Refresh data"
+  },
+  "payments": {
+    "unknown": "The result is not confirmed. The payment may have been recorded; retry with the same details to confirm it without a duplicate."
   }
 }

@@ -5,11 +5,11 @@ Atlas المجاني (M0) لا يأخذ نسخاً احتياطية. هذا ما
 | الملف | ماذا يفعل |
 |---|---|
 | `.github/workflows/db-backup.yml` | كل يوم 03:23 بتوقيت دمشق: نسخة مشفّرة + تجربة استرجاع فعلية + حفظ 90 يوماً |
-| `backup.sh` | `mongodump` ← ضغط ← تشفير GPG/AES-256. لا يكتب نسخة غير مشفّرة على القرص |
-| `restore.sh` | فك التشفير ← `mongorestore` إلى أي قاعدة (تجريبية أو الإنتاج) |
-| `verify-restore.js` | يعدّ وثائق كل مجموعة بعد الاسترجاع ويقارنها بالأصل |
+| `backup.sh` | `snapshot.js` (جلسة snapshot واحدة لكل المجموعات) ← ضغط ← تشفير GPG/AES-256. لا يكتب نسخة غير مشفّرة على القرص |
+| `restore.sh` | فك التشفير ← استعادة BSON من snapshot (ويدعم mongorestore للنسخ القديمة) إلى أي قاعدة (تجريبية أو الإنتاج) |
+| `verify-restore.js` | يفحص اتساق القيود والأرصدة وروابط الطلبات والدفعات والمرتجعات، ويقارن المجموعات بالأصل |
 
-الأدوات: `mongodump`/`mongorestore` المثبّتة إن وُجدت، وإلا صورة Docker الرسمية `mongo:8.0` تلقائياً.
+الأدوات للنسخ الجديدة: Node 24 وnpm ci داخل backend وgpg. يتطلب المصدر MongoDB 5+ يدعم snapshot reads؛ يفشل النسخ إذا كانت الميزة غير مدعومة أو انتهت مهلة اللقطة، ولا ينشئ نسخة من قراءات غير متسقة. النسخ القديمة تحتاج mongorestore أو Docker.
 
 ## الإعداد (مرة واحدة)
 
@@ -37,18 +37,18 @@ GitHub لا يُظهر السر بعد حفظه، وبدونه لا يمكن ف�
 ## الاسترجاع
 
 1. **Actions ← Database backup** ← اختر تشغيلاً بتاريخ اليوم المطلوب ← **Artifacts** ← نزّل `feniq-db-...`
-   وفك الـzip: فيه `feniq-db-....archive.gz.gpg` و `.sha256`.
+   وفك الـzip: فيه `feniq-db-....snapshot.jsonl.gz.gpg` و `.sha256`.
 2. على جهاز Linux/macOS (أو WSL على ويندوز) عليه `gpg` و Docker (أو MongoDB Database Tools)، داخل الريبو:
 
 ```bash
 export BACKUP_ENCRYPTION_KEY='...'   # من مدير كلمات السر
 
 # أ) تجربة آمنة أولاً: إلى قاعدة محلية/جانبية، لا تلمس الأصل
-backend/scripts/backup/restore.sh feniq-db-2026-10-04T0023Z.archive.gz.gpg \
+backend/scripts/backup/restore.sh feniq-db-2026-10-04T0023Z.snapshot.jsonl.gz.gpg \
   mongodb://127.0.0.1:27017 --to-db feniq_restore_test
 
 # ب) كارثة حقيقية: استرجاع كامل فوق قاعدة الإنتاج (يحذف كل مجموعة ثم يعيدها)
-backend/scripts/backup/restore.sh feniq-db-2026-10-04T0023Z.archive.gz.gpg \
+backend/scripts/backup/restore.sh feniq-db-2026-10-04T0023Z.snapshot.jsonl.gz.gpg \
   'mongodb+srv://feniq:PASSWORD@cluster0.xxxxx.mongodb.net' --drop
 ```
 
@@ -70,3 +70,5 @@ node scripts/backup/verify-restore.js --target '<نفس الرابط>' --db feni
 مقروء من البيانات ← `restore.sh --to-db` ← `verify-restore.js`: كل المجموعات والأعداد مطابقة.
 كذلك: كلمة سر خاطئة تفشل بوضوح، و`--drop` فوق قاعدة "تالفة" يعيدها كما كانت تماماً، والمسار عبر Docker
 (بدون أدوات MongoDB مثبّتة) يعمل.
+
+النسخ الجديدة تحفظ BSON والتواريخ والفهارس وخيارات المجموعات، وتتحقق من اكتمال الملف وعدد وثائقه. الاستعادة إلى مجموعات غير فارغة تتطلب --drop؛ جرّبها أولاً بقاعدة منفصلة. فشل التحقق المالي يمنع اعتبار النسخة سليمة، ولا يعيد بناء الأرصدة لإخفاء اختلافها.

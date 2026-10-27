@@ -120,7 +120,7 @@ void main() {
       when(() => repository.getOrders(status: 'pending')).thenAnswer(
         (_) async => WarehouseOrdersPage(orders: [_summary('o1'), _summary('o2', number: 2)]),
       );
-      when(() => repository.advance('o1')).thenAnswer((_) async => const AdvancedOrderStatus(status: 'out_for_delivery'));
+      when(() => repository.advance('o1', expectedStatus: any(named: 'expectedStatus'), targetStatus: any(named: 'targetStatus'))).thenAnswer((_) async => const AdvancedOrderStatus(status: 'out_for_delivery'));
       final cubit = WarehouseOrdersCubit(repository: repository);
       await cubit.load();
       final ok = await cubit.advance('o1');
@@ -133,7 +133,7 @@ void main() {
       when(() => repository.getOrders(status: 'pending')).thenAnswer(
         (_) async => WarehouseOrdersPage(orders: [_summary('o1')]),
       );
-      when(() => repository.advance('o1')).thenThrow(ServerFailure('no', code: 'ORDER_ALREADY_ADVANCED'));
+      when(() => repository.advance('o1', expectedStatus: any(named: 'expectedStatus'), targetStatus: any(named: 'targetStatus'))).thenThrow(ServerFailure('no', code: 'ORDER_ALREADY_ADVANCED'));
       final cubit = WarehouseOrdersCubit(repository: repository);
       await cubit.load();
       final ok = await cubit.advance('o1');
@@ -165,7 +165,7 @@ void main() {
     });
 
     test('approve & send moves the order on', () async {
-      when(() => repository.advance('o1')).thenAnswer((_) async => const AdvancedOrderStatus(status: 'out_for_delivery'));
+      when(() => repository.advance('o1', expectedStatus: any(named: 'expectedStatus'), targetStatus: any(named: 'targetStatus'))).thenAnswer((_) async => const AdvancedOrderStatus(status: 'out_for_delivery'));
       expect(await cubit.advance(), isTrue);
       expect(cubit.state.order?.status, 'out_for_delivery');
       expect(cubit.state.order?.isEditable, isFalse);

@@ -1,3 +1,4 @@
+import { useModalSafety } from '../hooks/useModalSafety';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatSyp } from '../utils/currency';
@@ -9,6 +10,7 @@ import { amountLeft, isValidPartial, parseWholeLiras } from '../utils/collectPay
 // stays on its way.
 export function CollectPaymentModal({ orderNumber, totalSyp, onChoose, onClose }) {
   const { t } = useTranslation();
+  const modal = useModalSafety(false, onClose);
   const [partial, setPartial] = useState(false);
   const [amount, setAmount] = useState('');
   const [error, setError] = useState(null);
@@ -25,8 +27,8 @@ export function CollectPaymentModal({ orderNumber, totalSyp, onChoose, onClose }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
+    <div className="modal-overlay" {...modal.overlayProps}>
+      <div className="modal" {...modal.dialogProps}>
         <h2>{t('collect.title', { number: orderNumber })}</h2>
         <p>{t('collect.total', { amount: formatSyp(totalSyp) })}</p>
         <div className="collect-choices">

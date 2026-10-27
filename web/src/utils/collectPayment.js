@@ -1,4 +1,4 @@
-import { newIdempotencyKey } from './payments';
+import { createIdempotencyKeys } from './payments';
 
 // "Delivered" asks one thing: did the warehouse collect the money? All, part,
 // or later. Same rules as the app's collect_payment_sheet.dart.
@@ -33,14 +33,15 @@ export function amountLeft(total, paid) {
 // the server took it.
 export async function recordCollectedPayment(api, { pharmacyId, amountSyp, note }) {
   try {
-    await api.createPayment({
+    const body = {
       pharmacyId,
       amount: amountSyp,
       currency: 'SYP',
       method: 'cash',
       note,
-      idempotencyKey: newIdempotencyKey(),
-    });
+    };
+    const keys = createIdempotencyKeys();
+    await keys.submit(body, (idempotencyKey) => api.createPayment({ ...body, idempotencyKey }));
     return true;
   } catch {
     return false;

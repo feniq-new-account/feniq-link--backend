@@ -21,6 +21,13 @@ permissions:
   contents: read
 
 jobs:
+  publication:
+    name: Website publication safeguards
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+
   backend:
     name: Backend (npm test)
     runs-on: ubuntu-24.04
@@ -36,7 +43,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
@@ -86,7 +93,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
           cache-dependency-path: web/package-lock.json
 

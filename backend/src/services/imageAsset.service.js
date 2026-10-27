@@ -2,10 +2,8 @@ const env = require('../config/env');
 const { ApiError } = require('../utils/ApiError');
 const { uploadImage, deleteImageByUrl } = require('./upload.service');
 const { verifyImageMagicBytes } = require('../middlewares/upload.middleware');
-const ProductCatalog = require('../models/productCatalog.model');
-const Product = require('../models/product.model');
-const Manufacturer = require('../models/manufacturer.model');
 const mediaStorage = require('./mediaStorage.service');
+const { hasMediaReferences } = require('./mediaReferences.service');
 
 // Catalog images (catalog overhaul Phase 5.3 / Phase 9, M7): the central image
 // of a catalog item, a manufacturer's logo and a warehouse's override image on
@@ -34,14 +32,19 @@ function isOwnImageUrl(url) {
   return isOwnCloudinaryUrl(url) || mediaStorage.isOwnMediaUrl(url);
 }
 
-// An image field sent as data (a product edit carrying `image`): null or ''
-// clears it; anything else must be one of our Cloudinary URLs (400 otherwise).
-// Returns undefined when the field was not sent.
-function imageUrlInput(value) {
+// An image field sent as data may clear or keep the existing asset. A new
+// assignment must come from a successful server-side upload, never a copied
+// public URL. Returns undefined when the field was not sent.
+function imageUrlInput(value, { currentUrl = null, trustedUpload = false } = {}) {
   if (value === undefined) return undefined;
   if (value === null || (typeof value === 'string' && !value.trim())) return null;
-  if (typeof value === 'string' && isOwnImageUrl(value.trim())) return value.trim();
-  throw ApiError.badRequest('Images must be uploaded - only our own image links are accepted.', undefined, 'INVALID_IMAGE_URL');
+  if (typeof value === 'string' && isOwnImageUrl(value.trim())) {
+    const url = value.trim();
+    // Keeping the existing image is safe; assigning somebody else's asset is
+    // not. Only the server's successful upload path may assign a new URL.
+    if (trustedUpload || url === currentUrl) return url;
+  }
+  throw ApiError.badRequest('Upload a new image using the image upload endpoint.', undefined, 'INVALID_IMAGE_URL');
 }
 
 // Validates an uploaded file's actual bytes and stores it on Cloudinary under
@@ -60,12 +63,7 @@ async function storeUploadedImage(file, folder) {
 async function releaseImage(url) {
   if (!url || !isOwnImageUrl(url)) return;
   try {
-    const [catalog, products, manufacturers] = await Promise.all([
-      ProductCatalog.exists({ imageUrl: url }),
-      Product.exists({ image: url }),
-      Manufacturer.exists({ logoUrl: url }),
-    ]);
-    if (catalog || products || manufacturers) return;
+    if (await hasMediaReferences(url)) return;
     await deleteImageByUrl(url);
   } catch (err) {
     // eslint-disable-next-line no-console

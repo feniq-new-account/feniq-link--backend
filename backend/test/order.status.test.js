@@ -285,3 +285,31 @@ test('an order on the road for a day closes on its own; a fresher one stays', as
   // The pharmacist is told it was delivered.
   assert.ok(notifications.some((n) => n.userId === String(ids.pharmacyUser) && /delivered/.test(n.bodyEn)));
 });
+
+test('retrying an explicit transition confirms its target without advancing twice', async () => {
+  const order = await makeOrder('pending');
+  const transition = { expectedStatus: 'pending', targetStatus: 'confirmed' };
+  const first = await warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser, transition);
+  const replay = await warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser, transition);
+  assert.strictEqual(first.status, 'confirmed');
+  assert.strictEqual(replay.status, 'confirmed');
+  assert.strictEqual((await Order.findById(order._id)).statusHistory.length, 2);
+  await warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser, { expectedStatus: 'confirmed', targetStatus: 'out_for_delivery' });
+  await assert.rejects(() => warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser, transition), withCode('ORDER_ALREADY_ADVANCED'));
+});
+
+test('an explicit transition cannot skip a stage', async () => {
+  const order = await makeOrder('pending');
+  await assert.rejects(() => warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser,
+    { expectedStatus: 'pending', targetStatus: 'delivered' }), withCode('INVALID_ORDER_TRANSITION'));
+  assert.strictEqual((await Order.findById(order._id)).status, 'pending');
+});
+
+test('warehouse history pages begin with newest orders and use a descending cursor', async () => {
+  const orders = [];
+  for (let i = 0; i < 4; i++) orders.push(await makeOrder('cancelled'));
+  const page = await warehouseOrderService.listOrdersForWarehouse(ids.warehouse, 'cancelled', { limit: 2 });
+  assert.deepStrictEqual(page.rows.map(r => r.order.orderNumber), orders.slice(-2).reverse().map(o => o.orderNumber));
+  const next = await warehouseOrderService.listOrdersForWarehouse(ids.warehouse, 'cancelled', { limit: 2, after: Number(page.nextCursor) });
+  assert.ok(next.rows.every(r => r.order.orderNumber < Number(page.nextCursor)));
+});

@@ -1,11 +1,11 @@
-# نسخة احتياطية لقاعدة البيانات كل 3 أيام (Atlas المجاني بلا نسخ احتياطية).
+# نسخة احتياطية لقاعدة البيانات يومياً (Atlas المجاني بلا نسخ احتياطية).
 #
-# كل 3 أيام 03:23 بتوقيت دمشق (00:23 UTC)، واللابتوب بينزّلها لـ D:/Feniq/_backups/db. أو يدوياً: Actions ← Database backup ← Run workflow.
-#   1. mongodump لقاعدة الإنتاج (سر MONGODB_URI) ← مضغوط ← مشفّر بـ GPG/AES-256
+# يومياً 03:23 بتوقيت دمشق (00:23 UTC)، واللابتوب بينزّلها لـ D:/Feniq/_backups/db. أو يدوياً: Actions ← Database backup ← Run workflow.
+#   1. snapshot read لقاعدة الإنتاج (سر MONGODB_URI) ← مضغوط ← مشفّر بـ GPG/AES-256
 #      بكلمة السر BACKUP_ENCRYPTION_KEY. لا تُكتب نسخة غير مشفّرة على القرص.
 #   2. تجربة استرجاع فعلية: تُفك النسخة وتُسترجع في MongoDB مؤقت داخل التشغيل،
 #      وتُقارن المجموعات بالأصل. إذا فشل الاسترجاع يفشل التشغيل (وتصل رسالة من GitHub).
-#   3. تُحفظ كـ Artifact باسم feniq-db-<التاريخ> لمدة 30 يوماً
+#   3. تُحفظ كـ Artifact باسم feniq-db-<التاريخ> لمدة 90 يوماً
 #      (أو BACKUP_RETENTION_DAYS من متغيرات المستودع).
 #
 # الأسرار (Settings ← Secrets and variables ← Actions):
@@ -18,7 +18,7 @@ name: Database backup
 
 on:
   schedule:
-    - cron: '23 0 */3 * *'
+    - cron: '23 0 * * *'
   workflow_dispatch:
 
 permissions:
@@ -51,6 +51,16 @@ jobs:
           [ -n "$BACKUP_ENCRYPTION_KEY" ] || { echo "::error::Repository secret BACKUP_ENCRYPTION_KEY is not set (openssl rand -base64 32)."; missing=1; }
           exit $missing
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install verifier dependencies
+        working-directory: backend
+        run: npm ci --omit=dev --ignore-scripts
+
       - name: Dump and encrypt
         id: dump
         env:
@@ -60,17 +70,7 @@ jobs:
           backend/scripts/backup/backup.sh backups
           file=$(ls backups/*.gpg)
           echo "file=$file" >> "$GITHUB_OUTPUT"
-          echo "name=$(basename "$file" .archive.gz.gpg)" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install verifier dependencies
-        working-directory: backend
-        run: npm ci --omit=dev --ignore-scripts
+          echo "name=$(basename "$file" .snapshot.jsonl.gz.gpg)" >> "$GITHUB_OUTPUT"
 
       - name: Restore drill (into the throwaway database)
         env:
@@ -97,7 +97,7 @@ jobs:
         with:
           name: ${{ steps.dump.outputs.name }}
           path: backups/
-          retention-days: ${{ vars.BACKUP_RETENTION_DAYS || 30 }}
+          retention-days: ${{ vars.BACKUP_RETENTION_DAYS || 90 }}
           if-no-files-found: error
           # Already compressed and encrypted - zipping it again gains nothing.
           compression-level: 0

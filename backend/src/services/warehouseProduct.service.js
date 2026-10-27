@@ -372,7 +372,7 @@ async function applyProductUpdate(
   product,
   userId,
   changes,
-  { requireRateUsed = false, session = null, resolve = true } = {}
+  { requireRateUsed = false, session = null, resolve = true, trustedImageUpload = false } = {}
 ) {
   if (changes.unit !== undefined && changes.unit !== null) {
     Object.assign(product, unitFieldsFrom(changes));
@@ -408,7 +408,7 @@ async function applyProductUpdate(
   // Phase 9 (M7): only an image we uploaded (imageUrlInput, 400
   // INVALID_IMAGE_URL otherwise); null or '' clears the override (L3). The
   // replaced one is released once the write is durable (releaseReplacedImage).
-  const image = imageUrlInput(changes.image);
+  const image = imageUrlInput(changes.image, { currentUrl: product.image, trustedUpload: trustedImageUpload });
   if (image !== undefined && image !== product.image) {
     product.$locals.replacedImage = product.image ?? null;
     product.image = image;
@@ -485,7 +485,7 @@ async function setProductImage(productId, warehouseId, userId, file) {
   const product = await findOwnedProductOrThrow(productId, warehouseId);
   const url = await storeUploadedImage(file, 'products');
   try {
-    return await applyProductUpdate(product, userId, { image: url });
+    return await applyProductUpdate(product, userId, { image: url }, { trustedImageUpload: true });
   } catch (err) {
     await releaseImage(url);
     throw err;

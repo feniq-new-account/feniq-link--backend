@@ -148,6 +148,59 @@ void main() {
       verify(() => rc.refresh()).called(1);
     });
 
+    test('mandatory update survives relaunches inside the fetch interval', () async {
+      final t0 = DateTime(2026, 1, 1, 8);
+      expect(
+        await build(current: '1.0.0', latest: '1.2.0', min: '1.1.0', now: () => t0)
+            .checkForUpdate(),
+        AppUpdateStatus.mandatory,
+      );
+      clearInteractions(rc);
+
+      for (final hours in [2, 10, 23]) {
+        final status = await build(
+          current: '1.0.0',
+          latest: '1.2.0',
+          min: '1.1.0',
+          now: () => t0.add(Duration(hours: hours)),
+        ).checkForUpdate();
+
+        expect(status, AppUpdateStatus.mandatory, reason: 'relaunch after ${hours}h');
+        verifyNever(() => rc.refresh());
+      }
+    });
+
+    test('installing a supported version clears the cached mandatory update', () async {
+      final t0 = DateTime(2026, 1, 1, 8);
+      await build(current: '1.0.0', latest: '1.2.0', min: '1.1.0', now: () => t0)
+          .checkForUpdate();
+      clearInteractions(rc);
+
+      final status = await build(
+        current: '1.1.0',
+        latest: '1.2.0',
+        min: '1.1.0',
+        now: () => t0.add(const Duration(hours: 1)),
+      ).checkForUpdate();
+
+      expect(status, AppUpdateStatus.none);
+      verifyNever(() => rc.refresh());
+    });
+
+    test('a failed refresh preserves a cached mandatory update', () async {
+      final t0 = DateTime(2026, 1, 1, 8);
+      final service = build(
+        current: '1.0.0',
+        latest: '1.2.0',
+        min: '1.1.0',
+        now: () => t0,
+      );
+      when(() => rc.refresh()).thenThrow(Exception('offline'));
+
+      expect(await service.checkForUpdate(), AppUpdateStatus.mandatory);
+      verify(() => rc.refresh()).called(1);
+    });
+
     test('a failed fetch still counts as a check (no retry storm)', () async {
       final t0 = DateTime(2026, 1, 1, 8);
       when(() => rc.refresh()).thenThrow(Exception('offline'));

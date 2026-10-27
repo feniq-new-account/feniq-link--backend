@@ -21,7 +21,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
-        value: "20"
+        value: "24"
+      - key: SEED_DEMO_DATA
+        value: "false"
       - key: JWT_SECRET
         generateValue: true
       - key: MONGODB_URI
@@ -56,6 +58,8 @@ services:
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
     envVars:
+      - key: NODE_VERSION
+        value: "24"
       - key: VITE_API_BASE_URL
         value: https://feniq-connect-api.onrender.com/api
     routes:

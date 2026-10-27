@@ -1,3 +1,4 @@
+import { useModalSafety } from '../hooks/useModalSafety';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -191,6 +192,7 @@ function ReversePaymentModal({ payment, onClose, onConfirm }) {
   const [idempotencyKeys] = useState(createIdempotencyKeys);
   const [reason, setReason] = useState('');
   const [isBusy, setIsBusy] = useState(false);
+  const modalSafety = useModalSafety(isBusy, onClose);
   const [error, setError] = useState(null);
 
   const amountText =
@@ -217,8 +219,8 @@ function ReversePaymentModal({ payment, onClose, onConfirm }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
+    <div className="modal-overlay" {...modalSafety.overlayProps}>
+      <div className="modal" {...modalSafety.dialogProps}>
         <h2>{t('debts.reversePaymentTitle')}</h2>
         <p className="hint">{t('debts.reversePaymentExplain', { amount: amountText })}</p>
         <form onSubmit={handleSubmit} className="product-form">
@@ -234,7 +236,7 @@ function ReversePaymentModal({ payment, onClose, onConfirm }) {
           </label>
           {error && <p className="error-text">{error}</p>}
           <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={isBusy}>
+            <button type="button" className="btn-secondary" onClick={modalSafety.close} disabled={isBusy}>
               {t('common.cancel')}
             </button>
             <button type="submit" className="btn-reject" disabled={isBusy}>

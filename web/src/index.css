@@ -5363,3 +5363,6 @@ input[type='date'][value='']:not(:focus) {
     content: none;
   }
 }
+
+.connection-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-block: 12px; color: var(--wh-muted, #46566b); font-size: 0.875rem; }
+.connection-status button { margin-inline-start: auto; }
