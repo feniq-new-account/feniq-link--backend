@@ -1,3 +1,4 @@
+import 'package:feniq/features/rep/presentation/managers/rep_load_status.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -113,10 +114,14 @@ void main() {
     await cubit.loadMoreVisits();
     expect(cubit.state.loadMoreError, isTrue);
     expect(cubit.state.errorCode, 'NETWORK_ERROR');
-    when(
-      () => repo.getRepVisits(repId: 'r1', after: 'v11'),
-    ).thenAnswer((_) async => WarehouseRepVisitsPage(visits: [entry('v10'), entry('v10')]));
-    await cubit.loadMoreVisits();
+    final retryPage = Completer<WarehouseRepVisitsPage>();
+    when(() => repo.getRepVisits(repId: 'r1', after: 'v11')).thenAnswer((_) => retryPage.future);
+    final retry = cubit.loadMoreVisits();
+    expect(cubit.state.isLoadingMore, isTrue);
+    expect(cubit.state.status, RepLoadStatus.loaded);
+    expect(cubit.state.errorCode, isNull);
+    retryPage.complete(WarehouseRepVisitsPage(visits: [entry('v10'), entry('v10')]));
+    await retry;
     expect(cubit.state.visits.map((v) => v.id), ['v11', 'v10']);
     expect(cubit.state.loadMoreError, isFalse);
     await cubit.close();

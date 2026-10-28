@@ -113,7 +113,7 @@ class WarehouseRepDetailCubit extends Cubit<WarehouseRepDetailState> {
   }
 
   WarehouseRepDetailState _with({required bool isLoadingMore}) => WarehouseRepDetailState(
-    status: state.status,
+    status: RepLoadStatus.loaded,
     pharmacies: state.pharmacies,
     visits: state.visits,
     hasMoreVisits: state.hasMoreVisits,
