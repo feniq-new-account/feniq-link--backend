@@ -147,6 +147,7 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
+          # This action executes each script line in a separate shell.
           script: |
             (cd apk && sha256sum -c SHA256SUMS)
             adb install -r apk/feniq-prelaunch-universal.apk
@@ -158,10 +159,7 @@ jobs:
             adb shell pidof com.feniq.link > apk/android15-pid.txt
             test -s apk/android15-pid.txt
             adb logcat -d -b crash > apk/android15-crashes.txt
-            if grep -q 'Process: com.feniq.link' apk/android15-crashes.txt; then
-              cat apk/android15-crashes.txt
-              exit 1
-            fi
+            if grep -q 'Process: com.feniq.link' apk/android15-crashes.txt; then cat apk/android15-crashes.txt; exit 1; fi
             adb exec-out screencap -p > apk/android15-startup.png
       - name: Keep Android startup evidence
         if: always()
