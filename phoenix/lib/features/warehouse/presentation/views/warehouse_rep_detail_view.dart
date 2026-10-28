@@ -36,7 +36,10 @@ class _WarehouseRepDetailViewState extends State<WarehouseRepDetailView> {
   @override
   void initState() {
     super.initState();
-    listenForEnd(_controller, () => context.read<WarehouseRepDetailCubit>().loadMoreVisits());
+    listenForEnd(_controller, () {
+      final cubit = context.read<WarehouseRepDetailCubit>();
+      if (!cubit.state.loadMoreError) cubit.loadMoreVisits();
+    });
   }
 
   @override

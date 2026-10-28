@@ -101,6 +101,8 @@ void main() {
         findsOneWidget,
         reason: 'A page error must be visible where the user reached the end',
       );
+      verifyNever(visits.loadMore);
+      verifyNever(detail.loadMoreVisits);
       clearInteractions(visits);
       clearInteractions(detail);
       await tester.tap(retry);

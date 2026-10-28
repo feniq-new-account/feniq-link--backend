@@ -39,7 +39,8 @@ class _RepVisitsTabState extends State<RepVisitsTab> {
     if (!_controller.hasClients) return;
     final position = _controller.position;
     if (position.pixels >= position.maxScrollExtent - 240) {
-      context.read<RepVisitsCubit>().loadMore();
+      final cubit = context.read<RepVisitsCubit>();
+      if (!cubit.state.loadMoreError) cubit.loadMore();
     }
   }
 
