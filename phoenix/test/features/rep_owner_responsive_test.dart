@@ -509,14 +509,16 @@ void main() {
               issues.add(details.toString().substring(0, details.toString().length.clamp(0, 1600)));
           final key = GlobalKey();
           Widget child = screen.startsWith('rep_') ? const RepShellView() : const WarehouseShellView();
-          if (screen == 'warehouse_rep_detail' || screen == 'warehouse_rep_detail_error')
+          if (screen == 'warehouse_rep_detail' || screen == 'warehouse_rep_detail_error') {
             child = const WarehouseRepDetailView(repName: 'سامر أحمد الحسن - Samer');
+          }
           if (screen == 'rep_detail' || screen == 'rep_detail_error') child = const RepPharmacyDetailView();
           if (screen == 'warehouse_detail') child = const WarehouseOrderDetailView();
-          if (screen == 'warehouse_return_detail' || screen == 'warehouse_reject')
+          if (screen == 'warehouse_return_detail' || screen == 'warehouse_reject') {
             child = const WarehouseReturnDetailView();
+          }
           if (screen == 'warehouse_statement' || screen == 'warehouse_payment') child = const WarehouseStatementView();
-          if (screen == 'warehouse_collect')
+          if (screen == 'warehouse_collect') {
             child = Scaffold(
               body: Builder(
                 builder: (context) => TextButton(
@@ -525,6 +527,7 @@ void main() {
                 ),
               ),
             );
+          }
           final record = <String, Object?>{
             'screen': screen,
             'variant': variant,
@@ -673,10 +676,11 @@ void main() {
       tester.view.resetDevicePixelRatio();
       tester.view.resetViewInsets();
       tester.platformDispatcher.clearTextScaleFactorTestValue();
-      if (root != null)
+      if (root != null) {
         File(
           '${root.path}/capture-results.json',
         ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(records));
+      }
     }
     expect(
       records.where((r) => (r['issues']! as List).isNotEmpty).toList(),

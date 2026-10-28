@@ -23,4 +23,4 @@ The responsive suite renders real Arabic screens using the bundled fonts, includ
 
 The backend integration test sends four concurrent HTTP scans against a temporary MongoDB replica set and asserts exactly one stored verified visit with matching receipt IDs.
 
-These tests do not substitute for a physical camera/GPS/keyboard check on the Oukitel C62. Product additions proposed in the earlier review (separate accountant memberships, an inventory screen and a unified activity feed) are outside these bug and responsive-layout changes.
+These tests do not substitute for a physical camera/GPS/keyboard check on the Oukitel C62.
