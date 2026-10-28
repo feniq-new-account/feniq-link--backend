@@ -182,6 +182,7 @@ class _CompactRoleNavigation extends StatelessWidget {
                   title: Text(destinations[i].label),
                   trailing: i == selectedIndex ? const Icon(Icons.check) : null,
                   selected: i == selectedIndex,
+                    selectedColor: AppColors.primaryTextOf(context),
                   onTap: () => Navigator.of(context).pop(i),
                 ),
             ],
