@@ -4,7 +4,7 @@
 
 - Period changes discard figures belonging to the previous period. Same-period refreshes retain cached figures with a visible failure, retry, and last successful update time.
 - Leaving a visit during GPS lookup safely ignores the late callback. Back waits during submission; a completed visit returns its result so the previous screen refreshes. All scan callbacks handle a disposed cubit.
-- Fresh visit loads invalidate pending pagination for both the rep and warehouse manager. Merging deduplicates IDs, preserves the new cursor, and exposes failed pages with retry controls.
+- Fresh visit loads invalidate pending pagination for both the rep and warehouse manager. Merging deduplicates IDs, preserves the new cursor, and exposes failed pages with retry controls at the end of the log, where the failed load occurred.
 - Verified visits serialize through the active assignment inside a MongoDB transaction. Concurrent scans return the same receipt, and the warehouse receives one creation event after commit.
 
 ## Layout and readability

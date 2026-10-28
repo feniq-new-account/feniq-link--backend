@@ -81,13 +81,13 @@ class _RepVisitsTabState extends State<RepVisitsTab> {
               ],
             );
           }
-          final hasError = state.status == RepLoadStatus.error || state.loadMoreError;
+          final hasError = state.status == RepLoadStatus.error && !state.loadMoreError;
           final hasNotice = hasError || state.status == RepLoadStatus.loading;
           return ListView.separated(
             controller: _controller,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: AppPadding.screen,
-            itemCount: state.visits.length + (hasNotice ? 1 : 0) + (state.isLoadingMore ? 1 : 0),
+            itemCount: state.visits.length + (hasNotice ? 1 : 0) + (state.isLoadingMore || state.loadMoreError ? 1 : 0),
             separatorBuilder: (_, _) => const SizedBox(height: AppSizes.spacingSmall),
             itemBuilder: (context, index) {
               if (hasNotice && index == 0) {
@@ -95,14 +95,19 @@ class _RepVisitsTabState extends State<RepVisitsTab> {
                     ? FailureWidget(
                         dense: true,
                         message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
-                        onRetry: () => state.loadMoreError
-                            ? context.read<RepVisitsCubit>().loadMore()
-                            : context.read<RepVisitsCubit>().load(),
+                        onRetry: () => context.read<RepVisitsCubit>().load(),
                       )
                     : const LinearProgressIndicator();
               }
               final i = index - (hasNotice ? 1 : 0);
               if (i >= state.visits.length) {
+                if (state.loadMoreError) {
+                  return FailureWidget(
+                    dense: true,
+                    message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+                    onRetry: () => context.read<RepVisitsCubit>().loadMore(),
+                  );
+                }
                 return const Padding(
                   padding: EdgeInsets.all(AppSizes.spacingMedium),
                   child: Center(child: CircularProgressIndicator()),

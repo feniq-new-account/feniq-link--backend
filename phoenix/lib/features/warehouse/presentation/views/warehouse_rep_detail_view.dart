@@ -84,13 +84,11 @@ class _WarehouseRepDetailViewState extends State<WarehouseRepDetailView> {
                 padding: AppPadding.screen,
                 children: [
                   if (state.status == RepLoadStatus.loading) const LinearProgressIndicator(),
-                  if (state.status == RepLoadStatus.error)
+                  if (state.status == RepLoadStatus.error && !state.loadMoreError)
                     FailureWidget(
                       dense: true,
                       message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
-                      onRetry: () => state.loadMoreError
-                          ? context.read<WarehouseRepDetailCubit>().loadMoreVisits()
-                          : context.read<WarehouseRepDetailCubit>().load(),
+                      onRetry: () => context.read<WarehouseRepDetailCubit>().load(),
                     ),
                   heading(l10n.warehouseRepPharmacies),
                   const SizedBox(height: AppSizes.spacingSmall),
@@ -153,6 +151,12 @@ class _WarehouseRepDetailViewState extends State<WarehouseRepDetailView> {
                     ),
                     const SizedBox(height: AppSizes.spacingSmall),
                   ],
+                  if (state.loadMoreError)
+                    FailureWidget(
+                      dense: true,
+                      message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+                      onRetry: () => context.read<WarehouseRepDetailCubit>().loadMoreVisits(),
+                    ),
                   if (state.isLoadingMore) const Center(child: CircularProgressIndicator()),
                 ],
               ),
