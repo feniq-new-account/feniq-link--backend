@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/display_name.dart';
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:feniq/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
@@ -209,7 +210,10 @@ class _Change extends StatelessWidget {
       text = l10n.warehouseSummaryChangeDown(-percent);
       color = AppColors.errorOf(context);
     }
-    return Text(text, style: context.textTheme.bodySmall?.copyWith(color: color));
+    return Text(
+      text.replaceAllMapped(RegExp(r'\d+%'), (match) => ltrIsolate(match[0]!)),
+      style: context.textTheme.bodySmall?.copyWith(color: color),
+    );
   }
 }
 

@@ -18,7 +18,7 @@ import 'package:feniq/core/extensions/build_context_extensions.dart';
 // for its "remove this item?" confirmation - otherwise the value just snaps
 // back to [minQuantity].
 //
-// Plain [Row] layout, so it mirrors correctly under RTL with no manual
+// Adaptive controls mirror correctly under RTL with no manual
 // handling, and every colour comes from AppColors.*Of(context) for light/dark.
 class QuantityStepper extends StatefulWidget {
   const QuantityStepper({
@@ -145,8 +145,8 @@ class _QuantityStepperState extends State<QuantityStepper> {
         borderRadius: AppRadius.small,
         border: Border.all(color: AppColors.borderOf(context)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: OverflowBar(
+        overflowAlignment: OverflowBarAlignment.center,
         children: [
           _StepButton(
             icon: Icons.remove,
@@ -157,7 +157,7 @@ class _QuantityStepperState extends State<QuantityStepper> {
           SizedBox(
             width: math.max(
               widget.compact ? 34.0 : 44.0,
-              MediaQuery.textScalerOf(context).scale((textStyle?.fontSize ?? 16) * 0.62) * widget.maxDigits + 8,
+              MediaQuery.textScalerOf(context).scale((textStyle?.fontSize ?? 16) * 0.62) * widget.maxDigits,
             ),
             child: TextField(
               controller: _controller,

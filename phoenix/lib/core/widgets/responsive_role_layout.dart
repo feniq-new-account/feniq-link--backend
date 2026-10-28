@@ -70,15 +70,21 @@ class ResponsiveRoleScaffold extends StatelessWidget {
           Theme.of(context).navigationBarTheme.labelTextStyle?.resolve({WidgetState.selected}) ??
           Theme.of(context).textTheme.labelMedium!;
       var labelHeight = 0.0;
+      var labelWidth = 0.0;
+      final slotWidth = math.max(24.0, space.maxWidth / destinations.length - 16);
       for (final destination in destinations) {
         final painter = TextPainter(
           text: TextSpan(text: destination.label, style: textStyle),
           textDirection: Directionality.of(context),
           textScaler: MediaQuery.textScalerOf(context),
-        )..layout(maxWidth: math.max(24, space.maxWidth / destinations.length - 16));
+        )..layout();
+        labelWidth = math.max(labelWidth, painter.width);
+        painter.layout(maxWidth: slotWidth);
         labelHeight = math.max(labelHeight, painter.height);
         painter.dispose();
       }
+      final railWidth = math.max(104.0, labelWidth + 32);
+      final compactMenu = labelWidth > slotWidth;
       return Scaffold(
         appBar: appBar,
         body: rail
@@ -93,7 +99,7 @@ class ResponsiveRoleScaffold extends StatelessWidget {
                           destinations.length * (56 + MediaQuery.textScalerOf(context).scale(40)) + 32,
                         ),
                         child: NavigationRail(
-                          minWidth: 104,
+                          minWidth: railWidth,
                           backgroundColor: AppColors.navyOf(context),
                           indicatorColor: Colors.white.withValues(alpha: 0.12),
                           selectedIconTheme: IconThemeData(color: AppColors.primaryOf(context)),
@@ -108,7 +114,10 @@ class ResponsiveRoleScaffold extends StatelessWidget {
                               NavigationRailDestination(
                                 icon: d.icon,
                                 selectedIcon: d.selectedIcon,
-                                label: SizedBox(width: 88, child: Text(d.label, textAlign: TextAlign.center)),
+                                label: SizedBox(
+                                  width: railWidth - 16,
+                                  child: Text(d.label, textAlign: TextAlign.center),
+                                ),
                               ),
                           ],
                         ),
@@ -123,6 +132,8 @@ class ResponsiveRoleScaffold extends StatelessWidget {
         floatingActionButton: floatingActionButton,
         bottomNavigationBar: rail
             ? null
+            : compactMenu
+            ? _CompactRoleNavigation(destinations: destinations, selectedIndex: selectedIndex, onSelected: onSelected)
             : NavigationBar(
                 height: math.max(80, 48 + labelHeight),
                 selectedIndex: selectedIndex,
@@ -143,5 +154,72 @@ class ResponsiveRoleBody extends StatelessWidget {
   Widget build(BuildContext context) => Align(
     alignment: Alignment.topCenter,
     child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 960), child: child),
+  );
+}
+
+/// An explicit section picker keeps every word readable when a five-tab bar
+/// would split Arabic words at accessibility text sizes.
+class _CompactRoleNavigation extends StatelessWidget {
+  const _CompactRoleNavigation({required this.destinations, required this.selectedIndex, required this.onSelected});
+  final List<NavigationDestination> destinations;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  Future<void> _choose(BuildContext context) async {
+    final selected = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < destinations.length; i++)
+                ListTile(
+                  minVerticalPadding: 16,
+                  leading: destinations[i].icon,
+                  title: Text(destinations[i].label),
+                  trailing: i == selectedIndex ? const Icon(Icons.check) : null,
+                  selected: i == selectedIndex,
+                  onTap: () => Navigator.of(context).pop(i),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (selected != null && context.mounted) onSelected(selected);
+  }
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: AppColors.navyOf(context),
+    child: SafeArea(
+      top: false,
+      child: InkWell(
+        key: const ValueKey('role-section-picker'),
+        onTap: () => _choose(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: IconTheme(
+            data: const IconThemeData(color: Colors.white),
+            child: Row(
+              children: [
+                destinations[selectedIndex].icon,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    destinations[selectedIndex].label,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.white),
+                  ),
+                ),
+                const Icon(Icons.expand_more),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
   );
 }

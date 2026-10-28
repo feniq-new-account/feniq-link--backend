@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -451,6 +452,7 @@ void main() {
       'warehouse_rep_detail',
       'warehouse_collect',
       'warehouse_reject',
+      'warehouse_navigation',
       'rep_visits_error',
       'rep_profile_error',
       'rep_detail_error',
@@ -565,13 +567,14 @@ void main() {
               _ => 0,
             };
             if (tab != 0) {
-              if (find.byType(NavigationRail).evaluate().isNotEmpty) {
-                tester.widget<NavigationRail>(find.byType(NavigationRail)).onDestinationSelected!(tab);
-              } else {
-                tester.widget<NavigationBar>(find.byType(NavigationBar)).onDestinationSelected!(tab);
-              }
+              tester.widget<ResponsiveRoleScaffold>(find.byType(ResponsiveRoleScaffold)).onSelected(tab);
               await tester.pump();
               await tester.pump(const Duration(milliseconds: 400));
+            }
+            if (screen == 'warehouse_navigation' &&
+                find.byKey(const ValueKey('role-section-picker')).evaluate().isNotEmpty) {
+              await tester.tap(find.byKey(const ValueKey('role-section-picker')));
+              await tester.pumpAndSettle();
             }
             if (screen == 'warehouse_add_rep') {
               await tester.tap(find.byType(FloatingActionButton));
@@ -607,6 +610,22 @@ void main() {
               tester.view.viewInsets = const FakeViewPadding(bottom: 300);
               await tester.pump();
               await tester.pump(const Duration(milliseconds: 500));
+            }
+            for (final navigation in [
+              ...find.byType(NavigationRail).evaluate(),
+              ...find.byType(NavigationBar).evaluate(),
+            ]) {
+              for (final element
+                  in find
+                      .descendant(of: find.byWidget(navigation.widget), matching: find.byType(RichText))
+                      .evaluate()) {
+                final paragraph = element.renderObject! as RenderParagraph;
+                final text = (element.widget as RichText).text.toPlainText();
+                final boxes = paragraph.getBoxesForSelection(TextSelection(baseOffset: 0, extentOffset: text.length));
+                if (boxes.map((box) => box.top).toSet().length > 1) {
+                  issues.add('Navigation label split across lines: $text');
+                }
+              }
             }
             if (variant == 'normal') {
               final targets = await androidTapTargetGuideline.evaluate(tester);
