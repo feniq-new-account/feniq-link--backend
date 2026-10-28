@@ -44,27 +44,19 @@ class RepPharmacyCard extends StatelessWidget {
           ),
           if (place.isNotEmpty) ...[
             const SizedBox(height: AppSizes.spacingXSmall),
-            Text(
-              place,
-              style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
-            ),
+            Text(place, style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context))),
           ],
           const SizedBox(height: AppSizes.spacingSmall),
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 12,
+            runSpacing: 8,
             children: [
-              Icon(
-                last == null ? Icons.location_off_outlined : Icons.place_outlined,
-                size: AppSizes.iconSizeSmall,
-                color: stale ? AppColors.primaryOf(context) : AppColors.textSecondaryOf(context),
-              ),
-              const SizedBox(width: AppSizes.spacingXSmall),
-              Expanded(
-                child: Text(
-                  lastVisitText(l10n, last, now),
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: stale ? AppColors.primaryOf(context) : AppColors.textSecondaryOf(context),
-                    fontWeight: stale ? FontWeight.w700 : null,
-                  ),
+              Text(
+                lastVisitText(l10n, last, now),
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: stale ? AppColors.primaryTextOf(context) : AppColors.textSecondaryOf(context),
+                  fontWeight: stale ? FontWeight.w700 : null,
                 ),
               ),
               Text(

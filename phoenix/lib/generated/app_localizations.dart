@@ -4859,13 +4859,13 @@ abstract class AppLocalizations {
   /// No description provided for @warehouseSummaryChangeUp.
   ///
   /// In en, this message translates to:
-  /// **'▲ {percent}% vs previous period'**
+  /// **'Up {percent}% vs previous period'**
   String warehouseSummaryChangeUp(int percent);
 
   /// No description provided for @warehouseSummaryChangeDown.
   ///
   /// In en, this message translates to:
-  /// **'▼ {percent}% vs previous period'**
+  /// **'Down {percent}% vs previous period'**
   String warehouseSummaryChangeDown(int percent);
 
   /// No description provided for @warehouseSummaryChangeFlat.
@@ -4915,6 +4915,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Payment is unconfirmed. Retry to confirm the same payment safely.'**
   String get paymentUnconfirmed;
+
+  /// No description provided for @dataLastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated: {time}'**
+  String dataLastUpdated(String time);
+
+  /// No description provided for @dataCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the last successfully loaded data.'**
+  String get dataCached;
 }
 
 class _AppLocalizationsDelegate

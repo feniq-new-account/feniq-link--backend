@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/collect_payment_sheet.dart';
@@ -49,7 +50,11 @@ class WarehouseOrderDetailView extends StatelessWidget {
     final cubit = context.read<WarehouseOrderDetailCubit>();
     final payments = context.read<WarehouseManagementRepository>();
     final messenger = ScaffoldMessenger.of(context);
-    final collected = await showCollectPaymentSheet(context, orderNumber: order.orderNumber, totalSyp: order.finalPrice);
+    final collected = await showCollectPaymentSheet(
+      context,
+      orderNumber: order.orderNumber,
+      totalSyp: order.finalPrice,
+    );
     if (collected == null) return;
     var message = l10n.warehouseOrderAdvanced(order.orderNumber, orderStatusLabel(l10n, 'delivered'));
     if (collected > 0) {
@@ -57,13 +62,22 @@ class WarehouseOrderDetailView extends StatelessWidget {
       if (pharmacyId == null) return;
       try {
         // The journal is durable before delivery as well as before payment.
-        await payments.recordPayment(pharmacyId: pharmacyId, amountSyp: collected,
-          method: 'cash', idempotencyKey: const Uuid().v4(), deliveryOrderId: order.id,
-          note: l10n.warehouseCollectNote(order.orderNumber));
+        await payments.recordPayment(
+          pharmacyId: pharmacyId,
+          amountSyp: collected,
+          method: 'cash',
+          idempotencyKey: const Uuid().v4(),
+          deliveryOrderId: order.id,
+          note: l10n.warehouseCollectNote(order.orderNumber),
+        );
         message = l10n.warehouseCollectRecorded(formatSyp(collected, l10n.currencySuffix));
-      } catch (_) { message = l10n.paymentUnconfirmed; }
+      } catch (_) {
+        message = l10n.paymentUnconfirmed;
+      }
       await cubit.load();
-    } else if (!await cubit.advance()) { return; }
+    } else if (!await cubit.advance()) {
+      return;
+    }
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
@@ -143,7 +157,7 @@ class WarehouseOrderDetailView extends StatelessWidget {
               foregroundColor: Colors.white,
               title: FullText(order == null ? '' : l10n.warehouseOrderTitle(order.orderNumber), minScale: 0.6),
             ),
-            body: _body(context, state),
+            body: ResponsiveRoleBody(child: _body(context, state)),
             bottomNavigationBar: order == null ? null : _actions(context, state, order),
           ),
         );
@@ -215,17 +229,18 @@ class WarehouseOrderDetailView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          Wrap(
+            spacing: AppSizes.spacingSmall,
+            runSpacing: AppSizes.spacingSmall,
             children: [
               StatusBadge(label: orderStatusLabel(l10n, order.status), tone: warehouseStatusTone(order.status)),
               if (order.hasReturn) ...[
                 const SizedBox(width: AppSizes.spacingSmall),
                 StatusBadge(label: l10n.warehouseHasReturn, tone: StatusBadgeTone.info),
               ],
-              const Spacer(),
               if (createdAt != null)
                 Text(
-                  DateFormatter.formatDateTime(createdAt),
+                  DateFormatter.formatDateTime(createdAt, locale: context.l10n.localeName),
                   style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
                 ),
             ],
@@ -254,7 +269,9 @@ class WarehouseOrderDetailView extends StatelessWidget {
         Text(place, style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context))),
       if (phone != null) ...[
         const SizedBox(height: AppSizes.spacingSmall),
-        Row(
+        Wrap(
+          spacing: AppSizes.spacingSmall,
+          runSpacing: AppSizes.spacingSmall,
           children: [
             OutlinedButton.icon(
               onPressed: () => _call(phone),
@@ -318,7 +335,11 @@ class WarehouseOrderDetailView extends StatelessWidget {
           ),
           if (manufacturer != null) Text(manufacturer, style: muted),
           const SizedBox(height: 4),
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               if (editable && !removed)
                 QuantityStepper(quantity: quantity, onChanged: (value) => cubit.setQuantity(item, value))
@@ -332,7 +353,6 @@ class WarehouseOrderDetailView extends StatelessWidget {
                 const SizedBox(width: AppSizes.spacingSmall),
                 StatusBadge(label: l10n.warehousePackageLine, tone: StatusBadgeTone.info),
               ],
-              const Spacer(),
               if (editable)
                 TextButton(
                   onPressed: () => cubit.toggleRemoved(item),
@@ -353,13 +373,17 @@ class WarehouseOrderDetailView extends StatelessWidget {
   Widget _moneyRow(BuildContext context, String label, double amount, {bool strong = false}) {
     final l10n = context.l10n;
     final style = strong
-        ? context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: AppColors.primaryOf(context))
+        ? context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: AppColors.primaryTextOf(context))
         : context.textTheme.bodyMedium;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 4,
         children: [
-          Expanded(child: Text(label, style: style)),
+          Text(label, style: style),
           Text(formatSyp(amount, l10n.currencySuffix), style: style),
         ],
       ),
@@ -414,7 +438,8 @@ class WarehouseOrderDetailView extends StatelessWidget {
           child: Row(
             children: [
               Expanded(child: Text(orderHistoryLabel(l10n, entry.status))),
-              if (entry.changedAt != null) Text(DateFormatter.formatDateTime(entry.changedAt!), style: muted),
+              if (entry.changedAt != null)
+                Text(DateFormatter.formatDateTime(entry.changedAt!, locale: context.l10n.localeName), style: muted),
             ],
           ),
         ),

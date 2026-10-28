@@ -2876,12 +2876,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String warehouseSummaryChangeUp(int percent) {
-    return '▲ $percent% vs previous period';
+    return 'Up $percent% vs previous period';
   }
 
   @override
   String warehouseSummaryChangeDown(int percent) {
-    return '▼ $percent% vs previous period';
+    return 'Down $percent% vs previous period';
   }
 
   @override
@@ -2909,4 +2909,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get paymentUnconfirmed =>
       'Payment is unconfirmed. Retry to confirm the same payment safely.';
+
+  @override
+  String dataLastUpdated(String time) {
+    return 'Last updated: $time';
+  }
+
+  @override
+  String get dataCached => 'Showing the last successfully loaded data.';
 }

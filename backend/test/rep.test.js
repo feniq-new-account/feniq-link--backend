@@ -405,6 +405,22 @@ test("a warehouse resets its rep's password: old sessions end and a change is fo
   assert.strictEqual(other.status, 404, "warehouse B cannot touch A's rep");
 });
 
+test('simultaneous verified scans commit one visit and return the same receipt', async () => {
+  const pharmacy = await createPharmacy('صيدلية زيارة متزامنة');
+  const { rep, appPhone } = await createRep(ctx.whA.token, 'مندوب التزامن');
+  await assign(ctx.whA.token, pharmacy.pharmacy._id, rep.id);
+  const token = await repToken(appPhone);
+  const qr = await call('GET', `/warehouse/reps/pharmacies/${pharmacy.pharmacy._id}/visit-code`, { token: ctx.whA.token });
+  const replies = await Promise.all(Array.from({ length: 4 }, () => call('POST', '/rep/visits', {
+    token, body: { code: qr.body.qrPayload, ...NEAR, accuracy: 15, isMocked: false },
+  })));
+  for (const reply of replies) assert.ok([200, 201].includes(reply.status), JSON.stringify(reply.body));
+  assert.strictEqual(replies.filter(r => !r.body.duplicate).length, 1);
+  assert.strictEqual(new Set(replies.map(r => r.body.visit.id)).size, 1);
+  const Visit = require('../src/models/repVisit.model');
+  assert.strictEqual(await Visit.countDocuments({ repId: rep.id, pharmacyId: pharmacy.pharmacy._id, status: 'verified' }), 1);
+});
+
 test('judgeVisit allows for GPS accuracy, but only up to a cap', () => {
   const pharmacy = { location: { coordinates: PHARMACY_POINT } };
   // ~200 m away.

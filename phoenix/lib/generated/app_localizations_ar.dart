@@ -1339,7 +1339,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String returnableOrderNumber(String number) {
-    return 'طلب #$number';
+    return 'طلب رقم $number';
   }
 
   @override
@@ -1943,7 +1943,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get repNavVisits => 'زياراتي';
 
   @override
-  String get repSearchHint => 'ابحث بالاسم أو المسؤول أو الهاتف أو العنوان';
+  String get repSearchHint => 'ابحث عن صيدلية';
 
   @override
   String get repScanAction => 'مسح باركود الزيارة';
@@ -2206,7 +2206,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseOrderTitle(int number) {
-    return 'طلبية #$number';
+    return 'طلبية رقم $number';
   }
 
   @override
@@ -2350,7 +2350,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseReturnTitle(int number) {
-    return 'مرتجع على الطلبية #$number';
+    return 'مرتجع على الطلبية رقم $number';
   }
 
   @override
@@ -2869,12 +2869,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseSummaryChangeUp(int percent) {
-    return '▲ $percent% عن الفترة السابقة';
+    return 'زيادة $percent% عن الفترة السابقة';
   }
 
   @override
   String warehouseSummaryChangeDown(int percent) {
-    return '▼ $percent% عن الفترة السابقة';
+    return 'نقصان $percent% عن الفترة السابقة';
   }
 
   @override
@@ -2902,4 +2902,12 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get paymentUnconfirmed =>
       'لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان.';
+
+  @override
+  String dataLastUpdated(String time) {
+    return 'آخر تحديث: $time';
+  }
+
+  @override
+  String get dataCached => 'البيانات المعروضة من آخر تحديث ناجح.';
 }

@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -60,7 +61,11 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
     final cubit = context.read<WarehouseOrdersCubit>();
     final payments = context.read<WarehouseManagementRepository>();
     final messenger = ScaffoldMessenger.of(context);
-    final collected = await showCollectPaymentSheet(context, orderNumber: order.orderNumber, totalSyp: order.finalPrice);
+    final collected = await showCollectPaymentSheet(
+      context,
+      orderNumber: order.orderNumber,
+      totalSyp: order.finalPrice,
+    );
     if (collected == null) return;
     var message = l10n.warehouseOrderAdvanced(order.orderNumber, orderStatusLabel(l10n, 'delivered'));
     if (collected > 0) {
@@ -68,13 +73,22 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
       if (pharmacyId == null) return;
       try {
         // The journal is durable before delivery as well as before payment.
-        await payments.recordPayment(pharmacyId: pharmacyId, amountSyp: collected,
-          method: 'cash', idempotencyKey: const Uuid().v4(), deliveryOrderId: order.id,
-          note: l10n.warehouseCollectNote(order.orderNumber));
+        await payments.recordPayment(
+          pharmacyId: pharmacyId,
+          amountSyp: collected,
+          method: 'cash',
+          idempotencyKey: const Uuid().v4(),
+          deliveryOrderId: order.id,
+          note: l10n.warehouseCollectNote(order.orderNumber),
+        );
         message = l10n.warehouseCollectRecorded(formatSyp(collected, l10n.currencySuffix));
-      } catch (_) { message = l10n.paymentUnconfirmed; }
+      } catch (_) {
+        message = l10n.paymentUnconfirmed;
+      }
       await cubit.load();
-    } else if (!await cubit.advance(order.id)) { return; }
+    } else if (!await cubit.advance(order.id)) {
+      return;
+    }
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
@@ -129,7 +143,7 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
         BlocBuilder<WarehouseOrdersCubit, WarehouseOrdersState>(
           buildWhen: (a, b) => a.filter != b.filter,
           builder: (context, state) => SizedBox(
-            height: 56,
+            height: roleFilterHeight(context),
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium, vertical: AppSizes.spacingSmall),
@@ -151,9 +165,7 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
           child: BlocConsumer<WarehouseOrdersCubit, WarehouseOrdersState>(
             listenWhen: (a, b) => b.actionErrorCode != null && a.actionErrorCode != b.actionErrorCode,
             listener: (context, state) => ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(translateErrorCode(l10n, state.actionErrorCode, state.actionErrorMessage ?? '')),
-              ),
+              SnackBar(content: Text(translateErrorCode(l10n, state.actionErrorCode, state.actionErrorMessage ?? ''))),
             ),
             builder: (context, state) => AppRefreshIndicator(
               onRefresh: () => context.read<WarehouseOrdersCubit>().load(),

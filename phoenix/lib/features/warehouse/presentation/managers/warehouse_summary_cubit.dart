@@ -14,6 +14,7 @@ class WarehouseSummaryState {
     this.summary,
     this.errorMessage,
     this.errorCode,
+    this.updatedAt,
   });
 
   final RepLoadStatus status;
@@ -21,6 +22,7 @@ class WarehouseSummaryState {
   final WarehouseSummary? summary;
   final String? errorMessage;
   final String? errorCode;
+  final DateTime? updatedAt;
 }
 
 /// The warehouse owner's at-a-glance summary: sales, collections, returns,
@@ -36,21 +38,38 @@ class WarehouseSummaryCubit extends Cubit<WarehouseSummaryState> {
   int _generation = 0;
 
   Future<void> setPeriod(String period) async {
+    if (isClosed) return;
+    if (!kSummaryPeriods.contains(period)) return;
     if (period == state.period && state.status != RepLoadStatus.initial) return;
-    emit(WarehouseSummaryState(status: RepLoadStatus.loading, period: period, summary: state.summary));
+    emit(WarehouseSummaryState(status: RepLoadStatus.loading, period: period));
     await load();
   }
 
   /// Fetches the current period. The previous figures stay on screen while it
   /// loads; a slower earlier answer never overwrites a newer one.
   Future<void> load() async {
+    if (isClosed) return;
     final generation = ++_generation;
     final period = state.period;
-    emit(WarehouseSummaryState(status: RepLoadStatus.loading, period: period, summary: state.summary));
+    emit(
+      WarehouseSummaryState(
+        status: RepLoadStatus.loading,
+        period: period,
+        summary: state.summary,
+        updatedAt: state.updatedAt,
+      ),
+    );
     try {
       final summary = await _repository.getSummary(period: period);
       if (generation != _generation || isClosed) return;
-      emit(WarehouseSummaryState(status: RepLoadStatus.loaded, period: period, summary: summary));
+      emit(
+        WarehouseSummaryState(
+          status: RepLoadStatus.loaded,
+          period: period,
+          summary: summary,
+          updatedAt: DateTime.now(),
+        ),
+      );
     } on Failure catch (f) {
       if (generation != _generation || isClosed) return;
       emit(
@@ -58,6 +77,7 @@ class WarehouseSummaryCubit extends Cubit<WarehouseSummaryState> {
           status: RepLoadStatus.error,
           period: period,
           summary: state.summary,
+          updatedAt: state.updatedAt,
           errorMessage: f.errMessage,
           errorCode: f.code,
         ),

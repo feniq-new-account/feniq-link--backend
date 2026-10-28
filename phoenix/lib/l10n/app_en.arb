@@ -1691,7 +1691,7 @@
       }
     }
   },
-  "warehouseSummaryChangeUp": "▲ {percent}% vs previous period",
+  "warehouseSummaryChangeUp": "Up {percent}% vs previous period",
   "@warehouseSummaryChangeUp": {
     "placeholders": {
       "percent": {
@@ -1699,7 +1699,7 @@
       }
     }
   },
-  "warehouseSummaryChangeDown": "▼ {percent}% vs previous period",
+  "warehouseSummaryChangeDown": "Down {percent}% vs previous period",
   "@warehouseSummaryChangeDown": {
     "placeholders": {
       "percent": {
@@ -1714,5 +1714,14 @@
   "warehouseSummaryNoBuyers": "No sales in this period.",
   "warehouseSummaryNoDebtors": "No outstanding debts.",
   "warehouseSummaryDeliveredNote": "Sales count delivered orders only.",
-  "paymentUnconfirmed": "Payment is unconfirmed. Retry to confirm the same payment safely."
+  "paymentUnconfirmed": "Payment is unconfirmed. Retry to confirm the same payment safely.",
+  "dataLastUpdated": "Last updated: {time}",
+  "dataCached": "Showing the last successfully loaded data.",
+  "@dataLastUpdated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  }
 }

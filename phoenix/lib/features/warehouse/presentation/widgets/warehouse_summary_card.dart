@@ -1,3 +1,5 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
+import 'package:feniq/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/constants/app_colors.dart';
@@ -47,15 +49,22 @@ class WarehouseSummaryCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSizes.spacingMedium),
-              if (summary != null)
-                SummaryFigures(summary: summary)
-              else if (state.status == RepLoadStatus.error)
+              if (state.status == RepLoadStatus.loading) const LinearProgressIndicator(),
+              if (state.status == RepLoadStatus.error)
                 FailureWidget(
                   dense: true,
                   message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
                   onRetry: () => context.read<WarehouseSummaryCubit>().load(),
-                )
-              else
+                ),
+              if (state.status == RepLoadStatus.error && summary != null) Text(l10n.dataCached),
+              if (state.updatedAt != null)
+                Text(
+                  l10n.dataLastUpdated(DateFormatter.formatDateTime(state.updatedAt!, locale: l10n.localeName)),
+                  style: context.textTheme.bodySmall,
+                ),
+              if (summary != null)
+                SummaryFigures(summary: summary)
+              else if (state.status != RepLoadStatus.error && state.status != RepLoadStatus.loading)
                 const Padding(
                   padding: EdgeInsets.all(AppSizes.spacingMedium),
                   child: Center(child: CircularProgressIndicator()),
@@ -96,47 +105,32 @@ class SummaryFigures extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        ResponsiveStatsGrid(
+          minTileWidth: 150,
+          maxColumns: 4,
           children: [
-            Expanded(
-              child: _Stat(
-                label: l10n.warehouseSummarySales,
-                value: formatSyp(current.salesSyp, suffix),
-                sub: l10n.warehouseSummaryInvoices(current.invoiceCount),
-                change: _Change(current: current.salesSyp, previous: previous.salesSyp),
-              ),
+            _Stat(
+              label: l10n.warehouseSummarySales,
+              value: formatSyp(current.salesSyp, suffix),
+              sub: l10n.warehouseSummaryInvoices(current.invoiceCount),
+              change: _Change(current: current.salesSyp, previous: previous.salesSyp),
             ),
-            const SizedBox(width: AppSizes.spacingSmall),
-            Expanded(
-              child: _Stat(
-                label: l10n.warehouseSummaryCollections,
-                value: formatSyp(current.collectionsSyp, suffix),
-                valueColor: AppColors.secondaryOf(context),
-                sub: l10n.warehouseSummaryPayments(current.paymentCount),
-                change: _Change(current: current.collectionsSyp, previous: previous.collectionsSyp),
-              ),
+            _Stat(
+              label: l10n.warehouseSummaryCollections,
+              value: formatSyp(current.collectionsSyp, suffix),
+              valueColor: AppColors.secondaryOf(context),
+              sub: l10n.warehouseSummaryPayments(current.paymentCount),
+              change: _Change(current: current.collectionsSyp, previous: previous.collectionsSyp),
             ),
-          ],
-        ),
-        const SizedBox(height: AppSizes.spacingMedium),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _Stat(label: l10n.warehouseSummaryReturns, value: formatSyp(current.returnsSyp, suffix)),
-            ),
-            const SizedBox(width: AppSizes.spacingSmall),
-            Expanded(
-              child: _Stat(
-                label: l10n.warehouseSummaryTotalDebts,
-                value: formatSyp(outstanding.totalDebtSyp, suffix),
-                valueColor: AppColors.errorOf(context),
-                sub: l10n.warehouseSummaryDebtors(outstanding.debtorCount),
-                extraSub: outstanding.totalCreditSyp > 0
-                    ? l10n.warehouseSummaryCreditHeld(formatSyp(outstanding.totalCreditSyp, suffix))
-                    : null,
-              ),
+            _Stat(label: l10n.warehouseSummaryReturns, value: formatSyp(current.returnsSyp, suffix)),
+            _Stat(
+              label: l10n.warehouseSummaryTotalDebts,
+              value: formatSyp(outstanding.totalDebtSyp, suffix),
+              valueColor: AppColors.errorOf(context),
+              sub: l10n.warehouseSummaryDebtors(outstanding.debtorCount),
+              extraSub: outstanding.totalCreditSyp > 0
+                  ? l10n.warehouseSummaryCreditHeld(formatSyp(outstanding.totalCreditSyp, suffix))
+                  : null,
             ),
           ],
         ),
@@ -241,17 +235,12 @@ class _RankedList extends StatelessWidget {
           for (var i = 0; i < rows.length; i++)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 12,
+                runSpacing: 4,
                 children: [
-                  SizedBox(width: 20, child: Text('${i + 1}', style: muted)),
-                  Expanded(
-                    child: Text(
-                      warehouseLocalName(context, rows[i].nameAr, rows[i].nameEn),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.spacingSmall),
+                  Text(warehouseLocalName(context, rows[i].nameAr, rows[i].nameEn), style: muted),
                   Text(
                     formatSyp(rows[i].amountSyp, l10n.currencySuffix),
                     style: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),

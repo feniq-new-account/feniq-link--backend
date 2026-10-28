@@ -678,7 +678,7 @@
       }
     }
   },
-  "returnableOrderNumber": "طلب #{number}",
+  "returnableOrderNumber": "طلب رقم {number}",
   "returnableHoursLeft": "باقي {hours} ساعة",
   "returnableEndingSoon": "ينتهي قريباً",
   "returnableRequestButton": "طلب إرجاع",
@@ -935,7 +935,7 @@
   "packageAddToCart": "إضافة إلى السلة",
   "repNavPharmacies": "صيدلياتي",
   "repNavVisits": "زياراتي",
-  "repSearchHint": "ابحث بالاسم أو المسؤول أو الهاتف أو العنوان",
+  "repSearchHint": "ابحث عن صيدلية",
   "repScanAction": "مسح باركود الزيارة",
   "repNoPharmaciesTitle": "لا توجد صيدليات معيّنة لك بعد",
   "repNoPharmaciesSubtitle": "المستودع هو من يسند لك الصيدليات، وتظهر هنا فور إسنادها.",
@@ -1006,7 +1006,7 @@
   "warehouseMarkDelivered": "تم التسليم",
   "warehouseConfirmApproveTitle": "الطلبية طلعت ع الطريق؟",
   "warehouseConfirmApproveBody": "الطلبية رقم {number} رح تطلع للصيدلية، وبعدها ما عاد فيك تعدّل أصنافها.",
-  "warehouseOrderTitle": "طلبية #{number}",
+  "warehouseOrderTitle": "طلبية رقم {number}",
   "warehouseOrderItemsCount": "الأصناف: {count}",
   "warehouseNoOrdersTitle": "ما في طلبيات هون",
   "warehouseNoOrdersSubtitle": "الطلبيات الجديدة بتطلع هون أول ما توصل، وبيجيك إشعار فيها.",
@@ -1047,7 +1047,7 @@
   "warehouseNavReturns": "المرتجعات",
   "warehouseNavAccounts": "الحسابات",
   "warehouseNavReps": "المناديب",
-  "warehouseReturnTitle": "مرتجع على الطلبية #{number}",
+  "warehouseReturnTitle": "مرتجع على الطلبية رقم {number}",
   "warehouseReturnNoOrder": "مرتجع",
   "warehouseReturnUnits": "{count} قطعة",
   "warehouseNoReturnsTitle": "ما في مرتجعات هون",
@@ -1191,8 +1191,8 @@
   "warehouseSummaryPayments": "{count} دفعة",
   "warehouseSummaryDebtors": "{count} صيدلية عليها دين",
   "warehouseSummaryCreditHeld": "رصيد للصيدليات عندك: {amount}",
-  "warehouseSummaryChangeUp": "▲ {percent}% عن الفترة السابقة",
-  "warehouseSummaryChangeDown": "▼ {percent}% عن الفترة السابقة",
+  "warehouseSummaryChangeUp": "زيادة {percent}% عن الفترة السابقة",
+  "warehouseSummaryChangeDown": "نقصان {percent}% عن الفترة السابقة",
   "warehouseSummaryChangeFlat": "متل الفترة السابقة",
   "warehouseSummaryChangeNew": "ما كان في شي بالفترة السابقة",
   "warehouseSummaryTopBuyers": "أكتر الصيدليات شراءً",
@@ -1200,5 +1200,14 @@
   "warehouseSummaryNoBuyers": "ما في مبيعات بهالفترة.",
   "warehouseSummaryNoDebtors": "ما في ديون.",
   "warehouseSummaryDeliveredNote": "المبيعات بتحسب الطلبيات المتسلَّمة بس.",
-  "paymentUnconfirmed": "لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان."
+  "paymentUnconfirmed": "لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان.",
+  "dataLastUpdated": "آخر تحديث: {time}",
+  "dataCached": "البيانات المعروضة من آخر تحديث ناجح.",
+  "@dataLastUpdated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -30,7 +31,7 @@ class WarehousePagedList extends StatelessWidget {
   final String emptyTitle;
   final String emptySubtitle;
   final IconData emptyIcon;
-  // Set when the first load failed and there is nothing to show.
+  // A failed refresh is visible even when earlier rows remain available.
   final String? errorMessage;
   final VoidCallback? onRetry;
   final bool isLoadingMore;
@@ -57,7 +58,17 @@ class WarehousePagedList extends StatelessWidget {
         ],
       );
     }
-    final offset = header == null ? 0 : 1;
+    final top = header != null || isLoading || errorMessage != null
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ?header,
+              if (isLoading) const LinearProgressIndicator(),
+              if (errorMessage != null) FailureWidget(dense: true, message: errorMessage!, onRetry: onRetry),
+            ],
+          )
+        : null;
+    final offset = top == null ? 0 : 1;
     return ListView.separated(
       controller: controller,
       physics: const AlwaysScrollableScrollPhysics(),
@@ -65,7 +76,7 @@ class WarehousePagedList extends StatelessWidget {
       itemCount: itemCount + offset + (isLoadingMore ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: AppSizes.spacingSmall),
       itemBuilder: (context, index) {
-        if (offset == 1 && index == 0) return header!;
+        if (offset == 1 && index == 0) return top!;
         final i = index - offset;
         if (i >= itemCount) {
           return const Padding(
@@ -105,7 +116,7 @@ class WarehouseFilterChips<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 56,
+    height: roleFilterHeight(context),
     child: ListView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium, vertical: AppSizes.spacingSmall),

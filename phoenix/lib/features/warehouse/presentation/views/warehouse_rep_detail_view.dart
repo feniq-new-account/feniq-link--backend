@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/constants/app_colors.dart';
@@ -53,95 +54,111 @@ class _WarehouseRepDetailViewState extends State<WarehouseRepDetailView> {
         foregroundColor: Colors.white,
         title: FullText(widget.repName, minScale: 0.6),
       ),
-      body: BlocBuilder<WarehouseRepDetailCubit, WarehouseRepDetailState>(
-        builder: (context, state) {
-          if (state.status == RepLoadStatus.error && state.pharmacies.isEmpty && state.visits.isEmpty) {
-            return ListView(
-              padding: AppPadding.screen,
-              children: [
-                FailureWidget(
-                  message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
-                  onRetry: () => context.read<WarehouseRepDetailCubit>().load(),
-                ),
-              ],
+      body: ResponsiveRoleBody(
+        child: BlocBuilder<WarehouseRepDetailCubit, WarehouseRepDetailState>(
+          builder: (context, state) {
+            if (state.status == RepLoadStatus.error && state.pharmacies.isEmpty && state.visits.isEmpty) {
+              return ListView(
+                padding: AppPadding.screen,
+                children: [
+                  FailureWidget(
+                    message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+                    onRetry: () => context.read<WarehouseRepDetailCubit>().load(),
+                  ),
+                ],
+              );
+            }
+            if (state.status != RepLoadStatus.loaded && state.pharmacies.isEmpty && state.visits.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
+            Widget heading(String text) => Padding(
+              padding: const EdgeInsets.only(top: AppSizes.spacingSmall),
+              child: Text(text, style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
             );
-          }
-          if (state.status != RepLoadStatus.loaded && state.pharmacies.isEmpty && state.visits.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
-          Widget heading(String text) => Padding(
-            padding: const EdgeInsets.only(top: AppSizes.spacingSmall),
-            child: Text(text, style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-          );
-          return AppRefreshIndicator(
-            onRefresh: () => context.read<WarehouseRepDetailCubit>().load(),
-            child: ListView(
-              controller: _controller,
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: AppPadding.screen,
-              children: [
-                heading(l10n.warehouseRepPharmacies),
-                const SizedBox(height: AppSizes.spacingSmall),
-                if (state.pharmacies.isEmpty) Text(l10n.warehouseRepNoPharmacies, style: muted),
-                for (final pharmacy in state.pharmacies) ...[
-                  CustomCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          warehouseLocalName(context, pharmacy.nameAr, pharmacy.nameEn),
-                          style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        Text(
-                          [
-                            if (pharmacy.city != null) pharmacy.city!,
-                            pharmacy.lastVisitAt == null
-                                ? l10n.warehouseRepNeverVisited
-                                : l10n.warehouseRepLastVisit(DateFormatter.formatDate(pharmacy.lastVisitAt!)),
-                          ].join(' · '),
-                          style: muted,
-                        ),
-                      ],
+            return AppRefreshIndicator(
+              onRefresh: () => context.read<WarehouseRepDetailCubit>().load(),
+              child: ListView(
+                controller: _controller,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: AppPadding.screen,
+                children: [
+                  if (state.status == RepLoadStatus.loading) const LinearProgressIndicator(),
+                  if (state.status == RepLoadStatus.error)
+                    FailureWidget(
+                      dense: true,
+                      message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+                      onRetry: () => state.loadMoreError
+                          ? context.read<WarehouseRepDetailCubit>().loadMoreVisits()
+                          : context.read<WarehouseRepDetailCubit>().load(),
                     ),
-                  ),
+                  heading(l10n.warehouseRepPharmacies),
                   const SizedBox(height: AppSizes.spacingSmall),
-                ],
-                const SizedBox(height: AppSizes.spacingSmall),
-                heading(l10n.warehouseRepVisits),
-                const SizedBox(height: AppSizes.spacingSmall),
-                if (state.visits.isEmpty) Text(l10n.warehouseRepNoVisits, style: muted),
-                for (final visit in state.visits) ...[
-                  CustomCard(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                warehouseLocalName(context, visit.pharmacyNameAr, visit.pharmacyNameEn),
-                                style: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                              if (visit.scannedAt != null)
-                                Text(DateFormatter.formatDateTime(visit.scannedAt!), style: muted),
-                            ],
+                  if (state.pharmacies.isEmpty) Text(l10n.warehouseRepNoPharmacies, style: muted),
+                  for (final pharmacy in state.pharmacies) ...[
+                    CustomCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            warehouseLocalName(context, pharmacy.nameAr, pharmacy.nameEn),
+                            style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                           ),
-                        ),
-                        StatusBadge(
-                          label: visitStatusLabel(l10n, VisitStatus.parse(visit.status)),
-                          tone: visitStatusTone(VisitStatus.parse(visit.status)),
-                        ),
-                      ],
+                          Text(
+                            [
+                              if (pharmacy.city != null) pharmacy.city!,
+                              pharmacy.lastVisitAt == null
+                                  ? l10n.warehouseRepNeverVisited
+                                  : l10n.warehouseRepLastVisit(
+                                      DateFormatter.formatDate(pharmacy.lastVisitAt!, locale: context.l10n.localeName),
+                                    ),
+                            ].join(' · '),
+                            style: muted,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: AppSizes.spacingSmall),
+                  ],
                   const SizedBox(height: AppSizes.spacingSmall),
+                  heading(l10n.warehouseRepVisits),
+                  const SizedBox(height: AppSizes.spacingSmall),
+                  if (state.visits.isEmpty) Text(l10n.warehouseRepNoVisits, style: muted),
+                  for (final visit in state.visits) ...[
+                    CustomCard(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  warehouseLocalName(context, visit.pharmacyNameAr, visit.pharmacyNameEn),
+                                  style: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                                if (visit.scannedAt != null)
+                                  Text(
+                                    DateFormatter.formatDateTime(visit.scannedAt!, locale: context.l10n.localeName),
+                                    style: muted,
+                                  ),
+                              ],
+                            ),
+                          ),
+                          StatusBadge(
+                            label: visitStatusLabel(l10n, VisitStatus.parse(visit.status)),
+                            tone: visitStatusTone(VisitStatus.parse(visit.status)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.spacingSmall),
+                  ],
+                  if (state.isLoadingMore) const Center(child: CircularProgressIndicator()),
                 ],
-                if (state.isLoadingMore) const Center(child: CircularProgressIndicator()),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

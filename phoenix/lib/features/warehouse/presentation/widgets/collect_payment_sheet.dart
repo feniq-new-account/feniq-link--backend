@@ -1,3 +1,5 @@
+import 'package:feniq/core/utils/number_input.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:feniq/core/constants/app_padding.dart';
@@ -62,56 +64,57 @@ class _CollectPaymentSheetState extends State<CollectPaymentSheet> {
       child: SafeArea(
         child: Padding(
           padding: AppPadding.screen,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(l10n.warehouseCollectTitle(widget.orderNumber), style: context.textTheme.titleMedium),
-              const SizedBox(height: AppSizes.spacingSmall),
-              Text(l10n.warehouseCollectTotal(formatSyp(widget.totalSyp, suffix))),
-              const SizedBox(height: AppSizes.spacingMedium),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(context).pop(widget.totalSyp),
-                      child: Text(l10n.warehouseCollectFull),
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.spacingSmall),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => setState(() => _partial = true),
-                      child: Text(l10n.warehouseCollectPartial),
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.spacingSmall),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(0.0),
-                      child: Text(l10n.warehouseCollectLater),
-                    ),
-                  ),
-                ],
-              ),
-              if (_partial) ...[
-                const SizedBox(height: AppSizes.spacingMedium),
-                TextField(
-                  controller: _amount,
-                  autofocus: true,
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => setState(() => _error = null),
-                  decoration: InputDecoration(
-                    labelText: l10n.warehouseCollectPaidLabel(suffix),
-                    errorText: _error,
-                  ),
-                ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l10n.warehouseCollectTitle(widget.orderNumber), style: context.textTheme.titleMedium),
                 const SizedBox(height: AppSizes.spacingSmall),
-                Text(l10n.warehouseCollectLeft(formatSyp(left < 0 ? 0 : left, suffix))),
+                Text(l10n.warehouseCollectTotal(formatSyp(widget.totalSyp, suffix))),
                 const SizedBox(height: AppSizes.spacingMedium),
-                FilledButton(onPressed: _savePartial, child: Text(l10n.warehouseCollectSave)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(context).pop(widget.totalSyp),
+                        child: Text(l10n.warehouseCollectFull),
+                      ),
+                    ),
+                    const SizedBox(width: AppSizes.spacingSmall),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => setState(() => _partial = true),
+                        child: Text(l10n.warehouseCollectPartial),
+                      ),
+                    ),
+                    const SizedBox(width: AppSizes.spacingSmall),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(0.0),
+                        child: Text(l10n.warehouseCollectLater),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_partial) ...[
+                  const SizedBox(height: AppSizes.spacingMedium),
+                  TextField(
+                    controller: _amount,
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    textDirection: TextDirection.ltr,
+                    inputFormatters: [const WesternDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (_) => setState(() => _error = null),
+                    decoration: InputDecoration(labelText: l10n.warehouseCollectPaidLabel(suffix), errorText: _error),
+                  ),
+                  const SizedBox(height: AppSizes.spacingSmall),
+                  Text(l10n.warehouseCollectLeft(formatSyp(left < 0 ? 0 : left, suffix))),
+                  const SizedBox(height: AppSizes.spacingMedium),
+                  FilledButton(onPressed: _savePartial, child: Text(l10n.warehouseCollectSave)),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

@@ -8,6 +8,7 @@ const Warehouse = require('../models/warehouse.model');
 const { ApiError } = require('../utils/ApiError');
 const { startOfBusinessMonth } = require('../utils/businessTime');
 const { repRateFor } = require('../utils/repCommission');
+const { runInTransaction } = require('../utils/transaction');
 const { sumRepCommission } = require('./repCommissionTotals.service');
 const { distanceMeters, isValidCoordinate } = require('../utils/geo');
 const { pharmacyActivity } = require('./rep.service');
@@ -163,35 +164,39 @@ async function recordVisit(rep, { code, latitude, longitude, accuracy, isMocked 
   if (!pharmacy) {
     throw ApiError.notFound('No pharmacy has this visit code.', 'VISIT_CODE_NOT_FOUND');
   }
-  await assertAssigned(rep, pharmacy._id);
   const { coordinates, accuracyMeters } = readCoordinates({ latitude, longitude, accuracy });
   const { status, distance } = judgeVisit({ pharmacy, coordinates, accuracyMeters, isMocked });
-
-  if (status === 'verified') {
-    const recent = await RepVisit.findOne({
-      repId: rep._id,
-      pharmacyId: pharmacy._id,
-      status: 'verified',
-      scannedAt: { $gte: new Date(now.getTime() - DUPLICATE_WINDOW_MS) },
-    }).lean();
-    if (recent) return { visit: recent, pharmacy, duplicate: true };
+  const result = await runInTransaction(async (session) => {
+    // Serialize scans through the existing active assignment. A competing
+    // transaction retries from a fresh snapshot and sees the committed visit.
+    // Keeping the lock write and visit in one transaction also covers crashes.
+    const assigned = await RepAssignment.updateOne(
+      { repId: rep._id, pharmacyId: pharmacy._id, active: true },
+      { $inc: { __v: 1 } },
+      { session }
+    );
+    if (!assigned.matchedCount) {
+      throw ApiError.forbidden('This pharmacy is not assigned to you.', 'PHARMACY_NOT_ASSIGNED');
+    }
+    if (status === 'verified') {
+      const recent = await RepVisit.findOne({
+        repId: rep._id, pharmacyId: pharmacy._id, status: 'verified',
+        scannedAt: { $gte: new Date(now.getTime() - DUPLICATE_WINDOW_MS) },
+      }).session(session).lean();
+      if (recent) return { visit: recent, pharmacy, duplicate: true };
+    }
+    const [visit] = await RepVisit.create([{
+      repId: rep._id, warehouseId: rep.warehouseId, pharmacyId: pharmacy._id,
+      status, coordinates, accuracyMeters, distanceMeters: distance, scannedAt: now,
+    }], { session });
+    return { visit: visit.toObject(), pharmacy, duplicate: false };
+  });
+  if (!result.duplicate) {
+    emitToWarehouse(rep.warehouseId, EVENTS.REP_VISIT_CREATED, {
+      visitId: result.visit._id.toString(), repId: rep._id.toString(),
+    });
   }
-
-  const visit = await RepVisit.create({
-    repId: rep._id,
-    warehouseId: rep.warehouseId,
-    pharmacyId: pharmacy._id,
-    status,
-    coordinates,
-    accuracyMeters,
-    distanceMeters: distance,
-    scannedAt: now,
-  });
-  emitToWarehouse(rep.warehouseId, EVENTS.REP_VISIT_CREATED, {
-    visitId: visit._id.toString(),
-    repId: rep._id.toString(),
-  });
-  return { visit: visit.toObject(), pharmacy, duplicate: false };
+  return result;
 }
 
 async function listMyVisits(rep, { limit, after } = {}) {

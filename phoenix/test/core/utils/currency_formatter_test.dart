@@ -16,7 +16,7 @@ void main() {
 
       test('handles zero and negative amounts', () {
         expect(formatSyp(0, 'ل.س'), equals('0 ل.س'));
-        expect(formatSyp(-5000, 'ل.س'), equals('-5,000 ل.س'));
+        expect(formatSyp(-5000, 'ل.س'), equals('\u2066-5,000\u2069 ل.س'));
       });
     });
 

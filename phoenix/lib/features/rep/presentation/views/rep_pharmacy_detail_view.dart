@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -62,31 +63,46 @@ class RepPharmacyDetailView extends StatelessWidget {
           },
         ),
       ),
-      body: AppRefreshIndicator(
-        onRefresh: () => context.read<RepPharmacyDetailCubit>().load(),
-        child: BlocBuilder<RepPharmacyDetailCubit, RepPharmacyDetailState>(
-          builder: (context, state) {
-            final detail = state.detail;
-            if (detail == null) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: AppPadding.screen,
-                children: [
-                  if (state.status == RepLoadStatus.error)
-                    FailureWidget(
-                      message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
-                      onRetry: () => context.read<RepPharmacyDetailCubit>().load(),
-                    )
-                  else
-                    const Padding(
-                      padding: EdgeInsets.all(AppSizes.spacingXLarge),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                ],
+      body: ResponsiveRoleBody(
+        child: AppRefreshIndicator(
+          onRefresh: () => context.read<RepPharmacyDetailCubit>().load(),
+          child: BlocBuilder<RepPharmacyDetailCubit, RepPharmacyDetailState>(
+            builder: (context, state) {
+              final detail = state.detail;
+              if (detail == null) {
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: AppPadding.screen,
+                  children: [
+                    if (state.status == RepLoadStatus.error)
+                      FailureWidget(
+                        message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+                        onRetry: () => context.read<RepPharmacyDetailCubit>().load(),
+                      )
+                    else
+                      const Padding(
+                        padding: EdgeInsets.all(AppSizes.spacingXLarge),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                  ],
+                );
+              }
+              return _Body(
+                detail: detail,
+                onCall: _call,
+                onLogVisit: () => _logVisit(context),
+                notice: state.status == RepLoadStatus.loading
+                    ? const LinearProgressIndicator()
+                    : state.status == RepLoadStatus.error
+                    ? FailureWidget(
+                        dense: true,
+                        message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+                        onRetry: () => context.read<RepPharmacyDetailCubit>().load(),
+                      )
+                    : null,
               );
-            }
-            return _Body(detail: detail, onCall: _call, onLogVisit: () => _logVisit(context));
-          },
+            },
+          ),
         ),
       ),
     );
@@ -94,8 +110,9 @@ class RepPharmacyDetailView extends StatelessWidget {
 }
 
 class _Body extends StatelessWidget {
-  const _Body({required this.detail, required this.onCall, required this.onLogVisit});
+  const _Body({required this.detail, required this.onCall, required this.onLogVisit, this.notice});
 
+  final Widget? notice;
   final RepPharmacyDetail detail;
   final Future<void> Function(String phone) onCall;
   final VoidCallback onLogVisit;
@@ -113,6 +130,7 @@ class _Body extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: AppPadding.screen,
       children: [
+        if (notice != null) notice!,
         CustomCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,7 +147,7 @@ class _Body extends StatelessWidget {
                     IconButton(
                       onPressed: () => onCall(phone),
                       tooltip: l10n.repCallAction,
-                      icon: Icon(Icons.call, color: AppColors.primaryOf(context)),
+                      icon: Icon(Icons.call, color: AppColors.primaryTextOf(context)),
                     ),
                   ],
                 ),
@@ -141,12 +159,12 @@ class _Body extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppSizes.spacingMedium),
             decoration: BoxDecoration(
-              color: AppColors.primaryOf(context).withValues(alpha: 0.1),
+              color: AppColors.primaryTextOf(context).withValues(alpha: 0.1),
               borderRadius: AppRadius.small,
             ),
             child: Row(
               children: [
-                Icon(Icons.location_off_outlined, color: AppColors.primaryOf(context)),
+                Icon(Icons.location_off_outlined, color: AppColors.primaryTextOf(context)),
                 const SizedBox(width: AppSizes.spacingSmall),
                 Expanded(child: Text(l10n.repNoLocationWarning, style: context.textTheme.bodySmall)),
               ],
@@ -175,7 +193,10 @@ class _Body extends StatelessWidget {
         if (detail.orders.isEmpty)
           Text(l10n.repNoOrdersYet, style: context.textTheme.bodyMedium?.copyWith(color: textSecondary))
         else
-          for (final order in detail.orders) ...[_OrderTile(order: order), const SizedBox(height: AppSizes.spacingSmall)],
+          for (final order in detail.orders) ...[
+            _OrderTile(order: order),
+            const SizedBox(height: AppSizes.spacingSmall),
+          ],
         const SizedBox(height: AppSizes.spacingMedium),
         _SectionTitle(l10n.repRecentVisits),
         if (detail.visits.isEmpty)
@@ -222,10 +243,7 @@ class _InfoLine extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
-                ),
+                Text(label, style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context))),
                 Text(value, style: context.textTheme.bodyMedium),
               ],
             ),
@@ -244,7 +262,9 @@ class _OrderTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final when = order.createdAt == null ? '' : DateFormatter.formatDateTime(order.createdAt!);
+    final when = order.createdAt == null
+        ? ''
+        : DateFormatter.formatDateTime(order.createdAt!, locale: context.l10n.localeName);
     return CustomCard(
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
       child: Row(
@@ -263,7 +283,7 @@ class _OrderTile extends StatelessWidget {
           ),
           Text(
             formatSyp(order.finalPrice, l10n.currencySuffix),
-            style: context.textTheme.titleSmall?.copyWith(color: AppColors.primaryOf(context)),
+            style: context.textTheme.titleSmall?.copyWith(color: AppColors.primaryTextOf(context)),
           ),
         ],
       ),

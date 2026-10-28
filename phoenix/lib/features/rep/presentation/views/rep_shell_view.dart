@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +42,7 @@ class _RepShellViewState extends State<RepShellView> {
     final l10n = context.l10n;
     final titles = [l10n.repNavPharmacies, l10n.repVisitsTitle, l10n.profileTitle];
 
-    return Scaffold(
+    return ResponsiveRoleScaffold(
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
@@ -56,27 +57,25 @@ class _RepShellViewState extends State<RepShellView> {
               label: Text(l10n.repScanAction),
             )
           : null,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (index) => setState(() => _index = index),
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.storefront_outlined),
-            selectedIcon: Icon(Icons.storefront, color: AppColors.primaryOf(context)),
-            label: l10n.repNavPharmacies,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.place_outlined),
-            selectedIcon: Icon(Icons.place, color: AppColors.primaryOf(context)),
-            label: l10n.repNavVisits,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: AppColors.primaryOf(context)),
-            label: l10n.profileTitle,
-          ),
-        ],
-      ),
+      selectedIndex: _index,
+      onSelected: (index) => setState(() => _index = index),
+      destinations: [
+        NavigationDestination(
+          icon: const Icon(Icons.storefront_outlined),
+          selectedIcon: Icon(Icons.storefront, color: AppColors.primaryOf(context)),
+          label: l10n.repNavPharmacies,
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.place_outlined),
+          selectedIcon: Icon(Icons.place, color: AppColors.primaryOf(context)),
+          label: l10n.repNavVisits,
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.person_outline),
+          selectedIcon: Icon(Icons.person, color: AppColors.primaryOf(context)),
+          label: l10n.profileTitle,
+        ),
+      ],
     );
   }
 }

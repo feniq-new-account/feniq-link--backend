@@ -1,3 +1,4 @@
+import 'display_name.dart';
 import 'package:intl/intl.dart';
 
 // The single money formatter for the whole app. SYP (Syrian pound) is the
@@ -28,7 +29,8 @@ const String kMoneyUnavailable = '—';
 ///   100000  -> "100,000 ل.س"
 ///   1500000 -> "1,500,000 ل.س"
 String formatSyp(num sypAmount, String currencySuffix) {
-  return '${_grouped.format(sypAmount.round())} $currencySuffix';
+  final digits = _grouped.format(sypAmount.round());
+  return '${sypAmount < 0 ? ltrIsolate(digits) : digits} $currencySuffix';
 }
 
 /// Converts a USD-native amount (the catalog's stored currency) to the SYP

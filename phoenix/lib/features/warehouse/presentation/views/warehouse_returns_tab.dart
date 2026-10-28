@@ -128,7 +128,7 @@ class _ReturnCard extends StatelessWidget {
           Text(
             [
               l10n.warehouseReturnUnits(item.unitCount),
-              if (createdAt != null) DateFormatter.formatDateTime(createdAt),
+              if (createdAt != null) DateFormatter.formatDateTime(createdAt, locale: context.l10n.localeName),
             ].join(' · '),
             style: muted,
           ),

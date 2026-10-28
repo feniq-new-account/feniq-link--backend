@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -87,7 +88,7 @@ class WarehouseReturnDetailView extends StatelessWidget {
                 minScale: 0.6,
               ),
             ),
-            body: _body(context, state),
+            body: ResponsiveRoleBody(child: _body(context, state)),
             bottomNavigationBar: item == null || !item.isPending
                 ? null
                 : SafeArea(
@@ -106,7 +107,10 @@ class WarehouseReturnDetailView extends StatelessWidget {
                             child: FilledButton(
                               onPressed: state.isActing ? null : () => _confirmApprove(context),
                               child: state.isActing
-                                  ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                  ? const SizedBox.square(
+                                      dimension: 18,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
                                   : Text(l10n.warehouseReturnApprove),
                             ),
                           ),
@@ -163,7 +167,8 @@ class WarehouseReturnDetailView extends StatelessWidget {
                 children: [
                   StatusBadge(label: returnStatusLabel(l10n, item.status), tone: warehouseReturnTone(item.status)),
                   const Spacer(),
-                  if (createdAt != null) Text(DateFormatter.formatDateTime(createdAt), style: muted),
+                  if (createdAt != null)
+                    Text(DateFormatter.formatDateTime(createdAt, locale: context.l10n.localeName), style: muted),
                 ],
               ),
               const SizedBox(height: AppSizes.spacingSmall),
@@ -227,7 +232,10 @@ class WarehouseReturnDetailView extends StatelessWidget {
                 for (final url in item.images)
                   ClipRRect(
                     borderRadius: AppRadius.small,
-                    child: SizedBox.square(dimension: 96, child: AppNetworkImage(url: url, fit: BoxFit.cover)),
+                    child: SizedBox.square(
+                      dimension: 96,
+                      child: AppNetworkImage(url: url, fit: BoxFit.cover),
+                    ),
                   ),
               ],
             ),

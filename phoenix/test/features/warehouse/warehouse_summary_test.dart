@@ -96,7 +96,7 @@ void main() {
       await cubit.close();
     });
 
-    test('picking another period reloads with it and keeps the old figures meanwhile', () async {
+    test('picking another period clears figures belonging to the previous period', () async {
       when(() => repo.getSummary(period: any(named: 'period'))).thenAnswer((_) async => _summary());
       final cubit = WarehouseSummaryCubit(repository: repo);
       await cubit.load();
@@ -107,7 +107,7 @@ void main() {
       expect(cubit.state.period, 'month');
       expect(cubit.state.status, RepLoadStatus.loaded);
       expect(states.first.status, RepLoadStatus.loading);
-      expect(states.first.summary, isNotNull);
+      expect(states.first.summary, isNull);
       verify(() => repo.getSummary(period: 'month')).called(1);
       await sub.cancel();
       await cubit.close();
@@ -181,7 +181,13 @@ void main() {
       // Yesterday: -40,000 net sales (a reversal of an older charge); today: 150,000.
       final json = {
         ..._json['summary']!,
-        'previous': {'salesSyp': -40000, 'collectionsSyp': 90000, 'returnsSyp': 0, 'invoiceCount': 1, 'paymentCount': 2},
+        'previous': {
+          'salesSyp': -40000,
+          'collectionsSyp': 90000,
+          'returnsSyp': 0,
+          'invoiceCount': 1,
+          'paymentCount': 2,
+        },
       };
       await tester.pumpWidget(
         MaterialApp(
@@ -189,9 +195,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
-            body: SingleChildScrollView(
-              child: SummaryFigures(summary: WarehouseSummary.fromJson({'summary': json})),
-            ),
+            body: SingleChildScrollView(child: SummaryFigures(summary: WarehouseSummary.fromJson({'summary': json}))),
           ),
         ),
       );

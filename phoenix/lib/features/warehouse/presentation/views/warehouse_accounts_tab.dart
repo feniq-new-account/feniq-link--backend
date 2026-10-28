@@ -109,7 +109,7 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                   itemCount: state.accounts.length,
                   isLoading: state.status == RepLoadStatus.initial || state.status == RepLoadStatus.loading,
                   isLoadingMore: state.isLoadingMore,
-                  errorMessage: state.status == RepLoadStatus.error && state.accounts.isEmpty
+                  errorMessage: state.status == RepLoadStatus.error
                       ? translateErrorCode(l10n, state.errorCode, state.errorMessage ?? '')
                       : null,
                   onRetry: () => context.read<WarehouseAccountsCubit>().load(),
@@ -125,15 +125,15 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            spacing: 12,
+                            runSpacing: 8,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  warehouseLocalName(context, row.nameAr, row.nameEn),
-                                  style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                                ),
+                              Text(
+                                warehouseLocalName(context, row.nameAr, row.nameEn),
+                                style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                               ),
-                              const SizedBox(width: AppSizes.spacingSmall),
                               WarehouseBalanceText(balanceSyp: row.balanceSyp),
                             ],
                           ),
@@ -147,7 +147,7 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                             row.lastPaymentAt == null
                                 ? l10n.warehouseAccountNoPayment
                                 : l10n.warehouseAccountLastPayment(
-                                    DateFormatter.formatDate(row.lastPaymentAt!.toLocal()),
+                                    DateFormatter.formatDate(row.lastPaymentAt!.toLocal(), locale: l10n.localeName),
                                   ),
                             style: muted,
                           ),
