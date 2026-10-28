@@ -72,6 +72,9 @@ jobs:
           tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           app_id=$("$tools/aapt2" dump packagename "$apk")
           [ "$app_id" = 'com.feniq.link' ] || { echo '::error::Unexpected Android application ID.'; exit 1; }
+          native_code=$("$tools/aapt2" dump badging "$apk" | sed -n 's/^native-code: //p')
+          [ "$native_code" = "'arm64-v8a'" ] || { echo '::error::Unexpected native architectures in ARM64 APK.'; exit 1; }
+          "$tools/zipalign" -c -P 16 4 "$apk"
           cert=$("$tools/apksigner" verify --print-certs "$apk" | sed -n 's/^.*certificate SHA-256 digest: //p' | head -1 | tr 'a-f' 'A-F')
           [ -n "$cert" ] || { echo '::error::Missing signing certificate.'; exit 1; }
           # Keep pubspec's version code for this isolated validation artifact;
