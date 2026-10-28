@@ -15,9 +15,9 @@
 # feniq-apk-TEST-ONLY، ولا يُنشر على الموقع أبداً (لا يمكن التحديث فوقه).
 #
 # التحقق: صفحة كل تشغيل (Summary) تعرض معرّف التطبيق وبصمة SHA-256 لشهادة
-# التوقيع. نفس البصمة في كل نسخة = التحديث فوق النسخة السابقة يعمل. إذا وُضع
-# متغيّر المستودع ANDROID_CERT_SHA256 (Settings ← Variables) بالبصمة الصحيحة،
-# يفشل البناء تلقائياً إذا وُقّع بمفتاح آخر.
+# التوقيع. نفس البصمة مع رقم بناء مناسب يسمح بالتحديث فوق النسخة السابقة.
+# البصمة المرجعية محفوظة في .github/android-certificate.sha256؛ يمكن تجاوزها
+# بمتغيّر المستودع ANDROID_CERT_SHA256. اختلاف التوقيع يوقف النشر.
 name: Build Android APK
 
 on:
@@ -102,6 +102,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           EXPECTED_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
         run: |
+          EXPECTED_SHA256="${EXPECTED_SHA256:-$(cat ../.github/android-certificate.sha256)}"
           if [ -z "$KEYSTORE_BASE64" ]; then
             echo "::warning::No signing key in repository secrets - this APK is signed with a temporary debug key, uploaded as feniq-apk-TEST-ONLY and never published. See phoenix/android/README.md."
             echo "artifact=feniq-apk-TEST-ONLY" >> "$GITHUB_OUTPUT"
@@ -144,6 +145,7 @@ jobs:
           ARTIFACT: ${{ steps.signing.outputs.artifact }}
         run: |
           apk=build/app/outputs/flutter-apk/app-release.apk
+          EXPECTED_SHA256="${EXPECTED_SHA256:-$(cat ../.github/android-certificate.sha256)}"
           tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           app_id=$("$tools/aapt2" dump packagename "$apk")
           # The signer line's label varies by apksigner version and signature

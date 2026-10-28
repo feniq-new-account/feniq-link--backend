@@ -7,9 +7,13 @@ on:
     paths:
       - 'phoenix/**'
       - '.github/workflows/prelaunch-android-check.yml'
+      - '.github/scripts/android_review_version.py'
+      - '.github/scripts/test_android_review_version.py'
+      - '.github/android-certificate.sha256'
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: prelaunch-android-${{ github.ref }}
   cancel-in-progress: true
@@ -24,6 +28,14 @@ jobs:
       API_BASE_URL: ${{ vars.API_BASE_URL || 'https://feniq-connect-api.onrender.com/api' }}
     steps:
       - uses: actions/checkout@v4
+      - name: Use the Android release version counter
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/android-apk.yml/runs?per_page=30" > "$RUNNER_TEMP/android-release-runs.json"
+          code=$(python3 ../.github/scripts/android_review_version.py < "$RUNNER_TEMP/android-release-runs.json")
+          echo "code=$code" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -59,26 +71,31 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > android/key.properties
           echo 'kind=signed' >> "$GITHUB_OUTPUT"
-      - name: Compile ARM64 release APK
+      - name: Compile universal release APK
         run: >
-          flutter build apk --release --target-platform android-arm64 --no-pub
+          flutter build apk --release --no-pub --build-number=${{ steps.version.outputs.code }}
           --dart-define="API_BASE_URL=$API_BASE_URL"
       - name: Verify Android artifact
         env:
           KIND: ${{ steps.signing.outputs.kind }}
           EXPECTED_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
+          EXPECTED_VERSION_CODE: ${{ steps.version.outputs.code }}
         run: |
           apk=build/app/outputs/flutter-apk/app-release.apk
+          EXPECTED_SHA256="${EXPECTED_SHA256:-$(cat ../.github/android-certificate.sha256)}"
           tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           app_id=$("$tools/aapt2" dump packagename "$apk")
           [ "$app_id" = 'com.feniq.link' ] || { echo '::error::Unexpected Android application ID.'; exit 1; }
-          native_code=$("$tools/aapt2" dump badging "$apk" | sed -n 's/^native-code: //p')
-          [ "$native_code" = "'arm64-v8a'" ] || { echo '::error::Unexpected native architectures in ARM64 APK.'; exit 1; }
+          badging=$("$tools/aapt2" dump badging "$apk")
+          native_code=$(echo "$badging" | sed -n 's/^native-code: //p')
+          [ "$native_code" = "'arm64-v8a' 'armeabi-v7a' 'x86_64'" ] || { echo '::error::Missing native architectures in universal APK.'; exit 1; }
+          code=$(echo "$badging" | sed -n "s/^package:.*versionCode='\([0-9]*\)'.*/\1/p")
+          [ "$code" = "$EXPECTED_VERSION_CODE" ] || { echo '::error::Unexpected APK version code.'; exit 1; }
           "$tools/zipalign" -c -P 16 4 "$apk"
           cert=$("$tools/apksigner" verify --print-certs "$apk" | sed -n 's/^.*certificate SHA-256 digest: //p' | head -1 | tr 'a-f' 'A-F')
           [ -n "$cert" ] || { echo '::error::Missing signing certificate.'; exit 1; }
-          # Keep pubspec's version code for this isolated validation artifact;
-          # never mint a high code that could block later production updates.
+          # The same release counter keeps this installable over older builds
+          # without blocking the next ordinary production build.
           verification=TEST-ONLY
           if [ "$KIND" = signed ]; then
             if [ -n "$EXPECTED_SHA256" ]; then
@@ -91,17 +108,46 @@ jobs:
             fi
           fi
           mkdir -p build/prelaunch
-          cp "$apk" build/prelaunch/feniq-prelaunch-arm64.apk
-          (cd build/prelaunch && sha256sum feniq-prelaunch-arm64.apk > SHA256SUMS)
+          cp "$apk" build/prelaunch/feniq-prelaunch-universal.apk
+          (cd build/prelaunch && sha256sum feniq-prelaunch-universal.apk > SHA256SUMS)
           jq -n --arg verification "$verification" --arg cert "$cert" --arg api "$API_BASE_URL" \
-            --arg commit "$GITHUB_SHA" --arg id "$app_id" \
-            '{verification:$verification,certificateSha256:$cert,apiBaseUrl:$api,commit:$commit,applicationId:$id,publication:false}' > build/prelaunch/validation.json
+            --arg commit "$GITHUB_SHA" --arg id "$app_id" --argjson code "$code" \
+            '{verification:$verification,certificateSha256:$cert,apiBaseUrl:$api,commit:$commit,applicationId:$id,versionCode:$code,abis:["arm64-v8a","armeabi-v7a","x86_64"],publication:false}' > build/prelaunch/validation.json
           cat build/prelaunch/validation.json
           cat build/prelaunch/SHA256SUMS
           { echo '### Android prelaunch validation'; echo "- $verification"; echo "- applicationId: $app_id"; echo "- Commit: $GITHUB_SHA"; echo '- Review artifact only; no website publication.'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
-          name: feniq-prelaunch-arm64
+          name: feniq-prelaunch-universal
           path: phoenix/build/prelaunch/
           retention-days: 7
           if-no-files-found: error
+  install:
+    needs: apk
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: feniq-prelaunch-universal
+          path: apk
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install signed APK on Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            (cd apk && sha256sum -c SHA256SUMS)
+            adb install -r apk/feniq-prelaunch-universal.apk
+            adb shell pm path com.feniq.link
