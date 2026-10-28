@@ -10,7 +10,7 @@
 ## Layout and readability
 
 - Adaptive statistics, wrapping order headers, contact actions, quantities and totals replace fixed rows that overflowed.
-- Phone navigation grows with its labels; wide layouts use a scrollable RTL navigation rail. Detail content has a readable maximum width on tablets.
+- Phone navigation uses a section picker when its labels cannot fit on one line; wide layouts use a scrollable RTL rail whose width follows the actual label size. Detail content has a readable maximum width on tablets.
 - Numeric inputs accept Arabic and Persian keyboard digits, while displaying western digits. Phones use LTR; negative amounts and Arabic dates use directional isolation. Arabic order titles use an unambiguous “رقم” label.
 - Filters retain Android's 48dp touch targets. Orange text uses the existing readable contrast token. Selected chips have a visible checkmark, and card shadows are lighter.
 - Add-rep passwords support show/hide. Payment and scan panels scroll in short landscape viewports and with enlarged text. Refresh errors stay visible beside cached data.
@@ -19,8 +19,10 @@
 
 Permanent regression tests cover GPS disposal, late submission receipts, stale pagination in both roles, failed month switches, numeric keyboard normalization, and negative amounts.
 
-The responsive suite renders real Arabic screens using the bundled fonts, including all tabs, detail pages, loading/empty/error states, forms, dialogs and cached-error states. It checks small phones, landscape, split-screen, tablets, large text (up to 3×), dark mode, keyboard space, content reached by scrolling, Android tap targets, labels and the visual position of the minus sign. Set `FENIQ_CAPTURE_DIR` to save screenshots and the JSON evidence outside the repository.
+The responsive suite renders real Arabic screens using the bundled fonts, including all tabs, detail pages, loading/empty/error states, forms, dialogs and cached-error states. It checks small phones, landscape, split-screen, tablets, large text (up to 3×), dark mode, keyboard space, content reached by scrolling, Android tap targets, labels and the visual position of the minus sign, and unsplit navigation labels. Set `FENIQ_CAPTURE_DIR` to save screenshots and the JSON evidence outside the repository.
 
 The backend integration test sends four concurrent HTTP scans against a temporary MongoDB replica set and asserts exactly one stored verified visit with matching receipt IDs.
 
 These tests do not substitute for a physical camera/GPS/keyboard check on the Oukitel C62.
+
+The Android validation workflow verifies the signed universal APK, installs it on Android 15, starts MainActivity, checks that its process stays alive without an app crash, and saves launch logs plus a screenshot.

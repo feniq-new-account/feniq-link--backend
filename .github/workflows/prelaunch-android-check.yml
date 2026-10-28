@@ -140,7 +140,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Install signed APK on Android 15
+      - name: Install and launch signed APK on Android 15
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -151,3 +151,23 @@ jobs:
             (cd apk && sha256sum -c SHA256SUMS)
             adb install -r apk/feniq-prelaunch-universal.apk
             adb shell pm path com.feniq.link
+            adb logcat -c
+            adb shell am start -W -n com.feniq.link/.MainActivity | tee apk/android15-launch.txt
+            grep -q 'Status: ok' apk/android15-launch.txt
+            sleep 8
+            adb shell pidof com.feniq.link > apk/android15-pid.txt
+            test -s apk/android15-pid.txt
+            adb logcat -d -b crash > apk/android15-crashes.txt
+            if grep -q 'Process: com.feniq.link' apk/android15-crashes.txt; then
+              cat apk/android15-crashes.txt
+              exit 1
+            fi
+            adb exec-out screencap -p > apk/android15-startup.png
+      - name: Keep Android startup evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: feniq-android15-smoke
+          path: apk/android15-*
+          if-no-files-found: warn
+          retention-days: 7
