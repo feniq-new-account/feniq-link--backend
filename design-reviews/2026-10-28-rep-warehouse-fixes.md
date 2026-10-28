@@ -13,6 +13,7 @@
 - Phone navigation uses a section picker when its labels cannot fit on one line; wide layouts use a scrollable RTL rail whose width follows the actual label size. Detail content has a readable maximum width on tablets.
 - Numeric inputs accept Arabic and Persian keyboard digits, while displaying western digits. Phones use LTR; negative amounts and Arabic dates use directional isolation. Arabic order titles use an unambiguous “رقم” label.
 - Filters retain Android's 48dp touch targets. Orange text uses the existing readable contrast token. Selected chips have a visible checkmark, and card shadows are lighter.
+- Scrollable lists leave room below their final card for the floating action, including with enlarged text. Geometry checks cover pharmacies, reps and statements after scrolling to the end.
 - Add-rep passwords support show/hide. Payment and scan panels scroll in short landscape viewports and with enlarged text. Refresh errors stay visible beside cached data.
 
 ## Verification

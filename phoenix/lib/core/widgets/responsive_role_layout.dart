@@ -42,6 +42,9 @@ class ResponsiveStatsGrid extends StatelessWidget {
 
 double roleFilterHeight(BuildContext context) => math.max(64, MediaQuery.textScalerOf(context).scale(13) + 40);
 
+/// Leave enough scroll range for the last card to clear an extended action.
+double roleFabClearance(BuildContext context) => math.max(96, MediaQuery.textScalerOf(context).scale(16) * 1.4 + 48);
+
 /// Phone, split-screen, landscape and tablet share the same destinations.
 /// Wide layouts use a scrollable rail; phone bars grow to fit their labels.
 class ResponsiveRoleScaffold extends StatelessWidget {
@@ -182,7 +185,7 @@ class _CompactRoleNavigation extends StatelessWidget {
                   title: Text(destinations[i].label),
                   trailing: i == selectedIndex ? const Icon(Icons.check) : null,
                   selected: i == selectedIndex,
-                    selectedColor: AppColors.primaryTextOf(context),
+                  selectedColor: AppColors.primaryTextOf(context),
                   onTap: () => Navigator.of(context).pop(i),
                 ),
             ],

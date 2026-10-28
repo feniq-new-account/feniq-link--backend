@@ -1,3 +1,6 @@
+import 'package:feniq/core/widgets/custom_card.dart';
+import 'package:feniq/features/rep/presentation/views/rep_pharmacies_tab.dart';
+import 'package:feniq/features/warehouse/presentation/views/warehouse_reps_tab.dart';
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -677,6 +680,20 @@ void main() {
                   (position.pixels + position.viewportDimension * 0.8).clamp(0, position.maxScrollExtent),
                 );
                 await tester.pump();
+              }
+            }
+            if (screen == 'rep_pharmacies' || screen == 'warehouse_reps' || screen == 'warehouse_statement') {
+              final tabView = find.byType(switch (screen) {
+                'rep_pharmacies' => RepPharmaciesTab,
+                'warehouse_reps' => WarehouseRepsTab,
+                _ => WarehouseStatementView,
+              });
+              final cards = find.descendant(of: tabView, matching: find.byType(CustomCard));
+              final fab = find.byType(FloatingActionButton);
+              if (cards.evaluate().isNotEmpty &&
+                  fab.evaluate().isNotEmpty &&
+                  tester.getRect(cards.last).overlaps(tester.getRect(fab))) {
+                issues.add('The floating action covers the final card after scrolling to the end');
               }
             }
           } catch (error) {

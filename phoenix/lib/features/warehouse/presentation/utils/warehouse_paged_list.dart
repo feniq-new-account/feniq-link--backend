@@ -23,8 +23,10 @@ class WarehousePagedList extends StatelessWidget {
     this.isLoadingMore = false,
     this.controller,
     this.header,
+    this.bottomClearance = 0,
   });
 
+  final double bottomClearance;
   final int itemCount;
   final IndexedWidgetBuilder itemBuilder;
   final bool isLoading;
@@ -45,7 +47,7 @@ class WarehousePagedList extends StatelessWidget {
       return ListView(
         controller: controller,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: AppPadding.screen,
+        padding: AppPadding.screen.add(EdgeInsets.only(bottom: bottomClearance)),
         children: [
           ?header,
           const SizedBox(height: AppSizes.spacingLarge),
@@ -72,7 +74,7 @@ class WarehousePagedList extends StatelessWidget {
     return ListView.separated(
       controller: controller,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: AppPadding.screen,
+      padding: AppPadding.screen.add(EdgeInsets.only(bottom: bottomClearance)),
       itemCount: itemCount + offset + (isLoadingMore ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: AppSizes.spacingSmall),
       itemBuilder: (context, index) {

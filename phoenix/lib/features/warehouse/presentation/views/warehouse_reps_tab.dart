@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:feniq/core/utils/number_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -96,6 +97,7 @@ class WarehouseRepsTab extends StatelessWidget {
       builder: (context, state) => AppRefreshIndicator(
         onRefresh: () => context.read<WarehouseRepsCubit>().load(),
         child: WarehousePagedList(
+          bottomClearance: roleFabClearance(context),
           itemCount: state.reps.length,
           isLoading: state.status == RepLoadStatus.initial || state.status == RepLoadStatus.loading,
           errorMessage: state.status == RepLoadStatus.error

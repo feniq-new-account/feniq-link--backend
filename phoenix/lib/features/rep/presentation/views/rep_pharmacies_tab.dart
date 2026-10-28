@@ -53,7 +53,7 @@ class _RepPharmaciesTabState extends State<RepPharmaciesTab> {
             // Always scrollable, so pull-to-refresh also works on a short or
             // empty list.
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: AppPadding.screen,
+            padding: AppPadding.screen.add(EdgeInsets.only(bottom: roleFabClearance(context))),
             children: [
               const _StatsRow(),
               const SizedBox(height: AppSizes.spacingMedium),

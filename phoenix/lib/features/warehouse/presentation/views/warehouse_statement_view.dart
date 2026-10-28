@@ -129,7 +129,7 @@ class _WarehouseStatementViewState extends State<WarehouseStatementView> {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         // Room under the last row for the floating button.
-        padding: AppPadding.screen.copyWith(bottom: 96),
+        padding: AppPadding.screen.copyWith(bottom: roleFabClearance(context)),
         children: [
           CustomCard(
             child: Column(
