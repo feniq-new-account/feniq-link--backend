@@ -2,14 +2,8 @@
 # site or a release, and never exposes the signing key outside GitHub Actions.
 name: Prelaunch Android validation
 on:
-  push:
-    branches: [codex/prelaunch-hardening]
-    paths:
-      - 'phoenix/**'
-      - '.github/workflows/prelaunch-android-check.yml'
-      - '.github/scripts/android_review_version.py'
-      - '.github/scripts/test_android_review_version.py'
-      - '.github/android-certificate.sha256'
+  # Historical one-off review validation; launch builds now use the shared
+  # android-apk.yml counter and the explicitly requested task branch.
   workflow_dispatch:
 permissions:
   contents: read

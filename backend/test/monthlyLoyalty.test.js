@@ -133,7 +133,10 @@ test('month boundaries use Damascus time and the first terms remain frozen for t
   assert.equal(key, '2026-11');
   order.monthlyLoyalty.tiers = [{ minSyp: 100000, discountSyp: 9000 }];
   await loyalty.prepareDelivery(order, new Date('2026-11-02T10:00:00Z'));
-  assert.equal((await Period.findOne({ ...ctx.filter, period: key })).tiers[0].discountSyp, 1000);
+  assert.equal((await Period.findOne({ ...ctx.filter, period: key })).tiers.length, 0, 'preparing a delivery must not freeze terms');
+  await ctx.deliver(order);
+  const current = await Period.findOne({ ...ctx.filter, period: require('../src/utils/businessTime').businessDateOf(new Date()).slice(0, 7) });
+  assert.equal(current.tiers[0].discountSyp, 1000);
 });
 test('disabling the paid feature stops new earning promises while preserving earned spendable credit', async () => {
   const ctx = await setup();
@@ -186,4 +189,21 @@ test('a partial return below a threshold reverses only the lost tier increment u
   assert.equal((await Period.findOne(ctx.filter)).eligibleSyp, 199000);
   assert.equal((await ctx.wallet()).loyaltyBalanceSyp, 1000);
   assert.equal((await Order.findById(id(second))).monthlyLoyalty.reversedSyp, 1000);
+});
+
+
+test('a failed first delivery cannot freeze stale reward tiers for the first successful delivery', async (t) => {
+  const ctx = await setup();
+  const first = await ctx.place(100);
+  t.mock.method(financialAudit, 'record', async () => { throw new Error('audit unavailable'); });
+  await assert.rejects(ctx.deliver(first), /audit unavailable/);
+  assert.equal((await Period.findOne(ctx.filter)).tiers.length, 0);
+  assert.equal((await ctx.wallet()).loyaltyBalanceSyp, 0);
+  t.mock.restoreAll();
+  await settings.updateLoyalty(ctx.wh.id, { enabled: true, mode: 'monthly', revision: 0, tiers: [{ minSyp: 100000, discountSyp: 9000 }] });
+  const second = await ctx.place(100);
+  await ctx.deliver(second);
+  assert.equal((await Period.findOne(ctx.filter)).tiers[0].discountSyp, 9000);
+  assert.equal((await ctx.wallet()).loyaltyBalanceSyp, 9000);
+  assert.equal((await Order.findById(id(first))).status, 'out_for_delivery');
 });

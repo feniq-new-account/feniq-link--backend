@@ -17,7 +17,7 @@ async function prepareDelivery(order, now = new Date()) {
     { $setOnInsert: { balanceSyp: 0, loyaltyBalanceSyp: 0 } }, { upsert: true });
   try {
   await Period.updateOne({ pharmacyId: order.pharmacyId, warehouseId: order.warehouseId, period },
-    { $setOnInsert: { tiers: order.monthlyLoyalty.tiers, eligibleSyp: 0, entitlementSyp: 0 } }, { upsert: true });
+    { $setOnInsert: { tiers: [], eligibleSyp: 0, entitlementSyp: 0 } }, { upsert: true });
   } catch (error) { if (error.code !== 11000) throw error; } // another first delivery won the period
   return period;
 }
@@ -25,6 +25,11 @@ async function prepareDelivery(order, now = new Date()) {
 async function changeEntitlement({ order, period, changeSyp, returnId }, session) {
   const row = await Period.findOne({ pharmacyId: order.pharmacyId, warehouseId: order.warehouseId, period }).session(session);
   if (!row) throw ApiError.conflict('Monthly loyalty period missing.', 'LOYALTY_PERIOD_CHANGED');
+  // Reserve only the period key outside the transaction. Terms freeze with
+  // the first committed delivery, so a failed audit/charge cannot fix terms
+  // for a month in which no delivery actually succeeded. Non-empty legacy
+  // terms remain frozen even after a full return reduces eligibility to zero.
+  if (!row.tiers.length) row.tiers = order.monthlyLoyalty.tiers;
   const eligible = row.eligibleSyp + changeSyp;
   if (!Number.isSafeInteger(eligible) || eligible < 0) {
     throw ApiError.conflict('Monthly purchase total changed.', 'LOYALTY_PERIOD_CHANGED');
@@ -77,7 +82,7 @@ async function stateFor(pharmacyId, warehouseId, now = new Date(), defaultTiers 
     Period.findOne({ pharmacyId, warehouseId, period }).lean(),
     Credit.findOne({ pharmacyId, warehouseId }).select('loyaltyBalanceSyp').lean(),
   ]);
-  const tiers = row?.tiers ?? defaultTiers;
+  const tiers = row?.tiers?.length ? row.tiers : defaultTiers;
   const eligibleSyp = row?.eligibleSyp ?? 0;
   const nextTier = tiers.find((tier) => tier.minSyp > eligibleSyp) ?? null;
   return { period, eligibleSyp, entitlementSyp: row?.entitlementSyp ?? 0,

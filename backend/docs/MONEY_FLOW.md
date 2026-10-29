@@ -380,3 +380,53 @@ pinned by a test.
 | Pharmacy debt total silently dropped credit balances | debt / credit / net, server-computed |
 | Invoice printed the undiscounted unit price beside a discounted line total | Discounted unit price is the headline |
 | Return window: 24h in code, "48 hours" in every UI string | Aligned to 24h everywhere |
+
+## 10. Monthly loyalty and source-aware pharmacy credit (launch extension)
+
+A warehouse selects either `per_order` or `monthly`; they never stack as two
+loyalty discounts. Per-order terms remain frozen on each order. Monthly orders
+freeze their offered tier terms too, but earn only on their **delivered final
+net invoice value**, after other discounts and already-used credit. Pending and
+cancelled orders earn nothing. The business month is `Asia/Damascus`.
+
+`MonthlyLoyaltyPeriod` freezes its non-empty tiers with the **first committed
+delivery** in that pharmacy/warehouse/month. `prepareDelivery` only reserves an
+empty period key outside the transaction; a failed charge or audit must not
+freeze the month. All eligibility, tier freezing, entitlement, wallet movement,
+order markers, ledger charge and audit then commit together. Further deliveries
+add only the difference between the new entitlement and the entitlement already
+granted. Existing non-empty period terms remain frozen even after full returns.
+
+`PharmacyCredit.balanceSyp` is commission credit. `loyaltyBalanceSyp` is a separate
+signed loyalty wallet. Spendable credit is `balanceSyp + max(loyaltyBalanceSyp,0)`.
+An order's `used`/`released` CreditEntries freeze the commission/loyalty source
+split; cancellation and pending edits restore those sources. Legacy entries
+without a split are commission credit. These wallets are not cash receivables.
+
+An approved return reduces the original invoice month's eligible value by its
+frozen net return credit, capped at the original remaining eligibility. It
+recomputes that month's entitlement and posts only the loyalty difference in
+the same return transaction. If a spent reward must be reversed, a negative
+loyalty wallet offsets future loyalty rewards. It never consumes commission
+credit and never creates a cash debt or a new ledger charge. Return valuation
+and commission settlement still use the original order's frozen FX and terms.
+
+Disabling loyalty or expiring the subscription stops new earning promises.
+Previously snapshotted order promises and earned spendable credit remain valid.
+Target bonuses are deferred and do not change the existing four-way commission.
+
+## 11. Monitoring reports are views of the same posted ledger
+
+Sales, returns and collections net each entry family with its reversals. Net
+sales are sales minus returns, not profit. New reports expose a snapshot time
+and separate creation-date order counts from effective-date posted money. No
+cost data is available to invent a warehouse profit figure.
+
+Receivable aging is an explicitly labelled **FIFO monitoring estimate**, because
+payments are account-level rather than allocated to invoices. Returns reduce
+their source invoice first; reversing a payment restores the original unpaid
+invoice age. Only a `charge` provides a documented invoice age. Remaining opening
+balances, migration adjustments and manual debit corrections without an original
+invoice date are reported as `unknownAgeSyp`, not guessed into overdue bands.
+Dated bands plus that unknown amount equal total debt; held account credit is
+separate. This view never edits entries, allocation history or account balances.
