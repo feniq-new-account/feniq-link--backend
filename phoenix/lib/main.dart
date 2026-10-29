@@ -181,6 +181,7 @@ Future<void> main() async {
   final appRouter = AppRouter();
   runApp(
     MyApp(
+      onWarehouseActive: () async { await apiClient.dio.get('/warehouse/subscription'); },
       initialState: initialState,
       storageService: storageService,
       appUpdateService: appUpdateService,
@@ -254,6 +255,7 @@ Future<SettingsState> _loadInitialSettings(
 
 class MyApp extends StatelessWidget {
   const MyApp({
+    this.onWarehouseActive,
     required this.initialState,
     required this.storageService,
     required this.appUpdateService,
@@ -281,6 +283,7 @@ class MyApp extends StatelessWidget {
     super.key,
   });
 
+  final Future<void> Function()? onWarehouseActive;
   final SettingsState initialState;
   final StorageService storageService;
   final AppUpdateService appUpdateService;
@@ -367,6 +370,7 @@ class MyApp extends StatelessWidget {
           BlocProvider(
             create: (context) => AuthCubit(
               onSessionToken: context.read<CartCubit>().restoreForToken,
+              onWarehouseActive: onWarehouseActive,
               authRepository: authRepository,
               secureStorage: secureStorage,
               fcmService: fcmService,

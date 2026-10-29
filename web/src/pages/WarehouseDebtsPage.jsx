@@ -610,6 +610,7 @@ export function WarehouseDebtsPage() {
   const [search, setSearch] = useState('');
   // A row's "pay in full" / "part payment" open this: { mode, row }.
   const [paying, setPaying] = useState(null);
+  const [payingBusy, setPayingBusy] = useState(false);
   const [payMessage, setPayMessage] = useState(null);
   const [voiceOpen, setVoiceOpen] = useState(false);
 
@@ -675,10 +676,11 @@ export function WarehouseDebtsPage() {
           type="search"
           className="wh-filter-search"
           placeholder={t('debts.searchPlaceholder')}
+          disabled={payingBusy}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
-        {canRecord && <button type="button" className="btn-secondary wh-voice-btn" onClick={() => setVoiceOpen(true)}>
+        {canRecord && <button type="button" className="btn-secondary wh-voice-btn" disabled={payingBusy} onClick={() => setVoiceOpen(true)}>
           {t('voicePay.title')}
         </button>}
       </div>
@@ -696,20 +698,7 @@ export function WarehouseDebtsPage() {
 
       {error && <p className="error-text">{error}</p>}
       {payMessage && <p className="hint">{payMessage}</p>}
-      {paying && (
-        <QuickPaymentModal
-          mode={paying.mode}
-          pharmacyId={paying.row.pharmacyId}
-          pharmacyName={displayName(paying.row.nameEn, paying.row.nameAr)}
-          owedSyp={paying.row.balanceSyp}
-          onClose={() => setPaying(null)}
-          onDone={(amount) => {
-            setPaying(null);
-            setPayMessage(t('quickPay.recorded', { amount: formatSyp(amount) }));
-            reset();
-          }}
-        />
-      )}
+
 
       {isLoading ? (
         <p className="hint">{t('common.loading')}</p>
@@ -737,7 +726,7 @@ export function WarehouseDebtsPage() {
                   <tr
                     key={row.pharmacyId}
                     className="clickable-row"
-                    onClick={() => setSelectedPharmacyId(row.pharmacyId)}
+                    onClick={() => { if (!payingBusy) setSelectedPharmacyId(row.pharmacyId); }}
                   >
                     <td>
                       {displayName(row.nameEn, row.nameAr)}
@@ -758,6 +747,7 @@ export function WarehouseDebtsPage() {
                         <div className="wh-order-actions">
                           <button
                             type="button"
+                            disabled={payingBusy}
                             className="wh-row-action"
                             onClick={(event) => {
                               event.stopPropagation();
@@ -768,6 +758,7 @@ export function WarehouseDebtsPage() {
                           </button>
                           <button
                             type="button"
+                            disabled={payingBusy}
                             className="wh-row-action wh-row-action-secondary"
                             onClick={(event) => {
                               event.stopPropagation();
@@ -778,6 +769,22 @@ export function WarehouseDebtsPage() {
                           </button>
                         </div>
                       )}
+      {canRecord && paying?.row.pharmacyId === row.pharmacyId && (
+        <QuickPaymentModal
+          key={`${row.pharmacyId}-${paying.mode}`}
+          onBusyChange={setPayingBusy}
+          mode={paying.mode}
+          pharmacyId={paying.row.pharmacyId}
+          pharmacyName={displayName(paying.row.nameEn, paying.row.nameAr)}
+          owedSyp={paying.row.balanceSyp}
+          onClose={() => setPaying(null)}
+          onDone={(amount) => {
+            setPaying(null);
+            setPayMessage(t('quickPay.recorded', { amount: formatSyp(amount) }));
+            reset();
+          }}
+        />
+      )}
                     </td>
                   </tr>
                 ))}

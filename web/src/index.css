@@ -5383,3 +5383,18 @@ input[type='date'][value='']:not(:focus) {
 .app-release-page .warehouse-access-feature { display: flex; gap: 8px; align-items: center; }
 .app-release-roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-block: 16px; }
 @media (max-width: 1000px) { .app-release-roles { grid-template-columns: minmax(0, 1fr); } }
+
+/* Confirmation belongs to its row, next to the accountant's action. */
+.inline-payment {
+  width: min(100%, 390px); min-width: 0; box-sizing: border-box;
+  margin-block-start: 10px; padding: 14px; text-align: start; white-space: normal;
+  border: 1px solid #b9d5cd; border-radius: 12px; background: #f3faf7; color: #16283f;
+}
+.inline-payment h3 { margin: 0 0 8px; font-size: 15px; overflow-wrap: anywhere; }
+.inline-payment p { margin: 6px 0; overflow-wrap: anywhere; }
+.inline-payment label { display: grid; gap: 6px; }
+.inline-payment input { min-width: 0; width: 100%; box-sizing: border-box; }
+.inline-payment .collect-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 10px; }
+.inline-payment button { min-height: 48px; white-space: normal; }
+.wh-inline-actions { min-width: 0; display: flex; flex-direction: column; align-items: stretch; }
+.inline-payment .product-form { min-width: 0; }

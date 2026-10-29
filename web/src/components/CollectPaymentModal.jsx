@@ -1,5 +1,5 @@
-import { useModalSafety } from '../hooks/useModalSafety';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { asciiDigits } from '../utils/digits';
 import { useTranslation } from 'react-i18next';
 import { formatSyp } from '../utils/currency';
 import { amountLeft, isValidPartial, parseWholeLiras } from '../utils/collectPayment';
@@ -10,7 +10,8 @@ import { amountLeft, isValidPartial, parseWholeLiras } from '../utils/collectPay
 // stays on its way.
 export function CollectPaymentModal({ orderNumber, totalSyp, onChoose, onClose }) {
   const { t } = useTranslation();
-  const modal = useModalSafety(false, onClose);
+  const choosing = useRef(false);
+  const choose = (amount) => { if (choosing.current) return; choosing.current = true; onChoose(amount); };
   const [partial, setPartial] = useState(false);
   const [amount, setAmount] = useState('');
   const [error, setError] = useState(null);
@@ -23,22 +24,23 @@ export function CollectPaymentModal({ orderNumber, totalSyp, onChoose, onClose }
       setError(t('collect.partialInvalid'));
       return;
     }
-    onChoose(paid);
+    choose(paid);
   };
 
   return (
-    <div className="modal-overlay" {...modal.overlayProps}>
-      <div className="modal" {...modal.dialogProps}>
-        <h2>{t('collect.title', { number: orderNumber })}</h2>
+    <section className="inline-payment" role="region" aria-label={t('collect.title', { number: orderNumber })}
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape' && !choosing.current) onClose(); }}>
+        <h3>{t('collect.title', { number: orderNumber })}</h3>
         <p>{t('collect.total', { amount: formatSyp(totalSyp) })}</p>
         <div className="collect-choices">
-          <button type="button" className="btn-primary" onClick={() => onChoose(totalSyp)}>
+          <button type="button" className="btn-primary" onClick={() => choose(totalSyp)}>
             {t('collect.full')}
           </button>
           <button type="button" className="btn-secondary" onClick={() => setPartial(true)}>
             {t('collect.partial')}
           </button>
-          <button type="button" className="btn-secondary" onClick={() => onChoose(0)}>
+          <button type="button" className="btn-secondary" onClick={() => choose(0)}>
             {t('collect.later')}
           </button>
         </div>
@@ -50,21 +52,22 @@ export function CollectPaymentModal({ orderNumber, totalSyp, onChoose, onClose }
                 type="text"
                 inputMode="numeric"
                 autoFocus
+                dir="ltr"
                 value={amount}
                 onChange={(e) => {
-                  setAmount(e.target.value);
+                  setAmount(asciiDigits(e.target.value));
                   setError(null);
                 }}
               />
             </label>
             <p className="hint">{t('collect.left', { amount: formatSyp(amountLeft(totalSyp, paid)) })}</p>
-            {error && <p className="error">{error}</p>}
+            {error && <p className="error-text" role="alert">{error}</p>}
             <button type="submit" className="btn-primary">
               {t('collect.save')}
             </button>
           </form>
         )}
-      </div>
-    </div>
+        <button type="button" className="btn-secondary" onClick={onClose}>{t('common.cancel')}</button>
+    </section>
   );
 }

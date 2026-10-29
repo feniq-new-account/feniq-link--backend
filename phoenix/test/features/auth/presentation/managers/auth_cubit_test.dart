@@ -22,11 +22,11 @@ class MockFcmService extends Mock implements FcmService {}
 
 class MockNotificationRepository extends Mock implements NotificationRepository {}
 
-UserModel _user({String status = 'active'}) => UserModel(
+UserModel _user({String status = 'active', String role = 'pharmacy'}) => UserModel(
   id: 'u1',
   name: 'Dr. Test',
   phone: '+963999999999',
-  role: 'pharmacy',
+  role: role,
   status: status,
   lang: 'ar',
 );
@@ -58,6 +58,19 @@ void main() {
     when(() => fcm.initialize()).thenAnswer((_) async {});
     when(() => fcm.unregisterDevice()).thenAnswer((_) async {});
     when(() => notifications.clear()).thenAnswer((_) async {});
+  });
+
+  test('a confirmed warehouse entry activates its trial without blocking offline browsing', () async {
+    when(() => storage.read(StorageKeys.authToken)).thenAnswer((_) async => 'jwt');
+    when(() => repo.getMe()).thenAnswer((_) async => MeResponse(user: _user(role: 'warehouse')));
+    var activations = 0;
+    final cubit = AuthCubit(authRepository: repo, secureStorage: storage, fcmService: fcm,
+      notificationRepository: notifications, onWarehouseActive: () async { activations++; throw Exception('offline'); });
+    await cubit.checkSession();
+    await Future<void>.delayed(Duration.zero);
+    expect(activations, 1);
+    expect(cubit.state.sessionStatus, SessionStatus.active);
+    await cubit.close();
   });
 
   group('checkSession - C1: only a real 401/403 clears the token', () {

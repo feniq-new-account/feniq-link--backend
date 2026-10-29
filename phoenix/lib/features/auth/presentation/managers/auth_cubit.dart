@@ -27,12 +27,14 @@ class AuthCubit extends Cubit<AuthState> {
     required NotificationRepository notificationRepository,
     SessionScope? sessionScope,
     Future<void> Function(String? token)? onSessionToken,
+    Future<void> Function()? onWarehouseActive,
   }) : _authRepository = authRepository,
        _secureStorage = secureStorage,
        _fcmService = fcmService,
        _notificationRepository = notificationRepository,
        _sessionScope = sessionScope,
        _onSessionToken = onSessionToken,
+       _onWarehouseActive = onWarehouseActive,
        super(const AuthState()) {
     // A single app-wide place reacts to "an authenticated request got 401"
     // (emitted by AuthInterceptor). Re-entrancy is guarded inside
@@ -57,6 +59,7 @@ class AuthCubit extends Cubit<AuthState> {
   // cubit without one.
   final SessionScope? _sessionScope;
   final Future<void> Function(String? token)? _onSessionToken;
+  final Future<void> Function()? _onWarehouseActive;
 
   late final StreamSubscription<void> _unauthorizedSubscription;
 
@@ -547,6 +550,15 @@ class AuthCubit extends Cubit<AuthState> {
   void _registerForPushIfActive(SessionStatus sessionStatus) {
     if (sessionStatus == SessionStatus.active) {
       unawaited(_fcmService.initialize());
+      if (state.user?.role == 'warehouse') {
+        unawaited(_activateWarehouseTrial());
+      }
+    }
+  }
+
+  Future<void> _activateWarehouseTrial() async {
+    try { await _onWarehouseActive?.call(); } catch (_) {
+      // Offline entry remains usable; the next confirmed sign-in retries.
     }
   }
 

@@ -155,6 +155,7 @@ export function WarehouseOrdersPage() {
 
   // The row's actions: move it on, and - until it is sent - edit it.
   const renderActions = (order) => (
+    <div className="wh-inline-actions">
     <div className="wh-order-actions">
       {ADVANCE_KEYS[order.status] && (
         <button
@@ -180,6 +181,15 @@ export function WarehouseOrdersPage() {
         >
           {t('orders.editOrder')}
         </button>
+      )}
+    </div>
+      {collecting?.id === order.id && (
+        <CollectPaymentModal
+          orderNumber={collecting.orderNumber}
+          totalSyp={collecting.finalPrice}
+          onChoose={handleCollectChoice}
+          onClose={() => setCollecting(null)}
+        />
       )}
     </div>
   );
@@ -225,14 +235,7 @@ export function WarehouseOrdersPage() {
 
       {(error || actionError) && <p className="error-text">{error || actionError}</p>}
       {collectMessage && <p className="hint">{collectMessage}</p>}
-      {collecting && (
-        <CollectPaymentModal
-          orderNumber={collecting.orderNumber}
-          totalSyp={collecting.finalPrice}
-          onChoose={handleCollectChoice}
-          onClose={() => setCollecting(null)}
-        />
-      )}
+
 
       {isLoading ? (
         <p className="hint">{t('common.loading')}</p>
@@ -290,7 +293,7 @@ export function WarehouseOrdersPage() {
                 tabIndex={0}
                 onClick={() => openOrder(order)}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter') openOrder(order);
+                  if (event.key === 'Enter' && event.target === event.currentTarget) openOrder(order);
                 }}
               >
                 <div className="wh-order-card-head">

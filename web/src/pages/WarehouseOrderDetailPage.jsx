@@ -1114,7 +1114,7 @@ export function WarehouseOrderDetailPage() {
                 !order.deliverySealPhoto && (
                   <p className="hint">{t('orderDetail.awaitingDeliverySealPhoto')}</p>
                 )}
-              {order.status === 'delivered' && (
+              {canRecord && order.status === 'delivered' && (
                 <button className="btn-secondary" onClick={() => setShowPaymentModal(true)}>
                   {t('orderDetail.recordPayment')}
                 </button>
@@ -1122,11 +1122,6 @@ export function WarehouseOrderDetailPage() {
               {statusMessage && <p className="hint">{statusMessage}</p>}
               {paymentMessage && <p className="hint">{paymentMessage}</p>}
             </div>
-          </div>
-        </div>
-        </div>
-      )}
-
       {showCollect && order && (
         <CollectPaymentModal
           orderNumber={order.orderNumber}
@@ -1135,7 +1130,13 @@ export function WarehouseOrderDetailPage() {
           onClose={() => setShowCollect(false)}
         />
       )}
-      {showPaymentModal && order && (
+          </div>
+        </div>
+        </div>
+      )}
+
+
+      {canRecord && showPaymentModal && order && (
         <RecordPaymentModal
           pharmacyId={order.pharmacy.id}
           onClose={() => setShowPaymentModal(false)}
