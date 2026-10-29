@@ -1,3 +1,4 @@
+import { NumericInput } from '../components/NumericInput';
 import { asciiDigits } from '../utils/digits';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +41,7 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <label htmlFor="phone">{t('auth.phoneLabel')}</label>
-          <input
+          <NumericInput
             id="phone"
             type="tel"
             value={phone}

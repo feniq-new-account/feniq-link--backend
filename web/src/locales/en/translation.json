@@ -1746,5 +1746,8 @@
       "rural": "Countryside",
       "unknown": "Unspecified"
     }
+  },
+  "numericInput": {
+    "invalid": "Enter a valid number within the shown limits. Review the amount rather than removing digits to bypass this message."
   }
 }

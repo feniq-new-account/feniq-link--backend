@@ -1,3 +1,4 @@
+import { NumericInput } from '../components/NumericInput';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -171,7 +172,7 @@ export function AdminOffersPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <input
+            <NumericInput
               type="number"
               min="1"
               max="100"
@@ -180,7 +181,7 @@ export function AdminOffersPage() {
               value={discountMin}
               onChange={(e) => setDiscountMin(e.target.value)}
             />
-            <input
+            <NumericInput
               type="number"
               min="1"
               max="100"

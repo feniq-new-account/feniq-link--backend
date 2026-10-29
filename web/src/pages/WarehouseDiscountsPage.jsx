@@ -1,3 +1,4 @@
+import { NumericInput } from '../components/NumericInput';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -158,7 +159,7 @@ export function WarehouseDiscountsPage() {
                       <td>{discount.manufacturerAr}</td>
                       <td className="wh-num">
                         {editingId === discount.id ? (
-                          <input
+                          <NumericInput
                             type="number"
                             min="0.01"
                             max="100"
@@ -234,7 +235,7 @@ export function WarehouseDiscountsPage() {
             </label>
             <label>
               {t('discounts.discountPercent')}
-              <input
+              <NumericInput
                 type="number"
                 min="0.01"
                 max="100"

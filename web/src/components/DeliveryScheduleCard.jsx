@@ -1,3 +1,4 @@
+import { NumericInput } from './NumericInput';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -57,7 +58,7 @@ export function DeliveryScheduleCard() {
           {settings.zones.map((zone, index) => <section className="delivery-zone" key={zone._id || `new-${index}`}>
             <div className="delivery-fields">
               <label>{t('delivery.zoneName')}<input required maxLength={80} value={zone.name} onChange={(e) => zoneChange(index, { ...zone, name: e.target.value })} /></label>
-              <label>{t('delivery.preparation')}<input dir="ltr" inputMode="decimal" required type="number" min="0" max="168" step="0.25" value={zone.preparationHours} onChange={(e) => zoneChange(index, { ...zone, preparationHours: number(e.target.value) })} /></label>
+              <label>{t('delivery.preparation')}<NumericInput dir="ltr" inputMode="decimal" required type="number" min="0" max="168" step="0.25" value={zone.preparationHours} onChange={(e) => zoneChange(index, { ...zone, preparationHours: number(e.target.value) })} /></label>
               <label className="delivery-toggle"><input type="checkbox" checked={zone.active} onChange={(e) => zoneChange(index, { ...zone, active: e.target.checked })} />{t('delivery.zoneActive')}</label>
             </div>
             {zone.slots.map((slot, slotIndex) => <div className="delivery-fields" key={slotIndex}>

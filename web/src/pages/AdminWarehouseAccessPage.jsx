@@ -1,3 +1,4 @@
+import { NumericInput } from '../components/NumericInput';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -116,7 +117,7 @@ export function AdminWarehouseAccessPage() {
             </select></label>
             <label>{t('warehouseAccess.paidUntil')}<input type="datetime-local" lang="en" dir="ltr" value={form.paidUntil}
               required={form.status === 'active'} onChange={(e) => setForm({ ...form, paidUntil: e.target.value })} /></label>
-            <label>{t('warehouseAccess.graceDays')}<input type="number" lang="en" dir="ltr" min="0" max="30" step="1" value={form.graceDays}
+            <label>{t('warehouseAccess.graceDays')}<NumericInput type="number" lang="en" dir="ltr" min="0" max="30" step="1" value={form.graceDays}
               onChange={(e) => setForm({ ...form, graceDays: e.target.value })} /></label>
             <p className="hint">{t('warehouseAccess.trialHelp')}</p>
             {detail.featureNames.map((key) => <label key={key} className="warehouse-access-feature">
@@ -144,7 +145,7 @@ export function AdminWarehouseAccessPage() {
               <legend>{t('warehouseAccess.addMember')}</legend>
               <label>{t('warehouseAccess.name')}<input required maxLength="120" value={member.name}
                 onChange={(e) => setMember({ ...member, name: e.target.value })} /></label>
-              <label>{t('warehouseAccess.phone')}<input required type="tel" dir="ltr" value={member.phone}
+              <label>{t('warehouseAccess.phone')}<NumericInput required type="tel" dir="ltr" value={member.phone}
                 onChange={(e) => setMember({ ...member, phone: e.target.value })} /></label>
               <label>{t('warehouseAccess.password')}<input required type="password" autoComplete="new-password" minLength="10"
                 value={member.password} onChange={(e) => setMember({ ...member, password: e.target.value })} /></label>

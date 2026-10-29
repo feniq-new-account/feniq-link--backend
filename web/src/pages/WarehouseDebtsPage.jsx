@@ -1,3 +1,4 @@
+import { NumericInput } from '../components/NumericInput';
 import { useSearchParams } from 'react-router-dom';
 import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
 import { useAuth } from '../auth/AuthContext';
@@ -105,7 +106,7 @@ function AddPaymentForm({ pharmacyId, remainingSyp, onSaved }) {
       <form onSubmit={handleSubmit} className="product-form">
         <label>
           {t('debts.amount')}
-          <input
+          <NumericInput
             type="number"
             min="0.01"
             step="0.01"

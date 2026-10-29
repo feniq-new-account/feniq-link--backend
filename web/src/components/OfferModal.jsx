@@ -1,3 +1,4 @@
+import { NumericInput } from './NumericInput';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProductPicker } from './CatalogPickers';
@@ -184,7 +185,7 @@ export function OfferModal({ mode, offer, searchProducts, usdToSyp, onClose, onS
           ) : (
             <label>
               {t('offers.warehouse.discountPercentage')}
-              <input
+              <NumericInput
                 type="number"
                 min="1"
                 max="100"

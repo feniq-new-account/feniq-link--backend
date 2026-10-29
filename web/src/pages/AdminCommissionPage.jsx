@@ -1,3 +1,4 @@
+import { NumericInput } from '../components/NumericInput';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -146,7 +147,7 @@ function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) 
         </label>
         <label>
           {t('commission.amount')}
-          <input
+          <NumericInput
             type="number"
             min="1"
             step="1"

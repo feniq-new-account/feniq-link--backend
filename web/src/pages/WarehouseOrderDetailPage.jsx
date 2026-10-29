@@ -1,3 +1,4 @@
+import { NumericInput } from '../components/NumericInput';
 import { DeliveryEstimate } from '../components/DeliveryEstimate';
 import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
 import { useAuth } from '../auth/AuthContext';
@@ -126,7 +127,7 @@ function RecordPaymentModal({ pharmacyId, onClose, onRecorded }) {
         <form onSubmit={handleSubmit} className="product-form">
           <label>
             {t('debts.amount')}
-            <input
+            <NumericInput
               type="number"
               min="0.01"
               step="0.01"
@@ -377,7 +378,7 @@ function EditItemsSection({ order, onSaved }) {
           <div className="wh-package-controls">
             <label>
               {t('orderDetail.packageCopies')}
-              <input
+              <NumericInput
                 type="number"
                 min="1"
                 value={copiesOf(group)}
@@ -435,7 +436,7 @@ function EditItemsSection({ order, onSaved }) {
                 <tr key={item.id}>
                   <td>{displayName(item.productNameEn, item.productNameAr)}</td>
                   <td className="wh-num">
-                    <input
+                    <NumericInput
                       type="number"
                       min="1"
                       value={item.quantity}
@@ -460,7 +461,7 @@ function EditItemsSection({ order, onSaved }) {
               <tr key={item.tempId}>
                 <td>{displayName(item.productNameEn, item.productNameAr)}</td>
                 <td className="wh-num">
-                  <input
+                  <NumericInput
                     type="number"
                     min="1"
                     value={item.quantity}
@@ -500,7 +501,7 @@ function EditItemsSection({ order, onSaved }) {
             placeholder={t('orderDetail.selectProductPlaceholder')}
           />
         </div>
-        <input
+        <NumericInput
           type="number"
           min="1"
           value={newQuantity}

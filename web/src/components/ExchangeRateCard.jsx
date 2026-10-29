@@ -1,3 +1,4 @@
+import { NumericInput } from './NumericInput';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -167,7 +168,7 @@ export function ExchangeRateCard({ rate, onChanged }) {
         <form onSubmit={handleSetManual} className="adm-rate-form">
           <label className="adm-rate-input-label">
             {t('admin.exchangeRate.newRateLabel')}
-            <input
+            <NumericInput
               type="number"
               min="0"
               step="0.01"

@@ -1,3 +1,4 @@
+import { NumericInput } from '../components/NumericInput';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -91,10 +92,10 @@ export function AdminAppReleasePage() {
         <div className="app-release-roles">
           {ROLES.map((role) => <fieldset key={role} disabled={!form.enabled || busy}>
             <legend>{t(`appRelease.roles.${role}`)}</legend>
-            <label>{t('appRelease.recommended')}<input type="number" lang="en" dir="ltr" min="1"
+            <label>{t('appRelease.recommended')}<NumericInput type="number" lang="en" dir="ltr" min="1"
               max={artifact?.latestBuild || undefined} required value={form.roles[role].recommendedBuild || ''}
               onChange={(event) => updateRole(role, { recommendedBuild: event.target.value })} /></label>
-            <label>{t('appRelease.minimum')}<input type="number" lang="en" dir="ltr" min="1"
+            <label>{t('appRelease.minimum')}<NumericInput type="number" lang="en" dir="ltr" min="1"
               max={artifact?.latestBuild || undefined} required value={form.roles[role].minimumBuild}
               onChange={(event) => updateRole(role, { minimumBuild: event.target.value })} /></label>
             <label>{t('appRelease.deadline')}<input type="datetime-local" lang="en" dir="ltr"
