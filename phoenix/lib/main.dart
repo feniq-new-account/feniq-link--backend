@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:feniq/config/app_config.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -81,7 +83,9 @@ Future<void> _initializeFirebase() async {
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       await Firebase.initializeApp();
     } else {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
     }
     // TEMP DIAGNOSTIC LOG (see FCM_DEBUG task).
     debugPrint('FCM_DEBUG: Firebase.initializeApp() succeeded');
@@ -108,10 +112,25 @@ Future<void> main() async {
   // AppUpdateGate, behind AppUpdateService's own 24h gate.
   final remoteConfigService = RemoteConfigService();
   await remoteConfigService.initialize();
+  final packageInfo = await _installedPackage();
+  final releaseClient = Dio(
+    BaseOptions(
+      baseUrl: AppConfig.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+    ),
+  );
   final appUpdateService = AppUpdateService(
     remoteConfigService: remoteConfigService,
     storageService: storageService,
-    currentVersion: await _currentAppVersion(),
+    currentVersion: packageInfo?.version ?? '',
+    currentBuild: int.tryParse(packageInfo?.buildNumber ?? '') ?? 0,
+    fetchRelease: !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+        ? () async {
+            final response = await releaseClient.get('/app/release');
+            return Map<String, dynamic>.from(response.data as Map);
+          }
+        : null,
   );
 
   final secureStorage = SecureStorageService();
@@ -129,7 +148,10 @@ Future<void> main() async {
   // The phone's saved copy of the warehouses and their catalogs, so the
   // pharmacist can still browse and search medicines with no connection.
   final offlineStore = OfflineStore();
-  final warehouseRepository = WarehouseRepositoryImpl(apiClient: apiClient, offlineStore: offlineStore);
+  final warehouseRepository = WarehouseRepositoryImpl(
+    apiClient: apiClient,
+    offlineStore: offlineStore,
+  );
   final catalogRepository = CatalogRepositoryImpl(
     apiClient: apiClient,
     sessionScope: sessionScope,
@@ -145,11 +167,17 @@ Future<void> main() async {
   final reviewRepository = ReviewRepositoryImpl(apiClient: apiClient);
   final debtRepository = DebtRepositoryImpl(apiClient: apiClient);
   final bannersRepository = BannersRepositoryImpl(apiClient: apiClient);
-  final advertisementsRepository = AdvertisementsRepositoryImpl(apiClient: apiClient);
+  final advertisementsRepository = AdvertisementsRepositoryImpl(
+    apiClient: apiClient,
+  );
   final offersRepository = OffersRepositoryImpl(apiClient: apiClient);
   final repRepository = RepRepositoryImpl(apiClient: apiClient);
-  final warehouseOrdersRepository = WarehouseOrdersRepositoryImpl(apiClient: apiClient);
-  final warehouseManagementRepository = WarehouseManagementRepositoryImpl(apiClient: apiClient);
+  final warehouseOrdersRepository = WarehouseOrdersRepositoryImpl(
+    apiClient: apiClient,
+  );
+  final warehouseManagementRepository = WarehouseManagementRepositoryImpl(
+    apiClient: apiClient,
+  );
   final appRouter = AppRouter();
   runApp(
     MyApp(
@@ -184,11 +212,11 @@ Future<void> main() async {
 // The installed app version ("1.0.0"), build metadata dropped. Guarded so a
 // platform-channel failure here can never stop Feniq from starting - an
 // empty string just means the update checker does nothing.
-Future<String> _currentAppVersion() async {
+Future<PackageInfo?> _installedPackage() async {
   try {
-    return (await PackageInfo.fromPlatform()).version;
+    return await PackageInfo.fromPlatform();
   } catch (_) {
-    return '';
+    return null;
   }
 }
 
@@ -301,15 +329,24 @@ class MyApp extends StatelessWidget {
         // Read by the shared package -> cart flow to re-fetch a tapped package
         // before it reaches the cart (advertisement_cart_launcher.dart), and
         // by the Offers & Ads tab to list what is running.
-        RepositoryProvider<AdvertisementsRepository>.value(value: advertisementsRepository),
+        RepositoryProvider<AdvertisementsRepository>.value(
+          value: advertisementsRepository,
+        ),
         RepositoryProvider<OffersRepository>.value(value: offersRepository),
-        if (repRepository != null) RepositoryProvider<RepRepository>.value(value: repRepository!),
+        if (repRepository != null)
+          RepositoryProvider<RepRepository>.value(value: repRepository!),
         if (warehouseOrdersRepository != null)
-          RepositoryProvider<WarehouseOrdersRepository>.value(value: warehouseOrdersRepository!),
+          RepositoryProvider<WarehouseOrdersRepository>.value(
+            value: warehouseOrdersRepository!,
+          ),
         if (warehouseManagementRepository != null)
-          RepositoryProvider<WarehouseManagementRepository>.value(value: warehouseManagementRepository!),
+          RepositoryProvider<WarehouseManagementRepository>.value(
+            value: warehouseManagementRepository!,
+          ),
         // The platform location API, behind a seam the scan flow can be tested through.
-        RepositoryProvider<LocationProvider>.value(value: const GeolocatorLocationProvider()),
+        RepositoryProvider<LocationProvider>.value(
+          value: const GeolocatorLocationProvider(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -333,7 +370,7 @@ class MyApp extends StatelessWidget {
               authRepository: authRepository,
               secureStorage: secureStorage,
               fcmService: fcmService,
-            notificationRepository: notificationRepository,
+              notificationRepository: notificationRepository,
               sessionScope: sessionScope,
             ),
           ),
@@ -368,59 +405,59 @@ class MyApp extends StatelessWidget {
         // scope so it can reach AuthCubit; throttling + "only when it matters"
         // logic lives in AuthCubit.revalidateOnResume.
         child: _SessionLifecycleObserver(
-          child: AppUpdateGate(
-            service: appUpdateService,
-            isAppShellReady: () {
-              try {
-                return appRouter
-                        .router.routerDelegate.currentConfiguration.uri.path !=
-                    RoutePaths.splash;
-              } catch (_) {
-                return true;
-              }
-            },
-            child: Builder(
-              builder: (context) => BlocBuilder<SettingsCubit, SettingsState>(
-                builder: (context, state) {
-                  // TEMP DIAGNOSTIC (router-lifecycle) - remove after verifying.
-                  debugPrint(
-                    'ROUTER_DEBUG: MyApp build/rebuild - '
-                    'locale=${state.locale?.languageCode ?? 'null'} '
-                    'themeMode=${state.themeMode.name} '
-                    'router=#${identityHashCode(appRouter.router)}',
-                  );
-                  return MaterialApp.router(
-                    themeMode: state.themeMode,
-                    darkTheme: DarkTheme.data,
-                    // Stable instance created once in main() - NOT `AppRouter().router`,
-                    // which builds a brand-new GoRouter (resetting navigation to the
-                    // splash route) on every SettingsCubit rebuild.
-                    routerConfig: appRouter.router,
-                    debugShowCheckedModeBanner: false,
-                    theme: LightTheme.data,
-                    locale: state.locale,
-                    localizationsDelegates: const [
-                      AppLocalizations.delegate,
-                      GlobalMaterialLocalizations.delegate,
-                      GlobalWidgetsLocalizations.delegate,
-                      GlobalCupertinoLocalizations.delegate,
-                    ],
-                    supportedLocales: AppLocalizations.supportedLocales,
-                    // A strip above every screen while what is shown is the
-                    // phone's saved copy (OfflineBanner). The child keeps one
-                    // fixed place in the tree, so the navigator never rebuilds
-                    // when the strip appears or goes.
-                    builder: (context, child) => AppTextScale(
-                      // Nothing ever sits beneath the phone's navigation
-                      // buttons - see SystemBarsSafeArea.
-                      child: SystemBarsSafeArea(
-                        child: OfflineBannerFrame(child: child ?? const SizedBox.shrink()),
+          child: Builder(
+            builder: (context) => BlocBuilder<SettingsCubit, SettingsState>(
+              builder: (context, state) {
+                // TEMP DIAGNOSTIC (router-lifecycle) - remove after verifying.
+                debugPrint(
+                  'ROUTER_DEBUG: MyApp build/rebuild - '
+                  'locale=${state.locale?.languageCode ?? 'null'} '
+                  'themeMode=${state.themeMode.name} '
+                  'router=#${identityHashCode(appRouter.router)}',
+                );
+                return MaterialApp.router(
+                  themeMode: state.themeMode,
+                  darkTheme: DarkTheme.data,
+                  // Stable instance created once in main() - NOT `AppRouter().router`,
+                  // which builds a brand-new GoRouter (resetting navigation to the
+                  // splash route) on every SettingsCubit rebuild.
+                  routerConfig: appRouter.router,
+                  debugShowCheckedModeBanner: false,
+                  theme: LightTheme.data,
+                  locale: state.locale,
+                  localizationsDelegates: const [
+                    AppLocalizations.delegate,
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate,
+                  ],
+                  supportedLocales: AppLocalizations.supportedLocales,
+                  // A strip above every screen while what is shown is the
+                  // phone's saved copy (OfflineBanner). The child keeps one
+                  // fixed place in the tree, so the navigator never rebuilds
+                  // when the strip appears or goes.
+                  builder: (context, child) => AppTextScale(
+                    // Nothing ever sits beneath the phone's navigation
+                    // buttons - see SystemBarsSafeArea.
+                    child: SystemBarsSafeArea(
+                      child: AppUpdateGate(
+                        service: appUpdateService,
+                        isAppShellReady: () =>
+                            appRouter
+                                .router
+                                .routerDelegate
+                                .currentConfiguration
+                                .uri
+                                .path !=
+                            RoutePaths.splash,
+                        child: OfflineBannerFrame(
+                          child: child ?? const SizedBox.shrink(),
+                        ),
                       ),
                     ),
-                  );
-                },
-              ),
-              
+                  ),
+                );
+              },
             ),
           ),
         ),

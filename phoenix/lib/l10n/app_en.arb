@@ -879,7 +879,7 @@
   "updateRequiredMessage": "Your current version of Feniq is no longer supported. Please update the application to continue.",
   "updateNow": "Update Now",
   "later": "Later",
-  "updateOpenStoreFailed": "Unable to open Google Play. Please try again.",
+  "updateOpenStoreFailed": "Could not download the update or open the Android installer. Check your connection and free space, then retry.",
   "deliverySealRequiredTitle": "Confirm delivery",
   "deliverySealRequiredMessage": "This warehouse asks for a photo of the shipment seal before the order is completed. Take a clear photo of the seal/stamp on the package.",
   "takeSealPhoto": "Add seal photo",
@@ -1723,5 +1723,8 @@
         "type": "String"
       }
     }
-  }
+  },
+  "updateDownloading": "Downloading update",
+  "updateInstallPermission": "Allow Feniq to install apps in Android settings, then return and tap Update now. The downloaded file will be reused.",
+  "updateCancelDownload": "Cancel download"
 }

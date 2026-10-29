@@ -1591,7 +1591,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get updateOpenStoreFailed =>
-      'تعذر فتح متجر Google Play. حاول مرة أخرى.';
+      'تعذر تنزيل التحديث أو فتح مثبت أندرويد. تحقق من الاتصال والمساحة المتاحة وأعد المحاولة.';
 
   @override
   String get deliverySealRequiredTitle => 'تأكيد التسليم';
@@ -2910,4 +2910,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dataCached => 'البيانات المعروضة من آخر تحديث ناجح.';
+
+  @override
+  String get updateDownloading => 'جارٍ تنزيل التحديث';
+
+  @override
+  String get updateInstallPermission =>
+      'اسمح لفينيق بتثبيت التطبيقات من شاشة إعدادات أندرويد، ثم ارجع واضغط «تحديث الآن». لن تحتاج لتنزيل الملف مرة أخرى.';
+
+  @override
+  String get updateCancelDownload => 'إلغاء التنزيل';
 }

@@ -25,6 +25,10 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
       return l10n.errorTimeout;
     case 'HTTP_401':
       return l10n.errorSessionExpired;
+    case 'APP_UPDATE_REQUIRED':
+      return l10n.updateRequiredMessage;
+    case 'ACCOUNTANT_REQUIRED':
+    case 'FEATURE_NOT_ENABLED':
     case 'HTTP_403':
       return l10n.errorNoPermission;
     case 'HTTP_404':

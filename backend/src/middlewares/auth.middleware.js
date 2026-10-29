@@ -77,6 +77,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
 
   req.user = await authenticateToken(token);
+  await require('../services/appRelease.service').enforceMobileBuild(req, req.user);
   next();
 });
 

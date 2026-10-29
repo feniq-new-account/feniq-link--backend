@@ -1,22 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/services/app_update_events.dart';
 import 'package:feniq/core/services/app_update_service.dart';
 import 'package:feniq/core/services/navigation_service.dart';
-import 'package:feniq/features/app_update/presentation/app_update_dialog.dart';
+import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
+import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
+import 'app_update_dialog.dart';
 
-// Runs the update check ONCE per app launch, after the first frame, and shows
-// the right dialog for `optional` / `mandatory`. `none` does nothing at all -
-// no dialog, no snackbar, no banner (requirement section 8).
-//
-// It sits high in the tree (wraps the router's content) so it lives for the
-// whole session, but it shows the dialog through
-// NavigationService.instance.navigatorKey - the same navigator FcmService
-// deep-links through.
-//
-// Auth-independent: fired from initState, not gated on login / session
-// restore / which screen is showing. It does wait for the app to leave the
-// splash screen first, so the splash -> first-screen navigation can't pop the
-// dialog out from under the user; a mandatory dialog is then re-shown if it is
-// ever dismissed by anything other than the user actually updating.
+/// Inside MaterialApp.builder, above the router. A mandatory policy blocks
+/// all app content, including saved catalogs, and leaves the updater usable.
 class AppUpdateGate extends StatefulWidget {
   const AppUpdateGate({
     super.key,
@@ -24,53 +17,134 @@ class AppUpdateGate extends StatefulWidget {
     required this.isAppShellReady,
     required this.child,
   });
-
   final AppUpdateService service;
-
-  /// True once the router has navigated away from the splash route.
   final bool Function() isAppShellReady;
-
   final Widget child;
-
   @override
   State<AppUpdateGate> createState() => _AppUpdateGateState();
 }
 
-class _AppUpdateGateState extends State<AppUpdateGate> {
-  // Static so a hot-reload / widget rebuild can't run the check twice, and so
-  // an optional dialog is never shown more than once per app session
-  // (requirement section 6).
-  static bool _ranThisSession = false;
+class _AppUpdateGateState extends State<AppUpdateGate>
+    with WidgetsBindingObserver {
+  AppUpdateStatus _status = AppUpdateStatus.none;
+  String? _role;
+  bool _checking = false;
+  bool _queued = false;
+  bool _optionalShowing = false;
+  final Set<String> _optionalShown = {};
+  Timer? _timer;
+  StreamSubscription<AuthState>? _auth;
+  StreamSubscription<Map<String, dynamic>>? _required;
 
   @override
   void initState() {
     super.initState();
-    if (_ranThisSession) return;
-    _ranThisSession = true;
+    WidgetsBinding.instance.addObserver(this);
+    final auth = context.read<AuthCubit?>();
+    _role = auth?.state.role;
+    _auth = auth?.stream.listen((state) {
+      if (_role == state.role) return;
+      _role = state.role;
+      unawaited(_run());
+    });
+    _required = AppUpdateEvents.stream.listen((payload) async {
+      try {
+        await widget.service.acceptRequiredPolicy(payload);
+        if (mounted) await _run();
+      } catch (_) {
+        if (mounted) await _run();
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) => _run());
-  }
-
-  Future<void> _run() async {
-    final status = await widget.service.checkForUpdate();
-    if (status == AppUpdateStatus.none || !mounted) return;
-
-    // Wait for the shell to be on screen (capped ~10s) so a splash -> next
-    // `go()` doesn't immediately dismiss the dialog.
-    for (var i = 0; i < 40 && mounted && !widget.isAppShellReady(); i++) {
-      await Future<void>.delayed(const Duration(milliseconds: 250));
-    }
-
-    final mandatory = status == AppUpdateStatus.mandatory;
-    do {
-      final context = NavigationService.instance.navigatorKey.currentContext;
-      if (context == null || !context.mounted) return;
-      await showAppUpdateDialog(context, mandatory: mandatory, service: widget.service);
-      // A mandatory update has no "Later" and no dismissible barrier - if it
-      // still closed (a route change, say), bring it straight back.
-      if (mandatory) await Future<void>.delayed(const Duration(milliseconds: 300));
-    } while (mandatory && mounted);
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) => _run());
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) unawaited(_run());
+  }
+
+  @override
+  Future<bool> didPopRoute() async => _status == AppUpdateStatus.mandatory;
+
+  Future<void> _run() async {
+    if (!mounted) return;
+    if (_checking) {
+      _queued = true;
+      return;
+    }
+    _checking = true;
+    final role = _role;
+    try {
+      final status = await widget.service.checkForUpdate(role: role);
+      if (!mounted) return;
+      if (role != _role) {
+        _queued = true;
+        return;
+      }
+      setState(() => _status = status);
+      final optionalKey =
+          '${role ?? 'anonymous'}:${widget.service.release?.latestBuild ?? 'legacy'}';
+      if (status == AppUpdateStatus.optional &&
+          !_optionalShowing &&
+          !_optionalShown.contains(optionalKey)) {
+        for (var i = 0; i < 40 && mounted && !widget.isAppShellReady(); i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 250));
+        }
+        if (!mounted || _status != AppUpdateStatus.optional || role != _role) {
+          return;
+        }
+        final navigatorContext =
+            NavigationService.instance.navigatorKey.currentContext;
+        if (navigatorContext != null && navigatorContext.mounted) {
+          _optionalShown.add(optionalKey);
+          _optionalShowing = true;
+          unawaited(
+            showAppUpdateDialog(
+              navigatorContext,
+              mandatory: false,
+              service: widget.service,
+            ).whenComplete(() => _optionalShowing = false),
+          );
+        }
+      }
+    } finally {
+      _checking = false;
+      if (_queued && mounted) {
+        _queued = false;
+        unawaited(_run());
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final blocking = _status == AppUpdateStatus.mandatory;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ExcludeSemantics(
+          excluding: blocking,
+          child: Offstage(offstage: blocking, child: widget.child),
+        ),
+        if (blocking) ...[
+          const ModalBarrier(dismissible: false, color: Colors.black54),
+          SafeArea(
+            child: Center(
+              child: AppUpdateDialog(mandatory: true, service: widget.service),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    unawaited(_auth?.cancel());
+    unawaited(_required?.cancel());
+    super.dispose();
+  }
 }

@@ -1521,5 +1521,30 @@
     "roleChanged": "Role updated. This user must sign in again.",
     "statusFailed": "Could not refresh the subscription. You can read records and retry.",
     "accessNotice": "Feature access follows the subscription status. Previous records remain available."
+  },
+  "appRelease": {
+    "title": "Android app updates",
+    "help": "Verify the published signed APK, then configure update prompts and deadlines for each role. After the deadline, the app is blocked until updated.",
+    "publication": "Published release",
+    "enabled": "Enable update policy",
+    "origin": "App download site (HTTPS)",
+    "inspect": "Verify published release",
+    "verified": "The release manifest, signing fingerprint and published file size match. The phone also verifies the APK before installation.",
+    "availableBuild": "Available build",
+    "version": "Version name",
+    "notes": "Administrative notes",
+    "recommended": "Recommended update build",
+    "minimum": "Oldest build allowed after the deadline",
+    "deadline": "Optional update deadline (your device time)",
+    "deadlineHelp": "The update is optional before this date. Leaving the date empty enforces the minimum immediately.",
+    "sevenDays": "Recommend this build and require it after 7 days",
+    "save": "Save update policy",
+    "saved": "Update policy saved.",
+    "reload": "Reload settings",
+    "roles": {
+      "pharmacy": "Pharmacist",
+      "rep": "Rep",
+      "warehouse": "Warehouse owner"
+    }
   }
 }

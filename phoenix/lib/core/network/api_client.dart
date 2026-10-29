@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:feniq/core/network/interceptors/app_build_interceptor.dart';
 import 'package:feniq/core/constants/storage_keys.dart';
 import 'package:dio/dio.dart';
 import 'package:feniq/config/app_config.dart';
@@ -9,6 +10,7 @@ class ApiClient {
   ApiClient({required SecureStorageService secureStorage})
     : _secureStorage = secureStorage,
       _dio = Dio(_baseOptions()) {
+    _dio.interceptors.add(AppBuildInterceptor());
     _dio.interceptors.add(
       AuthInterceptor(
         secureStorage: secureStorage,
@@ -34,7 +36,11 @@ class ApiClient {
   Future<String?> currentAccountId() async {
     final token = await _secureStorage.read(StorageKeys.authToken);
     try {
-      final claims = jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(token!.split('.')[1]))));
+      final claims = jsonDecode(
+        utf8.decode(
+          base64Url.decode(base64Url.normalize(token!.split('.')[1])),
+        ),
+      );
       return claims['sub'] as String?;
     } catch (_) {
       return null;

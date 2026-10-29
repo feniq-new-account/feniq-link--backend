@@ -1593,7 +1593,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateOpenStoreFailed =>
-      'Unable to open Google Play. Please try again.';
+      'Could not download the update or open the Android installer. Check your connection and free space, then retry.';
 
   @override
   String get deliverySealRequiredTitle => 'Confirm delivery';
@@ -2917,4 +2917,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dataCached => 'Showing the last successfully loaded data.';
+
+  @override
+  String get updateDownloading => 'Downloading update';
+
+  @override
+  String get updateInstallPermission =>
+      'Allow Feniq to install apps in Android settings, then return and tap Update now. The downloaded file will be reused.';
+
+  @override
+  String get updateCancelDownload => 'Cancel download';
 }

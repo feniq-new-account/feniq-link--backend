@@ -2729,7 +2729,7 @@ abstract class AppLocalizations {
   /// No description provided for @updateOpenStoreFailed.
   ///
   /// In en, this message translates to:
-  /// **'Unable to open Google Play. Please try again.'**
+  /// **'Could not download the update or open the Android installer. Check your connection and free space, then retry.'**
   String get updateOpenStoreFailed;
 
   /// No description provided for @deliverySealRequiredTitle.
@@ -4927,6 +4927,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Showing the last successfully loaded data.'**
   String get dataCached;
+
+  /// No description provided for @updateDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading update'**
+  String get updateDownloading;
+
+  /// No description provided for @updateInstallPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Feniq to install apps in Android settings, then return and tap Update now. The downloaded file will be reused.'**
+  String get updateInstallPermission;
+
+  /// No description provided for @updateCancelDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel download'**
+  String get updateCancelDownload;
 }
 
 class _AppLocalizationsDelegate

@@ -225,6 +225,8 @@ async function request(path, { method = 'GET', body, _retried = false } = {}) {
 
   if (!response.ok) {
     const messages = {
+      INVALID_APP_RELEASE: ['تعذّر التحقق من ملف التحديث أو إعداداته. راجع النسخة المنشورة وأرقام البناء والتواريخ.', 'Could not verify the update artifact or settings. Check the published release, build numbers and deadlines.'],
+      APP_RELEASE_CHANGED: ['تغيرت إعدادات التحديث. أعد تحميلها قبل الحفظ.', 'Update settings changed. Reload before saving.'],
       FEATURE_NOT_ENABLED: ['هذه الميزة غير متاحة للمستودع حالياً. تواصل مع إدارة فينيق.', 'This feature is not currently available for the warehouse. Contact Feniq support.'],
       ACCOUNTANT_REQUIRED: ['تسجيل الدفعات متاح لحساب المحاسب. يمكنك متابعة كشف الحساب.', 'Recording payments requires an accountant account. You can read the statement.'],
       INVALID_SUBSCRIPTION: ['تحقق من بيانات الاشتراك وتاريخ الانتهاء والميزات المختارة.', 'Check the subscription details, expiry date and selected features.'],
@@ -358,6 +360,10 @@ function advertisementFormData(data, imageFile) {
 }
 
 export const api = {
+  getAdminAppRelease: () => request('/admin/app-release'),
+  inspectAdminAppRelease: (sourceOrigin) => request('/admin/app-release/inspect', { method: 'POST', body: { sourceOrigin } }),
+  updateAdminAppRelease: (body) => request('/admin/app-release', { method: 'PUT', body }),
+
   listAdminWarehouseAccess: ({ search = '', after } = {}) => {
     const query = new URLSearchParams({ search, limit: '20' });
     if (after) query.set('after', after);

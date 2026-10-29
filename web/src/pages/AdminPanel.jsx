@@ -1,3 +1,4 @@
+import { AdminAppReleasePage } from './AdminAppReleasePage';
 import { AdminWarehouseAccessPage } from './AdminWarehouseAccessPage';
 import { useRef, useState } from 'react';
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
@@ -48,6 +49,7 @@ export function AdminPanel() {
     { path: '/admin/dashboard', label: t('nav.dashboard') },
     { path: '/admin/accounts', label: t('nav.accounts') },
     { path: '/admin/warehouse-access', label: t('warehouseAccess.title') },
+    { path: '/admin/app-release', label: t('appRelease.title') },
     // Who gets in when a pharmacy signs up: the approval switch, the
     // syndicate list and the Telegram bot.
     { path: '/admin/registration', label: t('nav.registration') },
@@ -141,6 +143,7 @@ export function AdminPanel() {
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/accounts" element={<AccountsPage />} />
             <Route path="/admin/warehouse-access" element={<AdminWarehouseAccessPage />} />
+            <Route path="/admin/app-release" element={<AdminAppReleasePage />} />
             <Route path="/admin/registration" element={<AdminRegistrationPage />} />
             {/* Old bookmark - the section was renamed Pending Accounts -> Accounts. */}
             <Route path="/admin/pending-accounts" element={<Navigate to="/admin/accounts" replace />} />

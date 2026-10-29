@@ -20,35 +20,51 @@ Future<void> showAppUpdateDialog(
   return showDialog<void>(
     context: context,
     barrierDismissible: !mandatory,
-    builder: (_) => _AppUpdateDialog(mandatory: mandatory, service: service),
+    builder: (_) => AppUpdateDialog(mandatory: mandatory, service: service),
   );
 }
 
-class _AppUpdateDialog extends StatefulWidget {
-  const _AppUpdateDialog({required this.mandatory, required this.service});
+class AppUpdateDialog extends StatefulWidget {
+  const AppUpdateDialog({
+    super.key,
+    required this.mandatory,
+    required this.service,
+  });
 
   final bool mandatory;
   final AppUpdateService service;
 
   @override
-  State<_AppUpdateDialog> createState() => _AppUpdateDialogState();
+  State<AppUpdateDialog> createState() => _AppUpdateDialogState();
 }
 
-class _AppUpdateDialogState extends State<_AppUpdateDialog> {
+class _AppUpdateDialogState extends State<AppUpdateDialog> {
   bool _launching = false;
   bool _launchFailed = false;
+  double? _progress;
 
   Future<void> _updateNow() async {
     if (_launching) return;
     setState(() {
       _launching = true;
       _launchFailed = false;
+      _progress = null;
     });
-    final ok = await widget.service.openUpdateUrl();
+    final ok = await widget.service.openUpdateUrl(
+      onProgress: (received, total) {
+        if (mounted) {
+          setState(
+            () => _progress = total > 0
+                ? (received / total).clamp(0.0, 1.0)
+                : null,
+          );
+        }
+      },
+    );
     if (!mounted) return;
     setState(() {
       _launching = false;
-      _launchFailed = !ok;
+      _launchFailed = !ok && !widget.service.downloadCancelled;
     });
     // On success for an optional update the user has chosen to leave for the
     // store - close the dialog. A mandatory dialog stays up until the app is
@@ -93,7 +109,9 @@ class _AppUpdateDialogState extends State<_AppUpdateDialog> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              widget.mandatory ? Icons.system_update : Icons.rocket_launch_outlined,
+              widget.mandatory
+                  ? Icons.system_update
+                  : Icons.rocket_launch_outlined,
               color: AppColors.primaryOf(context),
               size: 20,
             ),
@@ -107,34 +125,50 @@ class _AppUpdateDialogState extends State<_AppUpdateDialog> {
           ),
         ],
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            widget.mandatory ? l10n.updateRequiredMessage : l10n.updateAvailableMessage,
-            style: context.textTheme.bodyMedium?.copyWith(
-              color: AppColors.textSecondaryOf(context),
-              height: 1.5,
-            ),
-          ),
-          if (_launchFailed) ...[
-            const SizedBox(height: AppSizes.spacingMedium),
-            Container(
-              padding: const EdgeInsets.all(AppSizes.spacingSmall),
-              decoration: BoxDecoration(
-                color: AppColors.errorOf(context).withValues(alpha: 0.08),
-                borderRadius: AppRadius.small,
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.mandatory
+                  ? l10n.updateRequiredMessage
+                  : l10n.updateAvailableMessage,
+              style: context.textTheme.bodyMedium?.copyWith(
+                color: AppColors.textSecondaryOf(context),
+                height: 1.5,
               ),
-              child: Text(
-                l10n.updateOpenStoreFailed,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: AppColors.errorOf(context),
+            ),
+            if (_launching && widget.service.release != null) ...[
+              const SizedBox(height: AppSizes.spacingMedium),
+              LinearProgressIndicator(value: _progress),
+              const SizedBox(height: AppSizes.spacingSmall),
+              Text(
+                _progress == null
+                    ? l10n.updateDownloading
+                    : '${l10n.updateDownloading} ${(_progress! * 100).round()}%',
+              ),
+            ],
+            if (_launchFailed) ...[
+              const SizedBox(height: AppSizes.spacingMedium),
+              Container(
+                padding: const EdgeInsets.all(AppSizes.spacingSmall),
+                decoration: BoxDecoration(
+                  color: AppColors.errorOf(context).withValues(alpha: 0.08),
+                  borderRadius: AppRadius.small,
+                ),
+                child: Text(
+                  widget.service.needsInstallPermission
+                      ? l10n.updateInstallPermission
+                      : l10n.updateOpenStoreFailed,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: AppColors.errorOf(context),
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
       actions: [
         Column(
@@ -145,6 +179,11 @@ class _AppUpdateDialogState extends State<_AppUpdateDialog> {
               isLoading: _launching,
               onPressed: _updateNow,
             ),
+            if (_launching && widget.service.release != null)
+              TextButton(
+                onPressed: widget.service.cancelDownload,
+                child: Text(l10n.updateCancelDownload),
+              ),
             if (!widget.mandatory) ...[
               const SizedBox(height: AppSizes.spacingSmall),
               TextButton(

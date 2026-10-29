@@ -5376,3 +5376,10 @@ input[type='date'][value='']:not(:focus) {
 .warehouse-access-feature input { width: 20px; height: 20px; flex-shrink: 0; }
 .warehouse-access-credentials { margin-block: 16px; padding: 16px; border: 1px solid currentColor; border-radius: 12px; }
 @media (max-width: 800px) { .warehouse-access-layout { grid-template-columns: minmax(0, 1fr); } }
+
+.app-release-page label { display: grid; gap: 6px; margin-block: 12px; }
+.app-release-page fieldset { min-width: 0; padding: 16px; border: 1px solid var(--color-border, #dce3ee); border-radius: 12px; }
+.app-release-page input, .app-release-page textarea { max-width: 100%; min-width: 0; }
+.app-release-page .warehouse-access-feature { display: flex; gap: 8px; align-items: center; }
+.app-release-roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-block: 16px; }
+@media (max-width: 1000px) { .app-release-roles { grid-template-columns: minmax(0, 1fr); } }

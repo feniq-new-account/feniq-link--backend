@@ -795,7 +795,7 @@
   "updateRequiredMessage": "إصدار التطبيق الحالي لم يعد مدعوماً. يرجى تحديث التطبيق للمتابعة.",
   "updateNow": "تحديث الآن",
   "later": "لاحقاً",
-  "updateOpenStoreFailed": "تعذر فتح متجر Google Play. حاول مرة أخرى.",
+  "updateOpenStoreFailed": "تعذر تنزيل التحديث أو فتح مثبت أندرويد. تحقق من الاتصال والمساحة المتاحة وأعد المحاولة.",
   "deliverySealRequiredTitle": "تأكيد التسليم",
   "deliverySealRequiredMessage": "يطلب هذا المستودع صورة لختم الشحنة قبل إتمام الطلب. التقط صورة واضحة للختم على الطرد.",
   "takeSealPhoto": "إضافة صورة الختم",
@@ -1209,5 +1209,8 @@
         "type": "String"
       }
     }
-  }
+  },
+  "updateDownloading": "جارٍ تنزيل التحديث",
+  "updateInstallPermission": "اسمح لفينيق بتثبيت التطبيقات من شاشة إعدادات أندرويد، ثم ارجع واضغط «تحديث الآن». لن تحتاج لتنزيل الملف مرة أخرى.",
+  "updateCancelDownload": "إلغاء التنزيل"
 }
