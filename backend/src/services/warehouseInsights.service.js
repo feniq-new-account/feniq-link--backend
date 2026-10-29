@@ -70,9 +70,9 @@ async function loadSnapshot(warehouseId, now) {
       nameEn: row.nameEn, phone: row.phone, city: row.city, address: row.address }]));
     const debtors = [];
     const agingBuckets = [0, 0, 0, 0];
-    let totalDebtSyp = 0, totalCreditSyp = 0;
+    let totalDebtSyp = 0, totalCreditSyp = 0, unknownAgeSyp = 0;
     for (const [pharmacyId, aged] of agedAccounts) {
-      totalDebtSyp += aged.debtSyp; totalCreditSyp += aged.creditSyp;
+      unknownAgeSyp += aged.unknownAgeSyp; totalDebtSyp += aged.debtSyp; totalCreditSyp += aged.creditSyp;
       aged.buckets.forEach((amount, index) => { agingBuckets[index] += amount; });
       if (aged.overdueSyp > 0) debtors.push({ pharmacy: named.get(pharmacyId) || { id: pharmacyId, nameAr: 'صيدلية غير متاحة', nameEn: 'Unavailable pharmacy', phone: null }, ...aged });
     }
@@ -90,7 +90,7 @@ async function loadSnapshot(warehouseId, now) {
       b.oldestAgeDays - a.oldestAgeDays || b.overdueSyp - a.overdueSyp || a.pharmacy.id.localeCompare(b.pharmacy.id));
     inactive.sort((a, b) => b.days - a.days || a.pharmacy.id.localeCompare(b.pharmacy.id));
     return { asOf: now, settings, source: [...movements.values()], overdue, inactive, operational: { pendingOrders, pendingReturns },
-      aging: { buckets: agingBuckets, totalDebtSyp, totalCreditSyp,
+      aging: { buckets: agingBuckets, totalDebtSyp, totalCreditSyp, unknownAgeSyp,
         overdueSyp: overdue.reduce((sum, row) => sum + row.overdueSyp, 0), overduePharmacies: overdue.length } };
   });
 }

@@ -3340,4 +3340,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String deliveryHoursMinutes(String hours, String minutes) {
     return '$hours ساعة و $minutes دقيقة';
   }
+
+  @override
+  String get warehouseInsightsUnknownAge =>
+      'رصيد بلا عمر فاتورة موثق؛ داخل إجمالي الدين، وخارج شرائح التأخر حتى يتوفر تاريخ موثوق.';
 }

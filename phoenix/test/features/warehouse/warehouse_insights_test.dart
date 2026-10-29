@@ -35,7 +35,8 @@ const report = WarehouseInsightsReport(
   netSalesSyp: 128745600,
   collectionsSyp: 98245600,
   returnsSyp: 1245600,
-  debtSyp: 190000000,
+  debtSyp: 190012000,
+  unknownAgeSyp: 12000,
   aging: [90000000, 60000000, 30000000, 10000000],
   daily: [
     DailyWarehouseMovement(

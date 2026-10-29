@@ -113,6 +113,7 @@ export function WarehouseInsightsPage() {
           </Link>)}</div>}
           <WarehouseTrendChart daily={data.daily} />
           <section className="wh-detail-card"><h2>{t('insights.aging')}</h2><p className="hint">{t('insights.agingMethod')}</p>
+            {data.aging.unknownAgeSyp > 0 && <p>{t('insights.unknownAge')} <bdi>{formatSyp(data.aging.unknownAgeSyp)}</bdi></p>}
             {data.aging.buckets.map((amount, i) => {
               const bounds = [0, data.settings.overdueDays, data.settings.overdueDays * 2, data.settings.overdueDays * 4];
               const label = i === 3 ? `${bounds[i]}+` : `${bounds[i]}–${bounds[i + 1] - 1}`;

@@ -3349,4 +3349,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String deliveryHoursMinutes(String hours, String minutes) {
     return '$hours hours $minutes minutes';
   }
+
+  @override
+  String get warehouseInsightsUnknownAge =>
+      'Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available.';
 }

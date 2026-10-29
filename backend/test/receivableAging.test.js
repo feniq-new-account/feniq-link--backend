@@ -33,3 +33,16 @@ test('the configured overdue boundary uses Damascus calendar days', () => {
   const result = ageAccount([row('1', 'debit', 1000, '2026-10-13T21:30:00Z')], { now, overdueDays: 15 });
   assert.equal(result.oldestAgeDays, 15); assert.equal(result.overdueSyp, 1000);
 });
+
+test('opening balances and manual debits are included in debt without inventing invoice age', () => {
+  const result = ageAccount([row('1', 'debit', 10000, '2026-01-01', { kind: 'opening_balance' }),
+    row('2', 'debit', 2000, '2026-01-02', { kind: 'manual_debit' }), row('3', 'debit', 5000, '2026-10-01')], { now });
+  assert.equal(result.debtSyp, 17000); assert.equal(result.unknownAgeSyp, 12000);
+  assert.equal(result.overdueSyp, 5000); assert.equal(result.oldestAgeDays, 28);
+  assert.equal(result.buckets.reduce((a, b) => a + b, 0) + result.unknownAgeSyp, result.debtSyp);
+});
+test('account payments reduce the older unknown opening lot without changing known invoice dates', () => {
+  const result = ageAccount([row('1', 'debit', 10000, '2026-01-01', { kind: 'opening_balance' }),
+    row('2', 'debit', 5000, '2026-10-01'), row('3', 'credit', 11000, '2026-10-29')], { now });
+  assert.equal(result.unknownAgeSyp, 0); assert.equal(result.debtSyp, 4000); assert.equal(result.overdueSyp, 4000);
+});

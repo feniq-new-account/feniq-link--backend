@@ -1,20 +1,34 @@
-Map<String, dynamic> _map(Object? value) => value is Map ? value.cast<String, dynamic>() : const {};
-List<Map<String, dynamic>> _rows(Object? value) =>
-    value is List ? value.whereType<Map>().map((row) => row.cast<String, dynamic>()).toList() : const [];
+Map<String, dynamic> _map(Object? value) =>
+    value is Map ? value.cast<String, dynamic>() : const {};
+List<Map<String, dynamic>> _rows(Object? value) => value is List
+    ? value.whereType<Map>().map((row) => row.cast<String, dynamic>()).toList()
+    : const [];
 int _int(Object? value) => value is num ? value.round() : 0;
 
 class FollowUpSettings {
-  const FollowUpSettings({this.overdueDays = 15, this.inactiveDays = 15, this.revision = 0});
+  const FollowUpSettings({
+    this.overdueDays = 15,
+    this.inactiveDays = 15,
+    this.revision = 0,
+  });
   final int overdueDays, inactiveDays, revision;
   factory FollowUpSettings.fromJson(Object? value) {
     final json = _map(value);
     return FollowUpSettings(
-      overdueDays: _int(json['overdueDays']) > 0 ? _int(json['overdueDays']) : 15,
-      inactiveDays: _int(json['inactiveDays']) > 0 ? _int(json['inactiveDays']) : 15,
+      overdueDays: _int(json['overdueDays']) > 0
+          ? _int(json['overdueDays'])
+          : 15,
+      inactiveDays: _int(json['inactiveDays']) > 0
+          ? _int(json['inactiveDays'])
+          : 15,
       revision: _int(json['revision']),
     );
   }
-  Map<String, dynamic> toJson() => {'overdueDays': overdueDays, 'inactiveDays': inactiveDays, 'revision': revision};
+  Map<String, dynamic> toJson() => {
+    'overdueDays': overdueDays,
+    'inactiveDays': inactiveDays,
+    'revision': revision,
+  };
 }
 
 class DailyWarehouseMovement {
@@ -26,12 +40,13 @@ class DailyWarehouseMovement {
   });
   final String date;
   final int netSalesSyp, collectionsSyp, returnsSyp;
-  factory DailyWarehouseMovement.fromJson(Map<String, dynamic> json) => DailyWarehouseMovement(
-    date: json['date'] as String? ?? '',
-    netSalesSyp: _int(json['netSalesSyp']),
-    collectionsSyp: _int(json['collectionsSyp']),
-    returnsSyp: _int(json['returnsSyp']),
-  );
+  factory DailyWarehouseMovement.fromJson(Map<String, dynamic> json) =>
+      DailyWarehouseMovement(
+        date: json['date'] as String? ?? '',
+        netSalesSyp: _int(json['netSalesSyp']),
+        collectionsSyp: _int(json['collectionsSyp']),
+        returnsSyp: _int(json['returnsSyp']),
+      );
 }
 
 class WarehouseInsightsReport {
@@ -42,12 +57,13 @@ class WarehouseInsightsReport {
     this.collectionsSyp = 0,
     this.returnsSyp = 0,
     this.debtSyp = 0,
+    this.unknownAgeSyp = 0,
     this.aging = const [0, 0, 0, 0],
     this.settings = const FollowUpSettings(),
   });
   final String asOfBusiness;
   final List<DailyWarehouseMovement> daily;
-  final int netSalesSyp, collectionsSyp, returnsSyp, debtSyp;
+  final int netSalesSyp, collectionsSyp, returnsSyp, debtSyp, unknownAgeSyp;
   final List<int> aging;
   final FollowUpSettings settings;
   factory WarehouseInsightsReport.fromJson(Map<String, dynamic> json) {
@@ -60,7 +76,10 @@ class WarehouseInsightsReport {
       collectionsSyp: _int(totals['collectionsSyp']),
       returnsSyp: _int(totals['returnsSyp']),
       debtSyp: _int(aged['totalDebtSyp']),
-      aging: buckets is List && buckets.length == 4 ? buckets.map(_int).toList() : const [0, 0, 0, 0],
+      unknownAgeSyp: _int(aged['unknownAgeSyp']),
+      aging: buckets is List && buckets.length == 4
+          ? buckets.map(_int).toList()
+          : const [0, 0, 0, 0],
       settings: FollowUpSettings.fromJson(json['settings']),
     );
   }
@@ -124,22 +143,30 @@ class WarehouseFollowUpPage {
 }
 
 class WarehouseInsightAlert {
-  const WarehouseInsightAlert({required this.code, required this.count, this.amountSyp = 0});
+  const WarehouseInsightAlert({
+    required this.code,
+    required this.count,
+    this.amountSyp = 0,
+  });
   final String code;
   final int count, amountSyp;
-  factory WarehouseInsightAlert.fromJson(Map<String, dynamic> json) => WarehouseInsightAlert(
-    code: json['code'] as String? ?? '',
-    count: _int(json['count']),
-    amountSyp: _int(json['amountSyp']),
-  );
+  factory WarehouseInsightAlert.fromJson(Map<String, dynamic> json) =>
+      WarehouseInsightAlert(
+        code: json['code'] as String? ?? '',
+        count: _int(json['count']),
+        amountSyp: _int(json['amountSyp']),
+      );
 }
 
 class WarehouseAlertsData {
   const WarehouseAlertsData({this.alerts = const [], this.asOfBusiness = ''});
   final List<WarehouseInsightAlert> alerts;
   final String asOfBusiness;
-  factory WarehouseAlertsData.fromJson(Map<String, dynamic> json) => WarehouseAlertsData(
-    alerts: _rows(json['alerts']).map(WarehouseInsightAlert.fromJson).toList(),
-    asOfBusiness: json['asOfBusiness'] as String? ?? '',
-  );
+  factory WarehouseAlertsData.fromJson(Map<String, dynamic> json) =>
+      WarehouseAlertsData(
+        alerts: _rows(
+          json['alerts'],
+        ).map(WarehouseInsightAlert.fromJson).toList(),
+        asOfBusiness: json['asOfBusiness'] as String? ?? '',
+      );
 }

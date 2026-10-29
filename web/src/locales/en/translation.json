@@ -1631,7 +1631,8 @@
     },
     "noAlerts": "No follow-up alerts right now.",
     "scopeShort": "Feniq transactions only; net sales are not profit.",
-    "about": "About these figures"
+    "about": "About these figures",
+    "unknownAge": "Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available."
   },
   "delivery": {
     "title": "Delivery regions and schedules",

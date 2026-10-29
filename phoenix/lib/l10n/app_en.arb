@@ -1927,5 +1927,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "warehouseInsightsUnknownAge": "Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available."
 }

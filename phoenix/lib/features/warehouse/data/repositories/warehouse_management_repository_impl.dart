@@ -8,13 +8,17 @@ import 'package:feniq/features/warehouse/data/models/warehouse_management_models
 
 import 'warehouse_management_repository.dart';
 
-class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository {
-  WarehouseManagementRepositoryImpl({required ApiClient apiClient}) : _apiClient = apiClient;
+class WarehouseManagementRepositoryImpl
+    implements WarehouseManagementRepository {
+  WarehouseManagementRepositoryImpl({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   final ApiClient _apiClient;
   final PendingPaymentJournal _payments = PendingPaymentJournal();
 
-  Future<Map<String, dynamic>> _run(Future<Response<dynamic>> Function(Dio dio) call) async {
+  Future<Map<String, dynamic>> _run(
+    Future<Response<dynamic>> Function(Dio dio) call,
+  ) async {
     try {
       final response = await call(_apiClient.dio);
       final data = response.data;
@@ -25,60 +29,178 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
   }
 
   @override
-  Future<void> rescheduleDelivery(String orderId, String expectedBusiness, String reason, int revision) async {
-    await _run((dio) => dio.put('/warehouse/delivery/orders/$orderId/reschedule', data: {
-      'expectedBusiness': expectedBusiness, 'reason': reason, 'revision': revision}));
+  Future<void> rescheduleDelivery(
+    String orderId,
+    String expectedBusiness,
+    String reason,
+    int revision,
+  ) async {
+    await _run(
+      (dio) => dio.put(
+        '/warehouse/delivery/orders/$orderId/reschedule',
+        data: {
+          'expectedBusiness': expectedBusiness,
+          'reason': reason,
+          'revision': revision,
+        },
+      ),
+    );
   }
+
   @override
-  Future<Map<String, dynamic>> getDeliverySettings() => _run((dio) => dio.get('/warehouse/delivery'));
+  Future<Map<String, dynamic>> getDeliverySettings() =>
+      _run((dio) => dio.get('/warehouse/delivery'));
   @override
-  Future<Map<String, dynamic>> saveDeliverySettings(Map<String, dynamic> settings) => _run((dio) => dio.put('/warehouse/delivery', data: settings));
+  Future<Map<String, dynamic>> saveDeliverySettings(
+    Map<String, dynamic> settings,
+  ) => _run((dio) => dio.put('/warehouse/delivery', data: settings));
   @override
-  Future<List<Map<String, dynamic>>> searchDeliveryPharmacies(String query) async {
-    final result = await _run((dio) => dio.get('/warehouse/delivery/pharmacies', queryParameters: {'q': query}));
-    return (result['pharmacies'] as List).map((row) => (row as Map).cast<String, dynamic>()).toList();
+  Future<List<Map<String, dynamic>>> searchDeliveryPharmacies(
+    String query,
+  ) async {
+    final result = await _run(
+      (dio) => dio.get(
+        '/warehouse/delivery/pharmacies',
+        queryParameters: {'q': query},
+      ),
+    );
+    return (result['pharmacies'] as List)
+        .map((row) => (row as Map).cast<String, dynamic>())
+        .toList();
   }
+
   @override
-  Future<Map<String, dynamic>> assignDeliveryPharmacy(String id, String? zoneId, int revision) =>
-    _run((dio) => dio.put('/warehouse/delivery/pharmacies/$id', data: {'zoneId': zoneId, 'revision': revision}));
+  Future<Map<String, dynamic>> assignDeliveryPharmacy(
+    String id,
+    String? zoneId,
+    int revision,
+  ) => _run(
+    (dio) => dio.put(
+      '/warehouse/delivery/pharmacies/$id',
+      data: {'zoneId': zoneId, 'revision': revision},
+    ),
+  );
   @override
   Future<Map<String, bool>> getInsightAccess() async {
     final data = await _run((dio) => dio.get('/warehouse/subscription'));
-    if (data['features'] is! Map) throw ServerFailure('Incomplete subscription response.', code: FailureCode.unexpected);
+    if (data['features'] is! Map) {
+      throw ServerFailure(
+        'Incomplete subscription response.',
+        code: FailureCode.unexpected,
+      );
+    }
     final flags = (data['features'] as Map?) ?? const {};
-    return {for (final entry in flags.entries) entry.key.toString(): entry.value == true};
+    return {
+      for (final entry in flags.entries)
+        entry.key.toString(): entry.value == true,
+    };
   }
+
   @override
-  Future<WarehouseInsightsReport> getInsights({String period = 'month', bool force = false}) async {
-    final data = await _run((dio) => dio.get('/warehouse/insights/report', queryParameters: {'period': period, if (force) 'force': '1'}));
-    if (data['totals'] is! Map || data['daily'] is! List || data['aging'] is! Map || data['asOfBusiness'] is! String) {
-      throw ServerFailure('Incomplete report response.', code: FailureCode.unexpected);
+  Future<WarehouseInsightsReport> getInsights({
+    String period = 'month',
+    bool force = false,
+  }) async {
+    final data = await _run(
+      (dio) => dio.get(
+        '/warehouse/insights/report',
+        queryParameters: {'period': period, if (force) 'force': '1'},
+      ),
+    );
+    if (data['totals'] is! Map ||
+        data['daily'] is! List ||
+        data['aging'] is! Map ||
+        data['asOfBusiness'] is! String) {
+      throw ServerFailure(
+        'Incomplete report response.',
+        code: FailureCode.unexpected,
+      );
+    }
+    bool whole(Object? value) =>
+        value is num &&
+        value.isFinite &&
+        value % 1 == 0 &&
+        value.abs() <= 9007199254740991;
+    final totals = data['totals'] as Map, aging = data['aging'] as Map;
+    final rows = data['daily'] as List, buckets = aging['buckets'];
+    if (![
+          'salesSyp',
+          'netSalesSyp',
+          'collectionsSyp',
+          'returnsSyp',
+        ].every((key) => whole(totals[key])) ||
+        !whole(aging['totalDebtSyp']) ||
+        buckets is! List ||
+        buckets.length != 4 ||
+        !buckets.every(whole) ||
+        !rows.every(
+          (row) =>
+              row is Map &&
+              row['date'] is String &&
+              [
+                'netSalesSyp',
+                'collectionsSyp',
+                'returnsSyp',
+              ].every((key) => whole(row[key])),
+        )) {
+      throw ServerFailure(
+        'Incomplete report figures.',
+        code: FailureCode.unexpected,
+      );
     }
     return WarehouseInsightsReport.fromJson(data);
   }
+
   @override
-  Future<WarehouseFollowUpPage> getFollowUp({required String kind, String? after, bool force = false}) async {
-    final data = await _run((dio) => dio.get('/warehouse/insights/follow-up', queryParameters: {
-      'kind': kind, if (after != null) 'after': after, if (force) 'force': '1'}));
-    if (data['rows'] is! List || data['pagination'] is! Map || data['asOfBusiness'] is! String) {
-      throw ServerFailure('Incomplete follow-up response.', code: FailureCode.unexpected);
+  Future<WarehouseFollowUpPage> getFollowUp({
+    required String kind,
+    String? after,
+    bool force = false,
+  }) async {
+    final data = await _run(
+      (dio) => dio.get(
+        '/warehouse/insights/follow-up',
+        queryParameters: {
+          'kind': kind,
+          if (after != null) 'after': after,
+          if (force) 'force': '1',
+        },
+      ),
+    );
+    if (data['rows'] is! List ||
+        data['pagination'] is! Map ||
+        data['asOfBusiness'] is! String) {
+      throw ServerFailure(
+        'Incomplete follow-up response.',
+        code: FailureCode.unexpected,
+      );
     }
     return WarehouseFollowUpPage.fromJson(data);
   }
+
   @override
   Future<FollowUpSettings> updateFollowUp(FollowUpSettings settings) async =>
-    FollowUpSettings.fromJson((await _run((dio) => dio.put('/warehouse/insights/settings', data: settings.toJson())))['settings']);
+      FollowUpSettings.fromJson(
+        (await _run(
+          (dio) =>
+              dio.put('/warehouse/insights/settings', data: settings.toJson()),
+        ))['settings'],
+      );
   @override
   Future<WarehouseAlertsData> getInsightAlerts() async {
     final data = await _run((dio) => dio.get('/warehouse/insights/alerts'));
     if (data['alerts'] is! List || data['asOfBusiness'] is! String) {
-      throw ServerFailure('Incomplete alerts response.', code: FailureCode.unexpected);
+      throw ServerFailure(
+        'Incomplete alerts response.',
+        code: FailureCode.unexpected,
+      );
     }
     return WarehouseAlertsData.fromJson(data);
   }
 
-  WarehouseRep _rep(Map<String, dynamic> data) =>
-      WarehouseRep.fromJson((data['rep'] as Map?)?.cast<String, dynamic>() ?? const {});
+  WarehouseRep _rep(Map<String, dynamic> data) => WarehouseRep.fromJson(
+    (data['rep'] as Map?)?.cast<String, dynamic>() ?? const {},
+  );
 
   @override
   Future<List<WarehouseRep>> getReps() async {
@@ -122,7 +244,11 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
     final data = await _run(
       (dio) => dio.patch(
         Endpoints.warehouseRep(repId),
-        data: {'commissionRate': ?commissionRate, 'isActive': ?isActive, 'warehouseShareToRep': ?warehouseShareToRep},
+        data: {
+          'commissionRate': ?commissionRate,
+          'isActive': ?isActive,
+          'warehouseShareToRep': ?warehouseShareToRep,
+        },
       ),
     );
     return _rep(data);
@@ -130,12 +256,19 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
 
   @override
   Future<void> resetRepPassword(String repId, String password) async {
-    await _run((dio) => dio.post(Endpoints.warehouseRepResetPassword(repId), data: {'password': password}));
+    await _run(
+      (dio) => dio.post(
+        Endpoints.warehouseRepResetPassword(repId),
+        data: {'password': password},
+      ),
+    );
   }
 
   @override
   Future<List<RepAssignedPharmacy>> getRepPharmacies(String repId) async {
-    final data = await _run((dio) => dio.get(Endpoints.warehouseRepPharmacies(repId)));
+    final data = await _run(
+      (dio) => dio.get(Endpoints.warehouseRepPharmacies(repId)),
+    );
     return ((data['pharmacies'] as List?) ?? const [])
         .whereType<Map>()
         .map((e) => RepAssignedPharmacy.fromJson(Map<String, dynamic>.from(e)))
@@ -143,20 +276,32 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
   }
 
   @override
-  Future<WarehouseRepVisitsPage> getRepVisits({String? repId, String? after}) async {
+  Future<WarehouseRepVisitsPage> getRepVisits({
+    String? repId,
+    String? after,
+  }) async {
     final data = await _run(
-      (dio) => dio.get(Endpoints.warehouseRepVisits, queryParameters: {'repId': ?repId, 'after': ?after}),
+      (dio) => dio.get(
+        Endpoints.warehouseRepVisits,
+        queryParameters: {'repId': ?repId, 'after': ?after},
+      ),
     );
     return WarehouseRepVisitsPage.fromJson(data);
   }
 
   @override
-  Future<WarehouseAccountsPage> getAccounts({String? search, String? after}) async {
+  Future<WarehouseAccountsPage> getAccounts({
+    String? search,
+    String? after,
+  }) async {
     final text = search?.trim();
     final data = await _run(
       (dio) => dio.get(
         Endpoints.warehouseBalances,
-        queryParameters: {if (text != null && text.isNotEmpty) 'search': text, 'after': ?after},
+        queryParameters: {
+          if (text != null && text.isNotEmpty) 'search': text,
+          'after': ?after,
+        },
       ),
     );
     return WarehouseAccountsPage.fromJson(data);
@@ -164,13 +309,20 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
 
   @override
   Future<WarehouseStatement> getStatement(String pharmacyId) async {
-    final data = await _run((dio) => dio.get(Endpoints.warehouseBalance(pharmacyId)));
+    final data = await _run(
+      (dio) => dio.get(Endpoints.warehouseBalance(pharmacyId)),
+    );
     return WarehouseStatement.fromJson(data);
   }
 
   @override
   Future<WarehouseSummary> getSummary({String period = 'today'}) async {
-    final data = await _run((dio) => dio.get(Endpoints.warehouseBalancesSummary, queryParameters: {'period': period}));
+    final data = await _run(
+      (dio) => dio.get(
+        Endpoints.warehouseBalancesSummary,
+        queryParameters: {'period': period},
+      ),
+    );
     return WarehouseSummary.fromJson(data);
   }
 
@@ -185,7 +337,9 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
   }) async {
     final text = note?.trim();
     final ownerId = await _apiClient.currentAccountId();
-    if (ownerId == null) throw ServerFailure('Session expired', code: 'HTTP_401');
+    if (ownerId == null) {
+      throw ServerFailure('Session expired', code: 'HTTP_401');
+    }
     final payload = <String, Object?>{
       if (deliveryOrderId != null) 'deliveryOrderId': deliveryOrderId,
       'pharmacyId': pharmacyId,
@@ -201,24 +355,36 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
         proposedKey: idempotencyKey,
         send: (key) async {
           if (await _apiClient.currentAccountId() != ownerId) {
-            throw ServerFailure('Session changed. Sign in to the original account to resume.', code: 'HTTP_401');
+            throw ServerFailure(
+              'Session changed. Sign in to the original account to resume.',
+              code: 'HTTP_401',
+            );
           }
           if (deliveryOrderId != null) {
             await _run(
               (dio) => dio.post(
                 Endpoints.warehouseOrderAdvance(deliveryOrderId),
-                data: {'expectedStatus': 'out_for_delivery', 'targetStatus': 'delivered'},
+                data: {
+                  'expectedStatus': 'out_for_delivery',
+                  'targetStatus': 'delivered',
+                },
               ),
             );
           }
-          final payment = {...payload, 'idempotencyKey': key}..remove('deliveryOrderId');
-          await _run((dio) => dio.post(Endpoints.warehousePayments, data: payment));
+          final payment = {...payload, 'idempotencyKey': key}
+            ..remove('deliveryOrderId');
+          await _run(
+            (dio) => dio.post(Endpoints.warehousePayments, data: payment),
+          );
         },
       );
     } on Failure {
       rethrow;
     } catch (_) {
-      throw ServerFailure('Payment could not be confirmed. Retry the same payment.', code: 'PAYMENT_UNCONFIRMED');
+      throw ServerFailure(
+        'Payment could not be confirmed. Retry the same payment.',
+        code: 'PAYMENT_UNCONFIRMED',
+      );
     }
   }
 
@@ -230,7 +396,9 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
 
   @override
   Future<WarehouseLoyalty> getLoyalty() async =>
-      WarehouseLoyalty.fromSettingsJson(await _run((dio) => dio.get(Endpoints.warehouseSettings)));
+      WarehouseLoyalty.fromSettingsJson(
+        await _run((dio) => dio.get(Endpoints.warehouseSettings)),
+      );
 
   @override
   Future<WarehouseLoyalty> updateLoyalty({
@@ -253,7 +421,10 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
   );
 
   @override
-  Future<WarehouseReturnsPage> getReturns({String? status, String? after}) async {
+  Future<WarehouseReturnsPage> getReturns({
+    String? status,
+    String? after,
+  }) async {
     final data = await _run(
       (dio) => dio.get(
         Endpoints.warehouseReturns,
@@ -266,27 +437,39 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
 
   @override
   Future<WarehouseReturn> getReturn(String returnId) async {
-    final data = await _run((dio) => dio.get(Endpoints.warehouseReturn(returnId)));
+    final data = await _run(
+      (dio) => dio.get(Endpoints.warehouseReturn(returnId)),
+    );
     return WarehouseReturn.fromJson(data);
   }
 
   @override
   Future<double?> previewReturnCredit(String returnId) async {
-    final data = await _run((dio) => dio.get(Endpoints.warehouseReturnPreview(returnId)));
+    final data = await _run(
+      (dio) => dio.get(Endpoints.warehouseReturnPreview(returnId)),
+    );
     final preview = data['preview'];
     final credit = preview is Map ? preview['creditSyp'] : null;
     return credit is num ? credit.toDouble() : null;
   }
 
   // The resolve endpoints answer with the return's new status only.
-  WarehouseReturn _resolved(Map<String, dynamic> data) => WarehouseReturn.fromJson(data);
+  WarehouseReturn _resolved(Map<String, dynamic> data) =>
+      WarehouseReturn.fromJson(data);
 
   @override
-  Future<WarehouseReturn> approveReturn(String returnId) async =>
-      _resolved(await _run((dio) => dio.post(Endpoints.warehouseReturnApprove(returnId))));
-
-  @override
-  Future<WarehouseReturn> rejectReturn(String returnId, String note) async => _resolved(
-    await _run((dio) => dio.post(Endpoints.warehouseReturnReject(returnId), data: {'rejectionNote': note})),
+  Future<WarehouseReturn> approveReturn(String returnId) async => _resolved(
+    await _run((dio) => dio.post(Endpoints.warehouseReturnApprove(returnId))),
   );
+
+  @override
+  Future<WarehouseReturn> rejectReturn(String returnId, String note) async =>
+      _resolved(
+        await _run(
+          (dio) => dio.post(
+            Endpoints.warehouseReturnReject(returnId),
+            data: {'rejectionNote': note},
+          ),
+        ),
+      );
 }

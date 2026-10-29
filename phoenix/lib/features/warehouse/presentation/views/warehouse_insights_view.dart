@@ -349,6 +349,14 @@ class _ReportFigures extends StatelessWidget {
                 l10n.warehouseInsightsAgingMethod,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              if (report.unknownAgeSyp > 0) ...[
+                const SizedBox(height: 12),
+                Text(l10n.warehouseInsightsUnknownAge),
+                Text(
+                  formatSyp(report.unknownAgeSyp, l10n.currencySuffix),
+                  textDirection: TextDirection.ltr,
+                ),
+              ],
               for (var i = 0; i < 4; i++) ...[
                 const SizedBox(height: 14),
                 Text(

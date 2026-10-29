@@ -40,7 +40,9 @@ async function request(person, path, method = 'GET', body) {
     ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   return { status: response.status, body: await response.json() };
 }
+const originalMongooseNow = mongoose.now;
 test.before(async () => {
+  mongoose.now = () => new Date('2026-10-29T03:00:00Z');
   await startMemoryMongo({ dbName: 'warehouse-insights' });
   await Promise.all([LedgerEntry.init(), LedgerAccount.init()]);
   owner = await user('Owner', 'warehouse', '01', 'owner');
@@ -64,7 +66,7 @@ test.before(async () => {
   server = require('../src/app').listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve)); base = `http://127.0.0.1:${server.address().port}`;
 });
-test.after(async () => { if (server) await new Promise((resolve) => server.close(resolve)); await stopMemoryMongo(); });
+test.after(async () => { if (server) await new Promise((resolve) => server.close(resolve)); await stopMemoryMongo(); mongoose.now = originalMongooseNow; });
 
 test('daily charts and KPIs use the same snapshot, net delivered sales and source-isolated debts', async () => {
   const result = await insights.report(wh.id, { period: 'month', force: '1' }, now);
@@ -85,11 +87,21 @@ test('follow-up lists include this warehouse customers/assignments only and page
   assert.deepEqual(new Set([...first.rows, ...second.rows].map((row) => row.pharmacy.id)), new Set([a.id, c.id]));
   assert.ok(!JSON.stringify(snapshot.inactive).includes(stranger.id));
 });
+test('unknown historical debt reconciles with total debt without inventing overdue invoices', async () => {
+  const historical = await pharmacy('Unaged opening account', '15');
+  const account = await ledger.resolveAccount(historical._id, wh._id);
+  await runInTransaction((session) => ledger.postEntry({ account, kind: 'manual_debit', amountSyp: 2500,
+    effectiveAt: new Date('2020-01-01'), reason: 'Historical amount without original invoice date', createdBy: owner._id }, session));
+  const result = await insights.report(wh.id, { period: 'month', force: '1' }, now);
+  assert.equal(result.aging.unknownAgeSyp, 2500); assert.equal(result.aging.totalDebtSyp, 11500);
+  assert.equal(result.aging.buckets.reduce((sum, n) => sum + n, 0) + result.aging.unknownAgeSyp, result.aging.totalDebtSyp);
+  assert.equal(result.aging.overdueSyp, 9000); assert.equal(result.aging.overduePharmacies, 1);
+});
 test('owner and accountant can open their reports; foreign warehouse data is absent', async () => {
   insights.invalidate(wh.id); insights.invalidate(other.id);
-  const own = await request(owner, '/report?period=month');
-  const account = await request(accountant, '/report?period=month');
-  const foreign = await request(otherOwner, '/report?period=month');
+  const own = await request(owner, '/report?period=custom&from=2026-10-01&to=2026-10-29');
+  const account = await request(accountant, '/report?period=custom&from=2026-10-01&to=2026-10-29');
+  const foreign = await request(otherOwner, '/report?period=custom&from=2026-10-01&to=2026-10-29');
   assert.equal(own.status, 200); assert.equal(account.status, 200); assert.equal(foreign.status, 200);
   assert.equal(own.body.totals.salesSyp, account.body.totals.salesSyp);
   assert.equal(foreign.body.totals.salesSyp, 999999);

@@ -11,7 +11,7 @@ function ageAccount(entries, { overdueDays = 15, now = new Date() } = {}) {
   const live = entries.filter((row) => !row.reversalOf && !reversed.has(String(row._id)));
   const lots = live.filter((row) => row.direction === 'debit').map((row) => ({
     id: String(row._id), orderId: row.source?.orderId ? String(row.source.orderId) : null,
-    amountSyp: row.amountSyp, at: new Date(row.effectiveAt), sequence: row.sequence,
+    knownAge: row.kind === 'charge', amountSyp: row.amountSyp, at: new Date(row.effectiveAt), sequence: row.sequence,
   })).sort((a, b) => a.at - b.at || a.sequence - b.sequence);
   let pooledCredit = 0;
   for (const row of live.filter((entry) => entry.direction === 'credit')) {
@@ -27,19 +27,20 @@ function ageAccount(entries, { overdueDays = 15, now = new Date() } = {}) {
   }
   const buckets = [0, 0, 0, 0];
   let oldestUnpaidAt = null;
-  let overdueSyp = 0;
+  let overdueSyp = 0, unknownAgeSyp = 0;
   for (const lot of lots) {
     const paid = Math.min(lot.amountSyp, pooledCredit);
     lot.amountSyp -= paid; pooledCredit -= paid;
     if (!lot.amountSyp) continue;
+    if (!lot.knownAge) { unknownAgeSyp += lot.amountSyp; continue; }
     const days = Math.max(0, dayNumber(now) - dayNumber(lot.at));
     const index = days < overdueDays ? 0 : days < 2 * overdueDays ? 1 : days < 4 * overdueDays ? 2 : 3;
     buckets[index] += lot.amountSyp;
     if (days >= overdueDays) overdueSyp += lot.amountSyp;
     if (!oldestUnpaidAt) oldestUnpaidAt = lot.at;
   }
-  const debtSyp = buckets.reduce((sum, amount) => sum + amount, 0);
-  return { debtSyp, creditSyp: pooledCredit, overdueSyp, buckets, oldestUnpaidAt,
+  const debtSyp = unknownAgeSyp + buckets.reduce((sum, amount) => sum + amount, 0);
+  return { debtSyp, unknownAgeSyp, creditSyp: pooledCredit, overdueSyp, buckets, oldestUnpaidAt,
     oldestAgeDays: oldestUnpaidAt ? Math.max(0, dayNumber(now) - dayNumber(oldestUnpaidAt)) : 0 };
 }
 module.exports = { ageAccount, dayNumber };

@@ -5695,6 +5695,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{hours} hours {minutes} minutes'**
   String deliveryHoursMinutes(String hours, String minutes);
+
+  /// No description provided for @warehouseInsightsUnknownAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available.'**
+  String get warehouseInsightsUnknownAge;
 }
 
 class _AppLocalizationsDelegate

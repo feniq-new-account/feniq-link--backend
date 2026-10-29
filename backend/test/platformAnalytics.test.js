@@ -17,7 +17,9 @@ async function post(ph, warehouse, kind, amountSyp, at) {
   return runInTransaction((session) => ledger.postEntry({ account, kind, amountSyp, effectiveAt: new Date(at),
     source: kind === 'charge' ? { orderId: oid() } : kind === 'payment' ? { paymentId: oid() } : { returnId: oid() }, createdBy: admin.id }, session));
 }
+const originalMongooseNow = mongoose.now;
 test.before(async () => {
+  mongoose.now = () => new Date('2026-10-29T03:00:00Z');
   await startMemoryMongo({ dbName: 'platform-analytics' }); first = 992000;
   admin = await User.create({ name: 'Admin', phone: '+963944000001', role: 'admin', status: 'active' });
   whUser = await User.create({ name: 'Warehouse', phone: '+963944000002', role: 'warehouse', status: 'active' });
@@ -42,7 +44,7 @@ test.before(async () => {
   await billing.configureSubscription(other.id, admin.id, { features: { loyalty: false } });
   server = require('../src/app').listen(0, '127.0.0.1'); await new Promise((resolve) => server.once('listening', resolve)); base = `http://127.0.0.1:${server.address().port}/api/admin/analytics`;
 });
-test.after(async () => { if (server) await new Promise((resolve) => server.close(resolve)); await stopMemoryMongo(); });
+test.after(async () => { if (server) await new Promise((resolve) => server.close(resolve)); await stopMemoryMongo(); mongoose.now = originalMongooseNow; });
 test('platform sums reconcile across regions, daily series and the immutable ledger', async () => {
   const data = await service.report({ period: 'month', force: '1' }, now);
   assert.equal(data.orders.requestedOrders, 3); assert.equal(data.orders.cancelledOrders, 1); assert.equal(data.orders.requestedSyp, 2000);
