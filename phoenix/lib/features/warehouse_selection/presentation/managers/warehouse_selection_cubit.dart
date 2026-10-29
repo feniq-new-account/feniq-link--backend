@@ -65,6 +65,8 @@ class WarehouseSelectionCubit extends Cubit<WarehouseSelectionState> implements 
   // One warehouse at a time, in the background: the screen never waits on it.
   // A catalog saved today is skipped (syncForOffline's own daily check), and a
   // failed download keeps the previous copy. Stops if the pharmacist signs out.
+  Future<void> retryOfflineCatalogs() => _keepCatalogsOffline(state.warehouses.map((w) => w.id).toList(), _session);
+
   Future<void> _keepCatalogsOffline(List<String> warehouseIds, int session) async {
     final sync = _offlineCatalogs;
     if (sync == null) return;

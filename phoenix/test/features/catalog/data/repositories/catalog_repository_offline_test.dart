@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:async';
+import 'package:feniq/core/offline/catalog_download_status.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,8 +30,11 @@ Map<String, dynamic> _product(String id, String nameAr, {String? ingredient, Str
   'dosageForm': ingredient == null ? null : 'أقراص',
 };
 
-Response<dynamic> _ok(Object data) =>
-    Response(data: data, statusCode: 200, requestOptions: RequestOptions(path: ''));
+Response<dynamic> _ok(Object data) => Response(
+  data: data,
+  statusCode: 200,
+  requestOptions: RequestOptions(path: ''),
+);
 
 DioException _offline() => DioException.connectionError(
   requestOptions: RequestOptions(path: ''),
@@ -39,8 +44,18 @@ DioException _offline() => DioException.connectionError(
 DioException _serverError() => DioException.badResponse(
   statusCode: 500,
   requestOptions: RequestOptions(path: ''),
-  response: Response(data: {'message': 'boom'}, statusCode: 500, requestOptions: RequestOptions(path: '')),
+  response: Response(
+    data: {'message': 'boom'},
+    statusCode: 500,
+    requestOptions: RequestOptions(path: ''),
+  ),
 );
+
+class FullDiskStore extends OfflineStore {
+  FullDiskStore() : super(directoryProvider: () async => throw const FileSystemException('disk full'));
+  @override
+  Future<bool> writeConfirmed(String name, Object? data, {DateTime? savedAt}) async => false;
+}
 
 void main() {
   late MockApiClient apiClient;
@@ -102,6 +117,7 @@ void main() {
     store = OfflineStore(directoryProvider: () async => Directory('${dir.path}/offline'));
     repository = CatalogRepositoryImpl(apiClient: apiClient, offlineStore: store);
     OfflineStatus.instance.live();
+    CatalogDownloadStatus.instance.clear();
   });
 
   tearDown(() async {
@@ -191,10 +207,10 @@ void main() {
       expect(DailyRefresh.isCurrent(entry!.savedAt), isTrue);
     });
 
-    test('a recent copy is not downloaded again', () async {
+    test('a recent copy checks its revision without downloading pages again', () async {
       clearInteractions(dio);
       await repository.syncForOffline('w1');
-      verifyNever(() => dio.get(any(), queryParameters: any(named: 'queryParameters')));
+      verifyNever(() => dio.get('/warehouses/w1/products', queryParameters: any(named: 'queryParameters')));
     });
 
     test('a different warehouse has no copy to fall back on', () async {
@@ -237,5 +253,97 @@ void main() {
     goOffline();
     await repository.syncForOffline('w1');
     expect(await store.read('catalog_w1'), isNull);
+  });
+  test('unchanged revision avoids pages; a changed revision refreshes on the same day', () async {
+    serveCatalog();
+    var revision = 'r1';
+    when(
+      () => dio.get('/warehouses/w1/products/revision'),
+    ).thenAnswer((_) async => _ok({'revision': revision, 'productCount': 3}));
+    await repository.syncForOffline('w1');
+    expect(((await store.read('catalog_w1'))!.data as Map)['revision'], 'r1');
+    clearInteractions(dio);
+    await repository.syncForOffline('w1');
+    verifyNever(() => dio.get('/warehouses/w1/products', queryParameters: any(named: 'queryParameters')));
+    revision = 'r2';
+    await repository.syncForOffline('w1');
+    expect(((await store.read('catalog_w1'))!.data as Map)['revision'], 'r2');
+  });
+
+  test('a changing catalog during download keeps the previous complete file', () async {
+    serveCatalog();
+    await repository.syncForOffline('w1');
+    final old = (await store.read('catalog_w1'))!.savedAt;
+    var probe = 0;
+    when(
+      () => dio.get('/warehouses/w1/products/revision'),
+    ).thenAnswer((_) async => _ok({'revision': 'r${probe++}', 'productCount': 3}));
+    await repository.syncForOffline('w1', force: true);
+    expect((await store.read('catalog_w1'))!.savedAt, old);
+    expect(CatalogDownloadStatus.instance.entries.value['w1']!.phase, CatalogDownloadPhase.failed);
+    expect(CatalogDownloadStatus.instance.entries.value['w1']!.savedAt, old);
+  });
+
+  test('repeated cursor and unfinished pages never replace a complete copy', () async {
+    serveCatalog();
+    await repository.syncForOffline('w1');
+    final old = (await store.read('catalog_w1'))!.savedAt;
+    var page = 0;
+    when(() => dio.get('/warehouses/w1/products', queryParameters: any(named: 'queryParameters'))).thenAnswer(
+      (_) async => _ok({
+        'products': [_product('new${page++}', 'NEW')],
+        'pagination': {'hasMore': true, 'nextCursor': 'stuck'},
+      }),
+    );
+    await repository.syncForOffline('w1', force: true);
+    expect((await store.read('catalog_w1'))!.savedAt, old);
+  });
+
+  test('a server still claiming more at the page limit is incomplete', () async {
+    serveCatalog();
+    var page = 0;
+    when(() => dio.get('/warehouses/w1/products', queryParameters: any(named: 'queryParameters'))).thenAnswer((
+      _,
+    ) async {
+      final id = 'new${page++}';
+      return _ok({
+        'products': [_product(id, 'NEW')],
+        'pagination': {'hasMore': true, 'nextCursor': id},
+      });
+    });
+    await repository.syncForOffline('w1');
+    expect(page, 300);
+    expect(await store.read('catalog_w1'), isNull);
+  });
+
+  test('sign-out during a download cannot recreate the previous account catalog', () async {
+    serveCatalog();
+    final response = Completer<Response<dynamic>>();
+    final started = Completer<void>();
+    when(() => dio.get('/warehouses/w1/products', queryParameters: any(named: 'queryParameters'))).thenAnswer((_) {
+      started.complete();
+      return response.future;
+    });
+    final pending = repository.syncForOffline('w1');
+    await started.future;
+    repository.resetForSignOut();
+    response.complete(
+      _ok({
+        'products': [_product('p1', 'OLD')],
+        'pagination': {'hasMore': false},
+      }),
+    );
+    await pending;
+    expect(await store.read('catalog_w1'), isNull);
+    expect(CatalogDownloadStatus.instance.entries.value, isEmpty);
+  });
+
+  test('a full disk is never marked saved or used as an in-memory saved snapshot', () async {
+    serveCatalog();
+    repository = CatalogRepositoryImpl(apiClient: apiClient, offlineStore: FullDiskStore());
+    await repository.syncForOffline('w1');
+    expect(CatalogDownloadStatus.instance.entries.value['w1']!.phase, CatalogDownloadPhase.failed);
+    goOffline();
+    await expectLater(repository.getProducts(warehouseId: 'w1'), throwsA(isA<ServerFailure>()));
   });
 }

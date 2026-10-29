@@ -1726,5 +1726,26 @@
   },
   "updateDownloading": "Downloading update",
   "updateInstallPermission": "Allow Feniq to install apps in Android settings, then return and tap Update now. The downloaded file will be reused.",
-  "updateCancelDownload": "Cancel download"
+  "updateCancelDownload": "Cancel download",
+  "offlineCatalogsReady": "Saved for offline browsing: {ready}/{total}",
+  "@offlineCatalogsReady": {
+    "placeholders": {
+      "ready": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineCatalogsSaving": "Saving catalogs on this device…",
+  "offlineCatalogsRetry": "Saving is incomplete. Connect to the internet and ensure enough storage; the previous copy is kept.",
+  "offlineCatalogsLastSync": "Last sync: {time}",
+  "@offlineCatalogsLastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -4945,6 +4945,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel download'**
   String get updateCancelDownload;
+
+  /// No description provided for @offlineCatalogsReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved for offline browsing: {ready}/{total}'**
+  String offlineCatalogsReady(String ready, String total);
+
+  /// No description provided for @offlineCatalogsSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving catalogs on this device…'**
+  String get offlineCatalogsSaving;
+
+  /// No description provided for @offlineCatalogsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving is incomplete. Connect to the internet and ensure enough storage; the previous copy is kept.'**
+  String get offlineCatalogsRetry;
+
+  /// No description provided for @offlineCatalogsLastSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync: {time}'**
+  String offlineCatalogsLastSync(String time);
 }
 
 class _AppLocalizationsDelegate

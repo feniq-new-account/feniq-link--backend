@@ -1212,5 +1212,26 @@
   },
   "updateDownloading": "جارٍ تنزيل التحديث",
   "updateInstallPermission": "اسمح لفينيق بتثبيت التطبيقات من شاشة إعدادات أندرويد، ثم ارجع واضغط «تحديث الآن». لن تحتاج لتنزيل الملف مرة أخرى.",
-  "updateCancelDownload": "إلغاء التنزيل"
+  "updateCancelDownload": "إلغاء التنزيل",
+  "offlineCatalogsReady": "محفوظ للتصفح بلا إنترنت: {ready}/{total}",
+  "@offlineCatalogsReady": {
+    "placeholders": {
+      "ready": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineCatalogsSaving": "جارٍ حفظ الكتالوجات على هذا الجهاز…",
+  "offlineCatalogsRetry": "لم يكتمل الحفظ. تحتاج إنترنت ومساحة كافية؛ النسخة السابقة محفوظة.",
+  "offlineCatalogsLastSync": "آخر مزامنة: {time}",
+  "@offlineCatalogsLastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  }
 }

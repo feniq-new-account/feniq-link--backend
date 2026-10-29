@@ -17,6 +17,7 @@ class SliverRowGrid extends StatelessWidget {
     this.mainAxisSpacing = 0,
     this.crossAxisSpacing = 0,
     this.minRowHeight = 0,
+    this.cellAspectRatio,
   });
 
   final int itemCount;
@@ -28,20 +29,27 @@ class SliverRowGrid extends StatelessWidget {
   // height it was designed at.
   final double minRowHeight;
 
+  /// Preferred width/height ratio; content can always make a row taller.
+  final double? cellAspectRatio;
+
   @override
   Widget build(BuildContext context) {
     return SliverLayoutBuilder(
       builder: (context, constraints) {
-        final columns =
-            ((constraints.crossAxisExtent + crossAxisSpacing) / (maxCrossAxisExtent + crossAxisSpacing)).ceil().clamp(1, 12);
+        final columns = ((constraints.crossAxisExtent + crossAxisSpacing) / (maxCrossAxisExtent + crossAxisSpacing))
+            .ceil()
+            .clamp(1, 12);
         final rows = (itemCount / columns).ceil();
+        final cellWidth = (constraints.crossAxisExtent - (columns - 1) * crossAxisSpacing) / columns;
+        final preferredHeight = cellAspectRatio == null ? 0.0 : cellWidth / cellAspectRatio!;
+        final rowHeight = preferredHeight > minRowHeight ? preferredHeight : minRowHeight;
         return SliverList(
           delegate: SliverChildBuilderDelegate((context, row) {
             final start = row * columns;
             return Padding(
               padding: EdgeInsets.only(bottom: row == rows - 1 ? 0 : mainAxisSpacing),
               child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: minRowHeight),
+                constraints: BoxConstraints(minHeight: rowHeight),
                 child: IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,

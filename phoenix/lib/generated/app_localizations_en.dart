@@ -2927,4 +2927,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateCancelDownload => 'Cancel download';
+
+  @override
+  String offlineCatalogsReady(String ready, String total) {
+    return 'Saved for offline browsing: $ready/$total';
+  }
+
+  @override
+  String get offlineCatalogsSaving => 'Saving catalogs on this device…';
+
+  @override
+  String get offlineCatalogsRetry =>
+      'Saving is incomplete. Connect to the internet and ensure enough storage; the previous copy is kept.';
+
+  @override
+  String offlineCatalogsLastSync(String time) {
+    return 'Last sync: $time';
+  }
 }

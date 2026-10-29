@@ -18,7 +18,9 @@ void main() {
 
   test('writes a document and reads it back with the time it was saved', () async {
     final savedAt = DateTime.utc(2026, 10, 4, 9, 30);
-    await store.write('catalog_w1', {'products': [1, 2, 3]}, savedAt: savedAt);
+    await store.write('catalog_w1', {
+      'products': [1, 2, 3],
+    }, savedAt: savedAt);
     final entry = await store.read('catalog_w1');
     expect(entry, isNotNull);
     expect(entry!.savedAt.toUtc(), savedAt);
@@ -55,5 +57,18 @@ void main() {
     await store.clear();
     expect(await store.read('a'), isNull);
     expect(await store.read('b'), isNull);
+  });
+  test('a queued write cannot resurrect data after sign-out deletion', () async {
+    final write = store.writeConfirmed('old', {'account': 'previous'});
+    final clear = store.clear();
+    await Future.wait([write, clear]);
+    expect(await store.read('old'), isNull);
+    expect(await store.writeConfirmed('new', {'account': 'current'}), isTrue);
+    expect((await store.read('new'))!.data, {'account': 'current'});
+  });
+
+  test('a disk failure is reported instead of claiming offline readiness', () async {
+    final unavailable = OfflineStore(directoryProvider: () async => throw const FileSystemException('full'));
+    expect(await unavailable.writeConfirmed('catalog', {'products': []}), isFalse);
   });
 }

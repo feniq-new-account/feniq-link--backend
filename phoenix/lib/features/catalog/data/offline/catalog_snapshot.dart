@@ -17,10 +17,12 @@ class CatalogSnapshot {
     required this.savedAt,
     required this.products,
     required this.manufacturers,
+    this.revision,
   });
 
   final String warehouseId;
   final DateTime savedAt;
+  final String? revision;
 
   /// The `products` rows of the server's list endpoint, in its order (by id).
   final List<Map<String, dynamic>> products;
@@ -36,6 +38,9 @@ class CatalogSnapshot {
 
   Map<String, Object?> toJson() => {
     'warehouseId': warehouseId,
+    'revision': revision,
+    'complete': true,
+    'productCount': products.length,
     'products': products,
     'manufacturers': manufacturers,
   };
@@ -45,9 +50,13 @@ class CatalogSnapshot {
     final products = data['products'];
     final manufacturers = data['manufacturers'];
     if (products is! List || manufacturers is! List) return null;
+    if (data['complete'] == false || (data['productCount'] != null && data['productCount'] != products.length)) {
+      return null;
+    }
     return CatalogSnapshot(
       warehouseId: warehouseId,
       savedAt: savedAt,
+      revision: data['revision'] as String?,
       products: products.whereType<Map<String, dynamic>>().toList(),
       manufacturers: manufacturers,
     );

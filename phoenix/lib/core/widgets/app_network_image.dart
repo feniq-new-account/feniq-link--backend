@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../utils/cloudinary_image.dart';
+import '../offline/permanent_image_store.dart';
 
 /// The one way the app loads a remote image.
 ///
@@ -129,6 +130,8 @@ class AppNetworkImage extends StatelessWidget {
 
           return CachedNetworkImage(
             imageUrl: resolvedUrl,
+            cacheManager: PermanentImageStore.instance.manager,
+            cacheKey: PermanentImageStore.key(trimmed, framed: framed),
             fit: fit,
             width: width,
             height: height,

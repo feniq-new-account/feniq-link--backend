@@ -2920,4 +2920,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get updateCancelDownload => 'إلغاء التنزيل';
+
+  @override
+  String offlineCatalogsReady(String ready, String total) {
+    return 'محفوظ للتصفح بلا إنترنت: $ready/$total';
+  }
+
+  @override
+  String get offlineCatalogsSaving => 'جارٍ حفظ الكتالوجات على هذا الجهاز…';
+
+  @override
+  String get offlineCatalogsRetry =>
+      'لم يكتمل الحفظ. تحتاج إنترنت ومساحة كافية؛ النسخة السابقة محفوظة.';
+
+  @override
+  String offlineCatalogsLastSync(String time) {
+    return 'آخر مزامنة: $time';
+  }
 }

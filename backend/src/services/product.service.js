@@ -336,6 +336,7 @@ async function listManufacturersWithDiscountsForWarehouse(warehouseId) {
 }
 
 module.exports = {
+  CATALOG_PRODUCT_SELECT,
   listWarehouseProducts,
   listAlternatives,
   listAlternativesElsewhere,
