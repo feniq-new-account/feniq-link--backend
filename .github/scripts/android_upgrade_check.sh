@@ -6,10 +6,10 @@ mapfile -t prior_apks < <(find apk/baseline -type f -name '*.apk')
 mapfile -t current_apks < <(find apk/current -type f -name '*.apk')
 mapfile -t manifests < <(find apk/current -type f -name 'release.json')
 [ "${#prior_apks[@]}" = 1 ] && [ "${#current_apks[@]}" = 1 ] && [ "${#manifests[@]}" = 1 ]
-prior=${prior_apks[0]}
-current=${current_apks[0]}
-manifest=${manifests[0]}
-adb_binary=$(command -v adb)
+prior=$(realpath "${prior_apks[0]}")
+current=$(realpath "${current_apks[0]}")
+manifest=$(realpath "${manifests[0]}")
+adb_binary="${ANDROID_HOME:?}/platform-tools/adb"
 adb() { timeout 180 "$adb_binary" "$@"; }
 build_tools=$(find "${ANDROID_HOME:?}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
 expected=$(tr -d ' :\r\n' < .github/android-certificate.sha256 | tr 'a-f' 'A-F')
@@ -30,6 +30,7 @@ done
 current_digest=$(jq -r .sha256 "$manifest")
 [ "$(sha256sum "$current" | cut -d ' ' -f 1)" = "$current_digest" ]
 if [ "${VERIFY_ARTIFACT_ONLY:-0}" = 1 ]; then exit 0; fi
+test -x "$adb_binary"
 adb root
 adb wait-for-device
 # Prevent the review install from contacting any application server.
