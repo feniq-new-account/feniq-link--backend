@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { randomUUID } = require('crypto');
 const Warehouse = require('../models/warehouse.model');
 const LedgerEntry = require('../models/ledgerEntry.model');
 const Order = require('../models/order.model');
@@ -11,6 +12,8 @@ const { businessDateOf, BUSINESS_TIME_ZONE } = require('../utils/businessTime');
 const { resolveSummaryPeriod } = require('./warehouseSummary.service');
 const { ApiError } = require('../utils/ApiError');
 const cache = new Map();
+const retainedPages = new Map();
+const PAGE_TTL = 5 * 60 * 1000;
 const TTL = 15000;
 const DAYS = 86400000;
 const DEFAULT_FOLLOW_UP = { overdueDays: 15, inactiveDays: 15, revision: 0 };
@@ -89,21 +92,42 @@ async function loadSnapshot(warehouseId, now) {
     const overdue = debtors.filter((row) => row.pharmacy).sort((a, b) =>
       b.oldestAgeDays - a.oldestAgeDays || b.overdueSyp - a.overdueSyp || a.pharmacy.id.localeCompare(b.pharmacy.id));
     inactive.sort((a, b) => b.days - a.days || a.pharmacy.id.localeCompare(b.pharmacy.id));
-    return { asOf: now, settings, source: [...movements.values()], overdue, inactive, operational: { pendingOrders, pendingReturns },
+    return { cursorId: randomUUID(), asOf: now, settings, source: [...movements.values()], overdue, inactive, operational: { pendingOrders, pendingReturns },
       aging: { buckets: agingBuckets, totalDebtSyp, totalCreditSyp, unknownAgeSyp,
         overdueSyp: overdue.reduce((sum, row) => sum + row.overdueSyp, 0), overduePharmacies: overdue.length } };
   });
 }
+function retainPages(warehouseId, snapshot) {
+  const at = Date.now();
+  for (const [id, entry] of retainedPages) if (at - entry.at > PAGE_TTL) retainedPages.delete(id);
+  if (!retainedPages.has(snapshot.cursorId)) retainedPages.set(snapshot.cursorId, { warehouseId: String(warehouseId), snapshot, at });
+  if (retainedPages.size > 50) retainedPages.delete(retainedPages.keys().next().value);
+  return snapshot;
+}
+function decodeFollowUpCursor(after) {
+  try { const cursor = JSON.parse(after); if (cursor && typeof cursor === 'object') return cursor; } catch { /* rejected below */ }
+  throw ApiError.badRequest('Invalid follow-up cursor.', undefined, 'INVALID_CURSOR');
+}
+async function snapshotForPage(warehouseId, { after, force = false } = {}) {
+  if (!after) return snapshotFor(warehouseId, { force });
+  const cursor = decodeFollowUpCursor(after);
+  const saved = retainedPages.get(cursor.snapshotId);
+  if (!saved || Date.now() - saved.at > PAGE_TTL) {
+    throw ApiError.conflict('Follow-up snapshot expired. Refresh the list.', 'FOLLOW_UP_CHANGED');
+  }
+  if (saved.warehouseId !== String(warehouseId)) throw ApiError.badRequest('Invalid cursor.', undefined, 'INVALID_CURSOR');
+  return saved.snapshot;
+}
 async function snapshotFor(warehouseId, { force = false, now = new Date() } = {}) {
   const key = String(warehouseId);
   const cached = cache.get(key);
-  if (!force && cached && Date.now() - cached.at < TTL) return cached.pending;
+  if (!force && cached && Date.now() - cached.at < TTL) return retainPages(warehouseId, await cached.pending);
   const pending = loadSnapshot(warehouseId, now);
   const entry = { at: Date.now(), pending };
   cache.set(key, entry);
   // Bound snapshots on a long-lived server; never keep every warehouse forever.
   if (cache.size > 50) cache.delete(cache.keys().next().value);
-  try { return await pending; } catch (error) { if (cache.get(key) === entry) cache.delete(key); throw error; }
+  try { return retainPages(warehouseId, await pending); } catch (error) { if (cache.get(key) === entry) cache.delete(key); throw error; }
 }
 
 const MOVEMENTS = { charge: ['salesSyp', 1], charge_reversal: ['salesSyp', -1],
@@ -145,8 +169,8 @@ function followUpPage(snapshot, kind, { limit = 20, after } = {}) {
   let selected = rows;
   if (after) {
     let cursor;
-    try { cursor = JSON.parse(after); } catch { /* checked below */ }
-    if (!cursor || !Number.isFinite(cursor.days) || !Number.isFinite(cursor.amount) ||
+    cursor = decodeFollowUpCursor(after);
+    if (cursor.snapshotId !== snapshot.cursorId || cursor.kind !== kind || !Number.isFinite(cursor.days) || !Number.isFinite(cursor.amount) ||
         !mongoose.Types.ObjectId.isValid(cursor.id)) throw ApiError.badRequest('Invalid cursor.', undefined, 'INVALID_CURSOR');
     selected = rows.filter((row) => {
       const days = kind === 'overdue' ? row.oldestAgeDays : row.days;
@@ -157,7 +181,7 @@ function followUpPage(snapshot, kind, { limit = 20, after } = {}) {
   const page = selected.slice(0, limit);
   const last = page.at(-1);
   return { rows: page, total: rows.length, pagination: { hasMore: selected.length > limit,
-    nextCursor: last ? JSON.stringify({ days: kind === 'overdue' ? last.oldestAgeDays : last.days,
+    nextCursor: last ? JSON.stringify({ snapshotId: snapshot.cursorId, kind, days: kind === 'overdue' ? last.oldestAgeDays : last.days,
       amount: kind === 'overdue' ? last.overdueSyp : 0, id: last.pharmacy.id }) : null } };
 }
 async function saveConfiguration(warehouseId, body) {
@@ -173,4 +197,4 @@ async function saveConfiguration(warehouseId, body) {
   invalidate(warehouseId);
   return configuration(updated);
 }
-module.exports = { report, snapshotFor, followUpPage, saveConfiguration, invalidate, movementsFor, DEFAULT_FOLLOW_UP };
+module.exports = { report, snapshotFor, snapshotForPage, followUpPage, saveConfiguration, invalidate, movementsFor, DEFAULT_FOLLOW_UP };

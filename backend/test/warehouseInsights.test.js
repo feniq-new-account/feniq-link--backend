@@ -87,6 +87,17 @@ test('follow-up lists include this warehouse customers/assignments only and page
   assert.deepEqual(new Set([...first.rows, ...second.rows].map((row) => row.pharmacy.id)), new Set([a.id, c.id]));
   assert.ok(!JSON.stringify(snapshot.inactive).includes(stranger.id));
 });
+test('pagination keeps its original snapshot even when another operator refreshes the report', async () => {
+  const first = await request(owner, '/follow-up?kind=inactive&limit=1&force=1');
+  assert.equal(first.status, 200); assert.equal(first.body.pagination.hasMore, true);
+  const cursor = encodeURIComponent(first.body.pagination.nextCursor);
+  await request(owner, '/report?period=month&force=1');
+  const second = await request(accountant, `/follow-up?kind=inactive&limit=1&after=${cursor}`);
+  assert.equal(second.status, 200); assert.equal(second.body.asOf, first.body.asOf);
+  assert.notEqual(second.body.rows[0].pharmacy.id, first.body.rows[0].pharmacy.id);
+  assert.equal((await request(otherOwner, `/follow-up?kind=inactive&limit=1&after=${cursor}`)).status, 400);
+  assert.equal((await request(owner, `/follow-up?kind=overdue&limit=1&after=${cursor}`)).status, 400);
+});
 test('unknown historical debt reconciles with total debt without inventing overdue invoices', async () => {
   const historical = await pharmacy('Unaged opening account', '15');
   const account = await ledger.resolveAccount(historical._id, wh._id);

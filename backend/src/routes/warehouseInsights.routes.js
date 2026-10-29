@@ -30,7 +30,7 @@ router.get('/follow-up', asyncHandler(async (req, res) => {
   if (!['overdue', 'inactive'].includes(kind)) throw ApiError.badRequest('Invalid follow-up type.', undefined, 'INVALID_QUERY');
   await entitled(warehouse._id, kind === 'overdue' ? 'overdueReceivables' : 'inactivePharmacies');
   const { limit, after } = parseCursorQuery(req.query, 20);
-  const snapshot = await service.snapshotFor(warehouse._id, { force: req.query.force === '1' });
+  const snapshot = await service.snapshotForPage(warehouse._id, { after, force: req.query.force === '1' });
   res.set('Cache-Control', 'no-store').json({ success: true, ...metadata(snapshot),
     ...service.followUpPage(snapshot, kind, { limit, after }) });
 }));

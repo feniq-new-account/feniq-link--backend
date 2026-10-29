@@ -381,7 +381,7 @@ pinned by a test.
 | Invoice printed the undiscounted unit price beside a discounted line total | Discounted unit price is the headline |
 | Return window: 24h in code, "48 hours" in every UI string | Aligned to 24h everywhere |
 
-## 10. Monthly loyalty and source-aware pharmacy credit (launch extension)
+## 11. Monthly loyalty and source-aware pharmacy credit (launch extension)
 
 A warehouse selects either `per_order` or `monthly`; they never stack as two
 loyalty discounts. Per-order terms remain frozen on each order. Monthly orders
@@ -415,7 +415,7 @@ Disabling loyalty or expiring the subscription stops new earning promises.
 Previously snapshotted order promises and earned spendable credit remain valid.
 Target bonuses are deferred and do not change the existing four-way commission.
 
-## 11. Monitoring reports are views of the same posted ledger
+## 12. Monitoring reports are views of the same posted ledger
 
 Sales, returns and collections net each entry family with its reversals. Net
 sales are sales minus returns, not profit. New reports expose a snapshot time

@@ -47,7 +47,7 @@ export const NumericInput = forwardRef(function NumericInput({
     }
     event.target.value = text; setRaw(text); setRejected(false); validate(event.target, text, false); onChange?.(event);
   }
-  return <><input {...props} type={telephone ? 'tel' : 'text'} data-numeric-input={telephone ? 'tel' : 'number'} aria-invalid={rejected || props['aria-invalid'] || undefined} aria-describedby={[props['aria-describedby'], rejected ? errorId : null].filter(Boolean).join(' ') || undefined} inputMode={inputMode || (telephone ? 'tel' : 'decimal')}
+  return <><input {...props} type={telephone ? 'tel' : 'text'} data-numeric-input={telephone ? 'tel' : 'number'} aria-invalid={rejected || props['aria-invalid'] || undefined} aria-describedby={[props['aria-describedby'], rejected ? errorId : null].filter(Boolean).join(' ') || undefined} inputMode={inputMode || (telephone ? 'tel' : step === 'any' || Number(step) % 1 !== 0 ? 'decimal' : 'numeric')}
     lang={lang} dir={dir} min={min} max={max} step={step} value={raw}
     ref={(element) => { node.current = element; if (typeof ref === 'function') ref(element); else if (ref) ref.current = element; }}
     onChange={change} onBlur={(event) => { validate(event.target, raw); onBlur?.(event); }} />{rejected && <small id={errorId} role="alert" className="numeric-input-error">{t('numericInput.invalid')}</small>}</>;
