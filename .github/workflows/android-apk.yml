@@ -6,7 +6,7 @@
 #
 # للتجربة: كل بناء يدوي على main يضع آخر نسختين على روابط ثابتة (أسرع من
 # Artifacts، ملف APK مباشر بدون zip):
-#   الموبايل (arm64):  https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-test.apk
+#   الموبايل (نسخة شاملة):  https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-test.apk
 #   المحاكي (x86_64): https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-emulator.apk
 #
 # التوقيع: من أسرار المستودع ANDROID_KEYSTORE_BASE64 و ANDROID_KEYSTORE_PASSWORD
@@ -201,28 +201,17 @@ jobs:
             phoenix/build/app/outputs/flutter-apk/release.json
           retention-days: 30
 
-      # The fixed download link for trying the app on a phone: a release asset
-      # is served straight as an .apk (no zip) and downloads much faster than
-      # an artifact. Built for 64-bit ARM only (every current phone), which
-      # halves the size. main only - neither a PR nor a manual run of another
-      # branch ever replaces it.
-      - name: Build phone APK (arm64)
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        # The first build's Gradle daemon still holds its 8 GB heap; a second
-        # daemon on top of it made the runner run out of memory and shut the
-        # job down ("received a shutdown signal"). Stop it first.
-        run: |
-          (cd android && ./gradlew --stop) || true
-          flutter build apk --release \
-            --target-platform android-arm64 \
-            --build-number=$((GITHUB_RUN_NUMBER + 1000)) \
-            --dart-define="API_BASE_URL=$API_BASE_URL"
-          cp build/app/outputs/flutter-apk/app-release.apk feniq-test.apk
+      # One universal phone download also supports phones whose Android OS
+      # runs 32-bit despite a 64-bit CPU. Reuse the already verified APK; do
+      # not replace the stable phone link with an arm64-only build.
+      - name: Prepare universal phone APK
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
+        run: cp build/app/outputs/flutter-apk/app-release.apk feniq-test.apk
 
       # Same app for the Android Studio emulator, which runs x86_64 images and
       # cannot install the arm64-only phone build.
       - name: Build emulator APK (x86_64)
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
         run: |
           (cd android && ./gradlew --stop) || true
           flutter build apk --release \
@@ -232,7 +221,7 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk feniq-emulator.apk
 
       - name: Publish to the test-latest release
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
