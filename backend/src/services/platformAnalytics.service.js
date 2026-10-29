@@ -130,7 +130,7 @@ async function load(query, now) {
 }
 async function report(query = {}, now = new Date()) {
   reportingWindow(query, now);
-  const key = JSON.stringify([query.period || 'month', query.from, query.to]);
+  const key = JSON.stringify([businessDateOf(now), query.period || 'month', query.from, query.to]);
   const entry = cache.get(key);
   if (query.force !== '1' && entry && Date.now() - entry.at < 30000) return entry.promise;
   const next = { at: Date.now(), promise: load(query, now) }; cache.set(key, next);

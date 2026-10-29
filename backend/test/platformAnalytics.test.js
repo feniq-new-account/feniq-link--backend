@@ -78,3 +78,12 @@ test('admin analytics are inaccessible to warehouse and pharmacy accounts', asyn
     const response = await fetch(base, { headers: { authorization: `Bearer ${token}` } }); assert.equal(response.status, status);
   }
 });
+
+test('a cached report cannot cross into a different Damascus business day', async () => {
+  service.invalidate();
+  const today = await service.report({ period: 'today' }, now);
+  const tomorrow = await service.report({ period: 'today' }, new Date('2026-10-30T15:00:00Z'));
+  assert.equal(today.period.fromDate, '2026-10-29');
+  assert.equal(tomorrow.period.fromDate, '2026-10-30');
+  assert.notEqual(today.asOfBusiness, tomorrow.asOfBusiness);
+});

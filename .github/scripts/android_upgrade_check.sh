@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 # Ephemeral emulator only. No users or production database are touched.
-set -euo pipefail
+set -euxo pipefail
 mkdir -p apk/evidence
-prior=apk/baseline/feniq-prelaunch-universal.apk
-current=apk/current/app-release.apk
+mapfile -t prior_apks < <(find apk/baseline -type f -name '*.apk')
+mapfile -t current_apks < <(find apk/current -type f -name '*.apk')
+mapfile -t manifests < <(find apk/current -type f -name 'release.json')
+[ "${#prior_apks[@]}" = 1 ] && [ "${#current_apks[@]}" = 1 ] && [ "${#manifests[@]}" = 1 ]
+prior=${prior_apks[0]}
+current=${current_apks[0]}
+manifest=${manifests[0]}
+adb_binary=$(command -v adb)
+adb() { timeout 180 "$adb_binary" "$@"; }
 build_tools=$(find "${ANDROID_HOME:?}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
 expected=$(tr -d ' :\r\n' < .github/android-certificate.sha256 | tr 'a-f' 'A-F')
 cert_of() { "$build_tools/apksigner" verify --print-certs "$1" | sed -n 's/^.*certificate SHA-256 digest: //p' | head -1 | tr 'a-f' 'A-F'; }
@@ -20,8 +27,9 @@ for abi in arm64-v8a armeabi-v7a x86_64; do
   grep -q "'$abi'" apk/evidence/current-badging.txt
 done
 (cd apk/baseline && sha256sum -c SHA256SUMS)
-current_digest=$(jq -r .sha256 apk/current/release.json)
+current_digest=$(jq -r .sha256 "$manifest")
 [ "$(sha256sum "$current" | cut -d ' ' -f 1)" = "$current_digest" ]
+if [ "${VERIFY_ARTIFACT_ONLY:-0}" = 1 ]; then exit 0; fi
 adb root
 adb wait-for-device
 # Prevent the review install from contacting any application server.
