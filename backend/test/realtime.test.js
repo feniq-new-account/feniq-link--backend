@@ -22,7 +22,7 @@ const { io: ioClient } = require('socket.io-client');
 const users = new Map();
 const warehousesByUserId = new Map();
 
-const { modelQuery } = require('./helpers/model-query-stub');
+const { modelQuery, findWarehouseFixture } = require('./helpers/model-query-stub');
 
 function stubModule(relativePath, exportsValue) {
   const resolved = require.resolve(path.join(__dirname, '..', 'src', relativePath));
@@ -37,7 +37,7 @@ stubModule('models/user.model.js', {
   findById: modelQuery((id) => users.get(String(id)) ?? null),
 });
 stubModule('models/warehouse.model.js', {
-  findOne: modelQuery((filter) => warehousesByUserId.get(String(filter.userId)) ?? null),
+  findOne: modelQuery((filter) => findWarehouseFixture(warehousesByUserId, filter)),
 });
 
 const {
@@ -50,6 +50,7 @@ const {
 
 // --- Fixtures --------------------------------------------------------------
 const WAREHOUSE_A_USER = 'aaaaaaaaaaaaaaaaaaaaaaa1';
+const WAREHOUSE_A_ACCOUNTANT = 'aaaaaaaaaaaaaaaaaaaaaaa2';
 const WAREHOUSE_B_USER = 'bbbbbbbbbbbbbbbbbbbbbbb1';
 const PHARMACY_USER = 'ccccccccccccccccccccccc1';
 const BLOCKED_USER = 'ddddddddddddddddddddddd1';
@@ -65,6 +66,7 @@ function seedFixtures() {
   warehousesByUserId.clear();
 
   users.set(WAREHOUSE_A_USER, { _id: WAREHOUSE_A_USER, role: 'warehouse', status: 'active' });
+  users.set(WAREHOUSE_A_ACCOUNTANT, { _id: WAREHOUSE_A_ACCOUNTANT, role: 'warehouse', warehouseRole: 'accountant', status: 'active' });
   users.set(WAREHOUSE_B_USER, { _id: WAREHOUSE_B_USER, role: 'warehouse', status: 'active' });
   users.set(PHARMACY_USER, { _id: PHARMACY_USER, role: 'pharmacy', status: 'active' });
   users.set(BLOCKED_USER, { _id: BLOCKED_USER, role: 'warehouse', status: 'blocked' });
@@ -73,7 +75,7 @@ function seedFixtures() {
   users.set(BLOCKED_ADMIN_USER, { _id: BLOCKED_ADMIN_USER, role: 'admin', status: 'blocked' });
   users.set(PENDING_ADMIN_USER, { _id: PENDING_ADMIN_USER, role: 'admin', status: 'pending' });
 
-  warehousesByUserId.set(WAREHOUSE_A_USER, { _id: WAREHOUSE_A_ID, userId: WAREHOUSE_A_USER });
+  warehousesByUserId.set(WAREHOUSE_A_USER, { _id: WAREHOUSE_A_ID, userId: WAREHOUSE_A_USER, memberUserIds: [WAREHOUSE_A_ACCOUNTANT] });
   warehousesByUserId.set(WAREHOUSE_B_USER, { _id: WAREHOUSE_B_ID, userId: WAREHOUSE_B_USER });
   warehousesByUserId.set(BLOCKED_USER, { _id: WAREHOUSE_A_ID, userId: BLOCKED_USER });
   // Deliberately also gives the admin users a warehouse profile: if
@@ -156,6 +158,18 @@ test.after(async () => {
 test('a valid warehouse token connects successfully', async () => {
   const client = connectClient({ token: tokenFor(WAREHOUSE_A_USER) });
   assert.strictEqual(await settle(client), 'connected');
+  client.close();
+});
+
+test('a linked accountant joins only their warehouse room using their own account', async () => {
+  const client = connectClient({ token: tokenFor(WAREHOUSE_A_ACCOUNTANT) });
+  assert.strictEqual(await settle(client), 'connected');
+  const received = [];
+  client.on(EVENTS.ORDER_CREATED, (payload) => received.push(payload.orderId));
+  emitToWarehouse(WAREHOUSE_B_ID, EVENTS.ORDER_CREATED, { orderId: 'other-warehouse' });
+  emitToWarehouse(WAREHOUSE_A_ID, EVENTS.ORDER_CREATED, { orderId: 'own-warehouse' });
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  assert.deepStrictEqual(received, ['own-warehouse']);
   client.close();
 });
 

@@ -35,4 +35,17 @@ function modelQuery(resolver) {
   };
 }
 
-module.exports = { modelQuery };
+// Warehouse fixtures are indexed by their original owner. Match Mongo's
+// membership predicate as well, so socket isolation tests exercise the same
+// ownership/employee alternatives that a real query would evaluate.
+function findWarehouseFixture(byOwner, filter) {
+  const matches = (ownerId, row, condition) => {
+    if (condition.$or) return condition.$or.some((part) => matches(ownerId, row, part));
+    if (condition.userId !== undefined) return String(ownerId) === String(condition.userId);
+    if (condition.memberUserIds !== undefined) return (row.memberUserIds || []).some((id) => String(id) === String(condition.memberUserIds));
+    return false;
+  };
+  return [...byOwner.entries()].find(([ownerId, row]) => matches(ownerId, row, filter))?.[1] ?? null;
+}
+
+module.exports = { modelQuery, findWarehouseFixture };

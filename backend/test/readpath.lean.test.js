@@ -188,14 +188,15 @@ test('GET /auth/me payload is unchanged for a pharmacy user', async () => {
   assert.ok(!('password' in payload.user), 'password must never be serialised');
 });
 
-test('GET /auth/me payload is unchanged for a warehouse user', async () => {
+test('GET /auth/me preserves a legacy warehouse profile and identifies its existing access scope', async () => {
   const result = await authService.getMe(LEGACY_WAREHOUSE_USER_ID);
   const payload = authViewModel.toMeResponse(result);
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status', 'warehouseRole'].sort()
   );
   assert.strictEqual(payload.user.role, 'warehouse');
+  assert.strictEqual(payload.user.warehouseRole, 'legacy');
   assert.strictEqual(payload.pharmacy, null);
   assert.ok(payload.warehouse, 'the warehouse profile must still be resolved');
   assert.deepStrictEqual(
