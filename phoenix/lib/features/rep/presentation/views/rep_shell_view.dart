@@ -1,4 +1,5 @@
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
+import 'package:feniq/core/widgets/startup_location_permission.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -49,7 +50,14 @@ class _RepShellViewState extends State<RepShellView> {
         automaticallyImplyLeading: false,
         title: FullText(titles[_index], minScale: 0.6),
       ),
-      body: IndexedStack(index: _index, children: const [RepPharmaciesTab(), RepVisitsTab(), RepProfileTab()]),
+      body: Column(
+        children: [
+          const StartupLocationPermission(),
+          Expanded(
+            child: IndexedStack(index: _index, children: const [RepPharmaciesTab(), RepVisitsTab(), RepProfileTab()]),
+          ),
+        ],
+      ),
       floatingActionButton: _index == 0
           ? FloatingActionButton.extended(
               onPressed: _scan,

@@ -30,6 +30,7 @@ import 'package:feniq/core/widgets/brand_header_glow.dart';
 import 'package:feniq/core/widgets/full_text.dart';
 import 'package:feniq/core/widgets/sliver_row_grid.dart';
 import 'package:feniq/core/widgets/offline_catalog_readiness.dart';
+import 'package:feniq/core/widgets/startup_location_permission.dart';
 
 // Shared loaded/loading geometry; square cards can grow for full names.
 const double _tileMaxWidth = 210;
@@ -203,6 +204,7 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
               ),
             ),
           ),
+          const SliverToBoxAdapter(child: StartupLocationPermission()),
           SliverToBoxAdapter(child: BannerSlider(onBannerTap: _handleBannerTap)),
           // The city scope switch, in the open directly above the grid it
           // controls. Only rendered once the server has confirmed it can

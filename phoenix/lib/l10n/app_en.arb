@@ -1747,5 +1747,16 @@
         "type": "String"
       }
     }
-  }
+  },
+  "locationPermissionPurpose": "Location helps identify pharmacy premises and verify a visit when its code is scanned. Browsing remains available without permission; we do not track your movements in the background.",
+  "locationPermissionPermanent": "Location permission is blocked. In app settings, allow location while using the app to verify visits.",
+  "locationServiceDisabled": "Location services are off. Enable GPS before recording a visit.",
+  "locationOpenSettings": "Open settings",
+  "locationAllow": "Allow location",
+  "repVisitLocationUnapproved": "Pharmacy location awaiting approval",
+  "repVisitPoorAccuracy": "Location accuracy insufficient",
+  "repVisitStaleLocation": "Location reading expired",
+  "repScanLocationUnapprovedMessage": "This pharmacy location is not approved yet. Contact Feniq to confirm its premises; this attempt is not a verified visit.",
+  "repScanPoorAccuracyMessage": "GPS accuracy is insufficient. Move near the pharmacy entrance or an open area, then scan again.",
+  "repScanStaleLocationMessage": "The location reading expired. Enable automatic time and location on the phone, then scan again for a fresh reading."
 }

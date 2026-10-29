@@ -1233,5 +1233,16 @@
         "type": "String"
       }
     }
-  }
+  },
+  "locationPermissionPurpose": "السماح بالموقع يساعدنا على تحديد موقع الصيدلية والتحقق من الزيارة عند مسح رمزها. يمكنك التصفح دون منحه؛ لا نتتبع تحركاتك في الخلفية.",
+  "locationPermissionPermanent": "إذن الموقع موقوف. افتح إعدادات التطبيق واسمح بالموقع أثناء الاستخدام لتتمكن من إثبات الزيارة.",
+  "locationServiceDisabled": "خدمة الموقع مطفأة. فعّل GPS قبل تسجيل الزيارة.",
+  "locationOpenSettings": "فتح الإعدادات",
+  "locationAllow": "السماح بالموقع",
+  "repVisitLocationUnapproved": "موقع الصيدلية بانتظار الاعتماد",
+  "repVisitPoorAccuracy": "دقة الموقع غير كافية",
+  "repVisitStaleLocation": "قراءة الموقع قديمة",
+  "repScanLocationUnapprovedMessage": "لم يُعتمد موقع هذه الصيدلية بعد. تواصل مع إدارة فينيق لتثبيته؛ هذه المحاولة لا تُحتسب زيارة مؤكدة.",
+  "repScanPoorAccuracyMessage": "دقة GPS غير كافية. اقترب من مدخل الصيدلية أو مكان مفتوح ثم أعد المسح.",
+  "repScanStaleLocationMessage": "انتهت صلاحية قراءة الموقع. فعّل الوقت التلقائي والموقع في الهاتف ثم أعد المسح للحصول على قراءة جديدة."
 }

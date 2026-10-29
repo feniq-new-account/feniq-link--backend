@@ -30,13 +30,14 @@ const pharmacy = asyncHandler(async (req, res) => {
 
 const createVisit = asyncHandler(async (req, res) => {
   const rep = await repPortal.loadRepOrThrow(req.user._id);
-  const { code, latitude, longitude, accuracy, isMocked } = req.body ?? {};
+  const { code, latitude, longitude, accuracy, isMocked, capturedAt } = req.body ?? {};
   const { visit, pharmacy, duplicate } = await repPortal.recordVisit(rep, {
     code,
     latitude,
     longitude,
     accuracy,
     isMocked,
+    capturedAt,
   });
   res.status(duplicate ? 200 : 201).json({
     success: true,

@@ -4969,6 +4969,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last sync: {time}'**
   String offlineCatalogsLastSync(String time);
+
+  /// No description provided for @locationPermissionPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Location helps identify pharmacy premises and verify a visit when its code is scanned. Browsing remains available without permission; we do not track your movements in the background.'**
+  String get locationPermissionPurpose;
+
+  /// No description provided for @locationPermissionPermanent.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is blocked. In app settings, allow location while using the app to verify visits.'**
+  String get locationPermissionPermanent;
+
+  /// No description provided for @locationServiceDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services are off. Enable GPS before recording a visit.'**
+  String get locationServiceDisabled;
+
+  /// No description provided for @locationOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get locationOpenSettings;
+
+  /// No description provided for @locationAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow location'**
+  String get locationAllow;
+
+  /// No description provided for @repVisitLocationUnapproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy location awaiting approval'**
+  String get repVisitLocationUnapproved;
+
+  /// No description provided for @repVisitPoorAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Location accuracy insufficient'**
+  String get repVisitPoorAccuracy;
+
+  /// No description provided for @repVisitStaleLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location reading expired'**
+  String get repVisitStaleLocation;
+
+  /// No description provided for @repScanLocationUnapprovedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This pharmacy location is not approved yet. Contact Feniq to confirm its premises; this attempt is not a verified visit.'**
+  String get repScanLocationUnapprovedMessage;
+
+  /// No description provided for @repScanPoorAccuracyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS accuracy is insufficient. Move near the pharmacy entrance or an open area, then scan again.'**
+  String get repScanPoorAccuracyMessage;
+
+  /// No description provided for @repScanStaleLocationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The location reading expired. Enable automatic time and location on the phone, then scan again for a fresh reading.'**
+  String get repScanStaleLocationMessage;
 }
 
 class _AppLocalizationsDelegate

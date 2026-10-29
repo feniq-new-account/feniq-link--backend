@@ -9,6 +9,7 @@ class DeviceLocation {
     required this.longitude,
     required this.accuracy,
     required this.isMocked,
+    this.capturedAt,
   });
 
   final double latitude;
@@ -17,6 +18,7 @@ class DeviceLocation {
   /// Metres of uncertainty the phone reports around the point.
   final double accuracy;
   final bool isMocked;
+  final DateTime? capturedAt;
 }
 
 enum LocationProblem { serviceDisabled, permissionDenied, permissionDeniedForever, unavailable }
@@ -60,11 +62,15 @@ class GeolocatorLocationProvider implements LocationProvider {
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 15),
       );
+      if (DateTime.now().difference(position.timestamp).abs() > const Duration(seconds: 120)) {
+        throw const LocationUnavailable(LocationProblem.unavailable);
+      }
       return DeviceLocation(
         latitude: position.latitude,
         longitude: position.longitude,
         accuracy: position.accuracy,
         isMocked: position.isMocked,
+        capturedAt: position.timestamp,
       );
     } catch (_) {
       throw const LocationUnavailable(LocationProblem.unavailable);

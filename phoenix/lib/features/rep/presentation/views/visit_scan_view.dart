@@ -259,6 +259,12 @@ class _Result extends StatelessWidget {
         return l10n.repScanMockMessage;
       case VisitStatus.noPharmacyLocation:
         return l10n.repScanNoLocationMessage;
+      case VisitStatus.locationUnapproved:
+        return l10n.repScanLocationUnapprovedMessage;
+      case VisitStatus.poorAccuracy:
+        return l10n.repScanPoorAccuracyMessage;
+      case VisitStatus.staleLocation:
+        return l10n.repScanStaleLocationMessage;
     }
   }
 

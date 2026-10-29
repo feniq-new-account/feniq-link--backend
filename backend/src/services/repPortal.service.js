@@ -18,12 +18,8 @@ const { emitToWarehouse, EVENTS } = require('../realtime');
 // The rep's own app: their pharmacies, those pharmacies' orders to the rep's
 // warehouse, and logging a visit by scanning the pharmacy's QR.
 
-// How close the phone has to be to the pharmacy for a scan to verify. GPS on
-// a mid-range phone indoors is often 20-60 m off, so the reported accuracy is
-// added on top - capped, so a phone claiming 2 km of uncertainty cannot
-// verify from across town.
-const VISIT_RADIUS_METERS = 150;
-const MAX_ACCURACY_ALLOWANCE_METERS = 100;
+const { DEFAULT_POLICY, getPolicy } = require('./visitVerification.service');
+const VISIT_RADIUS_METERS = DEFAULT_POLICY.radiusMeters;
 // A second scan of the same pharmacy this soon is the same visit (a double
 // tap, a retry on a slow network), not a new one.
 const DUPLICATE_WINDOW_MS = 30 * 60 * 1000;
@@ -128,12 +124,12 @@ async function getMyPharmacy(rep, pharmacyId) {
 }
 
 function readCoordinates({ latitude, longitude, accuracy }) {
-  const lat = Number(latitude);
-  const lng = Number(longitude);
+  const lat = latitude;
+  const lng = longitude;
   if (!isValidCoordinate(lng, lat)) {
     throw ApiError.badRequest('A valid location is required to log a visit.', undefined, 'INVALID_LOCATION');
   }
-  const accuracyMeters = Number(accuracy);
+  const accuracyMeters = typeof accuracy === 'number' ? accuracy : NaN;
   return {
     coordinates: [lng, lat],
     accuracyMeters: Number.isFinite(accuracyMeters) && accuracyMeters >= 0 ? accuracyMeters : null,
@@ -141,31 +137,39 @@ function readCoordinates({ latitude, longitude, accuracy }) {
 }
 
 // Decides what a scan proves - see repVisit.model.js for the four outcomes.
-function judgeVisit({ pharmacy, coordinates, accuracyMeters, isMocked }) {
+function judgeVisit({ pharmacy, coordinates, accuracyMeters, isMocked, capturedAt, now = new Date(), policy = DEFAULT_POLICY }) {
   const point = pharmacy.location && Array.isArray(pharmacy.location.coordinates)
-    ? pharmacy.location.coordinates
-    : null;
-  const distance = point && point.length === 2 ? Math.round(distanceMeters(coordinates, point)) : null;
+    ? pharmacy.location.coordinates : null;
+  const exactDistance = point && point.length === 2 ? distanceMeters(coordinates, point) : null;
+  const distance = exactDistance === null ? null : Math.round(exactDistance);
   if (isMocked === true) return { status: 'mock_location', distance };
   if (distance === null) return { status: 'no_pharmacy_location', distance };
-  const allowance = Math.min(accuracyMeters ?? 0, MAX_ACCURACY_ALLOWANCE_METERS);
-  return { status: distance <= VISIT_RADIUS_METERS + allowance ? 'verified' : 'out_of_range', distance };
+  if (pharmacy.locationApproval !== 'approved') return { status: 'location_unapproved', distance };
+  if (accuracyMeters === null || !Number.isFinite(accuracyMeters) || accuracyMeters > policy.maxAccuracyMeters) {
+    return { status: 'poor_accuracy', distance };
+  }
+  const captured = typeof capturedAt === 'string' ? new Date(capturedAt).getTime() : NaN;
+  const age = now.getTime() - captured;
+  if (!Number.isFinite(age) || age < -30000 || age > policy.maxAgeSeconds * 1000) {
+    return { status: 'stale_location', distance };
+  }
+  return { status: exactDistance <= policy.radiusMeters ? 'verified' : 'out_of_range', distance };
 }
 
 // A scan of a pharmacy's visit QR. Every scan is stored - the ones that did
 // not verify too, so the warehouse can see them - except an immediate repeat
 // of a verified visit, which returns that visit instead of counting twice.
-async function recordVisit(rep, { code, latitude, longitude, accuracy, isMocked }, now = new Date()) {
+async function recordVisit(rep, { code, latitude, longitude, accuracy, isMocked, capturedAt }, now = new Date()) {
   const visitCode = pharmacyVisitCodes.parseVisitCode(code);
   if (!visitCode) {
     throw ApiError.badRequest('This is not a Feniq visit code.', undefined, 'INVALID_VISIT_CODE');
   }
   const pharmacy = await pharmacyVisitCodes.findPharmacyByVisitCode(visitCode);
-  if (!pharmacy) {
+  if (!pharmacy || pharmacy.isActive === false) {
     throw ApiError.notFound('No pharmacy has this visit code.', 'VISIT_CODE_NOT_FOUND');
   }
   const { coordinates, accuracyMeters } = readCoordinates({ latitude, longitude, accuracy });
-  const { status, distance } = judgeVisit({ pharmacy, coordinates, accuracyMeters, isMocked });
+  const policy = await getPolicy();
   const result = await runInTransaction(async (session) => {
     // Serialize scans through the existing active assignment. A competing
     // transaction retries from a fresh snapshot and sees the committed visit.
@@ -178,18 +182,29 @@ async function recordVisit(rep, { code, latitude, longitude, accuracy, isMocked 
     if (!assigned.matchedCount) {
       throw ApiError.forbidden('This pharmacy is not assigned to you.', 'PHARMACY_NOT_ASSIGNED');
     }
+    // Serialize against administrative moves/revocations of the premises as
+    // well. A transaction retry must judge the current approved point, never
+    // a location fetched before an administrator changed it.
+    const currentPharmacy = await Pharmacy.findOneAndUpdate(
+      { _id: pharmacy._id, isActive: { $ne: false } }, { $inc: { __v: 1 } },
+      { session, new: true }
+    ).select('_id nameAr nameEn location locationApproval isActive').lean();
+    if (!currentPharmacy) throw ApiError.notFound('Pharmacy not found.', 'VISIT_CODE_NOT_FOUND');
+    const { status, distance } = judgeVisit({ pharmacy: currentPharmacy, coordinates, accuracyMeters, isMocked, capturedAt, now, policy });
     if (status === 'verified') {
       const recent = await RepVisit.findOne({
         repId: rep._id, pharmacyId: pharmacy._id, status: 'verified',
         scannedAt: { $gte: new Date(now.getTime() - DUPLICATE_WINDOW_MS) },
       }).session(session).lean();
-      if (recent) return { visit: recent, pharmacy, duplicate: true };
+      if (recent) return { visit: recent, pharmacy: currentPharmacy, duplicate: true };
     }
     const [visit] = await RepVisit.create([{
       repId: rep._id, warehouseId: rep.warehouseId, pharmacyId: pharmacy._id,
       status, coordinates, accuracyMeters, distanceMeters: distance, scannedAt: now,
+      locationCapturedAt: typeof capturedAt === 'string' && Number.isFinite(Date.parse(capturedAt)) ? new Date(capturedAt) : null,
+      verificationPolicy: { radiusMeters: policy.radiusMeters, maxAccuracyMeters: policy.maxAccuracyMeters, maxAgeSeconds: policy.maxAgeSeconds },
     }], { session });
-    return { visit: visit.toObject(), pharmacy, duplicate: false };
+    return { visit: visit.toObject(), pharmacy: currentPharmacy, duplicate: false };
   });
   if (!result.duplicate) {
     emitToWarehouse(rep.warehouseId, EVENTS.REP_VISIT_CREATED, {

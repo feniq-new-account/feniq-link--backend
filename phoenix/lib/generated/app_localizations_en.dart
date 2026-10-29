@@ -2944,4 +2944,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String offlineCatalogsLastSync(String time) {
     return 'Last sync: $time';
   }
+
+  @override
+  String get locationPermissionPurpose =>
+      'Location helps identify pharmacy premises and verify a visit when its code is scanned. Browsing remains available without permission; we do not track your movements in the background.';
+
+  @override
+  String get locationPermissionPermanent =>
+      'Location permission is blocked. In app settings, allow location while using the app to verify visits.';
+
+  @override
+  String get locationServiceDisabled =>
+      'Location services are off. Enable GPS before recording a visit.';
+
+  @override
+  String get locationOpenSettings => 'Open settings';
+
+  @override
+  String get locationAllow => 'Allow location';
+
+  @override
+  String get repVisitLocationUnapproved =>
+      'Pharmacy location awaiting approval';
+
+  @override
+  String get repVisitPoorAccuracy => 'Location accuracy insufficient';
+
+  @override
+  String get repVisitStaleLocation => 'Location reading expired';
+
+  @override
+  String get repScanLocationUnapprovedMessage =>
+      'This pharmacy location is not approved yet. Contact Feniq to confirm its premises; this attempt is not a verified visit.';
+
+  @override
+  String get repScanPoorAccuracyMessage =>
+      'GPS accuracy is insufficient. Move near the pharmacy entrance or an open area, then scan again.';
+
+  @override
+  String get repScanStaleLocationMessage =>
+      'The location reading expired. Enable automatic time and location on the phone, then scan again for a fresh reading.';
 }

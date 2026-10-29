@@ -2937,4 +2937,43 @@ class AppLocalizationsAr extends AppLocalizations {
   String offlineCatalogsLastSync(String time) {
     return 'آخر مزامنة: $time';
   }
+
+  @override
+  String get locationPermissionPurpose =>
+      'السماح بالموقع يساعدنا على تحديد موقع الصيدلية والتحقق من الزيارة عند مسح رمزها. يمكنك التصفح دون منحه؛ لا نتتبع تحركاتك في الخلفية.';
+
+  @override
+  String get locationPermissionPermanent =>
+      'إذن الموقع موقوف. افتح إعدادات التطبيق واسمح بالموقع أثناء الاستخدام لتتمكن من إثبات الزيارة.';
+
+  @override
+  String get locationServiceDisabled =>
+      'خدمة الموقع مطفأة. فعّل GPS قبل تسجيل الزيارة.';
+
+  @override
+  String get locationOpenSettings => 'فتح الإعدادات';
+
+  @override
+  String get locationAllow => 'السماح بالموقع';
+
+  @override
+  String get repVisitLocationUnapproved => 'موقع الصيدلية بانتظار الاعتماد';
+
+  @override
+  String get repVisitPoorAccuracy => 'دقة الموقع غير كافية';
+
+  @override
+  String get repVisitStaleLocation => 'قراءة الموقع قديمة';
+
+  @override
+  String get repScanLocationUnapprovedMessage =>
+      'لم يُعتمد موقع هذه الصيدلية بعد. تواصل مع إدارة فينيق لتثبيته؛ هذه المحاولة لا تُحتسب زيارة مؤكدة.';
+
+  @override
+  String get repScanPoorAccuracyMessage =>
+      'دقة GPS غير كافية. اقترب من مدخل الصيدلية أو مكان مفتوح ثم أعد المسح.';
+
+  @override
+  String get repScanStaleLocationMessage =>
+      'انتهت صلاحية قراءة الموقع. فعّل الوقت التلقائي والموقع في الهاتف ثم أعد المسح للحصول على قراءة جديدة.';
 }

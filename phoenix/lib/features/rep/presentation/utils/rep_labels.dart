@@ -29,6 +29,12 @@ String visitStatusLabel(AppLocalizations l10n, VisitStatus status) {
       return l10n.repVisitMockLocation;
     case VisitStatus.noPharmacyLocation:
       return l10n.repVisitNoPharmacyLocation;
+    case VisitStatus.locationUnapproved:
+      return l10n.repVisitLocationUnapproved;
+    case VisitStatus.poorAccuracy:
+      return l10n.repVisitPoorAccuracy;
+    case VisitStatus.staleLocation:
+      return l10n.repVisitStaleLocation;
   }
 }
 
@@ -40,6 +46,9 @@ StatusBadgeTone visitStatusTone(VisitStatus status) {
     case VisitStatus.mockLocation:
       return StatusBadgeTone.danger;
     case VisitStatus.noPharmacyLocation:
+    case VisitStatus.locationUnapproved:
+    case VisitStatus.poorAccuracy:
+    case VisitStatus.staleLocation:
       return StatusBadgeTone.pending;
   }
 }

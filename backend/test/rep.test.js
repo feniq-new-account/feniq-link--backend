@@ -40,6 +40,9 @@ let phoneCounter = 0;
 const ctx = {};
 
 async function call(method, path, { body, token } = {}) {
+  if (method === 'POST' && path === '/rep/visits' && body && !Object.hasOwn(body, 'capturedAt')) {
+    body = { ...body, capturedAt: new Date().toISOString() }; // current mobile client contract
+  }
   const response = await fetch(baseUrl + path, {
     method,
     headers: {
@@ -87,7 +90,7 @@ async function createPharmacy(nameAr, { withLocation = true } = {}) {
   const pharmacy = await Pharmacy.create({
     userId: user._id, nameAr, nameEn: 'Pharmacy', ownerName: 'د. مالك', address: 'شارع', city: 'Latakia',
     areaType: 'city', phone, addedBy: 'self',
-    ...(withLocation ? { location: { type: 'Point', coordinates: PHARMACY_POINT } } : {}),
+    ...(withLocation ? { location: { type: 'Point', coordinates: PHARMACY_POINT }, locationApproval: 'approved' } : {}),
   });
   return { user, pharmacy, token: await login(phone, PHARMACY_PASSWORD) };
 }
@@ -421,15 +424,20 @@ test('simultaneous verified scans commit one visit and return the same receipt',
   assert.strictEqual(await Visit.countDocuments({ repId: rep.id, pharmacyId: pharmacy.pharmacy._id, status: 'verified' }), 1);
 });
 
-test('judgeVisit allows for GPS accuracy, but only up to a cap', () => {
-  const pharmacy = { location: { coordinates: PHARMACY_POINT } };
-  // ~200 m away.
+test('visit radius and GPS accuracy are separate requirements with fresh approved premises', () => {
+  const pharmacy = { location: { coordinates: PHARMACY_POINT }, locationApproval: 'approved' };
+  const now = new Date();
+  const judge = (overrides) => judgeVisit({ pharmacy, coordinates: PHARMACY_POINT, accuracyMeters: 100,
+    capturedAt: now.toISOString(), now, ...overrides });
   const at200 = [PHARMACY_POINT[0], PHARMACY_POINT[1] + 0.0018];
-  assert.strictEqual(judgeVisit({ pharmacy, coordinates: at200, accuracyMeters: 10 }).status, 'out_of_range');
-  assert.strictEqual(judgeVisit({ pharmacy, coordinates: at200, accuracyMeters: 80 }).status, 'verified');
-  // 2 km of claimed uncertainty does not stretch the radius to 2 km.
-  const at500 = [PHARMACY_POINT[0], PHARMACY_POINT[1] + 0.0045];
-  assert.strictEqual(judgeVisit({ pharmacy, coordinates: at500, accuracyMeters: 2000 }).status, 'out_of_range');
+  assert.equal(judge({ coordinates: at200, accuracyMeters: 80 }).status, 'out_of_range');
+  assert.equal(judge({ accuracyMeters: 100 }).status, 'verified');
+  assert.equal(judge({ accuracyMeters: 101 }).status, 'poor_accuracy');
+  assert.equal(judge({ accuracyMeters: null }).status, 'poor_accuracy');
+  assert.equal(judge({ capturedAt: null }).status, 'stale_location');
+  assert.equal(judge({ capturedAt: new Date(now - 120001).toISOString() }).status, 'stale_location');
+  assert.equal(judge({ capturedAt: new Date(now.getTime() + 31000).toISOString() }).status, 'stale_location');
+  assert.equal(judge({ pharmacy: { ...pharmacy, locationApproval: 'pending' } }).status, 'location_unapproved');
 });
 
 test('parseVisitCode accepts the QR text or the bare code, and nothing else', () => {

@@ -68,6 +68,7 @@ class RepRepositoryImpl implements RepRepository {
     required double longitude,
     required double accuracy,
     required bool isMocked,
+    DateTime? capturedAt,
   }) async {
     try {
       final response = await _apiClient.dio.post(
@@ -78,6 +79,7 @@ class RepRepositoryImpl implements RepRepository {
           'longitude': longitude,
           'accuracy': accuracy,
           'isMocked': isMocked,
+          'capturedAt': (capturedAt ?? DateTime.now()).toUtc().toIso8601String(),
         },
       );
       return RecordedVisit.fromJson(response.data as Map<String, dynamic>);

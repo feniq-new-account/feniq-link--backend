@@ -75,6 +75,7 @@ class VisitScanCubit extends Cubit<VisitScanState> {
         longitude: location.longitude,
         accuracy: location.accuracy,
         isMocked: location.isMocked,
+        capturedAt: location.capturedAt,
       );
       if (isClosed) return;
       emit(VisitScanState(status: VisitScanStatus.done, result: result));

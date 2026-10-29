@@ -55,6 +55,12 @@ const pharmacySchema = new Schema(
     // until someone asks. Not a secret on its own: a rep's scan only counts
     // when their phone is also at this pharmacy's `location`.
     visitCode: { type: String, default: undefined },
+    // Coordinates submitted by a pharmacy are a proposal until the admin
+    // confirms its real premises; reps cannot approve or move this point.
+    locationApproval: { type: String, enum: ['pending', 'approved'], default: 'pending' },
+    locationVersion: { type: Number, default: 0 },
+    locationApprovedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    locationApprovedAt: { type: Date, default: null },
     // What the registration was checked against the syndicate list and what
     // came of it (services/syndicateRegistry.service.js). A copy, not a
     // reference: the list is replaced wholesale on every upload. Absent on
