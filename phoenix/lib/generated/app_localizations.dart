@@ -5095,6 +5095,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loyalty settings changed. Go back and reopen settings before saving.'**
   String get errorLoyaltyChanged;
+
+  /// No description provided for @warehouseInsightsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse performance and follow-up'**
+  String get warehouseInsightsTitle;
+
+  /// No description provided for @warehouseInsightsScope.
+  ///
+  /// In en, this message translates to:
+  /// **'These figures cover Feniq transactions only. Net sales after returns are not profit; inventory costs and expenses are excluded.'**
+  String get warehouseInsightsScope;
+
+  /// No description provided for @warehouseInsightsNetSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Net sales'**
+  String get warehouseInsightsNetSales;
+
+  /// No description provided for @warehouseInsightsCollections.
+  ///
+  /// In en, this message translates to:
+  /// **'Collections'**
+  String get warehouseInsightsCollections;
+
+  /// No description provided for @warehouseInsightsReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns'**
+  String get warehouseInsightsReturns;
+
+  /// No description provided for @warehouseInsightsDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Current receivables'**
+  String get warehouseInsightsDebts;
+
+  /// No description provided for @warehouseInsightsTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales and collections over time'**
+  String get warehouseInsightsTrend;
+
+  /// No description provided for @warehouseInsightsInspectDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a day to inspect'**
+  String get warehouseInsightsInspectDay;
+
+  /// No description provided for @warehouseInsightsPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get warehouseInsightsPeriod;
+
+  /// No description provided for @warehouseInsightsRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get warehouseInsightsRefresh;
+
+  /// No description provided for @warehouseInsightsAsOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated:'**
+  String get warehouseInsightsAsOf;
+
+  /// No description provided for @warehouseInsightsDamascus.
+  ///
+  /// In en, this message translates to:
+  /// **'Damascus time'**
+  String get warehouseInsightsDamascus;
+
+  /// No description provided for @warehouseInsightsAging.
+  ///
+  /// In en, this message translates to:
+  /// **'Receivable age — days'**
+  String get warehouseInsightsAging;
+
+  /// No description provided for @warehouseInsightsAgingMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest debits are settled first. Returns reduce their original invoice; reversing a payment restores its original debt age. This is a monitoring allocation; payments are not invoice-specific.'**
+  String get warehouseInsightsAgingMethod;
+
+  /// No description provided for @warehouseInsightsDailyTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily detail table'**
+  String get warehouseInsightsDailyTable;
+
+  /// No description provided for @warehouseInsightsDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get warehouseInsightsDate;
+
+  /// No description provided for @warehouseInsightsPharmacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy'**
+  String get warehouseInsightsPharmacy;
+
+  /// No description provided for @warehouseInsightsPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get warehouseInsightsPhone;
+
+  /// No description provided for @warehouseInsightsCity.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get warehouseInsightsCity;
+
+  /// No description provided for @warehouseInsightsDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get warehouseInsightsDays;
+
+  /// No description provided for @warehouseInsightsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get warehouseInsightsAction;
+
+  /// No description provided for @warehouseInsightsOpenStatement.
+  ///
+  /// In en, this message translates to:
+  /// **'Open statement'**
+  String get warehouseInsightsOpenStatement;
+
+  /// No description provided for @warehouseInsightsOpenStatements.
+  ///
+  /// In en, this message translates to:
+  /// **'Account statements'**
+  String get warehouseInsightsOpenStatements;
+
+  /// No description provided for @warehouseInsightsSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt and inactivity thresholds'**
+  String get warehouseInsightsSettings;
+
+  /// No description provided for @warehouseInsightsOverdueDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Receivables overdue after — days'**
+  String get warehouseInsightsOverdueDays;
+
+  /// No description provided for @warehouseInsightsInactiveDays.
+  ///
+  /// In en, this message translates to:
+  /// **'No pharmacy orders for — days'**
+  String get warehouseInsightsInactiveDays;
+
+  /// No description provided for @warehouseInsightsSaveSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Save thresholds'**
+  String get warehouseInsightsSaveSettings;
+
+  /// No description provided for @warehouseInsightsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No follow-up cases match this threshold.'**
+  String get warehouseInsightsEmpty;
+
+  /// No description provided for @warehouseInsightsLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get warehouseInsightsLoadMore;
+
+  /// No description provided for @warehouseInsightsInactiveFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'These features are not active for this warehouse. Contact Feniq to activate them.'**
+  String get warehouseInsightsInactiveFeature;
+
+  /// No description provided for @warehouseInsightsNoAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'No follow-up alerts right now.'**
+  String get warehouseInsightsNoAlerts;
+
+  /// No description provided for @warehouseInsightsOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get warehouseInsightsOverview;
+
+  /// No description provided for @warehouseInsightsOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get warehouseInsightsOverdue;
+
+  /// No description provided for @warehouseInsightsInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive pharmacies'**
+  String get warehouseInsightsInactive;
+
+  /// No description provided for @warehouseInsightsAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up alerts'**
+  String get warehouseInsightsAlerts;
+
+  /// No description provided for @warehouseInsightsInvalidDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose 1–180 days.'**
+  String get warehouseInsightsInvalidDays;
+
+  /// No description provided for @warehouseInsightsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up thresholds saved.'**
+  String get warehouseInsightsSaved;
+
+  /// No description provided for @warehouseInsightsResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Results: {count}'**
+  String warehouseInsightsResults(String count);
+
+  /// No description provided for @warehouseInsightsNoPreviousOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'No previous orders; days count from assignment.'**
+  String get warehouseInsightsNoPreviousOrder;
+
+  /// No description provided for @errorFeatureUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'These features are not active for this warehouse. Contact Feniq to activate them.'**
+  String get errorFeatureUnavailable;
+
+  /// No description provided for @errorFollowUpChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up thresholds changed. Refresh before saving.'**
+  String get errorFollowUpChanged;
+
+  /// No description provided for @warehouseInsightsAlertOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders pending for 48 hours: {count}'**
+  String warehouseInsightsAlertOrders(String count);
+
+  /// No description provided for @warehouseInsightsAlertReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns awaiting a decision for 48 hours: {count}'**
+  String warehouseInsightsAlertReturns(String count);
+
+  /// No description provided for @warehouseInsightsAlertOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacies with overdue balances: {count}'**
+  String warehouseInsightsAlertOverdue(String count);
+
+  /// No description provided for @warehouseInsightsAlertInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacies needing order follow-up: {count}'**
+  String warehouseInsightsAlertInactive(String count);
+
+  /// No description provided for @warehouseInsightsScopeShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Feniq transactions only; net sales are not profit.'**
+  String get warehouseInsightsScopeShort;
+
+  /// No description provided for @warehouseInsightsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About these figures'**
+  String get warehouseInsightsAbout;
+
+  /// No description provided for @warehouseInsightsOverdueAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue amount'**
+  String get warehouseInsightsOverdueAmount;
 }
 
 class _AppLocalizationsDelegate

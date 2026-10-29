@@ -6,6 +6,15 @@ import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/core/utils/date_formatter.dart';
 
 void main() {
+  test('whole lira parsing rejects fractional and ambiguous separators', () {
+    expect(parseWholeLirasInput('10,5'), isNull);
+    expect(parseWholeLirasInput('١٠٫٥'), isNull);
+    expect(parseWholeLirasInput('0,500'), isNull);
+    expect(parseWholeLirasInput('9,007,199,254,740,992'), isNull);
+    expect(parseWholeLirasInput('۱۵۰٬۰۰۰'), 150000);
+    expect(parseWholeLirasInput(' 1 500 '), 1500);
+  });
+
   setUpAll(() => initializeDateFormatting());
   test('Arabic and Persian keyboards keep numeric input and cursor positions', () {
     const input = TextEditingValue(text: '+٩٦٣ ۱۲۳٫٤٥', selection: TextSelection.collapsed(offset: 10));

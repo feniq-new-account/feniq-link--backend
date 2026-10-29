@@ -1,3 +1,4 @@
+import 'package:feniq/features/warehouse/data/models/warehouse_insights_models.dart';
 import 'package:feniq/core/services/pending_payment_journal.dart';
 import 'package:dio/dio.dart';
 import 'package:feniq/core/error/failure.dart';
@@ -21,6 +22,42 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
     } on DioException catch (e) {
       throw ServerFailure.fromDioError(e);
     }
+  }
+
+  @override
+  Future<Map<String, bool>> getInsightAccess() async {
+    final data = await _run((dio) => dio.get('/warehouse/subscription'));
+    if (data['features'] is! Map) throw ServerFailure('Incomplete subscription response.', code: FailureCode.unexpected);
+    final flags = (data['features'] as Map?) ?? const {};
+    return {for (final entry in flags.entries) entry.key.toString(): entry.value == true};
+  }
+  @override
+  Future<WarehouseInsightsReport> getInsights({String period = 'month', bool force = false}) async {
+    final data = await _run((dio) => dio.get('/warehouse/insights/report', queryParameters: {'period': period, if (force) 'force': '1'}));
+    if (data['totals'] is! Map || data['daily'] is! List || data['aging'] is! Map || data['asOfBusiness'] is! String) {
+      throw ServerFailure('Incomplete report response.', code: FailureCode.unexpected);
+    }
+    return WarehouseInsightsReport.fromJson(data);
+  }
+  @override
+  Future<WarehouseFollowUpPage> getFollowUp({required String kind, String? after, bool force = false}) async {
+    final data = await _run((dio) => dio.get('/warehouse/insights/follow-up', queryParameters: {
+      'kind': kind, if (after != null) 'after': after, if (force) 'force': '1'}));
+    if (data['rows'] is! List || data['pagination'] is! Map || data['asOfBusiness'] is! String) {
+      throw ServerFailure('Incomplete follow-up response.', code: FailureCode.unexpected);
+    }
+    return WarehouseFollowUpPage.fromJson(data);
+  }
+  @override
+  Future<FollowUpSettings> updateFollowUp(FollowUpSettings settings) async =>
+    FollowUpSettings.fromJson((await _run((dio) => dio.put('/warehouse/insights/settings', data: settings.toJson())))['settings']);
+  @override
+  Future<WarehouseAlertsData> getInsightAlerts() async {
+    final data = await _run((dio) => dio.get('/warehouse/insights/alerts'));
+    if (data['alerts'] is! List || data['asOfBusiness'] is! String) {
+      throw ServerFailure('Incomplete alerts response.', code: FailureCode.unexpected);
+    }
+    return WarehouseAlertsData.fromJson(data);
   }
 
   WarehouseRep _rep(Map<String, dynamic> data) =>

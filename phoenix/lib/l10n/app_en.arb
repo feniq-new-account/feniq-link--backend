@@ -1782,5 +1782,88 @@
       }
     }
   },
-  "errorLoyaltyChanged": "Loyalty settings changed. Go back and reopen settings before saving."
+  "errorLoyaltyChanged": "Loyalty settings changed. Go back and reopen settings before saving.",
+  "warehouseInsightsTitle": "Warehouse performance and follow-up",
+  "warehouseInsightsScope": "These figures cover Feniq transactions only. Net sales after returns are not profit; inventory costs and expenses are excluded.",
+  "warehouseInsightsNetSales": "Net sales",
+  "warehouseInsightsCollections": "Collections",
+  "warehouseInsightsReturns": "Returns",
+  "warehouseInsightsDebts": "Current receivables",
+  "warehouseInsightsTrend": "Sales and collections over time",
+  "warehouseInsightsInspectDay": "Select a day to inspect",
+  "warehouseInsightsPeriod": "Period",
+  "warehouseInsightsRefresh": "Refresh",
+  "warehouseInsightsAsOf": "Updated:",
+  "warehouseInsightsDamascus": "Damascus time",
+  "warehouseInsightsAging": "Receivable age — days",
+  "warehouseInsightsAgingMethod": "Oldest debits are settled first. Returns reduce their original invoice; reversing a payment restores its original debt age. This is a monitoring allocation; payments are not invoice-specific.",
+  "warehouseInsightsDailyTable": "Daily detail table",
+  "warehouseInsightsDate": "Date",
+  "warehouseInsightsPharmacy": "Pharmacy",
+  "warehouseInsightsPhone": "Phone",
+  "warehouseInsightsCity": "City",
+  "warehouseInsightsDays": "Days",
+  "warehouseInsightsAction": "Action",
+  "warehouseInsightsOpenStatement": "Open statement",
+  "warehouseInsightsOpenStatements": "Account statements",
+  "warehouseInsightsSettings": "Debt and inactivity thresholds",
+  "warehouseInsightsOverdueDays": "Receivables overdue after — days",
+  "warehouseInsightsInactiveDays": "No pharmacy orders for — days",
+  "warehouseInsightsSaveSettings": "Save thresholds",
+  "warehouseInsightsEmpty": "No follow-up cases match this threshold.",
+  "warehouseInsightsLoadMore": "Load more",
+  "warehouseInsightsInactiveFeature": "These features are not active for this warehouse. Contact Feniq to activate them.",
+  "warehouseInsightsNoAlerts": "No follow-up alerts right now.",
+  "warehouseInsightsOverview": "Overview",
+  "warehouseInsightsOverdue": "Overdue",
+  "warehouseInsightsInactive": "Inactive pharmacies",
+  "warehouseInsightsAlerts": "Follow-up alerts",
+  "warehouseInsightsInvalidDays": "Choose 1–180 days.",
+  "warehouseInsightsSaved": "Follow-up thresholds saved.",
+  "warehouseInsightsResults": "Results: {count}",
+  "@warehouseInsightsResults": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsNoPreviousOrder": "No previous orders; days count from assignment.",
+  "errorFeatureUnavailable": "These features are not active for this warehouse. Contact Feniq to activate them.",
+  "errorFollowUpChanged": "Follow-up thresholds changed. Refresh before saving.",
+  "warehouseInsightsAlertOrders": "Orders pending for 48 hours: {count}",
+  "@warehouseInsightsAlertOrders": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsAlertReturns": "Returns awaiting a decision for 48 hours: {count}",
+  "@warehouseInsightsAlertReturns": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsAlertOverdue": "Pharmacies with overdue balances: {count}",
+  "@warehouseInsightsAlertOverdue": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsAlertInactive": "Pharmacies needing order follow-up: {count}",
+  "@warehouseInsightsAlertInactive": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsScopeShort": "Feniq transactions only; net sales are not profit.",
+  "warehouseInsightsAbout": "About these figures",
+  "warehouseInsightsOverdueAmount": "Overdue amount"
 }

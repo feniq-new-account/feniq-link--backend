@@ -1,3 +1,4 @@
+import { WarehouseInsightsPage } from './WarehouseInsightsPage';
 import { WarehouseSubscriptionProvider } from '../context/WarehouseSubscriptionContext';
 import { useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
@@ -172,6 +173,7 @@ function WarehousePanelContent() {
             ))}
             <Route path="/warehouse/discounts" element={<WarehouseDiscountsPage />} />
             <Route path="/warehouse/discount-codes" element={<WarehouseDiscountCodesPage />} />
+            <Route path="/warehouse/insights" element={<WarehouseInsightsPage />} />
             <Route path="/warehouse/debts" element={<WarehouseDebtsPage />} />
             <Route path="/warehouse/settlement" element={<WarehouseSettlementPage />} />
             <Route path="/warehouse/returns" element={<WarehouseReturnsPage />} />

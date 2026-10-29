@@ -41,6 +41,11 @@ const warehouseSchema = new Schema(
         default: [],
       },
     },
+    followUp: {
+      overdueDays: { type: Number, default: 15, min: 1, max: 180 },
+      inactiveDays: { type: Number, default: 15, min: 1, max: 180 },
+      revision: { type: Number, default: 0 },
+    },
     // Per-warehouse order size limits, in USD - the same currency the cart
     // totals in, so no conversion sits between what the pharmacist sees and
     // what's enforced (order.service.js). Both are opt-in: 0 means "no

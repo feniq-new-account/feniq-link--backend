@@ -79,7 +79,8 @@
     "categories": "Categories",
     "discountCodes": "Discount codes",
     "reps": "Reps",
-    "registration": "Pharmacy approval"
+    "registration": "Pharmacy approval",
+    "insights": "Performance and follow-up"
   },
   "auth": {
     "phoneLabel": "Phone number",
@@ -1581,5 +1582,55 @@
     "coordinatesRequired": "Enter latitude and longitude first.",
     "empty": "No pharmacies match this filter.",
     "refreshList": "Refresh list"
+  },
+  "insights": {
+    "title": "Warehouse performance and follow-up",
+    "scope": "These figures cover Feniq transactions only. Net sales after returns are not profit; inventory costs and expenses are excluded.",
+    "netSales": "Net sales",
+    "collections": "Collections",
+    "returns": "Returns",
+    "debts": "Current receivables",
+    "trend": "Sales and collections over time",
+    "inspectDay": "Select a day to inspect",
+    "period": "Period",
+    "refresh": "Refresh",
+    "export": "Export CSV",
+    "asOf": "Updated:",
+    "damascus": "Damascus time",
+    "aging": "Receivable age — days",
+    "agingMethod": "Oldest debits are settled first. Returns reduce their original invoice; reversing a payment restores its original debt age. This is a monitoring allocation; payments are not invoice-specific.",
+    "dailyTable": "Daily detail table",
+    "date": "Date",
+    "pharmacy": "Pharmacy",
+    "phone": "Phone",
+    "city": "City",
+    "days": "Days",
+    "overdueAmount": "Overdue amount",
+    "action": "Action",
+    "openStatement": "Open statement",
+    "openStatements": "Account statements",
+    "settings": "Debt and inactivity thresholds",
+    "overdueDays": "Receivables overdue after — days",
+    "inactiveDays": "No pharmacy orders for — days",
+    "saveSettings": "Save thresholds",
+    "results": "Results: {{count}}",
+    "empty": "No follow-up cases match this threshold.",
+    "loadMore": "Load more",
+    "inactiveFeature": "These features are not active for this warehouse. Contact Feniq to activate them.",
+    "tabs": {
+      "overview": "Overview",
+      "overdue": "Overdue",
+      "inactive": "Inactive pharmacies",
+      "alerts": "Follow-up alerts"
+    },
+    "alerts": {
+      "overdue": "Pharmacies with overdue balances: {{count}}",
+      "inactive": "Pharmacies needing order follow-up: {{count}}",
+      "orders_pending": "Orders pending for 48 hours: {{count}}",
+      "returns_pending": "Returns awaiting a decision for 48 hours: {{count}}"
+    },
+    "noAlerts": "No follow-up alerts right now.",
+    "scopeShort": "Feniq transactions only; net sales are not profit.",
+    "about": "About these figures"
   }
 }

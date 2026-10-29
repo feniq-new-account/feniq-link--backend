@@ -1,7 +1,6 @@
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:feniq/core/utils/number_input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
@@ -267,7 +266,7 @@ class _TextDialogState extends State<_TextDialog> {
         controller: _controller,
         autofocus: true,
         keyboardType: widget.number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
-        inputFormatters: widget.number ? [const WesternDigitsFormatter(), FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))] : null,
+        inputFormatters: widget.number ? const [WesternDigitsFormatter()] : null,
         decoration: InputDecoration(labelText: widget.label, helperText: widget.hint, helperMaxLines: 3),
         onChanged: (_) => setState(() {}),
       ),
@@ -375,7 +374,6 @@ class _AddRepSheetState extends State<_AddRepSheet> {
                     textDirection: TextDirection.ltr,
                     inputFormatters: [
                       const WesternDigitsFormatter(),
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                     ],
                     decoration: InputDecoration(
                       labelText: l10n.warehouseRepRate,

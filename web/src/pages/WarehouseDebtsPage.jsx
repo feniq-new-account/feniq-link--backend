@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
 import { useAuth } from '../auth/AuthContext';
 import { useModalSafety } from '../hooks/useModalSafety';
@@ -605,7 +606,9 @@ export function WarehouseDebtsPage() {
   const { hasFeature } = useWarehouseSubscription();
   const canRecord = user?.warehouseRole !== 'owner' && hasFeature('accounting');
   const { t } = useTranslation();
-  const [selectedPharmacyId, setSelectedPharmacyId] = useState(null);
+  const [params, setParams] = useSearchParams();
+  const selectedFromUrl = params.get('pharmacy') || null;
+  const [selectedPharmacyId, setSelectedPharmacyId] = useState(selectedFromUrl);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   // A row's "pay in full" / "part payment" open this: { mode, row }.
@@ -642,17 +645,19 @@ export function WarehouseDebtsPage() {
   } = usePaginatedData(fetchPage);
 
   useEffect(() => {
-    reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+    setSelectedPharmacyId(selectedFromUrl);
+    if (!selectedFromUrl) reset();
+  }, [search, selectedFromUrl, reset]);
 
   if (selectedPharmacyId) {
     return (
       <WarehouseDebtDetail
+        key={selectedPharmacyId}
         pharmacyId={selectedPharmacyId}
         onBack={() => {
+          const next = new URLSearchParams(params); next.delete('pharmacy');
+          setParams(next, { replace: true });
           setSelectedPharmacyId(null);
-          reset();
         }}
       />
     );
@@ -726,7 +731,7 @@ export function WarehouseDebtsPage() {
                   <tr
                     key={row.pharmacyId}
                     className="clickable-row"
-                    onClick={() => { if (!payingBusy) setSelectedPharmacyId(row.pharmacyId); }}
+                    onClick={() => { if (!payingBusy) { setSelectedPharmacyId(row.pharmacyId); setParams({ ...Object.fromEntries(params), pharmacy: row.pharmacyId }); } }}
                   >
                     <td>
                       {displayName(row.nameEn, row.nameAr)}

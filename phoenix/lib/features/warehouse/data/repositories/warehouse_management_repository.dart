@@ -1,8 +1,15 @@
+import 'package:feniq/features/warehouse/data/models/warehouse_insights_models.dart';
 import 'package:feniq/core/services/pending_payment_journal.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_management_models.dart';
 
 /// A warehouse account's reps, pharmacy accounts and returns.
 abstract class WarehouseManagementRepository {
+  Future<Map<String, bool>> getInsightAccess();
+  Future<WarehouseInsightsReport> getInsights({String period = 'month', bool force = false});
+  Future<WarehouseFollowUpPage> getFollowUp({required String kind, String? after, bool force = false});
+  Future<FollowUpSettings> updateFollowUp(FollowUpSettings settings);
+  Future<WarehouseAlertsData> getInsightAlerts();
+
   // Reps
   Future<List<WarehouseRep>> getReps();
 

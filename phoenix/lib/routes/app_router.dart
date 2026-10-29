@@ -1,3 +1,5 @@
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_insights_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/views/warehouse_insights_view.dart';
 import 'package:flutter/widgets.dart'; // BuildContext for the redirect; also debugPrint (TEMP DIAGNOSTIC router-lifecycle)
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -444,7 +446,7 @@ class AppRouter {
                     WarehouseRepsCubit(repository: context.read<WarehouseManagementRepository>())..load(),
               ),
             ],
-            child: const WarehouseShellView(),
+            child: WarehouseShellView(initialIndex: state.uri.queryParameters['tab'] == 'returns' ? 1 : 0),
           ),
         ),
       ),
@@ -503,6 +505,15 @@ class AppRouter {
             child: WarehouseRepDetailView(repName: state.extra is String ? state.extra! as String : ''),
           ),
         ),
+      ),
+      GoRoute(
+        name: RouteNames.warehouseInsights,
+        path: RoutePaths.warehouseInsights,
+        pageBuilder: (context, state) => buildPageTransition(state: state,
+          child: BlocProvider(create: (context) => WarehouseInsightsCubit(
+            repository: context.read<WarehouseManagementRepository>(),
+            warehouseRole: context.read<AuthCubit>().state.user?.warehouseRole ?? 'legacy')..loadAccess(),
+            child: const WarehouseInsightsView())),
       ),
       GoRoute(
         name: RouteNames.warehouseLoyalty,

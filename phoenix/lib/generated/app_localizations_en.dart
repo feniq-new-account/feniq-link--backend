@@ -3021,4 +3021,166 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorLoyaltyChanged =>
       'Loyalty settings changed. Go back and reopen settings before saving.';
+
+  @override
+  String get warehouseInsightsTitle => 'Warehouse performance and follow-up';
+
+  @override
+  String get warehouseInsightsScope =>
+      'These figures cover Feniq transactions only. Net sales after returns are not profit; inventory costs and expenses are excluded.';
+
+  @override
+  String get warehouseInsightsNetSales => 'Net sales';
+
+  @override
+  String get warehouseInsightsCollections => 'Collections';
+
+  @override
+  String get warehouseInsightsReturns => 'Returns';
+
+  @override
+  String get warehouseInsightsDebts => 'Current receivables';
+
+  @override
+  String get warehouseInsightsTrend => 'Sales and collections over time';
+
+  @override
+  String get warehouseInsightsInspectDay => 'Select a day to inspect';
+
+  @override
+  String get warehouseInsightsPeriod => 'Period';
+
+  @override
+  String get warehouseInsightsRefresh => 'Refresh';
+
+  @override
+  String get warehouseInsightsAsOf => 'Updated:';
+
+  @override
+  String get warehouseInsightsDamascus => 'Damascus time';
+
+  @override
+  String get warehouseInsightsAging => 'Receivable age — days';
+
+  @override
+  String get warehouseInsightsAgingMethod =>
+      'Oldest debits are settled first. Returns reduce their original invoice; reversing a payment restores its original debt age. This is a monitoring allocation; payments are not invoice-specific.';
+
+  @override
+  String get warehouseInsightsDailyTable => 'Daily detail table';
+
+  @override
+  String get warehouseInsightsDate => 'Date';
+
+  @override
+  String get warehouseInsightsPharmacy => 'Pharmacy';
+
+  @override
+  String get warehouseInsightsPhone => 'Phone';
+
+  @override
+  String get warehouseInsightsCity => 'City';
+
+  @override
+  String get warehouseInsightsDays => 'Days';
+
+  @override
+  String get warehouseInsightsAction => 'Action';
+
+  @override
+  String get warehouseInsightsOpenStatement => 'Open statement';
+
+  @override
+  String get warehouseInsightsOpenStatements => 'Account statements';
+
+  @override
+  String get warehouseInsightsSettings => 'Debt and inactivity thresholds';
+
+  @override
+  String get warehouseInsightsOverdueDays => 'Receivables overdue after — days';
+
+  @override
+  String get warehouseInsightsInactiveDays => 'No pharmacy orders for — days';
+
+  @override
+  String get warehouseInsightsSaveSettings => 'Save thresholds';
+
+  @override
+  String get warehouseInsightsEmpty =>
+      'No follow-up cases match this threshold.';
+
+  @override
+  String get warehouseInsightsLoadMore => 'Load more';
+
+  @override
+  String get warehouseInsightsInactiveFeature =>
+      'These features are not active for this warehouse. Contact Feniq to activate them.';
+
+  @override
+  String get warehouseInsightsNoAlerts => 'No follow-up alerts right now.';
+
+  @override
+  String get warehouseInsightsOverview => 'Overview';
+
+  @override
+  String get warehouseInsightsOverdue => 'Overdue';
+
+  @override
+  String get warehouseInsightsInactive => 'Inactive pharmacies';
+
+  @override
+  String get warehouseInsightsAlerts => 'Follow-up alerts';
+
+  @override
+  String get warehouseInsightsInvalidDays => 'Choose 1–180 days.';
+
+  @override
+  String get warehouseInsightsSaved => 'Follow-up thresholds saved.';
+
+  @override
+  String warehouseInsightsResults(String count) {
+    return 'Results: $count';
+  }
+
+  @override
+  String get warehouseInsightsNoPreviousOrder =>
+      'No previous orders; days count from assignment.';
+
+  @override
+  String get errorFeatureUnavailable =>
+      'These features are not active for this warehouse. Contact Feniq to activate them.';
+
+  @override
+  String get errorFollowUpChanged =>
+      'Follow-up thresholds changed. Refresh before saving.';
+
+  @override
+  String warehouseInsightsAlertOrders(String count) {
+    return 'Orders pending for 48 hours: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertReturns(String count) {
+    return 'Returns awaiting a decision for 48 hours: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertOverdue(String count) {
+    return 'Pharmacies with overdue balances: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertInactive(String count) {
+    return 'Pharmacies needing order follow-up: $count';
+  }
+
+  @override
+  String get warehouseInsightsScopeShort =>
+      'Feniq transactions only; net sales are not profit.';
+
+  @override
+  String get warehouseInsightsAbout => 'About these figures';
+
+  @override
+  String get warehouseInsightsOverdueAmount => 'Overdue amount';
 }

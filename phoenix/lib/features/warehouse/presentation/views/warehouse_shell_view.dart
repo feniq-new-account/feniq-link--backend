@@ -18,15 +18,29 @@ import 'package:feniq/routes/route_names.dart';
 /// The cubits are provided by the route; a tab is built the first time it is
 /// opened, so its cubit only loads then.
 class WarehouseShellView extends StatefulWidget {
-  const WarehouseShellView({super.key});
+  const WarehouseShellView({super.key, this.initialIndex = 0});
+  final int initialIndex;
 
   @override
   State<WarehouseShellView> createState() => _WarehouseShellViewState();
 }
 
 class _WarehouseShellViewState extends State<WarehouseShellView> {
-  int _index = 0;
-  final Set<int> _opened = {0};
+  late int _index = widget.initialIndex;
+  late final Set<int> _opened = {widget.initialIndex};
+
+  @override
+  void didUpdateWidget(covariant WarehouseShellView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      _index = widget.initialIndex; _opened.add(_index);
+    }
+  }
+  Future<void> _openInsights() async {
+    final tab = await context.pushNamed<String>(RouteNames.warehouseInsights);
+    if (!mounted || tab == null) return;
+    setState(() { _index = tab == 'returns' ? 1 : 0; _opened.add(_index); });
+  }
 
   static const _tabs = <Widget>[
     WarehouseOrdersTab(),
@@ -60,6 +74,7 @@ class _WarehouseShellViewState extends State<WarehouseShellView> {
         automaticallyImplyLeading: false,
         title: FullText(titles[_index], minScale: 0.6),
         actions: [
+          IconButton(tooltip: l10n.warehouseInsightsTitle, icon: const Icon(Icons.insights_outlined), onPressed: _openInsights),
           IconButton(
             tooltip: l10n.notificationsTitle,
             icon: const Icon(Icons.notifications_outlined),

@@ -228,6 +228,9 @@ async function request(path, { method = 'GET', body, _retried = false } = {}) {
       INVALID_APP_RELEASE: ['تعذّر التحقق من ملف التحديث أو إعداداته. راجع النسخة المنشورة وأرقام البناء والتواريخ.', 'Could not verify the update artifact or settings. Check the published release, build numbers and deadlines.'],
       APP_RELEASE_CHANGED: ['تغيرت إعدادات التحديث. أعد تحميلها قبل الحفظ.', 'Update settings changed. Reload before saving.'],
       FEATURE_NOT_ENABLED: ['هذه الميزة غير متاحة للمستودع حالياً. تواصل مع إدارة فينيق.', 'This feature is not currently available for the warehouse. Contact Feniq support.'],
+      FEATURE_UNAVAILABLE: ['هذه الميزة غير مفعلة للمستودع. تواصل مع إدارة فينيق لتفعيلها.', 'This feature is not active for this warehouse. Contact Feniq to activate it.'],
+      FOLLOW_UP_CHANGED: ['تغيّرت مدة المتابعة. أعد تحميل الصفحة قبل الحفظ.', 'Follow-up settings changed. Reload before saving.'],
+      INVALID_FOLLOW_UP_SETTINGS: ['اختر مدة من 1 إلى 180 يوماً.', 'Choose 1–180 days.'],
       LOYALTY_CHANGED: ['تغيّرت إعدادات الولاء. أعد تحميلها قبل الحفظ.', 'Loyalty settings changed. Reload before saving.'],
       PHARMACY_LOCATION_CHANGED: ['تغيّر الموقع. أعد تحميل القائمة قبل الحفظ.', 'The location changed. Reload the list before saving.'],
       VISIT_POLICY_CHANGED: ['تغيّرت سياسة الزيارة. أعد تحميل الإعدادات.', 'The visit policy changed. Reload the settings.'],
@@ -365,6 +368,11 @@ function advertisementFormData(data, imageFile) {
 }
 
 export const api = {
+  warehouseInsights: ({ period = 'month', from, to, force } = {}) => request(`/warehouse/insights/report?${new URLSearchParams({ period, ...(from ? { from } : {}), ...(to ? { to } : {}), ...(force ? { force: '1' } : {}) })}`),
+  warehouseFollowUp: ({ kind, after, force } = {}) => request(`/warehouse/insights/follow-up?${new URLSearchParams({ kind, ...(after ? { after } : {}), ...(force ? { force: '1' } : {}) })}`),
+  warehouseFollowUpExport: (kind) => request(`/warehouse/insights/export?${new URLSearchParams({ kind })}`),
+  warehouseInsightAlerts: () => request('/warehouse/insights/alerts'),
+  saveWarehouseFollowUp: (body) => request('/warehouse/insights/settings', { method: 'PUT', body }),
   getVisitVerification: () => request('/admin/visit-verification'),
   saveVisitVerification: (body) => request('/admin/visit-verification', { method: 'PUT', body }),
   listAdminPharmacyLocations: ({ search, approval, after } = {}) => {

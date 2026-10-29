@@ -28,7 +28,6 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
     case 'APP_UPDATE_REQUIRED':
       return l10n.updateRequiredMessage;
     case 'ACCOUNTANT_REQUIRED':
-    case 'FEATURE_NOT_ENABLED':
     case 'HTTP_403':
       return l10n.errorNoPermission;
     case 'HTTP_404':
@@ -225,6 +224,13 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
       return l10n.errorOrderNotEditable;
     case 'PACKAGE_ITEMS_LOCKED':
       return l10n.errorPackageItemsLocked;
+    case 'FEATURE_NOT_ENABLED':
+    case 'FEATURE_UNAVAILABLE':
+      return l10n.errorFeatureUnavailable;
+    case 'FOLLOW_UP_CHANGED':
+      return l10n.errorFollowUpChanged;
+    case 'INVALID_FOLLOW_UP_SETTINGS':
+      return l10n.warehouseInsightsInvalidDays;
     case 'LOYALTY_CHANGED':
       return l10n.errorLoyaltyChanged;
     case 'INVALID_LOYALTY_TIERS':

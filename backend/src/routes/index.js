@@ -86,6 +86,7 @@ router.use('/warehouse/returns', warehouseReturnRoutes);
 router.use('/warehouse/reviews', warehouseReviewRoutes);
 router.use('/warehouse/discounts', warehouseDiscountRoutes);
 router.use('/warehouse/manufacturers', warehouseManufacturerRoutes);
+router.use('/warehouse/insights', require('./warehouseInsights.routes'));
 router.use('/warehouse/balances', warehouseBalanceRoutes);
 router.use('/warehouse/payments', warehousePaymentRoutes);
 router.use('/pharmacy/debts', pharmacyDebtRoutes);

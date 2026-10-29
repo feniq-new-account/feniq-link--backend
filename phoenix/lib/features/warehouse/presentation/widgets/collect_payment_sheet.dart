@@ -1,5 +1,4 @@
 import 'package:feniq/core/utils/number_input.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:feniq/core/constants/app_padding.dart';
@@ -104,7 +103,7 @@ class _CollectPaymentSheetState extends State<CollectPaymentSheet> {
                     autofocus: true,
                     keyboardType: TextInputType.number,
                     textDirection: TextDirection.ltr,
-                    inputFormatters: [const WesternDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
+                    inputFormatters: const [WesternDigitsFormatter()],
                     onChanged: (_) => setState(() => _error = null),
                     decoration: InputDecoration(labelText: l10n.warehouseCollectPaidLabel(suffix), errorText: _error),
                   ),

@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/number_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -92,6 +93,7 @@ class _DiscountCodeFieldState extends State<DiscountCodeField> {
                       // Codes read left to right even in an Arabic layout.
                       textDirection: TextDirection.ltr,
                       inputFormatters: [
+                        const WesternDigitsFormatter(),
                         FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
                         LengthLimitingTextInputFormatter(8),
                         _UpperCaseFormatter(),

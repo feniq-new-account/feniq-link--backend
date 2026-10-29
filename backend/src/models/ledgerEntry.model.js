@@ -108,6 +108,9 @@ ledgerEntrySchema.index({ entryNumber: 1 }, { unique: true });
 // Statement render: everything for an account in business-date order.
 ledgerEntrySchema.index({ accountId: 1, effectiveAt: 1, sequence: 1 });
 
+// Stream account-level receivables in stable order for FIFO age monitoring.
+ledgerEntrySchema.index({ warehouseId: 1, accountId: 1, effectiveAt: 1, sequence: 1 });
+
 // THE double-charge guard: one 'charge' per order, at the database level.
 // The $type clause matters as much as the kind clause: without it every entry
 // that has no order (a payment, an adjustment) shares the key `null` and the

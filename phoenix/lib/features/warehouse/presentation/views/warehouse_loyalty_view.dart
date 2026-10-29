@@ -1,6 +1,5 @@
 import 'package:feniq/core/utils/number_input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
@@ -65,7 +64,7 @@ class _TierRow {
 }
 
 /// Digits only, Western or Arabic-Indic, grouping commas and spaces ignored.
-int? parseWholeLiras(String text) => int.tryParse(westernDigits(text).replaceAll(RegExp(r'[,،\s]'), ''));
+int? parseWholeLiras(String text) => parseWholeLirasInput(text);
 
 class _LoyaltyForm extends StatefulWidget {
   const _LoyaltyForm({required this.initial});
@@ -128,7 +127,7 @@ class _LoyaltyFormState extends State<_LoyaltyForm> {
     final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
     InputDecoration field(String label) =>
         InputDecoration(labelText: label, suffixText: l10n.currencySuffix, isDense: true);
-    final digits = [const WesternDigitsFormatter(), FilteringTextInputFormatter.allow(RegExp(r'[0-9,،]'))];
+    final digits = [const WesternDigitsFormatter()];
 
     return ListView(
       padding: AppPadding.screen,

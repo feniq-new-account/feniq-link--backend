@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { WarehouseDebtsPage } from './WarehouseDebtsPage';
@@ -16,7 +17,7 @@ beforeEach(async () => {
   api.warehouseBalances.mockResolvedValue({ pharmacies: [{ pharmacyId: 'p1', nameAr: 'صيدلية الشفاء', nameEn: 'Al Shifa',
     phone: '0944000001', balanceSyp: 1000, purchasesSyp: 1000, paidSyp: 0 }], pagination: { hasMore: false } });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
-  await act(async () => root.render(<WarehouseDebtsPage />));
+  await act(async () => root.render(<MemoryRouter><WarehouseDebtsPage /></MemoryRouter>));
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
 it('places full and partial confirmation directly inside the same pharmacy action cell', async () => {

@@ -1,7 +1,6 @@
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:feniq/core/utils/number_input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -246,7 +245,6 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                     textDirection: TextDirection.ltr,
                     inputFormatters: [
                       const WesternDigitsFormatter(),
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                     ],
                     decoration: InputDecoration(
                       labelText: l10n.warehousePaymentAmount(l10n.currencySuffix),

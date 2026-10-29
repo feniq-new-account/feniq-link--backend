@@ -90,15 +90,16 @@ void main() {
       expect(find.text('100'), findsOneWidget);
     });
 
-    testWidgets('non-digits are stripped by the field', (tester) async {
+    testWidgets('invalid pasted content cannot become a different valid quantity', (tester) async {
       final reported = <int>[];
-      await tester.pumpWidget(_Host(initial: 5, reported: reported));
-
-      await tester.enterText(find.byType(TextField), 'a1b2c');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pump();
-
-      expect(reported, [12]);
+      await tester.pumpWidget(_Host(initial: 7, reported: reported));
+      for (final draft in ['1.5', 'a2', '10000']) {
+        await tester.enterText(find.byType(TextField), draft);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pump();
+        expect(reported, isEmpty, reason: draft);
+        expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, '7');
+      }
     });
 
     testWidgets('with no onBelowMin, going below the minimum snaps back to it', (tester) async {

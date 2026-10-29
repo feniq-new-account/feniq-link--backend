@@ -1268,5 +1268,88 @@
       }
     }
   },
-  "errorLoyaltyChanged": "تغيّرت إعدادات الولاء. ارجع وأعد فتح الإعدادات قبل الحفظ."
+  "errorLoyaltyChanged": "تغيّرت إعدادات الولاء. ارجع وأعد فتح الإعدادات قبل الحفظ.",
+  "warehouseInsightsTitle": "أداء المستودع والمتابعة",
+  "warehouseInsightsScope": "هذه الأرقام تخص عمليات فينيق فقط. صافي المبيعات بعد المرتجعات لا يعني الربح؛ لا يشمل تكلفة البضاعة أو المصاريف.",
+  "warehouseInsightsNetSales": "صافي المبيعات",
+  "warehouseInsightsCollections": "التحصيل",
+  "warehouseInsightsReturns": "المرتجعات",
+  "warehouseInsightsDebts": "الديون الحالية",
+  "warehouseInsightsTrend": "المبيعات والتحصيل عبر الأيام",
+  "warehouseInsightsInspectDay": "اختر يوماً لعرض أرقامه",
+  "warehouseInsightsPeriod": "الفترة",
+  "warehouseInsightsRefresh": "تحديث",
+  "warehouseInsightsAsOf": "آخر تحديث:",
+  "warehouseInsightsDamascus": "توقيت دمشق",
+  "warehouseInsightsAging": "أعمار الديون — بالأيام",
+  "warehouseInsightsAgingMethod": "تُسوّى الحركات الأقدم أولاً. المرتجع يُنقص فاتورته الأصلية، وإلغاء الدفعة يعيد عمر الدين الأصلي. هذا تقدير للمتابعة؛ الدفعات غير مربوطة بفواتير محددة.",
+  "warehouseInsightsDailyTable": "جدول التفاصيل اليومية",
+  "warehouseInsightsDate": "التاريخ",
+  "warehouseInsightsPharmacy": "الصيدلية",
+  "warehouseInsightsPhone": "الهاتف",
+  "warehouseInsightsCity": "المدينة",
+  "warehouseInsightsDays": "الأيام",
+  "warehouseInsightsAction": "المتابعة",
+  "warehouseInsightsOpenStatement": "فتح الكشف",
+  "warehouseInsightsOpenStatements": "كشوف الحسابات",
+  "warehouseInsightsSettings": "مدة متابعة الديون والانقطاع",
+  "warehouseInsightsOverdueDays": "يتأخر الدين بعد — يوم",
+  "warehouseInsightsInactiveDays": "صيدلية بلا طلب منذ — يوم",
+  "warehouseInsightsSaveSettings": "حفظ المدة",
+  "warehouseInsightsEmpty": "لا توجد حالات تستدعي المتابعة بهذه المدة.",
+  "warehouseInsightsLoadMore": "عرض المزيد",
+  "warehouseInsightsInactiveFeature": "هذه الميزات غير مفعلة للمستودع. تواصل مع فينيق لتفعيلها.",
+  "warehouseInsightsNoAlerts": "لا توجد حالات تستدعي التنبيه الآن.",
+  "warehouseInsightsOverview": "نظرة عامة",
+  "warehouseInsightsOverdue": "ديون متأخرة",
+  "warehouseInsightsInactive": "صيدليات منقطعة",
+  "warehouseInsightsAlerts": "تنبيهات المتابعة",
+  "warehouseInsightsInvalidDays": "اختر مدة من 1 إلى 180 يوماً.",
+  "warehouseInsightsSaved": "تم حفظ مدة المتابعة.",
+  "warehouseInsightsResults": "النتائج: {count}",
+  "@warehouseInsightsResults": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsNoPreviousOrder": "لا توجد طلبات سابقة؛ المدة منذ تعيين الصيدلية.",
+  "errorFeatureUnavailable": "هذه الميزات غير مفعلة للمستودع. تواصل مع فينيق لتفعيلها.",
+  "errorFollowUpChanged": "تغيّرت مدة المتابعة. حدّث الصفحة قبل الحفظ.",
+  "warehouseInsightsAlertOrders": "طلبات معلّقة منذ 48 ساعة: {count}",
+  "@warehouseInsightsAlertOrders": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsAlertReturns": "مرتجعات بانتظار القرار منذ 48 ساعة: {count}",
+  "@warehouseInsightsAlertReturns": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsAlertOverdue": "صيدليات لها مبالغ متأخرة: {count}",
+  "@warehouseInsightsAlertOverdue": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsAlertInactive": "صيدليات بحاجة متابعة طلباتها: {count}",
+  "@warehouseInsightsAlertInactive": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsScopeShort": "عمليات فينيق فقط؛ صافي المبيعات ليس الربح.",
+  "warehouseInsightsAbout": "عن هذه الأرقام",
+  "warehouseInsightsOverdueAmount": "المبلغ المتأخر"
 }

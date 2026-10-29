@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import '../utils/number_input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
@@ -93,9 +92,14 @@ class _QuantityStepperState extends State<QuantityStepper> {
   }
 
   // Called when the field loses focus / the keyboard's "done" is pressed. The
-  // digits-only formatter means the text is always either digits or empty.
+  // Invalid pasted content stays invalid instead of becoming another quantity.
   void _commitTyped() {
-    final parsed = int.tryParse(_controller.text.trim());
+    final raw = _controller.text.trim();
+    final parsed = int.tryParse(raw);
+    if ((raw.isNotEmpty && parsed == null) || (parsed != null && parsed < 0)) {
+      _controller.text = '${widget.quantity}';
+      return;
+    }
 
     // Empty, or a number below the floor (0): the cart reads this as "remove
     // this line" (its onBelowMin opens the confirmation), the pre-add sheet
@@ -171,8 +175,7 @@ class _QuantityStepperState extends State<QuantityStepper> {
               onTapOutside: (_) => _focusNode.unfocus(),
               inputFormatters: [
                 const WesternDigitsFormatter(),
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(widget.maxDigits),
+                RejectOverlongInputFormatter(widget.maxDigits),
               ],
               style: textStyle,
               decoration: const InputDecoration(

@@ -3013,4 +3013,166 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get errorLoyaltyChanged =>
       'تغيّرت إعدادات الولاء. ارجع وأعد فتح الإعدادات قبل الحفظ.';
+
+  @override
+  String get warehouseInsightsTitle => 'أداء المستودع والمتابعة';
+
+  @override
+  String get warehouseInsightsScope =>
+      'هذه الأرقام تخص عمليات فينيق فقط. صافي المبيعات بعد المرتجعات لا يعني الربح؛ لا يشمل تكلفة البضاعة أو المصاريف.';
+
+  @override
+  String get warehouseInsightsNetSales => 'صافي المبيعات';
+
+  @override
+  String get warehouseInsightsCollections => 'التحصيل';
+
+  @override
+  String get warehouseInsightsReturns => 'المرتجعات';
+
+  @override
+  String get warehouseInsightsDebts => 'الديون الحالية';
+
+  @override
+  String get warehouseInsightsTrend => 'المبيعات والتحصيل عبر الأيام';
+
+  @override
+  String get warehouseInsightsInspectDay => 'اختر يوماً لعرض أرقامه';
+
+  @override
+  String get warehouseInsightsPeriod => 'الفترة';
+
+  @override
+  String get warehouseInsightsRefresh => 'تحديث';
+
+  @override
+  String get warehouseInsightsAsOf => 'آخر تحديث:';
+
+  @override
+  String get warehouseInsightsDamascus => 'توقيت دمشق';
+
+  @override
+  String get warehouseInsightsAging => 'أعمار الديون — بالأيام';
+
+  @override
+  String get warehouseInsightsAgingMethod =>
+      'تُسوّى الحركات الأقدم أولاً. المرتجع يُنقص فاتورته الأصلية، وإلغاء الدفعة يعيد عمر الدين الأصلي. هذا تقدير للمتابعة؛ الدفعات غير مربوطة بفواتير محددة.';
+
+  @override
+  String get warehouseInsightsDailyTable => 'جدول التفاصيل اليومية';
+
+  @override
+  String get warehouseInsightsDate => 'التاريخ';
+
+  @override
+  String get warehouseInsightsPharmacy => 'الصيدلية';
+
+  @override
+  String get warehouseInsightsPhone => 'الهاتف';
+
+  @override
+  String get warehouseInsightsCity => 'المدينة';
+
+  @override
+  String get warehouseInsightsDays => 'الأيام';
+
+  @override
+  String get warehouseInsightsAction => 'المتابعة';
+
+  @override
+  String get warehouseInsightsOpenStatement => 'فتح الكشف';
+
+  @override
+  String get warehouseInsightsOpenStatements => 'كشوف الحسابات';
+
+  @override
+  String get warehouseInsightsSettings => 'مدة متابعة الديون والانقطاع';
+
+  @override
+  String get warehouseInsightsOverdueDays => 'يتأخر الدين بعد — يوم';
+
+  @override
+  String get warehouseInsightsInactiveDays => 'صيدلية بلا طلب منذ — يوم';
+
+  @override
+  String get warehouseInsightsSaveSettings => 'حفظ المدة';
+
+  @override
+  String get warehouseInsightsEmpty =>
+      'لا توجد حالات تستدعي المتابعة بهذه المدة.';
+
+  @override
+  String get warehouseInsightsLoadMore => 'عرض المزيد';
+
+  @override
+  String get warehouseInsightsInactiveFeature =>
+      'هذه الميزات غير مفعلة للمستودع. تواصل مع فينيق لتفعيلها.';
+
+  @override
+  String get warehouseInsightsNoAlerts => 'لا توجد حالات تستدعي التنبيه الآن.';
+
+  @override
+  String get warehouseInsightsOverview => 'نظرة عامة';
+
+  @override
+  String get warehouseInsightsOverdue => 'ديون متأخرة';
+
+  @override
+  String get warehouseInsightsInactive => 'صيدليات منقطعة';
+
+  @override
+  String get warehouseInsightsAlerts => 'تنبيهات المتابعة';
+
+  @override
+  String get warehouseInsightsInvalidDays => 'اختر مدة من 1 إلى 180 يوماً.';
+
+  @override
+  String get warehouseInsightsSaved => 'تم حفظ مدة المتابعة.';
+
+  @override
+  String warehouseInsightsResults(String count) {
+    return 'النتائج: $count';
+  }
+
+  @override
+  String get warehouseInsightsNoPreviousOrder =>
+      'لا توجد طلبات سابقة؛ المدة منذ تعيين الصيدلية.';
+
+  @override
+  String get errorFeatureUnavailable =>
+      'هذه الميزات غير مفعلة للمستودع. تواصل مع فينيق لتفعيلها.';
+
+  @override
+  String get errorFollowUpChanged =>
+      'تغيّرت مدة المتابعة. حدّث الصفحة قبل الحفظ.';
+
+  @override
+  String warehouseInsightsAlertOrders(String count) {
+    return 'طلبات معلّقة منذ 48 ساعة: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertReturns(String count) {
+    return 'مرتجعات بانتظار القرار منذ 48 ساعة: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertOverdue(String count) {
+    return 'صيدليات لها مبالغ متأخرة: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertInactive(String count) {
+    return 'صيدليات بحاجة متابعة طلباتها: $count';
+  }
+
+  @override
+  String get warehouseInsightsScopeShort =>
+      'عمليات فينيق فقط؛ صافي المبيعات ليس الربح.';
+
+  @override
+  String get warehouseInsightsAbout => 'عن هذه الأرقام';
+
+  @override
+  String get warehouseInsightsOverdueAmount => 'المبلغ المتأخر';
 }
