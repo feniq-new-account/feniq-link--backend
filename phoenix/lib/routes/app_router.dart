@@ -1,3 +1,4 @@
+import 'package:feniq/features/warehouse/presentation/views/warehouse_delivery_view.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_insights_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_insights_view.dart';
 import 'package:flutter/widgets.dart'; // BuildContext for the redirect; also debugPrint (TEMP DIAGNOSTIC router-lifecycle)
@@ -450,6 +451,7 @@ class AppRouter {
           ),
         ),
       ),
+      GoRoute(name: RouteNames.warehouseDelivery, path: RoutePaths.warehouseDelivery, builder: (context, state) => const WarehouseDeliveryView()),
       GoRoute(
         name: RouteNames.warehouseOrder,
         path: RoutePaths.warehouseOrder,

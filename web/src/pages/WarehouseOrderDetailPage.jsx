@@ -1,3 +1,4 @@
+import { DeliveryEstimate } from '../components/DeliveryEstimate';
 import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
 import { useAuth } from '../auth/AuthContext';
 import { useModalSafety } from '../hooks/useModalSafety';
@@ -887,6 +888,7 @@ export function WarehouseOrderDetailPage() {
               )}
             </div>
 
+            <DeliveryEstimate estimate={order.deliveryEstimate} status={order.status} orderId={order.id} onChanged={load} />
             {FEATURES.deliverySealPhoto && order.status !== 'delivered' && order.status !== 'cancelled' && (
               <div className="wh-detail-card">
                 <h2 className="wh-detail-card-title">{t('orderDetail.sealRequirementTitle')}</h2>

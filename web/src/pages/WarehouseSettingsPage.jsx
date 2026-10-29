@@ -1,3 +1,4 @@
+import { DeliveryScheduleCard } from '../components/DeliveryScheduleCard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -227,6 +228,7 @@ export function WarehouseSettingsPage() {
           </form>
         </div>
       )}
+      <DeliveryScheduleCard />
       {!isLoading && <LoyaltySettingsCard />}
     </div>
   );

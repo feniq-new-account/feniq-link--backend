@@ -121,6 +121,7 @@ function parseRangeEnd(value) {
 }
 
 module.exports = {
+  zonedTimeToInstant,
   BUSINESS_TIME_ZONE,
   startOfBusinessDay,
   endOfBusinessDay,

@@ -225,6 +225,8 @@ async function request(path, { method = 'GET', body, _retried = false } = {}) {
 
   if (!response.ok) {
     const messages = {
+      INVALID_DELIVERY_SCHEDULE: ['راجع أسماء المناطق والأيام والأوقات ومهلة التجهيز. لا تكرر يوم التوزيع داخل المنطقة.', 'Check region names, days, times and preparation hours. Do not duplicate a weekday within a region.'],
+      DELIVERY_CHANGED: ['تغيرت إعدادات التوزيع. أعد تحميلها قبل الحفظ.', 'Delivery settings changed. Reload before saving.'],
       INVALID_APP_RELEASE: ['تعذّر التحقق من ملف التحديث أو إعداداته. راجع النسخة المنشورة وأرقام البناء والتواريخ.', 'Could not verify the update artifact or settings. Check the published release, build numbers and deadlines.'],
       APP_RELEASE_CHANGED: ['تغيرت إعدادات التحديث. أعد تحميلها قبل الحفظ.', 'Update settings changed. Reload before saving.'],
       FEATURE_NOT_ENABLED: ['هذه الميزة غير متاحة للمستودع حالياً. تواصل مع إدارة فينيق.', 'This feature is not currently available for the warehouse. Contact Feniq support.'],
@@ -368,6 +370,11 @@ function advertisementFormData(data, imageFile) {
 }
 
 export const api = {
+  deliverySettings: () => request('/warehouse/delivery'),
+  updateDeliverySettings: (body) => request('/warehouse/delivery', { method: 'PUT', body }),
+  deliveryPharmacies: (q) => request(`/warehouse/delivery/pharmacies?q=${encodeURIComponent(q)}`),
+  assignDeliveryPharmacy: (id, body) => request(`/warehouse/delivery/pharmacies/${id}`, { method: 'PUT', body }),
+  rescheduleDelivery: (id, body) => request(`/warehouse/delivery/orders/${id}/reschedule`, { method: 'PUT', body }),
   warehouseInsights: ({ period = 'month', from, to, force } = {}) => request(`/warehouse/insights/report?${new URLSearchParams({ period, ...(from ? { from } : {}), ...(to ? { to } : {}), ...(force ? { force: '1' } : {}) })}`),
   warehouseFollowUp: ({ kind, after, force } = {}) => request(`/warehouse/insights/follow-up?${new URLSearchParams({ kind, ...(after ? { after } : {}), ...(force ? { force: '1' } : {}) })}`),
   warehouseFollowUpExport: (kind) => request(`/warehouse/insights/export?${new URLSearchParams({ kind })}`),

@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/delivery_estimate_card.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -778,6 +779,7 @@ class _QuoteSummary extends StatelessWidget {
             style: positive,
             key: const Key('cartCreditUsed'),
           ),
+        DeliveryEstimateCard(estimate: quote?.deliveryEstimate, preview: true),
         if (quote?.monthlyLoyalty != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),

@@ -1051,6 +1051,7 @@ async function createOrder({
     const claimedCode = codeDoc
       ? await discountCodes.claimUse({ codeDoc, pharmacyId, now }, session)
       : null;
+    const deliveryEstimate = await require('./deliverySchedule.service').estimate(pharmacyId, warehouseId, new Date(), { session, lock: true });
     const orderNumber = await nextOrderNumber(session);
 
     const [created] = await Order.create(
@@ -1063,6 +1064,7 @@ async function createOrder({
           repCommission,
           loyaltyDiscountAmount,
           monthlyLoyalty,
+          deliveryEstimate,
           loyaltyTiers: loyaltyTiers.length > 0 ? loyaltyTiers : undefined,
           creditUsedSyp,
           status: 'pending',
@@ -1279,6 +1281,7 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
 
   return {
     // All null on a cart quoted without a code.
+    deliveryEstimate: await require('./deliverySchedule.service').estimate(pharmacyId, warehouseId, now),
     code: codeDoc?.code ?? null,
     type: codeDoc?.type ?? null,
     value: codeDoc?.value ?? null,

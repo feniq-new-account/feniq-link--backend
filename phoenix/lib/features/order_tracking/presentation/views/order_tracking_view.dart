@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/delivery_estimate_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -272,6 +273,7 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
             DeliverySealSection(order: order, isConfirming: state.isConfirmingDelivery),
           ],
           const SizedBox(height: AppSizes.spacingXLarge),
+          DeliveryEstimateCard(estimate: order.deliveryEstimate, status: order.status),
           StatusHistoryList(entries: order.statusHistory),
           if (order.items.isNotEmpty) ...[
             const SizedBox(height: AppSizes.spacingXLarge),

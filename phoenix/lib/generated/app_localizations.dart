@@ -5383,6 +5383,318 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Overdue amount'**
   String get warehouseInsightsOverdueAmount;
+
+  /// No description provided for @deliveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery regions and schedules'**
+  String get deliveryTitle;
+
+  /// No description provided for @deliveryExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable estimates after setting regions and assigning pharmacies. Damascus time, ±12 hours, frozen when submitted; not a guaranteed arrival time.'**
+  String get deliveryExplanation;
+
+  /// No description provided for @deliveryEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Show delivery estimate to pharmacies'**
+  String get deliveryEnable;
+
+  /// No description provided for @deliveryFeatureOff.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is not active for this warehouse. Earlier promises are preserved.'**
+  String get deliveryFeatureOff;
+
+  /// No description provided for @deliveryZoneName.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery region name'**
+  String get deliveryZoneName;
+
+  /// No description provided for @deliveryPreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation hours'**
+  String get deliveryPreparation;
+
+  /// No description provided for @deliveryZoneActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Region active'**
+  String get deliveryZoneActive;
+
+  /// No description provided for @deliveryDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Dispatch weekday'**
+  String get deliveryDay;
+
+  /// No description provided for @deliveryDepartureTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure — Damascus'**
+  String get deliveryDepartureTime;
+
+  /// No description provided for @deliveryArrivalHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival hours after departure'**
+  String get deliveryArrivalHours;
+
+  /// No description provided for @deliveryCutoffHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Order cutoff hours before departure'**
+  String get deliveryCutoffHours;
+
+  /// No description provided for @deliveryAddTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add dispatch day'**
+  String get deliveryAddTrip;
+
+  /// No description provided for @deliveryRemoveTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove dispatch day'**
+  String get deliveryRemoveTrip;
+
+  /// No description provided for @deliveryExceptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Date exceptions'**
+  String get deliveryExceptions;
+
+  /// No description provided for @deliveryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date — YYYY-MM-DD'**
+  String get deliveryDate;
+
+  /// No description provided for @deliveryCancelTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this date\'s trip'**
+  String get deliveryCancelTrip;
+
+  /// No description provided for @deliveryRemoveException.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove exception'**
+  String get deliveryRemoveException;
+
+  /// No description provided for @deliveryAddException.
+  ///
+  /// In en, this message translates to:
+  /// **'Add date exception'**
+  String get deliveryAddException;
+
+  /// No description provided for @deliveryPauseZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause region'**
+  String get deliveryPauseZone;
+
+  /// No description provided for @deliveryAddZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Add region'**
+  String get deliveryAddZone;
+
+  /// No description provided for @deliverySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save schedule'**
+  String get deliverySave;
+
+  /// No description provided for @deliverySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get deliverySaved;
+
+  /// No description provided for @deliveryReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload settings'**
+  String get deliveryReload;
+
+  /// No description provided for @deliveryAssignTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign pharmacies to delivery regions'**
+  String get deliveryAssignTitle;
+
+  /// No description provided for @deliveryAssignHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the schedule first, then find the pharmacy and choose its region. This assignment does not hide warehouses in the catalog.'**
+  String get deliveryAssignHint;
+
+  /// No description provided for @deliverySearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy name or phone'**
+  String get deliverySearch;
+
+  /// No description provided for @deliverySearchButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get deliverySearchButton;
+
+  /// No description provided for @deliveryUnassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No region — arrival unspecified'**
+  String get deliveryUnassigned;
+
+  /// No description provided for @deliveryPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get deliveryPaused;
+
+  /// No description provided for @deliveryArrivalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated delivery'**
+  String get deliveryArrivalTitle;
+
+  /// No description provided for @deliveryUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery time is not currently specified for this pharmacy.'**
+  String get deliveryUnavailable;
+
+  /// No description provided for @deliveryPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview; the estimate is fixed when you submit the order.'**
+  String get deliveryPreview;
+
+  /// No description provided for @deliveryRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected between'**
+  String get deliveryRange;
+
+  /// No description provided for @deliveryLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Past the arrival window. Contact the warehouse; the timer ending does not mean delivered.'**
+  String get deliveryLate;
+
+  /// No description provided for @deliveryDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get deliveryDelivered;
+
+  /// No description provided for @deliveryCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Order cancelled — arrival estimate ended'**
+  String get deliveryCancelled;
+
+  /// No description provided for @deliveryUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Time until the end of the window'**
+  String get deliveryUntil;
+
+  /// No description provided for @deliveryReschedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Change this order\'s estimate'**
+  String get deliveryReschedule;
+
+  /// No description provided for @deliveryNewTime.
+  ///
+  /// In en, this message translates to:
+  /// **'New arrival — Damascus time'**
+  String get deliveryNewTime;
+
+  /// No description provided for @deliveryReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for change — visible to the pharmacy'**
+  String get deliveryReason;
+
+  /// No description provided for @deliveryChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate changed'**
+  String get deliveryChanged;
+
+  /// No description provided for @deliveryInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Check region names, days and times. Hours 0–168, arrival up to 72. Do not repeat a weekday within a region.'**
+  String get deliveryInvalid;
+
+  /// No description provided for @deliveryUnsaved.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Save or reload before assigning pharmacies.'**
+  String get deliveryUnsaved;
+
+  /// No description provided for @deliveryNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching pharmacies'**
+  String get deliveryNoResults;
+
+  /// No description provided for @deliveryDays0.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get deliveryDays0;
+
+  /// No description provided for @deliveryDays1.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get deliveryDays1;
+
+  /// No description provided for @deliveryDays2.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get deliveryDays2;
+
+  /// No description provided for @deliveryDays3.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get deliveryDays3;
+
+  /// No description provided for @deliveryDays4.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get deliveryDays4;
+
+  /// No description provided for @deliveryDays5.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get deliveryDays5;
+
+  /// No description provided for @deliveryDays6.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get deliveryDays6;
+
+  /// No description provided for @deliveryHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} hours {minutes} minutes'**
+  String deliveryHoursMinutes(String hours, String minutes);
 }
 
 class _AppLocalizationsDelegate

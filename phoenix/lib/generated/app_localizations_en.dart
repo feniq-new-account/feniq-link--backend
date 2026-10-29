@@ -3183,4 +3183,170 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseInsightsOverdueAmount => 'Overdue amount';
+
+  @override
+  String get deliveryTitle => 'Delivery regions and schedules';
+
+  @override
+  String get deliveryExplanation =>
+      'Enable estimates after setting regions and assigning pharmacies. Damascus time, ±12 hours, frozen when submitted; not a guaranteed arrival time.';
+
+  @override
+  String get deliveryEnable => 'Show delivery estimate to pharmacies';
+
+  @override
+  String get deliveryFeatureOff =>
+      'This feature is not active for this warehouse. Earlier promises are preserved.';
+
+  @override
+  String get deliveryZoneName => 'Delivery region name';
+
+  @override
+  String get deliveryPreparation => 'Preparation hours';
+
+  @override
+  String get deliveryZoneActive => 'Region active';
+
+  @override
+  String get deliveryDay => 'Dispatch weekday';
+
+  @override
+  String get deliveryDepartureTime => 'Departure — Damascus';
+
+  @override
+  String get deliveryArrivalHours => 'Arrival hours after departure';
+
+  @override
+  String get deliveryCutoffHours => 'Order cutoff hours before departure';
+
+  @override
+  String get deliveryAddTrip => 'Add dispatch day';
+
+  @override
+  String get deliveryRemoveTrip => 'Remove dispatch day';
+
+  @override
+  String get deliveryExceptions => 'Date exceptions';
+
+  @override
+  String get deliveryDate => 'Date — YYYY-MM-DD';
+
+  @override
+  String get deliveryCancelTrip => 'Cancel this date\'s trip';
+
+  @override
+  String get deliveryRemoveException => 'Remove exception';
+
+  @override
+  String get deliveryAddException => 'Add date exception';
+
+  @override
+  String get deliveryPauseZone => 'Pause region';
+
+  @override
+  String get deliveryAddZone => 'Add region';
+
+  @override
+  String get deliverySave => 'Save schedule';
+
+  @override
+  String get deliverySaved => 'Saved';
+
+  @override
+  String get deliveryReload => 'Reload settings';
+
+  @override
+  String get deliveryAssignTitle => 'Assign pharmacies to delivery regions';
+
+  @override
+  String get deliveryAssignHint =>
+      'Save the schedule first, then find the pharmacy and choose its region. This assignment does not hide warehouses in the catalog.';
+
+  @override
+  String get deliverySearch => 'Pharmacy name or phone';
+
+  @override
+  String get deliverySearchButton => 'Search';
+
+  @override
+  String get deliveryUnassigned => 'No region — arrival unspecified';
+
+  @override
+  String get deliveryPaused => 'Paused';
+
+  @override
+  String get deliveryArrivalTitle => 'Estimated delivery';
+
+  @override
+  String get deliveryUnavailable =>
+      'Delivery time is not currently specified for this pharmacy.';
+
+  @override
+  String get deliveryPreview =>
+      'Preview; the estimate is fixed when you submit the order.';
+
+  @override
+  String get deliveryRange => 'Expected between';
+
+  @override
+  String get deliveryLate =>
+      'Past the arrival window. Contact the warehouse; the timer ending does not mean delivered.';
+
+  @override
+  String get deliveryDelivered => 'Delivered';
+
+  @override
+  String get deliveryCancelled => 'Order cancelled — arrival estimate ended';
+
+  @override
+  String get deliveryUntil => 'Time until the end of the window';
+
+  @override
+  String get deliveryReschedule => 'Change this order\'s estimate';
+
+  @override
+  String get deliveryNewTime => 'New arrival — Damascus time';
+
+  @override
+  String get deliveryReason => 'Reason for change — visible to the pharmacy';
+
+  @override
+  String get deliveryChanged => 'Estimate changed';
+
+  @override
+  String get deliveryInvalid =>
+      'Check region names, days and times. Hours 0–168, arrival up to 72. Do not repeat a weekday within a region.';
+
+  @override
+  String get deliveryUnsaved =>
+      'You have unsaved changes. Save or reload before assigning pharmacies.';
+
+  @override
+  String get deliveryNoResults => 'No matching pharmacies';
+
+  @override
+  String get deliveryDays0 => 'Sunday';
+
+  @override
+  String get deliveryDays1 => 'Monday';
+
+  @override
+  String get deliveryDays2 => 'Tuesday';
+
+  @override
+  String get deliveryDays3 => 'Wednesday';
+
+  @override
+  String get deliveryDays4 => 'Thursday';
+
+  @override
+  String get deliveryDays5 => 'Friday';
+
+  @override
+  String get deliveryDays6 => 'Saturday';
+
+  @override
+  String deliveryHoursMinutes(String hours, String minutes) {
+    return '$hours hours $minutes minutes';
+  }
 }

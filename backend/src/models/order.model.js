@@ -246,6 +246,8 @@ const orderSchema = new Schema(
     // as return.images[] / banner.imageUrl. deliverySealConfirmedAt marks when
     // the pharmacy confirmed; the order status itself is untouched by this (the
     // warehouse still advances it). Both null on every existing order.
+    deliveryEstimate: { type: Schema.Types.Mixed, default: null },
+    deliveryRevision: { type: Number, default: 0 },
     deliverySealPhoto: { type: String, default: null },
     deliverySealConfirmedAt: { type: Date, default: null },
     // Always the pharmacist's user - the warehouse has no cancellation authority from the app.

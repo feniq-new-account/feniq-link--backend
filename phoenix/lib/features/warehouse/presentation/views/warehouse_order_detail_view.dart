@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/delivery_estimate_card.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:uuid/uuid.dart';
@@ -196,6 +197,10 @@ class WarehouseOrderDetailView extends StatelessWidget {
             _pharmacyCard(context, order.pharmacy!),
             const SizedBox(height: AppSizes.spacingMedium),
           ],
+          DeliveryEstimateCard(estimate: order.deliveryEstimate, status: order.status, onReschedule: (date, reason, revision) async {
+            await context.read<WarehouseManagementRepository>().rescheduleDelivery(order.id, date, reason, revision);
+            if (context.mounted) { await context.read<WarehouseOrderDetailCubit>().load(); }
+          }),
           _itemsCard(context, state, order),
           const SizedBox(height: AppSizes.spacingMedium),
           _moneyCard(context, order),

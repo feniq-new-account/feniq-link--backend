@@ -4,6 +4,11 @@ import 'package:feniq/features/warehouse/data/models/warehouse_management_models
 
 /// A warehouse account's reps, pharmacy accounts and returns.
 abstract class WarehouseManagementRepository {
+  Future<void> rescheduleDelivery(String orderId, String expectedBusiness, String reason, int revision);
+  Future<Map<String, dynamic>> getDeliverySettings();
+  Future<Map<String, dynamic>> saveDeliverySettings(Map<String, dynamic> settings);
+  Future<List<Map<String, dynamic>>> searchDeliveryPharmacies(String query);
+  Future<Map<String, dynamic>> assignDeliveryPharmacy(String id, String? zoneId, int revision);
   Future<Map<String, bool>> getInsightAccess();
   Future<WarehouseInsightsReport> getInsights({String period = 'month', bool force = false});
   Future<WarehouseFollowUpPage> getFollowUp({required String kind, String? after, bool force = false});

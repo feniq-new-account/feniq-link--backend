@@ -25,6 +25,23 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
   }
 
   @override
+  Future<void> rescheduleDelivery(String orderId, String expectedBusiness, String reason, int revision) async {
+    await _run((dio) => dio.put('/warehouse/delivery/orders/$orderId/reschedule', data: {
+      'expectedBusiness': expectedBusiness, 'reason': reason, 'revision': revision}));
+  }
+  @override
+  Future<Map<String, dynamic>> getDeliverySettings() => _run((dio) => dio.get('/warehouse/delivery'));
+  @override
+  Future<Map<String, dynamic>> saveDeliverySettings(Map<String, dynamic> settings) => _run((dio) => dio.put('/warehouse/delivery', data: settings));
+  @override
+  Future<List<Map<String, dynamic>>> searchDeliveryPharmacies(String query) async {
+    final result = await _run((dio) => dio.get('/warehouse/delivery/pharmacies', queryParameters: {'q': query}));
+    return (result['pharmacies'] as List).map((row) => (row as Map).cast<String, dynamic>()).toList();
+  }
+  @override
+  Future<Map<String, dynamic>> assignDeliveryPharmacy(String id, String? zoneId, int revision) =>
+    _run((dio) => dio.put('/warehouse/delivery/pharmacies/$id', data: {'zoneId': zoneId, 'revision': revision}));
+  @override
   Future<Map<String, bool>> getInsightAccess() async {
     final data = await _run((dio) => dio.get('/warehouse/subscription'));
     if (data['features'] is! Map) throw ServerFailure('Incomplete subscription response.', code: FailureCode.unexpected);

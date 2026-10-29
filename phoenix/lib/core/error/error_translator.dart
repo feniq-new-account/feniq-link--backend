@@ -18,6 +18,9 @@ import 'package:feniq/generated/app_localizations.dart';
 // this generic single-string translator has no access to.
 String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMessage) {
   switch (code) {
+    case 'INVALID_DELIVERY_SCHEDULE':
+    case 'DELIVERY_CHANGED':
+      return l10n.deliveryInvalid;
     // --- Transport / HTTP-status failures (FailureCode + synthesised HTTP_*).
     case FailureCode.network:
       return l10n.errorNetwork;

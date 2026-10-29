@@ -81,7 +81,8 @@ function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn, has
   return {
     order: {
       id: order._id,
-      orderNumber: order.orderNumber,
+      deliveryEstimate: require('./deliveryEstimate.viewmodel').publicEstimate(order.deliveryEstimate, order.status),
+    orderNumber: order.orderNumber,
       status: order.status,
       totalPrice: order.totalPrice,
       discountAmount: order.discountAmount,

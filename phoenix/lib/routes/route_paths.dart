@@ -36,6 +36,7 @@ class RoutePaths {
   static const String panelHome = '/panel-home';
 
   static const String warehouseHome = '/warehouse';
+  static const String warehouseDelivery = '/warehouse/delivery';
   static const String warehouseInsights = '/warehouse/insights';
   static const String warehouseOrder = '/warehouse/orders/:orderId';
   static const String warehouseReturn = '/warehouse/returns/:returnId';

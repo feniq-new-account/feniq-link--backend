@@ -3175,4 +3175,169 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseInsightsOverdueAmount => 'المبلغ المتأخر';
+
+  @override
+  String get deliveryTitle => 'مناطق ومواعيد التوزيع';
+
+  @override
+  String get deliveryExplanation =>
+      'فعّل المواعيد بعد ضبط المناطق وربط الصيدليات. التقدير بتوقيت دمشق بهامش ±12 ساعة ويثبت عند إرسال الطلب؛ ليس ضماناً لساعة وصول محددة.';
+
+  @override
+  String get deliveryEnable => 'إظهار موعد التوصيل للصيدلي';
+
+  @override
+  String get deliveryFeatureOff =>
+      'الميزة غير مفعلة في اشتراك المستودع. المواعيد السابقة تبقى محفوظة.';
+
+  @override
+  String get deliveryZoneName => 'اسم منطقة التوزيع';
+
+  @override
+  String get deliveryPreparation => 'مهلة التجهيز بالساعات';
+
+  @override
+  String get deliveryZoneActive => 'المنطقة فعالة';
+
+  @override
+  String get deliveryDay => 'يوم الطلعة';
+
+  @override
+  String get deliveryDepartureTime => 'وقت الطلعة — دمشق';
+
+  @override
+  String get deliveryArrivalHours => 'ساعات الوصول بعد الطلعة';
+
+  @override
+  String get deliveryCutoffHours => 'إغلاق الطلب قبل الطلعة بساعات';
+
+  @override
+  String get deliveryAddTrip => 'إضافة يوم توزيع';
+
+  @override
+  String get deliveryRemoveTrip => 'حذف يوم التوزيع';
+
+  @override
+  String get deliveryExceptions => 'استثناءات الأيام';
+
+  @override
+  String get deliveryDate => 'التاريخ — YYYY-MM-DD';
+
+  @override
+  String get deliveryCancelTrip => 'إلغاء طلعة هذا اليوم';
+
+  @override
+  String get deliveryRemoveException => 'حذف الاستثناء';
+
+  @override
+  String get deliveryAddException => 'إضافة استثناء';
+
+  @override
+  String get deliveryPauseZone => 'إيقاف المنطقة';
+
+  @override
+  String get deliveryAddZone => 'إضافة منطقة';
+
+  @override
+  String get deliverySave => 'حفظ الجدول';
+
+  @override
+  String get deliverySaved => 'تم الحفظ';
+
+  @override
+  String get deliveryReload => 'إعادة تحميل الإعدادات';
+
+  @override
+  String get deliveryAssignTitle => 'ربط الصيدليات بمناطق التوزيع';
+
+  @override
+  String get deliveryAssignHint =>
+      'احفظ الجدول أولاً، ثم ابحث عن الصيدلية وحدد منطقتها. هذا الربط لا يخفي المستودعات من الكتالوج.';
+
+  @override
+  String get deliverySearch => 'اسم الصيدلية أو الهاتف';
+
+  @override
+  String get deliverySearchButton => 'بحث';
+
+  @override
+  String get deliveryUnassigned => 'بلا منطقة — الموعد غير محدد';
+
+  @override
+  String get deliveryPaused => 'موقوفة';
+
+  @override
+  String get deliveryArrivalTitle => 'التوصيل المتوقع';
+
+  @override
+  String get deliveryUnavailable =>
+      'موعد التوصيل غير محدد لهذه الصيدلية حالياً.';
+
+  @override
+  String get deliveryPreview => 'تقدير أولي؛ يثبت الموعد عند إرسال الطلب.';
+
+  @override
+  String get deliveryRange => 'متوقع بين';
+
+  @override
+  String get deliveryLate =>
+      'تأخر عن نافذة الوصول؛ تواصل مع المستودع. انتهاء الوقت لا يعني تسليم الطلب.';
+
+  @override
+  String get deliveryDelivered => 'تم التسليم';
+
+  @override
+  String get deliveryCancelled => 'الطلب ملغى — انتهى تقدير الوصول';
+
+  @override
+  String get deliveryUntil => 'الوقت المتبقي لنهاية النافذة';
+
+  @override
+  String get deliveryReschedule => 'تعديل موعد هذا الطلب';
+
+  @override
+  String get deliveryNewTime => 'الموعد الجديد — توقيت دمشق';
+
+  @override
+  String get deliveryReason => 'سبب تعديل الموعد — يظهر للصيدلي';
+
+  @override
+  String get deliveryChanged => 'تم تعديل الموعد';
+
+  @override
+  String get deliveryInvalid =>
+      'راجع أسماء المناطق والأيام والأوقات. الساعات من 0 إلى 168، وساعات الوصول حتى 72. لا تكرر اليوم في المنطقة.';
+
+  @override
+  String get deliveryUnsaved =>
+      'عندك تعديلات غير محفوظة. احفظها أو أعد تحميل الإعدادات قبل ربط الصيدليات.';
+
+  @override
+  String get deliveryNoResults => 'لا توجد صيدليات مطابقة';
+
+  @override
+  String get deliveryDays0 => 'الأحد';
+
+  @override
+  String get deliveryDays1 => 'الاثنين';
+
+  @override
+  String get deliveryDays2 => 'الثلاثاء';
+
+  @override
+  String get deliveryDays3 => 'الأربعاء';
+
+  @override
+  String get deliveryDays4 => 'الخميس';
+
+  @override
+  String get deliveryDays5 => 'الجمعة';
+
+  @override
+  String get deliveryDays6 => 'السبت';
+
+  @override
+  String deliveryHoursMinutes(String hours, String minutes) {
+    return '$hours ساعة و $minutes دقيقة';
+  }
 }

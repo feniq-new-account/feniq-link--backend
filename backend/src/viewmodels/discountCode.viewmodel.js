@@ -76,6 +76,7 @@ function toPreviewResponse(quote) {
         }
       : null,
     totals: {
+      deliveryEstimate: require('./deliveryEstimate.viewmodel').publicEstimate(quote.deliveryEstimate),
       subtotalSyp: quote.subtotalSyp,
       platformDiscountSyp: quote.platformDiscountSyp,
       // The warehouse's loyalty discount for a cart this size, the pharmacy's
