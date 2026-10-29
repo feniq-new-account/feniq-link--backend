@@ -1,3 +1,4 @@
+const monthlyLoyalty = require('./monthlyLoyalty.service');
 const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const Return = require('../models/return.model');
@@ -220,6 +221,7 @@ async function approveReturn(returnId, warehouseId, userId) {
     // Saved on the document itself rather than through a separate updateOne,
     // so the object handed back to the caller carries the link too - a bare
     // updateOne would leave `claimed` stale in memory.
+    await monthlyLoyalty.reverseForReturn(claimed, valuation.creditSyp, session);
     claimed.creditEntryId = entry._id;
     await claimed.save({ session });
 

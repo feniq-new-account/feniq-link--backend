@@ -93,7 +93,7 @@ class OfflineToast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final time = DateFormat('d/M HH:mm').format(savedAt.toLocal());
+    final time = DateFormat('d/M HH:mm', 'en_US').format(savedAt.toLocal());
     return SafeArea(
       bottom: false,
       child: Center(

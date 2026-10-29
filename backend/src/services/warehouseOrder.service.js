@@ -29,6 +29,7 @@ const {
 const { emitToWarehouse, EVENTS } = require('../realtime');
 const { FEATURES } = require('../config/features');
 const pharmacyCredit = require('./pharmacyCredit.service');
+const monthlyLoyalty = require('./monthlyLoyalty.service');
 
 // Section 7/13b: the warehouse only ever moves an order forward, one stage at
 // a time - no skipping, no picking an arbitrary status. Three stages, one
@@ -262,6 +263,7 @@ async function deliverOrder(order, { userId, note = null }) {
   // and an upsert inside a transaction burns the retry budget on conflicts.
   const account = await ledgerService.resolveAccount(order.pharmacyId, order.warehouseId);
 
+  const loyaltyPeriod = await monthlyLoyalty.prepareDelivery(order, now);
   const delivered = await runInTransaction(async (session) => {
     const moved = await Order.findOneAndUpdate(
       { _id: order._id, status: 'out_for_delivery', __v: order.__v },
@@ -278,6 +280,7 @@ async function deliverOrder(order, { userId, note = null }) {
     // The pharmacy's quarter of this order's rep commission becomes its credit
     // at this warehouse, in the same transaction as the delivery.
     await pharmacyCredit.earnForDelivery(moved, session);
+    await monthlyLoyalty.earnForDelivery(moved, loyaltyPeriod, session, now);
     const { entry, alreadyPosted } = await orderLedger.postChargeForDelivery(
       { order: moved, userId, deliveredAt: now, account },
       session

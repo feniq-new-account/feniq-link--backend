@@ -127,7 +127,7 @@ export function ExchangeRateCard({ rate, onChanged }) {
           <p className="hint">{t('admin.exchangeRate.noRate')}</p>
         ) : (
           <div className="adm-rate-value adm-num">
-            {t('admin.exchangeRate.rateValue', { rate: rate.usdToSyp.toLocaleString() })}
+            {t('admin.exchangeRate.rateValue', { rate: rate.usdToSyp.toLocaleString('en-US') })}
           </div>
         )}
 
@@ -209,8 +209,8 @@ export function ExchangeRateCard({ rate, onChanged }) {
                   {history.map((row) => (
                     <tr key={row.id}>
                       <td>{formatBusinessDateTime(row.effectiveFrom)}</td>
-                      <td className="adm-num">{row.usdToSyp.toLocaleString()}</td>
-                      <td className="adm-num">{row.previousUsdToSyp != null ? row.previousUsdToSyp.toLocaleString() : '—'}</td>
+                      <td className="adm-num">{row.usdToSyp.toLocaleString('en-US')}</td>
+                      <td className="adm-num">{row.previousUsdToSyp != null ? row.previousUsdToSyp.toLocaleString('en-US') : '—'}</td>
                       <td>
                         <span
                           className={`availability-badge ${row.source === 'manual' ? 'availability-paused' : 'availability-available'}`}

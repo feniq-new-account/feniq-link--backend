@@ -2976,4 +2976,41 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get repScanStaleLocationMessage =>
       'انتهت صلاحية قراءة الموقع. فعّل الوقت التلقائي والموقع في الهاتف ثم أعد المسح للحصول على قراءة جديدة.';
+
+  @override
+  String get warehouseLoyaltyMode => 'طريقة الولاء';
+
+  @override
+  String get warehouseLoyaltyPerOrder => 'حسب قيمة الطلب الواحد';
+
+  @override
+  String get warehouseLoyaltyMonthly => 'حسب مجموع المشتريات الشهرية';
+
+  @override
+  String get warehouseMonthlyLoyaltyHelp =>
+      'تُجمع الفواتير المسلّمة بقيمتها الصافية بعد الحسومات والرصيد، ضمن شهر بتوقيت دمشق. يُضاف فرق الحافز مرة واحدة لرصيد الطلب القادم. المرتجعات تخفض الاستحقاق، وإذا صُرف الحافز يُسوّى من حوافز الولاء القادمة دون المساس بعمولة الصيدلية أو تسجيل دين نقدي. تُثبّت شرائح الشهر عند أول تسليم فيه.';
+
+  @override
+  String pharmacyMonthlyLoyaltyProgress(String amount) {
+    return 'مشترياتك المسلّمة هذا الشهر: $amount. يُضاف فرق حافز الولاء بعد التسليم لرصيد طلبك القادم؛ المرتجعات تخفض الاستحقاق.';
+  }
+
+  @override
+  String get warehouseMonthlyLoyaltyExample =>
+      'مثال: مشتريات مسلّمة صافية 100,000 → رصيد 1,000؛ وعند 200,000 → مجموع رصيد 5,000، أي فرق إضافي 4,000.';
+
+  @override
+  String get warehouseMonthlyLoyaltyMin => 'مجموع الشهر من';
+
+  @override
+  String get warehouseMonthlyLoyaltyReward => 'الرصيد المستحق';
+
+  @override
+  String pharmacyMonthlyLoyaltyOffset(String amount) {
+    return 'حافز مرتجع صُرف سابقاً: $amount، سيُسوّى من حوافز الولاء القادمة؛ ليس ديناً نقدياً.';
+  }
+
+  @override
+  String get errorLoyaltyChanged =>
+      'تغيّرت إعدادات الولاء. ارجع وأعد فتح الإعدادات قبل الحفظ.';
 }

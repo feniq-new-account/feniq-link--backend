@@ -1,3 +1,5 @@
+const { runInTransaction } = require('../utils/transaction');
+const WarehouseAudit = require('../models/warehouseAudit.model');
 const { ApiError } = require('../utils/ApiError');
 const Warehouse = require('../models/warehouse.model');
 const { assertRateUsedIsCurrent } = require('./exchangeRate.service');
@@ -90,8 +92,22 @@ async function updateOrderLimits(
 // least minSyp gets discountSyp off" - whole liras). The warehouse pays for it,
 // so it is the warehouse's to set. Applies to orders placed from now on: each
 // order keeps the tiers it was placed under (order.model.js's loyaltyTiers).
-async function updateLoyalty(warehouseId, { enabled, tiers }) {
+async function updateLoyalty(warehouseId, { enabled, tiers, mode, revision, actorId }) {
   const warehouse = await getSettings(warehouseId);
+  const expectedRevision = revision ?? warehouse.loyalty?.revision ?? 0;
+  if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) {
+    throw ApiError.badRequest('Invalid loyalty revision.', undefined, 'INVALID_LOYALTY');
+  }
+  if (expectedRevision !== (warehouse.loyalty?.revision ?? 0)) {
+    throw ApiError.conflict('Loyalty configuration changed; reload settings.', 'LOYALTY_CHANGED');
+  }
+  const before = { enabled: warehouse.loyalty?.enabled ?? false, mode: warehouse.loyalty?.mode ?? 'per_order',
+    revision: expectedRevision, tiers: (warehouse.loyalty?.tiers || []).map((tier) => ({ minSyp: tier.minSyp, discountSyp: tier.discountSyp })) };
+  if (mode !== undefined) {
+    if (!['per_order', 'monthly'].includes(mode)) throw ApiError.badRequest('Invalid loyalty mode.', undefined, 'INVALID_LOYALTY');
+    warehouse.loyalty = warehouse.loyalty ?? {};
+    warehouse.loyalty.mode = mode;
+  }
   if (enabled !== undefined) {
     if (typeof enabled !== 'boolean') {
       throw ApiError.badRequest('enabled must be true or false.', undefined, 'INVALID_LOYALTY');
@@ -111,11 +127,29 @@ async function updateLoyalty(warehouseId, { enabled, tiers }) {
     warehouse.loyalty = warehouse.loyalty ?? {};
     warehouse.loyalty.tiers = parsed;
   }
+  if (warehouse.loyalty?.mode === 'monthly') {
+    const rows = warehouse.loyalty.tiers || [];
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i].discountSyp < rows[i - 1].discountSyp) {
+        throw ApiError.badRequest('Monthly rewards must not decrease at higher thresholds.', undefined, 'INVALID_LOYALTY_TIERS');
+      }
+    }
+  }
   if (warehouse.loyalty?.enabled && !(warehouse.loyalty.tiers?.length > 0)) {
     throw ApiError.badRequest('Add at least one tier before switching loyalty on.', undefined, 'LOYALTY_TIERS_REQUIRED');
   }
-  await warehouse.save();
-  return warehouse;
+  const after = { enabled: warehouse.loyalty?.enabled ?? false, mode: warehouse.loyalty?.mode ?? 'per_order',
+    revision: expectedRevision + 1, tiers: (warehouse.loyalty?.tiers || []).map((tier) => ({ minSyp: tier.minSyp, discountSyp: tier.discountSyp })) };
+  return runInTransaction(async (session) => {
+    const updated = await Warehouse.findOneAndUpdate({ _id: warehouseId,
+      ...(expectedRevision ? { 'loyalty.revision': expectedRevision } : { $or: [
+        { 'loyalty.revision': 0 }, { 'loyalty.revision': { $exists: false } },
+      ] }),
+    }, { $set: { loyalty: after } }, { session, new: true });
+    if (!updated) throw ApiError.conflict('Loyalty configuration changed; reload settings.', 'LOYALTY_CHANGED');
+    if (actorId) await WarehouseAudit.create([{ warehouseId, actorId, action: 'loyalty.configured', before, after }], { session });
+    return updated;
+  });
 }
 
 module.exports = { getSettings, updateOrderLimits, updateLoyalty };

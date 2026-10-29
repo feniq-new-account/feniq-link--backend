@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/number_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -21,13 +22,7 @@ import '../extensions/build_context_extensions.dart';
 // [phoneTextFieldFullValue], which does the prefixing in exactly one place so
 // it can not drift between a screen's validator and its submit call.
 class PhoneTextField extends StatelessWidget {
-  const PhoneTextField({
-    super.key,
-    required this.label,
-    required this.controller,
-    this.validator,
-    this.onChanged,
-  });
+  const PhoneTextField({super.key, required this.label, required this.controller, this.validator, this.onChanged});
 
   final String label;
   final TextEditingController controller;
@@ -76,7 +71,7 @@ class PhoneTextField extends StatelessWidget {
               child: TextFormField(
                 controller: controller,
                 keyboardType: TextInputType.phone,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                inputFormatters: [const WesternDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
                 validator: validator,
                 onChanged: onChanged,
                 textDirection: TextDirection.ltr,

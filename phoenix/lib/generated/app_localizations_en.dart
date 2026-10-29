@@ -2984,4 +2984,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get repScanStaleLocationMessage =>
       'The location reading expired. Enable automatic time and location on the phone, then scan again for a fresh reading.';
+
+  @override
+  String get warehouseLoyaltyMode => 'Loyalty method';
+
+  @override
+  String get warehouseLoyaltyPerOrder => 'Per-order value';
+
+  @override
+  String get warehouseLoyaltyMonthly => 'Monthly purchase total';
+
+  @override
+  String get warehouseMonthlyLoyaltyHelp =>
+      'Delivered invoices count at their net amount after discounts and credit, within a Damascus calendar month. Only the incremental reward is credited for the next order. Returns reduce entitlement; a spent reward offsets future loyalty, without taking commission credit or creating cash debt. Monthly tiers freeze at the first delivery.';
+
+  @override
+  String pharmacyMonthlyLoyaltyProgress(String amount) {
+    return 'Delivered purchases this month: $amount. Incremental loyalty is credited after delivery for your next order; returns reduce entitlement.';
+  }
+
+  @override
+  String get warehouseMonthlyLoyaltyExample =>
+      'Example: 100,000 delivered net purchases → 1,000 credit; at 200,000 → 5,000 total, so only 4,000 more.';
+
+  @override
+  String get warehouseMonthlyLoyaltyMin => 'Monthly total from';
+
+  @override
+  String get warehouseMonthlyLoyaltyReward => 'Total reward credit';
+
+  @override
+  String pharmacyMonthlyLoyaltyOffset(String amount) {
+    return 'Previously spent reward on returned goods: $amount. This offsets future loyalty; it is not a cash debt.';
+  }
+
+  @override
+  String get errorLoyaltyChanged =>
+      'Loyalty settings changed. Go back and reopen settings before saving.';
 }

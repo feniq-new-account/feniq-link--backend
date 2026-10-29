@@ -33,6 +33,8 @@ const warehouseSchema = new Schema(
     // switches it on; tiers of "an order of at least minSyp gets discountSyp
     // off", set by the warehouse and paid by it.
     loyalty: {
+      mode: { type: String, enum: ['per_order', 'monthly'], default: 'per_order' },
+      revision: { type: Number, default: 0 },
       enabled: { type: Boolean, default: false },
       tiers: {
         type: [new Schema({ minSyp: { type: Number, required: true }, discountSyp: { type: Number, required: true } }, { _id: false })],

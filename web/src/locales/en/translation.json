@@ -899,7 +899,14 @@
       "saved": "Loyalty discount saved.",
       "example": "Example: an order of 100,000 or more -> 2,000 off; 200,000 or more -> 5,000 off.",
       "errorTier": "Each tier needs an order value above zero and a discount below it, in whole numbers.",
-      "errorEmpty": "Add at least one tier before turning it on."
+      "errorEmpty": "Add at least one tier before turning it on.",
+      "mode": "Loyalty method",
+      "perOrder": "Per-order value",
+      "monthly": "Monthly purchase total",
+      "monthlyHelp": "Delivered invoices count at their net amount after discounts and credit, within a Damascus calendar month. Only the incremental reward is credited for the next order. Returns reduce entitlement; a spent reward offsets future loyalty, without taking commission credit or creating cash debt. Monthly tiers freeze at the first delivery.",
+      "monthlyExample": "Example: 100,000 delivered net purchases → 1,000 credit; at 200,000 → 5,000 total, so only 4,000 more.",
+      "monthlyMin": "Monthly total from",
+      "monthlyReward": "Total reward credit"
     }
   },
   "settlement": {

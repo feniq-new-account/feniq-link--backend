@@ -1,3 +1,4 @@
+import { asciiDigits } from '../utils/digits';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
@@ -43,7 +44,7 @@ export function LoginPage() {
             id="phone"
             type="tel"
             value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            onChange={(event) => setPhone(asciiDigits(event.target.value))}
             required
             autoFocus
           />

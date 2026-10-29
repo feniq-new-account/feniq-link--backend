@@ -22,6 +22,27 @@ void main() {
 
   setUp(() => repo = MockRepo());
 
+  test('monthly strategy survives reading and saving the server settings', () async {
+    final monthly = WarehouseLoyalty.fromSettingsJson({
+      'settings': {
+        'loyalty': {
+          'mode': 'monthly',
+          'enabled': true,
+          'tiers': [
+            {'minSyp': 100000, 'discountSyp': 1000},
+          ],
+        },
+      },
+    });
+    when(
+      () => repo.updateLoyalty(enabled: true, tiers: monthly.tiers, mode: 'monthly', revision: 0),
+    ).thenAnswer((_) async => monthly);
+    final cubit = WarehouseLoyaltyCubit(repository: repo);
+    expect(await cubit.save(enabled: true, tiers: monthly.tiers, mode: 'monthly'), isTrue);
+    expect(cubit.state.loyalty.mode, 'monthly');
+    await cubit.close();
+  });
+
   test('the quarters and the loyalty lines read off an order', () {
     final order = WarehouseOrderDetail.fromJson({
       'order': {
@@ -70,15 +91,15 @@ void main() {
 
   test('saving the loyalty discount keeps what the server answers; a refusal says why', () async {
     const tiers = [LoyaltyTier(minSyp: 100000, discountSyp: 2000)];
-    when(() => repo.updateLoyalty(enabled: true, tiers: tiers)).thenAnswer(
-      (_) async => const WarehouseLoyalty(enabled: true, tiers: tiers),
-    );
+    when(
+      () => repo.updateLoyalty(enabled: true, tiers: tiers, mode: 'per_order', revision: 0),
+    ).thenAnswer((_) async => const WarehouseLoyalty(enabled: true, tiers: tiers));
     final cubit = WarehouseLoyaltyCubit(repository: repo);
     expect(await cubit.save(enabled: true, tiers: tiers), isTrue);
     expect(cubit.state.loyalty.enabled, isTrue);
 
     when(
-      () => repo.updateLoyalty(enabled: true, tiers: const []),
+      () => repo.updateLoyalty(enabled: true, tiers: const [], mode: 'per_order', revision: 0),
     ).thenThrow(ServerFailure('no', code: 'LOYALTY_TIERS_REQUIRED'));
     expect(await cubit.save(enabled: true, tiers: const []), isFalse);
     expect(cubit.state.actionErrorCode, 'LOYALTY_TIERS_REQUIRED');
@@ -88,8 +109,13 @@ void main() {
     const rep = WarehouseRep(id: 'r1', name: 'Ahmad', phone: '0940000201', commissionRate: 2, pharmacyCount: 4);
     when(() => repo.getReps()).thenAnswer((_) async => [rep]);
     when(() => repo.updateRep('r1', warehouseShareToRep: true)).thenAnswer(
-      (_) async =>
-          const WarehouseRep(id: 'r1', name: 'Ahmad', phone: '0940000201', commissionRate: 2, warehouseShareToRep: true),
+      (_) async => const WarehouseRep(
+        id: 'r1',
+        name: 'Ahmad',
+        phone: '0940000201',
+        commissionRate: 2,
+        warehouseShareToRep: true,
+      ),
     );
     final cubit = WarehouseRepsCubit(repository: repo);
     await cubit.load();
@@ -120,6 +146,11 @@ void main() {
     await tester.tap(find.text('Save the loyalty discount'));
     await tester.pump();
     expect(find.text('Each tier needs an order value above zero and a smaller discount.'), findsOneWidget);
-    verifyNever(() => cubit.save(enabled: any(named: 'enabled'), tiers: any(named: 'tiers')));
+    verifyNever(
+      () => cubit.save(
+        enabled: any(named: 'enabled'),
+        tiers: any(named: 'tiers'),
+      ),
+    );
   });
 }

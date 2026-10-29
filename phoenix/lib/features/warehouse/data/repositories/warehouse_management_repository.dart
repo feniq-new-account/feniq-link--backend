@@ -48,7 +48,12 @@ abstract class WarehouseManagementRepository {
   // Loyalty discount
   Future<WarehouseLoyalty> getLoyalty();
 
-  Future<WarehouseLoyalty> updateLoyalty({required bool enabled, required List<LoyaltyTier> tiers});
+  Future<WarehouseLoyalty> updateLoyalty({
+    required bool enabled,
+    required List<LoyaltyTier> tiers,
+    String mode = 'per_order',
+    int? revision,
+  });
 
   // Returns
   Future<WarehouseReturnsPage> getReturns({String? status, String? after});

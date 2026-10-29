@@ -267,7 +267,7 @@ class _TextDialogState extends State<_TextDialog> {
         controller: _controller,
         autofocus: true,
         keyboardType: widget.number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
-        inputFormatters: widget.number ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))] : null,
+        inputFormatters: widget.number ? [const WesternDigitsFormatter(), FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))] : null,
         decoration: InputDecoration(labelText: widget.label, helperText: widget.hint, helperMaxLines: 3),
         onChanged: (_) => setState(() {}),
       ),

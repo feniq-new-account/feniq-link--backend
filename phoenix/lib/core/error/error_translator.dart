@@ -225,6 +225,8 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
       return l10n.errorOrderNotEditable;
     case 'PACKAGE_ITEMS_LOCKED':
       return l10n.errorPackageItemsLocked;
+    case 'LOYALTY_CHANGED':
+      return l10n.errorLoyaltyChanged;
     case 'INVALID_LOYALTY_TIERS':
       return l10n.errorInvalidLoyaltyTiers;
     case 'LOYALTY_TIERS_REQUIRED':

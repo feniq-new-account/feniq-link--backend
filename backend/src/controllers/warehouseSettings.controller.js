@@ -36,6 +36,9 @@ const updateLoyalty = asyncHandler(async (req, res) => {
   const warehouse = await loadWarehouseOrThrow(req.user._id);
   const updated = await settingsService.updateLoyalty(warehouse._id, {
     enabled: req.body?.enabled,
+    mode: req.body?.mode,
+    revision: req.body?.revision,
+    actorId: req.user._id,
     tiers: req.body?.tiers,
   });
   res.json({ success: true, message: 'Loyalty updated.', ...settingsViewModel.toWarehouseSettingsResponse(updated) });

@@ -778,6 +778,23 @@ class _QuoteSummary extends StatelessWidget {
             style: positive,
             key: const Key('cartCreditUsed'),
           ),
+        if (quote?.monthlyLoyalty != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              l10n.pharmacyMonthlyLoyaltyProgress(
+                formatSyp((quote!.monthlyLoyalty!['eligibleSyp'] as num?) ?? 0, l10n.currencySuffix),
+              ),
+              style: muted,
+            ),
+          ),
+        if (((quote?.monthlyLoyalty?['futureRewardOffsetSyp'] as num?) ?? 0) > 0)
+          Text(
+            l10n.pharmacyMonthlyLoyaltyOffset(
+              formatSyp(quote!.monthlyLoyalty!['futureRewardOffsetSyp'] as num, l10n.currencySuffix),
+            ),
+            style: muted,
+          ),
         if (state.hasDiscountCode)
           row(
             l10n.discountCodeLine(state.discountCode!),

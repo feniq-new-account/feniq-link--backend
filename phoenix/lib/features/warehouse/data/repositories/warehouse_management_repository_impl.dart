@@ -59,7 +59,12 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
   }
 
   @override
-  Future<WarehouseRep> updateRep(String repId, {double? commissionRate, bool? isActive, bool? warehouseShareToRep}) async {
+  Future<WarehouseRep> updateRep(
+    String repId, {
+    double? commissionRate,
+    bool? isActive,
+    bool? warehouseShareToRep,
+  }) async {
     final data = await _run(
       (dio) => dio.patch(
         Endpoints.warehouseRep(repId),
@@ -136,18 +141,26 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
       if (text != null && text.isNotEmpty) 'note': text,
     };
     try {
-      await _payments.run(ownerId: ownerId, payload: payload, proposedKey: idempotencyKey,
+      await _payments.run(
+        ownerId: ownerId,
+        payload: payload,
+        proposedKey: idempotencyKey,
         send: (key) async {
           if (await _apiClient.currentAccountId() != ownerId) {
             throw ServerFailure('Session changed. Sign in to the original account to resume.', code: 'HTTP_401');
           }
           if (deliveryOrderId != null) {
-            await _run((dio) => dio.post(Endpoints.warehouseOrderAdvance(deliveryOrderId),
-              data: {'expectedStatus': 'out_for_delivery', 'targetStatus': 'delivered'}));
+            await _run(
+              (dio) => dio.post(
+                Endpoints.warehouseOrderAdvance(deliveryOrderId),
+                data: {'expectedStatus': 'out_for_delivery', 'targetStatus': 'delivered'},
+              ),
+            );
           }
           final payment = {...payload, 'idempotencyKey': key}..remove('deliveryOrderId');
           await _run((dio) => dio.post(Endpoints.warehousePayments, data: payment));
-        });
+        },
+      );
     } on Failure {
       rethrow;
     } catch (_) {
@@ -166,15 +179,24 @@ class WarehouseManagementRepositoryImpl implements WarehouseManagementRepository
       WarehouseLoyalty.fromSettingsJson(await _run((dio) => dio.get(Endpoints.warehouseSettings)));
 
   @override
-  Future<WarehouseLoyalty> updateLoyalty({required bool enabled, required List<LoyaltyTier> tiers}) async =>
-      WarehouseLoyalty.fromSettingsJson(
-        await _run(
-          (dio) => dio.put(
-            Endpoints.warehouseLoyalty,
-            data: {'enabled': enabled, 'tiers': [for (final tier in tiers) tier.toJson()]},
-          ),
-        ),
-      );
+  Future<WarehouseLoyalty> updateLoyalty({
+    required bool enabled,
+    required List<LoyaltyTier> tiers,
+    String mode = 'per_order',
+    int? revision,
+  }) async => WarehouseLoyalty.fromSettingsJson(
+    await _run(
+      (dio) => dio.put(
+        Endpoints.warehouseLoyalty,
+        data: {
+          'enabled': enabled,
+          'mode': mode,
+          if (revision != null) 'revision': revision,
+          'tiers': [for (final tier in tiers) tier.toJson()],
+        },
+      ),
+    ),
+  );
 
   @override
   Future<WarehouseReturnsPage> getReturns({String? status, String? after}) async {

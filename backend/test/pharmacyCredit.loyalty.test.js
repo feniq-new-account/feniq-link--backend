@@ -321,6 +321,8 @@ test('a warehouse switches loyalty on with its tiers, and orders get the discoun
   });
   assert.strictEqual(saved.status, 200, JSON.stringify(saved.body));
   assert.deepStrictEqual(saved.body.settings.loyalty, {
+    mode: 'per_order',
+    revision: 1,
     enabled: true,
     tiers: [{ minSyp: 100000, discountSyp: 2000 }, { minSyp: 200000, discountSyp: 5000 }],
   });

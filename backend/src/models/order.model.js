@@ -143,6 +143,16 @@ const orderSchema = new Schema(
     // amount, and the warehouse's tiers as they were when the order was placed
     // - an edit re-derives the discount from these, never from today's tiers.
     loyaltyDiscountAmount: { type: Number, default: 0 },
+    monthlyLoyalty: {
+      type: new Schema({
+        tiers: [new Schema({ minSyp: Number, discountSyp: Number }, { _id: false })],
+        period: { type: String, default: null },
+        eligibleSyp: { type: Number, default: 0 },
+        reversedSyp: { type: Number, default: 0 },
+        creditedAt: { type: Date, default: null },
+      }, { _id: false }),
+      default: null,
+    },
     loyaltyTiers: {
       type: [new Schema({ minSyp: Number, discountSyp: Number }, { _id: false })],
       default: undefined,

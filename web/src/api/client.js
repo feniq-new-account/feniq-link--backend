@@ -228,6 +228,7 @@ async function request(path, { method = 'GET', body, _retried = false } = {}) {
       INVALID_APP_RELEASE: ['تعذّر التحقق من ملف التحديث أو إعداداته. راجع النسخة المنشورة وأرقام البناء والتواريخ.', 'Could not verify the update artifact or settings. Check the published release, build numbers and deadlines.'],
       APP_RELEASE_CHANGED: ['تغيرت إعدادات التحديث. أعد تحميلها قبل الحفظ.', 'Update settings changed. Reload before saving.'],
       FEATURE_NOT_ENABLED: ['هذه الميزة غير متاحة للمستودع حالياً. تواصل مع إدارة فينيق.', 'This feature is not currently available for the warehouse. Contact Feniq support.'],
+      LOYALTY_CHANGED: ['تغيّرت إعدادات الولاء. أعد تحميلها قبل الحفظ.', 'Loyalty settings changed. Reload before saving.'],
       PHARMACY_LOCATION_CHANGED: ['تغيّر الموقع. أعد تحميل القائمة قبل الحفظ.', 'The location changed. Reload the list before saving.'],
       VISIT_POLICY_CHANGED: ['تغيّرت سياسة الزيارة. أعد تحميل الإعدادات.', 'The visit policy changed. Reload the settings.'],
       INVALID_VISIT_POLICY: ['النطاق 25–500 m والدقة 10–100 m وعمر القراءة 15–300 s.', 'Radius must be 25–500 m, accuracy 10–100 m, and reading age 15–300 s.'],
@@ -1012,8 +1013,8 @@ export const api = {
   // `requireDeliverySealPhoto` is optional - omitted keys are left untouched
   // server-side (warehouseSettings.service.js).
   // The warehouse's own loyalty discount: { enabled, tiers: [{ minSyp, discountSyp }] }.
-  updateWarehouseLoyalty: ({ enabled, tiers }) =>
-    request('/warehouse/settings/loyalty', { method: 'PUT', body: { enabled, tiers } }),
+  updateWarehouseLoyalty: ({ enabled, tiers, mode, revision }) =>
+    request('/warehouse/settings/loyalty', { method: 'PUT', body: { enabled, tiers, mode, revision } }),
   updateWarehouseOrderLimits: ({ minOrderAmountUsd, maxOrderAmountUsd, requireDeliverySealPhoto, rateUsed }) =>
     request('/warehouse/settings', {
       method: 'PATCH',

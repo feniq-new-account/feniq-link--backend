@@ -104,9 +104,16 @@ async function hasFeature(warehouseId, name) {
 
 async function effectiveLoyaltyTiers(warehouse) {
   const { activeLoyaltyTiers } = require('../utils/loyalty');
-  const tiers = activeLoyaltyTiers(warehouse);
+  const tiers = warehouse?.loyalty?.mode === 'monthly' ? [] : activeLoyaltyTiers(warehouse);
   if (!tiers.length) return tiers;
   return await hasFeature(warehouse._id, 'loyalty') ? tiers : [];
 }
 
-module.exports = { FEATURES, evaluateSubscription, getSubscription, configureSubscription, hasFeature, validatePatch, effectiveLoyaltyTiers };
+async function effectiveMonthlyLoyalty(warehouse) {
+  const { activeLoyaltyTiers } = require('../utils/loyalty');
+  if (warehouse?.loyalty?.mode !== 'monthly') return null;
+  const tiers = activeLoyaltyTiers(warehouse);
+  return tiers.length && await hasFeature(warehouse._id, 'loyalty') ? { tiers } : null;
+}
+
+module.exports = { effectiveMonthlyLoyalty, FEATURES, evaluateSubscription, getSubscription, configureSubscription, hasFeature, validatePatch, effectiveLoyaltyTiers };

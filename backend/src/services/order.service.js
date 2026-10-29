@@ -11,7 +11,7 @@ const RepAssignment = require('../models/repAssignment.model');
 const Rep = require('../models/rep.model');
 const { feniqRateFor, splitRepCommission } = require('../utils/repCommission');
 const { loyaltyDiscountFor } = require('../utils/loyalty');
-const { effectiveLoyaltyTiers } = require('./warehouseSubscription.service');
+const { effectiveLoyaltyTiers, effectiveMonthlyLoyalty } = require('./warehouseSubscription.service');
 const pharmacyCredit = require('./pharmacyCredit.service');
 const Counter = require('../models/counter.model');
 const Return = require('../models/return.model');
@@ -732,6 +732,7 @@ async function createOrder({
     : null;
   const repCommissionRate = rep?.commissionRate ?? 0;
   const loyaltyTiers = await effectiveLoyaltyTiers(warehouse);
+  const monthlyLoyalty = await effectiveMonthlyLoyalty(warehouse);
   // The pharmacy's credit here, taken off this order automatically. Read now
   // and taken for real inside the transaction (a conditional decrement - see
   // pharmacyCredit.service.js), so a concurrent order can never overdraw it.
@@ -1061,6 +1062,7 @@ async function createOrder({
           repId: repAssignment ? repAssignment.repId : null,
           repCommission,
           loyaltyDiscountAmount,
+          monthlyLoyalty,
           loyaltyTiers: loyaltyTiers.length > 0 ? loyaltyTiers : undefined,
           creditUsedSyp,
           status: 'pending',
@@ -1263,6 +1265,8 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
   });
 
   const creditBalanceSyp = await pharmacyCredit.balanceFor(pharmacyId, warehouseId);
+  const monthlyTerms = await effectiveMonthlyLoyalty(warehouse);
+  const monthlyState = monthlyTerms ? await require('./monthlyLoyalty.service').stateFor(pharmacyId, warehouseId, now, monthlyTerms.tiers) : null;
   const rolled = rollUpOrderMoney({
     subtotalSyp: totalPrice,
     advertisementDiscountSypAmount: advertisementDiscountAmount,
@@ -1288,6 +1292,7 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
     // pharmacy's credit at this warehouse with the part this order takes.
     loyaltyDiscountSyp: rolled.loyaltyDiscountAmount,
     creditBalanceSyp,
+    monthlyLoyalty: monthlyState,
     creditUsedSyp: rolled.creditUsedSyp,
     preCodeSyp: rolled.preCodeSyp,
     discountSyp: rolled.discountCodeSyp,

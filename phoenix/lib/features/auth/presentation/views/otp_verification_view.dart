@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/number_input.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -367,7 +368,7 @@ class _OtpCodeInput extends StatelessWidget {
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               maxLength: _otpLength,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              inputFormatters: [const WesternDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
               autofillHints: const [AutofillHints.oneTimeCode],
               onChanged: onChanged,
               decoration: const InputDecoration(counterText: '', border: InputBorder.none),

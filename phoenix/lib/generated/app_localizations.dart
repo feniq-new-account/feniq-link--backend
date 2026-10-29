@@ -5035,6 +5035,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The location reading expired. Enable automatic time and location on the phone, then scan again for a fresh reading.'**
   String get repScanStaleLocationMessage;
+
+  /// No description provided for @warehouseLoyaltyMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Loyalty method'**
+  String get warehouseLoyaltyMode;
+
+  /// No description provided for @warehouseLoyaltyPerOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Per-order value'**
+  String get warehouseLoyaltyPerOrder;
+
+  /// No description provided for @warehouseLoyaltyMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly purchase total'**
+  String get warehouseLoyaltyMonthly;
+
+  /// No description provided for @warehouseMonthlyLoyaltyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered invoices count at their net amount after discounts and credit, within a Damascus calendar month. Only the incremental reward is credited for the next order. Returns reduce entitlement; a spent reward offsets future loyalty, without taking commission credit or creating cash debt. Monthly tiers freeze at the first delivery.'**
+  String get warehouseMonthlyLoyaltyHelp;
+
+  /// No description provided for @pharmacyMonthlyLoyaltyProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered purchases this month: {amount}. Incremental loyalty is credited after delivery for your next order; returns reduce entitlement.'**
+  String pharmacyMonthlyLoyaltyProgress(String amount);
+
+  /// No description provided for @warehouseMonthlyLoyaltyExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Example: 100,000 delivered net purchases → 1,000 credit; at 200,000 → 5,000 total, so only 4,000 more.'**
+  String get warehouseMonthlyLoyaltyExample;
+
+  /// No description provided for @warehouseMonthlyLoyaltyMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly total from'**
+  String get warehouseMonthlyLoyaltyMin;
+
+  /// No description provided for @warehouseMonthlyLoyaltyReward.
+  ///
+  /// In en, this message translates to:
+  /// **'Total reward credit'**
+  String get warehouseMonthlyLoyaltyReward;
+
+  /// No description provided for @pharmacyMonthlyLoyaltyOffset.
+  ///
+  /// In en, this message translates to:
+  /// **'Previously spent reward on returned goods: {amount}. This offsets future loyalty; it is not a cash debt.'**
+  String pharmacyMonthlyLoyaltyOffset(String amount);
+
+  /// No description provided for @errorLoyaltyChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Loyalty settings changed. Go back and reopen settings before saving.'**
+  String get errorLoyaltyChanged;
 }
 
 class _AppLocalizationsDelegate

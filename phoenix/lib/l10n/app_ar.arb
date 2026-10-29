@@ -1244,5 +1244,29 @@
   "repVisitStaleLocation": "قراءة الموقع قديمة",
   "repScanLocationUnapprovedMessage": "لم يُعتمد موقع هذه الصيدلية بعد. تواصل مع إدارة فينيق لتثبيته؛ هذه المحاولة لا تُحتسب زيارة مؤكدة.",
   "repScanPoorAccuracyMessage": "دقة GPS غير كافية. اقترب من مدخل الصيدلية أو مكان مفتوح ثم أعد المسح.",
-  "repScanStaleLocationMessage": "انتهت صلاحية قراءة الموقع. فعّل الوقت التلقائي والموقع في الهاتف ثم أعد المسح للحصول على قراءة جديدة."
+  "repScanStaleLocationMessage": "انتهت صلاحية قراءة الموقع. فعّل الوقت التلقائي والموقع في الهاتف ثم أعد المسح للحصول على قراءة جديدة.",
+  "warehouseLoyaltyMode": "طريقة الولاء",
+  "warehouseLoyaltyPerOrder": "حسب قيمة الطلب الواحد",
+  "warehouseLoyaltyMonthly": "حسب مجموع المشتريات الشهرية",
+  "warehouseMonthlyLoyaltyHelp": "تُجمع الفواتير المسلّمة بقيمتها الصافية بعد الحسومات والرصيد، ضمن شهر بتوقيت دمشق. يُضاف فرق الحافز مرة واحدة لرصيد الطلب القادم. المرتجعات تخفض الاستحقاق، وإذا صُرف الحافز يُسوّى من حوافز الولاء القادمة دون المساس بعمولة الصيدلية أو تسجيل دين نقدي. تُثبّت شرائح الشهر عند أول تسليم فيه.",
+  "pharmacyMonthlyLoyaltyProgress": "مشترياتك المسلّمة هذا الشهر: {amount}. يُضاف فرق حافز الولاء بعد التسليم لرصيد طلبك القادم؛ المرتجعات تخفض الاستحقاق.",
+  "@pharmacyMonthlyLoyaltyProgress": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseMonthlyLoyaltyExample": "مثال: مشتريات مسلّمة صافية 100,000 → رصيد 1,000؛ وعند 200,000 → مجموع رصيد 5,000، أي فرق إضافي 4,000.",
+  "warehouseMonthlyLoyaltyMin": "مجموع الشهر من",
+  "warehouseMonthlyLoyaltyReward": "الرصيد المستحق",
+  "pharmacyMonthlyLoyaltyOffset": "حافز مرتجع صُرف سابقاً: {amount}، سيُسوّى من حوافز الولاء القادمة؛ ليس ديناً نقدياً.",
+  "@pharmacyMonthlyLoyaltyOffset": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoyaltyChanged": "تغيّرت إعدادات الولاء. ارجع وأعد فتح الإعدادات قبل الحفظ."
 }

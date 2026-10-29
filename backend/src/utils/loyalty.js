@@ -42,7 +42,7 @@ function parseLoyaltyTiers(value) {
   for (const raw of value) {
     const minSyp = Number(raw?.minSyp);
     const discountSyp = Number(raw?.discountSyp);
-    if (!Number.isInteger(minSyp) || !Number.isInteger(discountSyp)) return null;
+    if (!Number.isSafeInteger(minSyp) || !Number.isSafeInteger(discountSyp)) return null;
     if (minSyp <= 0 || discountSyp <= 0 || discountSyp >= minSyp) return null;
     tiers.push({ minSyp, discountSyp });
   }

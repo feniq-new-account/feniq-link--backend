@@ -1,3 +1,5 @@
+import 'package:feniq/core/utils/number_input.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
@@ -115,6 +117,7 @@ class _AccountPartPaymentSheetState extends State<AccountPartPaymentSheet> {
                 controller: _amount,
                 autofocus: true,
                 keyboardType: TextInputType.number,
+                inputFormatters: [const WesternDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
                 onChanged: (_) => setState(() => _error = null),
                 decoration: InputDecoration(labelText: l10n.warehouseCollectPaidLabel(suffix), errorText: _error),
               ),

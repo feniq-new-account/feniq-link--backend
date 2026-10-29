@@ -1758,5 +1758,29 @@
   "repVisitStaleLocation": "Location reading expired",
   "repScanLocationUnapprovedMessage": "This pharmacy location is not approved yet. Contact Feniq to confirm its premises; this attempt is not a verified visit.",
   "repScanPoorAccuracyMessage": "GPS accuracy is insufficient. Move near the pharmacy entrance or an open area, then scan again.",
-  "repScanStaleLocationMessage": "The location reading expired. Enable automatic time and location on the phone, then scan again for a fresh reading."
+  "repScanStaleLocationMessage": "The location reading expired. Enable automatic time and location on the phone, then scan again for a fresh reading.",
+  "warehouseLoyaltyMode": "Loyalty method",
+  "warehouseLoyaltyPerOrder": "Per-order value",
+  "warehouseLoyaltyMonthly": "Monthly purchase total",
+  "warehouseMonthlyLoyaltyHelp": "Delivered invoices count at their net amount after discounts and credit, within a Damascus calendar month. Only the incremental reward is credited for the next order. Returns reduce entitlement; a spent reward offsets future loyalty, without taking commission credit or creating cash debt. Monthly tiers freeze at the first delivery.",
+  "pharmacyMonthlyLoyaltyProgress": "Delivered purchases this month: {amount}. Incremental loyalty is credited after delivery for your next order; returns reduce entitlement.",
+  "@pharmacyMonthlyLoyaltyProgress": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseMonthlyLoyaltyExample": "Example: 100,000 delivered net purchases → 1,000 credit; at 200,000 → 5,000 total, so only 4,000 more.",
+  "warehouseMonthlyLoyaltyMin": "Monthly total from",
+  "warehouseMonthlyLoyaltyReward": "Total reward credit",
+  "pharmacyMonthlyLoyaltyOffset": "Previously spent reward on returned goods: {amount}. This offsets future loyalty; it is not a cash debt.",
+  "@pharmacyMonthlyLoyaltyOffset": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoyaltyChanged": "Loyalty settings changed. Go back and reopen settings before saving."
 }

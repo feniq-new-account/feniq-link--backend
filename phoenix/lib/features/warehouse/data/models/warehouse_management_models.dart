@@ -563,14 +563,19 @@ class LoyaltyTier {
 
 /// The warehouse's loyalty discount: off unless it switches it on.
 class WarehouseLoyalty {
-  const WarehouseLoyalty({this.enabled = false, this.tiers = const []});
+  const WarehouseLoyalty({this.enabled = false, this.tiers = const [], this.mode = 'per_order', this.revision = 0});
 
   final bool enabled;
   final List<LoyaltyTier> tiers;
 
+  final String mode;
+  final int revision;
+
   factory WarehouseLoyalty.fromSettingsJson(Map<String, dynamic> json) {
     final loyalty = _map(_map(json['settings'])?['loyalty']);
     return WarehouseLoyalty(
+      mode: loyalty?['mode'] == 'monthly' ? 'monthly' : 'per_order',
+      revision: _int(loyalty?['revision']),
       enabled: loyalty?['enabled'] == true,
       tiers: _maps(loyalty?['tiers']).map(LoyaltyTier.fromJson).toList(),
     );
