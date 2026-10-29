@@ -14,9 +14,8 @@ function isValidPhone(phone) {
 }
 
 // The +9639XXXXXXXX form. The mobile app always signs in with this shape
-// (phone_text_field.dart composes it), and /auth/login-password matches the
-// stored number exactly - so an account that only ever signs in from the app
-// (a rep) has to be stored this way or its credentials would never work.
+// (phone_text_field.dart composes it). New reps use this storage format;
+// password login also falls back to the other spelling for legacy accounts.
 // Expects a number isValidPhone already accepted.
 function toInternationalPhone(phone) {
   return phone.startsWith('0') ? `+963${phone.slice(1)}` : phone;

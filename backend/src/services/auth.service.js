@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const env = require('../config/env');
 const { ApiError } = require('../utils/ApiError');
 const { assertPasswordPolicy } = require('../utils/password');
+const { normalizePhone, isValidPhone, toInternationalPhone } = require('../utils/phone');
 const User = require('../models/user.model');
 const RefreshToken = require('../models/refreshToken.model');
 const Pharmacy = require('../models/pharmacy.model');
@@ -421,7 +422,16 @@ async function clearFailedAttempts(user) {
 //    password gets the same generic 401 whether the account is locked or not
 //    and so learns nothing; the real owner gets a clear message.
 async function loginWithPassword({ phone, password }) {
-  const user = await User.findOne({ phone }).select(LOGIN_USER_FIELDS);
+  const enteredPhone = normalizePhone(phone);
+  let user = await User.findOne({ phone: enteredPhone }).select(LOGIN_USER_FIELDS);
+  // Older admin-created warehouse accounts use 09..., whereas the mobile
+  // phone field and new reps use +963.... Prefer an exact historical identity
+  // if both spellings already exist; never try another account's password
+  // after an exact match, merge users, or reset credentials here.
+  if (!user && isValidPhone(enteredPhone)) {
+    const alternative = enteredPhone.startsWith('0') ? toInternationalPhone(enteredPhone) : `0${enteredPhone.slice(4)}`;
+    user = await User.findOne({ phone: alternative }).select(LOGIN_USER_FIELDS);
+  }
 
   // One indistinguishable failure for all three ways this can go wrong: no
   // such account, an account with no password set, and a wrong password
