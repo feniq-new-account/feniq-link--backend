@@ -1464,5 +1464,62 @@
   },
   "payments": {
     "unknown": "The result is not confirmed. The payment may have been recorded; retry with the same details to confirm it without a duplicate."
+  },
+  "warehouseAccess": {
+    "title": "Warehouses and subscriptions",
+    "help": "Manage owner and accountant accounts and feature access. Reps are created by the warehouse or accountant.",
+    "empty": "No matching warehouses.",
+    "currentState": "Current status",
+    "subscription": "Subscription and features",
+    "plan": "Plan",
+    "status": "Subscription status",
+    "paidUntil": "Paid until (your device time)",
+    "graceDays": "Grace period in days",
+    "trialHelp": "The trial lasts 30 days from activation. Saving does not restart an existing trial or record a payment.",
+    "note": "Administrative note",
+    "save": "Save subscription and features",
+    "saved": "Subscription and features saved.",
+    "members": "Linked accounts",
+    "addMember": "Add owner or accountant",
+    "name": "Name",
+    "phone": "Phone number",
+    "password": "Temporary password",
+    "role": "Account type",
+    "create": "Create account",
+    "created": "Account created. A password change is required at first sign-in.",
+    "credentialsHelp": "Save these credentials now. The password is displayed here temporarily only.",
+    "hideCredentials": "Hide credentials",
+    "roles": {
+      "owner": "Warehouse owner",
+      "accountant": "Accountant",
+      "legacy": "Previous warehouse account"
+    },
+    "plans": {
+      "basic": "Basic",
+      "management": "Warehouse management",
+      "field_team": "Management and field team"
+    },
+    "states": {
+      "not_started": "Trial not started",
+      "trial": "Trial",
+      "active": "Active",
+      "grace": "Grace period",
+      "expired": "Expired",
+      "paused": "Paused"
+    },
+    "features": {
+      "repTracking": "Rep tracking",
+      "loyalty": "Loyalty",
+      "accounting": "Accounting operations",
+      "salesReports": "Advanced sales reports",
+      "ownerInsights": "Extended owner insights",
+      "overdueReceivables": "Overdue receivables",
+      "inactivePharmacies": "Inactive pharmacies",
+      "ownerAlerts": "Owner alerts",
+      "deliverySchedule": "Delivery scheduling"
+    },
+    "roleChanged": "Role updated. This user must sign in again.",
+    "statusFailed": "Could not refresh the subscription. You can read records and retry.",
+    "accessNotice": "Feature access follows the subscription status. Previous records remain available."
   }
 }

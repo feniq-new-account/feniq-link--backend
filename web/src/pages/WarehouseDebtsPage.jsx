@@ -1,3 +1,5 @@
+import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
+import { useAuth } from '../auth/AuthContext';
 import { useModalSafety } from '../hooks/useModalSafety';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -297,7 +299,7 @@ function PaymentRow({ payment, onReverse }) {
         <div className="table-row-actions">
           {/* Only a posted settlement can be reversed: a reversal is final, and
               an already-reversed payment has nothing left to undo. */}
-          {!isReversal && !isReversed && (
+          {onReverse && !isReversal && !isReversed && (
             <button className="btn-reject" onClick={() => onReverse(payment)}>
               {t('debts.reverse')}
             </button>
@@ -410,6 +412,9 @@ function StatementTable({ statement }) {
 }
 
 function WarehouseDebtDetail({ pharmacyId, onBack }) {
+  const { user } = useAuth();
+  const { hasFeature } = useWarehouseSubscription();
+  const canRecord = user?.warehouseRole !== 'owner' && hasFeature('accounting');
   const { t, i18n } = useTranslation();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -553,7 +558,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
                   </thead>
                   <tbody>
                     {payments.map((payment) => (
-                      <PaymentRow key={payment.id} payment={payment} onReverse={setReversing} />
+                      <PaymentRow key={payment.id} payment={payment} onReverse={canRecord ? setReversing : null} />
                     ))}
                   </tbody>
                 </table>
@@ -563,11 +568,11 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
         </div>
 
         <div className="wh-invoice-side">
-          <AddPaymentForm
+          {canRecord && <AddPaymentForm
             pharmacyId={pharmacyId}
             remainingSyp={statement.outstandingDebtSyp}
             onSaved={load}
-          />
+          />}
         </div>
       </div>
 
@@ -596,6 +601,9 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
 // financial happened on it - and every balance is SYP-native, so no exchange
 // rate is involved in rendering it.
 export function WarehouseDebtsPage() {
+  const { user } = useAuth();
+  const { hasFeature } = useWarehouseSubscription();
+  const canRecord = user?.warehouseRole !== 'owner' && hasFeature('accounting');
   const { t } = useTranslation();
   const [selectedPharmacyId, setSelectedPharmacyId] = useState(null);
   const [searchInput, setSearchInput] = useState('');
@@ -670,9 +678,9 @@ export function WarehouseDebtsPage() {
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
-        <button type="button" className="btn-secondary wh-voice-btn" onClick={() => setVoiceOpen(true)}>
+        {canRecord && <button type="button" className="btn-secondary wh-voice-btn" onClick={() => setVoiceOpen(true)}>
           {t('voicePay.title')}
-        </button>
+        </button>}
       </div>
 
       {voiceOpen && (
@@ -746,7 +754,7 @@ export function WarehouseDebtsPage() {
                       {row.lastPaymentAt ? formatBusinessDate(row.lastPaymentAt) : '—'}
                     </td>
                     <td className="wh-num">
-                      {row.balanceSyp > 0 && (
+                      {canRecord && row.balanceSyp > 0 && (
                         <div className="wh-order-actions">
                           <button
                             type="button"

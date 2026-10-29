@@ -1,3 +1,4 @@
+import { WarehouseSubscriptionProvider } from '../context/WarehouseSubscriptionContext';
 import { useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -45,7 +46,7 @@ import { DeliveryCollectionsNotice, DeliveryCollectionsProvider } from '../compo
 // row of pills the grouped pages render.
 export function WarehousePanel() {
   const { user } = useAuth();
-  return <DeliveryCollectionsProvider key={user.id}><WarehousePanelContent /></DeliveryCollectionsProvider>;
+  return <WarehouseSubscriptionProvider key={user.id}><DeliveryCollectionsProvider key={user.id}><WarehousePanelContent /></DeliveryCollectionsProvider></WarehouseSubscriptionProvider>;
 }
 
 function WarehousePanelContent() {

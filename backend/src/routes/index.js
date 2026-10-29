@@ -49,6 +49,9 @@ const pharmacyVisitCodeRoutes = require('./pharmacyVisitCode.routes');
 const telegramRoutes = require('./telegram.routes');
 
 const router = Router();
+const warehouseAccessRoutes = require('./warehouseAccess.routes');
+router.use('/admin/warehouses', warehouseAccessRoutes.admin);
+router.use('/warehouse/subscription', warehouseAccessRoutes.self);
 
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);

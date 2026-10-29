@@ -1,3 +1,5 @@
+import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
+import { useAuth } from '../auth/AuthContext';
 import { useModalSafety } from '../hooks/useModalSafety';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -552,6 +554,9 @@ export function WarehouseOrderDetailPage() {
   const { t } = useTranslation();
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { hasFeature } = useWarehouseSubscription();
+  const canRecord = user?.warehouseRole !== 'owner' && hasFeature('accounting');
   const { collect } = useDeliveryCollections();
   // Order/invoice figures are SYP-native; only per-line savings are USD and
   // need the live rate to show in SYP.
@@ -1093,7 +1098,7 @@ export function WarehouseOrderDetailPage() {
                 <button
                   className="btn-primary"
                   disabled={isAdvancing}
-                  onClick={order.status === 'out_for_delivery' ? () => setShowCollect(true) : handleAdvance}
+                  onClick={order.status === 'out_for_delivery' && canRecord ? () => setShowCollect(true) : handleAdvance}
                 >
                   {isAdvancing ? t('orders.updating') : t(ADVANCE_KEYS[order.status])}
                 </button>

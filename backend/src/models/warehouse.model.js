@@ -3,6 +3,7 @@ const { Schema, model } = require('mongoose');
 const warehouseSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    memberUserIds: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
     nameAr: { type: String, required: true, trim: true },
     nameEn: { type: String, required: true, trim: true },
     address: { type: String, required: true },
@@ -51,6 +52,7 @@ const warehouseSchema = new Schema(
 );
 
 warehouseSchema.index({ userId: 1 });
+warehouseSchema.index({ memberUserIds: 1 });
 warehouseSchema.index({ city: 1 });
 
 // Perf/pagination follow-up: plain single-field indexes backing the

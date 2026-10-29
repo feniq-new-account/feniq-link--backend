@@ -224,8 +224,16 @@ async function request(path, { method = 'GET', body, _retried = false } = {}) {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
+    const messages = {
+      FEATURE_NOT_ENABLED: ['هذه الميزة غير متاحة للمستودع حالياً. تواصل مع إدارة فينيق.', 'This feature is not currently available for the warehouse. Contact Feniq support.'],
+      ACCOUNTANT_REQUIRED: ['تسجيل الدفعات متاح لحساب المحاسب. يمكنك متابعة كشف الحساب.', 'Recording payments requires an accountant account. You can read the statement.'],
+      INVALID_SUBSCRIPTION: ['تحقق من بيانات الاشتراك وتاريخ الانتهاء والميزات المختارة.', 'Check the subscription details, expiry date and selected features.'],
+      INVALID_WAREHOUSE_MEMBER: ['تحقق من الاسم ونوع حساب المستودع.', 'Check the name and warehouse account type.'],
+      WAREHOUSE_MEMBER_NOT_FOUND: ['الحساب غير مرتبط بهذا المستودع.', 'This account is not linked to this warehouse.'],
+    };
+    const localized = messages[data?.code];
     throw new ApiError(
-      data?.message ?? messageForLanguage('تعذّرت العملية. أعد المحاولة.', 'Something went wrong. Please try again.'),
+      localized ? messageForLanguage(...localized) : data?.message ?? messageForLanguage('تعذّرت العملية. أعد المحاولة.', 'Something went wrong. Please try again.'),
       response.status,
       data?.code ?? null,
       data?.details ?? null
@@ -350,6 +358,18 @@ function advertisementFormData(data, imageFile) {
 }
 
 export const api = {
+  listAdminWarehouseAccess: ({ search = '', after } = {}) => {
+    const query = new URLSearchParams({ search, limit: '20' });
+    if (after) query.set('after', after);
+    return request(`/admin/warehouses?${query}`);
+  },
+  getAdminWarehouseMembers: (id) => request(`/admin/warehouses/${id}/members`),
+  updateAdminWarehouseMemberRole: (id, userId, warehouseRole) => request(`/admin/warehouses/${id}/members/${userId}`, { method: 'PUT', body: { warehouseRole } }),
+  createAdminWarehouseMember: (id, body) => request(`/admin/warehouses/${id}/members`, { method: 'POST', body }),
+  getAdminWarehouseSubscription: (id) => request(`/admin/warehouses/${id}/subscription`),
+  updateAdminWarehouseSubscription: (id, body) => request(`/admin/warehouses/${id}/subscription`, { method: 'PUT', body }),
+  getWarehouseSubscription: () => request('/warehouse/subscription'),
+
   // TODO(re-enable-otp): unused by the current login flow - kept for a
   // future re-enable. The backend routes are still live.
   sendOtp: (phone) => request('/auth/otp/send', { method: 'POST', body: { phone } }),

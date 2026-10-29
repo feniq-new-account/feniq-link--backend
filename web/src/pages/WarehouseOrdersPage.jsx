@@ -1,3 +1,5 @@
+import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
+import { useAuth } from '../auth/AuthContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +27,9 @@ const ADVANCE_KEYS = {
 };
 
 export function WarehouseOrdersPage() {
+  const { user } = useAuth();
+  const { hasFeature } = useWarehouseSubscription();
+  const canRecord = user?.warehouseRole !== 'owner' && hasFeature('accounting');
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { collect } = useDeliveryCollections();
@@ -157,7 +162,7 @@ export function WarehouseOrdersPage() {
           className={`wh-row-action wh-advance-to-${nextStatusOf(order.status)}`}
           onClick={(event) => {
             event.stopPropagation();
-            if (order.status === 'out_for_delivery') setCollecting(order);
+            if (order.status === 'out_for_delivery' && canRecord) setCollecting(order);
             else handleAdvance(order, order.status);
           }}
         >

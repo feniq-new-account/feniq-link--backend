@@ -10,7 +10,8 @@ const Warehouse = require('../models/warehouse.model');
 const RepAssignment = require('../models/repAssignment.model');
 const Rep = require('../models/rep.model');
 const { feniqRateFor, splitRepCommission } = require('../utils/repCommission');
-const { loyaltyDiscountFor, activeLoyaltyTiers } = require('../utils/loyalty');
+const { loyaltyDiscountFor } = require('../utils/loyalty');
+const { effectiveLoyaltyTiers } = require('./warehouseSubscription.service');
 const pharmacyCredit = require('./pharmacyCredit.service');
 const Counter = require('../models/counter.model');
 const Return = require('../models/return.model');
@@ -730,7 +731,7 @@ async function createOrder({
     ? await Rep.findById(repAssignment.repId).select('commissionRate warehouseShareToRep').lean()
     : null;
   const repCommissionRate = rep?.commissionRate ?? 0;
-  const loyaltyTiers = activeLoyaltyTiers(warehouse);
+  const loyaltyTiers = await effectiveLoyaltyTiers(warehouse);
   // The pharmacy's credit here, taken off this order automatically. Read now
   // and taken for real inside the transaction (a conditional decrement - see
   // pharmacyCredit.service.js), so a concurrent order can never overdraw it.
@@ -1267,7 +1268,7 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse?.discountRate ?? 0,
     commissionRate: warehouse?.commissionRate ?? 0,
-    loyaltyTiers: activeLoyaltyTiers(warehouse),
+    loyaltyTiers: await effectiveLoyaltyTiers(warehouse),
     creditAvailableSyp: creditBalanceSyp,
     discountCodeTerms: codeDoc ? discountCodes.termsOf(codeDoc) : null,
   });

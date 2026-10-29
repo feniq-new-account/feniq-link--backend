@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, setSession } from '../api/client';
 import { PasswordInput } from './PasswordInput';
+import { useModalSafety } from '../hooks/useModalSafety';
 
 // The signed-in panel user changes their own password. The server signs out
 // every other device and hands this one a fresh session, kept here so the
 // panel stays signed in.
 const MIN_LENGTH = { admin: 12, warehouse: 10 };
 
-export function ChangePasswordModal({ role, onClose }) {
+export function ChangePasswordModal({ role, onClose, required = false }) {
   const { t } = useTranslation();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
@@ -17,6 +18,8 @@ export function ChangePasswordModal({ role, onClose }) {
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const minLength = MIN_LENGTH[role] ?? 8;
+  const close = () => { if (!saving && (!required || done)) onClose(); };
+  const modal = useModalSafety(saving, close);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -42,14 +45,14 @@ export function ChangePasswordModal({ role, onClose }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
+    <div className="modal-overlay" {...modal.overlayProps}>
+      <div className="modal" {...modal.dialogProps}>
         <h2>{t('changePassword.title')}</h2>
         {done ? (
           <>
             <p className="reg-success">{t('changePassword.done')}</p>
             <div className="modal-actions">
-              <button type="button" className="btn-primary" onClick={onClose}>
+              <button type="button" className="btn-primary" onClick={close}>
                 {t('common.close')}
               </button>
             </div>
@@ -64,9 +67,9 @@ export function ChangePasswordModal({ role, onClose }) {
             <PasswordInput id="cp-confirm" value={confirm} onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
             {error && <p className="error-text">{error}</p>}
             <div className="modal-actions">
-              <button type="button" className="btn-secondary" onClick={onClose}>
+              {!required && <button type="button" className="btn-secondary" onClick={close} disabled={saving}>
                 {t('common.cancel')}
-              </button>
+              </button>}
               <button type="submit" className="btn-primary" disabled={saving}>
                 {t('changePassword.save')}
               </button>

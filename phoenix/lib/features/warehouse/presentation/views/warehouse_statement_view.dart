@@ -17,6 +17,7 @@ import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/core/widgets/failure_widget.dart';
 import 'package:feniq/core/widgets/full_text.dart';
 import 'package:feniq/features/debts/presentation/widgets/statement_row_tile.dart';
+import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_load_status.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_management_models.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_accounts_cubit.dart';
@@ -91,7 +92,7 @@ class _WarehouseStatementViewState extends State<WarehouseStatementView> {
                   ),
               ],
             ),
-            floatingActionButton: statement == null
+            floatingActionButton: statement == null || context.read<AuthCubit?>()?.state.user?.warehouseRole == 'owner'
                 ? null
                 : FloatingActionButton.extended(
                     onPressed: () => _recordPayment(statement),

@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { LoginPage } from './auth/LoginPage';
+import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { UnreadBadgesProvider } from './realtime/UnreadBadgesProvider';
@@ -57,6 +58,10 @@ function Gate() {
   //
   // The unread-badge store sits above both panels, so it keeps counting while
   // pages mount and unmount.
+  if (user?.mustChangePassword) {
+    return <ChangePasswordModal required role={user.role} onClose={retry} />;
+  }
+
   return (
     <ExchangeRateProvider>
       <RealtimeProvider>

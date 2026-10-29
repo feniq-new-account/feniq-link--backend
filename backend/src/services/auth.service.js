@@ -1,3 +1,4 @@
+const { warehouseForUserFilter } = require('../utils/loadWarehouse');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
@@ -67,7 +68,7 @@ const invalidCredentials = () =>
 // tokenVersion is here so issueToken can stamp the current value into every
 // token it mints; serializeUser does not read it and it never reaches a
 // response. mustChangePassword is read by toAuthResponse / toMeResponse only.
-const AUTH_USER_FIELDS = 'name phone role status lang tokenVersion mustChangePassword';
+const AUTH_USER_FIELDS = 'name phone role status lang tokenVersion mustChangePassword warehouseRole';
 
 // What the password-login path needs on top of AUTH_USER_FIELDS: the stored
 // hash plus the two throttling counters. Kept as its own constant rather than
@@ -194,7 +195,7 @@ async function loadProfile(user) {
   if (user.role === 'warehouse') {
     return {
       pharmacy: null,
-      warehouse: await Warehouse.findOne({ userId: user._id })
+      warehouse: await Warehouse.findOne(warehouseForUserFilter(user._id))
         .select('nameAr nameEn city phone logo')
         .lean(),
     };
