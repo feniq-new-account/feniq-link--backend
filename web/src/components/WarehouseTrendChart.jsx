@@ -17,7 +17,7 @@ export function WarehouseTrendChart({ daily }) {
   const index = Math.min(selected ?? daily.length - 1, daily.length - 1);
   const values = daily.flatMap((row) => [row.netSalesSyp, row.collectionsSyp]);
   const low = Math.min(0, ...values), high = Math.max(1, ...values);
-  const x = (i) => 90 + i / Math.max(1, daily.length - 1) * (width - 110);
+  const x = (i) => daily.length === 1 ? 90 + (width - 110) / 2 : 90 + i / (daily.length - 1) * (width - 110);
   const y = (value) => 205 - (value - low) / (high - low) * 180;
   const points = (key) => daily.map((row, i) => `${x(i)},${y(row[key])}`).join(' ');
   const current = daily[index];
@@ -36,7 +36,7 @@ export function WarehouseTrendChart({ daily }) {
         <circle cx={x(i)} cy={y(row.collectionsSyp)} r={i === index ? 5 : 2} fill="#ed7a23" />
       </g>)}
       <text x="90" y="232" fontSize="12" fill="#52657a" textAnchor="start" direction="ltr">{daily[0].date}</text>
-      <text x={width - 20} y="232" fontSize="12" fill="#52657a" textAnchor="end" direction="ltr">{daily.at(-1).date}</text>
+      {daily.length > 1 && <text x={width - 20} y="232" fontSize="12" fill="#52657a" textAnchor="end" direction="ltr">{daily.at(-1).date}</text>}
     </svg></div>
     <label className="insights-chart-picker">{t('insights.inspectDay')}
       <input type="range" min="0" max={Math.max(0, daily.length - 1)} value={index} disabled={daily.length === 1}

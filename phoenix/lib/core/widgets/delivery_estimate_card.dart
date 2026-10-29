@@ -152,7 +152,6 @@ class _DeliveryEstimateCardState extends State<DeliveryEstimateCard> {
                     '\u2066${remaining.inHours}\u2069',
                     '\u2066${remaining.inMinutes % 60}\u2069',
                   ),
-                  textDirection: TextDirection.ltr,
                 ),
               ],
               if (e['reason'] != null)

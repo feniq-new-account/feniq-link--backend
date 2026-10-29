@@ -1,3 +1,4 @@
+import { AdminAnalyticsPage } from './AdminAnalyticsPage';
 import { AdminVisitVerificationPage } from './AdminVisitVerificationPage';
 import { AdminAppReleasePage } from './AdminAppReleasePage';
 import { AdminWarehouseAccessPage } from './AdminWarehouseAccessPage';
@@ -48,6 +49,7 @@ export function AdminPanel() {
 
   const TABS = [
     { path: '/admin/dashboard', label: t('nav.dashboard') },
+    { path: '/admin/analytics', label: t('analytics.title') },
     { path: '/admin/accounts', label: t('nav.accounts') },
     { path: '/admin/warehouse-access', label: t('warehouseAccess.title') },
     { path: '/admin/app-release', label: t('appRelease.title') },
@@ -142,6 +144,7 @@ export function AdminPanel() {
 
         <div className="adm-content">
           <Routes>
+            <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/accounts" element={<AccountsPage />} />
             <Route path="/admin/warehouse-access" element={<AdminWarehouseAccessPage />} />

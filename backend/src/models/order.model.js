@@ -311,4 +311,7 @@ orderSchema.index(
   { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } } }
 );
 
+orderSchema.index({ createdAt: 1 });
+orderSchema.index({ pharmacyId: 1, createdAt: 1 });
+
 module.exports = model('Order', orderSchema);

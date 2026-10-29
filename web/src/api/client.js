@@ -370,6 +370,7 @@ function advertisementFormData(data, imageFile) {
 }
 
 export const api = {
+  platformAnalytics: ({ period = 'month', force = false } = {}) => request(`/admin/analytics?${new URLSearchParams({ period, ...(force ? { force: '1' } : {}) })}`),
   deliverySettings: () => request('/warehouse/delivery'),
   updateDeliverySettings: (body) => request('/warehouse/delivery', { method: 'PUT', body }),
   deliveryPharmacies: (q) => request(`/warehouse/delivery/pharmacies?q=${encodeURIComponent(q)}`),

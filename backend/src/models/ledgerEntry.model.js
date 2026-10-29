@@ -146,6 +146,8 @@ ledgerEntrySchema.index(
 // Warehouse settlement + platform reporting: charges in a period.
 ledgerEntrySchema.index({ warehouseId: 1, kind: 1, effectiveAt: 1 });
 
+ledgerEntrySchema.index({ effectiveAt: 1, kind: 1 });
+
 module.exports = model('LedgerEntry', ledgerEntrySchema);
 module.exports.ENTRY_KINDS = ENTRY_KINDS;
 module.exports.DEBIT = DEBIT;

@@ -56,6 +56,7 @@ const warehouseAccessRoutes = require('./warehouseAccess.routes');
 router.use('/admin/warehouses', warehouseAccessRoutes.admin);
 router.use('/warehouse/subscription', warehouseAccessRoutes.self);
 
+router.use('/admin/analytics', require('./platformAnalytics.routes'));
 router.use('/admin/visit-verification', require('./visitVerification.routes'));
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
