@@ -1,3 +1,4 @@
+import { NumericInput } from './NumericInput';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -335,7 +336,7 @@ export function AdvertisementModal({
                   <span className="wh-ad-selected-name">{displayName(item.nameEn, item.nameAr)}</span>
                   <label className="wh-ad-qty-label">
                     {t('advertisements.quantity')}
-                    <input
+                    <NumericInput
                       type="number"
                       min="1"
                       step="1"
@@ -370,7 +371,7 @@ export function AdvertisementModal({
             </div>
             <label className="wh-ad-total-input">
               {t('advertisements.totalPrice')}
-              <input
+              <NumericInput
                 type="number"
                 min="1"
                 step="1"

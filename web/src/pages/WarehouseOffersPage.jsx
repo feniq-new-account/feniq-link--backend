@@ -1,3 +1,4 @@
+import { NumericInput } from '../components/NumericInput';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -136,7 +137,7 @@ export function WarehouseOffersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <input
+        <NumericInput
           type="number"
           min="1"
           max="100"
@@ -145,7 +146,7 @@ export function WarehouseOffersPage() {
           value={discountMin}
           onChange={(e) => setDiscountMin(e.target.value)}
         />
-        <input
+        <NumericInput
           type="number"
           min="1"
           max="100"

@@ -1,3 +1,4 @@
+import 'package:feniq/core/utils/number_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -60,7 +61,8 @@ class _AppTextFieldState extends State<AppTextField> {
   @override
   Widget build(BuildContext context) {
     final obscured = widget.obscureText && !_revealed;
-    final suffixIcon = widget.suffixIcon ??
+    final suffixIcon =
+        widget.suffixIcon ??
         (widget.obscureText
             ? IconButton(
                 key: appTextFieldVisibilityToggleKey,
@@ -92,7 +94,12 @@ class _AppTextFieldState extends State<AppTextField> {
           controller: widget.controller,
           obscureText: obscured,
           keyboardType: widget.keyboardType,
-          inputFormatters: widget.inputFormatters,
+          inputFormatters:
+              !widget.obscureText &&
+                  (widget.keyboardType?.index == TextInputType.number.index ||
+                      widget.keyboardType == TextInputType.phone)
+              ? [const WesternDigitsFormatter(), ...?widget.inputFormatters]
+              : widget.inputFormatters,
           validator: widget.validator,
           onChanged: widget.onChanged,
           maxLines: widget.obscureText ? 1 : widget.maxLines,

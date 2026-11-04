@@ -678,7 +678,7 @@
       }
     }
   },
-  "returnableOrderNumber": "طلب #{number}",
+  "returnableOrderNumber": "طلب رقم {number}",
   "returnableHoursLeft": "باقي {hours} ساعة",
   "returnableEndingSoon": "ينتهي قريباً",
   "returnableRequestButton": "طلب إرجاع",
@@ -795,7 +795,7 @@
   "updateRequiredMessage": "إصدار التطبيق الحالي لم يعد مدعوماً. يرجى تحديث التطبيق للمتابعة.",
   "updateNow": "تحديث الآن",
   "later": "لاحقاً",
-  "updateOpenStoreFailed": "تعذر فتح متجر Google Play. حاول مرة أخرى.",
+  "updateOpenStoreFailed": "تعذر تنزيل التحديث أو فتح مثبت أندرويد. تحقق من الاتصال والمساحة المتاحة وأعد المحاولة.",
   "deliverySealRequiredTitle": "تأكيد التسليم",
   "deliverySealRequiredMessage": "يطلب هذا المستودع صورة لختم الشحنة قبل إتمام الطلب. التقط صورة واضحة للختم على الطرد.",
   "takeSealPhoto": "إضافة صورة الختم",
@@ -935,7 +935,7 @@
   "packageAddToCart": "إضافة إلى السلة",
   "repNavPharmacies": "صيدلياتي",
   "repNavVisits": "زياراتي",
-  "repSearchHint": "ابحث بالاسم أو المسؤول أو الهاتف أو العنوان",
+  "repSearchHint": "ابحث عن صيدلية",
   "repScanAction": "مسح باركود الزيارة",
   "repNoPharmaciesTitle": "لا توجد صيدليات معيّنة لك بعد",
   "repNoPharmaciesSubtitle": "المستودع هو من يسند لك الصيدليات، وتظهر هنا فور إسنادها.",
@@ -1006,7 +1006,7 @@
   "warehouseMarkDelivered": "تم التسليم",
   "warehouseConfirmApproveTitle": "الطلبية طلعت ع الطريق؟",
   "warehouseConfirmApproveBody": "الطلبية رقم {number} رح تطلع للصيدلية، وبعدها ما عاد فيك تعدّل أصنافها.",
-  "warehouseOrderTitle": "طلبية #{number}",
+  "warehouseOrderTitle": "طلبية رقم {number}",
   "warehouseOrderItemsCount": "الأصناف: {count}",
   "warehouseNoOrdersTitle": "ما في طلبيات هون",
   "warehouseNoOrdersSubtitle": "الطلبيات الجديدة بتطلع هون أول ما توصل، وبيجيك إشعار فيها.",
@@ -1047,7 +1047,7 @@
   "warehouseNavReturns": "المرتجعات",
   "warehouseNavAccounts": "الحسابات",
   "warehouseNavReps": "المناديب",
-  "warehouseReturnTitle": "مرتجع على الطلبية #{number}",
+  "warehouseReturnTitle": "مرتجع على الطلبية رقم {number}",
   "warehouseReturnNoOrder": "مرتجع",
   "warehouseReturnUnits": "{count} قطعة",
   "warehouseNoReturnsTitle": "ما في مرتجعات هون",
@@ -1152,7 +1152,7 @@
   "warehouseCollectSave": "سلّم واحفظ",
   "warehouseCollectPartialInvalid": "اكتب مبلغ أكبر من صفر وأصغر من المبلغ كله.",
   "warehouseCollectRecorded": "تم التسليم، وانسجّل {amount} مدفوع",
-  "warehouseCollectFailed": "تم التسليم، بس الدفعة ما انحفظت - سجّلها من الحسابات.",
+  "warehouseCollectFailed": "تم التسليم، لكن لم نتأكد من تسجيل المقبوض. أعد تأكيد الدفعة من التنبيه في لوحة المستودع.",
   "warehouseCollectNote": "دفعة عند تسليم الطلبية رقم {number}",
   "warehouseAccountPurchases": "اشترت {amount}",
   "warehouseAccountPaid": "دفعت {amount}",
@@ -1165,7 +1165,7 @@
   "warehouseAccountPaySave": "سجّل الدفعة",
   "warehouseAccountPayInvalid": "اكتب مبلغ أكبر من صفر وأصغر من المبلغ المطلوب.",
   "warehouseAccountPayRecorded": "انسجّلت دفعة {amount}",
-  "warehouseAccountPayFailed": "الدفعة ما انحفظت. جرّب مرة تانية.",
+  "warehouseAccountPayFailed": "لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان.",
   "warehouseVoiceTitle": "تسجيل دفعة بالصوت",
   "warehouseVoiceHint": "احكي مثلاً: «صيدلية النور دفعت خمسين ألف» أو «صيدلية الأمل دفعت المبلغ كامل».",
   "warehouseVoiceSpeak": "اضغط واحكي",
@@ -1191,13 +1191,228 @@
   "warehouseSummaryPayments": "{count} دفعة",
   "warehouseSummaryDebtors": "{count} صيدلية عليها دين",
   "warehouseSummaryCreditHeld": "رصيد للصيدليات عندك: {amount}",
-  "warehouseSummaryChangeUp": "▲ {percent}% عن الفترة السابقة",
-  "warehouseSummaryChangeDown": "▼ {percent}% عن الفترة السابقة",
+  "warehouseSummaryChangeUp": "زيادة {percent}% عن الفترة السابقة",
+  "warehouseSummaryChangeDown": "نقصان {percent}% عن الفترة السابقة",
   "warehouseSummaryChangeFlat": "متل الفترة السابقة",
   "warehouseSummaryChangeNew": "ما كان في شي بالفترة السابقة",
   "warehouseSummaryTopBuyers": "أكتر الصيدليات شراءً",
   "warehouseSummaryTopDebtors": "أكبر الديون",
   "warehouseSummaryNoBuyers": "ما في مبيعات بهالفترة.",
   "warehouseSummaryNoDebtors": "ما في ديون.",
-  "warehouseSummaryDeliveredNote": "المبيعات بتحسب الطلبيات المتسلَّمة بس."
+  "warehouseSummaryDeliveredNote": "المبيعات بتحسب الطلبيات المتسلَّمة بس.",
+  "paymentUnconfirmed": "لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان.",
+  "dataLastUpdated": "آخر تحديث: {time}",
+  "dataCached": "البيانات المعروضة من آخر تحديث ناجح.",
+  "@dataLastUpdated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDownloading": "جارٍ تنزيل التحديث",
+  "updateInstallPermission": "اسمح لفينيق بتثبيت التطبيقات من شاشة إعدادات أندرويد، ثم ارجع واضغط «تحديث الآن». لن تحتاج لتنزيل الملف مرة أخرى.",
+  "updateCancelDownload": "إلغاء التنزيل",
+  "offlineCatalogsReady": "محفوظ للتصفح بلا إنترنت: {ready}/{total}",
+  "@offlineCatalogsReady": {
+    "placeholders": {
+      "ready": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineCatalogsSaving": "جارٍ حفظ الكتالوجات على هذا الجهاز…",
+  "offlineCatalogsRetry": "لم يكتمل الحفظ. تحتاج إنترنت ومساحة كافية؛ النسخة السابقة محفوظة.",
+  "offlineCatalogsLastSync": "آخر مزامنة: {time}",
+  "@offlineCatalogsLastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "locationPermissionPurpose": "السماح بالموقع يساعدنا على تحديد موقع الصيدلية والتحقق من الزيارة عند مسح رمزها. يمكنك التصفح دون منحه؛ لا نتتبع تحركاتك في الخلفية.",
+  "locationPermissionPermanent": "إذن الموقع موقوف. افتح إعدادات التطبيق واسمح بالموقع أثناء الاستخدام لتتمكن من إثبات الزيارة.",
+  "locationServiceDisabled": "خدمة الموقع مطفأة. فعّل GPS قبل تسجيل الزيارة.",
+  "locationOpenSettings": "فتح الإعدادات",
+  "locationAllow": "السماح بالموقع",
+  "repVisitLocationUnapproved": "موقع الصيدلية بانتظار الاعتماد",
+  "repVisitPoorAccuracy": "دقة الموقع غير كافية",
+  "repVisitStaleLocation": "قراءة الموقع قديمة",
+  "repScanLocationUnapprovedMessage": "لم يُعتمد موقع هذه الصيدلية بعد. تواصل مع إدارة فينيق لتثبيته؛ هذه المحاولة لا تُحتسب زيارة مؤكدة.",
+  "repScanPoorAccuracyMessage": "دقة GPS غير كافية. اقترب من مدخل الصيدلية أو مكان مفتوح ثم أعد المسح.",
+  "repScanStaleLocationMessage": "انتهت صلاحية قراءة الموقع. فعّل الوقت التلقائي والموقع في الهاتف ثم أعد المسح للحصول على قراءة جديدة.",
+  "warehouseLoyaltyMode": "طريقة الولاء",
+  "warehouseLoyaltyPerOrder": "حسب قيمة الطلب الواحد",
+  "warehouseLoyaltyMonthly": "حسب مجموع المشتريات الشهرية",
+  "warehouseMonthlyLoyaltyHelp": "تُجمع الفواتير المسلّمة بقيمتها الصافية بعد الحسومات والرصيد، ضمن شهر بتوقيت دمشق. يُضاف فرق الحافز مرة واحدة لرصيد الطلب القادم. المرتجعات تخفض الاستحقاق، وإذا صُرف الحافز يُسوّى من حوافز الولاء القادمة دون المساس بعمولة الصيدلية أو تسجيل دين نقدي. تُثبّت شرائح الشهر عند أول تسليم فيه.",
+  "pharmacyMonthlyLoyaltyProgress": "مشترياتك المسلّمة هذا الشهر: {amount}. يُضاف فرق حافز الولاء بعد التسليم لرصيد طلبك القادم؛ المرتجعات تخفض الاستحقاق.",
+  "@pharmacyMonthlyLoyaltyProgress": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseMonthlyLoyaltyExample": "مثال: مشتريات مسلّمة صافية 100,000 → رصيد 1,000؛ وعند 200,000 → مجموع رصيد 5,000، أي فرق إضافي 4,000.",
+  "warehouseMonthlyLoyaltyMin": "مجموع الشهر من",
+  "warehouseMonthlyLoyaltyReward": "الرصيد المستحق",
+  "pharmacyMonthlyLoyaltyOffset": "حافز مرتجع صُرف سابقاً: {amount}، سيُسوّى من حوافز الولاء القادمة؛ ليس ديناً نقدياً.",
+  "@pharmacyMonthlyLoyaltyOffset": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoyaltyChanged": "تغيّرت إعدادات الولاء. ارجع وأعد فتح الإعدادات قبل الحفظ.",
+  "warehouseInsightsTitle": "أداء المستودع والمتابعة",
+  "warehouseInsightsScope": "هذه الأرقام تخص عمليات فينيق فقط. صافي المبيعات بعد المرتجعات لا يعني الربح؛ لا يشمل تكلفة البضاعة أو المصاريف.",
+  "warehouseInsightsNetSales": "صافي المبيعات",
+  "warehouseInsightsCollections": "التحصيل",
+  "warehouseInsightsReturns": "المرتجعات",
+  "warehouseInsightsDebts": "الديون الحالية",
+  "warehouseInsightsTrend": "المبيعات والتحصيل عبر الأيام",
+  "warehouseInsightsInspectDay": "اختر يوماً لعرض أرقامه",
+  "warehouseInsightsPeriod": "الفترة",
+  "warehouseInsightsRefresh": "تحديث",
+  "warehouseInsightsAsOf": "آخر تحديث:",
+  "warehouseInsightsDamascus": "توقيت دمشق",
+  "warehouseInsightsAging": "أعمار الديون — بالأيام",
+  "warehouseInsightsAgingMethod": "تُسوّى الحركات الأقدم أولاً. المرتجع يُنقص فاتورته الأصلية، وإلغاء الدفعة يعيد عمر الدين الأصلي. هذا تقدير للمتابعة؛ الدفعات غير مربوطة بفواتير محددة.",
+  "warehouseInsightsDailyTable": "جدول التفاصيل اليومية",
+  "warehouseInsightsDate": "التاريخ",
+  "warehouseInsightsPharmacy": "الصيدلية",
+  "warehouseInsightsPhone": "الهاتف",
+  "warehouseInsightsCity": "المدينة",
+  "warehouseInsightsDays": "الأيام",
+  "warehouseInsightsAction": "المتابعة",
+  "warehouseInsightsOpenStatement": "فتح الكشف",
+  "warehouseInsightsOpenStatements": "كشوف الحسابات",
+  "warehouseInsightsSettings": "مدة متابعة الديون والانقطاع",
+  "warehouseInsightsOverdueDays": "يتأخر الدين بعد — يوم",
+  "warehouseInsightsInactiveDays": "صيدلية بلا طلب منذ — يوم",
+  "warehouseInsightsSaveSettings": "حفظ المدة",
+  "warehouseInsightsEmpty": "لا توجد حالات تستدعي المتابعة بهذه المدة.",
+  "warehouseInsightsLoadMore": "عرض المزيد",
+  "warehouseInsightsInactiveFeature": "هذه الميزات غير مفعلة للمستودع. تواصل مع فينيق لتفعيلها.",
+  "warehouseInsightsNoAlerts": "لا توجد حالات تستدعي التنبيه الآن.",
+  "warehouseInsightsOverview": "نظرة عامة",
+  "warehouseInsightsOverdue": "ديون متأخرة",
+  "warehouseInsightsInactive": "صيدليات منقطعة",
+  "warehouseInsightsAlerts": "تنبيهات المتابعة",
+  "warehouseInsightsInvalidDays": "اختر مدة من 1 إلى 180 يوماً.",
+  "warehouseInsightsSaved": "تم حفظ مدة المتابعة.",
+  "warehouseInsightsResults": "النتائج: {count}",
+  "@warehouseInsightsResults": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsNoPreviousOrder": "لا توجد طلبات سابقة؛ المدة منذ تعيين الصيدلية.",
+  "errorFeatureUnavailable": "هذه الميزات غير مفعلة للمستودع. تواصل مع فينيق لتفعيلها.",
+  "errorFollowUpChanged": "تغيّرت مدة المتابعة. حدّث الصفحة قبل الحفظ.",
+  "warehouseInsightsAlertOrders": "طلبات معلّقة منذ 48 ساعة: {count}",
+  "@warehouseInsightsAlertOrders": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsAlertReturns": "مرتجعات بانتظار القرار منذ 48 ساعة: {count}",
+  "@warehouseInsightsAlertReturns": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsAlertOverdue": "صيدليات لها مبالغ متأخرة: {count}",
+  "@warehouseInsightsAlertOverdue": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsAlertInactive": "صيدليات بحاجة متابعة طلباتها: {count}",
+  "@warehouseInsightsAlertInactive": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsScopeShort": "عمليات فينيق فقط؛ صافي المبيعات ليس الربح.",
+  "warehouseInsightsAbout": "عن هذه الأرقام",
+  "warehouseInsightsOverdueAmount": "المبلغ المتأخر",
+  "deliveryTitle": "مناطق ومواعيد التوزيع",
+  "deliveryExplanation": "فعّل المواعيد بعد ضبط المناطق وربط الصيدليات. التقدير بتوقيت دمشق بهامش ±12 ساعة ويثبت عند إرسال الطلب؛ ليس ضماناً لساعة وصول محددة.",
+  "deliveryEnable": "إظهار موعد التوصيل للصيدلي",
+  "deliveryFeatureOff": "الميزة غير مفعلة في اشتراك المستودع. المواعيد السابقة تبقى محفوظة.",
+  "deliveryZoneName": "اسم منطقة التوزيع",
+  "deliveryPreparation": "مهلة التجهيز بالساعات",
+  "deliveryZoneActive": "المنطقة فعالة",
+  "deliveryDay": "يوم الطلعة",
+  "deliveryDepartureTime": "وقت الطلعة — دمشق",
+  "deliveryArrivalHours": "ساعات الوصول بعد الطلعة",
+  "deliveryCutoffHours": "إغلاق الطلب قبل الطلعة بساعات",
+  "deliveryAddTrip": "إضافة يوم توزيع",
+  "deliveryRemoveTrip": "حذف يوم التوزيع",
+  "deliveryExceptions": "استثناءات الأيام",
+  "deliveryDate": "التاريخ — YYYY-MM-DD",
+  "deliveryCancelTrip": "إلغاء طلعة هذا اليوم",
+  "deliveryRemoveException": "حذف الاستثناء",
+  "deliveryAddException": "إضافة استثناء",
+  "deliveryPauseZone": "إيقاف المنطقة",
+  "deliveryAddZone": "إضافة منطقة",
+  "deliverySave": "حفظ الجدول",
+  "deliverySaved": "تم الحفظ",
+  "deliveryReload": "إعادة تحميل الإعدادات",
+  "deliveryAssignTitle": "ربط الصيدليات بمناطق التوزيع",
+  "deliveryAssignHint": "احفظ الجدول أولاً، ثم ابحث عن الصيدلية وحدد منطقتها. هذا الربط لا يخفي المستودعات من الكتالوج.",
+  "deliverySearch": "اسم الصيدلية أو الهاتف",
+  "deliverySearchButton": "بحث",
+  "deliveryUnassigned": "بلا منطقة — الموعد غير محدد",
+  "deliveryPaused": "موقوفة",
+  "deliveryArrivalTitle": "التوصيل المتوقع",
+  "deliveryUnavailable": "موعد التوصيل غير محدد لهذه الصيدلية حالياً.",
+  "deliveryPreview": "تقدير أولي؛ يثبت الموعد عند إرسال الطلب.",
+  "deliveryRange": "متوقع بين",
+  "deliveryLate": "تأخر عن نافذة الوصول؛ تواصل مع المستودع. انتهاء الوقت لا يعني تسليم الطلب.",
+  "deliveryDelivered": "تم التسليم",
+  "deliveryCancelled": "الطلب ملغى — انتهى تقدير الوصول",
+  "deliveryUntil": "الوقت المتبقي لنهاية النافذة",
+  "deliveryReschedule": "تعديل موعد هذا الطلب",
+  "deliveryNewTime": "الموعد الجديد — توقيت دمشق",
+  "deliveryReason": "سبب تعديل الموعد — يظهر للصيدلي",
+  "deliveryChanged": "تم تعديل الموعد",
+  "deliveryInvalid": "راجع أسماء المناطق والأيام والأوقات. الساعات من 0 إلى 168، وساعات الوصول حتى 72. لا تكرر اليوم في المنطقة.",
+  "deliveryUnsaved": "عندك تعديلات غير محفوظة. احفظها أو أعد تحميل الإعدادات قبل ربط الصيدليات.",
+  "deliveryNoResults": "لا توجد صيدليات مطابقة",
+  "deliveryDays0": "الأحد",
+  "deliveryDays1": "الاثنين",
+  "deliveryDays2": "الثلاثاء",
+  "deliveryDays3": "الأربعاء",
+  "deliveryDays4": "الخميس",
+  "deliveryDays5": "الجمعة",
+  "deliveryDays6": "السبت",
+  "deliveryHoursMinutes": "{hours} ساعة و {minutes} دقيقة",
+  "@deliveryHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseInsightsUnknownAge": "رصيد بلا عمر فاتورة موثق؛ داخل إجمالي الدين، وخارج شرائح التأخر حتى يتوفر تاريخ موثوق."
 }

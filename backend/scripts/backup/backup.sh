@@ -3,11 +3,9 @@
 #
 #   MONGODB_URI=... BACKUP_ENCRYPTION_KEY=... backend/scripts/backup/backup.sh [مجلد-الإخراج]
 #
-# يكتب ملفاً واحداً: feniq-db-<التاريخ>.archive.gz.gpg (mongodump --archive --gzip
-# مشفّراً بـ GPG/AES-256 بكلمة السر BACKUP_ENCRYPTION_KEY) وبجانبه .sha256.
-# الملف غير المشفّر لا يُكتب على القرص أبداً: الـdump يمرّ مباشرة إلى التشفير.
-#
-# يستعمل mongodump المثبّت إن وُجد، وإلا صورة Docker الرسمية mongo:8.0.
+# يكتب snapshot BSON بصيغة JSONL مضغوطة ومشفّرة GPG/AES-256 وبجانبها .sha256.
+# جلسة snapshot واحدة تمنع اختلاف زمن قراءة المجموعات؛ لا fallback لقراءات متحركة.
+# لا تُكتب البيانات غير المشفّرة على القرص؛ Node 24 وnpm ci وgpg مطلوبة.
 # يُشغَّل يومياً من .github/workflows/db-backup.yml؛ الاسترجاع: restore.sh.
 set -euo pipefail
 
@@ -21,16 +19,17 @@ fi
 out_dir="${1:-.}"
 mkdir -p "$out_dir"
 stamp="$(date -u +%Y-%m-%dT%H%MZ)"
-file="$out_dir/feniq-db-$stamp.archive.gz.gpg"
+file="$out_dir/feniq-db-$stamp.snapshot.jsonl.gz.gpg"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=mongo-tool.sh
-source "$script_dir/mongo-tool.sh"
 
-echo "Dumping and encrypting to $file ..."
+
+trap 'rm -f "$file" "$file.sha256"' ERR
+echo "Taking a consistent snapshot and encrypting to $file ..."
 # The passphrase goes in on fd 3, never on the command line (where `ps` would
 # show it) and never in a file.
-mongo_tool mongodump --uri="$MONGODB_URI" --archive --gzip --quiet \
+node "$script_dir/snapshot.js" dump \
   | gpg --batch --yes --quiet --pinentry-mode loopback \
         --symmetric --cipher-algo AES256 \
         --passphrase-fd 3 --output "$file" 3<<<"$BACKUP_ENCRYPTION_KEY"

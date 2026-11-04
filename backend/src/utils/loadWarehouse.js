@@ -6,7 +6,7 @@ const { ApiError } = require('./ApiError');
 // (catalog overhaul Phase 11, L6 - it used to be pasted into each).
 // `select` / `lean` for callers that only need the id.
 async function loadWarehouseOrThrow(userId, { select = null, lean = false } = {}) {
-  let query = Warehouse.findOne({ userId });
+  let query = Warehouse.findOne(warehouseForUserFilter(userId));
   if (select) query = query.select(select);
   if (lean) query = query.lean();
   const warehouse = await query;
@@ -16,4 +16,8 @@ async function loadWarehouseOrThrow(userId, { select = null, lean = false } = {}
   return warehouse;
 }
 
-module.exports = { loadWarehouseOrThrow };
+function warehouseForUserFilter(userId) {
+  return { $or: [{ userId }, { memberUserIds: userId }] };
+}
+
+module.exports = { loadWarehouseOrThrow, warehouseForUserFilter };

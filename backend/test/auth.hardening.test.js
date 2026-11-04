@@ -307,6 +307,42 @@ test('H-3: a reset code cannot be replayed', async () => {
   assert.strictEqual(replay.body.code, 'INVALID_OTP');
 });
 
+test('password recovery revokes both access tokens and refresh tokens from other sessions', async () => {
+  const account = await freshAccount();
+  const signedIn = await call('POST', '/auth/login-password', { body: { phone: account.phone, password: account.password } });
+  await call('POST', '/auth/forgot-password', { body: { phone: account.phone } });
+  const password = 'recovered-password-2';
+  const reset = await call('POST', '/auth/reset-password', {
+    body: { phone: account.phone, otpCode: lastCodeFor(account.phone), password, confirmPassword: password },
+  });
+  assert.strictEqual(reset.status, 200, JSON.stringify(reset.body));
+  assert.strictEqual((await call('GET', '/auth/me', { token: account.token })).status, 401);
+  assert.strictEqual((await call('GET', '/auth/me', { token: signedIn.body.token })).status, 401);
+  assert.strictEqual((await call('POST', '/auth/refresh', { body: { refreshToken: signedIn.body.refreshToken } })).status, 401);
+  assert.strictEqual(await require('../src/models/refreshToken.model').countDocuments({ userId: signedIn.body.user.id }), 0);
+  assert.strictEqual((await call('POST', '/auth/login-password', { body: { phone: account.phone, password } })).status, 200);
+});
+
+test('without SMS delivery recovery directs known and unknown accounts to support', async () => {
+  const account = await freshAccount();
+  const env = require('../src/config/env');
+  const previous = { provider: env.sms.provider, nodeEnv: env.nodeEnv };
+  env.sms.provider = 'console';
+  env.nodeEnv = 'production';
+  try {
+    const known = await call('POST', '/auth/forgot-password', { body: { phone: account.phone } });
+    const unknown = await call('POST', '/auth/forgot-password', { body: { phone: nextPhone() } });
+    assert.strictEqual(known.status, 503);
+    assert.deepStrictEqual(known, unknown);
+    assert.strictEqual(known.body.code, 'PASSWORD_RECOVERY_SUPPORT_REQUIRED');
+    assert.strictEqual(known.body.details.recoveryMethod, 'support');
+    assert.strictEqual(await Otp.countDocuments({ phone: account.phone }), 0, 'no unusable reset code is created');
+  } finally {
+    env.sms.provider = previous.provider;
+    env.nodeEnv = previous.nodeEnv;
+  }
+});
+
 test('H-3c: a reset code is burned after 5 wrong guesses', async () => {
   const account = await freshAccount();
   await call('POST', '/auth/forgot-password', { body: { phone: account.phone } });

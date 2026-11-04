@@ -1,0 +1,27 @@
+{
+  "previousBuild": 1049,
+  "currentBuild": 1051,
+  "certificateSha256": "D4D2C93E38086E9B4847A74C822C527DF9336DB85752465B83593F8585FA5DD4",
+  "sha256": "2c5a5bdcebf4fdbb56dfdce8f356eef75a3500c09343a7dd4aaf6704f47660c3",
+  "signatureVerified": true,
+  "upgradeWithoutUninstall": true,
+  "privateFileSurvivedCacheClear": true,
+  "privateFileSurvivedUpgrade": true,
+  "launchVerified": true,
+  "scope": "Emulator storage probe; not a physical-phone or logged-in full-catalog test",
+  "publication": false,
+  "applicationId": "com.feniq.link",
+  "abis": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86_64"
+  ],
+  "buildSourceCommit": "1ae5e7ebefa0a0934a43687f9bd5395a4dfab7c1",
+  "buildRunId": 40871855654,
+  "buildJobId": 123440781592,
+  "apkArtifactId": 12898260164,
+  "upgradeRunId": 40879959354,
+  "upgradeJobId": 123468526075,
+  "evidenceArtifactId": 12900610549,
+  "apkArtifactExpiresAt": "2026-11-28T12:37:56Z"
+}

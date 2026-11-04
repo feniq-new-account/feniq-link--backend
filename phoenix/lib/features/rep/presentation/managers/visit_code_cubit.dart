@@ -20,19 +20,20 @@ class VisitCodeCubit extends Cubit<VisitCodeState> {
 
   final RepRepository _repository;
 
+  int _generation = 0;
+
   Future<void> load() async {
+    if (isClosed) return;
+    final generation = ++_generation;
     emit(VisitCodeState(status: RepLoadStatus.loading, code: state.code));
     try {
       final code = await _repository.getVisitCode();
+      if (isClosed || generation != _generation) return;
       emit(VisitCodeState(status: RepLoadStatus.loaded, code: code));
     } on Failure catch (f) {
+      if (isClosed || generation != _generation) return;
       emit(
-        VisitCodeState(
-          status: RepLoadStatus.error,
-          code: state.code,
-          errorMessage: f.errMessage,
-          errorCode: f.code,
-        ),
+        VisitCodeState(status: RepLoadStatus.error, code: state.code, errorMessage: f.errMessage, errorCode: f.code),
       );
     }
   }

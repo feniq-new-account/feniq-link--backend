@@ -51,4 +51,9 @@ const alternativesElsewhere = asyncHandler(async (req, res) => {
   res.json({ success: true, ...productViewModel.toElsewhereResponse(entries, rate?.usdToSyp ?? null) });
 });
 
-module.exports = { list, manufacturers, alternatives, alternativesElsewhere };
+const revision = asyncHandler(async (req, res) => {
+  const manifest = await require('../services/catalogRevision.service').getCatalogRevision(req.params.warehouseId);
+  res.set('Cache-Control', 'no-store').json({ success: true, ...manifest });
+});
+
+module.exports = { list, manufacturers, alternatives, alternativesElsewhere, revision };

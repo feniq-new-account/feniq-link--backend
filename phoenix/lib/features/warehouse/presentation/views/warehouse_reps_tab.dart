@@ -1,5 +1,6 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
+import 'package:feniq/core/utils/number_input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
@@ -75,11 +76,8 @@ class WarehouseRepsTab extends StatelessWidget {
     final l10n = context.l10n;
     final password = await showDialog<String>(
       context: context,
-      builder: (_) => _TextDialog(
-        title: l10n.warehouseRepResetPassword,
-        label: l10n.warehouseRepPassword,
-        minLength: 8,
-      ),
+      builder: (_) =>
+          _TextDialog(title: l10n.warehouseRepResetPassword, label: l10n.warehouseRepPassword, minLength: 8),
     );
     if (password == null) return;
     if (await cubit.resetPassword(rep.id, password)) {
@@ -98,9 +96,10 @@ class WarehouseRepsTab extends StatelessWidget {
       builder: (context, state) => AppRefreshIndicator(
         onRefresh: () => context.read<WarehouseRepsCubit>().load(),
         child: WarehousePagedList(
+          bottomClearance: roleFabClearance(context),
           itemCount: state.reps.length,
           isLoading: state.status == RepLoadStatus.initial || state.status == RepLoadStatus.loading,
-          errorMessage: state.status == RepLoadStatus.error && state.reps.isEmpty
+          errorMessage: state.status == RepLoadStatus.error
               ? translateErrorCode(l10n, state.errorCode, state.errorMessage ?? '')
               : null,
           onRetry: () => context.read<WarehouseRepsCubit>().load(),
@@ -111,11 +110,8 @@ class WarehouseRepsTab extends StatelessWidget {
             final rep = state.reps[index];
             return _RepCard(
               rep: rep,
-              onTap: () => context.pushNamed(
-                RouteNames.warehouseRep,
-                pathParameters: {'repId': rep.id},
-                extra: rep.name,
-              ),
+              onTap: () =>
+                  context.pushNamed(RouteNames.warehouseRep, pathParameters: {'repId': rep.id}, extra: rep.name),
               onEditRate: () => _editRate(context, rep),
               onToggleShare: () => _toggleShare(context, rep),
               onToggle: () => context.read<WarehouseRepsCubit>().updateRep(rep.id, isActive: !rep.isActive),
@@ -270,7 +266,7 @@ class _TextDialogState extends State<_TextDialog> {
         controller: _controller,
         autofocus: true,
         keyboardType: widget.number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
-        inputFormatters: widget.number ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))] : null,
+        inputFormatters: widget.number ? const [WesternDigitsFormatter()] : null,
         decoration: InputDecoration(labelText: widget.label, helperText: widget.hint, helperMaxLines: 3),
         onChanged: (_) => setState(() {}),
       ),
@@ -299,6 +295,7 @@ class _AddRepSheetState extends State<_AddRepSheet> {
   final _password = TextEditingController();
   final _rate = TextEditingController(text: '2');
   bool _shareToRep = false;
+  bool _showPassword = false;
 
   @override
   void dispose() {
@@ -351,20 +348,33 @@ class _AddRepSheetState extends State<_AddRepSheet> {
                   TextFormField(
                     controller: _phone,
                     keyboardType: TextInputType.phone,
+                    textDirection: TextDirection.ltr,
+                    inputFormatters: const [WesternDigitsFormatter()],
                     decoration: InputDecoration(labelText: l10n.warehouseRepPhone, hintText: '09XXXXXXXX'),
                     validator: required,
                   ),
                   const SizedBox(height: AppSizes.spacingSmall),
                   TextFormField(
                     controller: _password,
-                    decoration: InputDecoration(labelText: l10n.warehouseRepPassword),
+                    obscureText: !_showPassword,
+                    decoration: InputDecoration(
+                      labelText: l10n.warehouseRepPassword,
+                      suffixIcon: IconButton(
+                        tooltip: _showPassword ? l10n.hidePassword : l10n.showPassword,
+                        onPressed: () => setState(() => _showPassword = !_showPassword),
+                        icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility),
+                      ),
+                    ),
                     validator: (value) => (value == null || value.length < 8) ? l10n.warehouseRepPassword : null,
                   ),
                   const SizedBox(height: AppSizes.spacingSmall),
                   TextFormField(
                     controller: _rate,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+                    textDirection: TextDirection.ltr,
+                    inputFormatters: [
+                      const WesternDigitsFormatter(),
+                    ],
                     decoration: InputDecoration(
                       labelText: l10n.warehouseRepRate,
                       helperText: l10n.warehouseRepQuartersHint,

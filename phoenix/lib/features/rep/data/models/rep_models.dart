@@ -15,7 +15,10 @@ enum VisitStatus {
   verified,
   outOfRange,
   mockLocation,
-  noPharmacyLocation;
+  noPharmacyLocation,
+  locationUnapproved,
+  poorAccuracy,
+  staleLocation;
 
   static VisitStatus parse(Object? value) {
     switch (value) {
@@ -25,6 +28,12 @@ enum VisitStatus {
         return VisitStatus.outOfRange;
       case 'mock_location':
         return VisitStatus.mockLocation;
+      case 'location_unapproved':
+        return VisitStatus.locationUnapproved;
+      case 'poor_accuracy':
+        return VisitStatus.poorAccuracy;
+      case 'stale_location':
+        return VisitStatus.staleLocation;
       case 'no_pharmacy_location':
       default:
         return VisitStatus.noPharmacyLocation;

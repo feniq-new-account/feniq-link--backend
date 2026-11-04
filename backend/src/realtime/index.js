@@ -1,3 +1,4 @@
+const { warehouseForUserFilter } = require('../utils/loadWarehouse');
 const { randomUUID } = require('node:crypto');
 const { Server } = require('socket.io');
 const env = require('../config/env');
@@ -121,7 +122,7 @@ async function resolveRoomsFor(user) {
   }
 
   if (user.role === 'warehouse') {
-    const warehouse = await Warehouse.findOne({ userId: user._id }, '_id');
+    const warehouse = await Warehouse.findOne(warehouseForUserFilter(user._id), '_id');
     if (!warehouse) return [];
     return [warehouseRoom(warehouse._id)];
   }

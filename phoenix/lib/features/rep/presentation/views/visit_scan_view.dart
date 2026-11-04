@@ -55,9 +55,9 @@ class _VisitScanViewState extends State<VisitScanView> {
         return PopScope<Object?>(
           // The system Back gesture after a recorded visit still has to tell
           // the previous screen to refresh.
-          canPop: !recorded,
+          canPop: !recorded && state.status != VisitScanStatus.submitting,
           onPopInvokedWithResult: (didPop, _) {
-            if (!didPop) GoRouter.of(context).pop(true);
+            if (!didPop && recorded) GoRouter.of(context).pop(true);
           },
           child: Scaffold(
             backgroundColor: Colors.black,
@@ -75,7 +75,10 @@ class _VisitScanViewState extends State<VisitScanView> {
                   errorBuilder: (context, error) => _CameraError(error: error),
                 ),
                 const _ScanFrame(),
-                Align(alignment: Alignment.bottomCenter, child: _Panel(state: state)),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _Panel(state: state),
+                ),
               ],
             ),
           ),
@@ -118,25 +121,27 @@ class _CameraError extends StatelessWidget {
       color: Colors.black,
       padding: const EdgeInsets.all(AppSizes.spacingXLarge),
       alignment: Alignment.center,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.no_photography_outlined, color: Colors.white70, size: 56),
-          const SizedBox(height: AppSizes.spacingMedium),
-          Text(
-            denied ? l10n.repCameraDenied : l10n.repCameraUnavailable,
-            textAlign: TextAlign.center,
-            style: context.textTheme.bodyLarge?.copyWith(color: Colors.white),
-          ),
-          if (denied) ...[
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.no_photography_outlined, color: Colors.white70, size: 56),
             const SizedBox(height: AppSizes.spacingMedium),
-            OutlinedButton(
-              onPressed: Geolocator.openAppSettings,
-              style: OutlinedButton.styleFrom(foregroundColor: Colors.white),
-              child: Text(l10n.repOpenSettings),
+            Text(
+              denied ? l10n.repCameraDenied : l10n.repCameraUnavailable,
+              textAlign: TextAlign.center,
+              style: context.textTheme.bodyLarge?.copyWith(color: Colors.white),
             ),
+            if (denied) ...[
+              const SizedBox(height: AppSizes.spacingMedium),
+              OutlinedButton(
+                onPressed: Geolocator.openAppSettings,
+                style: OutlinedButton.styleFrom(foregroundColor: Colors.white),
+                child: Text(l10n.repOpenSettings),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -178,7 +183,7 @@ class _Panel extends StatelessWidget {
         margin: const EdgeInsets.all(AppSizes.spacingMedium),
         padding: const EdgeInsets.all(AppSizes.spacingMedium),
         decoration: BoxDecoration(color: AppColors.surfaceElevatedOf(context), borderRadius: AppRadius.large),
-        child: content,
+        child: SingleChildScrollView(child: content),
       ),
     );
   }
@@ -206,10 +211,7 @@ class _Message extends StatelessWidget {
               Text(title, style: context.textTheme.titleSmall),
               if (body != null) ...[
                 const SizedBox(height: AppSizes.spacingXSmall),
-                Text(
-                  body!,
-                  style: context.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondaryOf(context)),
-                ),
+                Text(body!, style: context.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondaryOf(context))),
               ],
             ],
           ),
@@ -257,6 +259,12 @@ class _Result extends StatelessWidget {
         return l10n.repScanMockMessage;
       case VisitStatus.noPharmacyLocation:
         return l10n.repScanNoLocationMessage;
+      case VisitStatus.locationUnapproved:
+        return l10n.repScanLocationUnapprovedMessage;
+      case VisitStatus.poorAccuracy:
+        return l10n.repScanPoorAccuracyMessage;
+      case VisitStatus.staleLocation:
+        return l10n.repScanStaleLocationMessage;
     }
   }
 
@@ -319,11 +327,7 @@ class _Failure extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Message(
-          icon: Icons.error_outline,
-          iconColor: AppColors.errorOf(context),
-          title: _message(l10n),
-        ),
+        _Message(icon: Icons.error_outline, iconColor: AppColors.errorOf(context), title: _message(l10n)),
         const SizedBox(height: AppSizes.spacingMedium),
         PrimaryButton(label: l10n.repScanTryAgain, onPressed: onRetry),
         if (settings != null) TextButton(onPressed: settings, child: Text(l10n.repOpenSettings)),

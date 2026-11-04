@@ -19,12 +19,14 @@ const repVisitSchema = new Schema(
     pharmacyId: { type: Schema.Types.ObjectId, ref: 'Pharmacy', required: true },
     status: {
       type: String,
-      enum: ['verified', 'out_of_range', 'no_pharmacy_location', 'mock_location'],
+      enum: ['verified', 'out_of_range', 'no_pharmacy_location', 'mock_location', 'location_unapproved', 'poor_accuracy', 'stale_location'],
       required: true,
     },
     // Where the phone said it was. [longitude, latitude], like Pharmacy.location.
     coordinates: { type: [Number], default: undefined },
     accuracyMeters: { type: Number, default: null },
+    locationCapturedAt: { type: Date, default: null },
+    verificationPolicy: { radiusMeters: Number, maxAccuracyMeters: Number, maxAgeSeconds: Number },
     // Phone to pharmacy, when the pharmacy has a location.
     distanceMeters: { type: Number, default: null },
     scannedAt: { type: Date, default: Date.now },

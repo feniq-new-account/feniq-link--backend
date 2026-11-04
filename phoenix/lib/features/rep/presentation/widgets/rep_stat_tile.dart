@@ -22,15 +22,12 @@ class RepStatTile extends StatelessWidget {
           Text(
             value,
             style: context.textTheme.titleLarge?.copyWith(
-              color: AppColors.primaryOf(context),
+              color: AppColors.primaryTextOf(context),
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: AppSizes.spacingXSmall),
-          Text(
-            label,
-            style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
-          ),
+          Text(label, style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context))),
         ],
       ),
     );

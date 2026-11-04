@@ -58,8 +58,12 @@ class WarehouseOrdersState {
     advancingIds: advancingIds ?? this.advancingIds,
     errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     errorCode: clearError ? null : (errorCode ?? this.errorCode),
-    actionErrorCode: clearActionError ? null : (actionErrorCode ?? this.actionErrorCode),
-    actionErrorMessage: clearActionError ? null : (actionErrorMessage ?? this.actionErrorMessage),
+    actionErrorCode: clearActionError
+        ? null
+        : (actionErrorCode ?? this.actionErrorCode),
+    actionErrorMessage: clearActionError
+        ? null
+        : (actionErrorMessage ?? this.actionErrorMessage),
   );
 }
 
@@ -84,7 +88,13 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
   Future<void> load() async {
     final generation = ++_generation;
     final filter = state.filter;
-    emit(state.copyWith(status: RepLoadStatus.loading, clearError: true, clearActionError: true));
+    emit(
+      state.copyWith(
+        status: RepLoadStatus.loading,
+        clearError: true,
+        clearActionError: true,
+      ),
+    );
     try {
       final page = await _repository.getOrders(status: filter);
       if (generation != _generation || isClosed) return;
@@ -99,7 +109,13 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
       );
     } on Failure catch (f) {
       if (generation != _generation || isClosed) return;
-      emit(state.copyWith(status: RepLoadStatus.error, errorMessage: f.errMessage, errorCode: f.code));
+      emit(
+        state.copyWith(
+          status: RepLoadStatus.error,
+          errorMessage: f.errMessage,
+          errorCode: f.code,
+        ),
+      );
     }
   }
 
@@ -109,12 +125,18 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
     final generation = _generation;
     emit(state.copyWith(isLoadingMore: true));
     try {
-      final page = await _repository.getOrders(status: state.filter, after: cursor);
+      final page = await _repository.getOrders(
+        status: state.filter,
+        after: cursor,
+      );
       if (generation != _generation || isClosed) return;
       final seen = state.orders.map((o) => o.id).toSet();
       emit(
         state.copyWith(
-          orders: [...state.orders, ...page.orders.where((o) => !seen.contains(o.id))],
+          orders: [
+            ...state.orders,
+            ...page.orders.where((o) => !seen.contains(o.id)),
+          ],
           hasMore: page.hasMore,
           nextCursor: page.nextCursor,
           clearCursor: page.nextCursor == null,
@@ -123,20 +145,42 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
       );
     } on Failure catch (f) {
       if (generation != _generation || isClosed) return;
-      emit(state.copyWith(isLoadingMore: false, actionErrorMessage: f.errMessage, actionErrorCode: f.code));
+      emit(
+        state.copyWith(
+          isLoadingMore: false,
+          actionErrorMessage: f.errMessage,
+          actionErrorCode: f.code,
+        ),
+      );
     }
   }
 
   /// One tap on a row's button: approve & send, or mark delivered.
   Future<bool> advance(String orderId) async {
     if (state.advancingIds.contains(orderId)) return false;
-    emit(state.copyWith(advancingIds: {...state.advancingIds, orderId}, clearActionError: true));
+    final matches = state.orders.where((order) => order.id == orderId);
+    if (matches.isEmpty) return false;
+    final order = matches.first;
+    if (nextWarehouseStatus(order.status) == null) return false;
+    emit(
+      state.copyWith(
+        advancingIds: {...state.advancingIds, orderId},
+        clearActionError: true,
+      ),
+    );
     try {
-      final result = await _repository.advance(orderId);
+      final result = await _repository.advance(
+        orderId,
+        expectedStatus: order.status,
+        targetStatus: nextWarehouseStatus(order.status),
+      );
       if (isClosed) return true;
       emit(
         state.copyWith(
-          orders: [for (final o in state.orders) o.id == orderId ? o.copyWith(status: result.status) : o],
+          orders: [
+            for (final o in state.orders)
+              o.id == orderId ? o.copyWith(status: result.status) : o,
+          ],
           advancingIds: {...state.advancingIds}..remove(orderId),
         ),
       );
@@ -162,7 +206,11 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
         orders: [
           for (final o in state.orders)
             o.id == detail.id
-                ? o.copyWith(status: detail.status, finalPrice: detail.finalPrice, itemCount: detail.items.length)
+                ? o.copyWith(
+                    status: detail.status,
+                    finalPrice: detail.finalPrice,
+                    itemCount: detail.items.length,
+                  )
                 : o,
         ],
       ),

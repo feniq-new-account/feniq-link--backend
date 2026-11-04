@@ -63,9 +63,11 @@ test('a URL that is not ours, or leaves the media folder, points at no file', as
   assert.strictEqual(media.pathForUrl('https://api.example.sy/media/%2e%2e/%2e%2e/etc/passwd'), null);
 });
 
-test('our own media URLs are accepted as an image field, others are not', () => {
+test('our own media URLs require a trusted upload or an unchanged current image', () => {
   const ours = 'https://api.example.sy/media/catalog/abc.webp';
-  assert.strictEqual(imageUrlInput(ours), ours);
+  assert.strictEqual(imageUrlInput(ours, { trustedUpload: true }), ours);
+  assert.strictEqual(imageUrlInput(ours, { currentUrl: ours }), ours);
+  assert.throws(() => imageUrlInput(ours), { statusCode: 400 });
   assert.throws(() => imageUrlInput('https://elsewhere.example/x.webp'), { statusCode: 400 });
 });
 

@@ -1,3 +1,5 @@
+import { NumericInput } from '../components/NumericInput';
+import { DeliveryScheduleCard } from '../components/DeliveryScheduleCard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -178,7 +180,7 @@ export function WarehouseSettingsPage() {
           <form onSubmit={handleSubmit} className="product-form">
             <label>
               {t('warehouseSettings.minLabel')}
-              <input
+              <NumericInput
                 type="number"
                 min="0"
                 step="1"
@@ -189,7 +191,7 @@ export function WarehouseSettingsPage() {
             </label>
             <label>
               {t('warehouseSettings.maxLabel')}
-              <input
+              <NumericInput
                 type="number"
                 min="0"
                 step="1"
@@ -227,6 +229,7 @@ export function WarehouseSettingsPage() {
           </form>
         </div>
       )}
+      <DeliveryScheduleCard />
       {!isLoading && <LoyaltySettingsCard />}
     </div>
   );

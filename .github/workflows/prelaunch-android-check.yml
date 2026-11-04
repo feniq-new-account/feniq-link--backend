@@ -1,0 +1,165 @@
+# Validation requested for this prelaunch review only. Never publishes to the
+# site or a release, and never exposes the signing key outside GitHub Actions.
+name: Prelaunch Android validation
+on:
+  # Historical one-off review validation; launch builds now use the shared
+  # android-apk.yml counter and the explicitly requested task branch.
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: prelaunch-android-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: phoenix
+    env:
+      API_BASE_URL: ${{ vars.API_BASE_URL || 'https://feniq-connect-api.onrender.com/api' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use the Android release version counter
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/android-apk.yml/runs?per_page=30" > "$RUNNER_TEMP/android-release-runs.json"
+          code=$(python3 ../.github/scripts/android_review_version.py < "$RUNNER_TEMP/android-release-runs.json")
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'
+          channel: stable
+          cache: true
+      - name: Prepare Android SDK and NDK licenses
+        run: bash android/install-ci-sdk.sh
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter analyze --no-fatal-infos
+      - name: Configure existing signing credential
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo 'kind=TEST-ONLY' >> "$GITHUB_OUTPUT"
+            echo '::warning::No production signing credential configured; validation APK uses a temporary test key.'
+            exit 0
+          fi
+          [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ] || { echo '::error::Incomplete signing configuration.'; exit 1; }
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+          {
+            echo 'storeFile=upload-keystore.jks'
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > android/key.properties
+          echo 'kind=signed' >> "$GITHUB_OUTPUT"
+      - name: Compile universal release APK
+        run: >
+          flutter build apk --release --no-pub --build-number=${{ steps.version.outputs.code }}
+          --dart-define="API_BASE_URL=$API_BASE_URL"
+      - name: Verify Android artifact
+        env:
+          KIND: ${{ steps.signing.outputs.kind }}
+          EXPECTED_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
+          EXPECTED_VERSION_CODE: ${{ steps.version.outputs.code }}
+        run: |
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          EXPECTED_SHA256="${EXPECTED_SHA256:-$(cat ../.github/android-certificate.sha256)}"
+          tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          app_id=$("$tools/aapt2" dump packagename "$apk")
+          [ "$app_id" = 'com.feniq.link' ] || { echo '::error::Unexpected Android application ID.'; exit 1; }
+          badging=$("$tools/aapt2" dump badging "$apk")
+          native_code=$(echo "$badging" | sed -n 's/^native-code: //p')
+          [ "$native_code" = "'arm64-v8a' 'armeabi-v7a' 'x86_64'" ] || { echo '::error::Missing native architectures in universal APK.'; exit 1; }
+          code=$(echo "$badging" | sed -n "s/^package:.*versionCode='\([0-9]*\)'.*/\1/p")
+          [ "$code" = "$EXPECTED_VERSION_CODE" ] || { echo '::error::Unexpected APK version code.'; exit 1; }
+          "$tools/zipalign" -c -P 16 4 "$apk"
+          cert=$("$tools/apksigner" verify --print-certs "$apk" | sed -n 's/^.*certificate SHA-256 digest: //p' | head -1 | tr 'a-f' 'A-F')
+          [ -n "$cert" ] || { echo '::error::Missing signing certificate.'; exit 1; }
+          # The same release counter keeps this installable over older builds
+          # without blocking the next ordinary production build.
+          verification=TEST-ONLY
+          if [ "$KIND" = signed ]; then
+            if [ -n "$EXPECTED_SHA256" ]; then
+              expected=$(echo "$EXPECTED_SHA256" | tr -d ' :' | tr 'a-f' 'A-F')
+              [ "$expected" = "$cert" ] || { echo '::error::Signing certificate does not match the configured production fingerprint.'; exit 1; }
+              verification=signed-fingerprint-verified
+            else
+              verification=signed-fingerprint-not-configured
+              echo '::warning::APK is signed, but production fingerprint is not configured; update compatibility is unverified.'
+            fi
+          fi
+          mkdir -p build/prelaunch
+          cp "$apk" build/prelaunch/feniq-prelaunch-universal.apk
+          (cd build/prelaunch && sha256sum feniq-prelaunch-universal.apk > SHA256SUMS)
+          jq -n --arg verification "$verification" --arg cert "$cert" --arg api "$API_BASE_URL" \
+            --arg commit "$GITHUB_SHA" --arg id "$app_id" --argjson code "$code" \
+            '{verification:$verification,certificateSha256:$cert,apiBaseUrl:$api,commit:$commit,applicationId:$id,versionCode:$code,abis:["arm64-v8a","armeabi-v7a","x86_64"],publication:false}' > build/prelaunch/validation.json
+          cat build/prelaunch/validation.json
+          cat build/prelaunch/SHA256SUMS
+          { echo '### Android prelaunch validation'; echo "- $verification"; echo "- applicationId: $app_id"; echo "- Commit: $GITHUB_SHA"; echo '- Review artifact only; no website publication.'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: feniq-prelaunch-universal
+          path: phoenix/build/prelaunch/
+          retention-days: 7
+          if-no-files-found: error
+  install:
+    needs: apk
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: feniq-prelaunch-universal
+          path: apk
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install and launch signed APK on Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          # This action executes each script line in a separate shell.
+          script: |
+            (cd apk && sha256sum -c SHA256SUMS)
+            adb install -r apk/feniq-prelaunch-universal.apk
+            adb shell pm path com.feniq.link
+            adb logcat -c
+            adb shell am start -W -n com.feniq.link/.MainActivity | tee apk/android15-launch.txt
+            grep -q 'Status: ok' apk/android15-launch.txt
+            sleep 8
+            adb shell pidof com.feniq.link > apk/android15-pid.txt
+            test -s apk/android15-pid.txt
+            adb logcat -d -b crash > apk/android15-crashes.txt
+            if grep -q 'Process: com.feniq.link' apk/android15-crashes.txt; then cat apk/android15-crashes.txt; exit 1; fi
+            adb exec-out screencap -p > apk/android15-startup.png
+      - name: Keep Android startup evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: feniq-android15-smoke
+          path: apk/android15-*
+          if-no-files-found: warn
+          retention-days: 7

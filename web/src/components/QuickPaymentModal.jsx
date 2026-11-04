@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { asciiDigits } from '../utils/digits';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { formatSyp } from '../utils/currency';
@@ -6,20 +7,24 @@ import { amountLeft, isValidPartial, parseWholeLiras } from '../utils/collectPay
 import { createIdempotencyKeys } from '../utils/payments';
 
 // Records a cash payment from a pharmacy straight from the accounts table:
-// "full" pays what it owes after a small confirm, "partial" asks for the
-// amount and shows what is left. One idempotency key per open modal, so a
+// Inline beneath the triggering buttons: "full" confirms the balance and
+// "partial" asks for the amount and shows the remainder. Stable keys ensure a
 // retry after a dropped response cannot credit the pharmacy twice.
-export function QuickPaymentModal({ mode, pharmacyId, pharmacyName, owedSyp, onClose, onDone }) {
+export function QuickPaymentModal({ mode, pharmacyId, pharmacyName, owedSyp, onClose, onDone, onBusyChange }) {
   const { t } = useTranslation();
   const [idempotencyKeys] = useState(createIdempotencyKeys);
   const [amount, setAmount] = useState('');
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const firstControl = useRef(null);
+  const sending = useRef(false);
+  useEffect(() => { firstControl.current?.focus(); }, []);
 
   const paid = mode === 'full' ? owedSyp : parseWholeLiras(amount);
 
   const submit = async (event) => {
     event.preventDefault();
+    if (sending.current) return;
     if (mode === 'partial' && !isValidPartial(paid, owedSyp)) {
       setError(t('quickPay.partialInvalid'));
       return;
@@ -30,7 +35,9 @@ export function QuickPaymentModal({ mode, pharmacyId, pharmacyName, owedSyp, onC
       currency: 'SYP',
       method: 'cash',
     };
+    sending.current = true;
     setSaving(true);
+    onBusyChange?.(true);
     setError(null);
     try {
       await idempotencyKeys.submit(payment, (idempotencyKey) =>
@@ -40,14 +47,18 @@ export function QuickPaymentModal({ mode, pharmacyId, pharmacyName, owedSyp, onC
     } catch (err) {
       setError(err.message);
     } finally {
+      sending.current = false;
       setSaving(false);
+      onBusyChange?.(false);
     }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
-        <h2>{mode === 'full' ? t('quickPay.fullTitle') : t('quickPay.partialTitle')}</h2>
+    <section className="inline-payment" role="region"
+      aria-label={mode === 'full' ? t('quickPay.fullTitle') : t('quickPay.partialTitle')}
+      aria-busy={saving} onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape' && !sending.current) onClose(); }}>
+        <h3>{mode === 'full' ? t('quickPay.fullTitle') : t('quickPay.partialTitle')}</h3>
         <p>{pharmacyName}</p>
         <form onSubmit={submit} className="product-form">
           {mode === 'full' ? (
@@ -60,10 +71,12 @@ export function QuickPaymentModal({ mode, pharmacyId, pharmacyName, owedSyp, onC
                 <input
                   type="text"
                   inputMode="numeric"
-                  autoFocus
+                  ref={firstControl}
+                  dir="ltr"
+                  disabled={saving}
                   value={amount}
                   onChange={(e) => {
-                    setAmount(e.target.value);
+                    setAmount(asciiDigits(e.target.value));
                     setError(null);
                   }}
                 />
@@ -71,17 +84,16 @@ export function QuickPaymentModal({ mode, pharmacyId, pharmacyName, owedSyp, onC
               <p className="hint">{t('quickPay.left', { amount: formatSyp(amountLeft(owedSyp, paid)) })}</p>
             </>
           )}
-          {error && <p className="error-text">{error}</p>}
+          {error && <p className="error-text" role="alert">{error}</p>}
           <div className="collect-choices">
-            <button type="submit" className="btn-primary" disabled={saving}>
+            <button ref={mode === 'full' ? firstControl : undefined} type="submit" className="btn-primary" disabled={saving}>
               {saving ? t('common.loading') : t('quickPay.save')}
             </button>
-            <button type="button" className="btn-secondary" onClick={onClose}>
+            <button type="button" className="btn-secondary" onClick={onClose} disabled={saving}>
               {t('common.cancel')}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </section>
   );
 }

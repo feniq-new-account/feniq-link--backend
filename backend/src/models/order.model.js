@@ -143,6 +143,16 @@ const orderSchema = new Schema(
     // amount, and the warehouse's tiers as they were when the order was placed
     // - an edit re-derives the discount from these, never from today's tiers.
     loyaltyDiscountAmount: { type: Number, default: 0 },
+    monthlyLoyalty: {
+      type: new Schema({
+        tiers: [new Schema({ minSyp: Number, discountSyp: Number }, { _id: false })],
+        period: { type: String, default: null },
+        eligibleSyp: { type: Number, default: 0 },
+        reversedSyp: { type: Number, default: 0 },
+        creditedAt: { type: Date, default: null },
+      }, { _id: false }),
+      default: null,
+    },
     loyaltyTiers: {
       type: [new Schema({ minSyp: Number, discountSyp: Number }, { _id: false })],
       default: undefined,
@@ -236,6 +246,8 @@ const orderSchema = new Schema(
     // as return.images[] / banner.imageUrl. deliverySealConfirmedAt marks when
     // the pharmacy confirmed; the order status itself is untouched by this (the
     // warehouse still advances it). Both null on every existing order.
+    deliveryEstimate: { type: Schema.Types.Mixed, default: null },
+    deliveryRevision: { type: Number, default: 0 },
     deliverySealPhoto: { type: String, default: null },
     deliverySealConfirmedAt: { type: Date, default: null },
     // Always the pharmacist's user - the warehouse has no cancellation authority from the app.
@@ -298,5 +310,8 @@ orderSchema.index(
   { pharmacyId: 1, idempotencyKey: 1 },
   { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } } }
 );
+
+orderSchema.index({ createdAt: 1 });
+orderSchema.index({ pharmacyId: 1, createdAt: 1 });
 
 module.exports = model('Order', orderSchema);

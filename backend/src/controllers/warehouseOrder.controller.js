@@ -1,19 +1,11 @@
 const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/ApiError');
-const Warehouse = require('../models/warehouse.model');
 const warehouseOrderService = require('../services/warehouseOrder.service');
 const warehouseOrderViewModel = require('../viewmodels/warehouseOrder.viewmodel');
 const { parseCursorQuery, parseNumericCursor, paginationMeta } = require('../utils/pagination');
 
 const WAREHOUSE_ORDERS_DEFAULT_LIMIT = 20;
 
-async function loadWarehouseOrThrow(userId) {
-  const warehouse = await Warehouse.findOne({ userId });
-  if (!warehouse) {
-    throw ApiError.notFound('Warehouse profile not found.', 'WAREHOUSE_PROFILE_NOT_FOUND');
-  }
-  return warehouse;
-}
+const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 
 const list = asyncHandler(async (req, res) => {
   const warehouse = await loadWarehouseOrThrow(req.user._id);
@@ -47,7 +39,8 @@ const advance = asyncHandler(async (req, res) => {
   const order = await warehouseOrderService.advanceOrderStatus(
     req.params.id,
     warehouse._id,
-    req.user._id
+    req.user._id,
+    req.body ?? {}
   );
   res.json({
     success: true,

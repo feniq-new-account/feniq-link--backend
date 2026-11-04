@@ -10,6 +10,7 @@ import 'package:feniq/features/cart/data/models/cart_quote.dart';
 import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_repository.dart';
 import 'package:feniq/features/cart/data/models/order_model.dart';
 import 'package:feniq/features/cart/data/repositories/order_repository.dart';
+import 'package:feniq/features/cart/data/repositories/cart_draft_store.dart';
 import 'package:feniq/features/catalog/data/models/product_model.dart';
 
 import 'cart_state.dart';
@@ -36,7 +37,9 @@ const Duration kCartQuoteDelay = Duration(milliseconds: 400);
 /// Whether a refusal is about the discount code itself (it stopped working),
 /// as opposed to the network or anything else.
 bool isDiscountCodeRefusal(String? code) =>
-    code != null && code.startsWith('DISCOUNT_CODE_') && code != 'DISCOUNT_CODE_CHANGED';
+    code != null &&
+    code.startsWith('DISCOUNT_CODE_') &&
+    code != 'DISCOUNT_CODE_CHANGED';
 
 // Section 6.6: every order belongs to exactly one warehouse. The pharmacist
 // can still fill carts at several warehouses at once: the state's own fields
@@ -54,22 +57,91 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   CartCubit({
     required OrderRepository orderRepository,
     required WarehouseRepository warehouseRepository,
+    CartDraftStore? draftStore,
     SessionScope? sessionScope,
     // Test seam for the TTL clock; production uses the wall clock.
     DateTime Function()? now,
-  })  : _orderRepository = orderRepository,
-        _warehouseRepository = warehouseRepository,
-        _sessionScope = sessionScope,
-        _now = now ?? DateTime.now,
-        super(const CartState()) {
+  }) : _orderRepository = orderRepository,
+       _warehouseRepository = warehouseRepository,
+       _draftStore = draftStore,
+       _sessionScope = sessionScope,
+       _now = now ?? DateTime.now,
+       super(const CartState()) {
     _sessionScope?.register(this);
   }
 
   final OrderRepository _orderRepository;
   final WarehouseRepository _warehouseRepository;
+  final CartDraftStore? _draftStore;
   final SessionScope? _sessionScope;
   final DateTime Function() _now;
   final Uuid _uuid = const Uuid();
+
+  bool get _isLocked =>
+      _restoringDraft || state.isSubmitting || state.isSubmittingAll;
+
+  String? _draftAccountId;
+  bool _restoringDraft = false;
+  Future<void> _draftWrites = Future<void>.value();
+  String? _lastEncodedDraft;
+
+  /// Called as soon as auth reads a saved token, before its network check, so
+  /// drafts are available even on an offline startup. Switching accounts
+  /// clears the visible state synchronously, before waiting for disk writes.
+  Future<void> restoreForToken(String? token) async {
+    final accountId = CartDraftStore.accountIdFromToken(token);
+    if (accountId == _draftAccountId) return;
+    final session = ++_session;
+    _cancelQuote();
+    _restoringDraft = true;
+    _draftAccountId = null;
+    _lastEncodedDraft = null;
+    emit(const CartState());
+    await _draftWrites;
+    if (isClosed || session != _session) return;
+    _draftAccountId = accountId;
+    final restored = accountId == null
+        ? const CartState()
+        : _draftStore?.restore(accountId) ?? const CartState();
+    emit(restored);
+    _restoringDraft = false;
+  }
+
+  Future<void> _queueDraftWrite(Future<void> Function() write) {
+    final pending = _draftWrites.then((_) => write());
+    // A failed background save must not poison later writes or logouts. The
+    // caller that requires durability before checkout still gets the failure.
+    _draftWrites = pending.catchError((Object _) {});
+    return pending;
+  }
+
+  Future<void> _saveDraft(
+    CartState draft, {
+    bool requiredBeforeSubmit = false,
+  }) {
+    final store = _draftStore;
+    if (store == null) return Future<void>.value();
+    final accountId = _draftAccountId;
+    if (accountId == null) {
+      return requiredBeforeSubmit
+          ? Future<void>.error(StateError('No account for cart draft'))
+          : Future<void>.value();
+    }
+    final encoded = store.encode(accountId, draft);
+    if (!requiredBeforeSubmit && encoded == _lastEncodedDraft) {
+      return Future<void>.value();
+    }
+    _lastEncodedDraft = encoded;
+    return _queueDraftWrite(() => store.saveEncoded(accountId, encoded));
+  }
+
+  @override
+  void onChange(Change<CartState> change) {
+    super.onChange(change);
+    if (!_restoringDraft) {
+      unawaited(_saveDraft(change.nextState).catchError((Object _) {}));
+    }
+  }
 
   // The cart quote in the air. Every quote, edit, apply, removal and reset
   // bumps [_quoteRequest], and an answer to an older request is dropped - so a
@@ -93,16 +165,29 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   // that just left; nothing the next one sends may carry it.
   @override
   void resetForSignOut() {
+    final accountId = _draftAccountId;
+    _draftAccountId = null;
+    _lastEncodedDraft = null;
+    _restoringDraft = false;
     _session++;
     _cancelQuote();
+    final store = _draftStore;
+    if (store != null && accountId != null) {
+      unawaited(
+        _queueDraftWrite(
+          () => store.clear(accountId),
+        ).catchError((Object _) {}),
+      );
+    }
     if (isClosed) return;
     emit(const CartState());
   }
 
   @override
-  Future<void> close() {
+  Future<void> close() async {
     _cancelQuote();
     _sessionScope?.unregister(this);
+    await _draftWrites;
     return super.close();
   }
 
@@ -141,7 +226,10 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   }
 
   bool _isStaleQuote(int request, int session, String warehouseId) =>
-      isClosed || request != _quoteRequest || session != _session || state.warehouseId != warehouseId;
+      isClosed ||
+      request != _quoteRequest ||
+      session != _session ||
+      state.warehouseId != warehouseId;
 
   // The state an edit that changes what the cart costs lands in - in the SAME
   // emit as the edit: the quote on hand no longer describes the cart. With the
@@ -149,7 +237,11 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   // it, the screen asks when it opens.
   CartState _costChanged(CartState next) => next.isEmpty
       ? next
-      : next.copyWith(isQuoteStale: true, isQuoting: _quoteViewers > 0, clearQuoteError: true);
+      : next.copyWith(
+          isQuoteStale: true,
+          isQuoting: _quoteViewers > 0,
+          clearQuoteError: true,
+        );
 
   // Right after emitting a _costChanged state. Debounced: the old figures stay
   // on screen (with the submit button held) until the edits settle.
@@ -168,33 +260,60 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
 
   Future<void> _requote(int request) async {
     final warehouseId = state.warehouseId;
-    if (warehouseId == null || state.isEmpty || request != _quoteRequest) return;
+    if (warehouseId == null || state.isEmpty || request != _quoteRequest) {
+      return;
+    }
     final code = state.discountCode;
     final session = _session;
     try {
-      final quote = await _orderRepository.quoteCart(warehouseId: warehouseId, items: state.items, code: code);
+      final quote = await _orderRepository.quoteCart(
+        warehouseId: warehouseId,
+        items: state.items,
+        code: code,
+      );
       if (_isStaleQuote(request, session, warehouseId)) return;
-      emit(state.copyWith(quote: quote, isQuoting: false, isQuoteStale: false, clearQuoteError: true));
+      emit(
+        state.copyWith(
+          quote: quote,
+          isQuoting: false,
+          isQuoteStale: false,
+          clearQuoteError: true,
+        ),
+      );
     } on Failure catch (f) {
       if (_isStaleQuote(request, session, warehouseId)) return;
       if (code != null && isDiscountCodeRefusal(f.code)) {
         // The applied code stopped working while the cart was being edited
         // (expired, stopped, used up...): it comes off, with the reason under
         // the field, and the cart is quoted again without it.
-        emit(state.copyWith(
-          clearDiscountCode: true,
-          discountCodeErrorCode: f.code,
-          clearPendingIdempotencyKey: true,
-        ));
+        emit(
+          state.copyWith(
+            clearDiscountCode: true,
+            discountCodeErrorCode: f.code,
+            clearPendingIdempotencyKey: true,
+          ),
+        );
         await _requote(++_quoteRequest);
         return;
       }
       // The network, most likely: no figures to show - the summary offers a
       // retry, and the submit button waits for it.
-      emit(state.copyWith(isQuoting: false, isQuoteStale: true, quoteErrorCode: f.code ?? 'UNEXPECTED_ERROR'));
+      emit(
+        state.copyWith(
+          isQuoting: false,
+          isQuoteStale: true,
+          quoteErrorCode: f.code ?? 'UNEXPECTED_ERROR',
+        ),
+      );
     } catch (_) {
       if (_isStaleQuote(request, session, warehouseId)) return;
-      emit(state.copyWith(isQuoting: false, isQuoteStale: true, quoteErrorCode: 'UNEXPECTED_ERROR'));
+      emit(
+        state.copyWith(
+          isQuoting: false,
+          isQuoteStale: true,
+          quoteErrorCode: 'UNEXPECTED_ERROR',
+        ),
+      );
     }
   }
 
@@ -206,6 +325,7 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   /// that cannot be used leaves the cart as it was, with the reason in
   /// [CartState.discountCodeErrorCode].
   Future<void> applyDiscountCode(String rawCode) async {
+    if (_isLocked) return;
     final code = rawCode.trim().toUpperCase();
     final warehouseId = state.warehouseId;
     if (code.isEmpty || warehouseId == null || state.isEmpty) return;
@@ -215,18 +335,24 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     final session = _session;
     emit(state.copyWith(isQuoting: true, clearDiscountCodeError: true));
     try {
-      final quote = await _orderRepository.quoteCart(warehouseId: warehouseId, items: state.items, code: code);
+      final quote = await _orderRepository.quoteCart(
+        warehouseId: warehouseId,
+        items: state.items,
+        code: code,
+      );
       if (_isStaleQuote(request, session, warehouseId)) return;
       final applied = quote.code ?? code;
-      emit(state.copyWith(
-        discountCode: applied,
-        quote: quote,
-        isQuoting: false,
-        isQuoteStale: false,
-        clearQuoteError: true,
-        // The code goes to the server with the order - a different request.
-        clearPendingIdempotencyKey: state.discountCode != applied,
-      ));
+      emit(
+        state.copyWith(
+          discountCode: applied,
+          quote: quote,
+          isQuoting: false,
+          isQuoteStale: false,
+          clearQuoteError: true,
+          // The code goes to the server with the order - a different request.
+          clearPendingIdempotencyKey: state.discountCode != applied,
+        ),
+      );
     } on Failure catch (f) {
       if (_isStaleQuote(request, session, warehouseId)) return;
       _applyRefused(f.code ?? 'UNEXPECTED_ERROR');
@@ -246,18 +372,23 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
 
   /// Takes the code off the cart; the cart is quoted again without it.
   void removeDiscountCode() {
+    if (_isLocked) return;
     if (state.discountCode == null) {
-      if (state.discountCodeErrorCode != null) emit(state.copyWith(clearDiscountCodeError: true));
+      if (state.discountCodeErrorCode != null) {
+        emit(state.copyWith(clearDiscountCodeError: true));
+      }
       return;
     }
     _cancelQuote();
-    emit(state.copyWith(
-      clearDiscountCode: true,
-      clearDiscountCodeError: true,
-      isQuoting: false,
-      isQuoteStale: true,
-      clearPendingIdempotencyKey: true,
-    ));
+    emit(
+      state.copyWith(
+        clearDiscountCode: true,
+        clearDiscountCodeError: true,
+        isQuoting: false,
+        isQuoteStale: true,
+        clearPendingIdempotencyKey: true,
+      ),
+    );
     if (_quoteViewers > 0) refreshQuote();
   }
 
@@ -356,10 +487,14 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   Future<void> _readWarehouseLimits(String warehouseId) async {
     final session = _session;
     try {
-      final profile = await _warehouseRepository.getWarehouseProfile(warehouseId);
+      final profile = await _warehouseRepository.getWarehouseProfile(
+        warehouseId,
+      );
       // Dropped when the cart moved on while this was in the air: a sign-out,
       // or a switch to another warehouse (whose own read is already running).
-      if (isClosed || session != _session || state.warehouseId != warehouseId) return;
+      if (isClosed || session != _session || state.warehouseId != warehouseId) {
+        return;
+      }
       emit(
         state.copyWith(
           minOrderAmountUsd: profile.minOrderAmountUsd,
@@ -385,25 +520,28 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   // the cart comes back. "Send all" keeps a refusal on it so the cart screen
   // can show it once the run ends.
   CartState _setAside(CartState cart, {bool keepError = false}) => CartState(
-        warehouseId: cart.warehouseId,
-        warehouseName: cart.warehouseName,
-        minOrderAmountUsd: cart.minOrderAmountUsd,
-        maxOrderAmountUsd: cart.maxOrderAmountUsd,
-        limitsFetchedAt: cart.limitsFetchedAt,
-        items: cart.items,
-        notes: cart.notes,
-        pendingIdempotencyKey: cart.pendingIdempotencyKey,
-        discountCode: cart.discountCode,
-        isQuoteStale: true,
-        errorMessage: keepError ? cart.errorMessage : null,
-        errorCode: keepError ? cart.errorCode : null,
-        errorDetails: keepError ? cart.errorDetails : null,
-      );
+    warehouseId: cart.warehouseId,
+    warehouseName: cart.warehouseName,
+    minOrderAmountUsd: cart.minOrderAmountUsd,
+    maxOrderAmountUsd: cart.maxOrderAmountUsd,
+    limitsFetchedAt: cart.limitsFetchedAt,
+    items: cart.items,
+    notes: cart.notes,
+    pendingIdempotencyKey: cart.pendingIdempotencyKey,
+    discountCode: cart.discountCode,
+    isQuoteStale: true,
+    errorMessage: keepError ? cart.errorMessage : null,
+    errorCode: keepError ? cart.errorCode : null,
+    errorDetails: keepError ? cart.errorDetails : null,
+  );
 
   // [front] in front of the given carts set aside - the state to emit.
   CartState _withFront(CartState front, Map<String, CartState> others) {
     final rest = Map<String, CartState>.of(others)..remove(front.warehouseId);
-    return front.copyWith(otherCarts: Map.unmodifiable(rest), isSubmittingAll: state.isSubmittingAll);
+    return front.copyWith(
+      otherCarts: Map.unmodifiable(rest),
+      isSubmittingAll: state.isSubmittingAll,
+    );
   }
 
   // Puts [front] in front of the given carts set aside, and brings its limits
@@ -421,8 +559,14 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   // [warehouseName] was given to start one.
   CartState? _switchedTo(String warehouseId, String? warehouseName) {
     final others = Map<String, CartState>.of(state.otherCarts);
-    final target = others.remove(warehouseId) ??
-        (warehouseName == null ? null : CartState(warehouseId: warehouseId, warehouseName: warehouseName));
+    final target =
+        others.remove(warehouseId) ??
+        (warehouseName == null
+            ? null
+            : CartState(
+                warehouseId: warehouseId,
+                warehouseName: warehouseName,
+              ));
     if (target == null) return null;
     final current = state.warehouseId;
     if (current != null && current != warehouseId && !state.isEmpty) {
@@ -434,6 +578,11 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   /// Brings the cart for [warehouseId] to the front, setting the current one
   /// aside. A warehouse with no cart yet is left alone.
   void switchToWarehouse(String warehouseId) {
+    if (_isLocked) return;
+    _switchToWarehouse(warehouseId);
+  }
+
+  void _switchToWarehouse(String warehouseId) {
     if (state.warehouseId == warehouseId) return;
     final next = _switchedTo(warehouseId, null);
     if (next == null) return;
@@ -462,31 +611,43 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     required String warehouseName,
     required int quantity,
   }) {
+    if (_isLocked) return;
     // One warehouse per cart (Section 6.6): a product from another warehouse
     // goes to that warehouse's own cart, which comes to the front - in the
     // same emit as the add.
     final warehouseChanged = state.warehouseId != warehouseId;
     if (warehouseChanged) _cancelQuote();
-    final base = warehouseChanged ? _switchedTo(warehouseId, warehouseName)! : state;
+    final base = warehouseChanged
+        ? _switchedTo(warehouseId, warehouseName)!
+        : state;
 
-    final existingIndex = base.items.indexWhere((item) => item.productId == product.id);
+    final existingIndex = base.items.indexWhere(
+      (item) => item.productId == product.id,
+    );
     final List<CartItem> updated;
     if (existingIndex >= 0) {
       final existing = base.items[existingIndex];
       updated = List.of(base.items)
-        ..[existingIndex] = existing.copyWith(quantity: existing.quantity + quantity);
+        ..[existingIndex] = existing.copyWith(
+          quantity: existing.quantity + quantity,
+        );
     } else {
-      updated = [...base.items, CartItem.fromProduct(product, quantity: quantity)];
+      updated = [
+        ...base.items,
+        CartItem.fromProduct(product, quantity: quantity),
+      ];
     }
     emit(
-      _costChanged(base.copyWith(
-        warehouseId: warehouseId,
-        warehouseName: warehouseName,
-        items: updated,
-        // A different cart now - see CartState.pendingIdempotencyKey.
-        clearPendingIdempotencyKey: true,
-        clearError: true,
-      )),
+      _costChanged(
+        base.copyWith(
+          warehouseId: warehouseId,
+          warehouseName: warehouseName,
+          items: updated,
+          // A different cart now - see CartState.pendingIdempotencyKey.
+          clearPendingIdempotencyKey: true,
+          clearError: true,
+        ),
+      ),
     );
     if (warehouseChanged) {
       // Another warehouse's cart: its limits, and its quote straight away.
@@ -511,11 +672,19 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     required String warehouseName,
     required List<CartItem> items,
   }) {
-    final others = Map<String, CartState>.of(state.otherCarts)..remove(warehouseId);
+    if (_isLocked) return;
+    final others = Map<String, CartState>.of(state.otherCarts)
+      ..remove(warehouseId);
     final current = state.warehouseId;
-    if (current != null && current != warehouseId && !state.isEmpty) others[current] = _setAside(state);
+    if (current != null && current != warehouseId && !state.isEmpty) {
+      others[current] = _setAside(state);
+    }
     _bringForward(
-      CartState(warehouseId: warehouseId, warehouseName: warehouseName, items: List.of(items)),
+      CartState(
+        warehouseId: warehouseId,
+        warehouseName: warehouseName,
+        items: List.of(items),
+      ),
       others,
     );
   }
@@ -533,9 +702,12 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     required String warehouseId,
     required String warehouseName,
   }) {
+    if (_isLocked) return;
     final warehouseChanged = state.warehouseId != warehouseId;
     if (warehouseChanged) _cancelQuote();
-    final base = warehouseChanged ? _switchedTo(warehouseId, warehouseName)! : state;
+    final base = warehouseChanged
+        ? _switchedTo(warehouseId, warehouseName)!
+        : state;
 
     final existingIndex = base.items.indexWhere(
       (item) => item.isPackage && item.packageId == packageLine.packageId,
@@ -552,13 +724,15 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     }
 
     emit(
-      _costChanged(base.copyWith(
-        warehouseId: warehouseId,
-        warehouseName: warehouseName,
-        items: updated,
-        clearPendingIdempotencyKey: true,
-        clearError: true,
-      )),
+      _costChanged(
+        base.copyWith(
+          warehouseId: warehouseId,
+          warehouseName: warehouseName,
+          items: updated,
+          clearPendingIdempotencyKey: true,
+          clearError: true,
+        ),
+      ),
     );
     if (warehouseChanged) {
       // Another warehouse's cart: its limits, and its quote straight away.
@@ -577,9 +751,11 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   // Keeps the idempotency key: the flag is display-only and never sent, so the
   // request this cart would make is unchanged.
   void markPackagesUnavailable(Iterable<String> packageIds) {
+    if (_isLocked) return;
     final ids = packageIds.toSet();
     final needsFlag = state.items.any(
-      (item) => item.isPackage && item.isAvailable && ids.contains(item.packageId),
+      (item) =>
+          item.isPackage && item.isAvailable && ids.contains(item.packageId),
     );
     if (!needsFlag) return;
     emit(state.copyWith(items: _flagUnavailablePackages(ids)));
@@ -588,20 +764,29 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   /// The one-tap way out of a PACKAGE_UNAVAILABLE refusal: drops every package
   /// line flagged unavailable and leaves the rest of the cart as it was.
   void removeUnavailablePackages() {
-    final updated = state.items.where((item) => !(item.isPackage && !item.isAvailable)).toList();
+    if (_isLocked) return;
+    final updated = state.items
+        .where((item) => !(item.isPackage && !item.isAvailable))
+        .toList();
     if (updated.length == state.items.length) return;
     if (updated.isEmpty) {
       _nextCartOrEmpty();
       return;
     }
-    emit(_costChanged(state.copyWith(items: updated, clearPendingIdempotencyKey: true)));
+    emit(
+      _costChanged(
+        state.copyWith(items: updated, clearPendingIdempotencyKey: true),
+      ),
+    );
     _scheduleRequote();
   }
 
   List<CartItem> _flagUnavailablePackages(Set<String> packageIds) => state.items
-      .map((item) => item.isPackage && packageIds.contains(item.packageId)
-          ? item.copyWith(isAvailable: false)
-          : item)
+      .map(
+        (item) => item.isPackage && packageIds.contains(item.packageId)
+            ? item.copyWith(isAvailable: false)
+            : item,
+      )
       .toList();
 
   // A PRICE_CHANGED refusal names every loose line whose price moved, with the
@@ -639,7 +824,9 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     var changed = false;
     final items = state.items.map((item) {
       final currentPriceUsd = currentPriceByProductId[item.productId];
-      if (item.isPackage || currentPriceUsd == null || currentPriceUsd == item.discountPriceUsd) {
+      if (item.isPackage ||
+          currentPriceUsd == null ||
+          currentPriceUsd == item.discountPriceUsd) {
         return item;
       }
       changed = true;
@@ -655,7 +842,8 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
         unitPriceUsd: (problem['priceUsd'] as num?) ?? currentPriceUsd,
         hasDiscountInputs: hasInputs,
         offerDiscountPercentage: problem['offerDiscountPercentage'] as num?,
-        manufacturerDiscountPercentage: problem['manufacturerDiscountPercentage'] as num?,
+        manufacturerDiscountPercentage:
+            problem['manufacturerDiscountPercentage'] as num?,
       );
     }).toList();
     return (items: items, changed: changed);
@@ -671,14 +859,19 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
         if (problem is! Map) continue;
         final productId = problem['productId'];
         if (productId is String) {
-          currentByProductId[productId] = BonusTier.listFromJson(problem['currentBonuses']);
+          currentByProductId[productId] = BonusTier.listFromJson(
+            problem['currentBonuses'],
+          );
         }
       }
     }
     return state.items.map((item) {
       final current = currentByProductId[item.productId];
       if (item.isPackage || current == null) return item;
-      return item.copyWith(bonuses: current, previousBonuses: item.previousBonuses ?? item.bonuses);
+      return item.copyWith(
+        bonuses: current,
+        previousBonuses: item.previousBonuses ?? item.bonuses,
+      );
     }).toList();
   }
 
@@ -691,6 +884,7 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   // a re-typed number), and dropping the key for that would let a retry after
   // a lost response place the same order twice.
   void updateQuantity(String lineKey, int quantity) {
+    if (_isLocked) return;
     final clamped = quantity < 1 ? 1 : quantity;
     final changed = state.items.any(
       (item) => item.lineKey == lineKey && item.quantity != clamped,
@@ -699,19 +893,28 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
       if (item.lineKey != lineKey) return item;
       return item.copyWith(quantity: clamped);
     }).toList();
-    final next = state.copyWith(items: updated, clearPendingIdempotencyKey: changed);
+    final next = state.copyWith(
+      items: updated,
+      clearPendingIdempotencyKey: changed,
+    );
     emit(changed ? _costChanged(next) : next);
     if (changed) _scheduleRequote();
   }
 
   void removeItem(String lineKey) {
-    final updated = state.items.where((item) => item.lineKey != lineKey).toList();
+    if (_isLocked) return;
+    final updated = state.items
+        .where((item) => item.lineKey != lineKey)
+        .toList();
     if (updated.isEmpty) {
       _nextCartOrEmpty();
       return;
     }
     final removed = updated.length != state.items.length;
-    final next = state.copyWith(items: updated, clearPendingIdempotencyKey: removed);
+    final next = state.copyWith(
+      items: updated,
+      clearPendingIdempotencyKey: removed,
+    );
     emit(removed ? _costChanged(next) : next);
     if (removed) _scheduleRequote();
   }
@@ -719,12 +922,14 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   /// [updateQuantity] on the cart at [warehouseId], which comes to the front
   /// - a stepper on a warehouse's catalog card edits that warehouse's cart.
   void updateQuantityAt(String warehouseId, String lineKey, int quantity) {
+    if (_isLocked) return;
     switchToWarehouse(warehouseId);
     if (state.warehouseId == warehouseId) updateQuantity(lineKey, quantity);
   }
 
   /// [removeItem] on the cart at [warehouseId], as [updateQuantityAt].
   void removeItemAt(String warehouseId, String lineKey) {
+    if (_isLocked) return;
     switchToWarehouse(warehouseId);
     if (state.warehouseId == warehouseId) removeItem(lineKey);
   }
@@ -735,6 +940,7 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   // (if any) comes forward. Carts at other warehouses are kept. Nothing is
   // sent to the server: a cart only exists on the client until submitOrder.
   void clearCart() {
+    if (_isLocked) return;
     if (state.isEmpty) return;
     _nextCartOrEmpty();
   }
@@ -743,12 +949,15 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   // submitOrder), so that is what decides whether the idempotency key goes: a
   // call that leaves it as it was (a trailing space) keeps the key. Any real
   // change drops it, and it is not restored if the change is later undone.
-  void updateNotes(String notes) => emit(
-    state.copyWith(
-      notes: notes,
-      clearPendingIdempotencyKey: notes.trim() != state.notes.trim(),
-    ),
-  );
+  void updateNotes(String notes) {
+    if (_isLocked) return;
+    emit(
+      state.copyWith(
+        notes: notes,
+        clearPendingIdempotencyKey: notes.trim() != state.notes.trim(),
+      ),
+    );
+  }
 
   // Client-side availability snapshots (taken when items were added) can go
   // stale by the time the pharmacist actually submits - the server re-checks
@@ -769,21 +978,29 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     bool acceptPriceChanges = false,
     double? rateUsed,
   }) async {
-    if (state.warehouseId == null) return null;
+    if (_restoringDraft || state.isSubmitting || state.warehouseId == null) {
+      return null;
+    }
     // Unreachable through the normal UI (CartView swaps to its empty-cart
     // view once items.isEmpty), but a real, user-visible message here rather
     // than a silent no-op covers any edge case that still reaches this call
     // - e.g. the last item being removed in the gap between tapping submit
     // and this running.
     if (state.items.isEmpty) {
-      emit(state.copyWith(errorMessage: 'Your cart is empty.', errorCode: 'CART_EMPTY'));
+      emit(
+        state.copyWith(
+          errorMessage: 'Your cart is empty.',
+          errorCode: 'CART_EMPTY',
+        ),
+      );
       return null;
     }
     // The submit button is held while a quote is in the air, or while the
     // figures on screen are not the server's for this cart
     // (CartState.isReadyToSubmit); this is the backstop for the one case the
     // order itself depends on - a code needs the revision it was quoted at.
-    if (state.isQuoting || (state.discountCode != null && !state.hasCurrentQuote)) {
+    if (state.isQuoting ||
+        (state.discountCode != null && !state.hasCurrentQuote)) {
       return null;
     }
 
@@ -796,22 +1013,31 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
         // here; this is the backstop. The error is cleared first so the
         // listener shows that dialog even if this repeats.
         emit(state.copyWith(clearError: true));
-        emit(state.copyWith(
-          errorMessage: 'Confirm the new prices before submitting.',
-          errorCode: state.hasUnconfirmedPriceChanges ? 'PRICE_CHANGE_UNCONFIRMED' : 'BONUS_CHANGE_UNCONFIRMED',
-        ));
+        emit(
+          state.copyWith(
+            errorMessage: 'Confirm the new prices before submitting.',
+            errorCode: state.hasUnconfirmedPriceChanges
+                ? 'PRICE_CHANGE_UNCONFIRMED'
+                : 'BONUS_CHANGE_UNCONFIRMED',
+          ),
+        );
         return null;
       }
       // Accepting changes nothing that is sent - the lines already carry the
       // new prices and bonuses - so the idempotency key is left as it is.
-      emit(state.copyWith(
-        items: [
-          for (final item in state.items)
-            item.hasUnconfirmedPriceChange || item.hasUnconfirmedBonusChange
-                ? item.copyWith(clearPreviousPrice: true, clearPreviousBonuses: true)
-                : item,
-        ],
-      ));
+      emit(
+        state.copyWith(
+          items: [
+            for (final item in state.items)
+              item.hasUnconfirmedPriceChange || item.hasUnconfirmedBonusChange
+                  ? item.copyWith(
+                      clearPreviousPrice: true,
+                      clearPreviousBonuses: true,
+                    )
+                  : item,
+          ],
+        ),
+      );
     }
 
     // Money-Flow V2 idempotency: minted on the FIRST attempt only and kept in
@@ -824,11 +1050,13 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     // stands for one exact cart, and the server refuses it for any other
     // (IDEMPOTENCY_KEY_REUSED).
     final idempotencyKey = state.pendingIdempotencyKey ?? _uuid.v4();
-    emit(state.copyWith(
-      isSubmitting: true,
-      pendingIdempotencyKey: idempotencyKey,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(
+        isSubmitting: true,
+        pendingIdempotencyKey: idempotencyKey,
+        clearError: true,
+      ),
+    );
     // The account this request is sent for. If it signs out before the answer
     // arrives, the answer is dropped: a success would otherwise empty the next
     // account's cart, and a refusal would land its error (or its repriced
@@ -842,10 +1070,17 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     // leak the reset exists to prevent.
     final session = _session;
     try {
+      // Persist the exact pending key BEFORE sending POST /orders. A killed
+      // process or a lost response can then retry this same request safely.
+      final submittedCart = state;
+      await _saveDraft(submittedCart, requiredBeforeSubmit: true);
+      if (isClosed || session != _session) return null;
       final order = await _orderRepository.submitOrder(
-        warehouseId: state.warehouseId!,
-        items: state.items,
-        notes: state.notes.trim().isEmpty ? null : state.notes.trim(),
+        warehouseId: submittedCart.warehouseId!,
+        items: submittedCart.items,
+        notes: submittedCart.notes.trim().isEmpty
+            ? null
+            : submittedCart.notes.trim(),
         // The repository splits `items` into loose product lines and packages:
         // a package crosses the wire as { advertisementId, copies } and
         // nothing else, and the server prices it from its own record.
@@ -855,8 +1090,8 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
         // since, the server refuses (DISCOUNT_CODE_CHANGED) rather than charge
         // a total the pharmacist never saw. Not part of the idempotency key's
         // identity beyond the code itself - the server fingerprints the code.
-        discountCode: state.discountCode,
-        discountCodeRevision: state.quote?.revision,
+        discountCode: submittedCart.discountCode,
+        discountCodeRevision: submittedCart.quote?.revision,
       );
       if (session != _session) return null;
       _nextCartOrEmpty();
@@ -886,9 +1121,10 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
       } else if (f.code == 'BONUS_CHANGED') {
         updatedItems = _applyBonusChanges(f.details?['problems']);
       } else if (f.code == 'PACKAGE_UNAVAILABLE') {
-        final refusedPackageIds = ((f.details?['advertisementIds'] as List?) ?? const [])
-            .map((id) => id.toString())
-            .toSet();
+        final refusedPackageIds =
+            ((f.details?['advertisementIds'] as List?) ?? const [])
+                .map((id) => id.toString())
+                .toSet();
         if (refusedPackageIds.isNotEmpty) {
           updatedItems = _flagUnavailablePackages(refusedPackageIds);
         }
@@ -906,27 +1142,28 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
           ? (f.details?['maxOrderAmountUsd'] as num?)
           : null;
       final refused = state.copyWith(
-          items: updatedItems,
-          minOrderAmountUsd: refusedMinimum,
-          maxOrderAmountUsd: refusedMaximum,
-          // The same rule every edit follows: the key names one exact cart.
-          // A repriced line sends a different price, so its key goes, just as
-          // updateQuantity drops it for a different quantity. (No order holds
-          // it - a PRICE_CHANGED refusal is issued before anything is placed -
-          // so this keeps the key honest rather than being what unblocks the
-          // retry; the new prices are.)
-          //
-          // IDEMPOTENCY_KEY_REUSED: the server already holds an order for this
-          // key, placed from a different cart (only an app that kept its key
-          // across an edit gets here). The error tells the pharmacist;
-          // dropping the key is what lets their next tap place this cart as
-          // the new order it is.
-          clearPendingIdempotencyKey: pricesChanged || f.code == 'IDEMPOTENCY_KEY_REUSED',
-          isSubmitting: false,
-          errorMessage: f.errMessage,
-          errorCode: f.code,
-          errorDetails: f.details,
-        );
+        items: updatedItems,
+        minOrderAmountUsd: refusedMinimum,
+        maxOrderAmountUsd: refusedMaximum,
+        // The same rule every edit follows: the key names one exact cart.
+        // A repriced line sends a different price, so its key goes, just as
+        // updateQuantity drops it for a different quantity. (No order holds
+        // it - a PRICE_CHANGED refusal is issued before anything is placed -
+        // so this keeps the key honest rather than being what unblocks the
+        // retry; the new prices are.)
+        //
+        // IDEMPOTENCY_KEY_REUSED: the server already holds an order for this
+        // key, placed from a different cart (only an app that kept its key
+        // across an edit gets here). The error tells the pharmacist;
+        // dropping the key is what lets their next tap place this cart as
+        // the new order it is.
+        clearPendingIdempotencyKey:
+            pricesChanged || f.code == 'IDEMPOTENCY_KEY_REUSED',
+        isSubmitting: false,
+        errorMessage: f.errMessage,
+        errorCode: f.code,
+        errorDetails: f.details,
+      );
       // Repriced lines change what the cart costs.
       emit(pricesChanged ? _costChanged(refused) : refused);
       if (pricesChanged) _scheduleRequote();
@@ -937,7 +1174,13 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
       // stays true forever and the submit button spins with no error ever
       // shown (the "submit order freezes" report this fixes).
       if (session != _session) return null;
-      emit(state.copyWith(isSubmitting: false, errorMessage: 'Unexpected error', errorCode: 'UNEXPECTED_ERROR'));
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Unexpected error',
+          errorCode: 'UNEXPECTED_ERROR',
+        ),
+      );
       return null;
     }
   }
@@ -949,43 +1192,61 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
   ///
   /// [fallbackRate] is the rate on screen, for a cart whose quote could not
   /// be had - each cart is otherwise sent at the rate it was quoted at.
-  Future<({List<OrderModel> orders, int refused})> submitAll({double? fallbackRate}) async {
+  Future<({List<OrderModel> orders, int refused})> submitAll({
+    double? fallbackRate,
+  }) async {
     final orders = <OrderModel>[];
     final refused = <String>[];
-    if (state.isEmpty || state.isSubmitting || state.isSubmittingAll) return (orders: orders, refused: 0);
+    if (state.isEmpty || state.isSubmitting || state.isSubmittingAll) {
+      return (orders: orders, refused: 0);
+    }
     final session = _session;
     final warehouseIds = [state.warehouseId!, ...state.otherCarts.keys];
     emit(state.copyWith(isSubmittingAll: true, clearError: true));
 
     for (final warehouseId in warehouseIds) {
-      if (isClosed || session != _session) return (orders: orders, refused: refused.length);
+      if (isClosed || session != _session) {
+        return (orders: orders, refused: refused.length);
+      }
       if (state.warehouseId != warehouseId) {
         if (!state.otherCarts.containsKey(warehouseId)) continue;
-        switchToWarehouse(warehouseId);
+        _switchToWarehouse(warehouseId);
       }
       if (state.isBelowMinimum || state.isAboveMaximum) {
-        emit(state.copyWith(
-          errorMessage: 'Outside the order limits.',
-          errorCode: state.isBelowMinimum ? 'ORDER_BELOW_MINIMUM' : 'ORDER_ABOVE_MAXIMUM',
-          errorDetails: state.isBelowMinimum
-              ? {'minOrderAmountUsd': state.minOrderAmountUsd}
-              : {'maxOrderAmountUsd': state.maxOrderAmountUsd},
-        ));
+        emit(
+          state.copyWith(
+            errorMessage: 'Outside the order limits.',
+            errorCode: state.isBelowMinimum
+                ? 'ORDER_BELOW_MINIMUM'
+                : 'ORDER_ABOVE_MAXIMUM',
+            errorDetails: state.isBelowMinimum
+                ? {'minOrderAmountUsd': state.minOrderAmountUsd}
+                : {'maxOrderAmountUsd': state.maxOrderAmountUsd},
+          ),
+        );
         refused.add(warehouseId);
         continue;
       }
       await refreshQuote();
-      if (isClosed || session != _session) return (orders: orders, refused: refused.length);
-      final order = await submitOrder(rateUsed: state.quote?.usdToSyp ?? fallbackRate);
+      if (isClosed || session != _session) {
+        return (orders: orders, refused: refused.length);
+      }
+      final order = await submitOrder(
+        rateUsed: state.quote?.usdToSyp ?? fallbackRate,
+      );
       if (order != null) {
         orders.add(order);
       } else if (session == _session) {
         refused.add(warehouseId);
       }
     }
-    if (isClosed || session != _session) return (orders: orders, refused: refused.length);
+    if (isClosed || session != _session) {
+      return (orders: orders, refused: refused.length);
+    }
 
-    if (refused.isNotEmpty && state.warehouseId != refused.first) switchToWarehouse(refused.first);
+    if (refused.isNotEmpty && state.warehouseId != refused.first) {
+      _switchToWarehouse(refused.first);
+    }
     // The run is over: the cart in front shows its reason now (emitted again,
     // so the cart screen sees it arrive even if it reads like the last one).
     final front = state.copyWith(isSubmittingAll: false);
@@ -1014,20 +1275,25 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
       final fresh = await _freshQuote(session);
       if (isClosed || session != _session) return;
       if (fresh.quote != null) {
-        emit(state.copyWith(
-          quote: fresh.quote,
-          isQuoting: false,
-          isQuoteStale: false,
-          isSubmitting: false,
-          errorMessage: f.errMessage,
-          errorCode: 'DISCOUNT_CODE_CHANGED',
-          errorDetails: f.details,
-        ));
+        emit(
+          state.copyWith(
+            quote: fresh.quote,
+            isQuoting: false,
+            isQuoteStale: false,
+            isSubmitting: false,
+            errorMessage: f.errMessage,
+            errorCode: 'DISCOUNT_CODE_CHANGED',
+            errorDetails: f.details,
+          ),
+        );
         return;
       }
       // The re-quote itself refused the code (or failed): take it off, with
       // the newest reason.
-      _removeRefusedCode(f, isDiscountCodeRefusal(fresh.errorCode) ? fresh.errorCode : reason);
+      _removeRefusedCode(
+        f,
+        isDiscountCodeRefusal(fresh.errorCode) ? fresh.errorCode : reason,
+      );
       return;
     }
     _removeRefusedCode(f, reason);
@@ -1035,17 +1301,19 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
 
   void _removeRefusedCode(Failure f, String? reason) {
     _cancelQuote();
-    emit(state.copyWith(
-      clearDiscountCode: true,
-      isQuoting: false,
-      isQuoteStale: true,
-      discountCodeErrorCode: reason,
-      clearPendingIdempotencyKey: true,
-      isSubmitting: false,
-      errorMessage: f.errMessage,
-      errorCode: 'DISCOUNT_CODE_CHANGED',
-      errorDetails: {...?f.details, 'reason': reason},
-    ));
+    emit(
+      state.copyWith(
+        clearDiscountCode: true,
+        isQuoting: false,
+        isQuoteStale: true,
+        discountCodeErrorCode: reason,
+        clearPendingIdempotencyKey: true,
+        isSubmitting: false,
+        errorMessage: f.errMessage,
+        errorCode: 'DISCOUNT_CODE_CHANGED',
+        errorDetails: {...?f.details, 'reason': reason},
+      ),
+    );
     // The figures on screen included the code: quote the cart without it.
     if (_quoteViewers > 0) refreshQuote();
   }
@@ -1063,29 +1331,37 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
     final fresh = await _freshQuote(session);
     if (isClosed || session != _session) return;
     final quote = fresh.quote;
-    emit(state.copyWith(
-      quote: quote,
-      isQuoting: false,
-      isQuoteStale: quote == null,
-      quoteErrorCode: quote == null ? fresh.errorCode : null,
-      clearQuoteError: quote != null,
-      isSubmitting: false,
-      errorMessage: f.errMessage,
-      errorCode: 'RATE_CHANGED',
-      errorDetails: {
-        ...?f.details,
-        if (quote != null && previousTotal != null) 'previousTotalSyp': previousTotal,
-        if (quote != null && previousTotal != null) 'currentTotalSyp': quote.finalSyp,
-      },
-    ));
+    emit(
+      state.copyWith(
+        quote: quote,
+        isQuoting: false,
+        isQuoteStale: quote == null,
+        quoteErrorCode: quote == null ? fresh.errorCode : null,
+        clearQuoteError: quote != null,
+        isSubmitting: false,
+        errorMessage: f.errMessage,
+        errorCode: 'RATE_CHANGED',
+        errorDetails: {
+          ...?f.details,
+          if (quote != null && previousTotal != null)
+            'previousTotalSyp': previousTotal,
+          if (quote != null && previousTotal != null)
+            'currentTotalSyp': quote.finalSyp,
+        },
+      ),
+    );
   }
 
   // A quote for the cart as it stands, taken during a refusal - null (with
   // the reason) when it could not be had, or when the cart moved on while it
   // was in the air.
-  Future<({CartQuote? quote, String? errorCode})> _freshQuote(int session) async {
+  Future<({CartQuote? quote, String? errorCode})> _freshQuote(
+    int session,
+  ) async {
     final warehouseId = state.warehouseId;
-    if (warehouseId == null || state.isEmpty) return (quote: null, errorCode: null);
+    if (warehouseId == null || state.isEmpty) {
+      return (quote: null, errorCode: null);
+    }
     _requoteTimer?.cancel();
     final request = ++_quoteRequest;
     try {
@@ -1094,7 +1370,9 @@ class CartCubit extends Cubit<CartState> implements SessionScoped {
         items: state.items,
         code: state.discountCode,
       );
-      if (_isStaleQuote(request, session, warehouseId)) return (quote: null, errorCode: null);
+      if (_isStaleQuote(request, session, warehouseId)) {
+        return (quote: null, errorCode: null);
+      }
       return (quote: quote, errorCode: null);
     } on Failure catch (failure) {
       return (quote: null, errorCode: failure.code ?? 'UNEXPECTED_ERROR');

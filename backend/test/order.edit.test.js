@@ -145,3 +145,50 @@ test('a wrong-warehouse edit is still an IDOR 404 (unchanged)', async () => {
     withCode('ORDER_NOT_FOUND')
   );
 });
+
+test('an unavailable addition rolls back quantity edits and removals from the same request', async () => {
+  const { order, item } = await makeOrder('pending', 0);
+  const second = await OrderItem.create({
+    orderId: order._id, productId: new mongoose.Types.ObjectId(), productNameAr: 'دواء آخر',
+    manufacturerAr: 'شركة', quantity: 1, unitPrice: 100, discountPrice: 100,
+  });
+  await Order.updateOne({ _id: order._id }, { $set: { totalPrice: 300, finalPrice: 300 } });
+  await assert.rejects(() => warehouseOrderService.updateOrderItems(
+    String(order._id), ids.warehouse, ids.pharmacyUser, {
+      updateItems: [{ orderItemId: String(item._id), quantity: 7 }],
+      removeItems: [String(second._id)],
+      addItems: [{ productId: String(new mongoose.Types.ObjectId()), quantity: 1 }],
+    }
+  ), withCode('PRODUCT_UNAVAILABLE'));
+  assert.strictEqual((await OrderItem.findById(item._id)).quantity, 2);
+  assert.ok(await OrderItem.exists({ _id: second._id }));
+  assert.strictEqual((await Order.findById(order._id)).finalPrice, 300);
+});
+
+test('a failure saving the repriced order rolls back its previously saved lines', async (t) => {
+  const { order, item } = await makeOrder('pending', 0);
+  const save = Order.prototype.save;
+  t.mock.method(Order.prototype, 'save', function (...args) {
+    if (String(this._id) === String(order._id)) throw new Error('injected order write failure');
+    return save.apply(this, args);
+  });
+  await assert.rejects(() => editQuantity(order, item, 8), /injected order write failure/);
+  assert.strictEqual((await OrderItem.findById(item._id)).quantity, 2);
+  assert.strictEqual((await Order.findById(order._id)).finalPrice, 200);
+});
+
+test('a status change during an edit retries the snapshot and blocks the edit', async (t) => {
+  const { order, item } = await makeOrder('confirmed', 0);
+  const save = Order.prototype.save;
+  let changed = false;
+  t.mock.method(Order.prototype, 'save', async function (...args) {
+    if (String(this._id) === String(order._id) && !changed) {
+      changed = true;
+      await Order.updateOne({ _id: order._id }, { $set: { status: 'out_for_delivery' }, $inc: { __v: 1 } });
+    }
+    return save.apply(this, args);
+  });
+  await assert.rejects(() => editQuantity(order, item, 8), withCode('ORDER_NOT_EDITABLE'));
+  assert.strictEqual((await OrderItem.findById(item._id)).quantity, 2);
+  assert.strictEqual((await Order.findById(order._id)).status, 'out_for_delivery');
+});

@@ -18,6 +18,9 @@ import 'package:feniq/generated/app_localizations.dart';
 // this generic single-string translator has no access to.
 String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMessage) {
   switch (code) {
+    case 'INVALID_DELIVERY_SCHEDULE':
+    case 'DELIVERY_CHANGED':
+      return l10n.deliveryInvalid;
     // --- Transport / HTTP-status failures (FailureCode + synthesised HTTP_*).
     case FailureCode.network:
       return l10n.errorNetwork;
@@ -25,6 +28,9 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
       return l10n.errorTimeout;
     case 'HTTP_401':
       return l10n.errorSessionExpired;
+    case 'APP_UPDATE_REQUIRED':
+      return l10n.updateRequiredMessage;
+    case 'ACCOUNTANT_REQUIRED':
     case 'HTTP_403':
       return l10n.errorNoPermission;
     case 'HTTP_404':
@@ -62,6 +68,10 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
     // Auth. Before F-01/F-02 the backend sent no `code` on any auth error,
     // so every one of these fell through to `default` and an Arabic-locale
     // pharmacist read the raw English sentence off the wire.
+    case 'PASSWORD_RECOVERY_SUPPORT_REQUIRED':
+      return l10n.forgotPasswordSupportLink;
+    case 'PAYMENT_UNCONFIRMED':
+      return l10n.paymentUnconfirmed;
     case 'INVALID_CREDENTIALS':
       return l10n.errorInvalidCredentials;
     case 'ACCOUNT_BLOCKED':
@@ -217,6 +227,15 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
       return l10n.errorOrderNotEditable;
     case 'PACKAGE_ITEMS_LOCKED':
       return l10n.errorPackageItemsLocked;
+    case 'FEATURE_NOT_ENABLED':
+    case 'FEATURE_UNAVAILABLE':
+      return l10n.errorFeatureUnavailable;
+    case 'FOLLOW_UP_CHANGED':
+      return l10n.errorFollowUpChanged;
+    case 'INVALID_FOLLOW_UP_SETTINGS':
+      return l10n.warehouseInsightsInvalidDays;
+    case 'LOYALTY_CHANGED':
+      return l10n.errorLoyaltyChanged;
     case 'INVALID_LOYALTY_TIERS':
       return l10n.errorInvalidLoyaltyTiers;
     case 'LOYALTY_TIERS_REQUIRED':

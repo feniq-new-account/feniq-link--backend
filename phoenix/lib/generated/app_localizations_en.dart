@@ -1593,7 +1593,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateOpenStoreFailed =>
-      'Unable to open Google Play. Please try again.';
+      'Could not download the update or open the Android installer. Check your connection and free space, then retry.';
 
   @override
   String get deliverySealRequiredTitle => 'Confirm delivery';
@@ -2723,7 +2723,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseCollectFailed =>
-      'Delivered, but the payment wasn\'t saved - record it from Accounts.';
+      'Delivery succeeded, but collection is unconfirmed. Retry the payment from the warehouse alert.';
 
   @override
   String warehouseCollectNote(int number) {
@@ -2778,7 +2778,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseAccountPayFailed =>
-      'The payment wasn\'t saved. Try again.';
+      'Payment is unconfirmed. Retry to confirm the same payment safely.';
 
   @override
   String get warehouseVoiceTitle => 'Record a payment by voice';
@@ -2876,12 +2876,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String warehouseSummaryChangeUp(int percent) {
-    return '▲ $percent% vs previous period';
+    return 'Up $percent% vs previous period';
   }
 
   @override
   String warehouseSummaryChangeDown(int percent) {
-    return '▼ $percent% vs previous period';
+    return 'Down $percent% vs previous period';
   }
 
   @override
@@ -2905,4 +2905,452 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get warehouseSummaryDeliveredNote =>
       'Sales count delivered orders only.';
+
+  @override
+  String get paymentUnconfirmed =>
+      'Payment is unconfirmed. Retry to confirm the same payment safely.';
+
+  @override
+  String dataLastUpdated(String time) {
+    return 'Last updated: $time';
+  }
+
+  @override
+  String get dataCached => 'Showing the last successfully loaded data.';
+
+  @override
+  String get updateDownloading => 'Downloading update';
+
+  @override
+  String get updateInstallPermission =>
+      'Allow Feniq to install apps in Android settings, then return and tap Update now. The downloaded file will be reused.';
+
+  @override
+  String get updateCancelDownload => 'Cancel download';
+
+  @override
+  String offlineCatalogsReady(String ready, String total) {
+    return 'Saved for offline browsing: $ready/$total';
+  }
+
+  @override
+  String get offlineCatalogsSaving => 'Saving catalogs on this device…';
+
+  @override
+  String get offlineCatalogsRetry =>
+      'Saving is incomplete. Connect to the internet and ensure enough storage; the previous copy is kept.';
+
+  @override
+  String offlineCatalogsLastSync(String time) {
+    return 'Last sync: $time';
+  }
+
+  @override
+  String get locationPermissionPurpose =>
+      'Location helps identify pharmacy premises and verify a visit when its code is scanned. Browsing remains available without permission; we do not track your movements in the background.';
+
+  @override
+  String get locationPermissionPermanent =>
+      'Location permission is blocked. In app settings, allow location while using the app to verify visits.';
+
+  @override
+  String get locationServiceDisabled =>
+      'Location services are off. Enable GPS before recording a visit.';
+
+  @override
+  String get locationOpenSettings => 'Open settings';
+
+  @override
+  String get locationAllow => 'Allow location';
+
+  @override
+  String get repVisitLocationUnapproved =>
+      'Pharmacy location awaiting approval';
+
+  @override
+  String get repVisitPoorAccuracy => 'Location accuracy insufficient';
+
+  @override
+  String get repVisitStaleLocation => 'Location reading expired';
+
+  @override
+  String get repScanLocationUnapprovedMessage =>
+      'This pharmacy location is not approved yet. Contact Feniq to confirm its premises; this attempt is not a verified visit.';
+
+  @override
+  String get repScanPoorAccuracyMessage =>
+      'GPS accuracy is insufficient. Move near the pharmacy entrance or an open area, then scan again.';
+
+  @override
+  String get repScanStaleLocationMessage =>
+      'The location reading expired. Enable automatic time and location on the phone, then scan again for a fresh reading.';
+
+  @override
+  String get warehouseLoyaltyMode => 'Loyalty method';
+
+  @override
+  String get warehouseLoyaltyPerOrder => 'Per-order value';
+
+  @override
+  String get warehouseLoyaltyMonthly => 'Monthly purchase total';
+
+  @override
+  String get warehouseMonthlyLoyaltyHelp =>
+      'Delivered invoices count at their net amount after discounts and credit, within a Damascus calendar month. Only the incremental reward is credited for the next order. Returns reduce entitlement; a spent reward offsets future loyalty, without taking commission credit or creating cash debt. Monthly tiers freeze at the first delivery.';
+
+  @override
+  String pharmacyMonthlyLoyaltyProgress(String amount) {
+    return 'Delivered purchases this month: $amount. Incremental loyalty is credited after delivery for your next order; returns reduce entitlement.';
+  }
+
+  @override
+  String get warehouseMonthlyLoyaltyExample =>
+      'Example: 100,000 delivered net purchases → 1,000 credit; at 200,000 → 5,000 total, so only 4,000 more.';
+
+  @override
+  String get warehouseMonthlyLoyaltyMin => 'Monthly total from';
+
+  @override
+  String get warehouseMonthlyLoyaltyReward => 'Total reward credit';
+
+  @override
+  String pharmacyMonthlyLoyaltyOffset(String amount) {
+    return 'Previously spent reward on returned goods: $amount. This offsets future loyalty; it is not a cash debt.';
+  }
+
+  @override
+  String get errorLoyaltyChanged =>
+      'Loyalty settings changed. Go back and reopen settings before saving.';
+
+  @override
+  String get warehouseInsightsTitle => 'Warehouse performance and follow-up';
+
+  @override
+  String get warehouseInsightsScope =>
+      'These figures cover Feniq transactions only. Net sales after returns are not profit; inventory costs and expenses are excluded.';
+
+  @override
+  String get warehouseInsightsNetSales => 'Net sales';
+
+  @override
+  String get warehouseInsightsCollections => 'Collections';
+
+  @override
+  String get warehouseInsightsReturns => 'Returns';
+
+  @override
+  String get warehouseInsightsDebts => 'Current receivables';
+
+  @override
+  String get warehouseInsightsTrend => 'Sales and collections over time';
+
+  @override
+  String get warehouseInsightsInspectDay => 'Select a day to inspect';
+
+  @override
+  String get warehouseInsightsPeriod => 'Period';
+
+  @override
+  String get warehouseInsightsRefresh => 'Refresh';
+
+  @override
+  String get warehouseInsightsAsOf => 'Updated:';
+
+  @override
+  String get warehouseInsightsDamascus => 'Damascus time';
+
+  @override
+  String get warehouseInsightsAging => 'Receivable age — days';
+
+  @override
+  String get warehouseInsightsAgingMethod =>
+      'Oldest debits are settled first. Returns reduce their original invoice; reversing a payment restores its original debt age. This is a monitoring allocation; payments are not invoice-specific.';
+
+  @override
+  String get warehouseInsightsDailyTable => 'Daily detail table';
+
+  @override
+  String get warehouseInsightsDate => 'Date';
+
+  @override
+  String get warehouseInsightsPharmacy => 'Pharmacy';
+
+  @override
+  String get warehouseInsightsPhone => 'Phone';
+
+  @override
+  String get warehouseInsightsCity => 'City';
+
+  @override
+  String get warehouseInsightsDays => 'Days';
+
+  @override
+  String get warehouseInsightsAction => 'Action';
+
+  @override
+  String get warehouseInsightsOpenStatement => 'Open statement';
+
+  @override
+  String get warehouseInsightsOpenStatements => 'Account statements';
+
+  @override
+  String get warehouseInsightsSettings => 'Debt and inactivity thresholds';
+
+  @override
+  String get warehouseInsightsOverdueDays => 'Receivables overdue after — days';
+
+  @override
+  String get warehouseInsightsInactiveDays => 'No pharmacy orders for — days';
+
+  @override
+  String get warehouseInsightsSaveSettings => 'Save thresholds';
+
+  @override
+  String get warehouseInsightsEmpty =>
+      'No follow-up cases match this threshold.';
+
+  @override
+  String get warehouseInsightsLoadMore => 'Load more';
+
+  @override
+  String get warehouseInsightsInactiveFeature =>
+      'These features are not active for this warehouse. Contact Feniq to activate them.';
+
+  @override
+  String get warehouseInsightsNoAlerts => 'No follow-up alerts right now.';
+
+  @override
+  String get warehouseInsightsOverview => 'Overview';
+
+  @override
+  String get warehouseInsightsOverdue => 'Overdue';
+
+  @override
+  String get warehouseInsightsInactive => 'Inactive pharmacies';
+
+  @override
+  String get warehouseInsightsAlerts => 'Follow-up alerts';
+
+  @override
+  String get warehouseInsightsInvalidDays => 'Choose 1–180 days.';
+
+  @override
+  String get warehouseInsightsSaved => 'Follow-up thresholds saved.';
+
+  @override
+  String warehouseInsightsResults(String count) {
+    return 'Results: $count';
+  }
+
+  @override
+  String get warehouseInsightsNoPreviousOrder =>
+      'No previous orders; days count from assignment.';
+
+  @override
+  String get errorFeatureUnavailable =>
+      'These features are not active for this warehouse. Contact Feniq to activate them.';
+
+  @override
+  String get errorFollowUpChanged =>
+      'Follow-up thresholds changed. Refresh before saving.';
+
+  @override
+  String warehouseInsightsAlertOrders(String count) {
+    return 'Orders pending for 48 hours: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertReturns(String count) {
+    return 'Returns awaiting a decision for 48 hours: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertOverdue(String count) {
+    return 'Pharmacies with overdue balances: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertInactive(String count) {
+    return 'Pharmacies needing order follow-up: $count';
+  }
+
+  @override
+  String get warehouseInsightsScopeShort =>
+      'Feniq transactions only; net sales are not profit.';
+
+  @override
+  String get warehouseInsightsAbout => 'About these figures';
+
+  @override
+  String get warehouseInsightsOverdueAmount => 'Overdue amount';
+
+  @override
+  String get deliveryTitle => 'Delivery regions and schedules';
+
+  @override
+  String get deliveryExplanation =>
+      'Enable estimates after setting regions and assigning pharmacies. Damascus time, ±12 hours, frozen when submitted; not a guaranteed arrival time.';
+
+  @override
+  String get deliveryEnable => 'Show delivery estimate to pharmacies';
+
+  @override
+  String get deliveryFeatureOff =>
+      'This feature is not active for this warehouse. Earlier promises are preserved.';
+
+  @override
+  String get deliveryZoneName => 'Delivery region name';
+
+  @override
+  String get deliveryPreparation => 'Preparation hours';
+
+  @override
+  String get deliveryZoneActive => 'Region active';
+
+  @override
+  String get deliveryDay => 'Dispatch weekday';
+
+  @override
+  String get deliveryDepartureTime => 'Departure — Damascus';
+
+  @override
+  String get deliveryArrivalHours => 'Arrival hours after departure';
+
+  @override
+  String get deliveryCutoffHours => 'Order cutoff hours before departure';
+
+  @override
+  String get deliveryAddTrip => 'Add dispatch day';
+
+  @override
+  String get deliveryRemoveTrip => 'Remove dispatch day';
+
+  @override
+  String get deliveryExceptions => 'Date exceptions';
+
+  @override
+  String get deliveryDate => 'Date — YYYY-MM-DD';
+
+  @override
+  String get deliveryCancelTrip => 'Cancel this date\'s trip';
+
+  @override
+  String get deliveryRemoveException => 'Remove exception';
+
+  @override
+  String get deliveryAddException => 'Add date exception';
+
+  @override
+  String get deliveryPauseZone => 'Pause region';
+
+  @override
+  String get deliveryAddZone => 'Add region';
+
+  @override
+  String get deliverySave => 'Save schedule';
+
+  @override
+  String get deliverySaved => 'Saved';
+
+  @override
+  String get deliveryReload => 'Reload settings';
+
+  @override
+  String get deliveryAssignTitle => 'Assign pharmacies to delivery regions';
+
+  @override
+  String get deliveryAssignHint =>
+      'Save the schedule first, then find the pharmacy and choose its region. This assignment does not hide warehouses in the catalog.';
+
+  @override
+  String get deliverySearch => 'Pharmacy name or phone';
+
+  @override
+  String get deliverySearchButton => 'Search';
+
+  @override
+  String get deliveryUnassigned => 'No region — arrival unspecified';
+
+  @override
+  String get deliveryPaused => 'Paused';
+
+  @override
+  String get deliveryArrivalTitle => 'Estimated delivery';
+
+  @override
+  String get deliveryUnavailable =>
+      'Delivery time is not currently specified for this pharmacy.';
+
+  @override
+  String get deliveryPreview =>
+      'Preview; the estimate is fixed when you submit the order.';
+
+  @override
+  String get deliveryRange => 'Expected between';
+
+  @override
+  String get deliveryLate =>
+      'Past the arrival window. Contact the warehouse; the timer ending does not mean delivered.';
+
+  @override
+  String get deliveryDelivered => 'Delivered';
+
+  @override
+  String get deliveryCancelled => 'Order cancelled — arrival estimate ended';
+
+  @override
+  String get deliveryUntil => 'Time until the end of the window';
+
+  @override
+  String get deliveryReschedule => 'Change this order\'s estimate';
+
+  @override
+  String get deliveryNewTime => 'New arrival — Damascus time';
+
+  @override
+  String get deliveryReason => 'Reason for change — visible to the pharmacy';
+
+  @override
+  String get deliveryChanged => 'Estimate changed';
+
+  @override
+  String get deliveryInvalid =>
+      'Check region names, days and times. Hours 0–168, arrival up to 72. Do not repeat a weekday within a region.';
+
+  @override
+  String get deliveryUnsaved =>
+      'You have unsaved changes. Save or reload before assigning pharmacies.';
+
+  @override
+  String get deliveryNoResults => 'No matching pharmacies';
+
+  @override
+  String get deliveryDays0 => 'Sunday';
+
+  @override
+  String get deliveryDays1 => 'Monday';
+
+  @override
+  String get deliveryDays2 => 'Tuesday';
+
+  @override
+  String get deliveryDays3 => 'Wednesday';
+
+  @override
+  String get deliveryDays4 => 'Thursday';
+
+  @override
+  String get deliveryDays5 => 'Friday';
+
+  @override
+  String get deliveryDays6 => 'Saturday';
+
+  @override
+  String deliveryHoursMinutes(String hours, String minutes) {
+    return '$hours hours $minutes minutes';
+  }
+
+  @override
+  String get warehouseInsightsUnknownAge =>
+      'Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available.';
 }

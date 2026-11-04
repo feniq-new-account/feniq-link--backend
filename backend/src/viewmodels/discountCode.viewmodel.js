@@ -76,12 +76,14 @@ function toPreviewResponse(quote) {
         }
       : null,
     totals: {
+      deliveryEstimate: require('./deliveryEstimate.viewmodel').publicEstimate(quote.deliveryEstimate),
       subtotalSyp: quote.subtotalSyp,
       platformDiscountSyp: quote.platformDiscountSyp,
       // The warehouse's loyalty discount for a cart this size, the pharmacy's
       // credit at this warehouse, and the part of it this order takes.
       loyaltyDiscountSyp: quote.loyaltyDiscountSyp ?? 0,
       creditBalanceSyp: quote.creditBalanceSyp ?? 0,
+      ...(quote.monthlyLoyalty ? { monthlyLoyalty: quote.monthlyLoyalty } : {}),
       creditUsedSyp: quote.creditUsedSyp ?? 0,
       preCodeSyp: quote.preCodeSyp,
       discountSyp: quote.discountSyp,

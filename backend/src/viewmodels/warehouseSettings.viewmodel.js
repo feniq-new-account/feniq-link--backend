@@ -22,6 +22,8 @@ function toWarehouseSettingsResponse(warehouse) {
       requireDeliverySealPhoto: warehouse.requireDeliverySealPhoto ?? false,
       // The warehouse's own loyalty discount (utils/loyalty.js).
       loyalty: {
+        mode: warehouse.loyalty?.mode ?? 'per_order',
+        revision: warehouse.loyalty?.revision ?? 0,
         enabled: warehouse.loyalty?.enabled ?? false,
         tiers: (warehouse.loyalty?.tiers ?? []).map((tier) => ({ minSyp: tier.minSyp, discountSyp: tier.discountSyp })),
       },

@@ -4,8 +4,7 @@ const catalogViewModel = require('../viewmodels/productCatalog.viewmodel');
 const { suggestCatalogItems } = require('../services/warehouseImport.service');
 const catalogRequestService = require('../services/catalogRequest.service');
 const catalogRequestViewModel = require('../viewmodels/catalogRequest.viewmodel');
-const Warehouse = require('../models/warehouse.model');
-const { ApiError } = require('../utils/ApiError');
+const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 const { parseCursorQuery, parseObjectIdCursor, paginationMeta } = require('../utils/pagination');
 
 const search = asyncHandler(async (req, res) => {
@@ -26,8 +25,7 @@ const suggestions = asyncHandler(async (req, res) => {
 });
 
 const myRequests = asyncHandler(async (req, res) => {
-  const warehouse = await Warehouse.findOne({ userId: req.user._id }).select('_id').lean();
-  if (!warehouse) throw ApiError.notFound('Warehouse profile not found.', 'WAREHOUSE_PROFILE_NOT_FOUND');
+  const warehouse = await loadWarehouseOrThrow(req.user._id, { select: '_id', lean: true });
   const { limit, after } = parseCursorQuery(req.query, 30);
   const { rows, hasMore, nextCursor } = await catalogRequestService.listRequests({
     warehouseId: warehouse._id,

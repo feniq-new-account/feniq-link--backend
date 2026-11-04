@@ -1,3 +1,8 @@
+import { NumericInput } from '../components/NumericInput';
+import { DeliveryEstimate } from '../components/DeliveryEstimate';
+import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
+import { useAuth } from '../auth/AuthContext';
+import { useModalSafety } from '../hooks/useModalSafety';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,11 +16,12 @@ import { formatUsdAsSyp, formatSyp, formatMoneyFromUsd, remainingPaymentAmountFr
 import { PAYMENT_METHODS, PAYMENT_CURRENCIES as CURRENCIES, createIdempotencyKeys } from '../utils/payments';
 import { mayAdvance } from './orderStatusFlow';
 import { CollectPaymentModal } from '../components/CollectPaymentModal';
-import { recordCollectedPayment } from '../utils/collectPayment';
-import { isEditable } from './warehouseOrdersList';
+import { useDeliveryCollections } from '../components/DeliveryCollections';
+import { isEditable, nextStatusOf } from './warehouseOrdersList';
 import { realtimeBatchMatchesOrder } from './warehouseOrderDetailRealtime';
 import { FEATURES } from '../config/features';
 import { formatBusinessDateTime } from '../utils/businessDate';
+import { ConnectionStatus } from '../components/ConnectionStatus';
 
 function statusKeySuffix(status) {
   return status
@@ -53,6 +59,7 @@ function RecordPaymentModal({ pharmacyId, onClose, onRecorded }) {
   const [method, setMethod] = useState('cash');
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const modalSafety = useModalSafety(isSaving, onClose);
   const [error, setError] = useState(null);
   // The pharmacy's outstanding balance with this warehouse, for the "Full
   // amount" prefill. Payments settle the running balance, not a single order -
@@ -114,13 +121,13 @@ function RecordPaymentModal({ pharmacyId, onClose, onRecorded }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
+    <div className="modal-overlay" {...modalSafety.overlayProps}>
+      <div className="modal" {...modalSafety.dialogProps}>
         <h2>{t('orderDetail.recordPayment')}</h2>
         <form onSubmit={handleSubmit} className="product-form">
           <label>
             {t('debts.amount')}
-            <input
+            <NumericInput
               type="number"
               min="0.01"
               step="0.01"
@@ -166,7 +173,7 @@ function RecordPaymentModal({ pharmacyId, onClose, onRecorded }) {
           {error && <p className="error-text">{error}</p>}
 
           <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+            <button type="button" className="btn-secondary" onClick={modalSafety.close} disabled={isSaving}>
               {t('common.cancel')}
             </button>
             <button type="submit" className="btn-primary" disabled={isSaving}>
@@ -371,7 +378,7 @@ function EditItemsSection({ order, onSaved }) {
           <div className="wh-package-controls">
             <label>
               {t('orderDetail.packageCopies')}
-              <input
+              <NumericInput
                 type="number"
                 min="1"
                 value={copiesOf(group)}
@@ -429,7 +436,7 @@ function EditItemsSection({ order, onSaved }) {
                 <tr key={item.id}>
                   <td>{displayName(item.productNameEn, item.productNameAr)}</td>
                   <td className="wh-num">
-                    <input
+                    <NumericInput
                       type="number"
                       min="1"
                       value={item.quantity}
@@ -454,7 +461,7 @@ function EditItemsSection({ order, onSaved }) {
               <tr key={item.tempId}>
                 <td>{displayName(item.productNameEn, item.productNameAr)}</td>
                 <td className="wh-num">
-                  <input
+                  <NumericInput
                     type="number"
                     min="1"
                     value={item.quantity}
@@ -494,7 +501,7 @@ function EditItemsSection({ order, onSaved }) {
             placeholder={t('orderDetail.selectProductPlaceholder')}
           />
         </div>
-        <input
+        <NumericInput
           type="number"
           min="1"
           value={newQuantity}
@@ -549,12 +556,17 @@ export function WarehouseOrderDetailPage() {
   const { t } = useTranslation();
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { hasFeature } = useWarehouseSubscription();
+  const canRecord = user?.warehouseRole !== 'owner' && hasFeature('accounting');
+  const { collect } = useDeliveryCollections();
   // Order/invoice figures are SYP-native; only per-line savings are USD and
   // need the live rate to show in SYP.
   const usdToSyp = useExchangeRate();
   const [order, setOrder] = useState(null);
   const [isRating, setIsRating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [updatedAt, setUpdatedAt] = useState(null);
   const [error, setError] = useState(null);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [sealBusy, setSealBusy] = useState(false);
@@ -609,6 +621,7 @@ export function WarehouseOrderDetailPage() {
     try {
       const data = await api.warehouseOrderDetail(orderId);
       setOrder(data.order);
+      setUpdatedAt(Date.now());
       // Returned as well as stored: handleAdvance needs the fresh status to
       // name it in its success line, and the state setter above won't have
       // landed by the time it reads it.
@@ -658,16 +671,12 @@ export function WarehouseOrderDetailPage() {
   // "Delivered" asks "قبضت؟" first; closing the sheet leaves the order on its way.
   const handleCollectChoice = async (collected) => {
     setShowCollect(false);
-    const advanced = await handleAdvance();
-    if (!advanced || collected <= 0) return;
-    const saved = await recordCollectedPayment(api, {
-      pharmacyId: order.pharmacy?.id,
-      amountSyp: collected,
-      note: t('collect.note', { number: order.orderNumber }),
-    });
-    setStatusMessage(
-      saved ? t('collect.recorded', { amount: formatSyp(collected) }) : t('collect.failed')
-    );
+    setIsAdvancing(true);
+    try {
+      await collect(order, collected, t('collect.note', { number: order.orderNumber }));
+      setStatusMessage(collected > 0 ? t('collect.recorded', { amount: formatSyp(collected) }) : t('orderDetail.statusAdvanced', { status: statusLabel('delivered') }));
+    } catch { setStatusMessage(t('collect.pendingNotice')); }
+    finally { await load({ silent: true }); setIsAdvancing(false); }
   };
 
   const handleAdvance = async () => {
@@ -683,7 +692,7 @@ export function WarehouseOrderDetailPage() {
     setError(null);
     setStatusMessage(null);
     try {
-      await api.advanceOrderStatus(order.id);
+      await api.advanceOrderStatus(order.id, { expectedStatus: order.status, targetStatus: nextStatusOf(order.status) });
       // Re-fetches this order's own detail (status/statusHistory change) -
       // no full page reload. The list page picks up the new status on its
       // own next mount (it always refetches on mount/tab-change), so
@@ -695,6 +704,7 @@ export function WarehouseOrderDetailPage() {
       if (updated) setStatusMessage(t('orderDetail.statusAdvanced', { status: statusLabel(updated.status) }));
       return true;
     } catch (err) {
+      await load({ silent: true });
       setError(err.message);
       return false;
     } finally {
@@ -776,6 +786,8 @@ export function WarehouseOrderDetailPage() {
       {isLoading ? (
         <p className="hint">{t('common.loading')}</p>
       ) : !order ? null : (
+        <div>
+        <ConnectionStatus updatedAt={updatedAt} onRefresh={() => { load(); loadPendingReturn(); }} busy={isAdvancing} />
         <div className="wh-detail-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
             <div className="wh-detail-card">
@@ -877,6 +889,7 @@ export function WarehouseOrderDetailPage() {
               )}
             </div>
 
+            <DeliveryEstimate estimate={order.deliveryEstimate} status={order.status} orderId={order.id} onChanged={load} />
             {FEATURES.deliverySealPhoto && order.status !== 'delivered' && order.status !== 'cancelled' && (
               <div className="wh-detail-card">
                 <h2 className="wh-detail-card-title">{t('orderDetail.sealRequirementTitle')}</h2>
@@ -1088,7 +1101,7 @@ export function WarehouseOrderDetailPage() {
                 <button
                   className="btn-primary"
                   disabled={isAdvancing}
-                  onClick={order.status === 'out_for_delivery' ? () => setShowCollect(true) : handleAdvance}
+                  onClick={order.status === 'out_for_delivery' && canRecord ? () => setShowCollect(true) : handleAdvance}
                 >
                   {isAdvancing ? t('orders.updating') : t(ADVANCE_KEYS[order.status])}
                 </button>
@@ -1104,7 +1117,7 @@ export function WarehouseOrderDetailPage() {
                 !order.deliverySealPhoto && (
                   <p className="hint">{t('orderDetail.awaitingDeliverySealPhoto')}</p>
                 )}
-              {order.status === 'delivered' && (
+              {canRecord && order.status === 'delivered' && (
                 <button className="btn-secondary" onClick={() => setShowPaymentModal(true)}>
                   {t('orderDetail.recordPayment')}
                 </button>
@@ -1112,10 +1125,6 @@ export function WarehouseOrderDetailPage() {
               {statusMessage && <p className="hint">{statusMessage}</p>}
               {paymentMessage && <p className="hint">{paymentMessage}</p>}
             </div>
-          </div>
-        </div>
-      )}
-
       {showCollect && order && (
         <CollectPaymentModal
           orderNumber={order.orderNumber}
@@ -1124,7 +1133,13 @@ export function WarehouseOrderDetailPage() {
           onClose={() => setShowCollect(false)}
         />
       )}
-      {showPaymentModal && order && (
+          </div>
+        </div>
+        </div>
+      )}
+
+
+      {canRecord && showPaymentModal && order && (
         <RecordPaymentModal
           pharmacyId={order.pharmacy.id}
           onClose={() => setShowPaymentModal(false)}

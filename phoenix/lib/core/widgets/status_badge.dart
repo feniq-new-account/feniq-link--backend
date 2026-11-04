@@ -29,7 +29,7 @@ class StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final Color fg = switch (tone) {
-      StatusBadgeTone.pending => AppColors.primaryOf(context),
+      StatusBadgeTone.pending => AppColors.primaryTextOf(context),
       StatusBadgeTone.success => AppColors.secondaryOf(context),
       StatusBadgeTone.danger => AppColors.errorOf(context),
       StatusBadgeTone.info => AppColors.textOf(context),

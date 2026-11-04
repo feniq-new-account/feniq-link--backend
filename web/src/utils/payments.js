@@ -58,33 +58,50 @@ export function paymentRequestFingerprint(body) {
 //     something else, so the next attempt needs a fresh one.
 //
 // submit(body, send) is all three rules in one call, and what the forms use:
-// it hands `send` the body's key, resets after a success and forgets after an
+// it hands `send` the body's key, clears that confirmed request and forgets after an
 // IDEMPOTENCY_KEY_REUSED refusal, rethrowing every error for the form to show.
 //
-// The store lives and dies with the form component, so closing the form and
-// opening it again starts from fresh keys.
+// Unconfirmed keys survive reopening in account-scoped browser storage.
+// Confirming one payload does not discard keys of other uncertain attempts.
 export function createIdempotencyKeys(mintKey = newIdempotencyKey) {
   const keys = new Map();
+  let account = 'anonymous';
+  try {
+    const token = localStorage.getItem('phoenix.admin.token');
+    const encoded = token?.split('.')[1]?.replace(/-/g, '+').replace(/_/g, '/');
+    account = encoded ? JSON.parse(atob(encoded)).sub || account : account;
+  } catch { /* No authenticated storage in unit tests or a blocked browser. */ }
+  const storageKey = (fingerprint) => `feniq.pending-payment-key:${account}:${fingerprint}`;
+  const readStored = (fingerprint) => {
+    try { return localStorage.getItem(storageKey(fingerprint)); } catch { return null; }
+  };
+  const removeStored = (fingerprint) => {
+    try { localStorage.removeItem(storageKey(fingerprint)); } catch { /* In-memory retries still work. */ }
+  };
   const store = {
     keyFor(body) {
       const fingerprint = paymentRequestFingerprint(body);
-      let key = keys.get(fingerprint);
+      let key = keys.get(fingerprint) || readStored(fingerprint);
       if (!key) {
         key = mintKey();
-        keys.set(fingerprint, key);
+        try { localStorage.setItem(storageKey(fingerprint), key); } catch { /* In-memory retries still work. */ }
       }
+      keys.set(fingerprint, key);
       return key;
     },
     forget(body) {
-      keys.delete(paymentRequestFingerprint(body));
+      const fingerprint = paymentRequestFingerprint(body);
+      removeStored(fingerprint);
+      keys.delete(fingerprint);
     },
     reset() {
+      for (const fingerprint of keys.keys()) removeStored(fingerprint);
       keys.clear();
     },
     async submit(body, send) {
       try {
         const result = await send(store.keyFor(body));
-        store.reset();
+        store.forget(body);
         return result;
       } catch (err) {
         if (err?.code === 'IDEMPOTENCY_KEY_REUSED') store.forget(body);

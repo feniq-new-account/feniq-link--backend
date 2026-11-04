@@ -67,7 +67,7 @@ async function getOrCreateVisitCode(pharmacyId) {
 }
 
 async function findPharmacyByVisitCode(code) {
-  return Pharmacy.findOne({ visitCode: code }).select('_id nameAr nameEn location isActive').lean();
+  return Pharmacy.findOne({ visitCode: code }).select('_id nameAr nameEn location locationApproval isActive').lean();
 }
 
 module.exports = {

@@ -100,8 +100,11 @@ function toRepOrder(order) {
 }
 
 function toMe({ rep, warehouse, stats }) {
+  const { commissionRate, warehouseShareToRep, ...ownRep } = toRep(rep);
   return {
-    rep: toRep(rep),
+    // The warehouse's rate and split settings belong only in its own panel.
+    // A rep receives their effective rate in stats.ownCommissionRate.
+    rep: ownRep,
     warehouse: warehouse
       ? { id: warehouse._id, nameAr: warehouse.nameAr, nameEn: warehouse.nameEn, phone: warehouse.phone, logo: warehouse.logo ?? null }
       : null,

@@ -37,7 +37,7 @@ async function authenticateToken(token) {
   //    needed.
   //
   // Anything added here that needs a further field must extend this select.
-  const user = await User.findById(payload.sub).select('_id role status tokenVersion').lean();
+  const user = await User.findById(payload.sub).select('_id role status tokenVersion warehouseRole').lean();
   if (!user) {
     throw ApiError.unauthorized('User no longer exists.');
   }
@@ -77,6 +77,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
 
   req.user = await authenticateToken(token);
+  await require('../services/appRelease.service').enforceMobileBuild(req, req.user);
   next();
 });
 
@@ -85,6 +86,13 @@ function authorize(...roles) {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
       throw ApiError.forbidden('You do not have permission to perform this action.');
+    }
+    // Owners monitor accounts; only an accounting operator posts cash. The
+    // old combined login retains its existing scope until explicitly split.
+    if (req.user.role === 'warehouse' && req.user.warehouseRole === 'owner' &&
+        !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+        /\/warehouse\/payments(?:\/|$)/.test(req.originalUrl || '')) {
+      throw ApiError.forbidden('An accountant account is required to record payments.', 'ACCOUNTANT_REQUIRED');
     }
     next();
   };

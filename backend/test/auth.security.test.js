@@ -353,6 +353,27 @@ test('F-03: a garbage or expired refresh token is refused', async () => {
   assert.strictEqual(expired.status, 401);
 });
 
+test('a refresh token can be consumed by only one concurrent request', async () => {
+  const session = await freshSession();
+  const results = await Promise.all(Array.from({ length: 8 }, () => call('POST', '/auth/refresh', {
+    body: { refreshToken: session.refreshToken },
+  })));
+  assert.strictEqual(results.filter((result) => result.status === 200).length, 1);
+  assert.strictEqual(results.filter((result) => result.status === 401 && result.body.code === 'INVALID_REFRESH_TOKEN').length, 7);
+});
+
+test('a refresh token cannot adopt a newer account version after revocation', async () => {
+  const session = await freshSession('warehouse');
+  await User.updateOne({ _id: ids.warehouse }, { $inc: { tokenVersion: 1 } });
+  try {
+    const response = await call('POST', '/auth/refresh', { body: { refreshToken: session.refreshToken } });
+    assert.strictEqual(response.status, 401);
+    assert.strictEqual(response.body.code, 'INVALID_REFRESH_TOKEN');
+  } finally {
+    await User.updateOne({ _id: ids.warehouse }, { tokenVersion: 0 });
+  }
+});
+
 test('F-03: bumping tokenVersion revokes access tokens already issued', async () => {
   const session = await freshSession('warehouse');
 

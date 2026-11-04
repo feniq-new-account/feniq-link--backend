@@ -2729,7 +2729,7 @@ abstract class AppLocalizations {
   /// No description provided for @updateOpenStoreFailed.
   ///
   /// In en, this message translates to:
-  /// **'Unable to open Google Play. Please try again.'**
+  /// **'Could not download the update or open the Android installer. Check your connection and free space, then retry.'**
   String get updateOpenStoreFailed;
 
   /// No description provided for @deliverySealRequiredTitle.
@@ -4625,7 +4625,7 @@ abstract class AppLocalizations {
   /// No description provided for @warehouseCollectFailed.
   ///
   /// In en, this message translates to:
-  /// **'Delivered, but the payment wasn\'t saved - record it from Accounts.'**
+  /// **'Delivery succeeded, but collection is unconfirmed. Retry the payment from the warehouse alert.'**
   String get warehouseCollectFailed;
 
   /// No description provided for @warehouseCollectNote.
@@ -4703,7 +4703,7 @@ abstract class AppLocalizations {
   /// No description provided for @warehouseAccountPayFailed.
   ///
   /// In en, this message translates to:
-  /// **'The payment wasn\'t saved. Try again.'**
+  /// **'Payment is unconfirmed. Retry to confirm the same payment safely.'**
   String get warehouseAccountPayFailed;
 
   /// No description provided for @warehouseVoiceTitle.
@@ -4859,13 +4859,13 @@ abstract class AppLocalizations {
   /// No description provided for @warehouseSummaryChangeUp.
   ///
   /// In en, this message translates to:
-  /// **'▲ {percent}% vs previous period'**
+  /// **'Up {percent}% vs previous period'**
   String warehouseSummaryChangeUp(int percent);
 
   /// No description provided for @warehouseSummaryChangeDown.
   ///
   /// In en, this message translates to:
-  /// **'▼ {percent}% vs previous period'**
+  /// **'Down {percent}% vs previous period'**
   String warehouseSummaryChangeDown(int percent);
 
   /// No description provided for @warehouseSummaryChangeFlat.
@@ -4909,6 +4909,798 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sales count delivered orders only.'**
   String get warehouseSummaryDeliveredNote;
+
+  /// No description provided for @paymentUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment is unconfirmed. Retry to confirm the same payment safely.'**
+  String get paymentUnconfirmed;
+
+  /// No description provided for @dataLastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated: {time}'**
+  String dataLastUpdated(String time);
+
+  /// No description provided for @dataCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the last successfully loaded data.'**
+  String get dataCached;
+
+  /// No description provided for @updateDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading update'**
+  String get updateDownloading;
+
+  /// No description provided for @updateInstallPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Feniq to install apps in Android settings, then return and tap Update now. The downloaded file will be reused.'**
+  String get updateInstallPermission;
+
+  /// No description provided for @updateCancelDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel download'**
+  String get updateCancelDownload;
+
+  /// No description provided for @offlineCatalogsReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved for offline browsing: {ready}/{total}'**
+  String offlineCatalogsReady(String ready, String total);
+
+  /// No description provided for @offlineCatalogsSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving catalogs on this device…'**
+  String get offlineCatalogsSaving;
+
+  /// No description provided for @offlineCatalogsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving is incomplete. Connect to the internet and ensure enough storage; the previous copy is kept.'**
+  String get offlineCatalogsRetry;
+
+  /// No description provided for @offlineCatalogsLastSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync: {time}'**
+  String offlineCatalogsLastSync(String time);
+
+  /// No description provided for @locationPermissionPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Location helps identify pharmacy premises and verify a visit when its code is scanned. Browsing remains available without permission; we do not track your movements in the background.'**
+  String get locationPermissionPurpose;
+
+  /// No description provided for @locationPermissionPermanent.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is blocked. In app settings, allow location while using the app to verify visits.'**
+  String get locationPermissionPermanent;
+
+  /// No description provided for @locationServiceDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services are off. Enable GPS before recording a visit.'**
+  String get locationServiceDisabled;
+
+  /// No description provided for @locationOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get locationOpenSettings;
+
+  /// No description provided for @locationAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow location'**
+  String get locationAllow;
+
+  /// No description provided for @repVisitLocationUnapproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy location awaiting approval'**
+  String get repVisitLocationUnapproved;
+
+  /// No description provided for @repVisitPoorAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Location accuracy insufficient'**
+  String get repVisitPoorAccuracy;
+
+  /// No description provided for @repVisitStaleLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location reading expired'**
+  String get repVisitStaleLocation;
+
+  /// No description provided for @repScanLocationUnapprovedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This pharmacy location is not approved yet. Contact Feniq to confirm its premises; this attempt is not a verified visit.'**
+  String get repScanLocationUnapprovedMessage;
+
+  /// No description provided for @repScanPoorAccuracyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS accuracy is insufficient. Move near the pharmacy entrance or an open area, then scan again.'**
+  String get repScanPoorAccuracyMessage;
+
+  /// No description provided for @repScanStaleLocationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The location reading expired. Enable automatic time and location on the phone, then scan again for a fresh reading.'**
+  String get repScanStaleLocationMessage;
+
+  /// No description provided for @warehouseLoyaltyMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Loyalty method'**
+  String get warehouseLoyaltyMode;
+
+  /// No description provided for @warehouseLoyaltyPerOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Per-order value'**
+  String get warehouseLoyaltyPerOrder;
+
+  /// No description provided for @warehouseLoyaltyMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly purchase total'**
+  String get warehouseLoyaltyMonthly;
+
+  /// No description provided for @warehouseMonthlyLoyaltyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered invoices count at their net amount after discounts and credit, within a Damascus calendar month. Only the incremental reward is credited for the next order. Returns reduce entitlement; a spent reward offsets future loyalty, without taking commission credit or creating cash debt. Monthly tiers freeze at the first delivery.'**
+  String get warehouseMonthlyLoyaltyHelp;
+
+  /// No description provided for @pharmacyMonthlyLoyaltyProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered purchases this month: {amount}. Incremental loyalty is credited after delivery for your next order; returns reduce entitlement.'**
+  String pharmacyMonthlyLoyaltyProgress(String amount);
+
+  /// No description provided for @warehouseMonthlyLoyaltyExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Example: 100,000 delivered net purchases → 1,000 credit; at 200,000 → 5,000 total, so only 4,000 more.'**
+  String get warehouseMonthlyLoyaltyExample;
+
+  /// No description provided for @warehouseMonthlyLoyaltyMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly total from'**
+  String get warehouseMonthlyLoyaltyMin;
+
+  /// No description provided for @warehouseMonthlyLoyaltyReward.
+  ///
+  /// In en, this message translates to:
+  /// **'Total reward credit'**
+  String get warehouseMonthlyLoyaltyReward;
+
+  /// No description provided for @pharmacyMonthlyLoyaltyOffset.
+  ///
+  /// In en, this message translates to:
+  /// **'Previously spent reward on returned goods: {amount}. This offsets future loyalty; it is not a cash debt.'**
+  String pharmacyMonthlyLoyaltyOffset(String amount);
+
+  /// No description provided for @errorLoyaltyChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Loyalty settings changed. Go back and reopen settings before saving.'**
+  String get errorLoyaltyChanged;
+
+  /// No description provided for @warehouseInsightsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse performance and follow-up'**
+  String get warehouseInsightsTitle;
+
+  /// No description provided for @warehouseInsightsScope.
+  ///
+  /// In en, this message translates to:
+  /// **'These figures cover Feniq transactions only. Net sales after returns are not profit; inventory costs and expenses are excluded.'**
+  String get warehouseInsightsScope;
+
+  /// No description provided for @warehouseInsightsNetSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Net sales'**
+  String get warehouseInsightsNetSales;
+
+  /// No description provided for @warehouseInsightsCollections.
+  ///
+  /// In en, this message translates to:
+  /// **'Collections'**
+  String get warehouseInsightsCollections;
+
+  /// No description provided for @warehouseInsightsReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns'**
+  String get warehouseInsightsReturns;
+
+  /// No description provided for @warehouseInsightsDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Current receivables'**
+  String get warehouseInsightsDebts;
+
+  /// No description provided for @warehouseInsightsTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales and collections over time'**
+  String get warehouseInsightsTrend;
+
+  /// No description provided for @warehouseInsightsInspectDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a day to inspect'**
+  String get warehouseInsightsInspectDay;
+
+  /// No description provided for @warehouseInsightsPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get warehouseInsightsPeriod;
+
+  /// No description provided for @warehouseInsightsRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get warehouseInsightsRefresh;
+
+  /// No description provided for @warehouseInsightsAsOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated:'**
+  String get warehouseInsightsAsOf;
+
+  /// No description provided for @warehouseInsightsDamascus.
+  ///
+  /// In en, this message translates to:
+  /// **'Damascus time'**
+  String get warehouseInsightsDamascus;
+
+  /// No description provided for @warehouseInsightsAging.
+  ///
+  /// In en, this message translates to:
+  /// **'Receivable age — days'**
+  String get warehouseInsightsAging;
+
+  /// No description provided for @warehouseInsightsAgingMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest debits are settled first. Returns reduce their original invoice; reversing a payment restores its original debt age. This is a monitoring allocation; payments are not invoice-specific.'**
+  String get warehouseInsightsAgingMethod;
+
+  /// No description provided for @warehouseInsightsDailyTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily detail table'**
+  String get warehouseInsightsDailyTable;
+
+  /// No description provided for @warehouseInsightsDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get warehouseInsightsDate;
+
+  /// No description provided for @warehouseInsightsPharmacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy'**
+  String get warehouseInsightsPharmacy;
+
+  /// No description provided for @warehouseInsightsPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get warehouseInsightsPhone;
+
+  /// No description provided for @warehouseInsightsCity.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get warehouseInsightsCity;
+
+  /// No description provided for @warehouseInsightsDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get warehouseInsightsDays;
+
+  /// No description provided for @warehouseInsightsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get warehouseInsightsAction;
+
+  /// No description provided for @warehouseInsightsOpenStatement.
+  ///
+  /// In en, this message translates to:
+  /// **'Open statement'**
+  String get warehouseInsightsOpenStatement;
+
+  /// No description provided for @warehouseInsightsOpenStatements.
+  ///
+  /// In en, this message translates to:
+  /// **'Account statements'**
+  String get warehouseInsightsOpenStatements;
+
+  /// No description provided for @warehouseInsightsSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt and inactivity thresholds'**
+  String get warehouseInsightsSettings;
+
+  /// No description provided for @warehouseInsightsOverdueDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Receivables overdue after — days'**
+  String get warehouseInsightsOverdueDays;
+
+  /// No description provided for @warehouseInsightsInactiveDays.
+  ///
+  /// In en, this message translates to:
+  /// **'No pharmacy orders for — days'**
+  String get warehouseInsightsInactiveDays;
+
+  /// No description provided for @warehouseInsightsSaveSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Save thresholds'**
+  String get warehouseInsightsSaveSettings;
+
+  /// No description provided for @warehouseInsightsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No follow-up cases match this threshold.'**
+  String get warehouseInsightsEmpty;
+
+  /// No description provided for @warehouseInsightsLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get warehouseInsightsLoadMore;
+
+  /// No description provided for @warehouseInsightsInactiveFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'These features are not active for this warehouse. Contact Feniq to activate them.'**
+  String get warehouseInsightsInactiveFeature;
+
+  /// No description provided for @warehouseInsightsNoAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'No follow-up alerts right now.'**
+  String get warehouseInsightsNoAlerts;
+
+  /// No description provided for @warehouseInsightsOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get warehouseInsightsOverview;
+
+  /// No description provided for @warehouseInsightsOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get warehouseInsightsOverdue;
+
+  /// No description provided for @warehouseInsightsInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive pharmacies'**
+  String get warehouseInsightsInactive;
+
+  /// No description provided for @warehouseInsightsAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up alerts'**
+  String get warehouseInsightsAlerts;
+
+  /// No description provided for @warehouseInsightsInvalidDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose 1–180 days.'**
+  String get warehouseInsightsInvalidDays;
+
+  /// No description provided for @warehouseInsightsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up thresholds saved.'**
+  String get warehouseInsightsSaved;
+
+  /// No description provided for @warehouseInsightsResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Results: {count}'**
+  String warehouseInsightsResults(String count);
+
+  /// No description provided for @warehouseInsightsNoPreviousOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'No previous orders; days count from assignment.'**
+  String get warehouseInsightsNoPreviousOrder;
+
+  /// No description provided for @errorFeatureUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'These features are not active for this warehouse. Contact Feniq to activate them.'**
+  String get errorFeatureUnavailable;
+
+  /// No description provided for @errorFollowUpChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up thresholds changed. Refresh before saving.'**
+  String get errorFollowUpChanged;
+
+  /// No description provided for @warehouseInsightsAlertOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders pending for 48 hours: {count}'**
+  String warehouseInsightsAlertOrders(String count);
+
+  /// No description provided for @warehouseInsightsAlertReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns awaiting a decision for 48 hours: {count}'**
+  String warehouseInsightsAlertReturns(String count);
+
+  /// No description provided for @warehouseInsightsAlertOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacies with overdue balances: {count}'**
+  String warehouseInsightsAlertOverdue(String count);
+
+  /// No description provided for @warehouseInsightsAlertInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacies needing order follow-up: {count}'**
+  String warehouseInsightsAlertInactive(String count);
+
+  /// No description provided for @warehouseInsightsScopeShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Feniq transactions only; net sales are not profit.'**
+  String get warehouseInsightsScopeShort;
+
+  /// No description provided for @warehouseInsightsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About these figures'**
+  String get warehouseInsightsAbout;
+
+  /// No description provided for @warehouseInsightsOverdueAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue amount'**
+  String get warehouseInsightsOverdueAmount;
+
+  /// No description provided for @deliveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery regions and schedules'**
+  String get deliveryTitle;
+
+  /// No description provided for @deliveryExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable estimates after setting regions and assigning pharmacies. Damascus time, ±12 hours, frozen when submitted; not a guaranteed arrival time.'**
+  String get deliveryExplanation;
+
+  /// No description provided for @deliveryEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Show delivery estimate to pharmacies'**
+  String get deliveryEnable;
+
+  /// No description provided for @deliveryFeatureOff.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is not active for this warehouse. Earlier promises are preserved.'**
+  String get deliveryFeatureOff;
+
+  /// No description provided for @deliveryZoneName.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery region name'**
+  String get deliveryZoneName;
+
+  /// No description provided for @deliveryPreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation hours'**
+  String get deliveryPreparation;
+
+  /// No description provided for @deliveryZoneActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Region active'**
+  String get deliveryZoneActive;
+
+  /// No description provided for @deliveryDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Dispatch weekday'**
+  String get deliveryDay;
+
+  /// No description provided for @deliveryDepartureTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure — Damascus'**
+  String get deliveryDepartureTime;
+
+  /// No description provided for @deliveryArrivalHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival hours after departure'**
+  String get deliveryArrivalHours;
+
+  /// No description provided for @deliveryCutoffHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Order cutoff hours before departure'**
+  String get deliveryCutoffHours;
+
+  /// No description provided for @deliveryAddTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add dispatch day'**
+  String get deliveryAddTrip;
+
+  /// No description provided for @deliveryRemoveTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove dispatch day'**
+  String get deliveryRemoveTrip;
+
+  /// No description provided for @deliveryExceptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Date exceptions'**
+  String get deliveryExceptions;
+
+  /// No description provided for @deliveryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date — YYYY-MM-DD'**
+  String get deliveryDate;
+
+  /// No description provided for @deliveryCancelTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this date\'s trip'**
+  String get deliveryCancelTrip;
+
+  /// No description provided for @deliveryRemoveException.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove exception'**
+  String get deliveryRemoveException;
+
+  /// No description provided for @deliveryAddException.
+  ///
+  /// In en, this message translates to:
+  /// **'Add date exception'**
+  String get deliveryAddException;
+
+  /// No description provided for @deliveryPauseZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause region'**
+  String get deliveryPauseZone;
+
+  /// No description provided for @deliveryAddZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Add region'**
+  String get deliveryAddZone;
+
+  /// No description provided for @deliverySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save schedule'**
+  String get deliverySave;
+
+  /// No description provided for @deliverySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get deliverySaved;
+
+  /// No description provided for @deliveryReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload settings'**
+  String get deliveryReload;
+
+  /// No description provided for @deliveryAssignTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign pharmacies to delivery regions'**
+  String get deliveryAssignTitle;
+
+  /// No description provided for @deliveryAssignHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the schedule first, then find the pharmacy and choose its region. This assignment does not hide warehouses in the catalog.'**
+  String get deliveryAssignHint;
+
+  /// No description provided for @deliverySearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy name or phone'**
+  String get deliverySearch;
+
+  /// No description provided for @deliverySearchButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get deliverySearchButton;
+
+  /// No description provided for @deliveryUnassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No region — arrival unspecified'**
+  String get deliveryUnassigned;
+
+  /// No description provided for @deliveryPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get deliveryPaused;
+
+  /// No description provided for @deliveryArrivalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated delivery'**
+  String get deliveryArrivalTitle;
+
+  /// No description provided for @deliveryUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery time is not currently specified for this pharmacy.'**
+  String get deliveryUnavailable;
+
+  /// No description provided for @deliveryPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview; the estimate is fixed when you submit the order.'**
+  String get deliveryPreview;
+
+  /// No description provided for @deliveryRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected between'**
+  String get deliveryRange;
+
+  /// No description provided for @deliveryLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Past the arrival window. Contact the warehouse; the timer ending does not mean delivered.'**
+  String get deliveryLate;
+
+  /// No description provided for @deliveryDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get deliveryDelivered;
+
+  /// No description provided for @deliveryCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Order cancelled — arrival estimate ended'**
+  String get deliveryCancelled;
+
+  /// No description provided for @deliveryUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Time until the end of the window'**
+  String get deliveryUntil;
+
+  /// No description provided for @deliveryReschedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Change this order\'s estimate'**
+  String get deliveryReschedule;
+
+  /// No description provided for @deliveryNewTime.
+  ///
+  /// In en, this message translates to:
+  /// **'New arrival — Damascus time'**
+  String get deliveryNewTime;
+
+  /// No description provided for @deliveryReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for change — visible to the pharmacy'**
+  String get deliveryReason;
+
+  /// No description provided for @deliveryChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate changed'**
+  String get deliveryChanged;
+
+  /// No description provided for @deliveryInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Check region names, days and times. Hours 0–168, arrival up to 72. Do not repeat a weekday within a region.'**
+  String get deliveryInvalid;
+
+  /// No description provided for @deliveryUnsaved.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Save or reload before assigning pharmacies.'**
+  String get deliveryUnsaved;
+
+  /// No description provided for @deliveryNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching pharmacies'**
+  String get deliveryNoResults;
+
+  /// No description provided for @deliveryDays0.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get deliveryDays0;
+
+  /// No description provided for @deliveryDays1.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get deliveryDays1;
+
+  /// No description provided for @deliveryDays2.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get deliveryDays2;
+
+  /// No description provided for @deliveryDays3.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get deliveryDays3;
+
+  /// No description provided for @deliveryDays4.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get deliveryDays4;
+
+  /// No description provided for @deliveryDays5.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get deliveryDays5;
+
+  /// No description provided for @deliveryDays6.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get deliveryDays6;
+
+  /// No description provided for @deliveryHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} hours {minutes} minutes'**
+  String deliveryHoursMinutes(String hours, String minutes);
+
+  /// No description provided for @warehouseInsightsUnknownAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available.'**
+  String get warehouseInsightsUnknownAge;
 }
 
 class _AppLocalizationsDelegate

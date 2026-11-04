@@ -9,7 +9,11 @@ abstract class WarehouseOrdersRepository {
   Future<WarehouseOrderDetail> getOrder(String orderId);
 
   /// Moves the order one stage on: approve & send, then delivered.
-  Future<AdvancedOrderStatus> advance(String orderId);
+  Future<AdvancedOrderStatus> advance(
+    String orderId, {
+    String? expectedStatus,
+    String? targetStatus,
+  });
 
   /// Corrects an order still awaiting approval: new quantities by order-item
   /// id, and the lines to drop. The server reprices the whole order.

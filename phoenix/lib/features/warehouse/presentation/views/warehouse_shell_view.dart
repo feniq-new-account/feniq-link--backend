@@ -1,3 +1,5 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/pending_payments_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
@@ -16,15 +18,29 @@ import 'package:feniq/routes/route_names.dart';
 /// The cubits are provided by the route; a tab is built the first time it is
 /// opened, so its cubit only loads then.
 class WarehouseShellView extends StatefulWidget {
-  const WarehouseShellView({super.key});
+  const WarehouseShellView({super.key, this.initialIndex = 0});
+  final int initialIndex;
 
   @override
   State<WarehouseShellView> createState() => _WarehouseShellViewState();
 }
 
 class _WarehouseShellViewState extends State<WarehouseShellView> {
-  int _index = 0;
-  final Set<int> _opened = {0};
+  late int _index = widget.initialIndex;
+  late final Set<int> _opened = {widget.initialIndex};
+
+  @override
+  void didUpdateWidget(covariant WarehouseShellView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      _index = widget.initialIndex; _opened.add(_index);
+    }
+  }
+  Future<void> _openInsights() async {
+    final tab = await context.pushNamed<String>(RouteNames.warehouseInsights);
+    if (!mounted || tab == null) return;
+    setState(() { _index = tab == 'returns' ? 1 : 0; _opened.add(_index); });
+  }
 
   static const _tabs = <Widget>[
     WarehouseOrdersTab(),
@@ -45,19 +61,20 @@ class _WarehouseShellViewState extends State<WarehouseShellView> {
       l10n.warehouseNavAccount,
     ];
 
-    Widget icon(IconData outlined, IconData filled, String label) => NavigationDestination(
+    NavigationDestination icon(IconData outlined, IconData filled, String label) => NavigationDestination(
       icon: Icon(outlined),
       selectedIcon: Icon(filled, color: AppColors.primaryOf(context)),
       label: label,
     );
 
-    return Scaffold(
+    return ResponsiveRoleScaffold(
       appBar: AppBar(
         backgroundColor: AppColors.navyOf(context),
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
         title: FullText(titles[_index], minScale: 0.6),
         actions: [
+          IconButton(tooltip: l10n.warehouseInsightsTitle, icon: const Icon(Icons.insights_outlined), onPressed: _openInsights),
           IconButton(
             tooltip: l10n.notificationsTitle,
             icon: const Icon(Icons.notifications_outlined),
@@ -65,9 +82,18 @@ class _WarehouseShellViewState extends State<WarehouseShellView> {
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _index,
-        children: [for (var i = 0; i < _tabs.length; i++) _opened.contains(i) ? _tabs[i] : const SizedBox.shrink()],
+      body: Column(
+        children: [
+          const PendingPaymentsBar(),
+          Expanded(
+            child: IndexedStack(
+              index: _index,
+              children: [
+                for (var i = 0; i < _tabs.length; i++) _opened.contains(i) ? _tabs[i] : const SizedBox.shrink(),
+              ],
+            ),
+          ),
+        ],
       ),
       floatingActionButton: _index == 3
           ? Builder(
@@ -78,21 +104,18 @@ class _WarehouseShellViewState extends State<WarehouseShellView> {
               ),
             )
           : null,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        onDestinationSelected: (index) => setState(() {
-          _index = index;
-          _opened.add(index);
-        }),
-        destinations: [
-          icon(Icons.receipt_long_outlined, Icons.receipt_long, l10n.warehouseNavOrders),
-          icon(Icons.assignment_return_outlined, Icons.assignment_return, l10n.warehouseNavReturns),
-          icon(Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, l10n.warehouseNavAccounts),
-          icon(Icons.badge_outlined, Icons.badge, l10n.warehouseNavReps),
-          icon(Icons.person_outline, Icons.person, l10n.warehouseNavAccount),
-        ],
-      ),
+      selectedIndex: _index,
+      onSelected: (index) => setState(() {
+        _index = index;
+        _opened.add(index);
+      }),
+      destinations: [
+        icon(Icons.receipt_long_outlined, Icons.receipt_long, l10n.warehouseNavOrders),
+        icon(Icons.assignment_return_outlined, Icons.assignment_return, l10n.warehouseNavReturns),
+        icon(Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, l10n.warehouseNavAccounts),
+        icon(Icons.badge_outlined, Icons.badge, l10n.warehouseNavReps),
+        icon(Icons.person_outline, Icons.person, l10n.warehouseNavAccount),
+      ],
     );
   }
 }

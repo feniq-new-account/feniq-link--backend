@@ -38,13 +38,16 @@ class WarehouseOrderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               Text(
                 l10n.warehouseOrderTitle(order.orderNumber),
                 style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const Spacer(),
               StatusBadge(label: orderStatusLabel(l10n, order.status), tone: warehouseStatusTone(order.status)),
             ],
           ),
@@ -57,21 +60,23 @@ class WarehouseOrderCard extends StatelessWidget {
           Text(
             [
               if (city != null) city,
-              if (createdAt != null) DateFormatter.formatDateTime(createdAt),
+              if (createdAt != null) DateFormatter.formatDateTime(createdAt, locale: context.l10n.localeName),
               l10n.warehouseOrderItemsCount(order.itemCount),
             ].join(' · '),
             style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
           ),
           const SizedBox(height: AppSizes.spacingSmall),
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
-              Expanded(
-                child: Text(
-                  formatSyp(order.finalPrice, l10n.currencySuffix),
-                  style: context.textTheme.titleMedium?.copyWith(
-                    color: AppColors.primaryOf(context),
-                    fontWeight: FontWeight.w700,
-                  ),
+              Text(
+                formatSyp(order.finalPrice, l10n.currencySuffix),
+                style: context.textTheme.titleMedium?.copyWith(
+                  color: AppColors.primaryTextOf(context),
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               if (advanceLabel != null)

@@ -223,6 +223,8 @@ void main() {
 
       await interceptor.onError(_unauthorized(_options('/orders')), handler);
 
+      await pumpEventQueue();
+      expect(unauthorizedEvents, isEmpty, reason: 'A transient refresh error must not reset AuthCubit or its carts');
       verifyNever(() => storage.delete(any()));
     });
 

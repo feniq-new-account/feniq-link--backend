@@ -51,6 +51,8 @@ dependencies:
   # does not build on this Flutter/AGP toolchain.
   permission_handler: ^12.0.1
   cached_network_image: ^3.4.1
+  flutter_cache_manager: ^3.4.2
+  file: ^7.0.1
   # Autoplay video banners in the Offers/Ads slider (BannerSlider) - the only
   # video content in the app.
   video_player: ^2.9.5

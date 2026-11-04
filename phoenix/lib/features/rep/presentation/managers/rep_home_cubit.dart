@@ -21,14 +21,20 @@ class RepHomeCubit extends Cubit<RepHomeState> {
 
   final RepRepository _repository;
 
+  int _generation = 0;
+
   Future<void> load() async {
+    if (isClosed) return;
+    final generation = ++_generation;
     // Keep what is on screen while it refreshes: a pull-to-refresh must not
     // blank the numbers.
     emit(RepHomeState(status: RepLoadStatus.loading, me: state.me));
     try {
       final me = await _repository.getMe();
+      if (isClosed || generation != _generation) return;
       emit(RepHomeState(status: RepLoadStatus.loaded, me: me));
     } on Failure catch (f) {
+      if (isClosed || generation != _generation) return;
       emit(RepHomeState(status: RepLoadStatus.error, me: state.me, errorMessage: f.errMessage, errorCode: f.code));
     }
   }

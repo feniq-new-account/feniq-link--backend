@@ -22,6 +22,9 @@ const userSchema = new Schema(
       enum: ['admin', 'warehouse', 'pharmacy', 'rep'],
       required: true,
     },
+    // Null is the pre-existing combined warehouse login. New memberships
+    // distinguish the mobile owner from the accounting operator explicitly.
+    warehouseRole: { type: String, enum: ['owner', 'accountant'], default: null },
     // 'deleted' is a self-service deletion (auth.service.js deleteAccount) and
     // is terminal: it is refused at authenticate, so it must never be treated
     // as merely "not active". Distinct from 'blocked', which an admin applies

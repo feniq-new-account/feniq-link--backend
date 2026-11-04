@@ -21,6 +21,8 @@ class CartQuote {
     required this.platformDiscountSyp,
     this.loyaltyDiscountSyp = 0,
     this.creditBalanceSyp = 0,
+    this.monthlyLoyalty,
+    this.deliveryEstimate,
     this.creditUsedSyp = 0,
     required this.preCodeSyp,
     this.discountSyp = 0,
@@ -49,6 +51,8 @@ class CartQuote {
   /// The pharmacy's credit at this warehouse - its share of earlier orders'
   /// rep commission - and the part of it this order takes automatically.
   final int creditBalanceSyp;
+  final Map<String, dynamic>? monthlyLoyalty;
+  final Map<String, dynamic>? deliveryEstimate;
   final int creditUsedSyp;
 
   final int preCodeSyp;
@@ -77,6 +81,10 @@ class CartQuote {
       platformDiscountSyp: _int(totals['platformDiscountSyp']),
       loyaltyDiscountSyp: _int(totals['loyaltyDiscountSyp']),
       creditBalanceSyp: _int(totals['creditBalanceSyp']),
+      deliveryEstimate: (totals['deliveryEstimate'] as Map?)
+          ?.cast<String, dynamic>(),
+      monthlyLoyalty: (totals['monthlyLoyalty'] as Map?)
+          ?.cast<String, dynamic>(),
       creditUsedSyp: _int(totals['creditUsedSyp']),
       preCodeSyp: _int(totals['preCodeSyp']),
       discountSyp: _int(totals['discountSyp']),

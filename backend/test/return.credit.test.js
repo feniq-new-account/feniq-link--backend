@@ -31,6 +31,7 @@ const FinancialAuditLog = require('../src/models/financialAuditLog.model');
 
 const ledger = require('../src/services/ledger.service');
 const warehouseReturnService = require('../src/services/warehouseReturn.service');
+const returnService = require('../src/services/return.service');
 const { computeCredit } = require('../src/services/returnCredit.service');
 const { runInTransaction } = require('../src/utils/transaction');
 
@@ -276,6 +277,87 @@ test('an item that is not on the order is refused', () => {
 });
 
 // --- approval posts the credit ----------------------------------------------
+
+for (const reductions of [
+  { loyaltyDiscountAmount: 10000, creditUsedSyp: 0, finalPrice: 90000, expected: 81000 },
+  { loyaltyDiscountAmount: 0, creditUsedSyp: 60000, finalPrice: 40000, expected: 36000 },
+  { loyaltyDiscountAmount: 10000, creditUsedSyp: 60000, finalPrice: 30000, expected: 27000 },
+]) {
+  test(`partial returns refund the net charge with loyalty=${reductions.loyaltyDiscountAmount}, credit=${reductions.creditUsedSyp}`, () => {
+    const order = { _id: 'o', totalPrice: 100000, discountAmount: 0, ...reductions };
+    const orderItems = [{ _id: 'a', productId: 'p', quantity: 10, discountPrice: 10000 }];
+    const partial = computeCredit({ order, orderItems, returnItems: [{ orderItemId: 'a', quantity: 9 }] });
+    assert.strictEqual(partial.creditSyp, reductions.expected);
+    const full = computeCredit({ order, orderItems, returnItems: [{ orderItemId: 'a', quantity: 10 }] });
+    assert.strictEqual(full.creditSyp, order.finalPrice);
+    const withPriorCredit = computeCredit({
+      order, orderItems, returnItems: [{ orderItemId: 'a', quantity: 9 }], priorCreditsSyp: order.finalPrice - 1,
+    });
+    assert.strictEqual(withPriorCredit.creditSyp, 1, 'the remaining invoice is a hard cap');
+  });
+}
+
+test('approval values the latest items after a pharmacy edit before the transaction', async (t) => {
+  const { order, items, account } = await deliveredOrder([
+    { unitPrice: 10000, discountPrice: 10000, quantity: 10 },
+  ]);
+  const request = await makeReturn(order, items, [{ index: 0, quantity: 1 }]);
+  const resolveAccount = ledger.resolveAccount;
+  t.mock.method(ledger, 'resolveAccount', async (...args) => {
+    await returnService.updateReturn({
+      pharmacyId: ids.pharmacy, returnId: String(request._id),
+      items: [{ orderItemId: String(items[0]._id), quantity: 9, reasonType: 'damaged' }],
+    });
+    return resolveAccount(...args);
+  });
+  const { returnRequest: approved } = await warehouseReturnService.approveReturn(
+    String(request._id), ids.warehouse, ids.whUser
+  );
+  assert.strictEqual(approved.items[0].quantity, 9);
+  assert.strictEqual(approved.creditSyp, 90000);
+  assert.strictEqual(approved.creditValuation.lines[0].quantity, 9);
+  assert.strictEqual((await LedgerAccount.findById(account._id)).balanceCache.syp, 10000);
+});
+
+test('a pharmacy edit that loses to approval cannot alter the credited items', async (t) => {
+  const { order, items } = await deliveredOrder([
+    { unitPrice: 10000, discountPrice: 10000, quantity: 10 },
+  ]);
+  const request = await makeReturn(order, items, [{ index: 0, quantity: 1 }]);
+  const update = Return.findOneAndUpdate;
+  t.mock.method(Return, 'findOneAndUpdate', async function (filter, changes, options) {
+    if (changes.$set?.items) {
+      await warehouseReturnService.approveReturn(String(request._id), ids.warehouse, ids.whUser);
+    }
+    return update.call(this, filter, changes, options);
+  });
+  await assert.rejects(() => returnService.updateReturn({
+    pharmacyId: ids.pharmacy, returnId: String(request._id),
+    items: [{ orderItemId: String(items[0]._id), quantity: 9, reasonType: 'damaged' }],
+  }), withCode('RETURN_NOT_EDITABLE'));
+  const stored = await Return.findById(request._id).lean();
+  assert.strictEqual(stored.status, 'approved');
+  assert.strictEqual(stored.items[0].quantity, 1);
+  assert.strictEqual(stored.creditSyp, 10000);
+});
+
+test('a pharmacy deletion that loses to approval keeps the financial return record', async (t) => {
+  const { order, items } = await deliveredOrder([
+    { unitPrice: 10000, discountPrice: 10000, quantity: 10 },
+  ]);
+  const request = await makeReturn(order, items, [{ index: 0, quantity: 1 }]);
+  const remove = Return.deleteOne;
+  t.mock.method(Return, 'deleteOne', async function (...args) {
+    await warehouseReturnService.approveReturn(String(request._id), ids.warehouse, ids.whUser);
+    return remove.apply(this, args);
+  });
+  await assert.rejects(() => returnService.deleteReturn({
+    pharmacyId: ids.pharmacy, returnId: String(request._id),
+  }), withCode('RETURN_NOT_EDITABLE'));
+  const stored = await Return.findById(request._id).lean();
+  assert.strictEqual(stored.status, 'approved');
+  assert.strictEqual(await LedgerEntry.countDocuments({ 'source.returnId': request._id }), 1);
+});
 
 test('approving a return credits the account and links the entry', async () => {
   const { order, items, account } = await deliveredOrder(

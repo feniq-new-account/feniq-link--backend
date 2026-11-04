@@ -76,7 +76,7 @@ export function WarehouseReturnsPage() {
     try {
       preview = await api.returnCreditPreview(returnRequest.id);
     } catch (err) {
-      setError(err.message);
+      setActionError(err.message);
       return;
     }
     const confirmed = window.confirm(

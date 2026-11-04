@@ -1,3 +1,8 @@
+import { NumericInput } from '../components/NumericInput';
+import { useSearchParams } from 'react-router-dom';
+import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
+import { useAuth } from '../auth/AuthContext';
+import { useModalSafety } from '../hooks/useModalSafety';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -101,7 +106,7 @@ function AddPaymentForm({ pharmacyId, remainingSyp, onSaved }) {
       <form onSubmit={handleSubmit} className="product-form">
         <label>
           {t('debts.amount')}
-          <input
+          <NumericInput
             type="number"
             min="0.01"
             step="0.01"
@@ -191,6 +196,7 @@ function ReversePaymentModal({ payment, onClose, onConfirm }) {
   const [idempotencyKeys] = useState(createIdempotencyKeys);
   const [reason, setReason] = useState('');
   const [isBusy, setIsBusy] = useState(false);
+  const modalSafety = useModalSafety(isBusy, onClose);
   const [error, setError] = useState(null);
 
   const amountText =
@@ -217,8 +223,8 @@ function ReversePaymentModal({ payment, onClose, onConfirm }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
+    <div className="modal-overlay" {...modalSafety.overlayProps}>
+      <div className="modal" {...modalSafety.dialogProps}>
         <h2>{t('debts.reversePaymentTitle')}</h2>
         <p className="hint">{t('debts.reversePaymentExplain', { amount: amountText })}</p>
         <form onSubmit={handleSubmit} className="product-form">
@@ -234,7 +240,7 @@ function ReversePaymentModal({ payment, onClose, onConfirm }) {
           </label>
           {error && <p className="error-text">{error}</p>}
           <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={isBusy}>
+            <button type="button" className="btn-secondary" onClick={modalSafety.close} disabled={isBusy}>
               {t('common.cancel')}
             </button>
             <button type="submit" className="btn-reject" disabled={isBusy}>
@@ -295,7 +301,7 @@ function PaymentRow({ payment, onReverse }) {
         <div className="table-row-actions">
           {/* Only a posted settlement can be reversed: a reversal is final, and
               an already-reversed payment has nothing left to undo. */}
-          {!isReversal && !isReversed && (
+          {onReverse && !isReversal && !isReversed && (
             <button className="btn-reject" onClick={() => onReverse(payment)}>
               {t('debts.reverse')}
             </button>
@@ -408,6 +414,9 @@ function StatementTable({ statement }) {
 }
 
 function WarehouseDebtDetail({ pharmacyId, onBack }) {
+  const { user } = useAuth();
+  const { hasFeature } = useWarehouseSubscription();
+  const canRecord = user?.warehouseRole !== 'owner' && hasFeature('accounting');
   const { t, i18n } = useTranslation();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -551,7 +560,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
                   </thead>
                   <tbody>
                     {payments.map((payment) => (
-                      <PaymentRow key={payment.id} payment={payment} onReverse={setReversing} />
+                      <PaymentRow key={payment.id} payment={payment} onReverse={canRecord ? setReversing : null} />
                     ))}
                   </tbody>
                 </table>
@@ -561,11 +570,11 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
         </div>
 
         <div className="wh-invoice-side">
-          <AddPaymentForm
+          {canRecord && <AddPaymentForm
             pharmacyId={pharmacyId}
             remainingSyp={statement.outstandingDebtSyp}
             onSaved={load}
-          />
+          />}
         </div>
       </div>
 
@@ -594,12 +603,18 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
 // financial happened on it - and every balance is SYP-native, so no exchange
 // rate is involved in rendering it.
 export function WarehouseDebtsPage() {
+  const { user } = useAuth();
+  const { hasFeature } = useWarehouseSubscription();
+  const canRecord = user?.warehouseRole !== 'owner' && hasFeature('accounting');
   const { t } = useTranslation();
-  const [selectedPharmacyId, setSelectedPharmacyId] = useState(null);
+  const [params, setParams] = useSearchParams();
+  const selectedFromUrl = params.get('pharmacy') || null;
+  const [selectedPharmacyId, setSelectedPharmacyId] = useState(selectedFromUrl);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   // A row's "pay in full" / "part payment" open this: { mode, row }.
   const [paying, setPaying] = useState(null);
+  const [payingBusy, setPayingBusy] = useState(false);
   const [payMessage, setPayMessage] = useState(null);
   const [voiceOpen, setVoiceOpen] = useState(false);
 
@@ -631,17 +646,19 @@ export function WarehouseDebtsPage() {
   } = usePaginatedData(fetchPage);
 
   useEffect(() => {
-    reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+    setSelectedPharmacyId(selectedFromUrl);
+    if (!selectedFromUrl) reset();
+  }, [search, selectedFromUrl, reset]);
 
   if (selectedPharmacyId) {
     return (
       <WarehouseDebtDetail
+        key={selectedPharmacyId}
         pharmacyId={selectedPharmacyId}
         onBack={() => {
+          const next = new URLSearchParams(params); next.delete('pharmacy');
+          setParams(next, { replace: true });
           setSelectedPharmacyId(null);
-          reset();
         }}
       />
     );
@@ -665,12 +682,13 @@ export function WarehouseDebtsPage() {
           type="search"
           className="wh-filter-search"
           placeholder={t('debts.searchPlaceholder')}
+          disabled={payingBusy}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
-        <button type="button" className="btn-secondary wh-voice-btn" onClick={() => setVoiceOpen(true)}>
+        {canRecord && <button type="button" className="btn-secondary wh-voice-btn" disabled={payingBusy} onClick={() => setVoiceOpen(true)}>
           {t('voicePay.title')}
-        </button>
+        </button>}
       </div>
 
       {voiceOpen && (
@@ -686,20 +704,7 @@ export function WarehouseDebtsPage() {
 
       {error && <p className="error-text">{error}</p>}
       {payMessage && <p className="hint">{payMessage}</p>}
-      {paying && (
-        <QuickPaymentModal
-          mode={paying.mode}
-          pharmacyId={paying.row.pharmacyId}
-          pharmacyName={displayName(paying.row.nameEn, paying.row.nameAr)}
-          owedSyp={paying.row.balanceSyp}
-          onClose={() => setPaying(null)}
-          onDone={(amount) => {
-            setPaying(null);
-            setPayMessage(t('quickPay.recorded', { amount: formatSyp(amount) }));
-            reset();
-          }}
-        />
-      )}
+
 
       {isLoading ? (
         <p className="hint">{t('common.loading')}</p>
@@ -727,7 +732,7 @@ export function WarehouseDebtsPage() {
                   <tr
                     key={row.pharmacyId}
                     className="clickable-row"
-                    onClick={() => setSelectedPharmacyId(row.pharmacyId)}
+                    onClick={() => { if (!payingBusy) { setSelectedPharmacyId(row.pharmacyId); setParams({ ...Object.fromEntries(params), pharmacy: row.pharmacyId }); } }}
                   >
                     <td>
                       {displayName(row.nameEn, row.nameAr)}
@@ -744,10 +749,11 @@ export function WarehouseDebtsPage() {
                       {row.lastPaymentAt ? formatBusinessDate(row.lastPaymentAt) : '—'}
                     </td>
                     <td className="wh-num">
-                      {row.balanceSyp > 0 && (
+                      {canRecord && row.balanceSyp > 0 && (
                         <div className="wh-order-actions">
                           <button
                             type="button"
+                            disabled={payingBusy}
                             className="wh-row-action"
                             onClick={(event) => {
                               event.stopPropagation();
@@ -758,6 +764,7 @@ export function WarehouseDebtsPage() {
                           </button>
                           <button
                             type="button"
+                            disabled={payingBusy}
                             className="wh-row-action wh-row-action-secondary"
                             onClick={(event) => {
                               event.stopPropagation();
@@ -768,6 +775,22 @@ export function WarehouseDebtsPage() {
                           </button>
                         </div>
                       )}
+      {canRecord && paying?.row.pharmacyId === row.pharmacyId && (
+        <QuickPaymentModal
+          key={`${row.pharmacyId}-${paying.mode}`}
+          onBusyChange={setPayingBusy}
+          mode={paying.mode}
+          pharmacyId={paying.row.pharmacyId}
+          pharmacyName={displayName(paying.row.nameEn, paying.row.nameAr)}
+          owedSyp={paying.row.balanceSyp}
+          onClose={() => setPaying(null)}
+          onDone={(amount) => {
+            setPaying(null);
+            setPayMessage(t('quickPay.recorded', { amount: formatSyp(amount) }));
+            reset();
+          }}
+        />
+      )}
                     </td>
                   </tr>
                 ))}

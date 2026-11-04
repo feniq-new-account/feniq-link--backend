@@ -60,6 +60,33 @@ void main() {
 
   tearDown(() => cubit.close());
 
+  test('an in-flight order cannot switch or mutate another warehouse cart', () async {
+    final response = Completer<OrderModel>();
+    when(() => orderRepo.submitOrder(
+      warehouseId: any(named: 'warehouseId'), items: any(named: 'items'),
+      notes: any(named: 'notes'), idempotencyKey: any(named: 'idempotencyKey'),
+      rateUsed: any(named: 'rateUsed'),
+    )).thenAnswer((_) => response.future);
+    cubit.addProduct(_product('p1'), warehouseId: 'A', warehouseName: 'A', quantity: 2);
+    cubit.addProduct(_product('p2'), warehouseId: 'B', warehouseName: 'B', quantity: 3);
+    cubit.switchToWarehouse('A');
+    final sending = cubit.submitOrder();
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.isSubmitting, true);
+    cubit.switchToWarehouse('B');
+    cubit.removeItem(cubit.state.items.single.lineKey);
+    cubit.addProduct(_product('p3'), warehouseId: 'B', warehouseName: 'B', quantity: 1);
+    expect(cubit.state.warehouseId, 'A');
+    expect(cubit.state.items.single.quantity, 2);
+    response.complete(_fakeOrder);
+    expect(await sending, _fakeOrder);
+    expect(cubit.state.warehouseId, 'B');
+    expect(cubit.state.items.single.productId, 'p2');
+    expect(cubit.state.items.single.quantity, 3);
+    expect(cubit.state.otherCarts, isEmpty);
+  });
+
+
   group('One Warehouse Per Order', () {
     test('Test 1: adding to an empty cart binds the cart to that warehouse', () {
       cubit.addProduct(

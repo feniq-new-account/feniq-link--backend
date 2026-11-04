@@ -10,9 +10,9 @@ class AppShadows {
 
   /// Raised cards and tiles.
   static List<BoxShadow> card(BuildContext context) => context.isDarkMode
-      ? [BoxShadow(color: Colors.black.withValues(alpha: 0.32), blurRadius: 24, offset: const Offset(0, 10))]
+      ? [BoxShadow(color: Colors.black.withValues(alpha: 0.24), blurRadius: 12, offset: const Offset(0, 4))]
       : [
-          BoxShadow(color: AppColors.lightNavy.withValues(alpha: 0.07), blurRadius: 28, offset: const Offset(0, 12)),
+          BoxShadow(color: AppColors.lightNavy.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4)),
           BoxShadow(color: AppColors.lightNavy.withValues(alpha: 0.04), blurRadius: 3, offset: const Offset(0, 1)),
         ];
 

@@ -263,7 +263,7 @@
       }
       // no build published yet: send pharmacies to WhatsApp instead of a dead link
       apk.removeAttribute("download");
-      apk.href = "https://wa.me/963982001415?text=" + encodeURIComponent("مرحبا، بدي أنزّل تطبيق فينيق للصيدلية");
+      apk.href = "https://wa.me/963982001415?text=" + encodeURIComponent("مرحبا، بدي أنزّل تطبيق فينيق");
       $("apk-label").textContent = "اطلب رابط التطبيق على واتساب";
       meta.textContent = "رابط التنزيل المباشر يُضاف قريباً.";
     });

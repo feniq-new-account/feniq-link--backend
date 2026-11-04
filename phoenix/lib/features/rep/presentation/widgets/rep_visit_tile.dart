@@ -19,7 +19,9 @@ class RepVisitTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final when = visit.scannedAt == null ? '' : DateFormatter.formatDateTime(visit.scannedAt!);
+    final when = visit.scannedAt == null
+        ? ''
+        : DateFormatter.formatDateTime(visit.scannedAt!, locale: context.l10n.localeName);
     final distance = visit.distanceMeters;
     final name = repPharmacyName(context, visit.pharmacyNameAr ?? '', visit.pharmacyNameEn ?? '');
 
@@ -31,12 +33,8 @@ class RepVisitTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (showPharmacy && name.isNotEmpty)
-                  Text(name, style: context.textTheme.titleSmall),
-                Text(
-                  when,
-                  style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
-                ),
+                if (showPharmacy && name.isNotEmpty) Text(name, style: context.textTheme.titleSmall),
+                Text(when, style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context))),
                 if (distance != null)
                   Text(
                     l10n.repDistanceMeters(distance),

@@ -521,6 +521,8 @@ async function createWarehouseAccount({
       phone: cleanPhone,
       password: hashedPassword,
       role: 'warehouse',
+      warehouseRole: 'owner',
+      mustChangePassword: true,
       status: 'active',
     });
   } catch (err) {

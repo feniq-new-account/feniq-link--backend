@@ -1,3 +1,4 @@
+import { NumericInput } from './NumericInput';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -492,7 +493,7 @@ export function ProductFormModal({ mode, initialForm, categories, usdToSyp, onCl
           </div>
           <label>
             {t('productForm.priceSyp')}
-            <input
+            <NumericInput
               type="number"
               min="1"
               step="1"

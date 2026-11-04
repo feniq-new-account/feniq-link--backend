@@ -18,6 +18,9 @@ router.get(
   controller.list
 );
 
+router.get('/revision', authenticate, authorize('pharmacy'), requireActiveStatus,
+  objectIdParams('warehouseId'), controller.revision);
+
 // The other medicines in this warehouse with the same active ingredient,
 // strength and form.
 router.get(

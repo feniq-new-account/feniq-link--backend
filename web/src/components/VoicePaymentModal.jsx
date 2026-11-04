@@ -1,3 +1,4 @@
+import { useModalSafety } from '../hooks/useModalSafety';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -40,6 +41,7 @@ export function VoicePaymentModal({ onClose, onDone }) {
   const [chosenId, setChosenId] = useState(null);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const modalSafety = useModalSafety(saving, onClose);
   const recognizer = useRef(null);
 
   useEffect(() => {
@@ -106,8 +108,8 @@ export function VoicePaymentModal({ onClose, onDone }) {
   const nothingUnderstood = text.trim() && parsed.kind === 'unknown';
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
+    <div className="modal-overlay" {...modalSafety.overlayProps}>
+      <div className="modal" {...modalSafety.dialogProps}>
         <h2>{t('voicePay.title')}</h2>
         <p className="hint">{t('voicePay.hint')}</p>
 
@@ -175,7 +177,7 @@ export function VoicePaymentModal({ onClose, onDone }) {
           <button type="button" className="btn-primary" disabled={!selected || !payment || saving} onClick={save}>
             {saving ? t('common.loading') : t('voicePay.confirm')}
           </button>
-          <button type="button" className="btn-secondary" onClick={onClose}>
+          <button type="button" className="btn-secondary" onClick={modalSafety.close} disabled={saving}>
             {t('common.cancel')}
           </button>
         </div>

@@ -1,5 +1,5 @@
+import 'package:feniq/core/utils/number_input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_padding.dart';
@@ -64,14 +64,7 @@ class _TierRow {
 }
 
 /// Digits only, Western or Arabic-Indic, grouping commas and spaces ignored.
-int? parseWholeLiras(String text) {
-  const arabic = '٠١٢٣٤٥٦٧٨٩';
-  final western = text.split('').map((c) {
-    final i = arabic.indexOf(c);
-    return i >= 0 ? '$i' : c;
-  }).join();
-  return int.tryParse(western.replaceAll(RegExp(r'[,،\s]'), ''));
-}
+int? parseWholeLiras(String text) => parseWholeLirasInput(text);
 
 class _LoyaltyForm extends StatefulWidget {
   const _LoyaltyForm({required this.initial});
@@ -84,6 +77,7 @@ class _LoyaltyForm extends StatefulWidget {
 
 class _LoyaltyFormState extends State<_LoyaltyForm> {
   late bool _enabled = widget.initial.enabled;
+  late String _mode = widget.initial.mode;
   late final List<_TierRow> _rows = [
     for (final tier in widget.initial.tiers) _TierRow(min: '${tier.minSyp}', discount: '${tier.discountSyp}'),
     if (widget.initial.tiers.isEmpty) _TierRow(),
@@ -123,7 +117,7 @@ class _LoyaltyFormState extends State<_LoyaltyForm> {
       return;
     }
     setState(() => _error = null);
-    final ok = await context.read<WarehouseLoyaltyCubit>().save(enabled: _enabled, tiers: tiers);
+    final ok = await context.read<WarehouseLoyaltyCubit>().save(enabled: _enabled, tiers: tiers, mode: _mode);
     if (ok) messenger.showSnackBar(SnackBar(content: Text(l10n.warehouseLoyaltySaved)));
   }
 
@@ -133,7 +127,7 @@ class _LoyaltyFormState extends State<_LoyaltyForm> {
     final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
     InputDecoration field(String label) =>
         InputDecoration(labelText: label, suffixText: l10n.currencySuffix, isDense: true);
-    final digits = [FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩,،]'))];
+    final digits = [const WesternDigitsFormatter()];
 
     return ListView(
       padding: AppPadding.screen,
@@ -142,9 +136,27 @@ class _LoyaltyFormState extends State<_LoyaltyForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(l10n.warehouseLoyaltyIntro, style: context.textTheme.bodyMedium),
+              Text(
+                _mode == 'monthly' ? l10n.warehouseMonthlyLoyaltyHelp : l10n.warehouseLoyaltyIntro,
+                style: context.textTheme.bodyMedium,
+              ),
               const SizedBox(height: AppSizes.spacingSmall),
-              Text(l10n.warehouseLoyaltyExample, style: muted),
+              Text(
+                _mode == 'monthly' ? l10n.warehouseMonthlyLoyaltyExample : l10n.warehouseLoyaltyExample,
+                style: muted,
+              ),
+              DropdownButtonFormField<String>(
+                initialValue: _mode,
+                decoration: InputDecoration(labelText: l10n.warehouseLoyaltyMode),
+                isExpanded: true,
+                items: [
+                  DropdownMenuItem(value: 'per_order', child: Text(l10n.warehouseLoyaltyPerOrder)),
+                  DropdownMenuItem(value: 'monthly', child: Text(l10n.warehouseLoyaltyMonthly)),
+                ],
+                onChanged: (value) {
+                  if (value != null) setState(() => _mode = value);
+                },
+              ),
               Material(
                 type: MaterialType.transparency,
                 child: SwitchListTile(
@@ -167,7 +179,7 @@ class _LoyaltyFormState extends State<_LoyaltyForm> {
                     controller: _rows[i].min,
                     keyboardType: TextInputType.number,
                     inputFormatters: digits,
-                    decoration: field(l10n.warehouseLoyaltyMin),
+                    decoration: field(_mode == 'monthly' ? l10n.warehouseMonthlyLoyaltyMin : l10n.warehouseLoyaltyMin),
                   ),
                 ),
                 const SizedBox(width: AppSizes.spacingSmall),
@@ -176,7 +188,9 @@ class _LoyaltyFormState extends State<_LoyaltyForm> {
                     controller: _rows[i].discount,
                     keyboardType: TextInputType.number,
                     inputFormatters: digits,
-                    decoration: field(l10n.warehouseLoyaltyDiscount),
+                    decoration: field(
+                      _mode == 'monthly' ? l10n.warehouseMonthlyLoyaltyReward : l10n.warehouseLoyaltyDiscount,
+                    ),
                   ),
                 ),
                 IconButton(

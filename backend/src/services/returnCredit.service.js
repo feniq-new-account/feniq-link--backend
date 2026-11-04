@@ -108,8 +108,14 @@ function computeCredit({
 
   const orderGrossSyp = order.totalPrice;
   const discountCodeSyp = order.discountCode?.discountSyp ?? 0;
+  const loyaltyDiscountSyp = order.loyaltyDiscountAmount ?? 0;
+  // Redeemed pharmacy credit is already part of the order's reduction. A
+  // return refunds the net charge; it does not also release redeemed credit
+  // into the separate loyalty account (unlike cancelling an unfulfilled order).
+  const redeemedCreditSyp = order.creditUsedSyp ?? 0;
   const orderReductionsSyp =
-    (order.discountAmount ?? 0) + (order.advertisementDiscountAmount ?? 0) + discountCodeSyp;
+    (order.discountAmount ?? 0) + (order.advertisementDiscountAmount ?? 0) +
+    discountCodeSyp + loyaltyDiscountSyp + redeemedCreditSyp;
 
   // The share of the order-level reductions (platform discount + advertisement
   // package discount + discount code) that belongs to the returned slice.
@@ -135,9 +141,10 @@ function computeCredit({
     (item) => (returnedByItem.get(String(item._id)) ?? 0) >= item.quantity
   );
 
+  const remainingChargeSyp = Math.max(0, order.finalPrice - priorCreditsSyp);
   const creditSyp = isFinalReturn
-    ? Math.max(0, order.finalPrice - priorCreditsSyp)
-    : Math.max(0, rawCreditSyp);
+    ? remainingChargeSyp
+    : Math.min(remainingChargeSyp, Math.max(0, rawCreditSyp));
 
   // An admin code's compensation, undone in the same proportion as the goods
   // coming back - pinned to whatever is left of it on a full return, the same
@@ -176,6 +183,8 @@ function computeCredit({
       priorCreditsSyp,
       isFinalReturn,
       discountCodeSyp,
+      loyaltyDiscountSyp,
+      redeemedCreditSyp,
       platformCompensationSyp,
       compensationClawbackSyp,
       priorCompensationClawbackSyp,
@@ -197,7 +206,10 @@ async function valueReturn(returnRequest, session = null) {
     itemsQuery.session(session);
   }
 
-  const [order, orderItems] = await Promise.all([orderQuery, itemsQuery]);
+  // The driver does not support parallel commands on one transaction session.
+  const [order, orderItems] = session
+    ? [await orderQuery, await itemsQuery]
+    : await Promise.all([orderQuery, itemsQuery]);
   if (!order) {
     throw ApiError.notFound('The original order was not found.', 'ORDER_NOT_FOUND');
   }

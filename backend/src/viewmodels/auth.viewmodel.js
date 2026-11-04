@@ -4,6 +4,7 @@ function serializeUser(user) {
     name: user.name,
     phone: user.phone,
     role: user.role,
+    ...(user.role === 'warehouse' ? { warehouseRole: user.warehouseRole || 'legacy' } : {}),
     status: user.status,
     lang: user.lang,
   };

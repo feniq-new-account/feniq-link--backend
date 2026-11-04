@@ -22,12 +22,18 @@ class RepPharmacyDetailCubit extends Cubit<RepPharmacyDetailState> {
   final RepRepository _repository;
   final String pharmacyId;
 
+  int _generation = 0;
+
   Future<void> load() async {
+    if (isClosed) return;
+    final generation = ++_generation;
     emit(RepPharmacyDetailState(status: RepLoadStatus.loading, detail: state.detail));
     try {
       final detail = await _repository.getPharmacy(pharmacyId);
+      if (isClosed || generation != _generation) return;
       emit(RepPharmacyDetailState(status: RepLoadStatus.loaded, detail: detail));
     } on Failure catch (f) {
+      if (isClosed || generation != _generation) return;
       emit(
         RepPharmacyDetailState(
           status: RepLoadStatus.error,

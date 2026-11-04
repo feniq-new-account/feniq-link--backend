@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -52,7 +53,7 @@ class _RepPharmaciesTabState extends State<RepPharmaciesTab> {
             // Always scrollable, so pull-to-refresh also works on a short or
             // empty list.
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: AppPadding.screen,
+            padding: AppPadding.screen.add(EdgeInsets.only(bottom: roleFabClearance(context))),
             children: [
               const _StatsRow(),
               const SizedBox(height: AppSizes.spacingMedium),
@@ -83,7 +84,12 @@ class _RepPharmaciesTabState extends State<RepPharmaciesTab> {
     }
     if (state.pharmacies.isEmpty) {
       if (state.status == RepLoadStatus.initial || state.status == RepLoadStatus.loading) {
-        return const [Padding(padding: EdgeInsets.all(AppSizes.spacingXLarge), child: Center(child: CircularProgressIndicator()))];
+        return const [
+          Padding(
+            padding: EdgeInsets.all(AppSizes.spacingXLarge),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ];
       }
       final searching = state.query.isNotEmpty;
       return [
@@ -98,6 +104,13 @@ class _RepPharmaciesTabState extends State<RepPharmaciesTab> {
       ];
     }
     return [
+      if (state.status == RepLoadStatus.loading) const LinearProgressIndicator(),
+      if (state.status == RepLoadStatus.error)
+        FailureWidget(
+          dense: true,
+          message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+          onRetry: () => context.read<RepPharmaciesCubit>().load(),
+        ),
       for (final pharmacy in state.pharmacies) ...[
         RepPharmacyCard(
           pharmacy: pharmacy,
@@ -118,14 +131,26 @@ class _StatsRow extends StatelessWidget {
     return BlocBuilder<RepHomeCubit, RepHomeState>(
       builder: (context, state) {
         final stats = state.me?.stats;
-        if (stats == null) return const SizedBox.shrink();
-        return Row(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: RepStatTile(value: '${stats.pharmacyCount}', label: l10n.repStatPharmacies)),
-            const SizedBox(width: AppSizes.spacingSmall),
-            Expanded(child: RepStatTile(value: '${stats.visitsLast7Days}', label: l10n.repStatVisitsWeek)),
-            const SizedBox(width: AppSizes.spacingSmall),
-            Expanded(child: RepStatTile(value: '${stats.monthOrdersCount}', label: l10n.repStatOrdersMonth)),
+            if (state.status == RepLoadStatus.loading) const LinearProgressIndicator(),
+            if (state.status == RepLoadStatus.error)
+              FailureWidget(
+                dense: true,
+                message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+                onRetry: () => context.read<RepHomeCubit>().load(),
+              ),
+            if (stats != null)
+              ResponsiveStatsGrid(
+                minTileWidth: 100,
+                maxColumns: 3,
+                children: [
+                  RepStatTile(value: '${stats.pharmacyCount}', label: l10n.repStatPharmacies),
+                  RepStatTile(value: '${stats.visitsLast7Days}', label: l10n.repStatVisitsWeek),
+                  RepStatTile(value: '${stats.monthOrdersCount}', label: l10n.repStatOrdersMonth),
+                ],
+              ),
           ],
         );
       },

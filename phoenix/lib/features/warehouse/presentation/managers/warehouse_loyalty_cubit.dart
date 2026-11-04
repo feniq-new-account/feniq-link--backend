@@ -53,11 +53,16 @@ class WarehouseLoyaltyCubit extends Cubit<WarehouseLoyaltyState> {
   }
 
   /// True when the server took it.
-  Future<bool> save({required bool enabled, required List<LoyaltyTier> tiers}) async {
+  Future<bool> save({required bool enabled, required List<LoyaltyTier> tiers, String mode = 'per_order'}) async {
     if (state.isSaving) return false;
     emit(WarehouseLoyaltyState(status: state.status, loyalty: state.loyalty, isSaving: true));
     try {
-      final loyalty = await _repository.updateLoyalty(enabled: enabled, tiers: tiers);
+      final loyalty = await _repository.updateLoyalty(
+        enabled: enabled,
+        tiers: tiers,
+        mode: mode,
+        revision: state.loyalty.revision,
+      );
       if (isClosed) return true;
       emit(WarehouseLoyaltyState(status: RepLoadStatus.loaded, loyalty: loyalty));
       return true;

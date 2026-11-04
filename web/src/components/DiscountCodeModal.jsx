@@ -1,3 +1,4 @@
+import { NumericInput } from './NumericInput';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProductPicker } from './CatalogPickers';
@@ -81,7 +82,7 @@ export function DiscountCodeModal({ mode, code, searchPharmacies, isWarehouse, o
 
           <label>
             {form.type === 'percentage' ? t('discountCodes.form.percentValue') : t('discountCodes.form.fixedValue')}
-            <input
+            <NumericInput
               type="number"
               min={form.type === 'percentage' ? '0.01' : '1'}
               max={form.type === 'percentage' ? '100' : undefined}
@@ -107,7 +108,7 @@ export function DiscountCodeModal({ mode, code, searchPharmacies, isWarehouse, o
           <div className="form-row">
             <label>
               {t('discountCodes.form.maxUses')}
-              <input
+              <NumericInput
                 type="number"
                 min="1"
                 step="1"
@@ -118,7 +119,7 @@ export function DiscountCodeModal({ mode, code, searchPharmacies, isWarehouse, o
             </label>
             <label>
               {t('discountCodes.form.maxUsesPerPharmacy')}
-              <input
+              <NumericInput
                 type="number"
                 min="1"
                 step="1"

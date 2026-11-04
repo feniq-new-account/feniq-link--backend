@@ -84,6 +84,28 @@ android {
     }
 
     buildTypes {
+        // Flutter 3.35's defaults retain every ABI from plugin dependencies,
+        // even when --target-platform builds Flutter for only one of them.
+        // Match the requested engines so Android cannot install an APK with
+        // plugin libraries but no Flutter engine for the device architecture.
+        // Keep ordinary APKs (and their version codes) rather than forcing
+        // per-ABI splits, which add an ABI offset to Flutter's version code.
+        if (project.findProperty("split-per-abi")?.toString()?.toBoolean() != true) {
+            val platforms = project.findProperty("target-platform")?.toString()
+                ?: "android-arm,android-arm64,android-x64"
+            val targetAbis = platforms.split(",").map { platform ->
+                when (platform) {
+                    "android-arm" -> "armeabi-v7a"
+                    "android-arm64" -> "arm64-v8a"
+                    "android-x64" -> "x86_64"
+                    else -> throw GradleException("Unsupported Android target: $platform")
+                }
+            }
+            configureEach {
+                ndk.abiFilters.clear()
+                ndk.abiFilters.addAll(targetAbis)
+            }
+        }
         release {
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }

@@ -23,14 +23,14 @@ async function ensureAccount(pharmacyId, warehouseId) {
 
 async function balanceFor(pharmacyId, warehouseId, session = null) {
   const account = await PharmacyCredit.findOne({ pharmacyId, warehouseId })
-    .select('balanceSyp')
+    .select('balanceSyp loyaltyBalanceSyp')
     .session(session)
     .lean();
-  return account?.balanceSyp ?? 0;
+  return (account?.balanceSyp ?? 0) + Math.max(0, account?.loyaltyBalanceSyp ?? 0);
 }
 
-async function addEntry({ pharmacyId, warehouseId, orderId, kind, amountSyp }, session) {
-  await CreditEntry.create([{ pharmacyId, warehouseId, orderId, kind, amountSyp }], { session });
+async function addEntry(entry, session) {
+  await CreditEntry.create([entry], { session });
 }
 
 // Takes `amountSyp` for a new order. The decrement is conditional on the
@@ -38,25 +38,39 @@ async function addEntry({ pharmacyId, warehouseId, orderId, kind, amountSyp }, s
 // overdraw it: the loser is refused (CREDIT_CHANGED) and the pharmacy re-sends.
 async function useCredit({ pharmacyId, warehouseId, orderId, amountSyp }, session) {
   if (!(amountSyp > 0)) return;
-  const updated = await PharmacyCredit.findOneAndUpdate(
-    { pharmacyId, warehouseId, balanceSyp: { $gte: amountSyp } },
-    { $inc: { balanceSyp: -amountSyp } },
-    { new: true, session }
-  );
-  if (!updated) {
+  const account = await PharmacyCredit.findOne({ pharmacyId, warehouseId }).session(session).lean();
+  const commissionSyp = Math.min(account?.balanceSyp ?? 0, amountSyp);
+  const loyaltySyp = amountSyp - commissionSyp;
+  if (!account || loyaltySyp > Math.max(0, account.loyaltyBalanceSyp ?? 0)) {
     throw ApiError.conflict('Your credit at this warehouse changed - please send the order again.', 'CREDIT_CHANGED');
   }
-  await addEntry({ pharmacyId, warehouseId, orderId, kind: 'used', amountSyp }, session);
+  const changed = await PharmacyCredit.updateOne({ _id: account._id,
+    balanceSyp: { $gte: commissionSyp },
+    ...(loyaltySyp ? { loyaltyBalanceSyp: { $gte: loyaltySyp } } : {}),
+  }, { $inc: { balanceSyp: -commissionSyp, loyaltyBalanceSyp: -loyaltySyp } }, { session });
+  if (changed.modifiedCount !== 1) throw ApiError.conflict('Credit changed.', 'CREDIT_CHANGED');
+  await addEntry({ pharmacyId, warehouseId, orderId, kind: 'used', amountSyp, commissionSyp, loyaltySyp }, session);
 }
 
 async function giveBack({ pharmacyId, warehouseId, orderId, amountSyp }, session) {
   if (!(amountSyp > 0)) return;
+  // Return to the source actually spent. Legacy entries have no split and
+  // are entirely commission. Partial edits can release in several steps.
+  const entries = await CreditEntry.find({ orderId, pharmacyId, warehouseId, kind: { $in: ['used', 'released'] } })
+    .session(session).lean();
+  let commissionRemaining = 0, loyaltyRemaining = 0;
+  for (const entry of entries) {
+    const sign = entry.kind === 'used' ? 1 : -1;
+    commissionRemaining += sign * (entry.commissionSyp ?? entry.amountSyp);
+    loyaltyRemaining += sign * (entry.loyaltySyp ?? 0);
+  }
+  const loyaltySyp = Math.min(Math.max(0, loyaltyRemaining), amountSyp);
+  const commissionSyp = amountSyp - loyaltySyp;
+  if (commissionSyp > commissionRemaining) throw ApiError.conflict('Credit release exceeds the original use.', 'CREDIT_CHANGED');
   await PharmacyCredit.updateOne(
-    { pharmacyId, warehouseId },
-    { $inc: { balanceSyp: amountSyp } },
-    { upsert: true, session }
+    { pharmacyId, warehouseId }, { $inc: { balanceSyp: commissionSyp, loyaltyBalanceSyp: loyaltySyp } }, { upsert: true, session }
   );
-  await addEntry({ pharmacyId, warehouseId, orderId, kind: 'released', amountSyp }, session);
+  await addEntry({ pharmacyId, warehouseId, orderId, kind: 'released', amountSyp, commissionSyp, loyaltySyp }, session);
 }
 
 // On delivery: the pharmacy's quarter of this order's rep commission becomes

@@ -1,5 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api';
 
+function messageForLanguage(arabic, english) {
+  let language = typeof document === 'undefined' ? null : document.documentElement.lang;
+  try { language ||= localStorage.getItem('phoenix_lang'); } catch { /* Storage may be disabled. */ }
+  return language === 'en' ? english : arabic;
+}
+
 // Why the access token lives in localStorage, and why that is not changing
 // yet (audit F-05).
 //
@@ -129,12 +135,12 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   } catch (err) {
     if (err?.name === 'AbortError') {
       throw new ApiError(
-        'The request took too long and was cancelled. Check your connection and try again.',
+        messageForLanguage('انتهت مهلة الاتصال. قد تكون العملية وصلت إلى الخادم؛ أعد المحاولة بنفس البيانات لتأكيد النتيجة.', 'The request timed out. It may have reached the server; retry with the same details to confirm the result.'),
         0,
         'REQUEST_TIMEOUT'
       );
     }
-    throw err;
+    throw new ApiError(messageForLanguage('تعذّر الاتصال بالخادم. تحقّق من اتصالك وأعد المحاولة.', 'Unable to reach the server. Check your connection and retry.'), 0, 'NETWORK_UNAVAILABLE');
   } finally {
     clearTimeout(timer);
   }
@@ -161,17 +167,20 @@ async function performRefresh() {
       },
       DEFAULT_TIMEOUT_MS
     );
+    if (response.status >= 500 || response.status === 429) {
+      throw new ApiError(messageForLanguage('تعذّر تجديد الجلسة مؤقتاً. جلستك محفوظة؛ أعد المحاولة.', 'Session renewal is temporarily unavailable. Your session is saved; retry.'), response.status, 'SESSION_REFRESH_UNAVAILABLE');
+    }
     if (!response.ok) return false;
 
     const data = await response.json().catch(() => null);
-    if (!data?.token) return false;
+    if (!data?.token) throw new ApiError(messageForLanguage('تعذّر تأكيد تجديد الجلسة. أعد المحاولة.', 'Unable to confirm session renewal. Retry.'), 503, 'SESSION_REFRESH_UNAVAILABLE');
 
     setSession({ token: data.token, refreshToken: data.refreshToken });
     return true;
-  } catch {
+  } catch (error) {
     // Offline, DNS, CORS - "could not refresh", never "session is over".
     // Nothing is cleared here; that decision belongs to the caller.
-    return false;
+    throw error;
   }
 }
 
@@ -215,8 +224,28 @@ async function request(path, { method = 'GET', body, _retried = false } = {}) {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
+    const messages = {
+      INVALID_DELIVERY_SCHEDULE: ['راجع أسماء المناطق والأيام والأوقات ومهلة التجهيز. لا تكرر يوم التوزيع داخل المنطقة.', 'Check region names, days, times and preparation hours. Do not duplicate a weekday within a region.'],
+      DELIVERY_CHANGED: ['تغيرت إعدادات التوزيع. أعد تحميلها قبل الحفظ.', 'Delivery settings changed. Reload before saving.'],
+      INVALID_APP_RELEASE: ['تعذّر التحقق من ملف التحديث أو إعداداته. راجع النسخة المنشورة وأرقام البناء والتواريخ.', 'Could not verify the update artifact or settings. Check the published release, build numbers and deadlines.'],
+      APP_RELEASE_CHANGED: ['تغيرت إعدادات التحديث. أعد تحميلها قبل الحفظ.', 'Update settings changed. Reload before saving.'],
+      FEATURE_NOT_ENABLED: ['هذه الميزة غير متاحة للمستودع حالياً. تواصل مع إدارة فينيق.', 'This feature is not currently available for the warehouse. Contact Feniq support.'],
+      FEATURE_UNAVAILABLE: ['هذه الميزة غير مفعلة للمستودع. تواصل مع إدارة فينيق لتفعيلها.', 'This feature is not active for this warehouse. Contact Feniq to activate it.'],
+      FOLLOW_UP_CHANGED: ['تغيّرت مدة المتابعة. أعد تحميل الصفحة قبل الحفظ.', 'Follow-up settings changed. Reload before saving.'],
+      INVALID_FOLLOW_UP_SETTINGS: ['اختر مدة من 1 إلى 180 يوماً.', 'Choose 1–180 days.'],
+      LOYALTY_CHANGED: ['تغيّرت إعدادات الولاء. أعد تحميلها قبل الحفظ.', 'Loyalty settings changed. Reload before saving.'],
+      PHARMACY_LOCATION_CHANGED: ['تغيّر الموقع. أعد تحميل القائمة قبل الحفظ.', 'The location changed. Reload the list before saving.'],
+      VISIT_POLICY_CHANGED: ['تغيّرت سياسة الزيارة. أعد تحميل الإعدادات.', 'The visit policy changed. Reload the settings.'],
+      INVALID_VISIT_POLICY: ['النطاق 25–500 m والدقة 10–100 m وعمر القراءة 15–300 s.', 'Radius must be 25–500 m, accuracy 10–100 m, and reading age 15–300 s.'],
+      INVALID_PHARMACY_LOCATION: ['أدخل إحداثيات صحيحة وحالة اعتماد الموقع.', 'Enter valid coordinates and a location approval status.'],
+      ACCOUNTANT_REQUIRED: ['تسجيل الدفعات متاح لحساب المحاسب. يمكنك متابعة كشف الحساب.', 'Recording payments requires an accountant account. You can read the statement.'],
+      INVALID_SUBSCRIPTION: ['تحقق من بيانات الاشتراك وتاريخ الانتهاء والميزات المختارة.', 'Check the subscription details, expiry date and selected features.'],
+      INVALID_WAREHOUSE_MEMBER: ['تحقق من الاسم ونوع حساب المستودع.', 'Check the name and warehouse account type.'],
+      WAREHOUSE_MEMBER_NOT_FOUND: ['الحساب غير مرتبط بهذا المستودع.', 'This account is not linked to this warehouse.'],
+    };
+    const localized = messages[data?.code];
     throw new ApiError(
-      data?.message ?? 'Something went wrong. Please try again.',
+      localized ? messageForLanguage(...localized) : data?.message ?? messageForLanguage('تعذّرت العملية. أعد المحاولة.', 'Something went wrong. Please try again.'),
       response.status,
       data?.code ?? null,
       data?.details ?? null
@@ -341,6 +370,40 @@ function advertisementFormData(data, imageFile) {
 }
 
 export const api = {
+  platformAnalytics: ({ period = 'month', force = false } = {}) => request(`/admin/analytics?${new URLSearchParams({ period, ...(force ? { force: '1' } : {}) })}`),
+  deliverySettings: () => request('/warehouse/delivery'),
+  updateDeliverySettings: (body) => request('/warehouse/delivery', { method: 'PUT', body }),
+  deliveryPharmacies: (q) => request(`/warehouse/delivery/pharmacies?q=${encodeURIComponent(q)}`),
+  assignDeliveryPharmacy: (id, body) => request(`/warehouse/delivery/pharmacies/${id}`, { method: 'PUT', body }),
+  rescheduleDelivery: (id, body) => request(`/warehouse/delivery/orders/${id}/reschedule`, { method: 'PUT', body }),
+  warehouseInsights: ({ period = 'month', from, to, force } = {}) => request(`/warehouse/insights/report?${new URLSearchParams({ period, ...(from ? { from } : {}), ...(to ? { to } : {}), ...(force ? { force: '1' } : {}) })}`),
+  warehouseFollowUp: ({ kind, after, force } = {}) => request(`/warehouse/insights/follow-up?${new URLSearchParams({ kind, ...(after ? { after } : {}), ...(force ? { force: '1' } : {}) })}`),
+  warehouseFollowUpExport: (kind) => request(`/warehouse/insights/export?${new URLSearchParams({ kind })}`),
+  warehouseInsightAlerts: () => request('/warehouse/insights/alerts'),
+  saveWarehouseFollowUp: (body) => request('/warehouse/insights/settings', { method: 'PUT', body }),
+  getVisitVerification: () => request('/admin/visit-verification'),
+  saveVisitVerification: (body) => request('/admin/visit-verification', { method: 'PUT', body }),
+  listAdminPharmacyLocations: ({ search, approval, after } = {}) => {
+    const params = new URLSearchParams({ ...(search ? { search } : {}), ...(approval ? { approval } : {}), ...(after ? { after } : {}) });
+    return request(`/admin/visit-verification/pharmacies?${params}`);
+  },
+  saveAdminPharmacyLocation: (id, body) => request(`/admin/visit-verification/pharmacies/${id}`, { method: 'PUT', body }),
+  getAdminAppRelease: () => request('/admin/app-release'),
+  inspectAdminAppRelease: (sourceOrigin) => request('/admin/app-release/inspect', { method: 'POST', body: { sourceOrigin } }),
+  updateAdminAppRelease: (body) => request('/admin/app-release', { method: 'PUT', body }),
+
+  listAdminWarehouseAccess: ({ search = '', after } = {}) => {
+    const query = new URLSearchParams({ search, limit: '20' });
+    if (after) query.set('after', after);
+    return request(`/admin/warehouses?${query}`);
+  },
+  getAdminWarehouseMembers: (id) => request(`/admin/warehouses/${id}/members`),
+  updateAdminWarehouseMemberRole: (id, userId, warehouseRole) => request(`/admin/warehouses/${id}/members/${userId}`, { method: 'PUT', body: { warehouseRole } }),
+  createAdminWarehouseMember: (id, body) => request(`/admin/warehouses/${id}/members`, { method: 'POST', body }),
+  getAdminWarehouseSubscription: (id) => request(`/admin/warehouses/${id}/subscription`),
+  updateAdminWarehouseSubscription: (id, body) => request(`/admin/warehouses/${id}/subscription`, { method: 'PUT', body }),
+  getWarehouseSubscription: () => request('/warehouse/subscription'),
+
   // TODO(re-enable-otp): unused by the current login flow - kept for a
   // future re-enable. The backend routes are still live.
   sendOtp: (phone) => request('/auth/otp/send', { method: 'POST', body: { phone } }),
@@ -428,12 +491,12 @@ export const api = {
     return request(`/warehouse/orders${qs ? `?${qs}` : ''}`);
   },
   warehouseOrderDetail: (orderId) => request(`/warehouse/orders/${orderId}`),
-  advanceOrderStatus: (orderId) =>
-    request(`/warehouse/orders/${orderId}/advance-status`, { method: 'POST' }),
-  updateOrderItems: (orderId, { addItems, removeItems, updateItems }) =>
+  advanceOrderStatus: (orderId, transition) =>
+    request(`/warehouse/orders/${orderId}/advance-status`, { method: 'POST', body: transition }),
+  updateOrderItems: (orderId, { addItems, removeItems, updateItems, updatePackages, removePackages }) =>
     request(`/warehouse/orders/${orderId}/items`, {
       method: 'PATCH',
-      body: { addItems, removeItems, updateItems },
+      body: { addItems, removeItems, updateItems, updatePackages, removePackages },
     }),
   // Per-order proof-of-delivery toggle - flips just order.requiresDeliverySealPhoto.
   setOrderDeliverySealRequirement: (orderId, requiresDeliverySealPhoto) =>
@@ -966,8 +1029,8 @@ export const api = {
   // `requireDeliverySealPhoto` is optional - omitted keys are left untouched
   // server-side (warehouseSettings.service.js).
   // The warehouse's own loyalty discount: { enabled, tiers: [{ minSyp, discountSyp }] }.
-  updateWarehouseLoyalty: ({ enabled, tiers }) =>
-    request('/warehouse/settings/loyalty', { method: 'PUT', body: { enabled, tiers } }),
+  updateWarehouseLoyalty: ({ enabled, tiers, mode, revision }) =>
+    request('/warehouse/settings/loyalty', { method: 'PUT', body: { enabled, tiers, mode, revision } }),
   updateWarehouseOrderLimits: ({ minOrderAmountUsd, maxOrderAmountUsd, requireDeliverySealPhoto, rateUsed }) =>
     request('/warehouse/settings', {
       method: 'PATCH',

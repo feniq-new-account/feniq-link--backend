@@ -6,7 +6,7 @@
 #
 # للتجربة: كل بناء يدوي على main يضع آخر نسختين على روابط ثابتة (أسرع من
 # Artifacts، ملف APK مباشر بدون zip):
-#   الموبايل (arm64):  https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-test.apk
+#   الموبايل (نسخة شاملة):  https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-test.apk
 #   المحاكي (x86_64): https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-emulator.apk
 #
 # التوقيع: من أسرار المستودع ANDROID_KEYSTORE_BASE64 و ANDROID_KEYSTORE_PASSWORD
@@ -15,12 +15,16 @@
 # feniq-apk-TEST-ONLY، ولا يُنشر على الموقع أبداً (لا يمكن التحديث فوقه).
 #
 # التحقق: صفحة كل تشغيل (Summary) تعرض معرّف التطبيق وبصمة SHA-256 لشهادة
-# التوقيع. نفس البصمة في كل نسخة = التحديث فوق النسخة السابقة يعمل. إذا وُضع
-# متغيّر المستودع ANDROID_CERT_SHA256 (Settings ← Variables) بالبصمة الصحيحة،
-# يفشل البناء تلقائياً إذا وُقّع بمفتاح آخر.
+# التوقيع. نفس البصمة مع رقم بناء مناسب يسمح بالتحديث فوق النسخة السابقة.
+# البصمة المرجعية محفوظة في .github/android-certificate.sha256؛ يمكن تجاوزها
+# بمتغيّر المستودع ANDROID_CERT_SHA256. اختلاف التوقيع يوقف النشر.
 name: Build Android APK
 
 on:
+  # One task-specific branch for the owner's explicitly requested signed
+  # launch validation. Ordinary branches/main still require manual dispatch.
+  push:
+    branches: [codex/launch-apk-validation-2026-10-31, codex/launch-upgrade-check-2026-10-31]
   # PRs run Flutter tests only. APK creation requires a manual request.
   # site-deploy.yml only ever takes APKs from main.
   pull_request:
@@ -29,6 +33,10 @@ on:
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
     inputs:
+      baseline_validation_run:
+        description: 'Optional prior prelaunch workflow run for a signed upgrade and private-storage check (no publication on branches)'
+        required: false
+        default: ''
       api_base_url:
         description: 'رابط السيرفر (اتركه فارغاً للافتراضي)'
         required: false
@@ -36,6 +44,7 @@ on:
 # contents: write - to put the main build on the fixed "test-latest" release.
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: android-apk-${{ github.ref }}
@@ -60,8 +69,10 @@ jobs:
       - run: flutter test
 
   build:
+    outputs:
+      artifact: ${{ steps.signing.outputs.artifact }}
     # Ammar: never create an APK automatically; wait for an explicit request.
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/codex/launch-apk-validation-2026-10-31')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -86,7 +97,7 @@ jobs:
       # The app pins an NDK the runner doesn't have; Gradle installs it only
       # once the SDK licenses are accepted.
       - name: Accept Android SDK licenses
-        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+        run: bash android/install-ci-sdk.sh
 
       - run: flutter pub get
 
@@ -100,13 +111,25 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          EXPECTED_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
         run: |
+          EXPECTED_SHA256="${EXPECTED_SHA256:-$(cat ../.github/android-certificate.sha256)}"
           if [ -z "$KEYSTORE_BASE64" ]; then
             echo "::warning::No signing key in repository secrets - this APK is signed with a temporary debug key, uploaded as feniq-apk-TEST-ONLY and never published. See phoenix/android/README.md."
             echo "artifact=feniq-apk-TEST-ONLY" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "artifact=feniq-apk" >> "$GITHUB_OUTPUT"
+          # A signed staging build must never replace the public production APK.
+          if [ "$GITHUB_REF" = refs/heads/main ] && \
+             [ "$API_BASE_URL" = 'https://feniq-connect-api.onrender.com/api' ]; then
+            if [ -z "$EXPECTED_SHA256" ]; then
+              echo "::error::ANDROID_CERT_SHA256 is required for production publication."
+              exit 1
+            fi
+            echo "artifact=feniq-apk" >> "$GITHUB_OUTPUT"
+          else
+            echo "artifact=feniq-apk-TEST-ONLY" >> "$GITHUB_OUTPUT"
+          fi
           echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
           {
             echo "storeFile=upload-keystore.jks"
@@ -123,7 +146,7 @@ jobs:
         run: >
           flutter build apk --release
           --build-number=$((GITHUB_RUN_NUMBER + 1000))
-          --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
+          --dart-define="API_BASE_URL=$API_BASE_URL"
 
       # What the owner checks to know an update will install over the previous
       # version: the same application id and the same certificate fingerprint.
@@ -133,6 +156,7 @@ jobs:
           ARTIFACT: ${{ steps.signing.outputs.artifact }}
         run: |
           apk=build/app/outputs/flutter-apk/app-release.apk
+          EXPECTED_SHA256="${EXPECTED_SHA256:-$(cat ../.github/android-certificate.sha256)}"
           tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           app_id=$("$tools/aapt2" dump packagename "$apk")
           # The signer line's label varies by apksigner version and signature
@@ -162,45 +186,42 @@ jobs:
             fi
             echo "Fingerprint matches ANDROID_CERT_SHA256."
           fi
+          digest=$(sha256sum "$apk" | cut -d ' ' -f 1)
+          jq -n --arg api "$API_BASE_URL" --arg id "$app_id" --arg cert "$cert" \
+            --arg sha "$digest" --arg commit "$GITHUB_SHA" \
+            --arg build "$((GITHUB_RUN_NUMBER + 1000))" --arg date "$(date -u +%F)" \
+            '{apiBaseUrl:$api, applicationId:$id, certificateSha256:$cert, sha256:$sha, commit:$commit, build:$build, date:$date}' \
+            > build/app/outputs/flutter-apk/release.json
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.signing.outputs.artifact }}
-          path: phoenix/build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            phoenix/build/app/outputs/flutter-apk/app-release.apk
+            phoenix/build/app/outputs/flutter-apk/release.json
           retention-days: 30
 
-      # The fixed download link for trying the app on a phone: a release asset
-      # is served straight as an .apk (no zip) and downloads much faster than
-      # an artifact. Built for 64-bit ARM only (every current phone), which
-      # halves the size. main only - neither a PR nor a manual run of another
-      # branch ever replaces it.
-      - name: Build phone APK (arm64)
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        # The first build's Gradle daemon still holds its 8 GB heap; a second
-        # daemon on top of it made the runner run out of memory and shut the
-        # job down ("received a shutdown signal"). Stop it first.
-        run: |
-          (cd android && ./gradlew --stop) || true
-          flutter build apk --release \
-            --target-platform android-arm64 \
-            --build-number=$((GITHUB_RUN_NUMBER + 1000)) \
-            --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
-          cp build/app/outputs/flutter-apk/app-release.apk feniq-test.apk
+      # One universal phone download also supports phones whose Android OS
+      # runs 32-bit despite a 64-bit CPU. Reuse the already verified APK; do
+      # not replace the stable phone link with an arm64-only build.
+      - name: Prepare universal phone APK
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
+        run: cp build/app/outputs/flutter-apk/app-release.apk feniq-test.apk
 
       # Same app for the Android Studio emulator, which runs x86_64 images and
       # cannot install the arm64-only phone build.
       - name: Build emulator APK (x86_64)
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
         run: |
           (cd android && ./gradlew --stop) || true
           flutter build apk --release \
             --target-platform android-x64 \
             --build-number=$((GITHUB_RUN_NUMBER + 1000)) \
-            --dart-define=API_BASE_URL=${{ env.API_BASE_URL }}
+            --dart-define="API_BASE_URL=$API_BASE_URL"
           cp build/app/outputs/flutter-apk/app-release.apk feniq-emulator.apk
 
       - name: Publish to the test-latest release
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -211,3 +232,63 @@ jobs:
           else
             gh release create test-latest feniq-test.apk feniq-emulator.apk --prerelease --title "Feniq - آخر نسخة تجريبية" --notes "$notes" --target "$GITHUB_SHA"
           fi
+
+
+  upgrade-validation:
+    if: always() && (github.ref == 'refs/heads/codex/launch-upgrade-check-2026-10-31' || (needs.build.result == 'success' && (github.event_name == 'push' || inputs.baseline_validation_run != '')))
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: feniq-apk*
+          merge-multiple: true
+          run-id: ${{ github.ref == 'refs/heads/codex/launch-upgrade-check-2026-10-31' && '40871855654' || github.run_id }}
+          github-token: ${{ github.token }}
+          path: apk/current
+      - uses: actions/download-artifact@v4
+        with:
+          name: feniq-prelaunch-universal
+          run-id: ${{ inputs.baseline_validation_run || '40772986713' }}
+          github-token: ${{ github.token }}
+          path: apk/baseline
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verify downloaded artifact layout before starting Android
+        run: |
+          find apk -maxdepth 8 -type f
+          test "$(find apk/current -type f -name '*.apk' | wc -l)" = 1
+          test "$(find apk/current -type f -name 'release.json' | wc -l)" = 1
+          test "$(find apk/baseline -type f -name '*.apk' | wc -l)" = 1
+      - name: Verify both signatures, versions and artifact digests before Android
+        run: VERIFY_ARTIFACT_ONLY=1 bash .github/scripts/android_upgrade_check.sh
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify signed upgrade and private storage on Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash .github/scripts/android_upgrade_check.sh
+      - name: Keep upgrade evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: feniq-signed-upgrade-evidence
+          path: apk/evidence/
+          retention-days: 30
+          if-no-files-found: warn

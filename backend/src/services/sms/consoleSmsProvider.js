@@ -27,6 +27,10 @@ class ConsoleSmsProvider extends SmsProvider {
     return 'console';
   }
 
+  get canDeliver() {
+    return env.nodeEnv === 'development';
+  }
+
   async send(phone, message) {
     if (env.nodeEnv === 'development') {
       // eslint-disable-next-line no-console

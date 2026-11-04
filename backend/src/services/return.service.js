@@ -241,20 +241,36 @@ async function updateReturn({ pharmacyId, returnId, items, notes, keepImageUrls,
   ];
 
   const droppedImages = returnRequest.images.filter((url) => !keepSet.has(url));
+  const updated = await Return.findOneAndUpdate(
+    { _id: returnRequest._id, pharmacyId, status: 'pending', __v: returnRequest.__v ?? null },
+    { $set: { items: normalizedItems, notes: trimmedNotes, images: updatedImages }, $inc: { __v: 1 } },
+    { new: true, runValidators: true }
+  );
+  if (!updated) {
+    throw ApiError.conflict(
+      'This return request changed or was decided. Reload it before making changes.',
+      'RETURN_NOT_EDITABLE'
+    );
+  }
+  // An approval or another edit may win the race. Never delete its photos
+  // before the conditional update has actually succeeded.
   deleteImages(droppedImages);
 
-  returnRequest.items = normalizedItems;
-  returnRequest.notes = trimmedNotes;
-  returnRequest.images = updatedImages;
-  await returnRequest.save();
-
-  return { returnRequest, orderItemById };
+  return { returnRequest: updated, orderItemById };
 }
 
 async function deleteReturn({ pharmacyId, returnId }) {
   const returnRequest = await loadOwnPendingReturnOrThrow(returnId, pharmacyId);
+  const deleted = await Return.deleteOne({
+    _id: returnRequest._id, pharmacyId, status: 'pending', __v: returnRequest.__v ?? null,
+  });
+  if (deleted.deletedCount !== 1) {
+    throw ApiError.conflict(
+      'This return request changed or was decided. Reload it before making changes.',
+      'RETURN_NOT_EDITABLE'
+    );
+  }
   deleteImages(returnRequest.images);
-  await returnRequest.deleteOne();
 }
 
 const DEFAULT_RETURNS_LIMIT = 15;

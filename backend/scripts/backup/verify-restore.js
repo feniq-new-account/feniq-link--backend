@@ -8,13 +8,14 @@
 // keeps taking writes while the dump runs, so a few documents either way is
 // expected, not a broken backup.
 const { mongo } = require('mongoose');
+const { verifyFinancial } = require('./verify-financial');
 
 function arg(name) {
   const i = process.argv.indexOf(`--${name}`);
   return i === -1 ? null : process.argv[i + 1];
 }
 
-async function countsFor(uri, dbName) {
+async function countsFor(uri, dbName, verify = true) {
   const client = new mongo.MongoClient(uri, { serverSelectionTimeoutMS: 15000 });
   await client.connect();
   try {
@@ -25,6 +26,7 @@ async function countsFor(uri, dbName) {
       if (name.startsWith('system.')) continue;
       counts[name] = await db.collection(name).estimatedDocumentCount();
     }
+    if (verify) await verifyFinancial(db);
     return counts;
   } finally {
     await client.close();
@@ -39,7 +41,7 @@ async function main() {
     process.exit(2);
   }
   const restored = await countsFor(target, dbName);
-  const source = arg('source') ? await countsFor(arg('source'), arg('source-db') || 'feniq') : null;
+  const source = arg('source') ? await countsFor(arg('source'), arg('source-db') || 'feniq', false) : null;
 
   const names = [...new Set([...Object.keys(restored), ...Object.keys(source || {})])].sort();
   let total = 0;

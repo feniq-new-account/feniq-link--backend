@@ -29,6 +29,7 @@ const {
 const { emitToWarehouse, EVENTS } = require('../realtime');
 const { FEATURES } = require('../config/features');
 const pharmacyCredit = require('./pharmacyCredit.service');
+const monthlyLoyalty = require('./monthlyLoyalty.service');
 
 // Section 7/13b: the warehouse only ever moves an order forward, one stage at
 // a time - no skipping, no picking an arbitrary status. Three stages, one
@@ -68,6 +69,7 @@ async function listOrdersForWarehouse(
   status,
   { limit = DEFAULT_WAREHOUSE_ORDERS_LIMIT, after = null } = {}
 ) {
+  const newestFirst = Boolean(status && status !== 'pending');
   const filter = { warehouseId };
   if (status) {
     if (!Order.schema.path('status').enumValues.includes(status)) {
@@ -78,7 +80,7 @@ async function listOrdersForWarehouse(
     filter.status = status === 'confirmed' ? { $in: ['confirmed', 'preparing'] } : status;
   }
   if (after !== null) {
-    filter.orderNumber = { $gt: after };
+    filter.orderNumber = newestFirst ? { $lt: after } : { $gt: after };
   }
 
   // .select(): warehouseOrder.viewmodel.js's toWarehouseOrderItem (the list
@@ -87,7 +89,7 @@ async function listOrdersForWarehouse(
   // re-load the order themselves.
   const orders = await Order.find(filter)
     .select('orderNumber status finalPrice notes createdAt pharmacyId')
-    .sort({ orderNumber: 1 })
+    .sort({ orderNumber: newestFirst ? -1 : 1 })
     .limit(limit + 1);
   const hasMore = orders.length > limit;
   const page = hasMore ? orders.slice(0, limit) : orders;
@@ -132,7 +134,7 @@ async function listOrdersForWarehouse(
 // IDOR guard: scoped to warehouseId, same pattern as getOrderForPharmacy in
 // order.service.js - a warehouse can never advance (or even see) an order
 // that isn't its own.
-async function advanceOrderStatus(orderId, warehouseId, userId) {
+async function advanceOrderStatus(orderId, warehouseId, userId, transition = {}) {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }
@@ -141,6 +143,17 @@ async function advanceOrderStatus(orderId, warehouseId, userId) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }
 
+  const { expectedStatus, targetStatus } = transition;
+  if (expectedStatus !== undefined || targetStatus !== undefined) {
+    if (!Object.hasOwn(NEXT_STATUS, expectedStatus) || NEXT_STATUS[expectedStatus] !== targetStatus) {
+      throw ApiError.badRequest('Invalid order transition.', undefined, 'INVALID_ORDER_TRANSITION');
+    }
+    // A retry confirms the same target; it never advances a second stage.
+    if (order.status === targetStatus) return order;
+    if (order.status !== expectedStatus) {
+      throw ApiError.conflict('Order status changed. Reload before continuing.', 'ORDER_ALREADY_ADVANCED');
+    }
+  }
   const next = nextStatus(order.status);
   if (!next) {
     throw ApiError.badRequest(
@@ -174,9 +187,10 @@ async function advanceOrderStatus(orderId, warehouseId, userId) {
   // A compare-and-swap on the CURRENT status rather than a read-then-save:
   // two operators tapping at the same moment can never both move it.
   const advanced = await Order.findOneAndUpdate(
-    { _id: order._id, warehouseId, status: order.status },
+    { _id: order._id, warehouseId, status: order.status, __v: order.__v },
     {
       $set: { status: next },
+      $inc: { __v: 1 },
       $push: { statusHistory: { status: next, changedBy: userId, changedAt: now } },
     },
     { new: true }
@@ -249,11 +263,13 @@ async function deliverOrder(order, { userId, note = null }) {
   // and an upsert inside a transaction burns the retry budget on conflicts.
   const account = await ledgerService.resolveAccount(order.pharmacyId, order.warehouseId);
 
+  const loyaltyPeriod = await monthlyLoyalty.prepareDelivery(order, now);
   const delivered = await runInTransaction(async (session) => {
     const moved = await Order.findOneAndUpdate(
-      { _id: order._id, status: 'out_for_delivery' },
+      { _id: order._id, status: 'out_for_delivery', __v: order.__v },
       {
         $set: { status: 'delivered' },
+        $inc: { __v: 1 },
         $push: { statusHistory: { status: 'delivered', changedBy: userId, changedAt: now, note } },
       },
       { new: true, session }
@@ -264,6 +280,7 @@ async function deliverOrder(order, { userId, note = null }) {
     // The pharmacy's quarter of this order's rep commission becomes its credit
     // at this warehouse, in the same transaction as the delivery.
     await pharmacyCredit.earnForDelivery(moved, session);
+    await monthlyLoyalty.earnForDelivery(moved, loyaltyPeriod, session, now);
     const { entry, alreadyPosted } = await orderLedger.postChargeForDelivery(
       { order: moved, userId, deliveredAt: now, account },
       session
@@ -324,7 +341,7 @@ async function getOrderDetailForWarehouse(orderId, warehouseId) {
   // toWarehouseOrderDetailResponse reads exactly these order fields.
   const order = await Order.findOne({ _id: orderId, warehouseId })
     .select(
-      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice repCommission loyaltyDiscountAmount creditUsedSyp notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt'
+      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice repCommission loyaltyDiscountAmount creditUsedSyp notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt deliveryEstimate deliveryRevision'
     );
   if (!order) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
@@ -411,7 +428,39 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }
-  const order = await Order.findOne({ _id: orderId, warehouseId });
+  const { order, items, unchanged = false } = await runInTransaction((session) =>
+    editOrderItemsInTransaction(orderId, warehouseId, userId, payload, session)
+  );
+
+  const [pharmacy, returnRequest] = await Promise.all([
+    Pharmacy.findById(order.pharmacyId)
+      .select('userId nameAr nameEn ownerName address city phone verificationPhoto'),
+    Return.findOne({ orderId: order._id }).select('_id'),
+  ]);
+
+  // External effects run once, after commit, never inside a retryable callback.
+  if (!unchanged) {
+    try {
+      if (pharmacy) {
+        await notificationService.sendToUser(pharmacy.userId, {
+          titleAr: 'تم تعديل طلبك', titleEn: 'Your order was modified',
+          bodyAr: `قام المستودع بتعديل أصناف طلبك رقم ${order.orderNumber}`,
+          bodyEn: `The warehouse modified items in order #${order.orderNumber}`,
+          type: 'order_update', relatedOrderId: order._id,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to send order-items-modified notification.', err.message);
+    }
+  }
+  return { order, items, pharmacy, hasReturn: Boolean(returnRequest) };
+}
+
+// Re-read the order and its lines on every transaction attempt. Updating the
+// same order document serializes edits with cancellation and delivery: a
+// concurrent state change aborts this attempt before any line can be committed.
+async function editOrderItemsInTransaction(orderId, warehouseId, userId, payload, session) {
+  const order = await Order.findOne({ _id: orderId, warehouseId }).session(session);
   if (!order) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }
@@ -430,7 +479,7 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
     packageRemovals,
   } = validateEditPayload(payload);
 
-  const currentItems = await OrderItem.find({ orderId: order._id });
+  const currentItems = await OrderItem.find({ orderId: order._id }).session(session);
   const currentById = new Map(currentItems.map((item) => [item._id.toString(), item]));
 
   for (const id of removeIds) {
@@ -503,16 +552,10 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
     removedGroupIds.size > 0 ||
     packageUpdates.some(({ groupId, copies }) => groupById.get(groupId).copies !== copies);
   if (addItems.length === 0 && removeIdSet.size === 0 && !hasQuantityChange && !hasPackageChange) {
-    const [pharmacy, returnRequest] = await Promise.all([
-      // userId: this function also pushes the pharmacist a notification below.
-      Pharmacy.findById(order.pharmacyId)
-        .select('userId nameAr nameEn ownerName address city phone verificationPhoto'),
-      Return.findOne({ orderId: order._id }).select('_id'),
-    ]);
-    return { order, items: currentItems, pharmacy, hasReturn: Boolean(returnRequest) };
+    return { order, items: currentItems, unchanged: true };
   }
 
-  const warehouse = await Warehouse.findById(warehouseId);
+  const warehouse = await Warehouse.findById(warehouseId).session(session);
   const now = new Date();
 
   for (const { orderItemId, quantity } of updateItems) {
@@ -527,11 +570,6 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
   const changedExisting = updateItems
     .filter(({ orderItemId }) => !removeIdSet.has(orderItemId))
     .map(({ orderItemId }) => currentById.get(orderItemId));
-  await Promise.all(changedExisting.map((item) => item.save()));
-
-  if (removeIdSet.size > 0) {
-    await OrderItem.deleteMany({ _id: { $in: [...removeIdSet] } });
-  }
 
   // Section: package groups. A dropped group takes its lines with it; a group
   // whose `copies` changed has every one of its lines restated at
@@ -566,13 +604,7 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
     group.totalPriceUsd =
       Math.round(group.advertisementSnapshot.totalPriceUsd * copies * 100) / 100;
   }
-  await Promise.all(restatedPackageItems.map((item) => item.save()));
-
   if (removedGroupIds.size > 0) {
-    await OrderItem.deleteMany({
-      orderId: order._id,
-      packageGroupId: { $in: [...removedGroupIds] },
-    });
     order.orderPackageGroups = (order.orderPackageGroups ?? []).filter(
       (group) => !removedGroupIds.has(group._id.toString())
     );
@@ -596,7 +628,7 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
       _id: { $in: productIds },
       warehouseId,
       isAvailable: true,
-    }).populate('masterProductId');
+    }).session(session).populate('masterProductId');
     products.forEach(applyResolvedIdentity);
     const productById = new Map(products.map((p) => [p._id.toString(), p]));
 
@@ -628,7 +660,7 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
         // stays live from its start date on.
         $or: [{ isPermanent: true }, { endDate: { $gte: now } }],
         productId: { $in: productIds },
-      }),
+      }).session(session),
       getDiscountMapForWarehouse(warehouseId),
     ]);
     // The one deterministic "offer for this product" (offer.service.js).
@@ -663,7 +695,7 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
         ...bonusSnapshotFor(product.bonuses, item.quantity),
       };
     });
-    newItems = await OrderItem.insertMany(newItemsData);
+    newItems = await OrderItem.insertMany(newItemsData, { session });
   }
 
   const allItems = [...survivingItems, ...newItems];
@@ -770,45 +802,26 @@ async function updateOrderItems(orderId, warehouseId, userId, payload) {
     changedAt: now,
     note: ORDER_ITEMS_EDITED_NOTE,
   });
+  // Validation and repricing above are complete before existing rows change.
+  // All writes, including any returned pharmacy credit, share this session.
+  for (const item of [...changedExisting, ...restatedPackageItems]) {
+    await item.save({ session });
+  }
+  if (removeIdSet.size > 0) {
+    await OrderItem.deleteMany({ orderId: order._id, _id: { $in: [...removeIdSet] } }, { session });
+  }
+  if (removedGroupIds.size > 0) {
+    await OrderItem.deleteMany({ orderId: order._id, packageGroupId: { $in: [...removedGroupIds] } }, { session });
+  }
   if (creditReturnedSyp > 0) {
-    await runInTransaction(async (session) => {
-      await pharmacyCredit.giveBack(
-        { pharmacyId: order.pharmacyId, warehouseId: order.warehouseId, orderId: order._id, amountSyp: creditReturnedSyp },
-        session
-      );
-      await order.save({ session });
-    });
-  } else {
-    await order.save();
+    await pharmacyCredit.giveBack(
+      { pharmacyId: order.pharmacyId, warehouseId: order.warehouseId, orderId: order._id, amountSyp: creditReturnedSyp },
+      session
+    );
   }
-
-  const [pharmacy, returnRequest] = await Promise.all([
-    // userId: the pharmacist is notified of the edit just below.
-    Pharmacy.findById(order.pharmacyId)
-      .select('userId nameAr nameEn ownerName address city phone verificationPhoto'),
-    Return.findOne({ orderId: order._id }).select('_id'),
-  ]);
-
-  // Never lets a notification hiccup undo the edit above, which already
-  // succeeded - same defensive pattern as advanceOrderStatus above. Sent
-  // only after order.save() resolves, i.e. only once the edit is durable.
-  try {
-    if (pharmacy) {
-      await notificationService.sendToUser(pharmacy.userId, {
-        titleAr: 'تم تعديل طلبك',
-        titleEn: 'Your order was modified',
-        bodyAr: `قام المستودع بتعديل أصناف طلبك رقم ${order.orderNumber}`,
-        bodyEn: `The warehouse modified items in order #${order.orderNumber}`,
-        type: 'order_update',
-        relatedOrderId: order._id,
-      });
-    }
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to send order-items-modified notification.', err.message);
-  }
-
-  return { order, items: allItems, pharmacy, hasReturn: Boolean(returnRequest) };
+  order.increment();
+  await order.save({ session });
+  return { order, items: allItems };
 }
 
 // Section: the warehouse flips this one order's proof-of-delivery requirement

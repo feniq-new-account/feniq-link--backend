@@ -42,6 +42,7 @@ void main() {
         method: any(named: 'method'),
         idempotencyKey: any(named: 'idempotencyKey'),
         note: any(named: 'note'),
+        deliveryOrderId: 'o1',
       ),
     ).thenAnswer((_) async {});
   });
@@ -79,6 +80,7 @@ void main() {
         method: 'cash',
         idempotencyKey: any(named: 'idempotencyKey'),
         note: any(named: 'note'),
+        deliveryOrderId: 'o1',
       ),
     );
     return calls.captured.single as double;
@@ -88,7 +90,7 @@ void main() {
     await openSheet(tester);
     await tester.tap(find.text('All of it'));
     await tester.pumpAndSettle();
-    verify(() => cubit.advance('o1')).called(1);
+    verifyNever(() => cubit.advance('o1'));
     expect(paid(), 100000);
   });
 
@@ -101,7 +103,7 @@ void main() {
     expect(find.textContaining('Left: 40,000'), findsOneWidget);
     await tester.tap(find.text('Deliver and save'));
     await tester.pumpAndSettle();
-    verify(() => cubit.advance('o1')).called(1);
+    verifyNever(() => cubit.advance('o1'));
     expect(paid(), 60000);
   });
 
@@ -117,6 +119,7 @@ void main() {
         method: any(named: 'method'),
         idempotencyKey: any(named: 'idempotencyKey'),
         note: any(named: 'note'),
+        deliveryOrderId: 'o1',
       ),
     );
   });

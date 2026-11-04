@@ -180,3 +180,27 @@ describe('silent token refresh on the file transports', () => {
     expect(refreshCalls).toBe(1);
   });
 });
+
+describe('prelaunch order request contracts', () => {
+  beforeEach(() => {
+    vi.stubGlobal('localStorage', memoryStorage()); vi.stubGlobal('sessionStorage', memoryStorage());
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { success: true })));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+  it('preserves both tokens on a transient refresh failure', async () => {
+    setSession({token:'old-access', refreshToken:'old-refresh'});
+    fetch.mockResolvedValueOnce(jsonResponse(401, {})).mockResolvedValueOnce(jsonResponse(503, {}));
+    await expect(api.me()).rejects.toMatchObject({status:503, code:'SESSION_REFRESH_UNAVAILABLE'});
+    expect(getToken()).toBe('old-access'); expect(getRefreshToken()).toBe('old-refresh');
+  });
+  it('sends package edits and removals without dropping them', async () => {
+    const body = { updatePackages: [{ groupId: 'g', copies: 2 }], removePackages: ['removed'] };
+    await api.updateOrderItems('order', body);
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toMatchObject(body);
+  });
+  it('sends the explicit expected and target status', async () => {
+    const body = { expectedStatus: 'pending', targetStatus: 'confirmed' };
+    await api.advanceOrderStatus('order', body);
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual(body);
+  });
+});

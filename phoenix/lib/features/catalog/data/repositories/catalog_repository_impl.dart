@@ -6,6 +6,8 @@ import 'package:feniq/core/models/paginated_result.dart';
 import 'package:feniq/core/network/api_client.dart';
 import 'package:feniq/core/network/endpoints.dart';
 import 'package:feniq/core/offline/daily_refresh.dart';
+import 'package:feniq/core/offline/catalog_download_status.dart';
+import 'package:feniq/core/offline/permanent_image_store.dart';
 import 'package:feniq/core/offline/offline_status.dart';
 import 'package:feniq/core/offline/offline_store.dart';
 import 'package:feniq/core/offline/offline_syncable.dart';
@@ -32,7 +34,8 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
   // (the tests that do not care).
   final OfflineStore? _store;
   final Map<String, CatalogSnapshot> _snapshots = {};
-  final Set<String> _syncing = {};
+  final Map<String, int> _syncing = {};
+  int _session = 0;
 
   // A warehouse's saved copy taken since today's cutoff (DailyRefresh): the
   // catalog screens read it instead of asking the server.
@@ -57,10 +60,22 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
     if (inMemory != null) return inMemory;
     final store = _store;
     if (store == null) return null;
+    final session = _session;
     final entry = await store.read(_snapshotName(warehouseId));
+    if (session != _session) return null;
     if (entry == null) return null;
     final snapshot = CatalogSnapshot.fromEntry(warehouseId, entry.savedAt, entry.data);
-    if (snapshot != null) _snapshots[warehouseId] = snapshot;
+    if (snapshot != null) {
+      _snapshots[warehouseId] = snapshot;
+      CatalogDownloadStatus.instance.set(
+        warehouseId,
+        CatalogDownloadEntry(
+          CatalogDownloadPhase.saved,
+          savedAt: snapshot.savedAt,
+          productCount: snapshot.products.length,
+        ),
+      );
+    }
     return snapshot;
   }
 
@@ -75,26 +90,30 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
   Future<List<CategoryModel>> getCategories() {
     final cached = _categories;
     if (cached != null) return Future.value(cached);
+    final session = _session;
     return _categoriesRequest ??= _fetchCategories().then(
       (categories) {
-        _categories = categories;
-        _categoriesRequest = null;
+        if (session == _session) {
+          _categories = categories;
+          _categoriesRequest = null;
+        }
         return categories;
       },
       onError: (Object error, StackTrace stackTrace) {
-        _categoriesRequest = null;
+        if (session == _session) _categoriesRequest = null;
         Error.throwWithStackTrace(error, stackTrace);
       },
     );
   }
 
   Future<List<CategoryModel>> _fetchCategories() async {
+    final session = _session;
     try {
       final response = await _apiClient.dio.get(Endpoints.categories);
       final data = response.data as Map<String, dynamic>;
       final categories = (data['categories'] as List).cast<Map<String, dynamic>>();
       OfflineStatus.instance.live();
-      unawaited(_store?.write(_categoriesName, categories) ?? Future<void>.value());
+      if (session == _session) unawaited(_store?.write(_categoriesName, categories) ?? Future<void>.value());
       return categories.map(CategoryModel.fromJson).toList();
     } on DioException catch (e) {
       final failure = ServerFailure.fromDioError(e);
@@ -113,6 +132,9 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
   // The next account reads the categories fresh.
   @override
   void resetForSignOut() {
+    _session++;
+    _syncing.clear();
+    CatalogDownloadStatus.instance.clear();
     _categories = null;
     _categoriesRequest = null;
     // The saved catalogs are the previous account's: the next person to sign in
@@ -237,45 +259,130 @@ class CatalogRepositoryImpl implements CatalogRepository, OfflineSyncable, Sessi
     }
   }
 
+  /// Older servers can omit the probe; daily refresh remains compatible.
+  Future<({String revision, int count})?> _revision(String warehouseId) async {
+    try {
+      final response = await _apiClient.dio.get('${Endpoints.warehouseProducts(warehouseId)}/revision');
+      final data = response.data;
+      if (data is! Map || data['revision'] is! String || data['productCount'] is! int) return null;
+      return (revision: data['revision'] as String, count: data['productCount'] as int);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
   @override
   Future<void> syncForOffline(String warehouseId, {bool force = false}) async {
     final store = _store;
-    if (store == null || _syncing.contains(warehouseId)) return;
-    _syncing.add(warehouseId);
+    if (store == null || _syncing.containsKey(warehouseId)) return;
+    final session = _session;
+    _syncing[warehouseId] = session;
+    bool current() => session == _session;
+    CatalogSnapshot? existing;
     try {
-      final existing = await _snapshotFor(warehouseId);
-      if (!force && existing != null && DailyRefresh.isCurrent(existing.savedAt)) return;
-
+      existing = await _snapshotFor(warehouseId);
+      final before = await _revision(warehouseId);
+      if (!current()) return;
+      if (!force &&
+          existing != null &&
+          ((before != null && existing.revision == before.revision) ||
+              (before == null && DailyRefresh.isCurrent(existing.savedAt)))) {
+        return;
+      }
+      CatalogDownloadStatus.instance.set(
+        warehouseId,
+        CatalogDownloadEntry(
+          CatalogDownloadPhase.downloading,
+          savedAt: existing?.savedAt,
+          productCount: existing?.products.length ?? 0,
+        ),
+      );
       final products = <Map<String, dynamic>>[];
+      final ids = <String>{};
+      final cursors = <String>{};
       String? after;
+      var complete = false;
       for (var page = 0; page < _maxSyncPages; page++) {
+        if (!current()) return;
         final response = await _apiClient.dio.get(
           Endpoints.warehouseProducts(warehouseId),
           queryParameters: {'limit': CatalogSnapshot.maxPageSize, if (after != null) 'after': after},
         );
+        if (!current()) return;
         final data = response.data as Map<String, dynamic>;
-        products.addAll((data['products'] as List).whereType<Map<String, dynamic>>());
+        final rows = data['products'] as List;
+        for (final row in rows) {
+          if (row is! Map<String, dynamic> ||
+              ProductModel.tryFromJson(row) == null ||
+              row['id'] is! String ||
+              !ids.add(row['id'] as String)) {
+            throw const FormatException('Invalid or duplicated catalog row');
+          }
+          products.add(row);
+        }
         final pagination = data['pagination'] as Map<String, dynamic>?;
-        final next = pagination?['nextCursor'] as String?;
-        if (pagination?['hasMore'] != true || next == null) break;
+        if (pagination == null || pagination['hasMore'] is! bool) {
+          throw const FormatException('Missing catalog pagination');
+        }
+        if (pagination['hasMore'] == false) {
+          complete = true;
+          break;
+        }
+        final next = pagination['nextCursor'];
+        if (next is! String || next.isEmpty || rows.isEmpty || !cursors.add(next)) {
+          throw const FormatException('Incomplete catalog pagination');
+        }
         after = next;
       }
+      if (!complete || (before != null && before.count != products.length)) {
+        throw const FormatException('Catalog download did not finish');
+      }
       final manufacturersResponse = await _apiClient.dio.get(Endpoints.warehouseManufacturers(warehouseId));
-      final manufacturers = ((manufacturersResponse.data as Map<String, dynamic>)['manufacturers'] as List).cast<Object?>();
-
+      final manufacturers = ((manufacturersResponse.data as Map<String, dynamic>)['manufacturers'] as List)
+          .cast<Object?>();
+      final afterRevision = before == null ? null : await _revision(warehouseId);
+      if (before != null && (afterRevision == null || afterRevision.revision != before.revision)) {
+        throw const FormatException('Catalog changed during download');
+      }
+      if (!current()) return;
       final snapshot = CatalogSnapshot(
         warehouseId: warehouseId,
         savedAt: DateTime.now(),
         products: products,
         manufacturers: manufacturers,
+        revision: before?.revision,
       );
+      final saved = await store.writeConfirmed(
+        _snapshotName(warehouseId),
+        snapshot.toJson(),
+        savedAt: snapshot.savedAt,
+      );
+      if (!current()) return;
+      if (!saved) throw const FormatException('Catalog could not be saved');
       _snapshots[warehouseId] = snapshot;
-      await store.write(_snapshotName(warehouseId), snapshot.toJson(), savedAt: snapshot.savedAt);
+      CatalogDownloadStatus.instance.set(
+        warehouseId,
+        CatalogDownloadEntry(CatalogDownloadPhase.saved, savedAt: snapshot.savedAt, productCount: products.length),
+      );
+      PermanentImageStore.instance.prefetch(products.map((row) => row['image']).whereType<String>(), framed: true);
+      PermanentImageStore.instance.prefetch(
+        manufacturers.whereType<Map>().map((row) => row['logoUrl']).whereType<String>(),
+      );
     } catch (_) {
-      // A download that fails half way keeps the previous copy and is simply
-      // tried again the next time a warehouse is opened.
+      if (current()) {
+        CatalogDownloadStatus.instance.set(
+          warehouseId,
+          CatalogDownloadEntry(
+            CatalogDownloadPhase.failed,
+            savedAt: existing?.savedAt,
+            productCount: existing?.products.length ?? 0,
+          ),
+        );
+      }
+      // Never replace a complete previous copy with a partial/failed download.
     } finally {
-      _syncing.remove(warehouseId);
+      if (_syncing[warehouseId] == session) _syncing.remove(warehouseId);
     }
   }
 }

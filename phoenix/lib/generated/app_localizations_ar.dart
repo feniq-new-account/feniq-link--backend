@@ -1339,7 +1339,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String returnableOrderNumber(String number) {
-    return 'طلب #$number';
+    return 'طلب رقم $number';
   }
 
   @override
@@ -1591,7 +1591,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get updateOpenStoreFailed =>
-      'تعذر فتح متجر Google Play. حاول مرة أخرى.';
+      'تعذر تنزيل التحديث أو فتح مثبت أندرويد. تحقق من الاتصال والمساحة المتاحة وأعد المحاولة.';
 
   @override
   String get deliverySealRequiredTitle => 'تأكيد التسليم';
@@ -1943,7 +1943,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get repNavVisits => 'زياراتي';
 
   @override
-  String get repSearchHint => 'ابحث بالاسم أو المسؤول أو الهاتف أو العنوان';
+  String get repSearchHint => 'ابحث عن صيدلية';
 
   @override
   String get repScanAction => 'مسح باركود الزيارة';
@@ -2206,7 +2206,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseOrderTitle(int number) {
-    return 'طلبية #$number';
+    return 'طلبية رقم $number';
   }
 
   @override
@@ -2350,7 +2350,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseReturnTitle(int number) {
-    return 'مرتجع على الطلبية #$number';
+    return 'مرتجع على الطلبية رقم $number';
   }
 
   @override
@@ -2717,7 +2717,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseCollectFailed =>
-      'تم التسليم، بس الدفعة ما انحفظت - سجّلها من الحسابات.';
+      'تم التسليم، لكن لم نتأكد من تسجيل المقبوض. أعد تأكيد الدفعة من التنبيه في لوحة المستودع.';
 
   @override
   String warehouseCollectNote(int number) {
@@ -2771,7 +2771,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get warehouseAccountPayFailed => 'الدفعة ما انحفظت. جرّب مرة تانية.';
+  String get warehouseAccountPayFailed =>
+      'لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان.';
 
   @override
   String get warehouseVoiceTitle => 'تسجيل دفعة بالصوت';
@@ -2868,12 +2869,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseSummaryChangeUp(int percent) {
-    return '▲ $percent% عن الفترة السابقة';
+    return 'زيادة $percent% عن الفترة السابقة';
   }
 
   @override
   String warehouseSummaryChangeDown(int percent) {
-    return '▼ $percent% عن الفترة السابقة';
+    return 'نقصان $percent% عن الفترة السابقة';
   }
 
   @override
@@ -2897,4 +2898,450 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get warehouseSummaryDeliveredNote =>
       'المبيعات بتحسب الطلبيات المتسلَّمة بس.';
+
+  @override
+  String get paymentUnconfirmed =>
+      'لم نتأكد من تسجيل الدفعة. أعد المحاولة لتأكيد نفس الدفعة بأمان.';
+
+  @override
+  String dataLastUpdated(String time) {
+    return 'آخر تحديث: $time';
+  }
+
+  @override
+  String get dataCached => 'البيانات المعروضة من آخر تحديث ناجح.';
+
+  @override
+  String get updateDownloading => 'جارٍ تنزيل التحديث';
+
+  @override
+  String get updateInstallPermission =>
+      'اسمح لفينيق بتثبيت التطبيقات من شاشة إعدادات أندرويد، ثم ارجع واضغط «تحديث الآن». لن تحتاج لتنزيل الملف مرة أخرى.';
+
+  @override
+  String get updateCancelDownload => 'إلغاء التنزيل';
+
+  @override
+  String offlineCatalogsReady(String ready, String total) {
+    return 'محفوظ للتصفح بلا إنترنت: $ready/$total';
+  }
+
+  @override
+  String get offlineCatalogsSaving => 'جارٍ حفظ الكتالوجات على هذا الجهاز…';
+
+  @override
+  String get offlineCatalogsRetry =>
+      'لم يكتمل الحفظ. تحتاج إنترنت ومساحة كافية؛ النسخة السابقة محفوظة.';
+
+  @override
+  String offlineCatalogsLastSync(String time) {
+    return 'آخر مزامنة: $time';
+  }
+
+  @override
+  String get locationPermissionPurpose =>
+      'السماح بالموقع يساعدنا على تحديد موقع الصيدلية والتحقق من الزيارة عند مسح رمزها. يمكنك التصفح دون منحه؛ لا نتتبع تحركاتك في الخلفية.';
+
+  @override
+  String get locationPermissionPermanent =>
+      'إذن الموقع موقوف. افتح إعدادات التطبيق واسمح بالموقع أثناء الاستخدام لتتمكن من إثبات الزيارة.';
+
+  @override
+  String get locationServiceDisabled =>
+      'خدمة الموقع مطفأة. فعّل GPS قبل تسجيل الزيارة.';
+
+  @override
+  String get locationOpenSettings => 'فتح الإعدادات';
+
+  @override
+  String get locationAllow => 'السماح بالموقع';
+
+  @override
+  String get repVisitLocationUnapproved => 'موقع الصيدلية بانتظار الاعتماد';
+
+  @override
+  String get repVisitPoorAccuracy => 'دقة الموقع غير كافية';
+
+  @override
+  String get repVisitStaleLocation => 'قراءة الموقع قديمة';
+
+  @override
+  String get repScanLocationUnapprovedMessage =>
+      'لم يُعتمد موقع هذه الصيدلية بعد. تواصل مع إدارة فينيق لتثبيته؛ هذه المحاولة لا تُحتسب زيارة مؤكدة.';
+
+  @override
+  String get repScanPoorAccuracyMessage =>
+      'دقة GPS غير كافية. اقترب من مدخل الصيدلية أو مكان مفتوح ثم أعد المسح.';
+
+  @override
+  String get repScanStaleLocationMessage =>
+      'انتهت صلاحية قراءة الموقع. فعّل الوقت التلقائي والموقع في الهاتف ثم أعد المسح للحصول على قراءة جديدة.';
+
+  @override
+  String get warehouseLoyaltyMode => 'طريقة الولاء';
+
+  @override
+  String get warehouseLoyaltyPerOrder => 'حسب قيمة الطلب الواحد';
+
+  @override
+  String get warehouseLoyaltyMonthly => 'حسب مجموع المشتريات الشهرية';
+
+  @override
+  String get warehouseMonthlyLoyaltyHelp =>
+      'تُجمع الفواتير المسلّمة بقيمتها الصافية بعد الحسومات والرصيد، ضمن شهر بتوقيت دمشق. يُضاف فرق الحافز مرة واحدة لرصيد الطلب القادم. المرتجعات تخفض الاستحقاق، وإذا صُرف الحافز يُسوّى من حوافز الولاء القادمة دون المساس بعمولة الصيدلية أو تسجيل دين نقدي. تُثبّت شرائح الشهر عند أول تسليم فيه.';
+
+  @override
+  String pharmacyMonthlyLoyaltyProgress(String amount) {
+    return 'مشترياتك المسلّمة هذا الشهر: $amount. يُضاف فرق حافز الولاء بعد التسليم لرصيد طلبك القادم؛ المرتجعات تخفض الاستحقاق.';
+  }
+
+  @override
+  String get warehouseMonthlyLoyaltyExample =>
+      'مثال: مشتريات مسلّمة صافية 100,000 → رصيد 1,000؛ وعند 200,000 → مجموع رصيد 5,000، أي فرق إضافي 4,000.';
+
+  @override
+  String get warehouseMonthlyLoyaltyMin => 'مجموع الشهر من';
+
+  @override
+  String get warehouseMonthlyLoyaltyReward => 'الرصيد المستحق';
+
+  @override
+  String pharmacyMonthlyLoyaltyOffset(String amount) {
+    return 'حافز مرتجع صُرف سابقاً: $amount، سيُسوّى من حوافز الولاء القادمة؛ ليس ديناً نقدياً.';
+  }
+
+  @override
+  String get errorLoyaltyChanged =>
+      'تغيّرت إعدادات الولاء. ارجع وأعد فتح الإعدادات قبل الحفظ.';
+
+  @override
+  String get warehouseInsightsTitle => 'أداء المستودع والمتابعة';
+
+  @override
+  String get warehouseInsightsScope =>
+      'هذه الأرقام تخص عمليات فينيق فقط. صافي المبيعات بعد المرتجعات لا يعني الربح؛ لا يشمل تكلفة البضاعة أو المصاريف.';
+
+  @override
+  String get warehouseInsightsNetSales => 'صافي المبيعات';
+
+  @override
+  String get warehouseInsightsCollections => 'التحصيل';
+
+  @override
+  String get warehouseInsightsReturns => 'المرتجعات';
+
+  @override
+  String get warehouseInsightsDebts => 'الديون الحالية';
+
+  @override
+  String get warehouseInsightsTrend => 'المبيعات والتحصيل عبر الأيام';
+
+  @override
+  String get warehouseInsightsInspectDay => 'اختر يوماً لعرض أرقامه';
+
+  @override
+  String get warehouseInsightsPeriod => 'الفترة';
+
+  @override
+  String get warehouseInsightsRefresh => 'تحديث';
+
+  @override
+  String get warehouseInsightsAsOf => 'آخر تحديث:';
+
+  @override
+  String get warehouseInsightsDamascus => 'توقيت دمشق';
+
+  @override
+  String get warehouseInsightsAging => 'أعمار الديون — بالأيام';
+
+  @override
+  String get warehouseInsightsAgingMethod =>
+      'تُسوّى الحركات الأقدم أولاً. المرتجع يُنقص فاتورته الأصلية، وإلغاء الدفعة يعيد عمر الدين الأصلي. هذا تقدير للمتابعة؛ الدفعات غير مربوطة بفواتير محددة.';
+
+  @override
+  String get warehouseInsightsDailyTable => 'جدول التفاصيل اليومية';
+
+  @override
+  String get warehouseInsightsDate => 'التاريخ';
+
+  @override
+  String get warehouseInsightsPharmacy => 'الصيدلية';
+
+  @override
+  String get warehouseInsightsPhone => 'الهاتف';
+
+  @override
+  String get warehouseInsightsCity => 'المدينة';
+
+  @override
+  String get warehouseInsightsDays => 'الأيام';
+
+  @override
+  String get warehouseInsightsAction => 'المتابعة';
+
+  @override
+  String get warehouseInsightsOpenStatement => 'فتح الكشف';
+
+  @override
+  String get warehouseInsightsOpenStatements => 'كشوف الحسابات';
+
+  @override
+  String get warehouseInsightsSettings => 'مدة متابعة الديون والانقطاع';
+
+  @override
+  String get warehouseInsightsOverdueDays => 'يتأخر الدين بعد — يوم';
+
+  @override
+  String get warehouseInsightsInactiveDays => 'صيدلية بلا طلب منذ — يوم';
+
+  @override
+  String get warehouseInsightsSaveSettings => 'حفظ المدة';
+
+  @override
+  String get warehouseInsightsEmpty =>
+      'لا توجد حالات تستدعي المتابعة بهذه المدة.';
+
+  @override
+  String get warehouseInsightsLoadMore => 'عرض المزيد';
+
+  @override
+  String get warehouseInsightsInactiveFeature =>
+      'هذه الميزات غير مفعلة للمستودع. تواصل مع فينيق لتفعيلها.';
+
+  @override
+  String get warehouseInsightsNoAlerts => 'لا توجد حالات تستدعي التنبيه الآن.';
+
+  @override
+  String get warehouseInsightsOverview => 'نظرة عامة';
+
+  @override
+  String get warehouseInsightsOverdue => 'ديون متأخرة';
+
+  @override
+  String get warehouseInsightsInactive => 'صيدليات منقطعة';
+
+  @override
+  String get warehouseInsightsAlerts => 'تنبيهات المتابعة';
+
+  @override
+  String get warehouseInsightsInvalidDays => 'اختر مدة من 1 إلى 180 يوماً.';
+
+  @override
+  String get warehouseInsightsSaved => 'تم حفظ مدة المتابعة.';
+
+  @override
+  String warehouseInsightsResults(String count) {
+    return 'النتائج: $count';
+  }
+
+  @override
+  String get warehouseInsightsNoPreviousOrder =>
+      'لا توجد طلبات سابقة؛ المدة منذ تعيين الصيدلية.';
+
+  @override
+  String get errorFeatureUnavailable =>
+      'هذه الميزات غير مفعلة للمستودع. تواصل مع فينيق لتفعيلها.';
+
+  @override
+  String get errorFollowUpChanged =>
+      'تغيّرت مدة المتابعة. حدّث الصفحة قبل الحفظ.';
+
+  @override
+  String warehouseInsightsAlertOrders(String count) {
+    return 'طلبات معلّقة منذ 48 ساعة: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertReturns(String count) {
+    return 'مرتجعات بانتظار القرار منذ 48 ساعة: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertOverdue(String count) {
+    return 'صيدليات لها مبالغ متأخرة: $count';
+  }
+
+  @override
+  String warehouseInsightsAlertInactive(String count) {
+    return 'صيدليات بحاجة متابعة طلباتها: $count';
+  }
+
+  @override
+  String get warehouseInsightsScopeShort =>
+      'عمليات فينيق فقط؛ صافي المبيعات ليس الربح.';
+
+  @override
+  String get warehouseInsightsAbout => 'عن هذه الأرقام';
+
+  @override
+  String get warehouseInsightsOverdueAmount => 'المبلغ المتأخر';
+
+  @override
+  String get deliveryTitle => 'مناطق ومواعيد التوزيع';
+
+  @override
+  String get deliveryExplanation =>
+      'فعّل المواعيد بعد ضبط المناطق وربط الصيدليات. التقدير بتوقيت دمشق بهامش ±12 ساعة ويثبت عند إرسال الطلب؛ ليس ضماناً لساعة وصول محددة.';
+
+  @override
+  String get deliveryEnable => 'إظهار موعد التوصيل للصيدلي';
+
+  @override
+  String get deliveryFeatureOff =>
+      'الميزة غير مفعلة في اشتراك المستودع. المواعيد السابقة تبقى محفوظة.';
+
+  @override
+  String get deliveryZoneName => 'اسم منطقة التوزيع';
+
+  @override
+  String get deliveryPreparation => 'مهلة التجهيز بالساعات';
+
+  @override
+  String get deliveryZoneActive => 'المنطقة فعالة';
+
+  @override
+  String get deliveryDay => 'يوم الطلعة';
+
+  @override
+  String get deliveryDepartureTime => 'وقت الطلعة — دمشق';
+
+  @override
+  String get deliveryArrivalHours => 'ساعات الوصول بعد الطلعة';
+
+  @override
+  String get deliveryCutoffHours => 'إغلاق الطلب قبل الطلعة بساعات';
+
+  @override
+  String get deliveryAddTrip => 'إضافة يوم توزيع';
+
+  @override
+  String get deliveryRemoveTrip => 'حذف يوم التوزيع';
+
+  @override
+  String get deliveryExceptions => 'استثناءات الأيام';
+
+  @override
+  String get deliveryDate => 'التاريخ — YYYY-MM-DD';
+
+  @override
+  String get deliveryCancelTrip => 'إلغاء طلعة هذا اليوم';
+
+  @override
+  String get deliveryRemoveException => 'حذف الاستثناء';
+
+  @override
+  String get deliveryAddException => 'إضافة استثناء';
+
+  @override
+  String get deliveryPauseZone => 'إيقاف المنطقة';
+
+  @override
+  String get deliveryAddZone => 'إضافة منطقة';
+
+  @override
+  String get deliverySave => 'حفظ الجدول';
+
+  @override
+  String get deliverySaved => 'تم الحفظ';
+
+  @override
+  String get deliveryReload => 'إعادة تحميل الإعدادات';
+
+  @override
+  String get deliveryAssignTitle => 'ربط الصيدليات بمناطق التوزيع';
+
+  @override
+  String get deliveryAssignHint =>
+      'احفظ الجدول أولاً، ثم ابحث عن الصيدلية وحدد منطقتها. هذا الربط لا يخفي المستودعات من الكتالوج.';
+
+  @override
+  String get deliverySearch => 'اسم الصيدلية أو الهاتف';
+
+  @override
+  String get deliverySearchButton => 'بحث';
+
+  @override
+  String get deliveryUnassigned => 'بلا منطقة — الموعد غير محدد';
+
+  @override
+  String get deliveryPaused => 'موقوفة';
+
+  @override
+  String get deliveryArrivalTitle => 'التوصيل المتوقع';
+
+  @override
+  String get deliveryUnavailable =>
+      'موعد التوصيل غير محدد لهذه الصيدلية حالياً.';
+
+  @override
+  String get deliveryPreview => 'تقدير أولي؛ يثبت الموعد عند إرسال الطلب.';
+
+  @override
+  String get deliveryRange => 'متوقع بين';
+
+  @override
+  String get deliveryLate =>
+      'تأخر عن نافذة الوصول؛ تواصل مع المستودع. انتهاء الوقت لا يعني تسليم الطلب.';
+
+  @override
+  String get deliveryDelivered => 'تم التسليم';
+
+  @override
+  String get deliveryCancelled => 'الطلب ملغى — انتهى تقدير الوصول';
+
+  @override
+  String get deliveryUntil => 'الوقت المتبقي لنهاية النافذة';
+
+  @override
+  String get deliveryReschedule => 'تعديل موعد هذا الطلب';
+
+  @override
+  String get deliveryNewTime => 'الموعد الجديد — توقيت دمشق';
+
+  @override
+  String get deliveryReason => 'سبب تعديل الموعد — يظهر للصيدلي';
+
+  @override
+  String get deliveryChanged => 'تم تعديل الموعد';
+
+  @override
+  String get deliveryInvalid =>
+      'راجع أسماء المناطق والأيام والأوقات. الساعات من 0 إلى 168، وساعات الوصول حتى 72. لا تكرر اليوم في المنطقة.';
+
+  @override
+  String get deliveryUnsaved =>
+      'عندك تعديلات غير محفوظة. احفظها أو أعد تحميل الإعدادات قبل ربط الصيدليات.';
+
+  @override
+  String get deliveryNoResults => 'لا توجد صيدليات مطابقة';
+
+  @override
+  String get deliveryDays0 => 'الأحد';
+
+  @override
+  String get deliveryDays1 => 'الاثنين';
+
+  @override
+  String get deliveryDays2 => 'الثلاثاء';
+
+  @override
+  String get deliveryDays3 => 'الأربعاء';
+
+  @override
+  String get deliveryDays4 => 'الخميس';
+
+  @override
+  String get deliveryDays5 => 'الجمعة';
+
+  @override
+  String get deliveryDays6 => 'السبت';
+
+  @override
+  String deliveryHoursMinutes(String hours, String minutes) {
+    return '$hours ساعة و $minutes دقيقة';
+  }
+
+  @override
+  String get warehouseInsightsUnknownAge =>
+      'رصيد بلا عمر فاتورة موثق؛ داخل إجمالي الدين، وخارج شرائح التأخر حتى يتوفر تاريخ موثوق.';
 }

@@ -294,3 +294,25 @@ test('POST /orders: exactly 10000 is still accepted', async () => {
     await Product.updateOne({ _id: ids.product }, { $set: { price: 100 } });
   }
 });
+
+
+test('scheduled delivery is frozen at submission, replayed unchanged and exposed in both detail views', async () => {
+  const delivery = require('../src/services/deliverySchedule.service');
+  const warehouse = await Warehouse.findById(ids.warehouse);
+  const schedule = await delivery.configure(warehouse._id, warehouse.userId, { enabled: true, revision: 0,
+    zones: [{ name: 'North countryside', active: true, preparationHours: 0, exceptions: [],
+      slots: Array.from({ length: 7 }, (_, weekday) => ({ weekday, departureTime: '23:59', arrivalHours: 4, cutoffHours: 0 })) }] });
+  await delivery.assign(warehouse._id, warehouse.userId, ids.pharmacy, { zoneId: schedule.zones[0]._id, revision: 0 });
+  const rate = await ExchangeRate.findOne();
+  const first = await submit({ rateUsed: rate.usdToSyp, items: [line(ids.product)], idempotencyKey: 'frozen-delivery-001' });
+  assert.ok(first.deliveryEstimate.expectedAt); assert.strictEqual(first.deliveryEstimate.zoneName, 'North countryside');
+  await delivery.configure(warehouse._id, warehouse.userId, { ...schedule, enabled: false });
+  const replay = await submit({ rateUsed: rate.usdToSyp, items: [line(ids.product)], idempotencyKey: 'frozen-delivery-001' });
+  assert.strictEqual(String(replay._id), String(first._id));
+  assert.strictEqual(new Date(replay.deliveryEstimate.to).getTime(), new Date(first.deliveryEstimate.to).getTime());
+  const detail = await require('../src/services/warehouseOrder.service').getOrderDetailForWarehouse(first.id, warehouse.id);
+  const serialized = require('../src/viewmodels/warehouseOrder.viewmodel').toWarehouseOrderDetailResponse(detail).order;
+  assert.strictEqual(serialized.deliveryEstimate.zoneName, 'North countryside');
+  assert.strictEqual(serialized.deliveryEstimate.source, undefined);
+  assert.ok(serialized.deliveryEstimate.observedAt);
+});

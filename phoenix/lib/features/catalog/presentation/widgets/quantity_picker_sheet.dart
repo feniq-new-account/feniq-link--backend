@@ -52,8 +52,10 @@ class _QuantityPickerSheetState extends State<_QuantityPickerSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            runSpacing: AppSizes.spacingSmall,
             children: [
               Text(l10n.returnQuantityLabel, style: context.textTheme.titleMedium),
               QuantityStepper(

@@ -23,6 +23,8 @@ class OfflineStore {
     : _directoryProvider = directoryProvider ?? _defaultDirectory;
 
   final Future<Directory> Function() _directoryProvider;
+  Future<void> _operations = Future<void>.value();
+  int _generation = 0;
 
   static Future<Directory> _defaultDirectory() async {
     final base = await getApplicationSupportDirectory();
@@ -38,6 +40,9 @@ class OfflineStore {
   }
 
   Future<SavedEntry?> read(String name) async {
+    final generation = _generation;
+    await _operations;
+    if (generation != _generation) return null;
     try {
       final file = await _file(name);
       if (!await file.exists()) return null;
@@ -47,6 +52,7 @@ class OfflineStore {
       if (decoded is! Map) return null;
       final savedAt = DateTime.tryParse(decoded['savedAt'] as String? ?? '');
       if (savedAt == null) return null;
+      if (generation != _generation) return null;
       return SavedEntry(savedAt: savedAt, data: decoded['data']);
     } catch (_) {
       return null;
@@ -54,28 +60,49 @@ class OfflineStore {
   }
 
   Future<void> write(String name, Object? data, {DateTime? savedAt}) async {
-    try {
-      final file = await _file(name);
-      final text = jsonEncode({'savedAt': (savedAt ?? DateTime.now()).toIso8601String(), 'data': data});
-      // Written under another name and renamed, so a reader (or a crash in the
-      // middle of the write) never meets half a file.
-      final temporary = File('${file.path}.tmp');
-      await temporary.writeAsString(text, flush: true);
-      await temporary.rename(file.path);
-    } catch (_) {
-      // No saved copy this time; nothing else depends on it.
-    }
+    await writeConfirmed(name, data, savedAt: savedAt);
+  }
+
+  /// True only after an atomic durable write. A failed save must never be
+  /// advertised as an offline-ready catalog. Writes and sign-out deletion are
+  /// serialized so an older write cannot resurrect another account's files.
+  Future<bool> writeConfirmed(String name, Object? data, {DateTime? savedAt}) {
+    final generation = _generation;
+    final result = _operations.then((_) async {
+      if (generation != _generation) return false;
+      try {
+        final file = await _file(name);
+        final text = jsonEncode({'savedAt': (savedAt ?? DateTime.now()).toIso8601String(), 'data': data});
+        final temporary = File('${file.path}.tmp');
+        await temporary.writeAsString(text, flush: true);
+        if (generation != _generation) {
+          await temporary.delete();
+          return false;
+        }
+        await temporary.rename(file.path);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    });
+    _operations = result.then((_) {});
+    return result;
   }
 
   /// Forgets everything - the next person to sign in on this phone must not
   /// find the previous pharmacy's copy.
-  Future<void> clear() async {
-    try {
-      final dir = await _directoryProvider();
-      if (await dir.exists()) await dir.delete(recursive: true);
-    } catch (_) {
-      // Nothing to do about a folder that cannot be removed.
-    }
+  Future<void> clear() {
+    _generation++;
+    final result = _operations.then((_) async {
+      try {
+        final dir = await _directoryProvider();
+        if (await dir.exists()) await dir.delete(recursive: true);
+      } catch (_) {
+        // A failed deletion must not crash sign-out.
+      }
+    });
+    _operations = result;
+    return result;
   }
 }
 

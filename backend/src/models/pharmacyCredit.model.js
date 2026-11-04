@@ -10,6 +10,11 @@ const pharmacyCreditSchema = new Schema(
     pharmacyId: { type: Schema.Types.ObjectId, ref: 'Pharmacy', required: true },
     warehouseId: { type: Schema.Types.ObjectId, ref: 'Warehouse', required: true },
     balanceSyp: { type: Number, default: 0, min: 0 },
+    // Separate from commission credit. A return may make the loyalty wallet
+    // negative after its reward was spent; only future loyalty/released
+    // loyalty offsets that shortfall. It never takes commission or adds a
+    // cash receivable to the pharmacy ledger.
+    loyaltyBalanceSyp: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

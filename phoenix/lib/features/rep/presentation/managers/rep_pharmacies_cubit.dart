@@ -25,9 +25,7 @@ class RepPharmaciesState {
 }
 
 class RepPharmaciesCubit extends Cubit<RepPharmaciesState> {
-  RepPharmaciesCubit({required RepRepository repository})
-    : _repository = repository,
-      super(const RepPharmaciesState());
+  RepPharmaciesCubit({required RepRepository repository}) : _repository = repository, super(const RepPharmaciesState());
 
   final RepRepository _repository;
 
@@ -36,15 +34,22 @@ class RepPharmaciesCubit extends Cubit<RepPharmaciesState> {
   int _request = 0;
 
   Future<void> load({String? search}) async {
+    if (isClosed) return;
     final query = (search ?? state.query).trim();
     final request = ++_request;
-    emit(RepPharmaciesState(status: RepLoadStatus.loading, pharmacies: state.pharmacies, query: query));
+    emit(
+      RepPharmaciesState(
+        status: RepLoadStatus.loading,
+        pharmacies: query == state.query ? state.pharmacies : const [],
+        query: query,
+      ),
+    );
     try {
       final pharmacies = await _repository.getPharmacies(search: query);
-      if (request != _request) return;
+      if (isClosed || request != _request) return;
       emit(RepPharmaciesState(status: RepLoadStatus.loaded, pharmacies: pharmacies, query: query));
     } on Failure catch (f) {
-      if (request != _request) return;
+      if (isClosed || request != _request) return;
       emit(
         RepPharmaciesState(
           status: RepLoadStatus.error,

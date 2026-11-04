@@ -22,6 +22,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('both Arabic keyboard digit sets become ASCII before the numeric filter', (tester) async {
+    await pumpField(tester);
+    await tester.enterText(find.byType(TextFormField), '١٢٣٤٥٦٧٨');
+    expect(controller.text, '12345678');
+    await tester.enterText(find.byType(TextFormField), '۱۲۳۴۵۶۷۸');
+    expect(controller.text, '12345678');
+  });
+
   testWidgets('shows a fixed "09" prefix', (tester) async {
     await pumpField(tester);
     expect(find.text('09'), findsOneWidget);

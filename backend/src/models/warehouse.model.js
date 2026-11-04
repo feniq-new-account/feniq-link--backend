@@ -3,6 +3,7 @@ const { Schema, model } = require('mongoose');
 const warehouseSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    memberUserIds: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
     nameAr: { type: String, required: true, trim: true },
     nameEn: { type: String, required: true, trim: true },
     address: { type: String, required: true },
@@ -32,11 +33,18 @@ const warehouseSchema = new Schema(
     // switches it on; tiers of "an order of at least minSyp gets discountSyp
     // off", set by the warehouse and paid by it.
     loyalty: {
+      mode: { type: String, enum: ['per_order', 'monthly'], default: 'per_order' },
+      revision: { type: Number, default: 0 },
       enabled: { type: Boolean, default: false },
       tiers: {
         type: [new Schema({ minSyp: { type: Number, required: true }, discountSyp: { type: Number, required: true } }, { _id: false })],
         default: [],
       },
+    },
+    followUp: {
+      overdueDays: { type: Number, default: 15, min: 1, max: 180 },
+      inactiveDays: { type: Number, default: 15, min: 1, max: 180 },
+      revision: { type: Number, default: 0 },
     },
     // Per-warehouse order size limits, in USD - the same currency the cart
     // totals in, so no conversion sits between what the pharmacist sees and
@@ -51,6 +59,7 @@ const warehouseSchema = new Schema(
 );
 
 warehouseSchema.index({ userId: 1 });
+warehouseSchema.index({ memberUserIds: 1 });
 warehouseSchema.index({ city: 1 });
 
 // Perf/pagination follow-up: plain single-field indexes backing the

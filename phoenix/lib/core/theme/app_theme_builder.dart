@@ -58,7 +58,9 @@ class AppThemeBuilder {
         titleSpacing: 20,
         // A hairline instead of a drop shadow, the way the site's header
         // meets its page.
-        shape: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.08))),
+        shape: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.08)),
+        ),
         titleTextStyle: AppTextTheme.style(
           fontSize: 19,
           fontWeight: AppTextTheme.bold,
@@ -69,7 +71,10 @@ class AppThemeBuilder {
         color: surfaceElevated,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.large, side: BorderSide(color: border)),
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.large,
+          side: BorderSide(color: border),
+        ),
       ),
       dividerTheme: DividerThemeData(color: border, thickness: 1, space: 1),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -117,6 +122,7 @@ class AppThemeBuilder {
         extendedTextStyle: buttonText,
       ),
       chipTheme: ChipThemeData(
+        checkmarkColor: text,
         shape: StadiumBorder(side: BorderSide(color: border)),
         side: BorderSide(color: border),
         backgroundColor: surfaceElevated,
@@ -128,7 +134,12 @@ class AppThemeBuilder {
         filled: true,
         fillColor: surface,
         contentPadding: AppPadding.input,
-        hintStyle: AppTextTheme.style(fontSize: 14, fontWeight: AppTextTheme.regular, color: textSecondary, reading: true),
+        hintStyle: AppTextTheme.style(
+          fontSize: 14,
+          fontWeight: AppTextTheme.regular,
+          color: textSecondary,
+          reading: true,
+        ),
         labelStyle: AppTextTheme.style(fontSize: 14, fontWeight: AppTextTheme.medium, color: textSecondary),
         border: outline(border),
         enabledBorder: outline(border),
@@ -152,7 +163,11 @@ class AppThemeBuilder {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: isDark ? surfaceElevated : AppColors.header,
-        contentTextStyle: AppTextTheme.style(fontSize: 14, fontWeight: AppTextTheme.medium, color: isDark ? text : Colors.white),
+        contentTextStyle: AppTextTheme.style(
+          fontSize: 14,
+          fontWeight: AppTextTheme.medium,
+          color: isDark ? text : Colors.white,
+        ),
         shape: const RoundedRectangleBorder(borderRadius: AppRadius.small),
       ),
       tabBarTheme: TabBarThemeData(
@@ -167,7 +182,12 @@ class AppThemeBuilder {
       listTileTheme: ListTileThemeData(
         iconColor: textSecondary,
         titleTextStyle: AppTextTheme.style(fontSize: 15, fontWeight: AppTextTheme.medium, color: text),
-        subtitleTextStyle: AppTextTheme.style(fontSize: 13, fontWeight: AppTextTheme.regular, color: textSecondary, reading: true),
+        subtitleTextStyle: AppTextTheme.style(
+          fontSize: 13,
+          fontWeight: AppTextTheme.regular,
+          color: textSecondary,
+          reading: true,
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         height: 68,
@@ -193,6 +213,7 @@ class AppThemeBuilder {
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => AppTextTheme.style(
             fontSize: 12,
+            height: 1.25,
             fontWeight: states.contains(WidgetState.selected) ? AppTextTheme.semiBold : AppTextTheme.medium,
             color: states.contains(WidgetState.selected)
                 ? (isDark ? primary : AppColors.onNavyAccent)

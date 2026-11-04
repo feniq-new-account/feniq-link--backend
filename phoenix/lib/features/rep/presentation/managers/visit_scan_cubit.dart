@@ -49,7 +49,7 @@ class VisitScanCubit extends Cubit<VisitScanState> {
   /// Called by the camera for every frame that has a QR in it, many times a
   /// second - so anything but the `scanning` state is ignored.
   Future<void> onCodeDetected(String? raw) async {
-    if (state.status != VisitScanStatus.scanning) return;
+    if (isClosed || state.status != VisitScanStatus.scanning) return;
     if (!looksLikeVisitCode(raw)) {
       if (!state.notFeniqCode) emit(const VisitScanState(notFeniqCode: true));
       return;
@@ -61,10 +61,12 @@ class VisitScanCubit extends Cubit<VisitScanState> {
     try {
       location = await _locationProvider.current();
     } on LocationUnavailable catch (e) {
+      if (isClosed) return;
       emit(VisitScanState(status: VisitScanStatus.failed, locationProblem: e.problem));
       return;
     }
 
+    if (isClosed) return;
     emit(const VisitScanState(status: VisitScanStatus.submitting));
     try {
       final result = await _repository.recordVisit(
@@ -73,13 +75,18 @@ class VisitScanCubit extends Cubit<VisitScanState> {
         longitude: location.longitude,
         accuracy: location.accuracy,
         isMocked: location.isMocked,
+        capturedAt: location.capturedAt,
       );
+      if (isClosed) return;
       emit(VisitScanState(status: VisitScanStatus.done, result: result));
     } on Failure catch (f) {
+      if (isClosed) return;
       emit(VisitScanState(status: VisitScanStatus.failed, errorMessage: f.errMessage, errorCode: f.code));
     }
   }
 
   /// Back to the camera after a failure or a result.
-  void scanAgain() => emit(const VisitScanState());
+  void scanAgain() {
+    if (!isClosed && !state.isBusy) emit(const VisitScanState());
+  }
 }

@@ -1,3 +1,4 @@
+import { NumericInput } from './NumericInput';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -127,7 +128,7 @@ export function ExchangeRateCard({ rate, onChanged }) {
           <p className="hint">{t('admin.exchangeRate.noRate')}</p>
         ) : (
           <div className="adm-rate-value adm-num">
-            {t('admin.exchangeRate.rateValue', { rate: rate.usdToSyp.toLocaleString() })}
+            {t('admin.exchangeRate.rateValue', { rate: rate.usdToSyp.toLocaleString('en-US') })}
           </div>
         )}
 
@@ -167,7 +168,7 @@ export function ExchangeRateCard({ rate, onChanged }) {
         <form onSubmit={handleSetManual} className="adm-rate-form">
           <label className="adm-rate-input-label">
             {t('admin.exchangeRate.newRateLabel')}
-            <input
+            <NumericInput
               type="number"
               min="0"
               step="0.01"
@@ -209,8 +210,8 @@ export function ExchangeRateCard({ rate, onChanged }) {
                   {history.map((row) => (
                     <tr key={row.id}>
                       <td>{formatBusinessDateTime(row.effectiveFrom)}</td>
-                      <td className="adm-num">{row.usdToSyp.toLocaleString()}</td>
-                      <td className="adm-num">{row.previousUsdToSyp != null ? row.previousUsdToSyp.toLocaleString() : '—'}</td>
+                      <td className="adm-num">{row.usdToSyp.toLocaleString('en-US')}</td>
+                      <td className="adm-num">{row.previousUsdToSyp != null ? row.previousUsdToSyp.toLocaleString('en-US') : '—'}</td>
                       <td>
                         <span
                           className={`availability-badge ${row.source === 'manual' ? 'availability-paused' : 'availability-available'}`}

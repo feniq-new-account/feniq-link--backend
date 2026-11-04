@@ -25,13 +25,14 @@ class LinkedReturnModel {
   bool get isApproved => status == 'approved';
   bool get isRejected => status == 'rejected';
 
-  factory LinkedReturnModel.fromJson(Map<String, dynamic> json) => LinkedReturnModel(
-    id: json['id'] as String,
-    status: json['status'] as String,
-    rejectionNote: json['rejectionNote'] as String?,
-    creditSyp: json['creditSyp'] as num?,
-    creditUsd: json['creditUsd'] as num?,
-  );
+  factory LinkedReturnModel.fromJson(Map<String, dynamic> json) =>
+      LinkedReturnModel(
+        id: json['id'] as String,
+        status: json['status'] as String,
+        rejectionNote: json['rejectionNote'] as String?,
+        creditSyp: json['creditSyp'] as num?,
+        creditUsd: json['creditUsd'] as num?,
+      );
 }
 
 // The steps the pharmacist follows an order through: sent, (edited by the
@@ -41,7 +42,11 @@ class LinkedReturnModel {
 enum OrderStage { sent, modified, accepted, outForDelivery, delivered }
 
 // Section 7: only cancellable before the order goes out for delivery.
-const List<String> kOrderCancellableStatuses = ['pending', 'confirmed', 'preparing'];
+const List<String> kOrderCancellableStatuses = [
+  'pending',
+  'confirmed',
+  'preparing',
+];
 
 // Complaint Section 9: a compact summary of one complaint filed about this
 // order - shown in the "complaints about this order" section on the tracking
@@ -59,19 +64,25 @@ class OrderComplaintRef {
   final String subject;
   final String status;
 
-  factory OrderComplaintRef.fromJson(Map<String, dynamic> json) => OrderComplaintRef(
-    id: json['id'] as String,
-    complaintNumber: json['complaintNumber'] as int,
-    subject: json['subject'] as String? ?? '',
-    status: json['status'] as String,
-  );
+  factory OrderComplaintRef.fromJson(Map<String, dynamic> json) =>
+      OrderComplaintRef(
+        id: json['id'] as String,
+        complaintNumber: json['complaintNumber'] as int,
+        subject: json['subject'] as String? ?? '',
+        status: json['status'] as String,
+      );
 }
 
 // Section 8/13c: this pharmacy's own rating of the warehouse for this order,
 // if it's already submitted one - present so the tracking screen can show
 // "already rated" and skip the form on re-entry, instead of a separate call.
 class MyReviewModel {
-  const MyReviewModel({required this.id, required this.rating, this.comment, required this.createdAt});
+  const MyReviewModel({
+    required this.id,
+    required this.rating,
+    this.comment,
+    required this.createdAt,
+  });
 
   final String id;
   final int rating;
@@ -103,12 +114,13 @@ class OrderDiscountCode {
   final num value;
   final num discountSyp;
 
-  factory OrderDiscountCode.fromJson(Map<String, dynamic> json) => OrderDiscountCode(
-    code: json['code'] as String,
-    type: json['type'] as String,
-    value: json['value'] as num,
-    discountSyp: (json['discountSyp'] as num?) ?? 0,
-  );
+  factory OrderDiscountCode.fromJson(Map<String, dynamic> json) =>
+      OrderDiscountCode(
+        code: json['code'] as String,
+        type: json['type'] as String,
+        value: json['value'] as num,
+        discountSyp: (json['discountSyp'] as num?) ?? 0,
+      );
 }
 
 class OrderModel {
@@ -136,6 +148,7 @@ class OrderModel {
     this.myReview,
     this.complaints = const [],
     this.requiresDeliverySealPhoto = false,
+    this.deliveryEstimate,
     this.deliverySealPhotoUrl,
     this.deliverySealConfirmedAt,
   });
@@ -188,6 +201,7 @@ class OrderModel {
   // stored result. All three are only on the detail fetch and default to
   // false/null on older servers and every order placed before the feature.
   final bool requiresDeliverySealPhoto;
+  final Map<String, dynamic>? deliveryEstimate;
   final String? deliverySealPhotoUrl;
   final DateTime? deliverySealConfirmedAt;
 
@@ -203,7 +217,8 @@ class OrderModel {
   // pending - order.status itself never becomes 'modified' (see
   // order_status_label.dart), only statusHistory gets an entry for it, so
   // this is the one place that actually checks for it.
-  bool get wasModified => statusHistory.any((entry) => entry.status == 'modified');
+  bool get wasModified =>
+      statusHistory.any((entry) => entry.status == 'modified');
 
   DateTime? get lastModifiedAt {
     for (final entry in statusHistory.reversed) {
@@ -241,7 +256,9 @@ class OrderModel {
   // in, and only until a photo has actually been attached. Mirrors the
   // backend gate in warehouseOrder.service.js.
   bool get needsDeliverySealConfirmation =>
-      status == 'out_for_delivery' && requiresDeliverySealPhoto && deliverySealPhotoUrl == null;
+      status == 'out_for_delivery' &&
+      requiresDeliverySealPhoto &&
+      deliverySealPhotoUrl == null;
 
   OrderModel copyWith({MyReviewModel? myReview}) => OrderModel(
     id: id,
@@ -267,6 +284,7 @@ class OrderModel {
     myReview: myReview ?? this.myReview,
     complaints: complaints,
     requiresDeliverySealPhoto: requiresDeliverySealPhoto,
+    deliveryEstimate: deliveryEstimate,
     deliverySealPhotoUrl: deliverySealPhotoUrl,
     deliverySealConfirmedAt: deliverySealConfirmedAt,
   );
@@ -280,13 +298,18 @@ class OrderModel {
     commissionAmount: json['commissionAmount'] as num,
     // Absent on responses from a server that predates packages - defaults to
     // 0, which renders exactly as it did before.
-    advertisementDiscountAmount: (json['advertisementDiscountAmount'] as num?) ?? 0,
+    advertisementDiscountAmount:
+        (json['advertisementDiscountAmount'] as num?) ?? 0,
     loyaltyDiscountAmount: (json['loyaltyDiscountAmount'] as num?) ?? 0,
     creditUsedSyp: (json['creditUsedSyp'] as num?) ?? 0,
     discountCode: json['discountCode'] is Map<String, dynamic>
-        ? OrderDiscountCode.fromJson(json['discountCode'] as Map<String, dynamic>)
+        ? OrderDiscountCode.fromJson(
+            json['discountCode'] as Map<String, dynamic>,
+          )
         : null,
     finalPrice: json['finalPrice'] as num,
+    deliveryEstimate: (json['deliveryEstimate'] as Map?)
+        ?.cast<String, dynamic>(),
     notes: json['notes'] as String?,
     cancelReason: json['cancelReason'] as String?,
     warehouseId: json['warehouseId'] as String?,
@@ -294,17 +317,24 @@ class OrderModel {
     warehouseNameEn: json['warehouseNameEn'] as String?,
     statusHistory: json['statusHistory'] != null
         ? (json['statusHistory'] as List)
-              .map((e) => OrderStatusHistoryEntry.fromJson(e as Map<String, dynamic>))
+              .map(
+                (e) =>
+                    OrderStatusHistoryEntry.fromJson(e as Map<String, dynamic>),
+              )
               .toList()
         : const [],
-    createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : null,
+    createdAt: json['createdAt'] != null
+        ? DateTime.parse(json['createdAt'] as String)
+        : null,
     items: json['items'] != null
         ? (json['items'] as List)
               .map((e) => OrderLineItem.fromJson(e as Map<String, dynamic>))
               .toList()
         : const [],
     linkedReturn: json['linkedReturn'] != null
-        ? LinkedReturnModel.fromJson(json['linkedReturn'] as Map<String, dynamic>)
+        ? LinkedReturnModel.fromJson(
+            json['linkedReturn'] as Map<String, dynamic>,
+          )
         : null,
     myReview: json['myReview'] != null
         ? MyReviewModel.fromJson(json['myReview'] as Map<String, dynamic>)
@@ -316,7 +346,8 @@ class OrderModel {
         : const [],
     // Absent on responses from a server that predates the feature - default to
     // false/null so the tracking screen behaves exactly as it did before.
-    requiresDeliverySealPhoto: (json['requiresDeliverySealPhoto'] as bool?) ?? false,
+    requiresDeliverySealPhoto:
+        (json['requiresDeliverySealPhoto'] as bool?) ?? false,
     deliverySealPhotoUrl: json['deliverySealPhoto'] as String?,
     deliverySealConfirmedAt: json['deliverySealConfirmedAt'] != null
         ? DateTime.parse(json['deliverySealConfirmedAt'] as String)

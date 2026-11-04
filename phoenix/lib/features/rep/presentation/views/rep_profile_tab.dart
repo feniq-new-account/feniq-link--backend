@@ -1,3 +1,7 @@
+import 'package:feniq/core/error/error_translator.dart';
+import 'package:feniq/core/widgets/failure_widget.dart';
+import '../managers/rep_load_status.dart';
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -52,6 +56,13 @@ class RepProfileTab extends StatelessWidget {
         return ListView(
           padding: AppPadding.screen,
           children: [
+            if (state.status == RepLoadStatus.loading) const LinearProgressIndicator(),
+            if (state.status == RepLoadStatus.error)
+              FailureWidget(
+                dense: true,
+                message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+                onRetry: () => context.read<RepHomeCubit>().load(),
+              ),
             CustomCard(
               child: Row(
                 children: [
@@ -92,10 +103,7 @@ class RepProfileTab extends StatelessWidget {
                             l10n.repWarehouseLabel,
                             style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
                           ),
-                          Text(
-                            englishFirst(warehouse.nameEn, warehouse.nameAr),
-                            style: context.textTheme.titleSmall,
-                          ),
+                          Text(englishFirst(warehouse.nameEn, warehouse.nameAr), style: context.textTheme.titleSmall),
                         ],
                       ),
                     ),
@@ -105,23 +113,16 @@ class RepProfileTab extends StatelessWidget {
             ],
             if (stats != null) ...[
               const SizedBox(height: AppSizes.spacingMedium),
-              Row(
+              ResponsiveStatsGrid(
+                minTileWidth: 140,
+                maxColumns: 2,
                 children: [
-                  Expanded(child: RepStatTile(value: '${stats.pharmacyCount}', label: l10n.repStatPharmacies)),
-                  const SizedBox(width: AppSizes.spacingSmall),
-                  Expanded(child: RepStatTile(value: '${stats.visitsLast7Days}', label: l10n.repStatVisitsWeek)),
-                ],
-              ),
-              const SizedBox(height: AppSizes.spacingSmall),
-              Row(
-                children: [
-                  Expanded(child: RepStatTile(value: '${stats.monthOrdersCount}', label: l10n.repStatOrdersMonth)),
-                  const SizedBox(width: AppSizes.spacingSmall),
-                  Expanded(
-                    child: RepStatTile(
-                      value: formatSyp(stats.monthOrdersTotal, l10n.currencySuffix),
-                      label: l10n.repStatSalesMonth,
-                    ),
+                  RepStatTile(value: '${stats.pharmacyCount}', label: l10n.repStatPharmacies),
+                  RepStatTile(value: '${stats.visitsLast7Days}', label: l10n.repStatVisitsWeek),
+                  RepStatTile(value: '${stats.monthOrdersCount}', label: l10n.repStatOrdersMonth),
+                  RepStatTile(
+                    value: formatSyp(stats.monthOrdersTotal, l10n.currencySuffix),
+                    label: l10n.repStatSalesMonth,
                   ),
                 ],
               ),

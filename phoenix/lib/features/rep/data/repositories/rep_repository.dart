@@ -18,6 +18,7 @@ abstract class RepRepository {
     required double longitude,
     required double accuracy,
     required bool isMocked,
+    DateTime? capturedAt,
   });
 
   /// The signed-in pharmacy's visit QR.

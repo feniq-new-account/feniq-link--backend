@@ -1,10 +1,11 @@
 const { Router } = require('express');
 const { authenticate, authorize, requireActiveStatus } = require('../middlewares/auth.middleware');
 const controller = require('../controllers/warehousePayment.controller');
+const { requireWarehouseFeature } = require('../middlewares/warehouseFeature.middleware');
 
 const router = Router();
 
-router.use(authenticate, authorize('warehouse'), requireActiveStatus);
+router.use(authenticate, authorize('warehouse'), requireActiveStatus, requireWarehouseFeature('accounting'));
 
 // Money-Flow V2: payments are append-only. The V1 PATCH (edit) and DELETE
 // routes are gone - a mistake is corrected by posting a reversal, which keeps

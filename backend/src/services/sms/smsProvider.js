@@ -12,6 +12,10 @@
 // it in ./index.js, and set SMS_PROVIDER in the environment. Nothing else in
 // the application changes.
 class SmsProvider {
+  get canDeliver() {
+    return true;
+  }
+
   // Matches the SMS_PROVIDER env value that selects this provider.
   get name() {
     throw new Error(`${this.constructor.name} must define a \`name\` getter.`);

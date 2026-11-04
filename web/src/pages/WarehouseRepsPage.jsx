@@ -1,3 +1,4 @@
+import { NumericInput } from '../components/NumericInput';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -179,7 +180,7 @@ export function WarehouseRepsPage() {
             </label>
             <label>
               {t('reps.phone')}
-              <input
+              <NumericInput
                 type="tel"
                 dir="ltr"
                 placeholder="09xxxxxxxx"

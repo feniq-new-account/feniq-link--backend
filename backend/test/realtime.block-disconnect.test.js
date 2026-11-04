@@ -16,7 +16,7 @@ const path = require('node:path');
 const jwt = require('jsonwebtoken');
 const { io: ioClient } = require('socket.io-client');
 
-const { modelQuery } = require('./helpers/model-query-stub');
+const { modelQuery, findWarehouseFixture } = require('./helpers/model-query-stub');
 
 const users = new Map();
 const warehousesByUserId = new Map();
@@ -31,7 +31,7 @@ stubModule('models/user.model.js', {
   findById: modelQuery((id) => users.get(String(id)) ?? null),
 });
 stubModule('models/warehouse.model.js', {
-  findOne: modelQuery((filter) => warehousesByUserId.get(String(filter.userId)) ?? null),
+  findOne: modelQuery((filter) => findWarehouseFixture(warehousesByUserId, filter)),
 });
 stubModule('models/pharmacy.model.js', { findOne: modelQuery(() => null) });
 stubModule('models/refreshToken.model.js', {

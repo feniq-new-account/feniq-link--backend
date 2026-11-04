@@ -1,4 +1,9 @@
+import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:feniq/core/widgets/sliver_row_grid.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/theme/dark_theme.dart';
@@ -8,22 +13,20 @@ import 'package:feniq/features/warehouse_selection/data/models/warehouse_model.d
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_card.dart';
 import 'package:feniq/generated/app_localizations.dart';
 
-// WarehouseSelectionView lays the card out in a grid row (SliverRowGrid) of
-// at most 210pt wide and at least 220pt tall; a long name wraps and the row
-// grows with it rather than the name being cut off. A card that overflows
-// renders a yellow-and-black stripe in front of the pharmacist, so the layout
-// is worth pinning - especially against the two things that stretch it, a
-// long name and a large text scale.
-//
-// A RenderFlex overflow throws in a widget test, so simply pumping the card
-// the way the grid row does is the assertion; the expects below just prove
-// the content actually made it in.
+// The preferred square tile must retain full names and 48pt actions.
 void main() {
-  // A touch narrower than the tile the grid produces on a phone (two columns
-  // inside a 390pt screen), which is about the tightest the card ever has to
-  // be. The card's height doesn't depend on its width, only its text wrapping
-  // does.
-  const tileSize = Size(171, 220);
+  setUpAll(() async {
+    await (FontLoader('MaterialIcons')..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
+    for (final family in ['Readex', 'Plex']) {
+      final loader = FontLoader(family);
+      final prefix = family == 'Readex' ? 'ReadexPro' : 'IBMPlexSansArabic';
+      for (final weight in [400, 500, 600, 700]) {
+        loader.addFont(rootBundle.load('assets/fonts/$prefix-$weight.ttf'));
+      }
+      await loader.load();
+    }
+  });
+  const tileSize = Size(171, 171);
 
   WarehouseModel warehouse({String? name, String? logo}) => WarehouseModel(
     id: 'w1',
@@ -58,11 +61,7 @@ void main() {
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: tileSize.height),
                   child: IntrinsicHeight(
-                    child: WarehouseCard(
-                      warehouse: model ?? warehouse(),
-                      onSelect: () {},
-                      onViewProfile: () {},
-                    ),
+                    child: WarehouseCard(warehouse: model ?? warehouse(), onSelect: () {}, onViewProfile: () {}),
                   ),
                 ),
               ),
@@ -80,6 +79,8 @@ void main() {
     expect(find.text('Latakia Warehouse'), findsOneWidget);
     expect(find.text('Latakia'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
+    expect(tester.getSize(find.byType(OutlinedButton)).height, greaterThanOrEqualTo(48));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('fits its grid tile in dark mode', (tester) async {
@@ -92,20 +93,14 @@ void main() {
     expect(find.byType(CustomCard), findsOneWidget);
     // The label was once drawn in navyOf, which in night mode is the card's
     // own fill colour - present in the tree, invisible on screen.
-    expect(
-      tester.widget<Text>(find.text('Profile')).style?.color,
-      isNot(AppColors.darkSurfaceElevated),
-    );
+    expect(tester.widget<Text>(find.text('Profile')).style?.color, isNot(AppColors.darkSurfaceElevated));
   });
 
   testWidgets('fits its grid tile in Arabic, right to left', (tester) async {
     await pumpCard(tester, theme: LightTheme.data, locale: const Locale('ar'));
 
     expect(find.text('مستودع اللاذقية'), findsOneWidget);
-    expect(
-      Directionality.of(tester.element(find.byType(WarehouseCard))),
-      TextDirection.rtl,
-    );
+    expect(Directionality.of(tester.element(find.byType(WarehouseCard))), TextDirection.rtl);
   });
 
   testWidgets('survives a name far longer than the tile', (tester) async {
@@ -127,12 +122,7 @@ void main() {
   });
 
   testWidgets('survives a larger accessibility text scale', (tester) async {
-    await pumpCard(
-      tester,
-      theme: LightTheme.data,
-      locale: const Locale('en'),
-      textScale: 1.3,
-    );
+    await pumpCard(tester, theme: LightTheme.data, locale: const Locale('en'), textScale: 1.3);
 
     expect(find.byType(WarehouseCard), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
@@ -160,4 +150,66 @@ void main() {
     // the shipping glyph, which is what a not-yet-branded warehouse shows.
     expect(find.byIcon(Icons.local_shipping_outlined), findsOneWidget);
   });
+  for (final width in [320.0, 360.0, 390.0, 768.0, 1024.0]) {
+    for (final scale in [1.0, 2.0]) {
+      testWidgets('real Arabic grid at width $width and text $scale', (tester) async {
+        tester.view.physicalSize = Size(width, 1200);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: const Locale('ar'),
+            theme: LightTheme.data,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: MediaQuery(
+              data: MediaQueryData(size: Size(width, 1200), textScaler: TextScaler.linear(scale)),
+              child: Scaffold(
+                body: RepaintBoundary(
+                  key: const ValueKey('capture'),
+                  child: CustomScrollView(
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.all(20),
+                        sliver: SliverRowGrid(
+                          maxCrossAxisExtent: scale > 1.3 && width < 600 ? width : 210,
+                          cellAspectRatio: scale > 1.3 ? null : 1,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          itemCount: 4,
+                          itemBuilder: (context, index) => WarehouseCard(
+                            warehouse: warehouse(name: index == 3 ? 'مستودع النور الطبي للتوزيع' : 'النجاح'),
+                            onSelect: () {},
+                            onViewProfile: () {},
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        final first = tester.getSize(find.byType(WarehouseCard).first);
+        if (scale == 1 && width >= 360) expect(first.height, closeTo(first.width, 1));
+        for (final button in find.byType(OutlinedButton).evaluate()) {
+          expect(tester.getSize(find.byWidget(button.widget)).height, greaterThanOrEqualTo(48));
+        }
+        final captureDir = Platform.environment['FENIQ_CAPTURE_DIR'];
+        if (captureDir != null) {
+          final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(const ValueKey('capture')));
+          await tester.runAsync(() async {
+            final picture = await boundary.toImage(pixelRatio: 1);
+            final bytes = await picture.toByteData(format: ui.ImageByteFormat.png);
+            await Directory(captureDir).create(recursive: true);
+            await File('$captureDir/warehouses-$width-$scale.png').writeAsBytes(bytes!.buffer.asUint8List());
+            picture.dispose();
+          });
+        }
+      });
+    }
+  }
 }

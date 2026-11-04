@@ -10,7 +10,8 @@ const Warehouse = require('../models/warehouse.model');
 const RepAssignment = require('../models/repAssignment.model');
 const Rep = require('../models/rep.model');
 const { feniqRateFor, splitRepCommission } = require('../utils/repCommission');
-const { loyaltyDiscountFor, activeLoyaltyTiers } = require('../utils/loyalty');
+const { loyaltyDiscountFor } = require('../utils/loyalty');
+const { effectiveLoyaltyTiers, effectiveMonthlyLoyalty } = require('./warehouseSubscription.service');
 const pharmacyCredit = require('./pharmacyCredit.service');
 const Counter = require('../models/counter.model');
 const Return = require('../models/return.model');
@@ -730,7 +731,8 @@ async function createOrder({
     ? await Rep.findById(repAssignment.repId).select('commissionRate warehouseShareToRep').lean()
     : null;
   const repCommissionRate = rep?.commissionRate ?? 0;
-  const loyaltyTiers = activeLoyaltyTiers(warehouse);
+  const loyaltyTiers = await effectiveLoyaltyTiers(warehouse);
+  const monthlyLoyalty = await effectiveMonthlyLoyalty(warehouse);
   // The pharmacy's credit here, taken off this order automatically. Read now
   // and taken for real inside the transaction (a conditional decrement - see
   // pharmacyCredit.service.js), so a concurrent order can never overdraw it.
@@ -1049,6 +1051,7 @@ async function createOrder({
     const claimedCode = codeDoc
       ? await discountCodes.claimUse({ codeDoc, pharmacyId, now }, session)
       : null;
+    const deliveryEstimate = await require('./deliverySchedule.service').estimate(pharmacyId, warehouseId, new Date(), { session, lock: true });
     const orderNumber = await nextOrderNumber(session);
 
     const [created] = await Order.create(
@@ -1060,6 +1063,8 @@ async function createOrder({
           repId: repAssignment ? repAssignment.repId : null,
           repCommission,
           loyaltyDiscountAmount,
+          monthlyLoyalty,
+          deliveryEstimate,
           loyaltyTiers: loyaltyTiers.length > 0 ? loyaltyTiers : undefined,
           creditUsedSyp,
           status: 'pending',
@@ -1262,18 +1267,21 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
   });
 
   const creditBalanceSyp = await pharmacyCredit.balanceFor(pharmacyId, warehouseId);
+  const monthlyTerms = await effectiveMonthlyLoyalty(warehouse);
+  const monthlyState = monthlyTerms ? await require('./monthlyLoyalty.service').stateFor(pharmacyId, warehouseId, now, monthlyTerms.tiers) : null;
   const rolled = rollUpOrderMoney({
     subtotalSyp: totalPrice,
     advertisementDiscountSypAmount: advertisementDiscountAmount,
     discountRate: warehouse?.discountRate ?? 0,
     commissionRate: warehouse?.commissionRate ?? 0,
-    loyaltyTiers: activeLoyaltyTiers(warehouse),
+    loyaltyTiers: await effectiveLoyaltyTiers(warehouse),
     creditAvailableSyp: creditBalanceSyp,
     discountCodeTerms: codeDoc ? discountCodes.termsOf(codeDoc) : null,
   });
 
   return {
     // All null on a cart quoted without a code.
+    deliveryEstimate: await require('./deliverySchedule.service').estimate(pharmacyId, warehouseId, now),
     code: codeDoc?.code ?? null,
     type: codeDoc?.type ?? null,
     value: codeDoc?.value ?? null,
@@ -1287,6 +1295,7 @@ async function quoteOrder({ pharmacyId, warehouseId, items, packages = null, dis
     // pharmacy's credit at this warehouse with the part this order takes.
     loyaltyDiscountSyp: rolled.loyaltyDiscountAmount,
     creditBalanceSyp,
+    monthlyLoyalty: monthlyState,
     creditUsedSyp: rolled.creditUsedSyp,
     preCodeSyp: rolled.preCodeSyp,
     discountSyp: rolled.discountCodeSyp,

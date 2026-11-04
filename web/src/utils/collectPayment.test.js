@@ -8,6 +8,13 @@ describe('parseWholeLiras', () => {
     expect(parseWholeLiras('١٥٠،٠٠٠')).toBe(150000);
     expect(parseWholeLiras(' 1 500 ')).toBe(1500);
   });
+  it('does not silently turn a decimal/grouping typo into another payment', () => {
+    expect(parseWholeLiras('10,5')).toBeNull();
+    expect(parseWholeLiras('١٠٫٥')).toBeNull();
+    expect(parseWholeLiras('0,500')).toBeNull();
+    expect(parseWholeLiras('9,007,199,254,740,992')).toBeNull();
+    expect(parseWholeLiras('۱۵۰٬۰۰۰')).toBe(150000);
+  });
   it('is null for anything that is not a whole number', () => {
     expect(parseWholeLiras('')).toBeNull();
     expect(parseWholeLiras('abc')).toBeNull();

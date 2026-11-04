@@ -64,8 +64,9 @@ class FailureWidget extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: (dense ? context.textTheme.bodyMedium : context.textTheme.titleMedium)
-                    ?.copyWith(color: AppColors.textOf(context)),
+                style: (dense ? context.textTheme.bodyMedium : context.textTheme.titleMedium)?.copyWith(
+                  color: AppColors.textOf(context),
+                ),
               ),
               if (onRetry != null) ...[
                 SizedBox(height: dense ? AppSizes.spacingMedium : AppSizes.spacingLarge),
@@ -74,7 +75,7 @@ class FailureWidget extends StatelessWidget {
                   icon: const Icon(Icons.refresh, size: AppSizes.iconSizeSmall),
                   label: Text(l10n.retryButton),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primaryOf(context),
+                    foregroundColor: AppColors.primaryTextOf(context),
                     side: BorderSide(color: AppColors.borderOf(context)),
                     shape: const RoundedRectangleBorder(borderRadius: AppRadius.medium),
                     padding: const EdgeInsets.symmetric(

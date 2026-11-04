@@ -3,18 +3,22 @@
 // a field the server leaves out reads as null/0, so an older or newer server
 // never crashes a screen.
 
-DateTime? _date(Object? value) => value is String ? DateTime.tryParse(value)?.toLocal() : null;
+DateTime? _date(Object? value) =>
+    value is String ? DateTime.tryParse(value)?.toLocal() : null;
 
 int _int(Object? value) => value is num ? value.toInt() : 0;
 
 double _double(Object? value) => value is num ? value.toDouble() : 0;
 
-String _str(Object? value) => value is String ? value : (value?.toString() ?? '');
+String _str(Object? value) =>
+    value is String ? value : (value?.toString() ?? '');
 
-String? _strOrNull(Object? value) => value is String && value.isNotEmpty ? value : null;
+String? _strOrNull(Object? value) =>
+    value is String && value.isNotEmpty ? value : null;
 
-List<Map<String, dynamic>> _maps(Object? value) =>
-    value is List ? value.whereType<Map>().map(Map<String, dynamic>.from).toList() : const [];
+List<Map<String, dynamic>> _maps(Object? value) => value is List
+    ? value.whereType<Map>().map(Map<String, dynamic>.from).toList()
+    : const [];
 
 /// The warehouse's three stages: accept -> on the way -> delivered (the
 /// warehouse marks it when it collects; 24 hours on the way close it too, with
@@ -63,15 +67,16 @@ class WarehouseOrderPharmacy {
   final String? city;
   final String? phone;
 
-  factory WarehouseOrderPharmacy.fromJson(Map<String, dynamic> json) => WarehouseOrderPharmacy(
-    id: _str(json['id']),
-    nameAr: _str(json['nameAr']),
-    nameEn: _str(json['nameEn']),
-    ownerName: _strOrNull(json['ownerName']),
-    address: _strOrNull(json['address']),
-    city: _strOrNull(json['city']),
-    phone: _strOrNull(json['phone']),
-  );
+  factory WarehouseOrderPharmacy.fromJson(Map<String, dynamic> json) =>
+      WarehouseOrderPharmacy(
+        id: _str(json['id']),
+        nameAr: _str(json['nameAr']),
+        nameEn: _str(json['nameEn']),
+        ownerName: _strOrNull(json['ownerName']),
+        address: _strOrNull(json['address']),
+        city: _strOrNull(json['city']),
+        phone: _strOrNull(json['phone']),
+      );
 }
 
 class WarehouseOrderItem {
@@ -109,19 +114,20 @@ class WarehouseOrderItem {
 
   double get lineTotal => discountPrice * quantity;
 
-  factory WarehouseOrderItem.fromJson(Map<String, dynamic> json) => WarehouseOrderItem(
-    id: _str(json['id']),
-    productId: _strOrNull(json['productId']),
-    productNameAr: _str(json['productNameAr']),
-    productNameEn: _strOrNull(json['productNameEn']),
-    manufacturerAr: _strOrNull(json['manufacturerAr']),
-    manufacturerEn: _strOrNull(json['manufacturerEn']),
-    quantity: _int(json['quantity']),
-    unitPrice: _double(json['unitPrice']),
-    discountPrice: _double(json['discountPrice']),
-    freeQuantity: _int(json['freeQuantity']),
-    packageGroupId: _strOrNull(json['packageGroupId']),
-  );
+  factory WarehouseOrderItem.fromJson(Map<String, dynamic> json) =>
+      WarehouseOrderItem(
+        id: _str(json['id']),
+        productId: _strOrNull(json['productId']),
+        productNameAr: _str(json['productNameAr']),
+        productNameEn: _strOrNull(json['productNameEn']),
+        manufacturerAr: _strOrNull(json['manufacturerAr']),
+        manufacturerEn: _strOrNull(json['manufacturerEn']),
+        quantity: _int(json['quantity']),
+        unitPrice: _double(json['unitPrice']),
+        discountPrice: _double(json['discountPrice']),
+        freeQuantity: _int(json['freeQuantity']),
+        packageGroupId: _strOrNull(json['packageGroupId']),
+      );
 }
 
 /// One row of the orders list.
@@ -146,7 +152,11 @@ class WarehouseOrderSummary {
   final String? notes;
   final DateTime? createdAt;
 
-  WarehouseOrderSummary copyWith({String? status, double? finalPrice, int? itemCount}) => WarehouseOrderSummary(
+  WarehouseOrderSummary copyWith({
+    String? status,
+    double? finalPrice,
+    int? itemCount,
+  }) => WarehouseOrderSummary(
     id: id,
     orderNumber: orderNumber,
     status: status ?? this.status,
@@ -165,7 +175,9 @@ class WarehouseOrderSummary {
       status: _str(json['status']),
       finalPrice: _double(json['finalPrice']),
       itemCount: _maps(json['items']).length,
-      pharmacy: pharmacy is Map<String, dynamic> ? WarehouseOrderPharmacy.fromJson(pharmacy) : null,
+      pharmacy: pharmacy is Map<String, dynamic>
+          ? WarehouseOrderPharmacy.fromJson(pharmacy)
+          : null,
       notes: _strOrNull(json['notes']),
       createdAt: _date(json['createdAt']),
     );
@@ -173,7 +185,11 @@ class WarehouseOrderSummary {
 }
 
 class WarehouseOrdersPage {
-  const WarehouseOrdersPage({required this.orders, this.hasMore = false, this.nextCursor});
+  const WarehouseOrdersPage({
+    required this.orders,
+    this.hasMore = false,
+    this.nextCursor,
+  });
 
   final List<WarehouseOrderSummary> orders;
   final bool hasMore;
@@ -183,7 +199,9 @@ class WarehouseOrdersPage {
     final pagination = json['pagination'];
     final cursor = pagination is Map ? pagination['nextCursor'] : null;
     return WarehouseOrdersPage(
-      orders: _maps(json['orders']).map(WarehouseOrderSummary.fromJson).toList(),
+      orders: _maps(
+        json['orders'],
+      ).map(WarehouseOrderSummary.fromJson).toList(),
       hasMore: pagination is Map && pagination['hasMore'] == true,
       nextCursor: cursor?.toString(),
     );
@@ -211,33 +229,45 @@ class WarehouseRepCommission {
   final double pharmacyAmount;
   final bool warehouseShareToRep;
 
-  factory WarehouseRepCommission.fromJson(Map<String, dynamic> json) => WarehouseRepCommission(
-    rate: _double(json['rate']),
-    repAmount: _double(json['repAmount']),
-    feniqAmount: _double(json['feniqAmount']),
-    savingAmount: _double(json['savingAmount']),
-    pharmacyAmount: _double(json['pharmacyAmount']),
-    warehouseShareToRep: json['warehouseShareToRep'] == true,
-  );
+  factory WarehouseRepCommission.fromJson(Map<String, dynamic> json) =>
+      WarehouseRepCommission(
+        rate: _double(json['rate']),
+        repAmount: _double(json['repAmount']),
+        feniqAmount: _double(json['feniqAmount']),
+        savingAmount: _double(json['savingAmount']),
+        pharmacyAmount: _double(json['pharmacyAmount']),
+        warehouseShareToRep: json['warehouseShareToRep'] == true,
+      );
 }
 
 class WarehouseOrderHistoryEntry {
-  const WarehouseOrderHistoryEntry({required this.status, this.changedAt, this.note});
+  const WarehouseOrderHistoryEntry({
+    required this.status,
+    this.changedAt,
+    this.note,
+  });
 
   final String status;
   final DateTime? changedAt;
   final String? note;
 
-  factory WarehouseOrderHistoryEntry.fromJson(Map<String, dynamic> json) => WarehouseOrderHistoryEntry(
-    status: _str(json['status']),
-    changedAt: _date(json['changedAt']),
-    note: _strOrNull(json['note']),
-  );
+  factory WarehouseOrderHistoryEntry.fromJson(Map<String, dynamic> json) =>
+      WarehouseOrderHistoryEntry(
+        status: _str(json['status']),
+        changedAt: _date(json['changedAt']),
+        note: _strOrNull(json['note']),
+      );
 }
 
 /// A package deal on the order: its lines are edited on the panel.
 class WarehouseOrderPackage {
-  const WarehouseOrderPackage({required this.id, required this.copies, this.titleAr, this.titleEn, this.totalPriceSyp = 0});
+  const WarehouseOrderPackage({
+    required this.id,
+    required this.copies,
+    this.titleAr,
+    this.titleEn,
+    this.totalPriceSyp = 0,
+  });
 
   final String id;
   final int copies;
@@ -245,13 +275,14 @@ class WarehouseOrderPackage {
   final String? titleEn;
   final double totalPriceSyp;
 
-  factory WarehouseOrderPackage.fromJson(Map<String, dynamic> json) => WarehouseOrderPackage(
-    id: _str(json['id']),
-    copies: _int(json['copies']),
-    titleAr: _strOrNull(json['titleAr']),
-    titleEn: _strOrNull(json['titleEn']),
-    totalPriceSyp: _double(json['totalPriceSyp']),
-  );
+  factory WarehouseOrderPackage.fromJson(Map<String, dynamic> json) =>
+      WarehouseOrderPackage(
+        id: _str(json['id']),
+        copies: _int(json['copies']),
+        titleAr: _strOrNull(json['titleAr']),
+        titleEn: _strOrNull(json['titleEn']),
+        totalPriceSyp: _double(json['totalPriceSyp']),
+      );
 }
 
 class WarehouseOrderDetail {
@@ -273,6 +304,7 @@ class WarehouseOrderDetail {
     this.creditUsedSyp = 0,
     this.packages = const [],
     this.statusHistory = const [],
+    this.deliveryEstimate,
     this.notes,
     this.cancelReason,
     this.createdAt,
@@ -302,6 +334,7 @@ class WarehouseOrderDetail {
   final double creditUsedSyp;
   final List<WarehouseOrderPackage> packages;
   final List<WarehouseOrderHistoryEntry> statusHistory;
+  final Map<String, dynamic>? deliveryEstimate;
   final String? notes;
   final String? cancelReason;
   final DateTime? createdAt;
@@ -316,9 +349,14 @@ class WarehouseOrderDetail {
   /// On the way, and the pharmacy has not attached the seal photo the order
   /// asks for yet: the server refuses "delivered" until it does.
   bool get isWaitingForSealPhoto =>
-      status == 'out_for_delivery' && requiresDeliverySealPhoto && deliverySealPhoto == null;
+      status == 'out_for_delivery' &&
+      requiresDeliverySealPhoto &&
+      deliverySealPhoto == null;
 
-  WarehouseOrderDetail withStatus(String status, List<WarehouseOrderHistoryEntry> history) => WarehouseOrderDetail(
+  WarehouseOrderDetail withStatus(
+    String status,
+    List<WarehouseOrderHistoryEntry> history,
+  ) => WarehouseOrderDetail(
     id: id,
     orderNumber: orderNumber,
     status: status,
@@ -336,6 +374,7 @@ class WarehouseOrderDetail {
     creditUsedSyp: creditUsedSyp,
     packages: packages,
     statusHistory: history.isEmpty ? statusHistory : history,
+    deliveryEstimate: deliveryEstimate,
     notes: notes,
     cancelReason: cancelReason,
     createdAt: createdAt,
@@ -345,7 +384,9 @@ class WarehouseOrderDetail {
   );
 
   factory WarehouseOrderDetail.fromJson(Map<String, dynamic> json) {
-    final order = json['order'] is Map<String, dynamic> ? json['order'] as Map<String, dynamic> : json;
+    final order = json['order'] is Map<String, dynamic>
+        ? json['order'] as Map<String, dynamic>
+        : json;
     final pharmacy = order['pharmacy'];
     final rep = order['repCommission'];
     return WarehouseOrderDetail(
@@ -353,19 +394,31 @@ class WarehouseOrderDetail {
       orderNumber: _int(order['orderNumber']),
       status: _str(order['status']),
       items: _maps(order['items']).map(WarehouseOrderItem.fromJson).toList(),
-      pharmacy: pharmacy is Map<String, dynamic> ? WarehouseOrderPharmacy.fromJson(pharmacy) : null,
+      pharmacy: pharmacy is Map<String, dynamic>
+          ? WarehouseOrderPharmacy.fromJson(pharmacy)
+          : null,
       totalPrice: _double(order['totalPrice']),
       discountAmount: _double(order['discountAmount']),
-      advertisementDiscountAmount: _double(order['advertisementDiscountAmount']),
+      advertisementDiscountAmount: _double(
+        order['advertisementDiscountAmount'],
+      ),
       commissionAmount: _double(order['commissionAmount']),
       platformCompensationSyp: _double(order['platformCompensationSyp']),
       finalPrice: _double(order['finalPrice']),
       warehouseNetSyp: _double(order['warehouseNetSyp']),
-      repCommission: rep is Map<String, dynamic> ? WarehouseRepCommission.fromJson(rep) : null,
+      repCommission: rep is Map<String, dynamic>
+          ? WarehouseRepCommission.fromJson(rep)
+          : null,
       loyaltyDiscountAmount: _double(order['loyaltyDiscountAmount']),
       creditUsedSyp: _double(order['creditUsedSyp']),
-      packages: _maps(order['packageGroups']).map(WarehouseOrderPackage.fromJson).toList(),
-      statusHistory: _maps(order['statusHistory']).map(WarehouseOrderHistoryEntry.fromJson).toList(),
+      packages: _maps(
+        order['packageGroups'],
+      ).map(WarehouseOrderPackage.fromJson).toList(),
+      statusHistory: _maps(
+        order['statusHistory'],
+      ).map(WarehouseOrderHistoryEntry.fromJson).toList(),
+      deliveryEstimate: (order['deliveryEstimate'] as Map?)
+          ?.cast<String, dynamic>(),
       notes: _strOrNull(order['notes']),
       cancelReason: _strOrNull(order['cancelReason']),
       createdAt: _date(order['createdAt']),
@@ -378,16 +431,23 @@ class WarehouseOrderDetail {
 
 /// The server's answer to one advance: the new status and its history.
 class AdvancedOrderStatus {
-  const AdvancedOrderStatus({required this.status, this.statusHistory = const []});
+  const AdvancedOrderStatus({
+    required this.status,
+    this.statusHistory = const [],
+  });
 
   final String status;
   final List<WarehouseOrderHistoryEntry> statusHistory;
 
   factory AdvancedOrderStatus.fromJson(Map<String, dynamic> json) {
-    final order = json['order'] is Map<String, dynamic> ? json['order'] as Map<String, dynamic> : json;
+    final order = json['order'] is Map<String, dynamic>
+        ? json['order'] as Map<String, dynamic>
+        : json;
     return AdvancedOrderStatus(
       status: _str(order['status']),
-      statusHistory: _maps(order['statusHistory']).map(WarehouseOrderHistoryEntry.fromJson).toList(),
+      statusHistory: _maps(
+        order['statusHistory'],
+      ).map(WarehouseOrderHistoryEntry.fromJson).toList(),
     );
   }
 }

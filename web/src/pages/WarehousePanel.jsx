@@ -1,3 +1,5 @@
+import { WarehouseInsightsPage } from './WarehouseInsightsPage';
+import { WarehouseSubscriptionProvider } from '../context/WarehouseSubscriptionContext';
 import { useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +32,7 @@ import { WarehouseSettlementPage } from './WarehouseSettlementPage';
 import { WarehouseImportResultsPage, WarehouseImportsPage } from './WarehouseImportResultsPage';
 import { WarehouseRepsPage } from './WarehouseRepsPage';
 import { WarehouseRepDetailPage } from './WarehouseRepDetailPage';
+import { DeliveryCollectionsNotice, DeliveryCollectionsProvider } from '../components/DeliveryCollections';
 
 // Section 13b: the warehouse side of the shared React panel. Real routes
 // (not component state) - each tab gets its own bookmarkable/refreshable
@@ -43,6 +46,11 @@ import { WarehouseRepDetailPage } from './WarehouseRepDetailPage';
 // utils/warehouseNav.js for the model and WarehouseGroupSubNav for the second
 // row of pills the grouped pages render.
 export function WarehousePanel() {
+  const { user } = useAuth();
+  return <WarehouseSubscriptionProvider key={user.id}><DeliveryCollectionsProvider key={user.id}><WarehousePanelContent /></DeliveryCollectionsProvider></WarehouseSubscriptionProvider>;
+}
+
+function WarehousePanelContent() {
   const { t } = useTranslation();
   const { user, warehouse, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -129,6 +137,7 @@ export function WarehousePanel() {
         </header>
 
         <div className="wh-content">
+          <DeliveryCollectionsNotice />
           <Routes>
             <Route path="/warehouse/orders" element={<WarehouseOrdersPage />} />
             <Route path="/warehouse/orders/:orderId" element={<WarehouseOrderDetailPage />} />
@@ -164,6 +173,7 @@ export function WarehousePanel() {
             ))}
             <Route path="/warehouse/discounts" element={<WarehouseDiscountsPage />} />
             <Route path="/warehouse/discount-codes" element={<WarehouseDiscountCodesPage />} />
+            <Route path="/warehouse/insights" element={<WarehouseInsightsPage />} />
             <Route path="/warehouse/debts" element={<WarehouseDebtsPage />} />
             <Route path="/warehouse/settlement" element={<WarehouseSettlementPage />} />
             <Route path="/warehouse/returns" element={<WarehouseReturnsPage />} />

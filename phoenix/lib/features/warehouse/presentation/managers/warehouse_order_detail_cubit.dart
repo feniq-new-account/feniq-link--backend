@@ -32,9 +32,11 @@ class WarehouseOrderDetailState {
   final String? actionErrorCode;
 
   /// The quantity a line shows while editing.
-  int quantityOf(WarehouseOrderItem item) => draftQuantities[item.id] ?? item.quantity;
+  int quantityOf(WarehouseOrderItem item) =>
+      draftQuantities[item.id] ?? item.quantity;
 
-  bool get hasDraftChanges => draftRemovals.isNotEmpty || draftQuantities.isNotEmpty;
+  bool get hasDraftChanges =>
+      draftRemovals.isNotEmpty || draftQuantities.isNotEmpty;
 
   /// The edit would leave the order with no lines at all - the pharmacy
   /// cancels an order, the warehouse never empties one.
@@ -65,17 +67,23 @@ class WarehouseOrderDetailState {
     draftRemovals: draftRemovals ?? this.draftRemovals,
     errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     errorCode: clearError ? null : (errorCode ?? this.errorCode),
-    actionErrorMessage: clearActionError ? null : (actionErrorMessage ?? this.actionErrorMessage),
-    actionErrorCode: clearActionError ? null : (actionErrorCode ?? this.actionErrorCode),
+    actionErrorMessage: clearActionError
+        ? null
+        : (actionErrorMessage ?? this.actionErrorMessage),
+    actionErrorCode: clearActionError
+        ? null
+        : (actionErrorCode ?? this.actionErrorCode),
   );
 }
 
 /// One order on the warehouse's phone: read it, move it on, or correct its
 /// items before approving it.
 class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {
-  WarehouseOrderDetailCubit({required WarehouseOrdersRepository repository, required this.orderId})
-    : _repository = repository,
-      super(const WarehouseOrderDetailState());
+  WarehouseOrderDetailCubit({
+    required WarehouseOrdersRepository repository,
+    required this.orderId,
+  }) : _repository = repository,
+       super(const WarehouseOrderDetailState());
 
   final WarehouseOrdersRepository _repository;
   final String orderId;
@@ -88,34 +96,71 @@ class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {
       emit(state.copyWith(status: RepLoadStatus.loaded, order: order));
     } on Failure catch (f) {
       if (isClosed) return;
-      emit(state.copyWith(status: RepLoadStatus.error, errorMessage: f.errMessage, errorCode: f.code));
+      emit(
+        state.copyWith(
+          status: RepLoadStatus.error,
+          errorMessage: f.errMessage,
+          errorCode: f.code,
+        ),
+      );
     }
   }
 
   /// Approve & send, or mark delivered. True when the server took it.
   Future<bool> advance() async {
     final order = state.order;
-    if (order == null || state.isActing || order.nextStatus == null) return false;
+    if (order == null || state.isActing || order.nextStatus == null) {
+      return false;
+    }
     emit(state.copyWith(isActing: true, clearActionError: true));
     try {
-      final result = await _repository.advance(orderId);
+      final result = await _repository.advance(
+        orderId,
+        expectedStatus: order.status,
+        targetStatus: order.nextStatus,
+      );
       if (isClosed) return true;
-      emit(state.copyWith(isActing: false, order: order.withStatus(result.status, result.statusHistory)));
+      emit(
+        state.copyWith(
+          isActing: false,
+          order: order.withStatus(result.status, result.statusHistory),
+        ),
+      );
       return true;
     } on Failure catch (f) {
       if (isClosed) return false;
-      emit(state.copyWith(isActing: false, actionErrorMessage: f.errMessage, actionErrorCode: f.code));
+      emit(
+        state.copyWith(
+          isActing: false,
+          actionErrorMessage: f.errMessage,
+          actionErrorCode: f.code,
+        ),
+      );
       return false;
     }
   }
 
   void startEditing() {
     if (state.order?.isEditable != true) return;
-    emit(state.copyWith(isEditing: true, draftQuantities: const {}, draftRemovals: const {}, clearActionError: true));
+    emit(
+      state.copyWith(
+        isEditing: true,
+        draftQuantities: const {},
+        draftRemovals: const {},
+        clearActionError: true,
+      ),
+    );
   }
 
   void cancelEditing() {
-    emit(state.copyWith(isEditing: false, draftQuantities: const {}, draftRemovals: const {}, clearActionError: true));
+    emit(
+      state.copyWith(
+        isEditing: false,
+        draftQuantities: const {},
+        draftRemovals: const {},
+        clearActionError: true,
+      ),
+    );
   }
 
   void setQuantity(WarehouseOrderItem item, int quantity) {
@@ -160,7 +205,13 @@ class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {
       return true;
     } on Failure catch (f) {
       if (isClosed) return false;
-      emit(state.copyWith(isActing: false, actionErrorMessage: f.errMessage, actionErrorCode: f.code));
+      emit(
+        state.copyWith(
+          isActing: false,
+          actionErrorMessage: f.errMessage,
+          actionErrorCode: f.code,
+        ),
+      );
       return false;
     }
   }

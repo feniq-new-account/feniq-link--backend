@@ -7,6 +7,7 @@ class UserModel {
     required this.status,
     required this.lang,
     this.mustChangePassword = false,
+    this.warehouseRole = 'legacy',
   });
 
   final String id;
@@ -15,6 +16,7 @@ class UserModel {
   final String role;
   final String status;
   final String lang;
+  final String warehouseRole;
 
   // Set by the server after an admin reset: the user signed in with a
   // temporary password the admin chose, and must replace it before anything
@@ -30,6 +32,7 @@ class UserModel {
     status: json['status'] as String,
     lang: json['lang'] as String,
     mustChangePassword: json['mustChangePassword'] == true,
+    warehouseRole: json['warehouseRole'] as String? ?? 'legacy',
   );
 
   /// A warehouse's field sales rep: signs in to the same app but lands on the

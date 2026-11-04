@@ -1,3 +1,4 @@
+const monthlyLoyalty = require('./monthlyLoyalty.service');
 const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const Return = require('../models/return.model');
@@ -158,15 +159,24 @@ async function previewReturnCredit(returnId, warehouseId) {
 async function approveReturn(returnId, warehouseId, userId) {
   const returnRequest = await loadPendingReturnOrThrow(returnId, warehouseId);
 
-  const valuation = await valueReturn(returnRequest);
   // Resolved before the transaction opens - see ledger.service.js on upserts
   // and lazy index builds inside transactions.
   const account = await ledger.resolveAccount(returnRequest.pharmacyId, warehouseId);
   const now = new Date();
 
   const result = await runInTransaction(async (session) => {
+    // Both the editable items and their valuation come from this transaction's
+    // snapshot. A concurrent edit/delete makes the claim conflict and retry;
+    // no value from an earlier attempt can leak into the eventual credit.
+    const current = await Return.findOne({
+      _id: returnRequest._id, warehouseId, status: 'pending',
+    }).session(session);
+    if (!current) {
+      throw ApiError.conflict('This return has already been decided or deleted.', 'RETURN_ALREADY_RESOLVED');
+    }
+    const valuation = await valueReturn(current, session);
     const claimed = await Return.findOneAndUpdate(
-      { _id: returnRequest._id, warehouseId, status: 'pending' },
+      { _id: current._id, warehouseId, status: 'pending', __v: current.__v ?? null },
       {
         $set: {
           status: 'approved',
@@ -176,6 +186,7 @@ async function approveReturn(returnId, warehouseId, userId) {
           creditUsd: valuation.creditUsd,
           creditValuation: valuation.breakdown,
         },
+        $inc: { __v: 1 },
       },
       { new: true, session }
     );
@@ -210,6 +221,7 @@ async function approveReturn(returnId, warehouseId, userId) {
     // Saved on the document itself rather than through a separate updateOne,
     // so the object handed back to the caller carries the link too - a bare
     // updateOne would leave `claimed` stale in memory.
+    await monthlyLoyalty.reverseForReturn(claimed, valuation.creditSyp, session);
     claimed.creditEntryId = entry._id;
     await claimed.save({ session });
 
@@ -273,8 +285,11 @@ async function rejectReturn(returnId, warehouseId, userId, rejectionNote) {
   // Same compare-and-swap as approval: a rejection racing an approval must not
   // be able to overwrite a decision that has already moved money.
   const claimed = await Return.findOneAndUpdate(
-    { _id: returnRequest._id, warehouseId, status: 'pending' },
-    { $set: { status: 'rejected', rejectionNote: trimmedNote, resolvedBy: userId, resolvedAt: now } },
+    { _id: returnRequest._id, warehouseId, status: 'pending', __v: returnRequest.__v ?? null },
+    {
+      $set: { status: 'rejected', rejectionNote: trimmedNote, resolvedBy: userId, resolvedAt: now },
+      $inc: { __v: 1 },
+    },
     { new: true }
   );
   if (!claimed) {

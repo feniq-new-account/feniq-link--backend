@@ -1,5 +1,6 @@
+import 'dart:math' as math;
+import '../utils/number_input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
@@ -16,7 +17,7 @@ import 'package:feniq/core/extensions/build_context_extensions.dart';
 // for its "remove this item?" confirmation - otherwise the value just snaps
 // back to [minQuantity].
 //
-// Plain [Row] layout, so it mirrors correctly under RTL with no manual
+// Adaptive controls mirror correctly under RTL with no manual
 // handling, and every colour comes from AppColors.*Of(context) for light/dark.
 class QuantityStepper extends StatefulWidget {
   const QuantityStepper({
@@ -49,7 +50,7 @@ class QuantityStepper extends StatefulWidget {
   final String? incrementTooltip;
 
   // Slightly tighter sizing for dense spots like a grid product card. The +/−
-  // tap targets stay at least 44 logical px square either way.
+  // tap targets stay at least 48 logical px square either way.
   final bool compact;
 
   @override
@@ -91,9 +92,14 @@ class _QuantityStepperState extends State<QuantityStepper> {
   }
 
   // Called when the field loses focus / the keyboard's "done" is pressed. The
-  // digits-only formatter means the text is always either digits or empty.
+  // Invalid pasted content stays invalid instead of becoming another quantity.
   void _commitTyped() {
-    final parsed = int.tryParse(_controller.text.trim());
+    final raw = _controller.text.trim();
+    final parsed = int.tryParse(raw);
+    if ((raw.isNotEmpty && parsed == null) || (parsed != null && parsed < 0)) {
+      _controller.text = '${widget.quantity}';
+      return;
+    }
 
     // Empty, or a number below the floor (0): the cart reads this as "remove
     // this line" (its onBelowMin opens the confirmation), the pre-add sheet
@@ -131,10 +137,11 @@ class _QuantityStepperState extends State<QuantityStepper> {
 
   @override
   Widget build(BuildContext context) {
-    final double buttonSize = widget.compact ? 44 : 48;
+    final double buttonSize = 48;
     final canDecrement = widget.onBelowMin != null || widget.quantity > widget.minQuantity;
-    final textStyle = (widget.compact ? context.textTheme.titleSmall : context.textTheme.titleMedium)
-        ?.copyWith(fontWeight: FontWeight.w700);
+    final textStyle = (widget.compact ? context.textTheme.titleSmall : context.textTheme.titleMedium)?.copyWith(
+      fontWeight: FontWeight.w700,
+    );
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -142,8 +149,8 @@ class _QuantityStepperState extends State<QuantityStepper> {
         borderRadius: AppRadius.small,
         border: Border.all(color: AppColors.borderOf(context)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: OverflowBar(
+        overflowAlignment: OverflowBarAlignment.center,
         children: [
           _StepButton(
             icon: Icons.remove,
@@ -152,19 +159,23 @@ class _QuantityStepperState extends State<QuantityStepper> {
             onPressed: canDecrement ? () => _step(-1) : null,
           ),
           SizedBox(
-            width: widget.compact ? 34 : 44,
+            width: math.max(
+              widget.compact ? 34.0 : 44.0,
+              MediaQuery.textScalerOf(context).scale((textStyle?.fontSize ?? 16) * 0.62) * widget.maxDigits,
+            ),
             child: TextField(
               controller: _controller,
               focusNode: _focusNode,
               textAlign: TextAlign.center,
+              textDirection: TextDirection.ltr,
               keyboardType: const TextInputType.numberWithOptions(),
               textInputAction: TextInputAction.done,
               onChanged: widget.liveUpdate ? _onTextChanged : null,
               onSubmitted: (_) => _focusNode.unfocus(),
               onTapOutside: (_) => _focusNode.unfocus(),
               inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(widget.maxDigits),
+                const WesternDigitsFormatter(),
+                RejectOverlongInputFormatter(widget.maxDigits),
               ],
               style: textStyle,
               decoration: const InputDecoration(
@@ -176,12 +187,7 @@ class _QuantityStepperState extends State<QuantityStepper> {
               ),
             ),
           ),
-          _StepButton(
-            icon: Icons.add,
-            size: buttonSize,
-            tooltip: widget.incrementTooltip,
-            onPressed: () => _step(1),
-          ),
+          _StepButton(icon: Icons.add, size: buttonSize, tooltip: widget.incrementTooltip, onPressed: () => _step(1)),
         ],
       ),
     );
@@ -189,12 +195,7 @@ class _QuantityStepperState extends State<QuantityStepper> {
 }
 
 class _StepButton extends StatelessWidget {
-  const _StepButton({
-    required this.icon,
-    required this.size,
-    required this.onPressed,
-    this.tooltip,
-  });
+  const _StepButton({required this.icon, required this.size, required this.onPressed, this.tooltip});
 
   final IconData icon;
   final double size;

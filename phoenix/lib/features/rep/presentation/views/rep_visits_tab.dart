@@ -39,7 +39,8 @@ class _RepVisitsTabState extends State<RepVisitsTab> {
     if (!_controller.hasClients) return;
     final position = _controller.position;
     if (position.pixels >= position.maxScrollExtent - 240) {
-      context.read<RepVisitsCubit>().loadMore();
+      final cubit = context.read<RepVisitsCubit>();
+      if (!cubit.state.loadMoreError) cubit.loadMore();
     }
   }
 
@@ -81,20 +82,39 @@ class _RepVisitsTabState extends State<RepVisitsTab> {
               ],
             );
           }
+          final hasError = state.status == RepLoadStatus.error && !state.loadMoreError;
+          final hasNotice = hasError || state.status == RepLoadStatus.loading;
           return ListView.separated(
             controller: _controller,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: AppPadding.screen,
-            itemCount: state.visits.length + (state.isLoadingMore ? 1 : 0),
+            itemCount: state.visits.length + (hasNotice ? 1 : 0) + (state.isLoadingMore || state.loadMoreError ? 1 : 0),
             separatorBuilder: (_, _) => const SizedBox(height: AppSizes.spacingSmall),
             itemBuilder: (context, index) {
-              if (index >= state.visits.length) {
+              if (hasNotice && index == 0) {
+                return hasError
+                    ? FailureWidget(
+                        dense: true,
+                        message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+                        onRetry: () => context.read<RepVisitsCubit>().load(),
+                      )
+                    : const LinearProgressIndicator();
+              }
+              final i = index - (hasNotice ? 1 : 0);
+              if (i >= state.visits.length) {
+                if (state.loadMoreError) {
+                  return FailureWidget(
+                    dense: true,
+                    message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
+                    onRetry: () => context.read<RepVisitsCubit>().loadMore(),
+                  );
+                }
                 return const Padding(
                   padding: EdgeInsets.all(AppSizes.spacingMedium),
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
-              return RepVisitTile(visit: state.visits[index]);
+              return RepVisitTile(visit: state.visits[i]);
             },
           );
         },

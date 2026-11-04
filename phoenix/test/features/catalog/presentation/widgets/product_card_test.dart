@@ -41,8 +41,7 @@ void main() {
   tearDown(() => rateCubit.close());
 
   Future<void> loadRate(double usdToSyp) async {
-    when(() => rateRepository.getExchangeRate())
-        .thenAnswer((_) async => ExchangeRateModel(usdToSyp: usdToSyp));
+    when(() => rateRepository.getExchangeRate()).thenAnswer((_) async => ExchangeRateModel(usdToSyp: usdToSyp));
     await rateCubit.load();
   }
 
@@ -262,7 +261,7 @@ void main() {
         expect(find.textContaining('1000 MG'), findsOneWidget);
         expect(find.textContaining('أقراص ملبسة'), findsOneWidget);
         expect(find.text('METFORMIN'), findsOneWidget, reason: 'the strength is no longer folded into the ingredient');
-        expect(find.textContaining('إنتاج 03/2026'), findsOneWidget);
+        expect(find.textContaining('إنتاج 03/2026'), findsNothing);
         expect(find.textContaining('انتهاء 03/2028'), findsOneWidget);
       });
     }

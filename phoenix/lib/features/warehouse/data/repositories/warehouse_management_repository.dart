@@ -1,7 +1,20 @@
+import 'package:feniq/features/warehouse/data/models/warehouse_insights_models.dart';
+import 'package:feniq/core/services/pending_payment_journal.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_management_models.dart';
 
 /// A warehouse account's reps, pharmacy accounts and returns.
 abstract class WarehouseManagementRepository {
+  Future<void> rescheduleDelivery(String orderId, String expectedBusiness, String reason, int revision);
+  Future<Map<String, dynamic>> getDeliverySettings();
+  Future<Map<String, dynamic>> saveDeliverySettings(Map<String, dynamic> settings);
+  Future<List<Map<String, dynamic>>> searchDeliveryPharmacies(String query);
+  Future<Map<String, dynamic>> assignDeliveryPharmacy(String id, String? zoneId, int revision);
+  Future<Map<String, bool>> getInsightAccess();
+  Future<WarehouseInsightsReport> getInsights({String period = 'month', bool force = false});
+  Future<WarehouseFollowUpPage> getFollowUp({required String kind, String? after, bool force = false});
+  Future<FollowUpSettings> updateFollowUp(FollowUpSettings settings);
+  Future<WarehouseAlertsData> getInsightAlerts();
+
   // Reps
   Future<List<WarehouseRep>> getReps();
 
@@ -38,12 +51,21 @@ abstract class WarehouseManagementRepository {
     required String method,
     required String idempotencyKey,
     String? note,
+    String? deliveryOrderId,
   });
+
+  /// Payments with an unconfirmed result, recoverable with their original key.
+  Future<List<PendingPaymentRecord>> getPendingPayments();
 
   // Loyalty discount
   Future<WarehouseLoyalty> getLoyalty();
 
-  Future<WarehouseLoyalty> updateLoyalty({required bool enabled, required List<LoyaltyTier> tiers});
+  Future<WarehouseLoyalty> updateLoyalty({
+    required bool enabled,
+    required List<LoyaltyTier> tiers,
+    String mode = 'per_order',
+    int? revision,
+  });
 
   // Returns
   Future<WarehouseReturnsPage> getReturns({String? status, String? after});

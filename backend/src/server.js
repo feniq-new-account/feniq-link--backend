@@ -16,6 +16,7 @@ const { seedDemoCatalogImages } = require('./services/demoCatalogImages.service'
 const { zeroLegacyPlatformRates } = require('./services/platformRatesPolicy.service');
 const { seedDemoFeatures } = require('./services/demoFeatures.service');
 const { applyDemoBranding } = require('./services/demoBranding.service');
+const { initializeDatabase, markInitialized, shouldSeedDemo } = require('./utils/startupReadiness');
 
 // Audit L-5. Two behaviours branch on NODE_ENV and both get LOOSER when it is
 // not 'production':
@@ -57,35 +58,13 @@ async function start() {
   warnIfProductionLikeButNotProduction();
 
   try {
-    await connectDB();
+    await initializeDatabase({ connectDB, supportsTransactions, ensureFinancialIndexes, ensureDiscountCodeIndexes });
     // eslint-disable-next-line no-console
     console.log('MongoDB connected.');
 
-    // Money-Flow V2 runs every financial write inside a transaction, which
-    // needs a replica set (single-node is fine). Checked once, at boot, so a
-    // misconfigured deployment is obvious immediately rather than at the first
-    // payment. Non-financial routes still work, so this warns rather than
-    // exits - but it warns loudly.
-    if (await supportsTransactions()) {
-      // Built before the first request rather than lazily under one - see
-      // ledger.service.js's ensureFinancialIndexes.
-      await ensureFinancialIndexes();
-      // The discount-code usage counters are written inside the order
-      // transaction too - same reasoning.
-      await ensureDiscountCodeIndexes();
-      startLedgerVerifier();
-    } else {
-      // eslint-disable-next-line no-console
-      console.error(
-        [
-          '',
-          '*** MongoDB is a STANDALONE. Financial operations (delivery, payments,',
-          '*** returns) will fail with REPLICA_SET_REQUIRED until a replica set',
-          '*** is enabled. See backend/docs/LOCAL_SETUP.md.',
-          '',
-        ].join('\n')
-      );
-    }
+    const quarantined = await require('./services/demoQuarantine.service').quarantineDemoCredentials(env.nodeEnv);
+    if (quarantined) console.warn(`Disabled ${quarantined} unchanged demo credential(s) before accepting production traffic.`);
+    startLedgerVerifier();
 
     // The old 4% discount / 1% commission defaults are gone (profit policy in
     // services/platformRatesPolicy.service.js); warehouses made under them are
@@ -109,7 +88,7 @@ async function start() {
       }
     }
 
-    if (process.env.SEED_DEMO_DATA !== 'false') {
+    if (shouldSeedDemo(env.nodeEnv, process.env.SEED_DEMO_DATA)) {
       const admin = await seedDemoAdminIfNone();
       if (admin) {
         // eslint-disable-next-line no-console
@@ -164,9 +143,10 @@ async function start() {
     });
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error('MongoDB connection failed. Starting server anyway (DB-dependent routes will fail).');
+    console.error('Database initialization failed. Refusing to accept requests.');
     // eslint-disable-next-line no-console
-    console.error(err.message);
+    console.error(err.code || err.name || 'STARTUP_FAILED');
+    throw err;
   }
 
   // The Express app is wrapped in an explicit http.Server (instead of
@@ -175,6 +155,7 @@ async function start() {
   // middleware and health check is served exactly as before.
   const server = http.createServer(app);
   initRealtime(server);
+  markInitialized();
 
   server.listen(env.port, () => {
     // eslint-disable-next-line no-console
@@ -217,4 +198,8 @@ function startAutoDelivery() {
   run();
 }
 
-start();
+if (require.main === module) {
+  start().catch(() => process.exit(1));
+}
+
+module.exports = { start };

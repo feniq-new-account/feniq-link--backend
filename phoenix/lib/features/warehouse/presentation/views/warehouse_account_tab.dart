@@ -98,6 +98,11 @@ class WarehouseAccountTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSizes.spacingMedium),
+        CustomCard(onTap: () => context.pushNamed(RouteNames.warehouseDelivery), child: Row(children: [
+          const Icon(Icons.local_shipping_outlined), const SizedBox(width: 12),
+          Expanded(child: Text(l10n.deliveryTitle, style: context.textTheme.titleSmall)), const Icon(Icons.chevron_right),
+        ])),
+        const SizedBox(height: AppSizes.spacingMedium),
         CustomCard(
           onTap: () => context.pushNamed(RouteNames.warehouseLoyalty),
           child: Row(

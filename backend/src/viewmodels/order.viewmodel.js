@@ -5,6 +5,7 @@ const { FEATURES } = require('../config/features');
 function serializeOrder(order) {
   return {
     id: order._id,
+    deliveryEstimate: require('./deliveryEstimate.viewmodel').publicEstimate(order.deliveryEstimate, order.status),
     orderNumber: order.orderNumber,
     status: order.status,
     totalPrice: order.totalPrice,

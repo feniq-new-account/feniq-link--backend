@@ -29,13 +29,11 @@ import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/core/widgets/brand_header_glow.dart';
 import 'package:feniq/core/widgets/full_text.dart';
 import 'package:feniq/core/widgets/sliver_row_grid.dart';
+import 'package:feniq/core/widgets/offline_catalog_readiness.dart';
+import 'package:feniq/core/widgets/startup_location_permission.dart';
 
-// One set of grid metrics for the loaded grid and its loading skeleton, so
-// the placeholder cells land exactly where the cards are about to. The tile
-// height is WarehouseCard's fixed budget - see warehouse_card.dart and the
-// layout test that pins it.
+// Shared loaded/loading geometry; square cards can grow for full names.
 const double _tileMaxWidth = 210;
-const double _tileHeight = 220;
 const double _gridSpacing = AppSizes.spacingMedium - 4;
 
 class WarehouseSelectionView extends StatefulWidget {
@@ -112,10 +110,7 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
     context.pushNamed(
       RouteNames.manufacturers,
       pathParameters: {'warehouseId': banner.warehouseId!},
-      extra: ManufacturersRouteArgs(
-        warehouseName: '',
-        autoFilterManufacturer: banner.manufacturerAr,
-      ),
+      extra: ManufacturersRouteArgs(warehouseName: '', autoFilterManufacturer: banner.manufacturerAr),
     );
   }
 
@@ -124,11 +119,7 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
   void _handleViewProfile(WarehouseModel warehouse) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final name = isArabic ? warehouse.nameAr : warehouse.nameEn;
-    context.pushNamed(
-      RouteNames.warehouseProfile,
-      pathParameters: {'warehouseId': warehouse.id},
-      extra: name,
-    );
+    context.pushNamed(RouteNames.warehouseProfile, pathParameters: {'warehouseId': warehouse.id}, extra: name);
   }
 
   @override
@@ -139,226 +130,186 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
       // No pull-to-refresh: the warehouse list refreshes once a day by
       // itself (DailyRefresh).
       body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              snap: true,
-              elevation: 0,
-              backgroundColor: AppColors.navyOf(context),
-              foregroundColor: Colors.white,
-              toolbarHeight: 68,
-              flexibleSpace: const BrandHeaderGlow(),
-              leading: const Padding(
-                padding: EdgeInsets.all(AppSizes.spacingSmall),
-                child: BrandLogo.mark(height: 32, onDark: true),
-              ),
-              title:
-                  BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
-                    buildWhen: (previous, current) =>
-                        previous.warehouses.length != current.warehouses.length,
-                    builder: (context, state) {
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          FullText(
-                            l10n.warehouseSelectionTitle, minScale: 0.6),
-                          FullText(
-                            l10n.warehousesAvailableSubtitle(
-                              state.warehouses.length,
-                            ),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.normal,
-                              color: Colors.white70,
-                            ), minScale: 0.6),
-                        ],
-                      );
-                    },
-                  ),
-              actions: const [NotificationButton(), CartButton()],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(60),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSizes.spacingMedium,
-                    0,
-                    AppSizes.spacingMedium,
-                    AppSizes.spacingMedium,
-                  ),
-                  child: Container(
-                    height: 46,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.spacingMedium,
+        slivers: [
+          SliverAppBar(
+            floating: true,
+            snap: true,
+            elevation: 0,
+            backgroundColor: AppColors.navyOf(context),
+            foregroundColor: Colors.white,
+            toolbarHeight: 68,
+            flexibleSpace: const BrandHeaderGlow(),
+            leading: const Padding(
+              padding: EdgeInsets.all(AppSizes.spacingSmall),
+              child: BrandLogo.mark(height: 32, onDark: true),
+            ),
+            title: BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
+              buildWhen: (previous, current) => previous.warehouses.length != current.warehouses.length,
+              builder: (context, state) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FullText(l10n.warehouseSelectionTitle, minScale: 0.6),
+                    FullText(
+                      l10n.warehousesAvailableSubtitle(state.warehouses.length),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.white70),
+                      minScale: 0.6,
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.14),
-                      borderRadius: AppRadius.medium,
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.search,
-                          color: Colors.white70,
-                          size: 20,
-                        ),
-                        const SizedBox(width: AppSizes.spacingSmall),
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                            decoration: InputDecoration(
-                              filled: false,
-                              isDense: true,
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              errorBorder: InputBorder.none,
-                              focusedErrorBorder: InputBorder.none,
-                              hintText: l10n.searchWarehouseHint,
-                              hintStyle: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
+                  ],
+                );
+              },
+            ),
+            actions: const [NotificationButton(), CartButton()],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(60),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSizes.spacingMedium,
+                  0,
+                  AppSizes.spacingMedium,
+                  AppSizes.spacingMedium,
+                ),
+                child: Container(
+                  height: 46,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.14),
+                    borderRadius: AppRadius.medium,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, color: Colors.white70, size: 20),
+                      const SizedBox(width: AppSizes.spacingSmall),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          style: const TextStyle(color: Colors.white, fontSize: 14),
+                          decoration: InputDecoration(
+                            filled: false,
+                            isDense: true,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
+                            hintText: l10n.searchWarehouseHint,
+                            hintStyle: const TextStyle(color: Colors.white70, fontSize: 14),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: BannerSlider(onBannerTap: _handleBannerTap),
-            ),
-            // The city scope switch, in the open directly above the grid it
-            // controls. Only rendered once the server has confirmed it can
-            // actually narrow this pharmacy's list (cityScopeAvailable) - see
-            // WarehouseSelectionState.
-            BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
-              buildWhen: (previous, current) =>
-                  previous.cityScopeAvailable != current.cityScopeAvailable ||
-                  previous.onlyMyCity != current.onlyMyCity ||
-                  previous.isChangingScope != current.isChangingScope,
-              builder: (context, state) {
-                if (!state.cityScopeAvailable) {
-                  return const SliverToBoxAdapter(child: SizedBox.shrink());
-                }
-                return SliverToBoxAdapter(
-                  child: WarehouseCityScopeBar(
-                    onlyMyCity: state.onlyMyCity,
-                    isBusy: state.isChangingScope,
-                    onChanged: (onlyMyCity) => context
-                        .read<WarehouseSelectionCubit>()
-                        .setOnlyMyCity(onlyMyCity),
-                  ),
-                );
-              },
-            ),
-            BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
-              builder: (context, state) {
-                switch (state.status) {
-                  case WarehouseListStatus.initial:
-                  case WarehouseListStatus.loading:
-                    // Same grid metrics as the loaded state below - the
-                    // placeholder cells sit exactly where the warehouse
-                    // cards are about to. SkeletonGrid shrink-wraps, so it
-                    // drops into this CustomScrollView as a box adapter
-                    // without needing a sliver of its own.
-                    return SliverToBoxAdapter(
-                      child: SkeletonGrid(
-                        maxCrossAxisExtent: _tileMaxWidth,
-                        mainAxisExtent: _tileHeight,
-                        spacing: _gridSpacing,
-                        itemBuilder: (context, index) =>
-                            const _WarehouseSkeletonCell(),
-                      ),
-                    );
-                  case WarehouseListStatus.error:
+          ),
+          const SliverToBoxAdapter(child: StartupLocationPermission()),
+          SliverToBoxAdapter(child: BannerSlider(onBannerTap: _handleBannerTap)),
+          // The city scope switch, in the open directly above the grid it
+          // controls. Only rendered once the server has confirmed it can
+          // actually narrow this pharmacy's list (cityScopeAvailable) - see
+          // WarehouseSelectionState.
+          BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
+            buildWhen: (previous, current) =>
+                previous.cityScopeAvailable != current.cityScopeAvailable ||
+                previous.onlyMyCity != current.onlyMyCity ||
+                previous.isChangingScope != current.isChangingScope,
+            builder: (context, state) {
+              if (!state.cityScopeAvailable) {
+                return const SliverToBoxAdapter(child: SizedBox.shrink());
+              }
+              return SliverToBoxAdapter(
+                child: WarehouseCityScopeBar(
+                  onlyMyCity: state.onlyMyCity,
+                  isBusy: state.isChangingScope,
+                  onChanged: (onlyMyCity) => context.read<WarehouseSelectionCubit>().setOnlyMyCity(onlyMyCity),
+                ),
+              );
+            },
+          ),
+          BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
+            builder: (context, state) => SliverToBoxAdapter(child: OfflineCatalogReadiness(
+              warehouseIds: state.warehouses.map((w) => w.id).toList(),
+              onRetry: () => context.read<WarehouseSelectionCubit>().retryOfflineCatalogs(),
+            )),
+          ),
+          BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
+            builder: (context, state) {
+              final largeText = MediaQuery.textScalerOf(context).scale(14) > 14 * 1.3;
+              final screenWidth = MediaQuery.sizeOf(context).width;
+              final tileMaxWidth = largeText && screenWidth < 600 ? screenWidth : _tileMaxWidth;
+              switch (state.status) {
+                case WarehouseListStatus.initial:
+                case WarehouseListStatus.loading:
+                  return SliverPadding(
+                    padding: AppPadding.screen,
+                    sliver: SliverRowGrid(
+                      maxCrossAxisExtent: tileMaxWidth,
+                      cellAspectRatio: largeText ? null : 1,
+                      crossAxisSpacing: _gridSpacing,
+                      mainAxisSpacing: _gridSpacing,
+                      itemCount: 6,
+                      itemBuilder: (context, index) => const _WarehouseSkeletonCell(),
+                    ),
+                  );
+                case WarehouseListStatus.error:
+                  return SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: FailureWidget(
+                      message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? l10n.errorState),
+                      onRetry: () => context.read<WarehouseSelectionCubit>().loadWarehouses(),
+                    ),
+                  );
+                case WarehouseListStatus.loaded:
+                  if (state.warehouses.isEmpty) {
+                    // A dead end the pharmacist can walk straight out of:
+                    // when the emptiness is the city filter's doing, the way
+                    // to widen the search is offered right here rather than
+                    // left to be found back up the screen.
+                    if (state.isEmptyInOwnCity) {
+                      return SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _NoWarehousesInCityView(
+                          onViewAllCities: () => context.read<WarehouseSelectionCubit>().setOnlyMyCity(false),
+                        ),
+                      );
+                    }
                     return SliverFillRemaining(
                       hasScrollBody: false,
-                      child: FailureWidget(
-                        message: translateErrorCode(
-                          l10n,
-                          state.errorCode,
-                          state.errorMessage ?? l10n.errorState,
-                        ),
-                        onRetry: () => context
-                            .read<WarehouseSelectionCubit>()
-                            .loadWarehouses(),
-                      ),
+                      child: EmptyView(message: l10n.noWarehousesAvailable, icon: Icons.storefront_outlined),
                     );
-                  case WarehouseListStatus.loaded:
-                    if (state.warehouses.isEmpty) {
-                      // A dead end the pharmacist can walk straight out of:
-                      // when the emptiness is the city filter's doing, the way
-                      // to widen the search is offered right here rather than
-                      // left to be found back up the screen.
-                      if (state.isEmptyInOwnCity) {
-                        return SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: _NoWarehousesInCityView(
-                            onViewAllCities: () => context
-                                .read<WarehouseSelectionCubit>()
-                                .setOnlyMyCity(false),
-                          ),
+                  }
+                  final filtered = _filtered(state.warehouses);
+                  if (filtered.isEmpty) {
+                    return SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: EmptyView(message: l10n.noSearchResultsFound, icon: Icons.search_off_outlined),
+                    );
+                  }
+                  return SliverPadding(
+                    padding: AppPadding.screen,
+                    sliver: SliverRowGrid(
+                      maxCrossAxisExtent: tileMaxWidth,
+                      cellAspectRatio: largeText ? null : 1,
+                      mainAxisSpacing: _gridSpacing,
+                      crossAxisSpacing: _gridSpacing,
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final warehouse = filtered[index];
+                        return WarehouseCard(
+                          warehouse: warehouse,
+                          onSelect: () => _handleSelect(warehouse),
+                          onViewProfile: () => _handleViewProfile(warehouse),
                         );
-                      }
-                      return SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: EmptyView(
-                          message: l10n.noWarehousesAvailable,
-                          icon: Icons.storefront_outlined,
-                        ),
-                      );
-                    }
-                    final filtered = _filtered(state.warehouses);
-                    if (filtered.isEmpty) {
-                      return SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: EmptyView(
-                          message: l10n.noSearchResultsFound,
-                          icon: Icons.search_off_outlined,
-                        ),
-                      );
-                    }
-                    return SliverPadding(
-                      padding: AppPadding.screen,
-                      // Fluid column count (as many as fit at up to ~210px
-                      // each) rather than a fixed 1-vs-2 breakpoint - scales
-                      // smoothly from a phone up through a wide tablet
-                      // instead of jumping straight from 1 to 2 columns at
-                      // 700px.
-                      //
-                      // Tile metrics are shared with the skeleton above - see
-                      // _tileHeight.
-                      sliver: SliverRowGrid(
-                        maxCrossAxisExtent: _tileMaxWidth,
-                        mainAxisSpacing: _gridSpacing,
-                        crossAxisSpacing: _gridSpacing,
-                        // The card's designed height; a long name grows the
-                        // row rather than being cut off.
-                        minRowHeight: _tileHeight,
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final warehouse = filtered[index];
-                          return WarehouseCard(
-                            warehouse: warehouse,
-                            onSelect: () => _handleSelect(warehouse),
-                            onViewProfile: () => _handleViewProfile(warehouse),
-                          );
-                        },
-                      ),
-                    );
-                }
-              },
-            ),
-          ],
-        ),
+                      },
+                    ),
+                  );
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -394,10 +345,7 @@ class _NoWarehousesInCityView extends StatelessWidget {
             // offered, not a form's submit, so it stays a button rather than
             // stretching into a bar across the page.
             constraints: const BoxConstraints(maxWidth: 280),
-            child: PrimaryButton(
-              label: l10n.viewAllCitiesButton,
-              onPressed: onViewAllCities,
-            ),
+            child: PrimaryButton(label: l10n.viewAllCitiesButton, onPressed: onViewAllCities),
           ),
         ),
       ],
@@ -405,54 +353,33 @@ class _NoWarehousesInCityView extends StatelessWidget {
   }
 }
 
-// One warehouse placeholder: the logo banner, a two-line name, the city
-// pill, and the profile / WhatsApp action row pinned to the bottom edge -
-// the WarehouseCard layout with the content taken out.
+// Same compact logo and full-size action targets as the loaded card.
 class _WarehouseSkeletonCell extends StatelessWidget {
   const _WarehouseSkeletonCell();
 
   @override
   Widget build(BuildContext context) {
     return const SkeletonCard(
-      padding: EdgeInsets.zero,
+      padding: EdgeInsets.all(10),
       mainAxisSize: MainAxisSize.max,
       children: [
-        SkeletonBar(height: WarehouseCard.logoHeight, radius: AppRadius.large),
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSizes.spacingSmall + 2,
-            AppSizes.spacingSmall + 2,
-            AppSizes.spacingSmall + 2,
-            0,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SkeletonBar(height: 12),
-              SizedBox(height: AppSizes.spacingXSmall),
-              SkeletonBar(width: 96, height: 12),
-              SizedBox(height: AppSizes.spacingXSmall + 2),
-              SkeletonBar(width: 64, height: 18, radius: AppRadius.full),
-            ],
-          ),
+        Row(
+          children: [
+            SkeletonBar(width: 40, height: 40, radius: AppRadius.small),
+            SizedBox(width: 8),
+            Expanded(child: SkeletonBar(height: 24)),
+          ],
         ),
+        SizedBox(height: 6),
+        SkeletonBar(width: 64, height: 14),
         Spacer(),
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSizes.spacingSmall + 2,
-            AppSizes.spacingSmall,
-            AppSizes.spacingSmall + 2,
-            AppSizes.spacingSmall + 2,
-          ),
-          child: Row(
-            children: [
-              Expanded(child: SkeletonBar(height: 36)),
-              SizedBox(width: AppSizes.spacingSmall),
-              // Rounded square, not a circle - WhatsAppButton's own shape.
-              SkeletonBar(width: 36, height: 36),
-            ],
-          ),
+        SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: SkeletonBar(height: 48)),
+            SizedBox(width: 8),
+            SkeletonBar(width: 48, height: 48),
+          ],
         ),
       ],
     );

@@ -1,5 +1,6 @@
+import 'package:feniq/core/widgets/responsive_role_layout.dart';
+import 'package:feniq/core/utils/number_input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -15,6 +16,7 @@ import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/core/widgets/failure_widget.dart';
 import 'package:feniq/core/widgets/full_text.dart';
 import 'package:feniq/features/debts/presentation/widgets/statement_row_tile.dart';
+import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_load_status.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_management_models.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_accounts_cubit.dart';
@@ -42,7 +44,10 @@ class _WarehouseStatementViewState extends State<WarehouseStatementView> {
     final ok = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => BlocProvider.value(value: cubit, child: _PaymentSheet(pharmacyName: name)),
+      builder: (_) => BlocProvider.value(
+        value: cubit,
+        child: _PaymentSheet(pharmacyName: name),
+      ),
     );
     if (ok == true) {
       _changed = true;
@@ -68,7 +73,9 @@ class _WarehouseStatementViewState extends State<WarehouseStatementView> {
               backgroundColor: AppColors.navyOf(context),
               foregroundColor: Colors.white,
               title: FullText(
-                statement == null ? '' : warehouseLocalName(context, statement.pharmacyNameAr, statement.pharmacyNameEn),
+                statement == null
+                    ? ''
+                    : warehouseLocalName(context, statement.pharmacyNameAr, statement.pharmacyNameEn),
                 minScale: 0.6,
               ),
               actions: [
@@ -84,14 +91,14 @@ class _WarehouseStatementViewState extends State<WarehouseStatementView> {
                   ),
               ],
             ),
-            floatingActionButton: statement == null
+            floatingActionButton: statement == null || context.read<AuthCubit?>()?.state.user?.warehouseRole == 'owner'
                 ? null
                 : FloatingActionButton.extended(
                     onPressed: () => _recordPayment(statement),
                     icon: const Icon(Icons.payments_outlined),
                     label: Text(l10n.warehouseRecordPayment),
                   ),
-            body: _body(context, state),
+            body: ResponsiveRoleBody(child: _body(context, state)),
           ),
         );
       },
@@ -122,7 +129,7 @@ class _WarehouseStatementViewState extends State<WarehouseStatementView> {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         // Room under the last row for the floating button.
-        padding: AppPadding.screen.copyWith(bottom: 96),
+        padding: AppPadding.screen.copyWith(bottom: roleFabClearance(context)),
         children: [
           CustomCard(
             child: Column(
@@ -223,57 +230,65 @@ class _PaymentSheetState extends State<_PaymentSheet> {
         child: Padding(
           padding: AppPadding.screen,
           child: BlocBuilder<WarehouseStatementCubit, WarehouseStatementState>(
-            builder: (context, state) => Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(l10n.warehouseRecordPaymentTitle, style: context.textTheme.titleMedium),
-                Text(widget.pharmacyName, style: context.textTheme.bodyMedium),
-                const SizedBox(height: AppSizes.spacingMedium),
-                TextField(
-                  controller: _amount,
-                  autofocus: true,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-                  decoration: InputDecoration(
-                    labelText: l10n.warehousePaymentAmount(l10n.currencySuffix),
-                    errorText: _amountError,
+            builder: (context, state) => SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l10n.warehouseRecordPaymentTitle, style: context.textTheme.titleMedium),
+                  Text(widget.pharmacyName, style: context.textTheme.bodyMedium),
+                  const SizedBox(height: AppSizes.spacingMedium),
+                  TextField(
+                    controller: _amount,
+                    autofocus: true,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    textDirection: TextDirection.ltr,
+                    inputFormatters: [
+                      const WesternDigitsFormatter(),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: l10n.warehousePaymentAmount(l10n.currencySuffix),
+                      errorText: _amountError,
+                    ),
+                    onChanged: (_) {
+                      if (_amountError != null) setState(() => _amountError = null);
+                    },
                   ),
-                  onChanged: (_) {
-                    if (_amountError != null) setState(() => _amountError = null);
-                  },
-                ),
-                const SizedBox(height: AppSizes.spacingMedium),
-                Text(l10n.warehousePaymentMethod, style: context.textTheme.bodyMedium),
-                const SizedBox(height: AppSizes.spacingSmall),
-                Wrap(
-                  spacing: AppSizes.spacingSmall,
-                  children: [
-                    for (final method in kPaymentMethods)
-                      ChoiceChip(
-                        label: Text(warehousePaymentMethodLabel(l10n, method)),
-                        selected: _method == method,
-                        onSelected: (_) => setState(() => _method = method),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: AppSizes.spacingMedium),
-                TextField(controller: _note, decoration: InputDecoration(labelText: l10n.warehousePaymentNote)),
-                if (state.actionErrorCode != null) ...[
+                  const SizedBox(height: AppSizes.spacingMedium),
+                  Text(l10n.warehousePaymentMethod, style: context.textTheme.bodyMedium),
                   const SizedBox(height: AppSizes.spacingSmall),
-                  Text(
-                    translateErrorCode(l10n, state.actionErrorCode, state.actionErrorMessage ?? ''),
-                    style: context.textTheme.bodySmall?.copyWith(color: AppColors.errorOf(context)),
+                  Wrap(
+                    spacing: AppSizes.spacingSmall,
+                    children: [
+                      for (final method in kPaymentMethods)
+                        ChoiceChip(
+                          label: Text(warehousePaymentMethodLabel(l10n, method)),
+                          selected: _method == method,
+                          onSelected: (_) => setState(() => _method = method),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSizes.spacingMedium),
+                  TextField(
+                    controller: _note,
+                    decoration: InputDecoration(labelText: l10n.warehousePaymentNote),
+                  ),
+                  if (state.actionErrorCode != null) ...[
+                    const SizedBox(height: AppSizes.spacingSmall),
+                    Text(
+                      translateErrorCode(l10n, state.actionErrorCode, state.actionErrorMessage ?? ''),
+                      style: context.textTheme.bodySmall?.copyWith(color: AppColors.errorOf(context)),
+                    ),
+                  ],
+                  const SizedBox(height: AppSizes.spacingMedium),
+                  FilledButton(
+                    onPressed: state.isSaving ? null : _submit,
+                    child: state.isSaving
+                        ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        : Text(l10n.warehouseRecordPayment),
                   ),
                 ],
-                const SizedBox(height: AppSizes.spacingMedium),
-                FilledButton(
-                  onPressed: state.isSaving ? null : _submit,
-                  child: state.isSaving
-                      ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : Text(l10n.warehouseRecordPayment),
-                ),
-              ],
+              ),
             ),
           ),
         ),

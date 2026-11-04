@@ -580,8 +580,8 @@ class _CornerChip extends StatelessWidget {
   static bool _isLatin(String text) => RegExp(r'^[\x00-\x7F]+$').hasMatch(text);
 }
 
-// "إنتاج 03/2026 · انتهاء 03/2028" - the batch on sale, when the warehouse
-// gave it. An expiry less than six months away is shown in the warning colour.
+// Expiry is the batch detail needed when ordering. Production remains in the
+// data model, without adding clutter to the card.
 class _BatchDates extends StatelessWidget {
   const _BatchDates({required this.product});
 
@@ -591,29 +591,23 @@ class _BatchDates extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final produced = product.productionDate;
     final expires = product.expiryDate;
-    if (produced == null && expires == null) return const SizedBox.shrink();
+    if (expires == null) return const SizedBox.shrink();
     final l10n = context.l10n;
     final base = context.textTheme.bodySmall?.copyWith(fontSize: 12, color: AppColors.textSecondaryOf(context));
-    final expiresSoon = expires != null && expires.isBefore(DateTime.now().add(const Duration(days: 183)));
-    // Each date is one unbreakable piece ("انتهاء 08/2027"): when both do not
-    // fit on one line the expiry moves to the next line whole - a date is
-    // never cut off.
+    final expiresSoon = expires.isBefore(DateTime.now().add(const Duration(days: 183)));
     return Padding(
       padding: const EdgeInsets.only(top: 3),
       child: Wrap(
         spacing: AppSizes.spacingSmall,
         runSpacing: 1,
         children: [
-          if (produced != null) Text(l10n.productionDateShort(_format(produced)), style: base),
-          if (expires != null)
-            Text(
-              l10n.expiryDateShort(_format(expires)),
-              style: expiresSoon
-                  ? base?.copyWith(color: AppColors.warningOf(context), fontWeight: FontWeight.w700)
-                  : base,
-            ),
+          Text(
+            l10n.expiryDateShort(_format(expires)),
+            style: expiresSoon
+                ? base?.copyWith(color: AppColors.warningOf(context), fontWeight: FontWeight.w700)
+                : base,
+          ),
         ],
       ),
     );

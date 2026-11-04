@@ -1,3 +1,4 @@
+import 'package:feniq/core/widgets/delivery_estimate_card.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -471,7 +472,9 @@ class _CartViewState extends State<CartView> {
           String limitText(num usdAmount) =>
               formatMoneyFromUsd(usdAmount, usdToSyp, l10n.currencySuffix);
 
-          return LayoutBuilder(
+          return AbsorbPointer(
+            absorbing: state.isSubmitting || state.isSubmittingAll,
+            child: LayoutBuilder(
             builder: (context, box) => Column(
             children: [
               Expanded(
@@ -703,6 +706,7 @@ class _CartViewState extends State<CartView> {
               ),
             ],
           ),
+          ),
           );
         },
         ),
@@ -774,6 +778,24 @@ class _QuoteSummary extends StatelessWidget {
             '- ${formatSyp(quote.creditUsedSyp, l10n.currencySuffix)}',
             style: positive,
             key: const Key('cartCreditUsed'),
+          ),
+        DeliveryEstimateCard(estimate: quote?.deliveryEstimate, preview: true),
+        if (quote?.monthlyLoyalty != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              l10n.pharmacyMonthlyLoyaltyProgress(
+                formatSyp((quote!.monthlyLoyalty!['eligibleSyp'] as num?) ?? 0, l10n.currencySuffix),
+              ),
+              style: muted,
+            ),
+          ),
+        if (((quote?.monthlyLoyalty?['futureRewardOffsetSyp'] as num?) ?? 0) > 0)
+          Text(
+            l10n.pharmacyMonthlyLoyaltyOffset(
+              formatSyp(quote!.monthlyLoyalty!['futureRewardOffsetSyp'] as num, l10n.currencySuffix),
+            ),
+            style: muted,
           ),
         if (state.hasDiscountCode)
           row(
