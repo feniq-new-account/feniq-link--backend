@@ -126,3 +126,28 @@ is part of this package's test procedure.
 Each delivery records changes, exact tested commit, tests/results, limitations,
 required settings/indexes, rollback and merge/publication readiness. Preserve
 these decisions and the later Drive roadmap in My-mind without any secrets.
+
+## Implementation validation checkpoint
+
+- Local web suite: 59 files / 511 tests passed, plus production build and lint.
+- Local targeted Flutter: 326 tests passed; another 24-test run covered manual
+  registration, pending-profile editing, launch status and update-source behavior.
+  These runs overlap; they are not claimed as 350 distinct cases. Full analysis
+  reported no issues. The exact final head still requires its CI checks.
+- Backend full run: 1487 cases, 1484 passed; the three failures identified preview
+  seed assumptions (2) and the admin pharmacy projection contract (1). The fixes
+  passed the 17-case launch/preview/release run and the 21-case projection run.
+  Require the final CI backend run to pass, rather than calling the earlier
+  full run green. The existing encrypted CLI backup/restore/financial drill
+  passed against disposable local replica databases, not production.
+- Publication safeguards: all 16 Python tests passed, including retained download,
+  immutable identity, same-build byte mismatch, wrong signing metadata and no-APK
+  publication refusal.
+- Browser: the actual built admin registration page rendered at 390 and 1440 px
+  with explicit API fixtures; no page exceptions or document-width overflow,
+  and both saves preserved the configuration revision. Live sockets, real admin
+  accounts and production writes were not used. Narrow-screen field styling
+  is scoped to the launch form.
+
+Physical phone acceptance and production health/backup evidence remain open as
+listed above; a candidate artifact is not itself a public production release.

@@ -1,3 +1,4 @@
+import './LaunchSettingsCard.css';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -25,7 +26,7 @@ export function LaunchSettingsCard() {
     <div className="adm-card-head">{t('launch.title')}</div>
     <div className="reg-card-body">
       {error && <p className="error-text" role="alert">{error} <button type="button" onClick={load} disabled={busy}>{t('launch.reload')}</button></p>}
-      {!configuration ? <p>{t('common.loading')}</p> : <form onSubmit={save}>
+      {!configuration ? <p>{t('common.loading')}</p> : <form className="launch-settings-form" onSubmit={save}>
         <p className="hint">{t('launch.hint')}</p>
         <label>{t('launch.mode')}<select value={configuration.mode} disabled={busy}
           onChange={event => setConfiguration({ ...configuration, mode: event.target.value })}>

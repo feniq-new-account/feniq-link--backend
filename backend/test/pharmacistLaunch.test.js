@@ -75,6 +75,10 @@ test('pending pharmacy edits its own non-credential fields; changed coordinates 
   assert.equal(updated.body.pharmacy.ownerName, 'Updated Name');
   assert.equal(updated.body.pharmacy.areaName, 'جبلة');
   assert.equal(updated.body.pharmacy.locationApproval, 'pending');
+  const pending = await require('../src/services/admin.service').listPendingAccounts();
+  const adminRow = pending.find(row => String(row.user._id) === own.user.id);
+  assert.equal(adminRow.pharmacy.areaName, 'جبلة');
+  assert.deepEqual([...adminRow.pharmacy.location.coordinates], [35.8, 35.4]);
   for (const changes of [{ phone: '0944999999' }, { status: 'active' }, { latitude: 42 }, { role: 'admin' }]) {
     assert.equal((await call('PATCH', '/auth/profile', changes, own.token)).status, 400);
   }
