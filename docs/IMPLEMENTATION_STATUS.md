@@ -128,13 +128,18 @@ Validation of this new delta:
 - Python Playwright: Arabic global control and explicit member-role saves at
   390/1440 px; expected revision/reason, no automatic save on role selection,
   no page exception or horizontal overflow. Local API fixtures only.
-- Exact integration-head GitHub CI is pending submission. No new APK built;
-  real-device upgrade and five-interface live acceptance remain outstanding.
+- First integration-head CI: Flutter **1461 passed**, web/build/publication
+  safeguards passed. Backend **1513 passed / 6 failed** because legacy auth-shape
+  tests omitted the new permissions contract and one admin fixture omitted active
+  status. Those contract expectations are corrected without relaxing security;
+  the next head must pass CI before merge. No new APK built; physical-device and
+  five-interface live acceptance remain outstanding.
 
 Merge/deployment status: merge explicitly authorized by owner; development
 integration done. Main remains `86ebd6d1`. Moving main triggers the site workflow;
 Render API/web auto-deploy cannot be inspected with this executor's access.
-Resolve that deployment effect before moving main; do not equate merge approval
-with production publication approval. Preserve checkout closure and all existing
+The owner subsequently explicitly authorized the automatic publication accompanying
+PR15's merge after tests pass. This is a pre-merge checkpoint: check PR15 and Notion
+for the actual merge/publication result. Preserve checkout closure and all existing
 production identities. No production data touched. Rollback is matched code
 reversion preserving the additive revision/audit data, not database restoration.

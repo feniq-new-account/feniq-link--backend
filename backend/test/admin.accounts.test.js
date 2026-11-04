@@ -522,8 +522,12 @@ test('authorize("admin") rejects pharmacy/warehouse and ignores query params', (
   assert.throws(() => authorize('admin')(asWarehouse, {}, () => {}), /permission/);
 
   let passed = false;
-  authorize('admin')({ user: { role: 'admin' }, query: {} }, {}, () => {
+  authorize('admin')({ user: { role: 'admin', status: 'active' }, query: {} }, {}, () => {
     passed = true;
   });
-  assert.ok(passed, 'an admin passes the guard');
+  assert.ok(passed, 'an active admin passes the guard');
+  for (const status of ['pending', 'blocked', 'deleted', undefined]) {
+    assert.throws(() => authorize('admin')({ user: { role: 'admin', status }, query: { status: 'active' } }, {}, () => {}),
+      (error) => error.code === 'ACTIVE_ADMIN_REQUIRED');
+  }
 });

@@ -171,14 +171,19 @@ test('categories response is unchanged and still sorted by sortOrder', async () 
   );
 });
 
-test('GET /auth/me payload is unchanged for a pharmacy user', async () => {
+test('GET /auth/me preserves pharmacy fields and adds role permissions', async () => {
   const result = await authService.getMe(PHARMACY_USER_ID);
   const payload = authViewModel.toMeResponse(result);
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'permissions', 'phone', 'role', 'status'].sort()
   );
   assert.strictEqual(payload.user.role, 'pharmacy');
+  assert.deepStrictEqual(payload.user.permissions, {
+    platformManage: false, warehouseOperate: false, financialRead: true,
+    paymentRecord: false, paymentReverse: false, featureConfigure: false,
+    featureGrant: false, visitRecord: false, ownProfileEdit: true,
+  });
   assert.strictEqual(payload.user.status, 'active');
   assert.strictEqual(payload.user.lang, 'ar', 'schema default must survive');
   assert.ok(payload.pharmacy, 'the pharmacy profile must still be resolved');
@@ -193,10 +198,15 @@ test('GET /auth/me preserves a legacy warehouse profile and identifies its exist
   const payload = authViewModel.toMeResponse(result);
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status', 'warehouseRole'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'permissions', 'phone', 'role', 'status', 'warehouseRole'].sort()
   );
   assert.strictEqual(payload.user.role, 'warehouse');
   assert.strictEqual(payload.user.warehouseRole, 'legacy');
+  assert.deepStrictEqual(payload.user.permissions, {
+    platformManage: false, warehouseOperate: true, financialRead: true,
+    paymentRecord: true, paymentReverse: true, featureConfigure: true,
+    featureGrant: false, visitRecord: false, ownProfileEdit: false,
+  });
   assert.strictEqual(payload.pharmacy, null);
   assert.ok(payload.warehouse, 'the warehouse profile must still be resolved');
   assert.deepStrictEqual(
@@ -217,7 +227,7 @@ test('loginWithPassword is unaffected by the +password projection', async () => 
   const payload = authViewModel.toAuthResponse(result);
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'permissions', 'phone', 'role', 'status'].sort()
   );
   assert.strictEqual(payload.user.phone, PASSWORD_USER_PHONE);
   assert.ok(!('password' in payload.user), 'password must never be serialised');
@@ -264,7 +274,7 @@ test('loginWithPassword returns the full auth shape for an existing user', async
 
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'permissions', 'phone', 'role', 'status'].sort()
   );
   assert.strictEqual(payload.user.name, 'Pw Pharm');
   assert.strictEqual(payload.pharmacy.ownerName, 'Pw Owner');
@@ -289,9 +299,14 @@ test('register creates an active pharmacy and returns the documented auth shape'
 
   assert.deepStrictEqual(
     Object.keys(payload.user).sort(),
-    ['id', 'lang', 'mustChangePassword', 'name', 'phone', 'role', 'status'].sort()
+    ['id', 'lang', 'mustChangePassword', 'name', 'permissions', 'phone', 'role', 'status'].sort()
   );
   assert.strictEqual(payload.user.role, 'pharmacy');
+  assert.deepStrictEqual(payload.user.permissions, {
+    platformManage: false, warehouseOperate: false, financialRead: true,
+    paymentRecord: false, paymentReverse: false, featureConfigure: false,
+    featureGrant: false, visitRecord: false, ownProfileEdit: true,
+  });
   assert.strictEqual(payload.user.status, 'active', 'new accounts are auto-approved by default');
   assert.strictEqual(payload.pharmacy.ownerName, 'Fresh Owner');
   assert.strictEqual(payload.warehouse, null);

@@ -78,8 +78,11 @@ remain outside that authorization.
 Main has a website-publication workflow triggered by changed publication files;
 Render's actual auto-deploy state is not readable in this executor. Do not claim
 that updating render.yaml can pause already-configured services before a push.
-Verify/authorize deployment effects before moving production-bound refs. Money
-review remains required by CLAUDE.md for the financial parts of PR12/13/this diff.
+The owner subsequently authorized automatic publication accompanying PR15's merge
+after successful tests; no checkout, financial migration or APK build was authorized.
+Independent money-reviewer review required by CLAUDE.md completed successfully
+after the cross-owner concurrency fix. These are pre-merge facts; PR15 and Notion
+record the eventual merge and publication outcome.
 
 The comprehensive five-interface acceptance is a next step requested by the
 owner after integration. Automated pre-merge regression does not replace real
