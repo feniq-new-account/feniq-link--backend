@@ -88,9 +88,13 @@ production credentials and an attached Android phone are not present.
    replica-set support, HTTPS/CORS and approval settings. Confirm launch status
    is registration-only. Do not open ordering to satisfy a test.
 4. Use an isolated acceptance API and disposable accounts for account/upgrade
-   tests. The task-specific candidate branch runs the existing Android workflow,
+   tests. The task-specific same-repository candidate PR runs the existing Android workflow,
    requires the permanent key and matching certificate, and cannot publish the
    production website. Its signed build counter is shared with main releases.
+   This automatic artifact retains the configured API URL; its emulator probe
+   disables networking. Interactive test registrations require a separate
+   acceptance API and a manual build with api_base_url pointing to that API;
+   never create test accounts against production to complete this checklist.
 5. On a real Android device install the first candidate, register, verify admin
    visibility, close/reboot and interrupt the network. Install a higher signed
    candidate over it, retaining account/data/API. Test pending/approved accounts,
