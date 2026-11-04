@@ -203,6 +203,7 @@ class AppUpdateService {
       return _evaluate();
     } catch (e) {
       _logger.info('AppUpdateService.checkForUpdate skipped: $e');
+      if (_fetchRelease != null) return AppUpdateStatus.none;
       return _cachedMandatoryUpdate();
     }
   }
