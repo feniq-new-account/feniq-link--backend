@@ -1,5 +1,14 @@
 # Money-Flow V2
 
+> Business-policy notice (2026-11-04): this document describes the existing
+> financial engine, including legacy delivery-based commission and four-way
+> rep splits. Its name predates the new commercial collection policy.
+> [Notion decisions](https://app.notion.com/p/40e6c91cc9c481e4bc0ef8e47a7426e9)
+> supersede those commercial rules for the future version; see
+> [collection policy status](../../docs/COLLECTION_COMMISSION_V2.md).
+> The new calculator is preview-only. Do not claim the live ledger/settlement
+> engine implements it or rewrite historical entries to make it appear so.
+
 How money works in Feniq: what is stored, what is derived, and which rules
 are load-bearing. Read this before changing anything that touches a balance.
 

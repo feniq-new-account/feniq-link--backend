@@ -33,10 +33,11 @@ test.before(async () => {
 });
 test.after(async () => { if (server) await new Promise((resolve) => server.close(resolve)); await stopMemoryMongo(); });
 
-test('accountant, rep, pharmacist and owner share one warehouse safely through checkout, cash and return', async () => {
+test('legacy order history stays consistent while core cash survives subscription changes', async () => {
   const member = (await call(admin, `/admin/warehouses/${warehouse.id}/members`, 'POST', { name: 'Accountant', phone: '0944100005', password: 'Launch-Test-2026', warehouseRole: 'accountant' }, 201)).member;
   const accountant = await User.findById(member.id);
-  const trial = await call(accountant, '/warehouse/subscription'); assert.equal(trial.state, 'trial');
+  const subscription = await call(accountant, '/warehouse/subscription');
+  assert.equal(subscription.state, 'promotion'); assert.equal(subscription.configuration, null);
   const repCreated = (await call(accountant, '/warehouse/reps', 'POST', { name: 'مندوب الريف', phone: '0944100006', password: 'Launch-Test-2026', commissionRate: 4 }, 201)).rep;
   const rep = await Rep.findById(repCreated.id), repUser = await User.findById(rep.userId);
   await call(owner, `/warehouse/reps/pharmacies/${pharmacy.id}/rep`, 'PUT', { repId: rep.id });
@@ -67,10 +68,16 @@ test('accountant, rep, pharmacist and owner share one warehouse safely through c
   const payment = { pharmacyId: pharmacy.id, amount: 100000, currency: 'SYP', method: 'cash', idempotencyKey: 'launch-payment-001' };
   await call(owner, '/warehouse/payments', 'POST', payment, 403);
   await call(accountant, '/warehouse/payments', 'POST', payment, 201);
-  await call(admin, `/admin/warehouses/${warehouse.id}/subscription`, 'PUT', { features: { accounting: false, loyalty: false, repTracking: false, deliverySchedule: false } });
+  await call(admin, `/admin/warehouses/${warehouse.id}/subscription`, 'PUT', { revision: 0, features: { accounting: false, loyalty: false, repTracking: false, deliverySchedule: false } });
   await call(accountant, '/warehouse/payments', 'POST', payment, 200); // Lost acknowledgement survives feature expiry.
-  await call(accountant, '/warehouse/payments', 'POST', { ...payment, idempotencyKey: 'new-disabled-payment' }, 403);
+  // Core receipt and its documented reversal both remain available while
+  // advanced accounting is off; they must leave the original balance intact.
+  const extra = await call(accountant, '/warehouse/payments', 'POST', { ...payment, amount: 1000, idempotencyKey: 'new-core-payment' }, 201);
+  await call(accountant, `/warehouse/payments/${extra.payment.id}/reverse`, 'POST', {
+    reason: 'Acceptance correction', idempotencyKey: 'reverse-core-payment',
+  }, 201);
   await call(repUser, '/rep/visits', 'POST', visitBody, 403);
+  await call(owner, '/warehouse/reps/visits', 'GET', undefined, 403);
   const retained = (await call(pharmacist, `/orders/${order.id}`)).order;
   assert.equal(new Date(retained.deliveryEstimate.to).getTime(), new Date(order.deliveryEstimate.to).getTime());
   const line = await Item.findOne({ orderId: order.id });

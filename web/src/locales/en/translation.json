@@ -1486,7 +1486,7 @@
     "status": "Subscription status",
     "paidUntil": "Paid until (your device time)",
     "graceDays": "Grace period in days",
-    "trialHelp": "The trial lasts 30 days from activation. Saving does not restart an existing trial or record a payment.",
+    "trialHelp": "Launch promotion through December 31, 2026; grace through January 7, 2027 (Damascus), then permanent freemium. Reading does not start a trial; saving does not record a payment.",
     "note": "Administrative note",
     "save": "Save subscription and features",
     "saved": "Subscription and features saved.",
@@ -1506,9 +1506,10 @@
       "legacy": "Previous warehouse account"
     },
     "plans": {
-      "basic": "Basic",
-      "management": "Warehouse management",
-      "field_team": "Management and field team"
+      "basic": "Basic (legacy label)",
+      "management": "Warehouse management (legacy label)",
+      "field_team": "Management and field team (legacy label)",
+      "free": "Permanent free tier"
     },
     "states": {
       "not_started": "Trial not started",
@@ -1516,22 +1517,26 @@
       "active": "Active",
       "grace": "Grace period",
       "expired": "Expired",
-      "paused": "Paused"
+      "paused": "Paused",
+      "promotion": "Free launch promotion",
+      "freemium": "Permanent free tier",
+      "free": "Unsubscribed — permanent freemium"
     },
     "features": {
       "repTracking": "Rep tracking",
       "loyalty": "Loyalty",
-      "accounting": "Accounting operations",
+      "accounting": "Advanced accounting — scope awaiting approval",
       "salesReports": "Advanced sales reports",
       "ownerInsights": "Extended owner insights",
       "overdueReceivables": "Overdue receivables",
       "inactivePharmacies": "Inactive pharmacies",
       "ownerAlerts": "Owner alerts",
-      "deliverySchedule": "Delivery scheduling"
+      "deliverySchedule": "Delivery scheduling",
+      "ownerMobileAccess": "Owner mobile access"
     },
     "roleChanged": "Role updated. This user must sign in again.",
     "statusFailed": "Could not refresh the subscription. You can read records and retry.",
-    "accessNotice": "Feature access follows the subscription status. Previous records remain available."
+    "accessNotice": "Core orders, financial records and payment recording remain available according to account permissions."
   },
   "appRelease": {
     "title": "Android app updates",
@@ -1761,5 +1766,50 @@
     "reload": "Reload",
     "hint": "Open ordering only after warehouses, prices and commission agreements are ready. Registration approval is separate.",
     "revision": "Configuration revision: {{revision}}"
+  },
+  "featureControl": {
+    "title": "Feature Control Center",
+    "help": "Global switches affect all warehouses. Entitlements apply to the selected warehouse. Saving does not create charges or collect money.",
+    "core": "Catalog, core orders, invoices, financial records, payments, returns and settlements remain available according to account permissions.",
+    "reason": "Reason for change",
+    "global": "Platform switches for all warehouses",
+    "saveGlobal": "Save platform switches",
+    "saved": "Saved and entitlements refreshed.",
+    "allowed": "Available",
+    "denied": "Unavailable",
+    "grant": "Grant warehouse entitlement",
+    "kind": "Entitlement type",
+    "addon": "Standalone add-on",
+    "bundle": "Approved bundle",
+    "choose": "Choose a bundle",
+    "feature": "Feature",
+    "startsAt": "Starts at (device timezone)",
+    "endsAt": "Ends at (device timezone)",
+    "decisionRef": "Approved decision or contract reference",
+    "revoked": "Revoked",
+    "revoke": "Revoke with recorded reason",
+    "defineBundle": "Define an approved bundle",
+    "bundleHelp": "Enter approved package contents only. No default prices. Changed contents require a new code and preserve previously issued rights.",
+    "code": "Bundle code and version",
+    "name": "Approved bundle name",
+    "audit": "Recent change history",
+    "preferences": "Feature preferences",
+    "preferencesHelp": "Disable or re-enable features you are entitled to. Preferences cannot grant subscription rights.",
+    "preferencesSaved": "Saved. Reload the page to refresh other dashboard sections.",
+    "showPreferences": "Show feature preferences",
+    "reasons": {
+      "platform_disabled": "Disabled platform-wide",
+      "warehouse_disabled": "Disabled in warehouse preferences",
+      "administratively_disabled": "Disabled by warehouse administration",
+      "no_entitlement": "No active entitlement",
+      "grant": "Explicit entitlement",
+      "promotion": "Launch promotion",
+      "grace": "Grace period",
+      "active": "Existing subscription"
+    },
+    "tier": "Bundle category",
+    "customTier": "Other approved bundle",
+    "advancedTier": "Advanced tier",
+    "ownerIncluded": "Owner mobile access is included automatically in the advanced tier; owner insights are separate."
   }
 }

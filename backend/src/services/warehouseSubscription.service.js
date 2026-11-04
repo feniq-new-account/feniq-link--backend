@@ -4,55 +4,32 @@ const Audit = require('../models/warehouseAudit.model');
 const { ApiError } = require('../utils/ApiError');
 const { runInTransaction } = require('../utils/transaction');
 
-const DAY_MS = 86400000;
 const { FEATURES } = Subscription;
+const { PROMOTION_END, evaluateSubscription } = require('../utils/subscriptionPolicy');
 
-function evaluateSubscription(row, now = new Date()) {
-  // Existing warehouses are not unexpectedly locked by a schema rollout.
-  // Their trial begins at their first explicit subscription activation/read.
-  if (!row) return { state: 'not_started', features: Object.fromEntries(FEATURES.map((key) => [key, true])) };
-  const until = row.status === 'trial' ? row.trialUntil : row.paidUntil;
-  const expires = until ? new Date(until).getTime() : NaN;
-  const graceUntil = Number.isFinite(expires) ? new Date(expires + row.graceDays * DAY_MS) : null;
-  const state = row.status === 'paused' ? 'paused'
-    : now.getTime() < expires ? row.status
-    : graceUntil && now < graceUntil ? 'grace' : 'expired';
-  const usable = ['trial', 'active', 'grace'].includes(state);
-  return {
-    state, expiresAt: until || null, graceUntil,
-    features: Object.fromEntries(FEATURES.map((key) => [key, usable && row.features?.[key] !== false])),
-  };
-}
-
-async function getSubscription(warehouseId, { startTrial = false, now = new Date() } = {}) {
-  let row = await Subscription.findOne({ warehouseId }).lean();
-  if (!row && startTrial) {
-    try {
-      row = await Subscription.findOneAndUpdate({ warehouseId }, { $setOnInsert: {
-        warehouseId, startedAt: now, trialUntil: new Date(now.getTime() + 30 * DAY_MS),
-      } }, { upsert: true, new: true, setDefaultsOnInsert: true }).lean();
-    } catch (error) {
-      if (error.code !== 11000) throw error;
-      row = await Subscription.findOne({ warehouseId }).lean();
-    }
-  }
-  return { configuration: row, ...evaluateSubscription(row, now), featureNames: FEATURES };
+async function getSubscription(warehouseId, { now = new Date() } = {}) {
+  const row = await Subscription.findOne({ warehouseId }).lean();
+  const evaluated = await require('./featureControl.service').getEntitlements(warehouseId, { now, subscription: row });
+  return { ...evaluated, configuration: row, controlConfiguration: evaluated.configuration, featureNames: FEATURES };
 }
 
 function validatePatch(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw ApiError.badRequest('Invalid subscription.', undefined, 'INVALID_SUBSCRIPTION');
   const patch = {};
   for (const key of Object.keys(body)) {
-    if (!['plan', 'status', 'paidUntil', 'graceDays', 'features', 'note'].includes(key)) {
+    if (!['revision', 'plan', 'status', 'paidUntil', 'graceDays', 'features', 'note'].includes(key)) {
       throw ApiError.badRequest('Unknown subscription field.', undefined, 'INVALID_SUBSCRIPTION');
     }
   }
+  if (body.revision !== undefined && (!Number.isSafeInteger(body.revision) || body.revision < 0)) {
+    throw ApiError.badRequest('Invalid revision.', undefined, 'INVALID_SUBSCRIPTION');
+  }
   if (body.plan !== undefined) {
-    if (!['basic', 'management', 'field_team'].includes(body.plan)) throw ApiError.badRequest('Invalid plan.', undefined, 'INVALID_SUBSCRIPTION');
+    if (!['free', 'basic', 'management', 'field_team'].includes(body.plan)) throw ApiError.badRequest('Invalid plan.', undefined, 'INVALID_SUBSCRIPTION');
     patch.plan = body.plan;
   }
   if (body.status !== undefined) {
-    if (!['trial', 'active', 'paused'].includes(body.status)) throw ApiError.badRequest('Invalid status.', undefined, 'INVALID_SUBSCRIPTION');
+    if (!['free', 'trial', 'active', 'paused'].includes(body.status)) throw ApiError.badRequest('Invalid status.', undefined, 'INVALID_SUBSCRIPTION');
     patch.status = body.status;
   }
   if (body.graceDays !== undefined) {
@@ -83,13 +60,17 @@ async function configureSubscription(warehouseId, actorId, body, now = new Date(
   await runInTransaction(async (session) => {
     if (!await Warehouse.exists({ _id: warehouseId }).session(session)) throw ApiError.notFound('Warehouse not found.', 'WAREHOUSE_NOT_FOUND');
     const before = await Subscription.findOne({ warehouseId }).session(session).lean();
+    if (body.revision !== undefined && body.revision !== (before?.revision || 0)) {
+      throw ApiError.conflict('Subscription changed. Reload before saving.', 'FEATURE_CONTROL_CHANGED');
+    }
     const effectivePaidUntil = Object.hasOwn(patch, 'paidUntil') ? patch.paidUntil : before?.paidUntil;
     if ((patch.status || before?.status) === 'active' && !effectivePaidUntil) {
       throw ApiError.badRequest('An active subscription needs an expiry date.', undefined, 'INVALID_SUBSCRIPTION');
     }
     const after = await Subscription.findOneAndUpdate({ warehouseId }, {
       $set: patch,
-      $setOnInsert: { warehouseId, startedAt: now, trialUntil: new Date(now.getTime() + 30 * DAY_MS) },
+      $inc: { revision: 1 },
+      $setOnInsert: { warehouseId, startedAt: now, trialUntil: PROMOTION_END },
     }, { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true, session }).lean();
     await Audit.create([{ warehouseId, actorId, action: 'subscription.updated', before, after }], { session });
   });
@@ -97,7 +78,7 @@ async function configureSubscription(warehouseId, actorId, body, now = new Date(
 }
 
 async function hasFeature(warehouseId, name) {
-  if (!FEATURES.includes(name)) throw new Error(`Unknown feature: ${name}`);
+  if (!require('../config/featureCatalog').OPTIONAL_FEATURES.includes(name)) throw new Error(`Unknown feature: ${name}`);
   const result = await getSubscription(warehouseId);
   return result.features[name] === true;
 }

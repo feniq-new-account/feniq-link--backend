@@ -24,7 +24,7 @@ export function WarehouseSubscriptionProvider({ children }) {
       <p>{t('warehouseAccess.statusFailed')}</p>
       <button type="button" className="btn-secondary" onClick={() => setAttempt((value) => value + 1)}>{t('common.retry')}</button>
     </div>}
-    {subscription && ['expired', 'paused', 'grace'].includes(subscription.state) &&
+    {subscription && ['freemium', 'expired', 'paused', 'grace'].includes(subscription.state) &&
       <div className="warehouse-subscription-notice" role="status">
         {t(`warehouseAccess.states.${subscription.state}`)} — {t('warehouseAccess.accessNotice')}
       </div>}

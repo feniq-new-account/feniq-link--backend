@@ -37,3 +37,10 @@ test('post-2026 signup gets no invented new campaign, while explicit paid rights
   assert.equal(evaluate(null, now, { campaignEligible: false }).core.basicOrders, true);
   assert.equal(evaluate({ status: 'active', paidUntil: '2027-03-01' }, now, { campaignEligible: false }).state, 'active');
 });
+test('legacy timestamps missing during promotion do not lock accounts, and new January accounts are not auto-promoted', () => {
+  const { campaignEligibility } = require('../src/utils/featureEntitlements');
+  assert.equal(campaignEligibility({}, null, new Date('2026-12-20')), true);
+  assert.equal(campaignEligibility({}, null, new Date('2027-01-03')), false);
+  assert.equal(campaignEligibility({ createdAt: '2026-12-31T20:59:59Z' }, null, new Date('2027-01-03')), true);
+  assert.equal(campaignEligibility({ createdAt: '2026-12-31T21:00:00Z' }, null, new Date('2027-01-03')), false);
+});

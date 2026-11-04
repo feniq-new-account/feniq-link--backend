@@ -77,30 +77,19 @@ test('duplicate phone cannot create an orphan membership or a second audit', asy
   assert.equal(await Audit.countDocuments({ action: 'member.created' }), 1);
 });
 
-test('concurrent first activation starts exactly one 30-day trial and repeated reads do not extend it', async () => {
+test('subscription reads never create or renew a trial, including old startTrial clients', async () => {
   const now = new Date('2026-10-29T10:00:00Z');
   const rows = await Promise.all(Array.from({ length: 4 }, () => billing.getSubscription(warehouse.id, { startTrial: true, now })));
-  assert.equal(await Subscription.countDocuments({ warehouseId: warehouse.id }), 1);
+  assert.equal(await Subscription.countDocuments({ warehouseId: warehouse.id }), 0);
   for (const row of rows) {
-    assert.equal(row.state, 'trial');
-    assert.equal(new Date(row.configuration.trialUntil).getTime() - now.getTime(), 30 * 86400000);
+    assert.equal(row.state, 'promotion');
+    assert.equal(row.configuration, null);
     assert.equal(row.features.loyalty, true);
   }
-  const later = await billing.getSubscription(warehouse.id, { startTrial: true, now: new Date('2026-11-03T10:00:00Z') });
-  assert.equal(String(later.configuration.startedAt), String(rows[0].configuration.startedAt));
-});
-
-test('expiry, grace and pause boundaries are computed without deleting historical access data', () => {
-  const row = { status: 'trial', trialUntil: '2026-11-01T00:00:00Z', graceDays: 2, features: { loyalty: false } };
-  assert.equal(billing.evaluateSubscription(row, new Date('2026-10-31T23:59:59Z')).state, 'trial');
-  assert.equal(billing.evaluateSubscription(row, new Date('2026-11-01T00:00:00Z')).state, 'grace');
-  assert.equal(billing.evaluateSubscription(row, new Date('2026-11-03T00:00:00Z')).state, 'expired');
-  assert.equal(billing.evaluateSubscription(row, new Date('2026-10-31T23:59:59Z')).features.loyalty, false);
-  assert.equal(billing.evaluateSubscription({ ...row, status: 'paused' }).features.accounting, false);
 });
 
 test('admin feature changes are audited and enforced against direct API requests', async () => {
-  const updated = await request(admin, `/admin/warehouses/${warehouse.id}/subscription`, 'PUT', { features: { loyalty: false } });
+  const updated = await request(admin, `/admin/warehouses/${warehouse.id}/subscription`, 'PUT', { revision: 0, features: { loyalty: false } });
   assert.equal(updated.status, 200);
   assert.equal(updated.body.features.loyalty, false);
   const denied = await request(accountant, '/warehouse/settings/loyalty', 'PUT', { enabled: true, tiers: [] });
@@ -118,22 +107,23 @@ test('unknown features and active subscriptions without a paid expiry cannot be 
   assert.equal((await billing.getSubscription(warehouse.id)).configuration.paidUntil.toISOString(), '2027-01-01T00:00:00.000Z');
 });
 
-test('subscription expiry blocks a new cash entry but allows confirmation of an already saved receipt', async () => {
+test('commercial pause preserves cash recording and idempotent receipt replay', async () => {
   const Payment = require('../src/models/payment.model');
   const Pharmacy = require('../src/models/pharmacy.model');
   const pharmacyUser = await User.create({ name: 'Pharmacy', phone: '+963944000009', role: 'pharmacy', status: 'active' });
   const pharmacy = await Pharmacy.create({ userId: pharmacyUser.id, nameAr: 'صيدلية', nameEn: 'Pharmacy',
     ownerName: 'Pharmacist', address: 'Latakia', city: 'Latakia', areaType: 'rural', phone: '+963944000009', addedBy: 'self' });
+  await require('../src/models/exchangeRate.model').create({ _id: 'singleton', usdToSyp: 15000, source: 'manual' });
   const key = 'saved-before-expiry';
   const payment = await Payment.create({ pharmacyId: pharmacy.id, warehouseId: warehouse.id, amount: 1000,
     currency: 'SYP', recordedBy: accountant.id, idempotencyKey: key });
   await billing.configureSubscription(warehouse.id, admin.id, { status: 'paused' });
-  const fresh = await request(accountant, '/warehouse/payments', 'POST', { pharmacyId: pharmacy.id, amount: 1000, idempotencyKey: 'new-after-expiry' });
-  assert.equal(fresh.status, 403);
+  const fresh = await request(accountant, '/warehouse/payments', 'POST', { pharmacyId: pharmacy.id, amount: 1000, idempotencyKey: 'new-after-expiry', allowUnlinked: true, unlinkedReason: 'Opening payment recorded during acceptance' });
+  assert.equal(fresh.status, 201);
   const replay = await request(accountant, '/warehouse/payments', 'POST', { pharmacyId: pharmacy.id, amount: 1000, currency: 'SYP', idempotencyKey: key });
   assert.equal(replay.status, 200);
   assert.equal(replay.body.payment.id, payment.id);
-  assert.equal(await Payment.countDocuments({ warehouseId: warehouse.id }), 1);
+  assert.equal(await Payment.countDocuments({ warehouseId: warehouse.id }), 2);
   assert.equal((await request(accountant, '/warehouse/balances')).status, 200);
 });
 

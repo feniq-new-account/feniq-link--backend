@@ -58,6 +58,10 @@ router.use('/admin/app-release', appReleaseRoutes.admin);
 const warehouseAccessRoutes = require('./warehouseAccess.routes');
 router.use('/admin/warehouses', warehouseAccessRoutes.admin);
 router.use('/warehouse/subscription', warehouseAccessRoutes.self);
+const featureControlRoutes = require('./featureControl.routes');
+router.use('/admin/feature-control', featureControlRoutes.admin);
+router.use('/admin/warehouses/:warehouseId/entitlements', featureControlRoutes.warehouseAdmin);
+router.use('/warehouse/entitlements', featureControlRoutes.self);
 
 router.use('/admin/analytics', require('./platformAnalytics.routes'));
 router.use('/admin/visit-verification', require('./visitVerification.routes'));
@@ -71,6 +75,7 @@ router.use('/admin/products', adminProductRoutes);
 router.use('/admin/exchange-rate', adminExchangeRateRoutes);
 router.use('/admin/ledger', adminLedgerRoutes);
 router.use('/admin/commission', adminCommissionRoutes);
+router.use('/admin/commission-policy-preview', require('./commissionPolicyPreview.routes'));
 router.use('/exchange-rate', exchangeRateRoutes);
 router.use('/admin/catalog', adminCatalogRoutes);
 router.use('/admin/manufacturers', adminManufacturerRoutes);

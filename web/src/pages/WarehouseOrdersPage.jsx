@@ -1,4 +1,3 @@
-import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
 import { useAuth } from '../auth/AuthContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -28,8 +27,7 @@ const ADVANCE_KEYS = {
 
 export function WarehouseOrdersPage() {
   const { user } = useAuth();
-  const { hasFeature } = useWarehouseSubscription();
-  const canRecord = user?.warehouseRole !== 'owner' && hasFeature('accounting');
+  const canRecord = user?.warehouseRole !== 'owner';
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { collect } = useDeliveryCollections();

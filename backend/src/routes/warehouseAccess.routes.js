@@ -41,6 +41,9 @@ admin.get('/:warehouseId/subscription', objectIdParams('warehouseId'), asyncHand
   res.json({ success: true, ...await billing.getSubscription(req.params.warehouseId) });
 }));
 admin.put('/:warehouseId/subscription', objectIdParams('warehouseId'), asyncHandler(async (req, res) => {
+  if (!Number.isSafeInteger(req.body?.revision) || req.body.revision < 0) {
+    throw require('../utils/ApiError').ApiError.conflict('Reload subscription before saving.', 'FEATURE_CONTROL_CHANGED');
+  }
   res.json({ success: true, ...await billing.configureSubscription(req.params.warehouseId, req.user._id, req.body) });
 }));
 
@@ -48,6 +51,11 @@ const self = Router();
 self.use(authenticate, authorize('warehouse'), requireActiveStatus);
 self.get('/', asyncHandler(async (req, res) => {
   const warehouse = await loadWarehouseOrThrow(req.user._id, { select: '_id', lean: true });
-  res.json({ success: true, ...await billing.getSubscription(warehouse._id, { startTrial: true }) });
+  const result = await billing.getSubscription(warehouse._id);
+  delete result.controlConfiguration;
+  result.decisions = Object.fromEntries(Object.entries(result.decisions).map(([key, d]) => [key, {
+    allowed: d.allowed, reason: d.reason, effectiveUntil: d.effectiveUntil,
+  }]));
+  res.set('Cache-Control', 'no-store').json({ success: true, ...result });
 }));
 module.exports = { admin, self };

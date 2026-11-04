@@ -18,6 +18,10 @@ cannot change existing grants. Add-ons provide one feature; purchasing a feature
 already covered by an effective grant is rejected. Grants can be future-dated,
 expire or be revoked with audit evidence. No invoice or debit is generated.
 
+An explicitly marked advanced bundle always includes ownerMobileAccess; other
+features come only from its approved definition. No default advanced package is
+seeded, and ownerInsights is not inferred from mobile access.
+
 Post-2026 new warehouses do not receive an invented promotional trial; they have
 core access and explicit grants only, until the owner approves another policy.
 The owner mobile access capability is independent of advanced insights; existing
