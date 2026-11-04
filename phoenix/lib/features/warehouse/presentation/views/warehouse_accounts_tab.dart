@@ -20,6 +20,7 @@ import 'package:feniq/features/warehouse/presentation/widgets/account_payment.da
 import 'package:feniq/features/warehouse/presentation/widgets/warehouse_summary_card.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/voice_payment_sheet.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/features/warehouse/presentation/utils/warehouse_permissions.dart';
 
 /// Where every pharmacy's account stands with the warehouse, largest balance
 /// owed first; a tap opens its statement (and recording a payment).
@@ -78,7 +79,7 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                   }),
                 ),
               ),
-              IconButton(
+              if (canRecordWarehousePayments(context)) IconButton(
                 tooltip: l10n.warehouseVoiceTitle,
                 icon: const Icon(Icons.mic),
                 onPressed: () => showVoicePaymentSheet(context),
@@ -151,7 +152,7 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                                   ),
                             style: muted,
                           ),
-                          if (row.balanceSyp > 0) ...[
+                          if (row.balanceSyp > 0 && canRecordWarehousePayments(context)) ...[
                             const SizedBox(height: AppSizes.spacingSmall),
                             Row(
                               children: [

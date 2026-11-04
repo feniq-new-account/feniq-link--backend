@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { FeatureControlCenter } from './FeatureControlCenter';
 import { api } from '../api/client';
+import { MemoryRouter } from 'react-router-dom';
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: key => key }) }));
 vi.mock('../api/client', () => ({ api: Object.fromEntries(['getFeatureControl', 'getWarehouseEntitlements', 'getFeatureBundles', 'getFeatureAudit',
   'saveFeatureControl', 'grantWarehouseFeatures', 'revokeWarehouseGrant', 'createFeatureBundle'].map(key => [key, vi.fn()])) }));
@@ -41,4 +42,12 @@ it('a stale configuration fails visibly and can be reloaded without automatic re
   await act(async () => retry.click());
   expect(api.saveFeatureControl).toHaveBeenCalledTimes(1);
   expect(api.getFeatureControl).toHaveBeenCalledTimes(2);
+});
+it('global controls work without a warehouse and do not request or invent warehouse entitlements', async () => {
+  api.getWarehouseEntitlements.mockClear();
+  await act(async () => root.render(<MemoryRouter><FeatureControlCenter /></MemoryRouter>));
+  expect(host.querySelector('h1').textContent).toBe('featureControl.title');
+  expect(api.getWarehouseEntitlements).not.toHaveBeenCalled();
+  expect(host.querySelector('a').getAttribute('href')).toBe('/admin/warehouse-access');
+  expect(host.textContent).not.toContain('featureControl.grant');
 });

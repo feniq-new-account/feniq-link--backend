@@ -5,7 +5,9 @@ checkpoint at the end of each implementation batch; never infer deployment from
 a green build. Business authority is [Notion](https://app.notion.com/p/40e6c91cc9c481e4bc0ef8e47a7426e9).
 
 Baseline: main `86ebd6d1`; PR12 `65e45cf42dc3df12ade0ce7fe6a54282ac240a59`.
-Work branch: `codex/feature-control-foundation`, based on PR12 (stacked, not merged).
+Current integration branch: `codex/admin-permissions-integration`, combining
+PR12, PR13 (`cd6d8c5`) and PR14 (`051fd0d7`); main has not moved.
+The older foundation checkpoint below describes PR13, not the final integration.
 
 | Area | Baseline evidence | Open acceptance |
 | --- | --- | --- |
@@ -35,8 +37,8 @@ are development work on the stacked branch, not deployed production behavior.
 - P1 subscriptions: approved calendar, core access, tenant isolation, entitlement
   expiry/revocation and audit; no invented package prices.
 
-Unresolved business inputs: contractual city_ring classification, allocation
-selection policy, evidence/approval for warehouse collection, return commission
+Confirmed inputs: city_ring is rural; collection entry is manual. Unresolved:
+evidence/approval for warehouse collection, return commission
 adjustment after settlement, existing-user owner-mobile rights, post-2026
 promotion eligibility and final package definitions. These do not block signup.
 
@@ -91,3 +93,48 @@ promotion eligibility and final package definitions. These do not block signup.
   executor has no production credentials or attached phone; Render is blocked.
 - PR12 and this stacked work are not merged or deployed; ordering was not opened.
   New schema/control data is additive; rollback details are in FEATURE_CONTROL_API.
+
+## Admin integration checkpoint — 2026-11-04
+
+The preceding validation is the historical PR13 checkpoint. Current work and
+role matrix: [ADMIN_ACCESS_INTEGRATION](ADMIN_ACCESS_INTEGRATION.md).
+
+- Global admin `/admin/features` works without a warehouse. Per-warehouse grants,
+  preferences and named audit trails remain linked to warehouse access.
+- Shared backend role permissions are returned by login/refresh/me; web and
+  Flutter cash controls follow them. Owner accounts read but cannot post/reverse
+  cash; accountants and legacy combined accounts retain their existing scope.
+- Admin role changes require revision/reason, invalidate old sessions and close
+  live sockets only after audited commit. A shared warehouse transaction write
+  prevents concurrent downgrades of different owners from removing every owner.
+- Owner mobile feature preferences use server-effective rights; preferences never
+  grant a subscription. Advanced-accounting and rights-only/limited products are
+  labelled so a toggle cannot be mistaken for a complete commercial feature.
+- Backup-retention changes from PR14 are integrated: failed restore verification
+  retains the encrypted backup/checksum while the run remains failed. No live
+  backup job was run here.
+
+Validation of this new delta:
+
+- Backend affected files: **30/30 passed**, including distinct-owner concurrency,
+  stale changes, audit rollback, tenant filtering and inactive-admin denial.
+- Independent money-reviewer: **24/24** payment/idempotency/calendar/calculator
+  tests and **6/6** targeted owner/concurrency/rollback tests passed; no remaining
+  code blocker after the discovered owner race was fixed. No money/FX migration.
+- Web final full suite: **61 files / 515 passed**. Production build passed;
+  lint has existing warnings and no errors.
+- Flutter warehouse/auth/rep-owner regression: **271 passed**; after two extra
+  permission-model cases, final focused run **21 passed**. Analyze: no issues.
+- Python Playwright: Arabic global control and explicit member-role saves at
+  390/1440 px; expected revision/reason, no automatic save on role selection,
+  no page exception or horizontal overflow. Local API fixtures only.
+- Exact integration-head GitHub CI is pending submission. No new APK built;
+  real-device upgrade and five-interface live acceptance remain outstanding.
+
+Merge/deployment status: merge explicitly authorized by owner; development
+integration done. Main remains `86ebd6d1`. Moving main triggers the site workflow;
+Render API/web auto-deploy cannot be inspected with this executor's access.
+Resolve that deployment effect before moving main; do not equate merge approval
+with production publication approval. Preserve checkout closure and all existing
+production identities. No production data touched. Rollback is matched code
+reversion preserving the additive revision/audit data, not database restoration.

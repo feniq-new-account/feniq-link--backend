@@ -1536,7 +1536,17 @@
     },
     "roleChanged": "Role updated. This user must sign in again.",
     "statusFailed": "Could not refresh the subscription. You can read records and retry.",
-    "accessNotice": "Core orders, financial records and payment recording remain available according to account permissions."
+    "accessNotice": "Core orders, financial records and payment recording remain available according to account permissions.",
+    "saveMemberRole": "Save permission change",
+    "effectivePermissions": "Effective account permissions",
+    "permissions": {
+      "financialRead": "Read financial records",
+      "paymentRecord": "Record payments",
+      "paymentReverse": "Reverse payments",
+      "featureConfigure": "Feature preferences"
+    },
+    "accessHistory": "Account permission change history",
+    "auditReloadFailed": "The change was saved, but accounts and history could not be refreshed. Reload without submitting the change again."
   },
   "appRelease": {
     "title": "Android app updates",
@@ -1795,7 +1805,7 @@
     "audit": "Recent change history",
     "preferences": "Feature preferences",
     "preferencesHelp": "Disable or re-enable features you are entitled to. Preferences cannot grant subscription rights.",
-    "preferencesSaved": "Saved. Reload the page to refresh other dashboard sections.",
+    "preferencesSaved": "Saved and dashboard feature access refreshed.",
     "showPreferences": "Show feature preferences",
     "reasons": {
       "platform_disabled": "Disabled platform-wide",
@@ -1810,6 +1820,24 @@
     "tier": "Bundle category",
     "customTier": "Other approved bundle",
     "advancedTier": "Advanced tier",
-    "ownerIncluded": "Owner mobile access is included automatically in the advanced tier; owner insights are separate."
+    "ownerIncluded": "Owner mobile access is included automatically in the advanced tier; owner insights are separate.",
+    "states": {
+      "available": "Available within current scope",
+      "limited": "Limited scope",
+      "scope_pending": "Advanced scope awaiting approval",
+      "rights_only": "Entitlement prepared; mobile channel enforcement pending"
+    },
+    "implementationLimits": "Rep tracking currently records visits; alerts are in-screen. Sales reports and owner insights share the current report. Owner mobile rights do not block the legacy channel; advanced accounting is pending. Core payment recording remains available to accounting operators.",
+    "chooseWarehouse": "Select a warehouse to manage its rights and accounts",
+    "administrativeGrant": "Documented administrative grant",
+    "previousAccount": "Previous account",
+    "platformScope": "Platform",
+    "actions": {
+      "platform.features.updated": "Platform switches updated",
+      "bundle.created": "Bundle defined",
+      "entitlement.granted": "Entitlement granted",
+      "entitlement.revoked": "Entitlement revoked",
+      "warehouse.features.configured": "Warehouse preferences changed"
+    }
   }
 }

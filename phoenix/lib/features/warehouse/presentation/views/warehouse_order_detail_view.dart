@@ -1,5 +1,5 @@
 import 'package:feniq/core/widgets/delivery_estimate_card.dart';
-import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
+import 'package:feniq/features/warehouse/presentation/utils/warehouse_permissions.dart';
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
@@ -84,7 +84,7 @@ class WarehouseOrderDetailView extends StatelessWidget {
   }
 
   void _confirmAdvance(BuildContext context, WarehouseOrderDetail order) {
-    if (order.nextStatus == 'delivered' && context.read<AuthCubit?>()?.state.user?.warehouseRole != 'owner') {
+    if (order.nextStatus == 'delivered' && canRecordWarehousePayments(context)) {
       _deliverAndCollect(context, order);
       return;
     }

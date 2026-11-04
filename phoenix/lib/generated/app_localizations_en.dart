@@ -3383,4 +3383,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get launchRetry => 'Check again';
+
+  @override
+  String get featurePreferencesTitle => 'Feature preferences';
+
+  @override
+  String get featurePreferencesHelp =>
+      'Preferences cannot grant access. Availability depends on your account permissions, warehouse entitlements and platform settings. Advanced accounting is pending; core payment recording remains available to accounting operators.';
+
+  @override
+  String get featurePreferencesOwnerOnly =>
+      'Only the warehouse owner can edit these preferences.';
+
+  @override
+  String get featurePreferencesSaved =>
+      'Preferences saved and availability refreshed.';
+
+  @override
+  String get featurePreferencesAvailable => 'Currently available';
+
+  @override
+  String get featurePreferencesUnavailable => 'Currently unavailable';
+
+  @override
+  String get featurePreferencesReason => 'Reason for change';
+
+  @override
+  String get featurePreferencesSave => 'Save preferences';
+
+  @override
+  String get featurePreferencesRepTracking => 'Rep visit tracking';
+
+  @override
+  String get featurePreferencesLoyalty => 'Loyalty';
+
+  @override
+  String get featurePreferencesAccounting =>
+      'Advanced accounting — scope pending';
+
+  @override
+  String get featurePreferencesSalesReports => 'Sales reports';
+
+  @override
+  String get featurePreferencesOwnerInsights => 'Owner report';
+
+  @override
+  String get featurePreferencesOverdue => 'Overdue receivables';
+
+  @override
+  String get featurePreferencesInactive => 'Inactive pharmacies';
+
+  @override
+  String get featurePreferencesAlerts => 'In-screen owner alerts';
+
+  @override
+  String get featurePreferencesDelivery => 'Delivery scheduling';
+
+  @override
+  String get errorFeatureControlChanged =>
+      'Feature settings changed. Reload before saving.';
 }

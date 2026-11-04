@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import './FeatureControlCenter.css';
+import { Link } from 'react-router-dom';
 
 export function FeatureControlCenter({ warehouseId }) {
   const { t } = useTranslation();
@@ -16,7 +17,8 @@ export function FeatureControlCenter({ warehouseId }) {
   const [attempt, setAttempt] = useState(0);
   const load = useCallback(async () => {
     const [platform, rights, bundles, audit] = await Promise.all([
-      api.getFeatureControl(), api.getWarehouseEntitlements(warehouseId), api.getFeatureBundles(), api.getFeatureAudit(),
+      api.getFeatureControl(), warehouseId ? api.getWarehouseEntitlements(warehouseId) : Promise.resolve(null),
+      api.getFeatureBundles(), api.getFeatureAudit(warehouseId),
     ]);
     return { ...platform, rights, bundles: bundles.bundles, events: audit.events };
   }, [warehouseId]);
@@ -38,7 +40,7 @@ export function FeatureControlCenter({ warehouseId }) {
   }
   const label = key => t(`warehouseAccess.features.${key}`, { defaultValue: key });
   return <section className="feature-control-center">
-    <h3>{t('featureControl.title')}</h3>
+    {warehouseId ? <h3>{t('featureControl.title')}</h3> : <h1>{t('featureControl.title')}</h1>}
     <p className="hint">{t('featureControl.help')}</p>
     {error && <p className="error-text" role="alert">{error}</p>}
     <button type="button" className="btn-secondary" disabled={busy} onClick={() => setAttempt(v => v + 1)}>{t('common.retry')}</button>
@@ -51,12 +53,15 @@ export function FeatureControlCenter({ warehouseId }) {
         <fieldset disabled={busy}>
           <legend>{t('featureControl.global')}</legend>
           {data.featureNames.map(key => <label key={key} className="feature-control-switch">
-            <input type="checkbox" checked={switches[key] !== false} onChange={e => setSwitches({ ...switches, [key]: e.target.checked })} />{label(key)}
+            <input type="checkbox" checked={switches[key] !== false} onChange={e => setSwitches({ ...switches, [key]: e.target.checked })} />
+            <span>{label(key)}{data.featureDefinitions?.[key] && <small className="feature-state">{t(`featureControl.states.${data.featureDefinitions[key].status}`)}</small>}</span>
           </label>)}
           <button className="btn-primary" disabled={!reason.trim()}>{t('featureControl.saveGlobal')}</button>
         </fieldset>
       </form>
-      <div className="feature-control-decisions" role="list">
+      <p className="hint">{t('featureControl.implementationLimits')}</p>
+      {!data.rights && <p><Link to="/admin/warehouse-access">{t('featureControl.chooseWarehouse')}</Link></p>}
+      {data.rights && <><div className="feature-control-decisions" role="list">
         {data.featureNames.map(key => <p key={key} role="listitem"><strong>{label(key)}</strong>: {t(data.rights.features[key] ? 'featureControl.allowed' : 'featureControl.denied')}
           {' · '}{t(`featureControl.reasons.${data.rights.decisions[key].reason}`, { defaultValue: data.rights.decisions[key].reason })}</p>)}
       </div>
@@ -69,6 +74,7 @@ export function FeatureControlCenter({ warehouseId }) {
           <legend>{t('featureControl.grant')}</legend>
           <label>{t('featureControl.kind')}<select value={grant.kind} onChange={e => setGrant({ ...grant, kind: e.target.value })}>
             <option value="addon">{t('featureControl.addon')}</option><option value="bundle">{t('featureControl.bundle')}</option>
+            <option value="grant">{t('featureControl.administrativeGrant')}</option>
           </select></label>
           {grant.kind === 'bundle' ? <label>{t('featureControl.bundle')}<select required value={grant.sourceCode} onChange={e => setGrant({ ...grant, sourceCode: e.target.value })}>
             <option value="">{t('featureControl.choose')}</option>{data.bundles.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
@@ -86,6 +92,7 @@ export function FeatureControlCenter({ warehouseId }) {
         {g.revokedAt ? <span> · {t('featureControl.revoked')}</span> : <button type="button" className="btn-secondary" disabled={busy || !reason.trim()}
           onClick={() => action(() => api.revokeWarehouseGrant(warehouseId, g._id, { revision: data.rights.revision, reason }))}>{t('featureControl.revoke')}</button>}
       </li>)}</ul>
+      </>}
       <details><summary>{t('featureControl.defineBundle')}</summary>
         <p className="hint">{t('featureControl.bundleHelp')}</p>
         <form onSubmit={e => { e.preventDefault(); action(() => api.createFeatureBundle({ ...bundle, reason })); }}>
@@ -104,7 +111,9 @@ export function FeatureControlCenter({ warehouseId }) {
         </form>
       </details>
       <details><summary>{t('featureControl.audit')}</summary>
-        <ul>{data.events.map(event => <li key={event._id}><bdi>{new Date(event.createdAt).toLocaleString()}</bdi> · {event.action} · {event.reason}</li>)}</ul>
+        <ul>{data.events.map(event => <li key={event._id}><bdi>{new Date(event.createdAt).toLocaleString()}</bdi> ·
+          {t(`featureControl.actions.${event.action}`, { defaultValue: event.action })} · {event.reason} ·
+          {event.actorId?.name || t('featureControl.previousAccount')} · {event.warehouseId?.nameAr || event.warehouseId?.nameEn || t('featureControl.platformScope')}</li>)}</ul>
       </details>
     </>}
   </section>;

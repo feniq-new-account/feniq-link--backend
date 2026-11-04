@@ -46,6 +46,7 @@ const userSchema = new Schema(
     // existed carries no claim and is read as 0, so deploying it logs nobody
     // out.
     tokenVersion: { type: Number, default: 0 },
+    accessRevision: { type: Number, default: 0 },
 
     // Login throttling (Audit H-2). Counts CONSECUTIVE failures: reset to 0 by
     // any successful password check, so a user who mistypes twice and then

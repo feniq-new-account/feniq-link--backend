@@ -7,3 +7,4 @@
 .feature-control-center .feature-control-switch input { width: 20px; height: 20px; flex-shrink: 0; }
 .feature-control-center li, .feature-control-decisions p { overflow-wrap: anywhere; margin-block: 10px; }
 .feature-control-center li button { margin-inline: 10px; }
+.feature-state { display: block; font-weight: normal; margin-block: 3px; }

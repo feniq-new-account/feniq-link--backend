@@ -25,14 +25,19 @@ admin.get('/', asyncHandler(async (req, res) => {
     pagination: paginationMeta(hasMore, selected.length ? String(selected.at(-1)._id) : null) });
 }));
 admin.get('/:warehouseId/members', objectIdParams('warehouseId'), asyncHandler(async (req, res) => {
-  res.json({ success: true, members: await access.listWarehouseMembers(req.params.warehouseId) });
+  const members = await access.listWarehouseMembers(req.params.warehouseId);
+  const accessEvents = await require('../models/warehouseAudit.model').find({ warehouseId: req.params.warehouseId,
+    action: { $in: ['member.created', 'member.role_changed'] } }).populate('actorId', 'name')
+    .select('action actorId reason before after createdAt').sort({ createdAt: -1, _id: -1 }).limit(30).lean();
+  res.set('Cache-Control', 'no-store').json({ success: true, members, accessEvents });
 }));
 admin.post('/:warehouseId/members', objectIdParams('warehouseId'), asyncHandler(async (req, res) => {
   const member = await access.createWarehouseMember(req.params.warehouseId, req.user._id, req.body || {});
   res.status(201).json({ success: true, member });
 }));
 admin.put('/:warehouseId/members/:userId', objectIdParams('warehouseId', 'userId'), asyncHandler(async (req, res) => {
-  const members = await access.setWarehouseMemberRole(req.params.warehouseId, req.params.userId, req.user._id, req.body?.warehouseRole);
+  const members = await access.setWarehouseMemberRole(req.params.warehouseId, req.params.userId, req.user._id, req.body?.warehouseRole,
+    { revision: req.body?.revision, reason: req.body?.reason });
   res.json({ success: true, members });
 }));
 admin.get('/:warehouseId/subscription', objectIdParams('warehouseId'), asyncHandler(async (req, res) => {

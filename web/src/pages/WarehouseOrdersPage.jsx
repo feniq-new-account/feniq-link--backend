@@ -1,3 +1,4 @@
+import { hasRolePermission } from '../utils/userPermissions';
 import { useAuth } from '../auth/AuthContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -27,7 +28,7 @@ const ADVANCE_KEYS = {
 
 export function WarehouseOrdersPage() {
   const { user } = useAuth();
-  const canRecord = user?.warehouseRole !== 'owner';
+  const canRecord = hasRolePermission(user, 'paymentRecord');
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { collect } = useDeliveryCollections();

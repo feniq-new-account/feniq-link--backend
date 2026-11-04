@@ -1,3 +1,4 @@
+import { hasRolePermission } from '../utils/userPermissions';
 import { NumericInput } from '../components/NumericInput';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -414,7 +415,7 @@ function StatementTable({ statement }) {
 
 function WarehouseDebtDetail({ pharmacyId, onBack }) {
   const { user } = useAuth();
-  const canRecord = user?.warehouseRole !== 'owner';
+  const canRecord = hasRolePermission(user, 'paymentRecord');
   const { t, i18n } = useTranslation();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -602,7 +603,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
 // rate is involved in rendering it.
 export function WarehouseDebtsPage() {
   const { user } = useAuth();
-  const canRecord = user?.warehouseRole !== 'owner';
+  const canRecord = hasRolePermission(user, 'paymentRecord');
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const selectedFromUrl = params.get('pharmacy') || null;

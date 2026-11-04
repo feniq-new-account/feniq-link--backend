@@ -56,7 +56,11 @@ describe('warehouse access administration', () => {
     api.updateAdminWarehouseMemberRole.mockResolvedValue({ members: [{ id: 'u1', name: 'Owner', phone: '0944000001', warehouseRole: 'owner' }] });
     const select = [...host.querySelectorAll('li select')][0];
     await act(async () => { select.value = 'owner'; select.dispatchEvent(new Event('change', { bubbles: true })); });
-    expect(api.updateAdminWarehouseMemberRole).toHaveBeenCalledWith('w1', 'u1', 'owner');
+    expect(api.updateAdminWarehouseMemberRole).not.toHaveBeenCalled();
+    const reason = host.querySelector('li input');
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(reason, 'Separate owner permissions'); reason.dispatchEvent(new Event('input', { bubbles: true })); });
+    await click(buttonWith('warehouseAccess.saveMemberRole'));
+    expect(api.updateAdminWarehouseMemberRole).toHaveBeenCalledWith('w1', 'u1', 'owner', { revision: 0, reason: 'Separate owner permissions' });
     expect(host.textContent).toContain('warehouseAccess.roleChanged');
   });
 });

@@ -61,7 +61,8 @@ function serializeWarehouse(warehouse) {
 // share that one and have no use for it. Strictly boolean - a row that predates
 // the field reads as false.
 function serializeSelf(user) {
-  return { ...serializeUser(user), mustChangePassword: user.mustChangePassword === true };
+  return { ...serializeUser(user), mustChangePassword: user.mustChangePassword === true,
+    permissions: require('../utils/rolePermissions').rolePermissions(user) };
 }
 
 // `refreshToken` is only present on responses that actually start or renew

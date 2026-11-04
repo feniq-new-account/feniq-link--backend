@@ -4,6 +4,8 @@ const warehouseSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     memberUserIds: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
+    // Serialize member-role changes across different users in this warehouse.
+    memberAccessRevision: { type: Number, default: 0 },
     nameAr: { type: String, required: true, trim: true },
     nameEn: { type: String, required: true, trim: true },
     address: { type: String, required: true },

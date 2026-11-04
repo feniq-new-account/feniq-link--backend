@@ -3,17 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import { api } from '../api/client';
 import './FeatureControlCenter.css';
+import { hasRolePermission } from '../utils/userPermissions';
+import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
 
 export function FeaturePreferencesCard() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { refresh, applyFeatures } = useWarehouseSubscription();
   const [data, setData] = useState(null);
   const [features, setFeatures] = useState({});
   const [reason, setReason] = useState('');
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
-  if (user?.warehouseRole === 'accountant') return null;
+  if (!hasRolePermission(user, 'featureConfigure')) return null;
   async function load() {
     setBusy(true); setError(null); setSaved(false);
     try { const result = await api.getMyEntitlements(); setData(result); setFeatures(result.configuration.features); }
@@ -22,7 +25,8 @@ export function FeaturePreferencesCard() {
   async function save(e) {
     e.preventDefault(); setBusy(true); setError(null); setSaved(false);
     try { const result = await api.saveMyFeatureConfiguration({ revision: data.revision, features, reason });
-      setData({ ...data, revision: result.revision, features: result.features }); setSaved(true); setReason(''); }
+      setData({ ...data, revision: result.revision, features: result.features });
+      applyFeatures(result.features); refresh(); setSaved(true); setReason(''); }
     catch (err) { setError(err.message); } finally { setBusy(false); }
   }
   return <section className="feature-control-center">

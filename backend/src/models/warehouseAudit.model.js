@@ -4,6 +4,7 @@ const schema = new Schema({
   warehouseId: { type: Schema.Types.ObjectId, ref: 'Warehouse', required: true, index: true },
   actorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   action: { type: String, required: true },
+  reason: { type: String, default: '', maxlength: 1000 },
   before: { type: Schema.Types.Mixed, default: null },
   after: { type: Schema.Types.Mixed, default: null },
 }, { timestamps: { createdAt: true, updatedAt: false } });

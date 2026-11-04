@@ -21,6 +21,7 @@ import 'package:feniq/features/warehouse/presentation/managers/warehouse_orders_
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_order_labels.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/warehouse_order_card.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/features/warehouse/presentation/utils/warehouse_permissions.dart';
 
 /// The warehouse's orders: a status tab at a time, oldest first, with the
 /// forward step one tap (and one confirmation) away on every row.
@@ -93,7 +94,7 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
   }
 
   void _confirmAdvance(WarehouseOrderSummary order) {
-    if (nextWarehouseStatus(order.status) == 'delivered') {
+    if (nextWarehouseStatus(order.status) == 'delivered' && canRecordWarehousePayments(context)) {
       _deliverAndCollect(order);
       return;
     }

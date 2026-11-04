@@ -227,6 +227,10 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
       return l10n.errorOrderNotEditable;
     case 'PACKAGE_ITEMS_LOCKED':
       return l10n.errorPackageItemsLocked;
+    case 'FEATURE_CONTROL_CHANGED':
+      return l10n.errorFeatureControlChanged;
+    case 'OWNER_REQUIRED':
+      return l10n.featurePreferencesOwnerOnly;
     case 'FEATURE_NOT_ENABLED':
     case 'FEATURE_UNAVAILABLE':
       return l10n.errorFeatureUnavailable;

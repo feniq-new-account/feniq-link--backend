@@ -7,12 +7,13 @@ const { ApiError } = require('../utils/ApiError');
 const service = require('../services/featureControl.service');
 const Bundle = require('../models/featureBundle.model');
 const Audit = require('../models/featureControlAudit.model');
-const { OPTIONAL_FEATURES, CORE_FEATURES, SELF_CONFIGURABLE } = require('../config/featureCatalog');
+const { OPTIONAL_FEATURES, CORE_FEATURES, SELF_CONFIGURABLE, FEATURE_DEFINITIONS } = require('../config/featureCatalog');
 const admin = Router();
 admin.use(authenticate, authorize('admin'), requireActiveStatus);
 admin.get('/', asyncHandler(async (req, res) => {
   res.set('Cache-Control', 'no-store').json({ success: true, platform: await service.readPlatform(),
-    featureNames: OPTIONAL_FEATURES, coreFeatureNames: CORE_FEATURES, selfConfigurable: SELF_CONFIGURABLE });
+    featureNames: OPTIONAL_FEATURES, featureDefinitions: FEATURE_DEFINITIONS,
+    coreFeatureNames: CORE_FEATURES, selfConfigurable: SELF_CONFIGURABLE });
 }));
 admin.put('/', asyncHandler(async (req, res) => {
   res.json({ success: true, platform: await service.savePlatform(req.user._id, req.body) });
@@ -25,8 +26,14 @@ admin.post('/bundles', asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, bundle: await service.createBundle(req.user._id, req.body) });
 }));
 admin.get('/audit', asyncHandler(async (req, res) => {
+  const id = req.query.warehouseId;
+  if (id !== undefined && (typeof id !== 'string' || !/^[a-f\d]{24}$/i.test(id))) {
+    throw ApiError.badRequest('Invalid warehouse filter.', undefined, 'INVALID_FEATURE_CONTROL');
+  }
+  const filter = id ? { $or: [{ scope: 'platform' }, { scope: 'bundle' }, { warehouseId: id }] } : {};
   res.set('Cache-Control', 'no-store').json({ success: true,
-    events: await Audit.find({}).sort({ createdAt: -1, _id: -1 }).limit(100).lean() });
+    events: await Audit.find(filter).populate('actorId', 'name').populate('warehouseId', 'nameAr nameEn')
+      .sort({ createdAt: -1, _id: -1 }).limit(100).lean() });
 }));
 const warehouseAdmin = Router({ mergeParams: true });
 warehouseAdmin.use(authenticate, authorize('admin'), requireActiveStatus, objectIdParams('warehouseId'));
@@ -56,7 +63,7 @@ self.get('/', asyncHandler(async (req, res) => {
   }])), selfConfigurable: SELF_CONFIGURABLE });
 }));
 self.put('/configuration', asyncHandler(async (req, res) => {
-  if (req.user.warehouseRole === 'accountant') throw ApiError.forbidden('Only the warehouse owner can configure features.', 'OWNER_REQUIRED');
+  if (!require('../utils/rolePermissions').rolePermissions(req.user).featureConfigure) throw ApiError.forbidden('Only the warehouse owner can configure features.', 'OWNER_REQUIRED');
   const warehouse = await loadWarehouseOrThrow(req.user._id, { select: '_id', lean: true });
   const result = await service.configureWarehouse(warehouse._id, req.user._id, req.body);
   res.json({ success: true, revision: result.revision, features: result.features });

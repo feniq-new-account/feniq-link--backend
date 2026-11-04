@@ -143,3 +143,19 @@ test('commission policy API is an administrator-only calculation and creates no 
   assert.equal(result.body.persisted, false);
   assert.deepEqual([await LedgerEntry.countDocuments({}), await Payment.countDocuments({})], before);
 });
+test('warehouse-filtered audit excludes other tenants and names its actor; malformed filters are refused', async () => {
+  const foreign = await Warehouse.create({ userId: admin.id, nameAr: 'آخر', nameEn: 'Other', city: 'Jableh', address: 'Other', phone: '+963944100050' });
+  await Audit.create({ scope: 'warehouse', warehouseId: foreign.id, actorId: admin.id, action: 'test.foreign', reason: 'Foreign audit fixture', revision: 1 });
+  const own = await req(admin, `/admin/feature-control/audit?warehouseId=${wh.id}`);
+  assert.equal(own.status, 200);
+  assert.equal(own.body.events.some(e => e.action === 'test.foreign'), false);
+  assert.ok(own.body.events.some(e => e.actorId?.name === 'Admin'));
+  assert.equal((await req(admin, '/admin/feature-control/audit?warehouseId[bad]=x')).status, 400);
+});
+test('pending administrators cannot manage legacy or feature routes, but can inspect their own auth status', async () => {
+  const pending = await User.create({ name: 'Pending admin', phone: '+963944100051', role: 'admin', status: 'pending' });
+  assert.equal((await req(pending, '/admin/accounts')).status, 403);
+  assert.equal((await req(pending, '/admin/feature-control')).status, 403);
+  const me = await req(pending, '/auth/me');
+  assert.equal(me.status, 200); assert.equal(me.body.user.permissions.platformManage, false);
+});
