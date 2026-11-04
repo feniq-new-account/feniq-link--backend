@@ -27,6 +27,10 @@ def assemble(source, apk, previous, output, expected_cert):
             raise ValueError("The previous APK has no usable version manifest")
         shutil.copy2(old_apk, output / "feniq.apk")
 
+    old_releases = previous / "releases"
+    if old_releases.is_dir():
+        shutil.copytree(old_releases, output / "releases")
+
     candidate = apk / "app-release.apk"
     manifest = apk / "release.json"
     if candidate.is_file() and manifest.is_file():
@@ -38,17 +42,31 @@ def assemble(source, apk, previous, output, expected_cert):
             raise ValueError("Refusing to publish an APK for a different API or application id")
         if fingerprint(release.get("certificateSha256", "")) != expected:
             raise ValueError("Refusing to publish an APK signed by a different certificate")
+        build = str(release.get("build", ""))
+        version_name = release.get("versionName", "")
+        if not re.fullmatch(r"[1-9][0-9]{0,9}", build) or int(build) > 2100000000:
+            raise ValueError("Invalid Android build number")
+        if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version_name):
+            raise ValueError("Missing verified Android version name")
         digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
         if release.get("sha256") != digest:
             raise ValueError("APK digest differs from the verified build manifest")
-        if int(release["build"]) >= int(version.get("build") or 0):
+        if int(build) == int(version.get("build") or 0) and version.get("sha256") != digest:
+            raise ValueError("A published build number cannot identify different APK bytes")
+        if int(build) >= int(version.get("build") or 0):
             shutil.copy2(candidate, output / "feniq.apk")
-            version = {"apk": True, "build": release["build"], "date": release["date"],
+            filename = f"releases/{build}-{digest[:12]}.apk"
+            (output / "releases").mkdir(exist_ok=True)
+            shutil.copy2(candidate, output / filename)
+            version = {"apk": True, "build": build, "versionName": version_name,
+                       "file": filename, "applicationId": APPLICATION_ID, "date": release["date"],
                        "size": candidate.stat().st_size, "sha256": digest,
                        "certificateSha256": release["certificateSha256"]}
     elif candidate.is_file():
         print("::warning::APK has no verified release manifest; retaining the previous download.")
 
+    if not version.get("apk"):
+        raise ValueError("No usable Android download; retain the existing publication")
     (output / "version.json").write_text(json.dumps(version) + "\n")
     return version
 

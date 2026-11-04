@@ -49,6 +49,9 @@ jobs:
             if git cat-file -e FETCH_HEAD:feniq.apk 2>/dev/null; then
               git show FETCH_HEAD:feniq.apk > previous/feniq.apk
               git show FETCH_HEAD:version.json > previous/version.json
+              if git cat-file -e FETCH_HEAD:releases 2>/dev/null; then
+                git archive FETCH_HEAD releases | tar -x -C previous
+              fi
             fi
           fi
 

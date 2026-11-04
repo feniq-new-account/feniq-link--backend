@@ -191,6 +191,7 @@ class AppUpdateService {
     try {
       final policyStatus = await _checkReleasePolicy(role, force);
       if (policyStatus != null) return policyStatus;
+      if (_fetchRelease != null) return AppUpdateStatus.none;
       if (!_dueForCheck) return _cachedMandatoryUpdate();
 
       // Record the attempt up front, so a fetch that fails (offline, plugin

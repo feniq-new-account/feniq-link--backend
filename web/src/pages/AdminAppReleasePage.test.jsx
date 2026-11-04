@@ -44,3 +44,11 @@ it('the administrator can disable an update without requiring a new inspection',
   expect(api.inspectAdminAppRelease).not.toHaveBeenCalled();
   expect(host.textContent).toContain('appRelease.saved');
 });
+
+it('inspection uses the actual APK version', async () => {
+  api.inspectAdminAppRelease.mockResolvedValue({ artifact: { ...configuration, versionName: '1.1.0' } });
+  const inspect = [...host.querySelectorAll('button')].find(button => button.textContent === 'appRelease.inspect');
+  await act(async () => inspect.click());
+  await act(async () => host.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  expect(api.updateAdminAppRelease).toHaveBeenCalledWith(expect.objectContaining({ versionName: '1.1.0' }));
+});

@@ -31,7 +31,7 @@ class PublicationTest(unittest.TestCase):
         (self.apk / "app-release.apk").write_bytes(data)
         manifest = {"apiBaseUrl": module.PRODUCTION_API, "applicationId": module.APPLICATION_ID,
                     "certificateSha256": self.cert, "sha256": hashlib.sha256(data).hexdigest(),
-                    "build": "1006", "date": "2026-10-27", **changes}
+                    "build": "1006", "versionName": "1.1.0", "date": "2026-10-27", **changes}
         (self.apk / "release.json").write_text(json.dumps(manifest))
 
     def test_expired_artifact_preserves_previous_download(self):
@@ -56,6 +56,22 @@ class PublicationTest(unittest.TestCase):
     def test_older_apk_cannot_downgrade_public_download(self):
         self.candidate(build="1004")
         self.assertEqual(self.run_assembly()["build"], "1005")
+
+    def test_new_file_is_immutable_and_carries_its_version(self):
+        self.candidate()
+        result = self.run_assembly()
+        self.assertEqual(result["versionName"], "1.1.0")
+        self.assertEqual((self.out / result["file"]).read_bytes(), b"verified APK")
+
+    def test_first_publication_requires_a_verified_apk(self):
+        (self.old / "feniq.apk").unlink()
+        with self.assertRaises(ValueError):
+            self.run_assembly()
+
+    def test_same_build_cannot_replace_bytes(self):
+        self.candidate(build="1005")
+        with self.assertRaises(ValueError):
+            self.run_assembly()
 
     def test_tampered_apk_is_rejected(self):
         self.candidate(sha256="0" * 64)

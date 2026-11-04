@@ -39,6 +39,15 @@ void main() {
     );
   }
 
+  test('Android release failure never activates an unrelated Firebase minimum', () async {
+    when(() => rc.minVersion).thenReturn('99.0.0');
+    final service = AppUpdateService(remoteConfigService: rc, storageService: storage,
+      currentVersion: '1.1.0', currentBuild: 1058,
+      fetchRelease: () async => throw Exception('offline'));
+    expect(await service.checkForUpdate(), AppUpdateStatus.none);
+    verifyNever(() => rc.refresh());
+  });
+
   group('status evaluation (spec section 14)', () {
     test('1. current == latest -> none', () async {
       final s = build(current: '1.2.0', latest: '1.2.0', min: '1.1.0');

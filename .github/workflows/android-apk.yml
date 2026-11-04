@@ -24,7 +24,7 @@ on:
   # One task-specific branch for the owner's explicitly requested signed
   # launch validation. Ordinary branches/main still require manual dispatch.
   push:
-    branches: [codex/launch-apk-validation-2026-10-31, codex/launch-upgrade-check-2026-10-31]
+    branches: [codex/launch-apk-validation-2026-10-31, codex/launch-upgrade-check-2026-10-31, codex/pharmacist-launch]
   # PRs run Flutter tests only. APK creation requires a manual request.
   # site-deploy.yml only ever takes APKs from main.
   pull_request:
@@ -72,7 +72,7 @@ jobs:
     outputs:
       artifact: ${{ steps.signing.outputs.artifact }}
     # Ammar: never create an APK automatically; wait for an explicit request.
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/codex/launch-apk-validation-2026-10-31')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/codex/launch-apk-validation-2026-10-31' || github.ref == 'refs/heads/codex/pharmacist-launch'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -114,6 +114,10 @@ jobs:
           EXPECTED_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
         run: |
           EXPECTED_SHA256="${EXPECTED_SHA256:-$(cat ../.github/android-certificate.sha256)}"
+          if [ "$GITHUB_REF" = refs/heads/codex/pharmacist-launch ] && [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::The requested pharmacist acceptance build requires the permanent signing key."
+            exit 1
+          fi
           if [ -z "$KEYSTORE_BASE64" ]; then
             echo "::warning::No signing key in repository secrets - this APK is signed with a temporary debug key, uploaded as feniq-apk-TEST-ONLY and never published. See phoenix/android/README.md."
             echo "artifact=feniq-apk-TEST-ONLY" >> "$GITHUB_OUTPUT"
@@ -177,7 +181,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           echo "applicationId=$app_id"
           echo "certificate SHA-256=$cert"
-          if [ "$ARTIFACT" = "feniq-apk" ] && [ -n "$EXPECTED_SHA256" ]; then
+          if { [ "$ARTIFACT" = "feniq-apk" ] || [ "$GITHUB_REF" = refs/heads/codex/pharmacist-launch ]; } && [ -n "$EXPECTED_SHA256" ]; then
             want=$(echo "$EXPECTED_SHA256" | tr -d ' :' | tr 'a-f' 'A-F')
             got=$(echo "$cert" | tr -d ':')
             if [ "$want" != "$got" ]; then
@@ -186,11 +190,17 @@ jobs:
             fi
             echo "Fingerprint matches ANDROID_CERT_SHA256."
           fi
+          badging=$("$tools/aapt2" dump badging "$apk")
+          version_name=$(printf '%s\n' "$badging" | sed -n "s/^package:.*versionName='\([^']*\)'.*/\1/p")
+          actual_build=$(printf '%s\n' "$badging" | sed -n "s/^package:.*versionCode='\([^']*\)'.*/\1/p")
+          [ "$app_id" = com.feniq.link ]
+          [ "$actual_build" = "$((GITHUB_RUN_NUMBER + 1000))" ]
+          [ -n "$version_name" ]
           digest=$(sha256sum "$apk" | cut -d ' ' -f 1)
           jq -n --arg api "$API_BASE_URL" --arg id "$app_id" --arg cert "$cert" \
-            --arg sha "$digest" --arg commit "$GITHUB_SHA" \
+            --arg sha "$digest" --arg version "$version_name" --arg commit "$GITHUB_SHA" \
             --arg build "$((GITHUB_RUN_NUMBER + 1000))" --arg date "$(date -u +%F)" \
-            '{apiBaseUrl:$api, applicationId:$id, certificateSha256:$cert, sha256:$sha, commit:$commit, build:$build, date:$date}' \
+            '{versionName:$version, apiBaseUrl:$api, applicationId:$id, certificateSha256:$cert, sha256:$sha, commit:$commit, build:$build, date:$date}' \
             > build/app/outputs/flutter-apk/release.json
 
       - uses: actions/upload-artifact@v4

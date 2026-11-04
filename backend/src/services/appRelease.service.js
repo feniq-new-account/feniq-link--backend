@@ -30,14 +30,19 @@ async function inspectPublishedRelease(sourceOrigin, fetcher = fetch) {
       typeof data.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(data.sha256) ||
       typeof data.certificateSha256 !== 'string' || !/^[A-F0-9]{64}$/.test(CERTIFICATE) || data.certificateSha256.replace(/[: ]/g, '').toUpperCase() !== CERTIFICATE ||
       !Number.isInteger(data.size) || data.size < 500000 || data.size > 200 * 1024 * 1024) throw invalid('The published APK has no matching signed release manifest.');
-  const apkUrl = `${origin}/feniq.apk`;
+  if (data.applicationId !== 'com.feniq.link' || typeof data.versionName !== 'string' ||
+      !/^\d+\.\d+\.\d+$/.test(data.versionName) ||
+      data.file !== `releases/${latestBuild}-${data.sha256.slice(0, 12).toLowerCase()}.apk`) {
+    throw invalid('The release does not identify an immutable verified Android file.');
+  }
+  const apkUrl = `${origin}/${data.file}`;
   const head = await fetcher(apkUrl, { method: 'HEAD', redirect: 'error', signal: AbortSignal.timeout(15000) });
   const size = Number(head.headers.get('content-length'));
   const contentType = (head.headers.get('content-type') || '').split(';')[0];
   if (!head.ok || size !== data.size || !['application/vnd.android.package-archive', 'application/octet-stream'].includes(contentType)) {
     throw invalid('The published APK does not match its manifest.');
   }
-  return { latestBuild, apkUrl, size: data.size, sha256: data.sha256.toLowerCase(), certificateSha256: CERTIFICATE, applicationId: 'com.feniq.link' };
+  return { latestBuild, versionName: data.versionName, apkUrl, size: data.size, sha256: data.sha256.toLowerCase(), certificateSha256: CERTIFICATE, applicationId: 'com.feniq.link' };
 }
 
 function validateRoles(value, latestBuild) {
@@ -91,6 +96,7 @@ async function saveRelease(actorId, body, { fetcher = fetch } = {}) {
   } else {
     const artifact = await inspectPublishedRelease(body.sourceOrigin, fetcher);
     if (before && artifact.latestBuild < before.latestBuild) throw invalid('A published APK cannot downgrade the installed build.');
+    if (body.versionName !== artifact.versionName) throw invalid('Version name must match the published APK.');
     if (typeof body.versionName !== 'string' || !/^\d+\.\d+\.\d+$/.test(body.versionName) ||
         typeof body.notes !== 'string' || body.notes.length > 2000) throw invalid();
     fields = { ...artifact, enabled: true, versionName: body.versionName, notes: body.notes,

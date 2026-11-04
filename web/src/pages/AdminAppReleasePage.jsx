@@ -44,7 +44,7 @@ export function AdminAppReleasePage() {
     try {
       const result = await api.inspectAdminAppRelease(form.sourceOrigin);
       setArtifact(result.artifact);
-      setForm((current) => ({ ...current, roles: Object.fromEntries(ROLES.map((role) => [role, {
+      setForm((current) => ({ ...current, versionName: result.artifact.versionName, roles: Object.fromEntries(ROLES.map((role) => [role, {
         ...current.roles[role], recommendedBuild: current.roles[role].recommendedBuild || result.artifact.latestBuild,
       }])) }));
       setNotice(t('appRelease.verified'));
