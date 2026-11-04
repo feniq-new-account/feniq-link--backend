@@ -445,6 +445,8 @@ export const api = {
   blockAccount: (userId) => request(`/admin/accounts/${userId}/block`, { method: 'POST' }),
   // Registration approval page: the syndicate list, the approval switch and the
   // admins' Telegram bot (backend adminRegistration.controller.js).
+  getLaunchSettings: () => request('/admin/launch'),
+  updateLaunchSettings: (body) => request('/admin/launch', { method: 'PUT', body }),
   registrationStatus: () => request('/admin/registration'),
   // The signed-in user's own password. The response carries a fresh session
   // (token + refreshToken): every other device is signed out.

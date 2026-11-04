@@ -1,3 +1,4 @@
+import 'package:feniq/features/launch/launch_status_banner.dart';
 import 'package:feniq/core/widgets/delivery_estimate_card.dart';
 import 'dart:async';
 
@@ -29,7 +30,9 @@ import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/core/widgets/full_text.dart';
 
 class CartView extends StatefulWidget {
-  const CartView({super.key});
+  const CartView({super.key, this.loadLaunchStatus});
+
+  final Future<AppLaunchStatus> Function()? loadLaunchStatus;
 
   @override
   State<CartView> createState() => _CartViewState();
@@ -39,6 +42,7 @@ class _CartViewState extends State<CartView> {
   late final TextEditingController _notesController;
   // Held for dispose, where the context can no longer look it up.
   late final CartCubit _cartCubit;
+  bool _orderingEnabled = false;
 
   @override
   void initState() {
@@ -73,6 +77,8 @@ class _CartViewState extends State<CartView> {
 
     // The refused packages are already flagged on their lines by the time this
     // runs (CartCubit.submitOrder), so their names come off the cart itself.
+    if (state.errorCode == 'ORDERING_NOT_STARTED') return state.errorMessage ?? l10n.launchPreparing;
+
     if (state.errorCode == 'PACKAGE_UNAVAILABLE') {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       return describeUnavailablePackages(l10n, isArabic, state.items);
@@ -405,7 +411,11 @@ class _CartViewState extends State<CartView> {
           },
         ),
       ),
-      body: BlocListener<CartCubit, CartState>(
+      body: Column(children: [
+        LaunchStatusBanner(load: widget.loadLaunchStatus, onOrderingChanged: (enabled) {
+          if (mounted && _orderingEnabled != enabled) setState(() => _orderingEnabled = enabled);
+        }),
+        Expanded(child: BlocListener<CartCubit, CartState>(
         // Another warehouse's cart came to the front: the notes field shows
         // that cart's notes (the controller is only seeded once otherwise).
         listenWhen: (previous, current) => previous.warehouseId != current.warehouseId,
@@ -679,12 +689,12 @@ class _CartViewState extends State<CartView> {
                         PrimaryButton(
                           label: l10n.submitAllButton(state.cartCount),
                           isLoading: state.isSubmittingAll,
-                          onPressed: state.isSubmitting || state.isSubmittingAll || state.isQuoting
+                          onPressed: !_orderingEnabled || state.isSubmitting || state.isSubmittingAll || state.isQuoting
                               ? null
                               : _confirmSubmitAll,
                         ),
                         TextButton(
-                          onPressed: state.isReadyToSubmit && !state.isSubmittingAll ? _confirmSubmit : null,
+                          onPressed: _orderingEnabled && state.isReadyToSubmit && !state.isSubmittingAll ? _confirmSubmit : null,
                           child: Text(l10n.submitThisWarehouseOnly),
                         ),
                       ] else
@@ -696,7 +706,7 @@ class _CartViewState extends State<CartView> {
                           // the same rule regardless (double validation).
                           // ...and only once the server's figures for this
                           // exact cart are on screen (CartState.isReadyToSubmit).
-                          onPressed: state.isReadyToSubmit ? _confirmSubmit : null,
+                          onPressed: _orderingEnabled && state.isReadyToSubmit ? _confirmSubmit : null,
                         ),
                     ],
                   ),
@@ -710,7 +720,8 @@ class _CartViewState extends State<CartView> {
           );
         },
         ),
-      ),
+      )),
+      ]),
     );
   }
 }

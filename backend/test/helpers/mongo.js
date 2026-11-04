@@ -26,7 +26,7 @@ let replSet = null;
 
 // The download is slow the first time; node:test's default timeout is
 // generous but the boot itself can still take a few seconds on a cold cache.
-async function startMemoryMongo({ dbName = 'feniq-test' } = {}) {
+async function startMemoryMongo({ dbName = 'feniq-test', orderingOpen = true } = {}) {
   if (replSet) return mongoose.connection;
 
   // Required lazily so a test file that never calls this pays nothing for it,
@@ -39,6 +39,10 @@ async function startMemoryMongo({ dbName = 'feniq-test' } = {}) {
   });
 
   await mongoose.connect(replSet.getUri(dbName));
+  // Existing sales tests use an explicit open retail fixture. Production defaults closed.
+  if (orderingOpen) await mongoose.connection.collection('platformsettings').insertOne({
+    key: 'pharmacistLaunch', value: { mode: 'ordering_open', message: 'Test sales fixture', revision: 1 },
+  });
   return mongoose.connection;
 }
 

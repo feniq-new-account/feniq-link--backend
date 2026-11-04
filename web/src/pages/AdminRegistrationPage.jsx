@@ -1,3 +1,4 @@
+import { LaunchSettingsCard } from '../components/LaunchSettingsCard';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -31,6 +32,7 @@ export function AdminRegistrationPage() {
       <div className="adm-page-head">
         <h1>{t('nav.registration')}</h1>
       </div>
+      <LaunchSettingsCard />
       {error && <p className="error-text">{error}</p>}
       {!status && !error && <p className="hint">{t('common.loading')}</p>}
       {status && (

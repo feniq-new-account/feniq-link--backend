@@ -1750,5 +1750,16 @@
   },
   "numericInput": {
     "invalid": "Enter a valid number within the shown limits. Review the amount rather than removing digits to bypass this message."
+  },
+  "launch": {
+    "title": "Pharmacist launch status",
+    "mode": "Operating mode",
+    "registrationOnly": "Registration and browsing only",
+    "orderingOpen": "Accept orders",
+    "message": "Message shown to pharmacists",
+    "save": "Save operating mode",
+    "reload": "Reload",
+    "hint": "Open ordering only after warehouses, prices and commission agreements are ready. Registration approval is separate.",
+    "revision": "Configuration revision: {{revision}}"
   }
 }

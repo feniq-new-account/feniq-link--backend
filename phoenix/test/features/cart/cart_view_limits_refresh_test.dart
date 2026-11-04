@@ -1,3 +1,4 @@
+import '../../helpers/launch_fixture.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -125,7 +126,7 @@ void main() {
     final router = GoRouter(
       initialLocation: '/cart',
       routes: [
-        GoRoute(path: '/cart', name: RouteNames.cart, builder: (context, state) => const CartView()),
+        GoRoute(path: '/cart', name: RouteNames.cart, builder: (context, state) => const CartView(loadLaunchStatus: openLaunchForTest)),
         GoRoute(
           path: '/orders/:orderId',
           name: RouteNames.orderTracking,

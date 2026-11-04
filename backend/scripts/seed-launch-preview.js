@@ -56,6 +56,10 @@ async function seedLaunchPreview(accounts, options) {
     if (file.endsWith('.model.js')) require(path.join(__dirname, '../src/models', file));
   }
   await Promise.all(Object.values(mongoose.models).map((value) => value.init()));
+  // This is an explicitly confirmed, empty, isolated sales demo, never production.
+  await require('../src/models/platformSetting.model').create({ key: 'pharmacistLaunch',
+    value: { mode: 'ordering_open', message: '[DEMO] Isolated preview ordering', revision: 1 } });
+
   const seed = require('../src/services/demoSeed.service');
   await seed.seedDemoDataIfEmpty();
   const warehouses = await Warehouse.find().sort({ phone: 1 });

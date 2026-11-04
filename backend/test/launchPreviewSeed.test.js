@@ -8,7 +8,7 @@ const { startMemoryMongo, stopMemoryMongo } = require('./helpers/mongo');
 const { generateAccounts, assertPreviewTarget, seedLaunchPreview } = require('../scripts/seed-launch-preview');
 let server, base;
 const options = { nodeEnv: 'test', confirmedDatabase: 'feniq_launch_preview_test' };
-test.before(async () => { await startMemoryMongo({ dbName: options.confirmedDatabase }); });
+test.before(async () => { await startMemoryMongo({ dbName: options.confirmedDatabase, orderingOpen: false }); });
 test.after(async () => { if (server) await new Promise((resolve) => server.close(resolve)); await stopMemoryMongo(); });
 
 test('preview refuses production, unconfirmed targets and incomplete credentials before writing', async () => {

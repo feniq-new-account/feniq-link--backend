@@ -692,6 +692,10 @@ async function createOrder({
     if (existing) return replayOrRejectIdempotentOrder(existing, idempotencyFingerprint);
   }
 
+  // Existing idempotent results above stay readable even after ordering closes.
+  // This must run before credits, counters, stock or any other write.
+  await require('./launch.service').assertOrderingOpen();
+
   // Defense in depth: order.controller.js's validateItems already rejects an
   // empty/invalid cart before this is ever called from the API, and a
   // return's own items are validated non-empty at creation time (the other

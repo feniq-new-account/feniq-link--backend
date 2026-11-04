@@ -49,6 +49,9 @@ const pharmacyVisitCodeRoutes = require('./pharmacyVisitCode.routes');
 const telegramRoutes = require('./telegram.routes');
 
 const router = Router();
+const launchRoutes = require('./launch.routes');
+router.use('/app/status', launchRoutes.publicRouter);
+router.use('/admin/launch', launchRoutes.admin);
 const appReleaseRoutes = require('./appRelease.routes');
 router.use('/app/release', appReleaseRoutes.publicRouter);
 router.use('/admin/app-release', appReleaseRoutes.admin);
