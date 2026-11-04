@@ -10,12 +10,7 @@ import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 
-// Section 6.2 update: the address field is gone - this embedded map is now
-// the only way to set the pharmacy's location, and its resolved address is
-// what gets submitted as `address` (see registration_view.dart's _submit()).
-// Same geolocator/Nominatim logic as the earlier bottom-sheet picker, just
-// hosted inline in the form instead of a modal - see location_picker_sheet's
-// prior version in git history for that.
+// Optional map assist. Manual address entry remains available if GPS, tiles or geocoding fail.
 
 // Latakia, Syria - the app's only served city today (see
 // auth.service.js's registerOrLogin), used only as where the map opens if
@@ -38,7 +33,7 @@ Future<bool> ensureLocationPermission() async {
 
 Future<String?> _reverseGeocode(LatLng point, String languageCode) async {
   try {
-    final response = await Dio().get<Map<String, dynamic>>(
+    final response = await Dio(BaseOptions(connectTimeout: const Duration(seconds: 6), receiveTimeout: const Duration(seconds: 6))).get<Map<String, dynamic>>(
       'https://nominatim.openstreetmap.org/reverse',
       queryParameters: {
         'format': 'jsonv2',
@@ -86,7 +81,9 @@ class _LocationMapFieldState extends State<LocationMapField> {
   // True once "choose this location" is tapped: the map is locked and the
   // point is what gets submitted, until "change location" reopens it.
   bool _confirmed = false;
+  bool _userMoved = false;
   Timer? _debounce;
+  int _addressRequest = 0;
 
   @override
   void initState() {
@@ -115,7 +112,7 @@ class _LocationMapFieldState extends State<LocationMapField> {
         final position = await Geolocator.getCurrentPosition(
           timeLimit: const Duration(seconds: 6),
         );
-        if (mounted) {
+        if (mounted && !_confirmed && !_userMoved) {
           _center = LatLng(position.latitude, position.longitude);
           _mapController.move(_center, 15);
         }
@@ -123,27 +120,31 @@ class _LocationMapFieldState extends State<LocationMapField> {
         // Falls back to the default center already set.
       }
     }
-    await _resolveAddress();
+    if (mounted && !_confirmed) await _resolveAddress();
   }
 
   Future<void> _resolveAddress() async {
     if (!mounted) return;
     setState(() => _isResolving = true);
     final languageCode = Localizations.localeOf(context).languageCode;
-    final address = await _reverseGeocode(_center, languageCode);
-    if (!mounted) return;
+    final point = _center;
+    final request = ++_addressRequest;
+    final address = await _reverseGeocode(point, languageCode);
+    if (!mounted || request != _addressRequest || point != _center) return;
     setState(() {
       _resolvedAddress = address;
       _isResolving = false;
     });
     if (_confirmed) {
-      widget.onChanged(_center.latitude, _center.longitude, address);
+      widget.onChanged(point.latitude, point.longitude, address);
     }
   }
 
   void _onCenterSettled(LatLng center) {
     if (_confirmed) return;
+    _userMoved = true;
     _center = center;
+    _addressRequest++;
     setState(() => _isResolving = true);
     _debounce?.cancel();
     // At most one Nominatim request per second, and never mid-drag - only

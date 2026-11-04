@@ -3353,4 +3353,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get warehouseInsightsUnknownAge =>
       'Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available.';
+
+  @override
+  String get manualAddressLabel => 'Street address';
+
+  @override
+  String get areaNameLabel => 'Area or village';
+
+  @override
+  String get optionalLocationLabel => 'Pharmacy map location (optional)';
+
+  @override
+  String get registrationUnconfirmed =>
+      'We could not confirm registration. Your account may exist; try signing in with the same phone and password before registering again.';
+
+  @override
+  String get editProfileTitle => 'Edit pharmacy profile';
+
+  @override
+  String get saveProfileButton => 'Save profile';
+
+  @override
+  String get launchUnknown =>
+      'Operating status is unavailable. You can browse; ordering is paused until it can be checked.';
+
+  @override
+  String get launchPreparing =>
+      'Registration and browsing are open. Ordering has not started yet.';
+
+  @override
+  String get launchRetry => 'Check again';
 }

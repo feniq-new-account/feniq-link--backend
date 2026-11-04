@@ -3344,4 +3344,34 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get warehouseInsightsUnknownAge =>
       'رصيد بلا عمر فاتورة موثق؛ داخل إجمالي الدين، وخارج شرائح التأخر حتى يتوفر تاريخ موثوق.';
+
+  @override
+  String get manualAddressLabel => 'العنوان التفصيلي';
+
+  @override
+  String get areaNameLabel => 'المنطقة أو القرية';
+
+  @override
+  String get optionalLocationLabel => 'موقع الصيدلية على الخريطة (اختياري)';
+
+  @override
+  String get registrationUnconfirmed =>
+      'لم نتمكن من تأكيد نتيجة التسجيل. قد يكون حسابك أُنشئ؛ جرّب تسجيل الدخول بنفس الهاتف وكلمة المرور قبل إعادة التسجيل.';
+
+  @override
+  String get editProfileTitle => 'تعديل بيانات الصيدلية';
+
+  @override
+  String get saveProfileButton => 'حفظ البيانات';
+
+  @override
+  String get launchUnknown =>
+      'تعذر التحقق من مرحلة التشغيل. يمكنك التصفح؛ إرسال الطلبات متوقف حتى عودة الاتصال.';
+
+  @override
+  String get launchPreparing =>
+      'التسجيل والتصفح متاحان. استقبال الطلبات لم يبدأ بعد.';
+
+  @override
+  String get launchRetry => 'إعادة التحقق';
 }

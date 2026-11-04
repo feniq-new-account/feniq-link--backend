@@ -1,5 +1,6 @@
 const { warehouseForUserFilter } = require('../utils/loadWarehouse');
 const jwt = require('jsonwebtoken');
+const { runInTransaction } = require('../utils/transaction');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const env = require('../config/env');
@@ -102,14 +103,14 @@ function hashRefreshToken(rawToken) {
 
 // Issues a short-lived access token plus a refresh token row. Every
 // successful authentication goes through here.
-async function issueTokenPair(user) {
+async function issueTokenPair(user, session = null) {
   const refreshToken = generateRefreshToken();
-  await RefreshToken.create({
+  await RefreshToken.create([{
     userId: user._id,
     tokenHash: hashRefreshToken(refreshToken),
     tokenVersion: user.tokenVersion ?? 0,
     expiresAt: new Date(Date.now() + env.refreshTokenTtlDays * 24 * 60 * 60 * 1000),
-  });
+  }], { session });
   return { token: issueToken(user), refreshToken };
 }
 
@@ -188,7 +189,7 @@ async function loadProfile(user) {
   if (user.role === 'pharmacy') {
     return {
       pharmacy: await Pharmacy.findOne({ userId: user._id })
-        .select('nameAr nameEn ownerName address city areaType phone verificationPhoto')
+        .select('nameAr nameEn ownerName address city areaType areaName phone verificationPhoto location locationApproval')
         .lean(),
       warehouse: null,
     };
@@ -249,6 +250,7 @@ async function register({
   phone,
   address,
   areaType,
+  areaName = '',
   password,
   location,
 }) {
@@ -256,7 +258,10 @@ async function register({
   // unauthenticated caller any more. Leaking back the real owner's name and
   // role - which the old re-entry response did - was its own enumeration
   // channel on top of the bypass.
-  const existingUser = await User.findOne({ phone }).select('_id').lean();
+  await User.init();
+  const phoneKey = toInternationalPhone(phone);
+  const phoneAliases = [phoneKey, `0${phoneKey.slice(4)}`];
+  const existingUser = await User.findOne({ phone: { $in: phoneAliases } }).select('_id').lean();
   if (existingUser) {
     throw ApiError.conflict(
       'This phone number is already registered. Please sign in instead.',
@@ -281,47 +286,28 @@ async function register({
   const approvalRequired = await platformSettings.isApprovalRequired();
   const autoApproved = match?.decision === 'approved';
 
-  let user;
+  let result;
   try {
-    user = await User.create({
-      name,
-      phone,
-      password: hashedPassword,
-      role: 'pharmacy',
-      status: !approvalRequired || autoApproved ? 'active' : 'pending',
+    result = await runInTransaction(async (session) => {
+      const [user] = await User.create([{
+        name, phone, registrationPhoneKey: phoneKey, password: hashedPassword,
+        role: 'pharmacy', status: !approvalRequired || autoApproved ? 'active' : 'pending',
+      }], { session });
+      const [pharmacy] = await Pharmacy.create([{
+        userId: user._id, nameAr: pharmacyName, nameEn: pharmacyName,
+        ownerName: name, address, areaName, city: 'Latakia', areaType, phone,
+        location: location || undefined, addedBy: 'self',
+        syndicateMatch: match ? syndicateRegistry.toStoredMatch(match) : undefined,
+      }], { session });
+      return { user, pharmacy, warehouse: null, ...(await issueTokenPair(user, session)) };
     });
   } catch (err) {
-    // 11000 = duplicate key on the unique users.phone index: a second
-    // registration for this number landed between the findOne above and this
-    // insert. Same handling as admin.service.js's createWarehouseAccount - the
-    // index is the real guard, the lookup above is only there for the clean
-    // error message. Without this the race surfaces as a 500.
-    if (err && err.code === 11000) {
-      throw ApiError.conflict(
-        'An account already exists for this phone number. Please sign in instead.',
-        'PHONE_ALREADY_REGISTERED'
-      );
+    if (err?.code === 11000) {
+      throw ApiError.conflict('This phone number is already registered. Please sign in instead.', 'PHONE_ALREADY_REGISTERED');
     }
     throw err;
   }
-
-  // city defaults to Latakia: the registration form (Section 6.2) only collects
-  // name/pharmacyName/phone/address, but pharmacies.city is a required field and
-  // the spec's initial market is Latakia only (Section 2). Editable later from
-  // the profile/admin panel once a city field is actually needed.
-  const pharmacy = await Pharmacy.create({
-    userId: user._id,
-    nameAr: pharmacyName,
-    nameEn: pharmacyName,
-    ownerName: name,
-    address,
-    city: 'Latakia',
-    areaType,
-    phone,
-    location: location || undefined,
-    addedBy: 'self',
-    syndicateMatch: match ? syndicateRegistry.toStoredMatch(match) : undefined,
-  });
+  const { user } = result;
 
   // A brand-new pharmacy lands in the admin's approval queue, and until an
   // admin acts it cannot order at all - so the wait is the pharmacy's, not
@@ -343,7 +329,7 @@ async function register({
     console.error('Telegram registration alert failed:', err.message);
   });
 
-  return { user, pharmacy, warehouse: null, ...(await issueTokenPair(user)) };
+  return result;
 }
 
 // TODO(re-enable-otp): kept fully working, but no current client calls this -
@@ -804,7 +790,39 @@ async function getMe(userId) {
   return { user, pharmacy, warehouse };
 }
 
+async function updateProfile(userId, changes) {
+  await runInTransaction(async (session) => {
+    const user = await User.findById(userId).session(session);
+    if (!user || user.role !== 'pharmacy' || !['active', 'pending'].includes(user.status)) {
+      throw ApiError.forbidden('Only a pharmacy can edit its profile.');
+    }
+    const pharmacy = await Pharmacy.findOne({ userId }).session(session);
+    if (!pharmacy) throw ApiError.notFound('Pharmacy profile not found.');
+    pharmacy.areaType ||= 'city';
+    if (changes.name !== undefined) { user.name = changes.name; pharmacy.ownerName = changes.name; }
+    if (changes.pharmacyName !== undefined) { pharmacy.nameAr = changes.pharmacyName; pharmacy.nameEn = changes.pharmacyName; }
+    for (const key of ['address', 'areaName', 'areaType']) {
+      if (changes[key] !== undefined) pharmacy[key] = changes[key];
+    }
+    if (Object.hasOwn(changes, 'location')) {
+      const previous = pharmacy.location?.coordinates;
+      const next = changes.location?.coordinates;
+      if (JSON.stringify(previous) !== JSON.stringify(next)) {
+        pharmacy.location = changes.location || undefined;
+        pharmacy.locationApproval = 'pending';
+        pharmacy.locationVersion = (pharmacy.locationVersion || 0) + 1;
+        pharmacy.locationApprovedBy = null;
+        pharmacy.locationApprovedAt = null;
+      }
+    }
+    await user.save({ session });
+    await pharmacy.save({ session });
+  });
+  return getMe(userId);
+}
+
 module.exports = {
+  updateProfile,
   register,
   login,
   loginWithPassword,

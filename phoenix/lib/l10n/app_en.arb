@@ -1928,5 +1928,14 @@
       }
     }
   },
-  "warehouseInsightsUnknownAge": "Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available."
+  "warehouseInsightsUnknownAge": "Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available.",
+  "manualAddressLabel": "Street address",
+  "areaNameLabel": "Area or village",
+  "optionalLocationLabel": "Pharmacy map location (optional)",
+  "registrationUnconfirmed": "We could not confirm registration. Your account may exist; try signing in with the same phone and password before registering again.",
+  "editProfileTitle": "Edit pharmacy profile",
+  "saveProfileButton": "Save profile",
+  "launchUnknown": "Operating status is unavailable. You can browse; ordering is paused until it can be checked.",
+  "launchPreparing": "Registration and browsing are open. Ordering has not started yet.",
+  "launchRetry": "Check again"
 }

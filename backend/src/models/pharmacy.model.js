@@ -7,6 +7,7 @@ const pharmacySchema = new Schema(
     nameEn: { type: String, required: true, trim: true },
     ownerName: { type: String, required: true },
     address: { type: String, required: true },
+    areaName: { type: String, trim: true, maxlength: 160, default: '' },
     city: { type: String, required: true },
     // Collected on the registration screen's own dropdown (distinct from
     // `city`, which is a free-text city name defaulted server-side, not

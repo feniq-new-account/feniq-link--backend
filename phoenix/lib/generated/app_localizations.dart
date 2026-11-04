@@ -5701,6 +5701,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available.'**
   String get warehouseInsightsUnknownAge;
+
+  /// No description provided for @manualAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Street address'**
+  String get manualAddressLabel;
+
+  /// No description provided for @areaNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Area or village'**
+  String get areaNameLabel;
+
+  /// No description provided for @optionalLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy map location (optional)'**
+  String get optionalLocationLabel;
+
+  /// No description provided for @registrationUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not confirm registration. Your account may exist; try signing in with the same phone and password before registering again.'**
+  String get registrationUnconfirmed;
+
+  /// No description provided for @editProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit pharmacy profile'**
+  String get editProfileTitle;
+
+  /// No description provided for @saveProfileButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save profile'**
+  String get saveProfileButton;
+
+  /// No description provided for @launchUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Operating status is unavailable. You can browse; ordering is paused until it can be checked.'**
+  String get launchUnknown;
+
+  /// No description provided for @launchPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration and browsing are open. Ordering has not started yet.'**
+  String get launchPreparing;
+
+  /// No description provided for @launchRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get launchRetry;
 }
 
 class _AppLocalizationsDelegate
