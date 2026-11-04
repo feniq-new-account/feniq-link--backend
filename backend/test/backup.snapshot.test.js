@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { Writable, Readable } = require('node:stream');
+const { finished } = require('node:stream/promises');
 const mongoose = require('mongoose');
 const { startMemoryMongo, stopMemoryMongo } = require('./helpers/mongo');
 const { dump, restore } = require('../scripts/backup/snapshot');
@@ -21,6 +22,9 @@ test('snapshot preserves BSON and indexes and excludes writes after the snapshot
   } });
   try {
     await dump(client, db, output); output.end();
+    // dump respects backpressure but does not own/end the caller's stream.
+    // Its final write may still be queued behind the asynchronous source mutation.
+    await finished(output);
     await restore(target, Readable.from(chunks));
     assert.equal((await target.collection('b').findOne({ _id: 'two' })).value, 'before');
     const doc = await target.collection('a').findOne({ _id: 'one' });
