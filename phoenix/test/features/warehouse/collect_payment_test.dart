@@ -1,3 +1,4 @@
+import '../../helpers/warehouse_operator_auth.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -61,7 +62,7 @@ void main() {
         home: Scaffold(
           body: RepositoryProvider<WarehouseManagementRepository>.value(
             value: repository,
-            child: BlocProvider<WarehouseOrdersCubit>.value(value: cubit, child: const WarehouseOrdersTab()),
+            child: MultiBlocProvider(providers: [warehouseOperatorProvider(), BlocProvider<WarehouseOrdersCubit>.value(value: cubit)], child: const WarehouseOrdersTab()),
           ),
         ),
       ),

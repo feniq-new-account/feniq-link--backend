@@ -7,14 +7,33 @@ import 'package:feniq/core/network/endpoints.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_management_models.dart';
 
 import 'warehouse_management_repository.dart';
+import 'warehouse_feature_preferences_repository.dart';
 
 class WarehouseManagementRepositoryImpl
-    implements WarehouseManagementRepository {
+    implements
+        WarehouseManagementRepository,
+        WarehouseFeaturePreferencesRepository {
   WarehouseManagementRepositoryImpl({required ApiClient apiClient})
     : _apiClient = apiClient;
 
   final ApiClient _apiClient;
   final PendingPaymentJournal _payments = PendingPaymentJournal();
+
+  @override
+  Future<Map<String, dynamic>> getFeaturePreferences() =>
+      _run((dio) => dio.get('/warehouse/entitlements'));
+
+  @override
+  Future<Map<String, dynamic>> saveFeaturePreferences({
+    required int revision,
+    required String reason,
+    required Map<String, bool> features,
+  }) => _run(
+    (dio) => dio.put(
+      '/warehouse/entitlements/configuration',
+      data: {'revision': revision, 'reason': reason, 'features': features},
+    ),
+  );
 
   Future<Map<String, dynamic>> _run(
     Future<Response<dynamic>> Function(Dio dio) call,

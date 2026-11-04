@@ -74,6 +74,8 @@ import 'package:feniq/features/warehouse/presentation/managers/warehouse_account
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_summary_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_loyalty_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_loyalty_view.dart';
+import 'package:feniq/features/warehouse/presentation/views/warehouse_feature_preferences_view.dart';
+import 'package:feniq/features/warehouse/data/repositories/warehouse_feature_preferences_repository.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_rep_detail_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_reps_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_returns_cubit.dart';
@@ -528,6 +530,15 @@ class AppRouter {
             child: const WarehouseLoyaltyView(),
           ),
         ),
+      ),
+      GoRoute(
+        name: RouteNames.warehouseFeaturePreferences,
+        path: RoutePaths.warehouseFeaturePreferences,
+        pageBuilder: (context, state) => buildPageTransition(state: state,
+          child: WarehouseFeaturePreferencesView(
+            repository: context.read<WarehouseManagementRepository>() as WarehouseFeaturePreferencesRepository,
+            canConfigure: context.read<AuthCubit>().state.user?.canConfigureFeatures == true,
+          )),
       ),
       // Admin accounts: one screen that opens the web panel.
       GoRoute(

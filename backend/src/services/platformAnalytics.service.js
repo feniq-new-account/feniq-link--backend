@@ -6,7 +6,10 @@ const LedgerEntry = require('../models/ledgerEntry.model');
 const Subscription = require('../models/warehouseSubscription.model');
 const ProductCatalog = require('../models/productCatalog.model');
 const RepVisit = require('../models/repVisit.model');
-const { evaluateSubscription, FEATURES } = require('./warehouseSubscription.service');
+const { FEATURES } = require('./warehouseSubscription.service');
+const { evaluateEntitlements, campaignEligibility } = require('../utils/featureEntitlements');
+const FeatureControl = require('../models/warehouseFeatureControl.model');
+const { readPlatform } = require('./featureControl.service');
 const { runInTransaction } = require('../utils/transaction');
 const { resolveSummaryPeriod } = require('./warehouseSummary.service');
 const { movementsFor } = require('./warehouseInsights.service');
@@ -102,11 +105,16 @@ async function load(query, now) {
     ]).session(session);
     const visits = await RepVisit.aggregate([{ $match: { scannedAt: { $gte: period.from, $lte: period.to } } }, { $group: { _id: '$status', count: { $sum: 1 } } }]).session(session);
     const subscriptions = await Subscription.find({}).session(session).lean();
-    const warehouses = await Warehouse.find({}).select('_id isActive').session(session).lean();
+    const warehouses = await Warehouse.find({}).select('_id isActive createdAt').session(session).lean();
+    const controls = await FeatureControl.find({}).session(session).lean();
+    const byControl = new Map(controls.map(c => [String(c.warehouseId), c]));
+    const platform = await readPlatform(session);
     const byWarehouse = new Map(subscriptions.map((s) => [String(s.warehouseId), s]));
     const subscriptionStates = {}, featureAvailability = Object.fromEntries(FEATURES.map((f) => [f, 0]));
     for (const warehouse of warehouses) {
-      const evaluated = evaluateSubscription(byWarehouse.get(String(warehouse._id)), now);
+      const subscription = byWarehouse.get(String(warehouse._id));
+      const evaluated = evaluateEntitlements({ subscription, control: byControl.get(String(warehouse._id)), platform, now,
+        campaignEligible: campaignEligibility(warehouse, subscription, now) });
       subscriptionStates[evaluated.state] = (subscriptionStates[evaluated.state] || 0) + 1;
       for (const f of FEATURES) if (evaluated.features[f]) featureAvailability[f]++;
     }

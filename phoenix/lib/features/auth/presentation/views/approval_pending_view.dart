@@ -1,3 +1,4 @@
+import 'package:feniq/features/profile/presentation/views/edit_profile_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -147,6 +148,9 @@ class _ApprovalPendingViewState extends State<ApprovalPendingView>
                             if (!isBlocked) ...[
                               const SizedBox(height: AppSizes.spacingXLarge),
                               const _ChecklistCard(),
+                              TextButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) =>
+                                BlocProvider.value(value: context.read<AuthCubit>(), child: const EditProfileView()))),
+                                child: Text(l10n.editProfileTitle)),
                             ],
                             const SizedBox(height: AppSizes.spacingXLarge),
                             if (!isBlocked) ...[

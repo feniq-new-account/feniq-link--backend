@@ -1414,5 +1414,32 @@
       }
     }
   },
-  "warehouseInsightsUnknownAge": "رصيد بلا عمر فاتورة موثق؛ داخل إجمالي الدين، وخارج شرائح التأخر حتى يتوفر تاريخ موثوق."
+  "warehouseInsightsUnknownAge": "رصيد بلا عمر فاتورة موثق؛ داخل إجمالي الدين، وخارج شرائح التأخر حتى يتوفر تاريخ موثوق.",
+  "manualAddressLabel": "العنوان التفصيلي",
+  "areaNameLabel": "المنطقة أو القرية",
+  "optionalLocationLabel": "موقع الصيدلية على الخريطة (اختياري)",
+  "registrationUnconfirmed": "لم نتمكن من تأكيد نتيجة التسجيل. قد يكون حسابك أُنشئ؛ جرّب تسجيل الدخول بنفس الهاتف وكلمة المرور قبل إعادة التسجيل.",
+  "editProfileTitle": "تعديل بيانات الصيدلية",
+  "saveProfileButton": "حفظ البيانات",
+  "launchUnknown": "تعذر التحقق من مرحلة التشغيل. يمكنك التصفح؛ إرسال الطلبات متوقف حتى عودة الاتصال.",
+  "launchPreparing": "التسجيل والتصفح متاحان. استقبال الطلبات لم يبدأ بعد.",
+  "launchRetry": "إعادة التحقق",
+  "featurePreferencesTitle": "تفضيلات الميزات",
+  "featurePreferencesHelp": "تشغيل التفضيل لا يمنح حقاً جديداً. تبقى الإتاحة حسب صلاحيات حسابك وحقوق المستودع وإعدادات المنصة. المحاسبة المتقدمة قيد الاعتماد؛ القبض الأساسي يبقى للمحاسب.",
+  "featurePreferencesOwnerOnly": "تعديل هذه التفضيلات متاح لصاحب المستودع فقط.",
+  "featurePreferencesSaved": "تم حفظ التفضيلات وتحديث الإتاحة.",
+  "featurePreferencesAvailable": "متاحة حالياً",
+  "featurePreferencesUnavailable": "غير متاحة حالياً",
+  "featurePreferencesReason": "سبب التعديل",
+  "featurePreferencesSave": "حفظ التفضيلات",
+  "featurePreferencesRepTracking": "متابعة زيارات المندوب",
+  "featurePreferencesLoyalty": "الولاء",
+  "featurePreferencesAccounting": "المحاسبة المتقدمة — نطاقها قيد الاعتماد",
+  "featurePreferencesSalesReports": "تقارير المبيعات",
+  "featurePreferencesOwnerInsights": "تقرير المالك",
+  "featurePreferencesOverdue": "الديون المتأخرة",
+  "featurePreferencesInactive": "الصيدليات المنقطعة",
+  "featurePreferencesAlerts": "تنبيهات المالك داخل الشاشة",
+  "featurePreferencesDelivery": "جدولة التوصيل",
+  "errorFeatureControlChanged": "تغيّرت إعدادات الميزات. أعد تحميلها قبل الحفظ."
 }

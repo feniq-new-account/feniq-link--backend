@@ -1,3 +1,4 @@
+import 'edit_profile_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -222,6 +223,9 @@ class ProfileView extends StatelessWidget {
                   ),
 
                   const SizedBox(height: AppSizes.spacingMedium),
+                  TextButton.icon(icon: const Icon(Icons.edit_outlined), label: Text(l10n.editProfileTitle),
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) =>
+                      BlocProvider.value(value: context.read<AuthCubit>(), child: const EditProfileView())))),
                   CustomCard(
                     key: profileChangePasswordKey,
                     onTap: () => context.pushNamed(RouteNames.changePassword),

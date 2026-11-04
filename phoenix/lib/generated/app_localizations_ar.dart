@@ -3344,4 +3344,92 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get warehouseInsightsUnknownAge =>
       'رصيد بلا عمر فاتورة موثق؛ داخل إجمالي الدين، وخارج شرائح التأخر حتى يتوفر تاريخ موثوق.';
+
+  @override
+  String get manualAddressLabel => 'العنوان التفصيلي';
+
+  @override
+  String get areaNameLabel => 'المنطقة أو القرية';
+
+  @override
+  String get optionalLocationLabel => 'موقع الصيدلية على الخريطة (اختياري)';
+
+  @override
+  String get registrationUnconfirmed =>
+      'لم نتمكن من تأكيد نتيجة التسجيل. قد يكون حسابك أُنشئ؛ جرّب تسجيل الدخول بنفس الهاتف وكلمة المرور قبل إعادة التسجيل.';
+
+  @override
+  String get editProfileTitle => 'تعديل بيانات الصيدلية';
+
+  @override
+  String get saveProfileButton => 'حفظ البيانات';
+
+  @override
+  String get launchUnknown =>
+      'تعذر التحقق من مرحلة التشغيل. يمكنك التصفح؛ إرسال الطلبات متوقف حتى عودة الاتصال.';
+
+  @override
+  String get launchPreparing =>
+      'التسجيل والتصفح متاحان. استقبال الطلبات لم يبدأ بعد.';
+
+  @override
+  String get launchRetry => 'إعادة التحقق';
+
+  @override
+  String get featurePreferencesTitle => 'تفضيلات الميزات';
+
+  @override
+  String get featurePreferencesHelp =>
+      'تشغيل التفضيل لا يمنح حقاً جديداً. تبقى الإتاحة حسب صلاحيات حسابك وحقوق المستودع وإعدادات المنصة. المحاسبة المتقدمة قيد الاعتماد؛ القبض الأساسي يبقى للمحاسب.';
+
+  @override
+  String get featurePreferencesOwnerOnly =>
+      'تعديل هذه التفضيلات متاح لصاحب المستودع فقط.';
+
+  @override
+  String get featurePreferencesSaved => 'تم حفظ التفضيلات وتحديث الإتاحة.';
+
+  @override
+  String get featurePreferencesAvailable => 'متاحة حالياً';
+
+  @override
+  String get featurePreferencesUnavailable => 'غير متاحة حالياً';
+
+  @override
+  String get featurePreferencesReason => 'سبب التعديل';
+
+  @override
+  String get featurePreferencesSave => 'حفظ التفضيلات';
+
+  @override
+  String get featurePreferencesRepTracking => 'متابعة زيارات المندوب';
+
+  @override
+  String get featurePreferencesLoyalty => 'الولاء';
+
+  @override
+  String get featurePreferencesAccounting =>
+      'المحاسبة المتقدمة — نطاقها قيد الاعتماد';
+
+  @override
+  String get featurePreferencesSalesReports => 'تقارير المبيعات';
+
+  @override
+  String get featurePreferencesOwnerInsights => 'تقرير المالك';
+
+  @override
+  String get featurePreferencesOverdue => 'الديون المتأخرة';
+
+  @override
+  String get featurePreferencesInactive => 'الصيدليات المنقطعة';
+
+  @override
+  String get featurePreferencesAlerts => 'تنبيهات المالك داخل الشاشة';
+
+  @override
+  String get featurePreferencesDelivery => 'جدولة التوصيل';
+
+  @override
+  String get errorFeatureControlChanged =>
+      'تغيّرت إعدادات الميزات. أعد تحميلها قبل الحفظ.';
 }

@@ -77,30 +77,19 @@ test('duplicate phone cannot create an orphan membership or a second audit', asy
   assert.equal(await Audit.countDocuments({ action: 'member.created' }), 1);
 });
 
-test('concurrent first activation starts exactly one 30-day trial and repeated reads do not extend it', async () => {
+test('subscription reads never create or renew a trial, including old startTrial clients', async () => {
   const now = new Date('2026-10-29T10:00:00Z');
   const rows = await Promise.all(Array.from({ length: 4 }, () => billing.getSubscription(warehouse.id, { startTrial: true, now })));
-  assert.equal(await Subscription.countDocuments({ warehouseId: warehouse.id }), 1);
+  assert.equal(await Subscription.countDocuments({ warehouseId: warehouse.id }), 0);
   for (const row of rows) {
-    assert.equal(row.state, 'trial');
-    assert.equal(new Date(row.configuration.trialUntil).getTime() - now.getTime(), 30 * 86400000);
+    assert.equal(row.state, 'promotion');
+    assert.equal(row.configuration, null);
     assert.equal(row.features.loyalty, true);
   }
-  const later = await billing.getSubscription(warehouse.id, { startTrial: true, now: new Date('2026-11-03T10:00:00Z') });
-  assert.equal(String(later.configuration.startedAt), String(rows[0].configuration.startedAt));
-});
-
-test('expiry, grace and pause boundaries are computed without deleting historical access data', () => {
-  const row = { status: 'trial', trialUntil: '2026-11-01T00:00:00Z', graceDays: 2, features: { loyalty: false } };
-  assert.equal(billing.evaluateSubscription(row, new Date('2026-10-31T23:59:59Z')).state, 'trial');
-  assert.equal(billing.evaluateSubscription(row, new Date('2026-11-01T00:00:00Z')).state, 'grace');
-  assert.equal(billing.evaluateSubscription(row, new Date('2026-11-03T00:00:00Z')).state, 'expired');
-  assert.equal(billing.evaluateSubscription(row, new Date('2026-10-31T23:59:59Z')).features.loyalty, false);
-  assert.equal(billing.evaluateSubscription({ ...row, status: 'paused' }).features.accounting, false);
 });
 
 test('admin feature changes are audited and enforced against direct API requests', async () => {
-  const updated = await request(admin, `/admin/warehouses/${warehouse.id}/subscription`, 'PUT', { features: { loyalty: false } });
+  const updated = await request(admin, `/admin/warehouses/${warehouse.id}/subscription`, 'PUT', { revision: 0, features: { loyalty: false } });
   assert.equal(updated.status, 200);
   assert.equal(updated.body.features.loyalty, false);
   const denied = await request(accountant, '/warehouse/settings/loyalty', 'PUT', { enabled: true, tiers: [] });
@@ -118,33 +107,106 @@ test('unknown features and active subscriptions without a paid expiry cannot be 
   assert.equal((await billing.getSubscription(warehouse.id)).configuration.paidUntil.toISOString(), '2027-01-01T00:00:00.000Z');
 });
 
-test('subscription expiry blocks a new cash entry but allows confirmation of an already saved receipt', async () => {
+test('commercial pause preserves cash recording and idempotent receipt replay', async () => {
   const Payment = require('../src/models/payment.model');
   const Pharmacy = require('../src/models/pharmacy.model');
   const pharmacyUser = await User.create({ name: 'Pharmacy', phone: '+963944000009', role: 'pharmacy', status: 'active' });
   const pharmacy = await Pharmacy.create({ userId: pharmacyUser.id, nameAr: 'صيدلية', nameEn: 'Pharmacy',
     ownerName: 'Pharmacist', address: 'Latakia', city: 'Latakia', areaType: 'rural', phone: '+963944000009', addedBy: 'self' });
+  await require('../src/models/exchangeRate.model').create({ _id: 'singleton', usdToSyp: 15000, source: 'manual' });
   const key = 'saved-before-expiry';
   const payment = await Payment.create({ pharmacyId: pharmacy.id, warehouseId: warehouse.id, amount: 1000,
     currency: 'SYP', recordedBy: accountant.id, idempotencyKey: key });
   await billing.configureSubscription(warehouse.id, admin.id, { status: 'paused' });
-  const fresh = await request(accountant, '/warehouse/payments', 'POST', { pharmacyId: pharmacy.id, amount: 1000, idempotencyKey: 'new-after-expiry' });
-  assert.equal(fresh.status, 403);
+  const fresh = await request(accountant, '/warehouse/payments', 'POST', { pharmacyId: pharmacy.id, amount: 1000, idempotencyKey: 'new-after-expiry', allowUnlinked: true, unlinkedReason: 'Opening payment recorded during acceptance' });
+  assert.equal(fresh.status, 201);
   const replay = await request(accountant, '/warehouse/payments', 'POST', { pharmacyId: pharmacy.id, amount: 1000, currency: 'SYP', idempotencyKey: key });
   assert.equal(replay.status, 200);
   assert.equal(replay.body.payment.id, payment.id);
-  assert.equal(await Payment.countDocuments({ warehouseId: warehouse.id }), 1);
+  assert.equal(await Payment.countDocuments({ warehouseId: warehouse.id }), 2);
   assert.equal((await request(accountant, '/warehouse/balances')).status, 200);
 });
 
 test('admin can split a legacy login without changing warehouse ownership; stale tokens are revoked', async () => {
   const priorToken = token(accountant);
-  const result = await request(admin, `/admin/warehouses/${warehouse.id}/members/${accountant.id}`, 'PUT', { warehouseRole: 'owner' });
+  const result = await request(admin, `/admin/warehouses/${warehouse.id}/members/${accountant.id}`, 'PUT', { warehouseRole: 'owner', revision: 0, reason: 'Separate owner responsibilities' });
   assert.equal(result.status, 200);
   assert.equal(result.body.members.find((row) => row.id === accountant.id).warehouseRole, 'owner');
   const response = await fetch(`${base}/api/auth/me`, { headers: { authorization: `Bearer ${priorToken}` } });
   assert.equal(response.status, 401);
   assert.equal(String((await Warehouse.findById(warehouse.id)).userId), owner.id);
-  const wrongWarehouse = await request(admin, `/admin/warehouses/${other.id}/members/${owner.id}`, 'PUT', { warehouseRole: 'accountant' });
+  const wrongWarehouse = await request(admin, `/admin/warehouses/${other.id}/members/${owner.id}`, 'PUT', { warehouseRole: 'accountant', revision: 0, reason: 'Foreign target test' });
   assert.equal(wrongWarehouse.status, 404);
+});
+test('member role writes require a reason and current revision; stale changes cannot overwrite access', async () => {
+  const path = `/admin/warehouses/${warehouse.id}/members/${accountant.id}`;
+  assert.equal((await request(admin, path, 'PUT', { warehouseRole: 'accountant' })).status, 400);
+  const stale = await request(admin, path, 'PUT', { warehouseRole: 'accountant', revision: 0, reason: 'Stale operator' });
+  assert.equal(stale.status, 409);
+  assert.equal(stale.body.code, 'MEMBER_ACCESS_CHANGED');
+  assert.equal((await User.findById(accountant.id)).warehouseRole, 'owner');
+});
+test('administrator cannot remove the only active owner by a role change', async () => {
+  const holder = await User.create({ name: 'Sole owner', phone: '+963944000030', role: 'warehouse', warehouseRole: 'owner', status: 'active' });
+  const isolated = await Warehouse.create({ userId: holder.id, nameAr: 'مستقل', nameEn: 'Isolated', address: 'Latakia', city: 'Latakia', phone: holder.phone });
+  await assert.rejects(access.setWarehouseMemberRole(isolated.id, holder.id, admin.id, 'accountant', {
+    revision: 0, reason: 'Last owner test',
+  }), { code: 'LAST_WAREHOUSE_OWNER' });
+  assert.equal((await User.findById(holder.id)).warehouseRole, 'owner');
+});
+test('concurrent access changes keep one winner, revoke sessions once and audit the reason', async () => {
+  const member = await access.createWarehouseMember(warehouse.id, admin.id, {
+    name: 'Concurrent member', phone: '+963944000031', password: 'test-password-2026', warehouseRole: 'accountant',
+  });
+  const outcomes = await Promise.allSettled([1, 2].map(n => access.setWarehouseMemberRole(warehouse.id, member.id, admin.id, 'owner', {
+    revision: 0, reason: `Access change ${n}`,
+  })));
+  assert.equal(outcomes.filter(r => r.status === 'fulfilled').length, 1);
+  assert.equal(outcomes.find(r => r.status === 'rejected').reason.code, 'MEMBER_ACCESS_CHANGED');
+  const user = await User.findById(member.id);
+  assert.equal(user.accessRevision, 1); assert.equal(user.tokenVersion, 1);
+  const event = await Audit.findOne({ action: 'member.role_changed', 'after.userId': user._id }).lean();
+  assert.match(event.reason, /^Access change [12]$/);
+  assert.equal(event.before.revision, 0); assert.equal(event.after.revision, 1);
+});
+test('member listings and self-auth return the same effective permissions without exposing credentials', async () => {
+  const members = await access.listWarehouseMembers(warehouse.id);
+  const own = await request(owner, '/auth/me');
+  assert.equal(own.status, 200);
+  assert.deepEqual(own.body.user.permissions, members.find(m => String(m.id) === owner.id).permissions);
+  assert.equal(own.body.user.permissions.paymentRecord, false);
+  assert.equal(JSON.stringify(members).includes('tokenVersion'), false);
+});
+test('concurrent downgrades of different owners cannot leave a warehouse without an owner', async () => {
+  const first = await User.create({ name: 'First owner', phone: '+963944000033', role: 'warehouse', warehouseRole: 'owner', status: 'active' });
+  const second = await User.create({ name: 'Second owner', phone: '+963944000034', role: 'warehouse', warehouseRole: 'owner', status: 'active' });
+  const isolated = await Warehouse.create({ userId: first.id, memberUserIds: [second.id], nameAr: 'ملكية متزامنة',
+    nameEn: 'Concurrent ownership', address: 'Latakia', city: 'Latakia', phone: first.phone });
+  const outcomes = await Promise.allSettled([first, second].map(user => access.setWarehouseMemberRole(isolated.id, user.id, admin.id, 'accountant', {
+    revision: 0, reason: 'Concurrent owner downgrade',
+  })));
+  assert.equal(outcomes.filter(result => result.status === 'fulfilled').length, 1);
+  assert.equal(outcomes.find(result => result.status === 'rejected').reason.code, 'LAST_WAREHOUSE_OWNER');
+  assert.equal(await User.countDocuments({ _id: { $in: [first.id, second.id] }, warehouseRole: 'owner', status: 'active' }), 1);
+  assert.equal(await Audit.countDocuments({ warehouseId: isolated.id, action: 'member.role_changed' }), 1);
+  assert.equal((await Warehouse.findById(isolated.id)).memberAccessRevision, 1);
+});
+test('failed access audit rolls back the role and session revision; successful commit disconnects live sessions', async () => {
+  const member = await access.createWarehouseMember(warehouse.id, admin.id, {
+    name: 'Audit member', phone: '+963944000032', password: 'test-password-2026', warehouseRole: 'accountant',
+  });
+  const realtime = require('../src/realtime');
+  const originalAudit = Audit.create, originalDisconnect = realtime.disconnectUser;
+  const disconnected = [];
+  realtime.disconnectUser = id => disconnected.push(id);
+  Audit.create = async () => { throw new Error('Access audit unavailable'); };
+  try {
+    await assert.rejects(access.setWarehouseMemberRole(warehouse.id, member.id, admin.id, 'owner', { revision: 0, reason: 'Atomic access change' }), /Access audit unavailable/);
+    const unchanged = await User.findById(member.id);
+    assert.equal(unchanged.warehouseRole, 'accountant'); assert.equal(unchanged.tokenVersion, 0);
+    assert.deepEqual(disconnected, []);
+    Audit.create = originalAudit;
+    await access.setWarehouseMemberRole(warehouse.id, member.id, admin.id, 'owner', { revision: 0, reason: 'Atomic access change' });
+    assert.deepEqual(disconnected, [String(member.id)]);
+  } finally { Audit.create = originalAudit; realtime.disconnectUser = originalDisconnect; }
 });

@@ -1,3 +1,4 @@
+import '../../helpers/warehouse_operator_auth.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,7 +33,7 @@ Widget _app(Widget child, {Locale locale = const Locale('en')}) => MaterialApp(
   locale: locale,
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
-  home: child,
+  home: MultiBlocProvider(providers: [warehouseOperatorProvider()], child: child),
 );
 
 void main() {

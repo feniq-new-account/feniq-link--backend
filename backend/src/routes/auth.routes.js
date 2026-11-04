@@ -36,6 +36,7 @@ router.post('/forgot-password', ...credentialLimiters, controller.forgotPassword
 router.post('/reset-password', ...credentialLimiters, controller.resetPassword);
 
 router.get('/me', authenticate, controller.me);
+router.patch('/profile', authenticate, authorize('pharmacy'), controller.updateProfile);
 
 // Authenticated account management. Both re-check the current password inside
 // the service: holding a valid token is not sufficient authority to change a

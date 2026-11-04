@@ -21,6 +21,7 @@ abstract class AuthRepository {
     required String address,
     required String areaType,
     required String password,
+    String areaName = '',
     double? latitude,
     double? longitude,
   });
@@ -30,6 +31,8 @@ abstract class AuthRepository {
   Future<AuthResponse> loginWithPassword({required String phone, required String password});
 
   Future<MeResponse> getMe();
+
+  Future<MeResponse> updateProfile(Map<String, dynamic> changes);
 
   // Registers this device's FCM token against the signed-in user - best-
   // effort from the caller's side (FcmService swallows failures itself),

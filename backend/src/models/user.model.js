@@ -13,6 +13,8 @@ const userSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
     phone: { type: String, required: true, unique: true, trim: true },
+    // New registrations reserve both Syrian phone spellings without rewriting legacy identities.
+    registrationPhoneKey: { type: String, unique: true, sparse: true, select: false },
     password: { type: String, select: false },
     // 'rep' is a warehouse's field sales rep (rep.model.js): created by that
     // warehouse from its panel, signs in to the same mobile app, and sees only
@@ -44,6 +46,7 @@ const userSchema = new Schema(
     // existed carries no claim and is read as 0, so deploying it logs nobody
     // out.
     tokenVersion: { type: Number, default: 0 },
+    accessRevision: { type: Number, default: 0 },
 
     // Login throttling (Audit H-2). Counts CONSECUTIVE failures: reset to 0 by
     // any successful password check, so a user who mistypes twice and then

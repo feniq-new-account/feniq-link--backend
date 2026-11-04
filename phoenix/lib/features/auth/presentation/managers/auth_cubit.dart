@@ -241,9 +241,11 @@ class AuthCubit extends Cubit<AuthState> {
     required String address,
     required String areaType,
     required String password,
+    String areaName = '',
     double? latitude,
     double? longitude,
   }) async {
+    if (state.isSubmitting) return false;
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
       final result = await _authRepository.register(
@@ -252,6 +254,7 @@ class AuthCubit extends Cubit<AuthState> {
         phone: phone,
         address: address,
         areaType: areaType,
+        areaName: areaName,
         password: password,
         latitude: latitude,
         longitude: longitude,
@@ -274,9 +277,14 @@ class AuthCubit extends Cubit<AuthState> {
         state.copyWith(
           isSubmitting: false,
           errorMessage: f.errMessage,
-          errorCode: f.code,
+          errorCode: (f is ServerFailure && (f.statusCode == null || (f.statusCode ?? 0) >= 500))
+              ? 'REGISTRATION_UNCONFIRMED' : f.code,
         ),
       );
+      return false;
+    } catch (_) {
+      emit(state.copyWith(isSubmitting: false, errorCode: 'REGISTRATION_UNCONFIRMED',
+          errorMessage: 'Registration could not be confirmed. Try signing in.'));
       return false;
     }
   }
@@ -418,6 +426,29 @@ class AuthCubit extends Cubit<AuthState> {
 
     await logout();
     return true;
+  }
+
+  Future<bool> updateProfile(Map<String, dynamic> changes) async {
+    if (state.isSubmitting) return false;
+    final accountId = state.user?.id;
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+    try {
+      final me = await _authRepository.updateProfile(changes);
+      if (isClosed || state.user?.id != accountId) return false;
+      emit(state.copyWith(isSubmitting: false, user: me.user, pharmacy: me.pharmacy,
+          sessionStatus: _sessionStatusFor(me.user)));
+      return true;
+    } on Failure catch (failure) {
+      if (!isClosed && state.user?.id == accountId) {
+        emit(state.copyWith(isSubmitting: false, errorCode: failure.code, errorMessage: failure.errMessage));
+      }
+      return false;
+    } catch (_) {
+      if (!isClosed && state.user?.id == accountId) {
+        emit(state.copyWith(isSubmitting: false, errorCode: 'UNEXPECTED_ERROR', errorMessage: 'Could not save profile.'));
+      }
+      return false;
+    }
   }
 
   Future<void> logout() async {

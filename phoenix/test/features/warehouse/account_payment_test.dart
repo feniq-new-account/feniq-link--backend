@@ -10,13 +10,16 @@ import 'package:feniq/features/warehouse/presentation/managers/warehouse_summary
 import 'package:feniq/features/warehouse/presentation/views/warehouse_accounts_tab.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/account_payment.dart';
 import 'package:feniq/generated/app_localizations.dart';
+import '../../helpers/warehouse_operator_auth.dart';
 
 // The accounts table: one row per pharmacy with what it bought, paid and
 // still owes, and "pay in full" / "part payment" right on the row.
-class MockAccountsCubit extends MockCubit<WarehouseAccountsState> implements WarehouseAccountsCubit {}
+class MockAccountsCubit extends MockCubit<WarehouseAccountsState>
+    implements WarehouseAccountsCubit {}
 
 // The summary card above the rows has its own cubit; here it only has to exist.
-class MockSummaryCubit extends MockCubit<WarehouseSummaryState> implements WarehouseSummaryCubit {}
+class MockSummaryCubit extends MockCubit<WarehouseSummaryState>
+    implements WarehouseSummaryCubit {}
 
 final _row = WarehouseAccountRow(
   pharmacyId: 'p1',
@@ -28,7 +31,10 @@ final _row = WarehouseAccountRow(
   lastPaymentAt: DateTime.utc(2026, 10, 5),
 );
 
-final _sheetField = find.descendant(of: find.byType(AccountPartPaymentSheet), matching: find.byType(TextField));
+final _sheetField = find.descendant(
+  of: find.byType(AccountPartPaymentSheet),
+  matching: find.byType(TextField),
+);
 
 void main() {
   late MockAccountsCubit cubit;
@@ -40,7 +46,10 @@ void main() {
     whenListen(
       summaryCubit,
       const Stream<WarehouseSummaryState>.empty(),
-      initialState: const WarehouseSummaryState(status: RepLoadStatus.loaded, summary: WarehouseSummary()),
+      initialState: const WarehouseSummaryState(
+        status: RepLoadStatus.loaded,
+        summary: WarehouseSummary(),
+      ),
     );
     when(() => cubit.load()).thenAnswer((_) async {});
     when(() => cubit.loadMore()).thenAnswer((_) async {});
@@ -53,7 +62,11 @@ void main() {
     ).thenAnswer((_) async => true);
   });
 
-  Future<void> open(WidgetTester tester, WarehouseAccountRow row) async {
+  Future<void> open(
+    WidgetTester tester,
+    WarehouseAccountRow row, {
+    String warehouseRole = 'accountant',
+  }) async {
     // The summary card sits above the rows, so the default 800x600 screen
     // would push the pay buttons out of reach.
     tester.view.physicalSize = const Size(800, 2400);
@@ -62,7 +75,10 @@ void main() {
     whenListen(
       cubit,
       const Stream<WarehouseAccountsState>.empty(),
-      initialState: WarehouseAccountsState(status: RepLoadStatus.loaded, accounts: [row]),
+      initialState: WarehouseAccountsState(
+        status: RepLoadStatus.loaded,
+        accounts: [row],
+      ),
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -72,6 +88,7 @@ void main() {
         home: Scaffold(
           body: MultiBlocProvider(
             providers: [
+              warehouseOperatorProvider(warehouseRole: warehouseRole),
               BlocProvider<WarehouseAccountsCubit>.value(value: cubit),
               BlocProvider<WarehouseSummaryCubit>.value(value: summaryCubit),
             ],
@@ -83,15 +100,28 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('a row shows purchases, paid, owed and the last payment date', (tester) async {
+  testWidgets('a row shows purchases, paid, owed and the last payment date', (
+    tester,
+  ) async {
     await open(tester, _row);
     expect(find.textContaining('Bought 250,000'), findsOneWidget);
     expect(find.textContaining('Paid 150,000'), findsOneWidget);
     expect(find.textContaining('Owes 100,000'), findsOneWidget);
     expect(find.textContaining('Last payment'), findsOneWidget);
   });
+  testWidgets(
+    'owner can read account figures but has no cash or voice entry actions',
+    (tester) async {
+      await open(tester, _row, warehouseRole: 'owner');
+      expect(find.textContaining('Owes 100,000'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Pay in full'), findsNothing);
+      expect(find.byIcon(Icons.mic), findsNothing);
+    },
+  );
 
-  testWidgets('pay in full asks to confirm, then records what is owed', (tester) async {
+  testWidgets('pay in full asks to confirm, then records what is owed', (
+    tester,
+  ) async {
     await open(tester, _row);
     await tester.tap(find.widgetWithText(FilledButton, 'Pay in full'));
     await tester.pumpAndSettle();
@@ -122,25 +152,30 @@ void main() {
     );
   });
 
-  testWidgets('a part payment takes Arabic-Indic digits and shows what is left', (tester) async {
-    await open(tester, _row);
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Part payment'));
-    await tester.pumpAndSettle();
-    await tester.enterText(_sheetField, '٤٠٠٠٠');
-    await tester.pump();
-    expect(find.textContaining('Left: 60,000'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'Record payment'));
-    await tester.pumpAndSettle();
-    verify(
-      () => cubit.recordPayment(
-        pharmacyId: 'p1',
-        amountSyp: 40000,
-        idempotencyKey: any(named: 'idempotencyKey'),
-      ),
-    ).called(1);
-  });
+  testWidgets(
+    'a part payment takes Arabic-Indic digits and shows what is left',
+    (tester) async {
+      await open(tester, _row);
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Part payment'));
+      await tester.pumpAndSettle();
+      await tester.enterText(_sheetField, '٤٠٠٠٠');
+      await tester.pump();
+      expect(find.textContaining('Left: 60,000'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Record payment'));
+      await tester.pumpAndSettle();
+      verify(
+        () => cubit.recordPayment(
+          pharmacyId: 'p1',
+          amountSyp: 40000,
+          idempotencyKey: any(named: 'idempotencyKey'),
+        ),
+      ).called(1);
+    },
+  );
 
-  testWidgets('a part payment of the whole amount or zero is refused', (tester) async {
+  testWidgets('a part payment of the whole amount or zero is refused', (
+    tester,
+  ) async {
     await open(tester, _row);
     await tester.tap(find.widgetWithText(OutlinedButton, 'Part payment'));
     await tester.pumpAndSettle();
@@ -158,7 +193,15 @@ void main() {
   });
 
   testWidgets('a settled pharmacy has no pay buttons', (tester) async {
-    await open(tester, WarehouseAccountRow(pharmacyId: 'p2', nameAr: 'ب', nameEn: 'B', balanceSyp: 0));
+    await open(
+      tester,
+      WarehouseAccountRow(
+        pharmacyId: 'p2',
+        nameAr: 'ب',
+        nameEn: 'B',
+        balanceSyp: 0,
+      ),
+    );
     expect(find.text('Pay in full'), findsNothing);
     expect(find.text('No payments yet'), findsOneWidget);
   });

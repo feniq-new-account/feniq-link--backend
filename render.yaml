@@ -82,6 +82,12 @@ services:
       - path: /feniq.apk
         name: Cache-Control
         value: no-cache
+      - path: /releases/*.apk
+        name: Content-Type
+        value: application/vnd.android.package-archive
+      - path: /releases/*.apk
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
       - path: /version.json
         name: Cache-Control
         value: no-cache

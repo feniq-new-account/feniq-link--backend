@@ -28,7 +28,7 @@ beforeEach(async () => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
 
 describe('warehouse access administration', () => {
-  it('saves warehouse-specific feature switches with the configured trial instead of extending it', async () => {
+  it('saves warehouse-specific switches with a free baseline and no renewable trial', async () => {
     await click(buttonWith('Warehouse A'));
     const loyalty = host.querySelector('input[type="checkbox"]');
     await click(loyalty);
@@ -36,7 +36,7 @@ describe('warehouse access administration', () => {
     const form = buttonWith('warehouseAccess.save').closest('form');
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); });
     expect(api.updateAdminWarehouseSubscription).toHaveBeenCalledWith('w1', expect.objectContaining({
-      status: 'trial', graceDays: 7, features: { loyalty: false, repTracking: true },
+      status: 'free', graceDays: 7, features: { loyalty: false, repTracking: true },
     }));
     expect(api.updateAdminWarehouseSubscription.mock.calls[0][1]).not.toHaveProperty('trialUntil');
     expect(host.textContent).toContain('warehouseAccess.saved');
@@ -56,7 +56,11 @@ describe('warehouse access administration', () => {
     api.updateAdminWarehouseMemberRole.mockResolvedValue({ members: [{ id: 'u1', name: 'Owner', phone: '0944000001', warehouseRole: 'owner' }] });
     const select = [...host.querySelectorAll('li select')][0];
     await act(async () => { select.value = 'owner'; select.dispatchEvent(new Event('change', { bubbles: true })); });
-    expect(api.updateAdminWarehouseMemberRole).toHaveBeenCalledWith('w1', 'u1', 'owner');
+    expect(api.updateAdminWarehouseMemberRole).not.toHaveBeenCalled();
+    const reason = host.querySelector('li input');
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(reason, 'Separate owner permissions'); reason.dispatchEvent(new Event('input', { bubbles: true })); });
+    await click(buttonWith('warehouseAccess.saveMemberRole'));
+    expect(api.updateAdminWarehouseMemberRole).toHaveBeenCalledWith('w1', 'u1', 'owner', { revision: 0, reason: 'Separate owner permissions' });
     expect(host.textContent).toContain('warehouseAccess.roleChanged');
   });
 });

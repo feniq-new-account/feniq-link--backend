@@ -8,6 +8,7 @@ class PharmacyModel {
     required this.city,
     required this.phone,
     required this.areaType,
+    this.areaName = '',
   });
 
   final String id;
@@ -25,6 +26,7 @@ class PharmacyModel {
   // the login spinner ran forever with no error shown. Never make a login
   // response field that no screen reads a hard cast.
   final String areaType;
+  final String areaName;
 
   factory PharmacyModel.fromJson(Map<String, dynamic> json) => PharmacyModel(
     id: json['id'] as String,
@@ -35,5 +37,6 @@ class PharmacyModel {
     city: json['city'] as String,
     phone: json['phone'] as String,
     areaType: json['areaType'] as String? ?? 'city',
+    areaName: json['areaName'] as String? ?? '',
   );
 }

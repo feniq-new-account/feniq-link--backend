@@ -3,6 +3,7 @@ const env = require('../config/env');
 const { ApiError } = require('../utils/ApiError');
 const { asyncHandler } = require('../utils/asyncHandler');
 const User = require('../models/user.model');
+const { rolePermissions } = require('../utils/rolePermissions');
 
 // Verifies a raw JWT and resolves the User it belongs to, applying the same
 // "still allowed in" rules every authenticated HTTP request goes through.
@@ -87,9 +88,12 @@ function authorize(...roles) {
     if (!req.user || !roles.includes(req.user.role)) {
       throw ApiError.forbidden('You do not have permission to perform this action.');
     }
+    if (req.user.role === 'admin' && !rolePermissions(req.user).platformManage) {
+      throw ApiError.forbidden('An active administrator account is required.', 'ACTIVE_ADMIN_REQUIRED');
+    }
     // Owners monitor accounts; only an accounting operator posts cash. The
     // old combined login retains its existing scope until explicitly split.
-    if (req.user.role === 'warehouse' && req.user.warehouseRole === 'owner' &&
+    if (req.user.role === 'warehouse' && !rolePermissions(req.user).paymentRecord &&
         !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
         /\/warehouse\/payments(?:\/|$)/.test(req.originalUrl || '')) {
       throw ApiError.forbidden('An accountant account is required to record payments.', 'ACCOUNTANT_REQUIRED');

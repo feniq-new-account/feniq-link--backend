@@ -2,6 +2,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:feniq/features/auth/data/models/user_model.dart';
 
 void main() {
+  group('Server role permissions', () {
+    UserModel actor({String role = 'warehouse', String status = 'active', String warehouseRole = 'accountant', Map<String, dynamic>? permissions}) => UserModel.fromJson({
+      'id': 'role-test', 'name': 'Role test', 'phone': '+963944000001', 'role': role,
+      'status': status, 'lang': 'en', 'warehouseRole': warehouseRole,
+      if (permissions != null) 'permissions': permissions,
+    });
+    test('explicit server denial overrides an older role hint; legacy responses retain valid operator access', () {
+      expect(actor().canRecordPayments, isTrue);
+      expect(actor(permissions: {'paymentRecord': false}).canRecordPayments, isFalse);
+      expect(actor(warehouseRole: 'owner').canRecordPayments, isFalse);
+      expect(actor(warehouseRole: 'owner').canConfigureFeatures, isTrue);
+      expect(actor(permissions: {}).canRecordPayments, isFalse);
+    });
+    test('inactive and non-warehouse identities cannot use cash permissions', () {
+      expect(actor(status: 'blocked', permissions: {'paymentRecord': true}).canRecordPayments, isFalse);
+      expect(actor(role: 'pharmacy', permissions: {'paymentRecord': true}).canRecordPayments, isFalse);
+    });
+  });
   group('UserModel', () {
     group('constructor', () {
       test('creates instance with required parameters', () {

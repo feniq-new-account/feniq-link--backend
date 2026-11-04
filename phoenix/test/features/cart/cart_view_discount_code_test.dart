@@ -1,3 +1,4 @@
+import '../../helpers/launch_fixture.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -147,7 +148,7 @@ void main() {
     final router = GoRouter(
       initialLocation: '/cart',
       routes: [
-        GoRoute(path: '/cart', name: RouteNames.cart, builder: (context, state) => const CartView()),
+        GoRoute(path: '/cart', name: RouteNames.cart, builder: (context, state) => const CartView(loadLaunchStatus: openLaunchForTest)),
         GoRoute(
           path: '/orders/:orderId',
           name: RouteNames.orderTracking,

@@ -13,7 +13,7 @@ const roles = {
   rep: { minimumBuild: 1050, recommendedBuild: 1050, mandatoryAfter: '2026-10-30T12:00:00Z' },
   warehouse: { minimumBuild: 1, recommendedBuild: 1050, mandatoryAfter: null },
 };
-const manifest = { apk: true, build: '1050', size: 80000000, sha256: 'a'.repeat(64), certificateSha256: service.CERTIFICATE };
+const manifest = { versionName: '1.0.1', applicationId: 'com.feniq.link', file: 'releases/1050-aaaaaaaaaaaa.apk', apk: true, build: '1050', size: 80000000, sha256: 'a'.repeat(64), certificateSha256: service.CERTIFICATE };
 function fakeFetch(data = manifest, size = data.size) {
   return async (url, options) => options.method === 'HEAD'
     ? { ok: true, headers: new Headers({ 'content-length': String(size), 'content-type': 'application/vnd.android.package-archive' }) }

@@ -32,6 +32,10 @@ function serializePharmacy(pharmacy) {
     nameEn: pharmacy.nameEn,
     ownerName: pharmacy.ownerName,
     address: pharmacy.address,
+    areaName: pharmacy.areaName || '',
+    location: pharmacy.location?.coordinates?.length === 2
+      ? { type: 'Point', coordinates: [...pharmacy.location.coordinates] } : null,
+    locationApproval: pharmacy.locationApproval || 'pending',
     city: pharmacy.city,
     areaType: pharmacy.areaType || DEFAULT_AREA_TYPE,
     phone: pharmacy.phone,
@@ -57,7 +61,8 @@ function serializeWarehouse(warehouse) {
 // share that one and have no use for it. Strictly boolean - a row that predates
 // the field reads as false.
 function serializeSelf(user) {
-  return { ...serializeUser(user), mustChangePassword: user.mustChangePassword === true };
+  return { ...serializeUser(user), mustChangePassword: user.mustChangePassword === true,
+    permissions: require('../utils/rolePermissions').rolePermissions(user) };
 }
 
 // `refreshToken` is only present on responses that actually start or renew

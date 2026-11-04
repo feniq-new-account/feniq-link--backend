@@ -1,11 +1,12 @@
 const { Router } = require('express');
 const { authenticate, authorize, requireActiveStatus } = require('../middlewares/auth.middleware');
 const controller = require('../controllers/warehousePayment.controller');
-const { requireWarehouseFeature } = require('../middlewares/warehouseFeature.middleware');
 
 const router = Router();
 
-router.use(authenticate, authorize('warehouse'), requireActiveStatus, requireWarehouseFeature('accounting'));
+// Basic recording and documented reversal remain available in freemium.
+// The controller/service still require an accountant and enforce tenant scope.
+router.use(authenticate, authorize('warehouse'), requireActiveStatus);
 
 // Money-Flow V2: payments are append-only. The V1 PATCH (edit) and DELETE
 // routes are gone - a mistake is corrected by posting a reversal, which keeps

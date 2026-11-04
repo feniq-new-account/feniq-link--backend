@@ -23,3 +23,6 @@ backend/.env.example
 # Impeccable review captures (regenerated each round)
 .impeccable/review/
 .impeccable/*.local.json
+
+# Python publication checks
+__pycache__/

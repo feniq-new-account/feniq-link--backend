@@ -5701,6 +5701,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Balance without a verified invoice age; included in total debt, excluded from aging bands until a reliable date is available.'**
   String get warehouseInsightsUnknownAge;
+
+  /// No description provided for @manualAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Street address'**
+  String get manualAddressLabel;
+
+  /// No description provided for @areaNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Area or village'**
+  String get areaNameLabel;
+
+  /// No description provided for @optionalLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy map location (optional)'**
+  String get optionalLocationLabel;
+
+  /// No description provided for @registrationUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not confirm registration. Your account may exist; try signing in with the same phone and password before registering again.'**
+  String get registrationUnconfirmed;
+
+  /// No description provided for @editProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit pharmacy profile'**
+  String get editProfileTitle;
+
+  /// No description provided for @saveProfileButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save profile'**
+  String get saveProfileButton;
+
+  /// No description provided for @launchUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Operating status is unavailable. You can browse; ordering is paused until it can be checked.'**
+  String get launchUnknown;
+
+  /// No description provided for @launchPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration and browsing are open. Ordering has not started yet.'**
+  String get launchPreparing;
+
+  /// No description provided for @launchRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get launchRetry;
+
+  /// No description provided for @featurePreferencesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature preferences'**
+  String get featurePreferencesTitle;
+
+  /// No description provided for @featurePreferencesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences cannot grant access. Availability depends on your account permissions, warehouse entitlements and platform settings. Advanced accounting is pending; core payment recording remains available to accounting operators.'**
+  String get featurePreferencesHelp;
+
+  /// No description provided for @featurePreferencesOwnerOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the warehouse owner can edit these preferences.'**
+  String get featurePreferencesOwnerOnly;
+
+  /// No description provided for @featurePreferencesSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences saved and availability refreshed.'**
+  String get featurePreferencesSaved;
+
+  /// No description provided for @featurePreferencesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Currently available'**
+  String get featurePreferencesAvailable;
+
+  /// No description provided for @featurePreferencesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Currently unavailable'**
+  String get featurePreferencesUnavailable;
+
+  /// No description provided for @featurePreferencesReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for change'**
+  String get featurePreferencesReason;
+
+  /// No description provided for @featurePreferencesSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save preferences'**
+  String get featurePreferencesSave;
+
+  /// No description provided for @featurePreferencesRepTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Rep visit tracking'**
+  String get featurePreferencesRepTracking;
+
+  /// No description provided for @featurePreferencesLoyalty.
+  ///
+  /// In en, this message translates to:
+  /// **'Loyalty'**
+  String get featurePreferencesLoyalty;
+
+  /// No description provided for @featurePreferencesAccounting.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced accounting — scope pending'**
+  String get featurePreferencesAccounting;
+
+  /// No description provided for @featurePreferencesSalesReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales reports'**
+  String get featurePreferencesSalesReports;
+
+  /// No description provided for @featurePreferencesOwnerInsights.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner report'**
+  String get featurePreferencesOwnerInsights;
+
+  /// No description provided for @featurePreferencesOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue receivables'**
+  String get featurePreferencesOverdue;
+
+  /// No description provided for @featurePreferencesInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive pharmacies'**
+  String get featurePreferencesInactive;
+
+  /// No description provided for @featurePreferencesAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'In-screen owner alerts'**
+  String get featurePreferencesAlerts;
+
+  /// No description provided for @featurePreferencesDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery scheduling'**
+  String get featurePreferencesDelivery;
+
+  /// No description provided for @errorFeatureControlChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature settings changed. Reload before saving.'**
+  String get errorFeatureControlChanged;
 }
 
 class _AppLocalizationsDelegate

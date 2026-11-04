@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 
-const Context = createContext({ subscription: null, loading: false, hasFeature: () => true });
+const Context = createContext({ subscription: null, loading: false, hasFeature: () => false, refresh: () => {}, applyFeatures: () => {} });
 
 export function WarehouseSubscriptionProvider({ children }) {
   const { t } = useTranslation();
@@ -10,6 +10,8 @@ export function WarehouseSubscriptionProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [attempt, setAttempt] = useState(0);
+  const refresh = useCallback(() => setAttempt(value => value + 1), []);
+  const applyFeatures = useCallback(features => setSubscription(value => value ? { ...value, features } : value), []);
   useEffect(() => {
     let live = true;
     setLoading(true); setError(null);
@@ -19,12 +21,12 @@ export function WarehouseSubscriptionProvider({ children }) {
     return () => { live = false; };
   }, [attempt]);
   const hasFeature = (name) => subscription?.features?.[name] === true;
-  return <Context.Provider value={{ subscription, loading, hasFeature }}>
+  return <Context.Provider value={{ subscription, loading, hasFeature, refresh, applyFeatures }}>
     {error && <div className="warehouse-subscription-notice" role="status">
       <p>{t('warehouseAccess.statusFailed')}</p>
       <button type="button" className="btn-secondary" onClick={() => setAttempt((value) => value + 1)}>{t('common.retry')}</button>
     </div>}
-    {subscription && ['expired', 'paused', 'grace'].includes(subscription.state) &&
+    {subscription && ['freemium', 'expired', 'paused', 'grace'].includes(subscription.state) &&
       <div className="warehouse-subscription-notice" role="status">
         {t(`warehouseAccess.states.${subscription.state}`)} — {t('warehouseAccess.accessNotice')}
       </div>}

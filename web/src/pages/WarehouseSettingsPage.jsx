@@ -9,6 +9,7 @@ import { sypFromUsd } from '../utils/currency';
 import { submitWithRateCheck, withRateUsed } from '../utils/exchangeRate';
 import { FEATURES } from '../config/features';
 import { LoyaltySettingsCard } from '../components/LoyaltySettingsCard';
+import { FeaturePreferencesCard } from '../components/FeaturePreferencesCard';
 
 // Section: the warehouse's own order-size limits. Both are opt-in - an empty
 // minimum means "no minimum" (stored as 0) and an empty maximum means "no
@@ -230,6 +231,7 @@ export function WarehouseSettingsPage() {
         </div>
       )}
       <DeliveryScheduleCard />
+      <FeaturePreferencesCard />
       {!isLoading && <LoyaltySettingsCard />}
     </div>
   );

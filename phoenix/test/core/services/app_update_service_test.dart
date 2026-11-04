@@ -6,6 +6,7 @@ import 'package:feniq/core/services/remote_config_service.dart';
 import 'package:feniq/core/services/storage_service.dart';
 
 class MockRemoteConfigService extends Mock implements RemoteConfigService {}
+class UnavailableStorage extends Mock implements StorageService {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,26 @@ void main() {
       now: now,
     );
   }
+
+  test('Android release failure never activates an unrelated Firebase minimum', () async {
+    when(() => rc.minVersion).thenReturn('99.0.0');
+    final service = AppUpdateService(remoteConfigService: rc, storageService: storage,
+      currentVersion: '1.1.0', currentBuild: 1058,
+      fetchRelease: () async => throw Exception('offline'));
+    expect(await service.checkForUpdate(), AppUpdateStatus.none);
+    verifyNever(() => rc.refresh());
+  });
+
+  test('Android storage errors cannot fall back to a Firebase mandatory update', () async {
+    final unavailable = UnavailableStorage();
+    when(() => unavailable.getString(any())).thenThrow(StateError('storage unavailable'));
+    when(() => rc.minVersion).thenReturn('99.0.0');
+    final service = AppUpdateService(remoteConfigService: rc, storageService: unavailable,
+      currentVersion: '1.1.0', currentBuild: 1062,
+      fetchRelease: () async => throw Exception('offline'));
+    expect(await service.checkForUpdate(), AppUpdateStatus.none);
+    verifyNever(() => rc.refresh());
+  });
 
   group('status evaluation (spec section 14)', () {
     test('1. current == latest -> none', () async {

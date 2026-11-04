@@ -78,6 +78,8 @@ const register = asyncHandler(async (req, res) => {
   const pharmacyName = requireNonEmptyString(req.body.pharmacyName, 'Pharmacy name is required.');
   const address = requireNonEmptyString(req.body.address, 'Address is required.');
   const areaType = requireAreaType(req.body.areaType);
+  const areaName = req.body.areaName === undefined ? '' : requireNonEmptyString(req.body.areaName, 'Area is required.');
+  if (areaName.length > 160) throw ApiError.badRequest('Area is too long.');
   const password = requirePassword(req.body.password, 'Password is required.');
   const confirmPassword = requireNonEmptyString(
     req.body.confirmPassword,
@@ -95,6 +97,7 @@ const register = asyncHandler(async (req, res) => {
     phone,
     address,
     areaType,
+    areaName,
     password,
     location,
   });
@@ -314,7 +317,33 @@ const deleteDeviceToken = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Device unregistered.' });
 });
 
+const updateProfile = asyncHandler(async (req, res) => {
+  const allowed = ['name', 'pharmacyName', 'address', 'areaName', 'areaType', 'latitude', 'longitude'];
+  if (!req.body || Object.keys(req.body).length === 0 || Object.keys(req.body).some(key => !allowed.includes(key))) {
+    throw ApiError.badRequest('Invalid profile fields.');
+  }
+  const changes = {};
+  for (const key of ['name', 'pharmacyName', 'address', 'areaName']) {
+    if (Object.hasOwn(req.body, key)) {
+      changes[key] = requireNonEmptyString(req.body[key], `${key} is required.`);
+      if (changes[key].length > (key === 'address' ? 500 : 160)) throw ApiError.badRequest('Profile field is too long.');
+    }
+  }
+  if (Object.hasOwn(req.body, 'areaType')) changes.areaType = requireAreaType(req.body.areaType);
+  if (Object.hasOwn(req.body, 'latitude') || Object.hasOwn(req.body, 'longitude')) {
+    if (req.body.latitude === null && req.body.longitude === null) changes.location = null;
+    else {
+      if (typeof req.body.latitude !== 'number' || typeof req.body.longitude !== 'number') throw ApiError.badRequest('Invalid location.');
+      changes.location = parseOptionalLocation(req.body);
+      if (!changes.location) throw ApiError.badRequest('Invalid location.');
+    }
+  }
+  const result = await authService.updateProfile(req.user._id, changes);
+  res.json({ success: true, ...authViewModel.toMeResponse(result) });
+});
+
 module.exports = {
+  updateProfile,
   sendOtp,
   register,
   login,

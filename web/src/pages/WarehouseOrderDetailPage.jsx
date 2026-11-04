@@ -1,6 +1,6 @@
+import { hasRolePermission } from '../utils/userPermissions';
 import { NumericInput } from '../components/NumericInput';
 import { DeliveryEstimate } from '../components/DeliveryEstimate';
-import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
 import { useAuth } from '../auth/AuthContext';
 import { useModalSafety } from '../hooks/useModalSafety';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -557,8 +557,7 @@ export function WarehouseOrderDetailPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { hasFeature } = useWarehouseSubscription();
-  const canRecord = user?.warehouseRole !== 'owner' && hasFeature('accounting');
+  const canRecord = hasRolePermission(user, 'paymentRecord');
   const { collect } = useDeliveryCollections();
   // Order/invoice figures are SYP-native; only per-line savings are USD and
   // need the live rate to show in SYP.

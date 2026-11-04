@@ -29,6 +29,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String address,
     required String areaType,
     required String password,
+    String areaName = '',
     double? latitude,
     double? longitude,
   }) async {
@@ -41,6 +42,7 @@ class AuthRepositoryImpl implements AuthRepository {
           'phone': phone,
           'address': address,
           'areaType': areaType,
+          if (areaName.isNotEmpty) 'areaName': areaName,
           'password': password,
           'confirmPassword': password,
           if (latitude != null && longitude != null) 'latitude': latitude,
@@ -64,6 +66,14 @@ class AuthRepositoryImpl implements AuthRepository {
     } on DioException catch (e) {
       throw ServerFailure.fromDioError(e);
     }
+  }
+
+  @override
+  Future<MeResponse> updateProfile(Map<String, dynamic> changes) async {
+    try {
+      final response = await _apiClient.dio.patch('/auth/profile', data: changes);
+      return MeResponse.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) { throw ServerFailure.fromDioError(e); }
   }
 
   @override

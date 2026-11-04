@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 import { LoadMoreControl } from '../components/LoadMoreControl';
+import { FeatureControlCenter } from '../components/FeatureControlCenter';
 
 const EMPTY_MEMBER = { name: '', phone: '', password: '', warehouseRole: 'accountant' };
 function localDateInput(value) {
@@ -18,6 +19,9 @@ export function AdminWarehouseAccessPage() {
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
   const [members, setMembers] = useState([]);
+  const [memberRoles, setMemberRoles] = useState({});
+  const [memberReasons, setMemberReasons] = useState({});
+  const [accessEvents, setAccessEvents] = useState([]);
   const [form, setForm] = useState(null);
   const [member, setMember] = useState(EMPTY_MEMBER);
   const [created, setCreated] = useState(null);
@@ -25,6 +29,7 @@ export function AdminWarehouseAccessPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [showControls, setShowControls] = useState(false);
   const generation = useRef(0);
   const list = usePaginatedData(async (after) => {
     const result = await api.listAdminWarehouseAccess({ search, after });
@@ -42,8 +47,10 @@ export function AdminWarehouseAccessPage() {
       .then(([subscription, accounts]) => {
         if (current !== generation.current) return;
         setDetail(subscription); setMembers(accounts.members);
+        setAccessEvents(accounts.accessEvents || []);
+        setMemberRoles({}); setMemberReasons({});
         const config = subscription.configuration;
-        setForm({ plan: config?.plan || 'field_team', status: config?.status || 'trial',
+        setForm({ revision: config?.revision || 0, plan: config?.plan || 'free', status: config?.status || 'free',
           paidUntil: localDateInput(config?.paidUntil), graceDays: config?.graceDays ?? 7,
           note: config?.note || '',
           features: Object.fromEntries(subscription.featureNames.map((key) => [key, config?.features?.[key] !== false])),
@@ -59,9 +66,15 @@ export function AdminWarehouseAccessPage() {
       const result = await api.updateAdminWarehouseSubscription(selected.id, {
         ...form, graceDays: Number(form.graceDays), paidUntil: form.paidUntil ? new Date(form.paidUntil).toISOString() : null,
       });
-      setDetail(result); setNotice(t('warehouseAccess.saved'));
+      setDetail(result); setForm(current => ({ ...current, revision: result.configuration?.revision || 0 })); setNotice(t('warehouseAccess.saved'));
     } catch (err) { setError(err.message); }
     finally { setBusy(false); }
+  };
+  const refreshAccessHistory = async () => {
+    try {
+      const refreshed = await api.getAdminWarehouseMembers(selected.id);
+      setMembers(refreshed.members); setAccessEvents(refreshed.accessEvents || []);
+    } catch { setError(t('warehouseAccess.auditReloadFailed')); }
   };
   const createMember = async (event) => {
     event.preventDefault(); setBusy(true); setError(null); setNotice(null); setCreated(null);
@@ -70,14 +83,19 @@ export function AdminWarehouseAccessPage() {
       setMembers((rows) => [...rows, result.member]);
       setCreated({ ...result.member, temporaryPassword: member.password });
       setMember(EMPTY_MEMBER); setNotice(t('warehouseAccess.created'));
+      await refreshAccessHistory();
     } catch (err) { setError(err.message); }
     finally { setBusy(false); }
   };
-  const changeMemberRole = async (id, warehouseRole) => {
+  const changeMemberRole = async (row) => {
     setBusy(true); setError(null); setNotice(null);
     try {
-      const result = await api.updateAdminWarehouseMemberRole(selected.id, id, warehouseRole);
+      const result = await api.updateAdminWarehouseMemberRole(selected.id, row.id, memberRoles[row.id], {
+        revision: row.accessRevision || 0, reason: memberReasons[row.id],
+      });
       setMembers(result.members); setNotice(t('warehouseAccess.roleChanged'));
+      await refreshAccessHistory();
+      setMemberRoles({}); setMemberReasons({});
     } catch (err) { setError(err.message); }
     finally { setBusy(false); }
   };
@@ -99,21 +117,23 @@ export function AdminWarehouseAccessPage() {
     {list.data.length > 0 && <LoadMoreControl hasMore={list.hasMore} isLoadingMore={list.isLoadingMore} onLoadMore={list.loadMore} pageSize={20} />}
     {loading && <p role="status">{t('common.loading')}</p>}
     {error && <div><p className="error-text" role="alert">{error}</p>
-      {!detail && selected && <button type="button" className="btn-secondary"
+      {selected && <button type="button" className="btn-secondary"
         onClick={() => setSelected({ ...selected })}>{t('common.retry')}</button>}</div>}
     {notice && <p role="status">{notice}</p>}
     {detail && form && <>
       <h2>{selected.nameAr}</h2>
+      <button type="button" className="btn-secondary" onClick={() => setShowControls(v => !v)}>{t('featureControl.title')}</button>
+      {showControls && <FeatureControlCenter key={selected.id} warehouseId={selected.id} />}
       <p>{t('warehouseAccess.currentState')}: <strong>{t(`warehouseAccess.states.${detail.state}`)}</strong></p>
       <div className="warehouse-access-layout">
         <form onSubmit={saveSubscription}>
           <fieldset disabled={busy}>
             <legend>{t('warehouseAccess.subscription')}</legend>
             <label>{t('warehouseAccess.plan')}<select value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
-              {['basic', 'management', 'field_team'].map((key) => <option value={key} key={key}>{t(`warehouseAccess.plans.${key}`)}</option>)}
+              {['free', 'basic', 'management', 'field_team'].map((key) => <option value={key} key={key}>{t(`warehouseAccess.plans.${key}`)}</option>)}
             </select></label>
             <label>{t('warehouseAccess.status')}<select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              {['trial', 'active', 'paused'].map((key) => <option value={key} key={key}>{t(`warehouseAccess.states.${key}`)}</option>)}
+              {['free', 'active', 'paused', ...(form.status === 'trial' ? ['trial'] : [])].map((key) => <option value={key} key={key}>{t(`warehouseAccess.states.${key}`)}</option>)}
             </select></label>
             <label>{t('warehouseAccess.paidUntil')}<input type="datetime-local" lang="en" dir="ltr" value={form.paidUntil}
               required={form.status === 'active'} onChange={(e) => setForm({ ...form, paidUntil: e.target.value })} /></label>
@@ -133,13 +153,26 @@ export function AdminWarehouseAccessPage() {
           <h3>{t('warehouseAccess.members')}</h3>
           <ul>{members.map((row) => <li key={row.id}>
             {row.name} — <bdi dir="ltr">{row.phone}</bdi>
-            <label>{t('warehouseAccess.role')}<select value={row.warehouseRole} disabled={busy}
-              onChange={(event) => changeMemberRole(row.id, event.target.value)}>
+            <p>{t(`admin.accounts.status.${row.status}`, { defaultValue: row.status || '' })}</p>
+            <p>{t('warehouseAccess.effectivePermissions')}: {['financialRead', 'paymentRecord', 'paymentReverse', 'featureConfigure'].map(key =>
+              <span key={key} className="member-permission">{t(`warehouseAccess.permissions.${key}`)}: {t(row.permissions?.[key] ? 'featureControl.allowed' : 'featureControl.denied')} · </span>)}</p>
+            <label>{t('warehouseAccess.role')}<select value={memberRoles[row.id] || row.warehouseRole} disabled={busy}
+              onChange={(event) => setMemberRoles({ ...memberRoles, [row.id]: event.target.value })}>
               {row.warehouseRole === 'legacy' && <option value="legacy" disabled>{t('warehouseAccess.roles.legacy')}</option>}
               <option value="owner">{t('warehouseAccess.roles.owner')}</option>
               <option value="accountant">{t('warehouseAccess.roles.accountant')}</option>
             </select></label>
+            <label>{t('featureControl.reason')}<input value={memberReasons[row.id] || ''} maxLength="1000" disabled={busy}
+              onChange={event => setMemberReasons({ ...memberReasons, [row.id]: event.target.value })} /></label>
+            <button type="button" className="btn-secondary" disabled={busy || !memberRoles[row.id] || memberRoles[row.id] === row.warehouseRole || !memberReasons[row.id]?.trim()}
+              onClick={() => changeMemberRole(row)}>{t('warehouseAccess.saveMemberRole')}</button>
           </li>)}</ul>
+          <details><summary>{t('warehouseAccess.accessHistory')}</summary>
+            <ul>{accessEvents.map(event => <li key={event._id}>
+              <bdi>{new Date(event.createdAt).toLocaleString()}</bdi> · {event.actorId?.name || t('featureControl.previousAccount')} ·
+              {event.reason || t('warehouseAccess.created')} · {t(`warehouseAccess.roles.${event.before?.warehouseRole || 'legacy'}`)} → {t(`warehouseAccess.roles.${event.after?.warehouseRole || 'legacy'}`)}
+            </li>)}</ul>
+          </details>
           <form onSubmit={createMember}>
             <fieldset disabled={busy}>
               <legend>{t('warehouseAccess.addMember')}</legend>

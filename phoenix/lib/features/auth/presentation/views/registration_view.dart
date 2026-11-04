@@ -31,6 +31,8 @@ class _RegistrationViewState extends State<RegistrationView> {
   final _nameController = TextEditingController();
   final _pharmacyNameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _areaController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _agreedToTerms = false;
@@ -40,37 +42,25 @@ class _RegistrationViewState extends State<RegistrationView> {
   bool _obscureConfirmPassword = true;
   double? _latitude;
   double? _longitude;
-  // Section 6.2 update: there's no manual address field anymore - this is
-  // the map's own reverse-geocoded text, and it's what gets submitted as
-  // `address` below.
-  String? _resolvedAddress;
-  // Set by the map's "choose this location" button, cleared by "change
-  // location" - registration needs an explicitly chosen point.
-  bool _locationConfirmed = false;
-  String? _addressError;
-
   @override
   void dispose() {
     _nameController.dispose();
     _pharmacyNameController.dispose();
     _phoneController.dispose();
+    _addressController.dispose();
+    _areaController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
   void _handleLocationChanged(double latitude, double longitude, String? address) {
-    setState(() {
-      _latitude = latitude;
-      _longitude = longitude;
-      _resolvedAddress = address;
-      _locationConfirmed = true;
-      _addressError = null;
-    });
+    setState(() { _latitude = latitude; _longitude = longitude; });
+    if (_addressController.text.trim().isEmpty && address != null) _addressController.text = address;
   }
 
   void _handleLocationCleared() {
-    setState(() => _locationConfirmed = false);
+    setState(() { _latitude = null; _longitude = null; });
   }
 
   // Section 6-2/3: registers and routes directly by the resulting
@@ -79,14 +69,11 @@ class _RegistrationViewState extends State<RegistrationView> {
     context.unfocus();
     final l10n = context.l10n;
     final formValid = _formKey.currentState!.validate();
-    final address = _resolvedAddress?.trim() ?? '';
+    final address = _addressController.text.trim();
     setState(() {
       _termsError = _agreedToTerms ? null : l10n.termsAgreementRequiredError;
-      _addressError = !_locationConfirmed
-          ? l10n.confirmLocationRequiredError
-          : (address.isEmpty ? l10n.addressNotResolvedYetMessage : null);
     });
-    if (!formValid || !_agreedToTerms || _addressError != null) return;
+    if (!formValid || !_agreedToTerms) return;
 
     final cubit = context.read<AuthCubit>();
     final registered = await cubit.register(
@@ -98,6 +85,7 @@ class _RegistrationViewState extends State<RegistrationView> {
       // drift apart.
       phone: phoneTextFieldFullValue(_phoneController.text),
       address: address,
+      areaName: _areaController.text.trim(),
       areaType: _areaType!,
       password: _passwordController.text,
       latitude: _latitude,
@@ -184,20 +172,20 @@ class _RegistrationViewState extends State<RegistrationView> {
                               ),
                             ),
                             const SizedBox(height: AppSizes.spacingMedium),
-                            LocationMapField(
-                              label: l10n.addressLabel,
-                              onChanged: _handleLocationChanged,
-                              onCleared: _handleLocationCleared,
+                            AppTextField(
+                              label: l10n.manualAddressLabel, controller: _addressController,
+                              validator: (value) => Validators.validateRequired(value, l10n.fieldRequired),
                             ),
-                            if (_addressError != null) ...[
-                              const SizedBox(height: AppSizes.spacingXSmall),
-                              Text(
-                                _addressError!,
-                                style: context.textTheme.bodySmall?.copyWith(
-                                  color: AppColors.errorOf(context),
-                                ),
-                              ),
-                            ],
+                            const SizedBox(height: AppSizes.spacingMedium),
+                            AppTextField(
+                              label: l10n.areaNameLabel, controller: _areaController,
+                              validator: (value) => Validators.validateRequired(value, l10n.fieldRequired),
+                            ),
+                            ExpansionTile(
+                              title: Text(l10n.optionalLocationLabel),
+                              children: [LocationMapField(label: l10n.optionalLocationLabel,
+                                onChanged: _handleLocationChanged, onCleared: _handleLocationCleared)],
+                            ),
                             const SizedBox(height: AppSizes.spacingMedium),
                             _AreaTypeField(
                               label: l10n.areaTypeLabel,
@@ -301,6 +289,10 @@ class _RegistrationViewState extends State<RegistrationView> {
                               ),
                             ),
                             const SizedBox(height: AppSizes.spacingMedium),
+                            BlocBuilder<AuthCubit, AuthState>(builder: (context, state) =>
+                              state.errorCode == 'REGISTRATION_UNCONFIRMED'
+                                ? Text(l10n.registrationUnconfirmed, style: context.textTheme.bodyMedium)
+                                : const SizedBox.shrink()),
                             Center(
                               child: TextButton(
                                 onPressed: () => context.pushNamed(RouteNames.login),

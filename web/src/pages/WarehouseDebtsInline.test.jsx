@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { WarehouseDebtsPage } from './WarehouseDebtsPage';
 import { api } from '../api/client';
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key) => key }) }));
-vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: { warehouseRole: 'accountant' } }) }));
+vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: { role: 'warehouse', status: 'active', warehouseRole: 'accountant' } }) }));
 vi.mock('../context/WarehouseSubscriptionContext', () => ({ useWarehouseSubscription: () => ({ hasFeature: () => true }) }));
 vi.mock('../components/WarehouseSummaryCard', () => ({ WarehouseSummaryCard: () => null }));
 vi.mock('../components/WarehouseGroupSubNav', () => ({ WarehouseGroupSubNav: () => null }));
