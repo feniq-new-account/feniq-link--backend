@@ -38,6 +38,11 @@ jobs:
         image: mongo:8.0
         ports:
           - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping:1})'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v4
 
@@ -73,6 +78,7 @@ jobs:
           echo "name=$(basename "$file" .snapshot.jsonl.gz.gpg)" >> "$GITHUB_OUTPUT"
 
       - name: Restore drill (into the throwaway database)
+        id: restore
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
@@ -93,11 +99,26 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@v4
+      # A broken restore target must not discard a successfully encrypted
+      # snapshot. The failed drill still fails the job; retained != verified.
+      - name: Retain encrypted snapshot even if the restore drill fails
+        if: ${{ always() && steps.dump.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.dump.outputs.name }}
-          path: backups/
+          name: ${{ steps.restore.outcome == 'success' && steps.dump.outputs.name || format('{0}-restore-unverified', steps.dump.outputs.name) }}
+          path: |
+            ${{ steps.dump.outputs.file }}
+            ${{ steps.dump.outputs.file }}.sha256
           retention-days: ${{ vars.BACKUP_RETENTION_DAYS || 90 }}
           if-no-files-found: error
           # Already compressed and encrypted - zipping it again gains nothing.
           compression-level: 0
+
+      - name: Report unverified restore
+        if: ${{ always() && steps.dump.outcome == 'success' && steps.restore.outcome != 'success' }}
+        run: |
+          echo '::warning::Encrypted backup retained, but restore verification did not succeed. Do not mark this backup as verified.'
+          {
+            echo '### Encrypted snapshot retained; restore not verified'
+            echo 'The artifact is marked restore-unverified. The failed/cancelled drill remains a release gate; a retained snapshot is not evidence of recoverability.'
+          } >> "$GITHUB_STEP_SUMMARY"
