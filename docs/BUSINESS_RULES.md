@@ -21,6 +21,11 @@ Unapproved: final package names/content/prices, owner-app price, post-2026 new-w
 promotion, delivery fees, credit/return-dispute details and loyalty funding. The
 200,000 SYP discussion figure is not a price. No seed data or billing is created.
 
+Owner addendum in this session (2026-11-04): city_ring follows the rural model;
+cash entry is manual. These are recorded as conversation evidence, not falsely
+attributed to the unchanged Notion snapshot. The owner also reaffirmed Notion as
+the ongoing authority for business instructions.
+
 Financial transition is additive and versioned: no historical entry, payment,
 frozen rate, FX snapshot or legacy credit is recalculated. Delivery and collection
 are separate events. See `backend/docs/MONEY_FLOW.md` for the existing legacy flow;
