@@ -218,10 +218,12 @@ test('admin pending-accounts response keeps every serialised field', async () =>
   // admin-list addition (admin.viewmodel.js), null for a pharmacy never checked.
   assert.deepStrictEqual(
     Object.keys(pharmRow.pharmacy).sort(),
-    ['id', 'nameAr', 'nameEn', 'ownerName', 'address', 'city', 'areaType', 'phone', 'verificationPhoto', 'syndicateMatch'].sort()
+    ['id', 'nameAr', 'nameEn', 'ownerName', 'address', 'city', 'areaType', 'areaName', 'location', 'locationApproval', 'phone', 'verificationPhoto', 'syndicateMatch'].sort()
   );
   assert.strictEqual(pharmRow.pharmacy.nameEn, 'Pharmacy Pending');
   assert.strictEqual(pharmRow.pharmacy.syndicateMatch, null);
+  assert.strictEqual(pharmRow.pharmacy.areaName, '');
+  assert.strictEqual(pharmRow.pharmacy.location, null);
   assert.strictEqual(pharmRow.warehouse, null);
 
   const whRow = accounts.find((a) => a.user.role === 'warehouse');

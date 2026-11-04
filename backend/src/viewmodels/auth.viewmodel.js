@@ -33,7 +33,8 @@ function serializePharmacy(pharmacy) {
     ownerName: pharmacy.ownerName,
     address: pharmacy.address,
     areaName: pharmacy.areaName || '',
-    location: pharmacy.location || null,
+    location: pharmacy.location?.coordinates?.length === 2
+      ? { type: 'Point', coordinates: [...pharmacy.location.coordinates] } : null,
     locationApproval: pharmacy.locationApproval || 'pending',
     city: pharmacy.city,
     areaType: pharmacy.areaType || DEFAULT_AREA_TYPE,
