@@ -9,6 +9,7 @@ router.get('/trips', controller.list);
 router.post('/trips', controller.create);
 router.get('/trips/:id', controller.detail);
 router.get('/trips/:id/location', liveLocation.readForAdmin);
+router.put('/trips/:id/route', controller.configureRoute);
 router.post('/trips/:id/assign-driver', controller.assign);
 router.post('/trips/:id/start', controller.start);
 router.patch('/trips/:id/stops/:stopId', controller.stop);
