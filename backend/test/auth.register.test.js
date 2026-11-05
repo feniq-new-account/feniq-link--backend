@@ -144,3 +144,40 @@ for (const areaType of ['city', 'city_ring', 'rural']) {
     assert.strictEqual(stored.areaType, areaType);
   });
 }
+
+for (const coordinates of [
+  { latitude: null, longitude: null },
+  { latitude: '', longitude: '' },
+  { latitude: ' ', longitude: ' ' },
+  { latitude: null, longitude: 35.8 },
+  { latitude: 35.8, longitude: '' },
+  { latitude: 'not-a-coordinate', longitude: 35.8 },
+]) {
+  test(`registration ignores incomplete/blank coordinates: ${JSON.stringify(coordinates)}`, async () => {
+    const { status, body } = await call('POST', '/auth/register', {
+      body: nextPayload(coordinates),
+    });
+    assert.strictEqual(status, 201);
+    assert.strictEqual(body.success, true);
+    const stored = await Pharmacy.findById(body.pharmacy.id).lean();
+    assert.ok(!stored.location?.coordinates?.length, 'must not save an accidental map point');
+  });
+}
+
+test('registration preserves explicit valid zero coordinates', async () => {
+  const { status, body } = await call('POST', '/auth/register', {
+    body: nextPayload({ latitude: 0, longitude: 0 }),
+  });
+  assert.strictEqual(status, 201);
+  const stored = await Pharmacy.findById(body.pharmacy.id).lean();
+  assert.deepStrictEqual(stored.location.coordinates, [0, 0]);
+});
+
+test('registration preserves valid Latakia coordinates in GeoJSON longitude-first order', async () => {
+  const { status, body } = await call('POST', '/auth/register', {
+    body: nextPayload({ latitude: 35.52, longitude: 35.78 }),
+  });
+  assert.strictEqual(status, 201);
+  const stored = await Pharmacy.findById(body.pharmacy.id).lean();
+  assert.deepStrictEqual(stored.location.coordinates, [35.78, 35.52]);
+});
