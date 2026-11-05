@@ -15,6 +15,7 @@ import { useUnreadBadges } from '../realtime/UnreadBadgesProvider';
 import { AdminDashboardPage } from './AdminDashboardPage';
 import { AccountsPage } from './AccountsPage';
 import { AdminRegistrationPage } from './AdminRegistrationPage';
+import { AdminDistributionTripsPage } from './AdminDistributionTripsPage';
 import { AdminPharmacyLicencesPage } from './AdminPharmacyLicencesPage';
 import { AdminOffersPage } from './AdminOffersPage';
 import { AdminDiscountCodesPage } from './AdminDiscountCodesPage';
@@ -60,6 +61,7 @@ export function AdminPanel() {
     // Who gets in when a pharmacy signs up: the approval switch, the
     // syndicate list and the Telegram bot.
     { path: '/admin/registration', label: t('nav.registration') },
+    { path: '/admin/distribution', label: t('nav.distributionTrips') },
     { path: '/admin/pharmacy-licences', label: t('nav.pharmacyLicences') },
     { path: '/admin/offers', label: t('nav.offers') },
     // Review queue for warehouse codes, the platform's own codes, every code.
@@ -156,6 +158,7 @@ export function AdminPanel() {
             <Route path="/admin/app-release" element={<AdminAppReleasePage />} />
             <Route path="/admin/visit-verification" element={<AdminVisitVerificationPage />} />
             <Route path="/admin/registration" element={<AdminRegistrationPage />} />
+            <Route path="/admin/distribution" element={<AdminDistributionTripsPage />} />
             <Route path="/admin/pharmacy-licences" element={<AdminPharmacyLicencesPage />} />
             {/* Old bookmark - the section was renamed Pending Accounts -> Accounts. */}
             <Route path="/admin/pending-accounts" element={<Navigate to="/admin/accounts" replace />} />
