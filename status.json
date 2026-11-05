@@ -1,6 +1,6 @@
 {
   "session": "42029093717-1",
-  "lastCommand": 28,
+  "lastCommand": 29,
   "credentialEntryPendingRestart": false,
   "finished": false,
   "error": null,
@@ -251,6 +251,13 @@
         "tap",
         "wait",
         "restart"
+      ],
+      "error": null
+    },
+    {
+      "id": 29,
+      "ops": [
+        "swipe"
       ],
       "error": null
     }
