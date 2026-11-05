@@ -28,7 +28,10 @@ void main() {
         locale: Locale(language),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: BlocProvider<AuthCubit>.value(value: auth, child: const ApprovalPendingView()),
+        home: BlocProvider<AuthCubit>.value(
+          value: auth,
+          child: ApprovalPendingView(supportLauncher: (_) async => false),
+        ),
       ));
       await tester.pump();
       await tester.scrollUntilVisible(find.text(l10n.contactSupportButton), 200,
