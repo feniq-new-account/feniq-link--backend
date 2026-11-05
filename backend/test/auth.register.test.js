@@ -181,3 +181,11 @@ test('registration preserves valid Latakia coordinates in GeoJSON longitude-firs
   const stored = await Pharmacy.findById(body.pharmacy.id).lean();
   assert.deepStrictEqual(stored.location.coordinates, [35.78, 35.52]);
 });
+
+for (const [field, limit] of [['name', 160], ['pharmacyName', 160], ['address', 500], ['areaName', 160]]) {
+  test(`registration rejects ${field} longer than ${limit} characters`, async () => {
+    const response = await call('POST', '/auth/register', { body: nextPayload({ [field]: 'x'.repeat(limit + 1) }) });
+    assert.strictEqual(response.status, 400);
+    assert.strictEqual(response.body.success, false);
+  });
+}
