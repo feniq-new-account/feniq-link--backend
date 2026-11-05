@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 
-const initial = { region: '', serviceDate: '', driverName: '', driverPhone: '' };
+const initial = { region: '', serviceDate: '', driverName: '', driverPhone: '', driverUserId: '' };
 
 export function AdminDistributionTripsPage() {
   const { i18n } = useTranslation();
   const ar = (i18n.resolvedLanguage || i18n.language || 'ar').startsWith('ar');
   const tr = (a, e) => ar ? a : e;
   const [trips, setTrips] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [assignment, setAssignment] = useState({});
   const [form, setForm] = useState(initial);
   const [search, setSearch] = useState('');
   const [candidates, setCandidates] = useState([]);
@@ -27,6 +29,15 @@ export function AdminDistributionTripsPage() {
   }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    let alive = true;
+    api.adminDistributionDrivers().then(result => {
+      if (alive) setDrivers(result.drivers || []);
+    }).catch(() => {
+      if (alive) setError(tr('تعذر تحميل قائمة المندوبين.', 'Could not load driver accounts.'));
+    });
+    return () => { alive = false; };
+  }, []);
 
   async function lookup(event) {
     event.preventDefault();
@@ -84,6 +95,23 @@ export function AdminDistributionTripsPage() {
       await refresh();
     } catch (e) {
       setError(e.message || 'Unable to update trip; refresh the list.');
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function assignDriver(trip) {
+    const driverUserId = assignment[trip._id];
+    if (!driverUserId) return;
+    setBusy(true);
+    setError('');
+    try {
+      await api.assignDistributionTripDriver(trip._id, trip.revision, driverUserId);
+      await refresh();
+      setNotice(tr('تم ربط الرحلة بحساب المندوب.', 'Trip assigned to driver account.'));
+    } catch (e) {
+      setError(e.message || 'Could not assign driver.');
       await refresh();
     } finally {
       setBusy(false);
@@ -153,6 +181,22 @@ export function AdminDistributionTripsPage() {
               <input type="tel" value={form.driverPhone}
                 onChange={e => setForm(old => ({ ...old, driverPhone: e.target.value }))} />
             </label>
+            <label>{tr('حساب السائق (اختياري)', 'Driver login (optional)')}
+              <select aria-label="Driver login" value={form.driverUserId}
+                onChange={e => {
+                  const driver = drivers.find(d => d.userId === e.target.value);
+                  setForm(old => ({
+                    ...old,
+                    driverUserId: e.target.value,
+                    ...(driver ? { driverName: driver.name, driverPhone: driver.phone } : {}),
+                  }));
+                }}>
+                <option value="">{tr('بدون ربط بحساب', 'No account assigned')}</option>
+                {drivers.map(d => <option key={d.userId} value={d.userId}>
+                  {d.name} — {d.phone}
+                </option>)}
+              </select>
+            </label>
             <button type="submit" disabled={busy} className="btn-primary">
               {tr('إنشاء الرحلة', 'Create trip')}
             </button>
@@ -184,6 +228,25 @@ export function AdminDistributionTripsPage() {
                   )}
                 </div>
               ))}
+              {trip.status === 'planned' && (
+                <div>
+                  <label>{tr('ربط بحساب مندوب', 'Assign driver account')}
+                    <select aria-label={'Assign driver ' + trip._id}
+                      value={assignment[trip._id] || trip.driverUserId || ''}
+                      onChange={e => setAssignment(old => ({ ...old, [trip._id]: e.target.value }))}>
+                      <option value="">{tr('اختر حساباً', 'Choose driver')}</option>
+                      {drivers.map(d => <option key={d.userId} value={d.userId}>
+                        {d.name} — {d.phone}
+                      </option>)}
+                    </select>
+                  </label>
+                  <button type="button" className="btn-secondary"
+                    disabled={busy || !(assignment[trip._id] || trip.driverUserId)}
+                    onClick={() => assignDriver(trip)}>
+                    {tr('حفظ تعيين السائق', 'Save driver assignment')}
+                  </button>
+                </div>
+              )}
               {trip.status === 'planned' && (
                 <button type="button" className="btn-primary" disabled={busy}
                   onClick={() => action(trip, 'start')}>{tr('بدء الرحلة', 'Start trip')}</button>
