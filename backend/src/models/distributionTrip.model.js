@@ -14,6 +14,9 @@ const tripSchema = new Schema({
   serviceDate: { type: Date, required: true },
   driverName: { type: String, required: true, trim: true, maxlength: 160 },
   driverPhone: { type: String, trim: true, maxlength: 24, default: '' },
+  // Pilot: assign an existing active rep login to operate this trip.
+  // Transport-only drivers will need their own role/onboarding later.
+  driverUserId: { type: Schema.Types.ObjectId, ref: 'User', default: null, index: true },
   status: {
     type: String,
     enum: ['planned', 'in_progress', 'completed', 'cancelled'],
