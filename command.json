@@ -1,1 +1,1 @@
-{"id":40,"actions":[{"op":"tap","x":350,"y":745},{"op":"tap","x":250,"y":715},{"op":"tap","x":350,"y":780},{"op":"credential","role":"new_pharmacy","field":"phone","phoneMode":"tail"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":885},{"op":"credential","role":"owner","field":"password"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":980},{"op":"wait","seconds":3},{"op":"restart"}]}
+{"id":41,"actions":[{"op":"tap","x":70,"y":1170}]}
