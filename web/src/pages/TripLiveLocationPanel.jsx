@@ -36,7 +36,7 @@ export function parseGpxRoute(xml) {
   const points = nodes.map(node => [
     Number(node.getAttribute('lat')), Number(node.getAttribute('lon')),
   ]);
-  if (nodes.some(node => node.getAttribute('lat') === null || node.getAttribute('lon') === null) ||
+  if (nodes.some(node => !node.getAttribute('lat')?.trim() || !node.getAttribute('lon')?.trim()) ||
       points.some(([lat, lon]) => !Number.isFinite(lat) || !Number.isFinite(lon) ||
         lat < -90 || lat > 90 || lon < -180 || lon > 180)) {
     throw new Error('Invalid GPS coordinates in GPX.');
