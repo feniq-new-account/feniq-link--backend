@@ -43,6 +43,24 @@ it('shows an outside-route alert and preserves a live map link for the detouring
   expect(host.textContent).toContain('35.100000, 35.200000');
 });
 
+it('does not keep an old live detour alert after server connectivity is lost', async () => {
+  api.adminTripLiveLocation.mockResolvedValueOnce({ location: {
+    state: 'live',
+    location: { latitude: 35.1, longitude: 35.2, accuracyMeters: 12,
+      receivedAt: '2026-11-06T00:00:00Z' },
+    deviation: { state: 'off_route', distanceMeters: 1400, corridorMeters: 300 },
+  } }).mockRejectedValueOnce(new Error('Network unreachable'));
+  await act(async () => root.render(<TripLiveLocationPanel trip={activeTrip} arabic={false} />));
+  await act(async () => button('Monitor live driver position').click());
+  expect(host.textContent).toContain('Driver is outside the planned route');
+  await act(async () => button('Stop monitoring').click());
+  await act(async () => button('Monitor live driver position').click());
+  expect(host.textContent).toContain('Tracking server unreachable');
+  expect(host.textContent).toContain('last known position');
+  expect(host.textContent).not.toContain('Driver is outside the planned route');
+  expect(host.querySelector('a').href).toContain('mlat=35.1');
+});
+
 it('marks a disconnected driver as stale, not as off-route', async () => {
   api.adminTripLiveLocation.mockResolvedValue({ location: {
     state: 'stale', location: {
