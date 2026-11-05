@@ -45,7 +45,13 @@ function requirePassword(value, message, role = 'pharmacy') {
 // update). Returns null unless both are present and valid, so a partial/bad
 // pair is silently dropped rather than failing the whole registration.
 function parseOptionalLocation(body) {
-  if (body.latitude === undefined && body.longitude === undefined) {
+  // Null, empty and whitespace-only form values must not become 0 through
+  // Number(null) / Number('') / Number(' '). Missing either coordinate means
+  // the user did not provide a usable map location; never store (0, 0).
+  const hasCoordinate = (value) =>
+    value !== undefined && value !== null &&
+    (typeof value === 'number' || (typeof value === 'string' && value.trim() !== ''));
+  if (!hasCoordinate(body.latitude) || !hasCoordinate(body.longitude)) {
     return null;
   }
   const lat = Number(body.latitude);
