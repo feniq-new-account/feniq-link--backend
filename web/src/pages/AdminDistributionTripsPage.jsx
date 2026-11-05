@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { TripLiveLocationPanel } from './TripLiveLocationPanel';
 
 const initial = { region: '', serviceDate: '', driverName: '', driverPhone: '', driverUserId: '' };
 
@@ -211,6 +212,7 @@ export function AdminDistributionTripsPage() {
               <strong>{trip.region}</strong>{' — '}{trip.driverName}
               {' — '}{String(trip.serviceDate).slice(0, 10)}
               <p>{tr('الحالة', 'Status')}: {trip.status}</p>
+              <TripLiveLocationPanel trip={trip} arabic={ar} onRouteSaved={refresh} />
               {trip.stops.map(stop => (
                 <div key={stop._id}>
                   {stop.pharmacyName} — {stop.status}
