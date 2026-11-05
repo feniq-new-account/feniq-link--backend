@@ -219,6 +219,7 @@ async function openDocument(pharmacyId) {
   return {
     stream: grid.openDownloadStream(documentId),
     length: stored.length,
+    mimeType: stored.metadata?.mimeType || 'application/octet-stream',
   };
 }
 
