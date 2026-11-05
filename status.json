@@ -1,7 +1,7 @@
 {
   "session": "42079438769-1",
   "scenario": "prelaunch",
-  "lastCommand": 21,
+  "lastCommand": 22,
   "credentialEntryPendingRestart": false,
   "finished": false,
   "error": null,
@@ -219,6 +219,20 @@
     {
       "id": 21,
       "ops": [
+        "tap"
+      ],
+      "error": null
+    },
+    {
+      "id": 22,
+      "ops": [
+        "tap",
+        "credential",
+        "key",
+        "credential",
+        "key",
+        "wait",
+        "restart",
         "tap"
       ],
       "error": null
