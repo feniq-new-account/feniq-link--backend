@@ -113,6 +113,18 @@ test('GPS connection loss retains last known coordinates but removes false live 
   assert.equal(response.body.location.location.latitude, 35.112);
 });
 
+test('delayed device measurement is stale despite a fresh server receipt', async () => {
+  await Location.updateOne({ tripId: trip._id }, {
+    $set: { receivedAt: new Date(), measuredAt: new Date(Date.now() - 5 * 60 * 1000) },
+  });
+  const response = await call('GET', '/admin/distribution/trips/' + trip._id + '/location',
+    { token: jwtFor(admin) });
+  assert.equal(response.status, 200);
+  assert.equal(response.body.location.state, 'stale');
+  assert.equal(response.body.location.deviation, null);
+  assert.equal(response.body.location.location.latitude, 35.112);
+});
+
 test('completed trips do not accept or expose GPS even if an old fix exists', async () => {
   await Trip.updateOne({ _id: trip._id }, { $set: { status: 'completed' } });
   assert.equal((await call('PUT', '/driver/distribution/trips/' + trip._id + '/location',
