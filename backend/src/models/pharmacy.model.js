@@ -1,5 +1,20 @@
 const { Schema, model } = require('mongoose');
 
+// Licence documents are stored in a private MongoDB GridFS bucket; these
+// metadata fields must not be selected in ordinary profile/catalog queries.
+// No direct public document URL is ever persisted or serialized.
+const licenseReviewSchema = new Schema({
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], required: true },
+  revision: { type: Number, min: 1, required: true },
+  documentId: { type: Schema.Types.ObjectId, required: true },
+  mimeType: { type: String, enum: ['image/jpeg', 'image/png', 'application/pdf'], required: true },
+  fileSize: { type: Number, min: 1, required: true },
+  submittedAt: { type: Date, required: true },
+  reviewedAt: { type: Date, default: null },
+  reviewedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+  reviewNote: { type: String, default: '', maxlength: 500 },
+}, { _id: false });
+
 const pharmacySchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -30,6 +45,7 @@ const pharmacySchema = new Schema(
     // Reserved for a later stage - not used in the UI yet.
     licenseNumber: { type: String, default: null },
     licenseImage: { type: String, default: null },
+    licenseReview: { type: licenseReviewSchema, default: undefined, select: false },
     addedBy: { type: String, enum: ['admin', 'self'], required: true },
     averageRating: { type: Number, default: 0 },
     reviewsCount: { type: Number, default: 0 },
@@ -94,6 +110,7 @@ const pharmacySchema = new Schema(
 );
 
 pharmacySchema.index({ userId: 1 });
+pharmacySchema.index({ 'licenseReview.status': 1, _id: 1 });
 pharmacySchema.index({ city: 1 });
 pharmacySchema.index({ location: '2dsphere' });
 pharmacySchema.index({ visitCode: 1 }, { unique: true, sparse: true });
