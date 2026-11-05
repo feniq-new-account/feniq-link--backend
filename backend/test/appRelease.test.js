@@ -88,6 +88,6 @@ test('disabling a bad update remains possible when the download origin is unavai
 
 test('malformed JSON values return a controlled invalid-manifest error, not a server TypeError', async () => {
   for (const data of [null, false, 123, 'text', [], [manifest]]) {
-    await assert.rejects(service.inspectPublishedRelease(undefined, fakeFetch(data)), { code: 'INVALID_APP_RELEASE', statusCode: 400 });
+    await assert.rejects(service.inspectPublishedRelease(undefined, fakeFetch(data, manifest.size)), { code: 'INVALID_APP_RELEASE', statusCode: 400 });
   }
 });
