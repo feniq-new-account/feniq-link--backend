@@ -386,6 +386,11 @@ function advertisementFormData(data, imageFile) {
 
 export const api = {
   // Non-financial rural-distribution operations. Admin is server-authorized.
+  adminTripLiveLocation: (tripId) =>
+    request('/admin/distribution/trips/' + encodeURIComponent(tripId) + '/location'),
+  adminSaveTripRoute: (tripId, revision, routePoints, routeCorridorMeters) =>
+    request('/admin/distribution/trips/' + encodeURIComponent(tripId) + '/route',
+      { method: 'PUT', body: { revision, routePoints, routeCorridorMeters } }),
   adminDistributionDrivers: () => request('/admin/distribution/drivers'),
   assignDistributionTripDriver: (tripId, revision, driverUserId) =>
     request('/admin/distribution/trips/' + encodeURIComponent(tripId) + '/assign-driver',
