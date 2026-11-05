@@ -2,10 +2,12 @@ const { Router } = require('express');
 const { authenticate, authorize } = require('../middlewares/auth.middleware');
 const controller = require('../controllers/distributionTrip.controller');
 const liveLocation = require('../controllers/distributionLiveLocation.controller');
+const driverAccounts = require('../controllers/distributionDriverAccount.controller');
 
 const router = Router();
 router.use(authenticate, authorize('admin'));
 router.get('/drivers', controller.listDrivers);
+router.post('/drivers', driverAccounts.create);
 router.get('/trips', controller.list);
 router.post('/trips', controller.create);
 router.get('/trips/:id', controller.detail);

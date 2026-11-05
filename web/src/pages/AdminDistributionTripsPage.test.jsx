@@ -11,6 +11,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('../api/client', () => ({ api: {
   adminDistributionTrips: vi.fn(),
   adminDistributionDrivers: vi.fn(),
+  adminCreateDistributionDriver: vi.fn(),
   assignDistributionTripDriver: vi.fn(),
   adminAccounts: vi.fn(),
   createDistributionTrip: vi.fn(),
@@ -34,6 +35,9 @@ beforeEach(async () => {
   vi.clearAllMocks();
   api.adminDistributionTrips.mockResolvedValue({ trips: [], pagination: {} });
   api.adminDistributionDrivers.mockResolvedValue({ drivers: [{ userId: 'bbbbbbbbbbbbbbbbbbbbbbbb', name: 'Driver A', phone: '0931400002' }] });
+  api.adminCreateDistributionDriver.mockResolvedValue({ driver: {
+    userId: 'dddddddddddddddddddddddd', name: 'External Driver', phone: '+963931200003', role: 'driver',
+  } });
   api.assignDistributionTripDriver.mockResolvedValue({ success: true });
   api.adminAccounts.mockResolvedValue({ accounts });
   api.createDistributionTrip.mockResolvedValue({ trip: { _id: 'test-id' } });
@@ -51,20 +55,20 @@ function button(name) {
 }
 
 it('searches existing active pharmacies and requires a stop before saving', async () => {
-  await act(async () => container.querySelectorAll('form')[1].dispatchEvent(
+  await act(async () => container.querySelectorAll('form')[2].dispatchEvent(
     new Event('submit', { bubbles: true, cancelable: true })));
   expect(api.createDistributionTrip).not.toHaveBeenCalled();
   expect(container.textContent).toContain('Choose at least one pharmacy');
-  await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  await act(async () => container.querySelectorAll('form')[1].dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
   expect(api.adminAccounts).toHaveBeenCalledWith({
     role: 'pharmacy', status: 'active', search: '', limit: 20,
   });
 });
 
 it('trip creation preserves the manually selected stop sequence', async () => {
-  await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  await act(async () => container.querySelectorAll('form')[1].dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
   await act(async () => button('Add').click());
-  const inputs = container.querySelectorAll('form')[1].querySelectorAll('input');
+  const inputs = container.querySelectorAll('form')[2].querySelectorAll('input');
   await act(async () => {
     const values = ['Kasab', '2026-11-06', 'Driver A', '0931000014'];
     inputs.forEach((input, i) => {
@@ -119,4 +123,24 @@ it('admin can assign an existing planned trip with its current revision', async 
   });
   expect(api.assignDistributionTripDriver).toHaveBeenCalledWith(
     trip._id, 4, 'bbbbbbbbbbbbbbbbbbbbbbbb');
+});
+
+it('admin can create a standalone driver without exposing temporary credentials', async () => {
+  const form = container.querySelectorAll('form')[0];
+  const fields = form.querySelectorAll('input');
+  await act(async () => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    ['External Driver', '0931200003', 'temporary-secret-123'].forEach((value, index) => {
+      setter.call(fields[index], value);
+      fields[index].dispatchEvent(new Event('input', { bubbles: true }));
+      fields[index].dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  });
+  await act(async () => form.dispatchEvent(
+    new Event('submit', { bubbles: true, cancelable: true })));
+  expect(api.adminCreateDistributionDriver).toHaveBeenCalledTimes(1);
+  expect(container.textContent).toContain('Driver account created');
+  const driverSelect = container.querySelector('select[aria-label="Driver login"]');
+  expect(driverSelect.textContent).toContain('External Driver');
+  expect(container.textContent).not.toContain('temporary-secret-123');
 });

@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { TripLiveLocationPanel } from './TripLiveLocationPanel';
 
 const initial = { region: '', serviceDate: '', driverName: '', driverPhone: '', driverUserId: '' };
+const emptyDriver = { name: '', phone: '', password: '' };
 
 export function AdminDistributionTripsPage() {
   const { i18n } = useTranslation();
@@ -11,6 +12,7 @@ export function AdminDistributionTripsPage() {
   const tr = (a, e) => ar ? a : e;
   const [trips, setTrips] = useState([]);
   const [drivers, setDrivers] = useState([]);
+  const [newDriver, setNewDriver] = useState(emptyDriver);
   const [assignment, setAssignment] = useState({});
   const [form, setForm] = useState(initial);
   const [search, setSearch] = useState('');
@@ -39,6 +41,26 @@ export function AdminDistributionTripsPage() {
     });
     return () => { alive = false; };
   }, []);
+
+  async function createDriver(event) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const result = await api.adminCreateDistributionDriver(newDriver);
+      setDrivers(old => [...old.filter(driver => driver.userId !== result.driver.userId),
+        result.driver]);
+      setNewDriver(emptyDriver);
+      setNotice(tr('تم إنشاء حساب السائق. يجب تغيير كلمة المرور عند أول دخول.',
+        'Driver account created. The temporary password must be changed at first login.'));
+    } catch (e) {
+      setError(e.message || 'Cannot create driver account.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function lookup(event) {
     event.preventDefault();
@@ -141,6 +163,33 @@ export function AdminDistributionTripsPage() {
       )}</p>
       {error && <p className="error-text" role="alert">{error}</p>}
       {notice && <p className="reg-success" role="status">{notice}</p>}
+      <section className="adm-card reg-card">
+        <div className="adm-card-head">
+          <span>{tr('إنشاء حساب سائق نقل مستقل', 'Create external driver account')}</span>
+        </div>
+        <div className="reg-card-body">
+          <p className="hint">{tr('حساب السائق مخصص للرحلات فقط، دون صلاحيات مندوب المستودع. كلمة المرور مؤقتة ويجب تغييرها عند أول دخول.',
+            'Transport-only account with no field-rep privileges. Temporary password must change at first login.')}</p>
+          <form onSubmit={createDriver}>
+            <label>{tr('اسم السائق', 'Driver name')}
+              <input required maxLength={160} value={newDriver.name}
+                onChange={e => setNewDriver(old => ({ ...old, name: e.target.value }))} />
+            </label>
+            <label>{tr('رقم هاتف السائق', 'Driver phone')}
+              <input required type="tel" autoComplete="tel" value={newDriver.phone}
+                onChange={e => setNewDriver(old => ({ ...old, phone: e.target.value }))} />
+            </label>
+            <label>{tr('كلمة مرور مؤقتة (10 محارف على الأقل)', 'Temporary password (10+ characters)')}
+              <input required type="password" minLength={10} autoComplete="new-password"
+                value={newDriver.password}
+                onChange={e => setNewDriver(old => ({ ...old, password: e.target.value }))} />
+            </label>
+            <button type="submit" className="btn-secondary" disabled={busy}>
+              {tr('إنشاء حساب السائق', 'Create driver account')}
+            </button>
+          </form>
+        </div>
+      </section>
       <section className="adm-card reg-card">
         <div className="adm-card-head"><span>{tr('إنشاء رحلة', 'Create trip')}</span></div>
         <div className="reg-card-body">

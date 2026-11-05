@@ -392,6 +392,8 @@ export const api = {
     request('/admin/distribution/trips/' + encodeURIComponent(tripId) + '/route',
       { method: 'PUT', body: { revision, routePoints, routeCorridorMeters } }),
   adminDistributionDrivers: () => request('/admin/distribution/drivers'),
+  adminCreateDistributionDriver: (body) =>
+    request('/admin/distribution/drivers', { method: 'POST', body }),
   assignDistributionTripDriver: (tripId, revision, driverUserId) =>
     request('/admin/distribution/trips/' + encodeURIComponent(tripId) + '/assign-driver',
       { method: 'POST', body: { revision, driverUserId } }),
