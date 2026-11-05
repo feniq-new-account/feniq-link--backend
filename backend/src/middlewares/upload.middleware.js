@@ -48,6 +48,26 @@ function wrapMulter(multerMiddleware, tooLargeMessage, tooManyMessage, tooManyCo
   };
 }
 
+// Official pharmacy documents are never sent through the public media service.
+// The licence controller saves the validated buffer to a private Mongo GridFS
+// bucket and provides authenticated download endpoints only.
+const LICENSE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'application/pdf']);
+const pharmacyLicenseUpload = wrapMulter(
+  multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+      if (!LICENSE_MIME_TYPES.has(file.mimetype)) {
+        return cb(ApiError.badRequest('Licence must be a JPEG, PNG or PDF file.'));
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 2 * 1024 * 1024, files: 1 },
+  }).single('document'),
+  'Licence file must be smaller than 2MB.',
+  'Upload exactly one licence file.',
+  'INVALID_PHARMACY_LICENCE_FILE'
+);
+
 // Section 6.9/7: "more than one photo allowed" for a return request - capped
 // at MAX_RETURN_PHOTOS so a pharmacist can't attach an unbounded batch.
 const returnPhotosUpload = wrapMulter(
@@ -223,6 +243,7 @@ function verifyBannerMediaMagicBytes(buffer, mediaType) {
 }
 
 module.exports = {
+  pharmacyLicenseUpload,
   returnPhotosUpload,
   catalogImportUpload,
   bannerImageUpload,
