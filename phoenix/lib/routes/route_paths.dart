@@ -28,6 +28,7 @@ class RoutePaths {
   static const String submitComplaint = '/complaints/new';
   static const String complaintDetail = '/complaints/:complaintId';
 
+  static const String driverHome = '/driver';
   static const String repHome = '/rep';
   static const String repPharmacy = '/rep/pharmacies/:pharmacyId';
   static const String repScan = '/rep/scan';
