@@ -129,3 +129,56 @@ test('assigned driver starts, resolves stops and completes; cannot be reassigned
   assert.equal(completed.body.trip.status, 'completed');
   assert.equal(await Event.countDocuments({ tripId: trip._id }), 5);
 });
+
+test('standalone external driver has only assigned trip and GPS permissions', async () => {
+  const external = await User.create({
+    name: 'External Transport Driver', phone: '0931400010', role: 'driver', status: 'active',
+  });
+  const pending = await User.create({
+    name: 'Pending Driver', phone: '0931400011', role: 'driver', status: 'pending',
+  });
+  const driverToken = token(external);
+  const pendingToken = token(pending);
+  const directory = await call('GET', '/admin/distribution/drivers', { bearer: adminToken });
+  assert.equal(directory.status, 200);
+  assert.ok(directory.body.drivers.some(d => d.userId === String(external._id) && d.role === 'driver'));
+  const body = {
+    region: 'Jableh', driverName: external.name, serviceDate: '2026-11-09',
+    pharmacyIds: [String(pharmacy._id)], driverUserId: String(external._id),
+  };
+  assert.equal((await call('POST', '/admin/distribution/trips', {
+    bearer: adminToken, body: { ...body, driverUserId: String(pending._id) },
+  })).status, 400);
+  const created = await call('POST', '/admin/distribution/trips', {
+    bearer: adminToken, body,
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const tripId = created.body.trip._id;
+  const path = '/driver/distribution/trips/' + tripId;
+  assert.equal((await call('GET', '/driver/distribution/trips',
+    { bearer: driverToken })).body.trips.length, 1);
+  assert.equal((await call('GET', path, { bearer: repAToken })).status, 404);
+  assert.equal((await call('GET', '/rep/me', { bearer: driverToken })).status, 403);
+  assert.equal((await call('GET', '/admin/distribution/trips',
+    { bearer: driverToken })).status, 403);
+  assert.equal((await call('GET', '/driver/distribution/trips',
+    { bearer: pendingToken })).status, 403);
+  const fix = {
+    latitude: 35.51, longitude: 35.84, accuracyMeters: 11,
+    measuredAt: new Date().toISOString(),
+  };
+  assert.equal((await call('PUT', path + '/location',
+    { bearer: driverToken, body: fix })).status, 403);
+  const started = await call('POST', path + '/start', {
+    bearer: driverToken, body: { revision: 0 },
+  });
+  assert.equal(started.status, 200, JSON.stringify(started.body));
+  assert.equal((await call('PUT', path + '/location',
+    { bearer: repAToken, body: fix })).status, 403);
+  assert.equal((await call('PUT', path + '/location',
+    { bearer: driverToken, body: fix })).status, 200);
+  const tracked = await call('GET', '/admin/distribution/trips/' + tripId + '/location',
+    { bearer: adminToken });
+  assert.equal(tracked.status, 200);
+  assert.equal(tracked.body.location.location.latitude, 35.51);
+});
