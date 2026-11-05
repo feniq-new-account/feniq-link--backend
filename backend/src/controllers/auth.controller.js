@@ -83,6 +83,11 @@ const register = asyncHandler(async (req, res) => {
   const name = requireNonEmptyString(req.body.name, 'Full name is required.');
   const pharmacyName = requireNonEmptyString(req.body.pharmacyName, 'Pharmacy name is required.');
   const address = requireNonEmptyString(req.body.address, 'Address is required.');
+  // Keep registration limits aligned with PATCH /auth/profile. Reject overly
+  // long values before hashing passwords or accessing MongoDB.
+  if (name.length > 160 || pharmacyName.length > 160 || address.length > 500) {
+    throw ApiError.badRequest('Registration field is too long.');
+  }
   const areaType = requireAreaType(req.body.areaType);
   const areaName = req.body.areaName === undefined ? '' : requireNonEmptyString(req.body.areaName, 'Area is required.');
   if (areaName.length > 160) throw ApiError.badRequest('Area is too long.');
