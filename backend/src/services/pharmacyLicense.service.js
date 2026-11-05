@@ -203,6 +203,7 @@ async function listPending({ after = null, limit = 20 } = {}) {
       pharmacyId: p._id, pharmacyName: p.nameAr, ownerName: p.ownerName, phone: p.phone,
       userId: p.userId, status: p.licenseReview.status,
       submittedAt: p.licenseReview.submittedAt, revision: p.licenseReview.revision,
+      mimeType: p.licenseReview.mimeType,
     })),
     pagination: { hasMore, nextCursor: hasMore ? String(page[page.length - 1]._id) : null },
   };
