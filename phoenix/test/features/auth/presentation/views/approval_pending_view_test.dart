@@ -47,4 +47,32 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   }
+  testWidgets('pending support opens WhatsApp when a handler is available', (tester) async {
+    final auth = MockPendingAuth();
+    when(() => auth.state).thenReturn(const AuthState(sessionStatus: SessionStatus.pendingApproval));
+    String? contacted;
+    const language = 'ar';
+    final l10n = lookupAppLocalizations(const Locale(language));
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale(language),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: BlocProvider<AuthCubit>.value(
+        value: auth,
+        child: ApprovalPendingView(supportLauncher: (phone) async {
+          contacted = phone;
+          return true;
+        }),
+      ),
+    ));
+    await tester.pump();
+    await tester.scrollUntilVisible(find.text(l10n.contactSupportButton), 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text(l10n.contactSupportButton));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(contacted, supportWhatsAppPhone);
+    expect(find.textContaining(supportWhatsAppPhone), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
 }
