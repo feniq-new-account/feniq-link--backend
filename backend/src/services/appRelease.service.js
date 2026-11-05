@@ -25,6 +25,9 @@ async function inspectPublishedRelease(sourceOrigin, fetcher = fetch) {
   if (raw.length > 16384) throw invalid('Invalid Android manifest.');
   let data;
   try { data = JSON.parse(raw); } catch { throw invalid('Invalid Android manifest.'); }
+  // A syntactically valid JSON document can still be null or a primitive.
+  // Treat it as an invalid manifest instead of throwing a TypeError (HTTP 500).
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw invalid('Invalid Android manifest.');
   const latestBuild = Number(data.build);
   if (data.apk !== true || !Number.isInteger(latestBuild) || latestBuild < 1 || latestBuild > 2100000000 ||
       typeof data.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(data.sha256) ||
