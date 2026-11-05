@@ -102,10 +102,12 @@ async function readForAdmin(tripId) {
     expiresAt: { $gt: new Date() },
   }).select('latitude longitude accuracyMeters measuredAt receivedAt -_id').lean();
   if (!position) return { state: 'no_signal', location: null, deviation: null };
-  const age = Date.now() - new Date(position.receivedAt).getTime();
-  // Retain the LAST KNOWN point for an hour if connectivity is lost.
-  // A stale fix must never be flagged as an active deviation.
-  if (age > MAX_MEASUREMENT_AGE_MS) {
+  const now = Date.now();
+  const receivedAge = now - new Date(position.receivedAt).getTime();
+  const measuredAge = now - new Date(position.measuredAt).getTime();
+  // A delayed measurement must never look live just because it arrived recently.
+  // Retain the LAST KNOWN point without producing an active deviation alert.
+  if (receivedAge > MAX_MEASUREMENT_AGE_MS || measuredAge > MAX_MEASUREMENT_AGE_MS) {
     return { state: 'stale', location: position, deviation: null };
   }
   return {
