@@ -1,1 +1,1 @@
-{"id":2,"actions":[{"op":"tap","x":350,"y":780},{"op":"credential","role":"pharmacy","field":"phone","phoneMode":"tail"},{"op":"key","value":"BACK"}]}
+{"id":3,"actions":[{"op":"tap","x":350,"y":885},{"op":"credential","role":"pharmacy","field":"password"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":1045},{"op":"wait","seconds":6},{"op":"restart"}]}
