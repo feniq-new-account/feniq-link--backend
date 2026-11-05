@@ -1,1 +1,1 @@
-{"id":51,"actions":[{"op":"tap","x":665,"y":890},{"op":"tap","x":350,"y":580},{"op":"credential","role":"new_pharmacy","field":"password"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":745},{"op":"credential","role":"new_pharmacy","field":"password"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":1050},{"op":"wait","seconds":6},{"op":"restart"}]}
+{"id":52,"actions":[{"op":"tap","x":70,"y":1170}]}
