@@ -21,7 +21,11 @@ import 'package:feniq/routes/home_route.dart';
 import 'package:feniq/routes/route_names.dart';
 
 class ApprovalPendingView extends StatefulWidget {
-  const ApprovalPendingView({super.key});
+  const ApprovalPendingView({super.key, this.supportLauncher});
+
+  // An injectable launcher keeps the fallback test deterministic without
+  // relying on platform-specific URL-launcher behavior in widget tests.
+  final Future<bool> Function(String phone)? supportLauncher;
 
   @override
   State<ApprovalPendingView> createState() => _ApprovalPendingViewState();
@@ -52,7 +56,9 @@ class _ApprovalPendingViewState extends State<ApprovalPendingView>
     // If no browser/WhatsApp handler exists, retain the copyable number
     // dialog so a pending or blocked pharmacy is never stranded.
     try {
-      if (await launchWhatsApp(supportWhatsAppPhone)) return;
+      final opened = await (widget.supportLauncher?.call(supportWhatsAppPhone) ??
+          launchWhatsApp(supportWhatsAppPhone));
+      if (opened) return;
     } catch (_) {
       // URL launching can fail on devices without an external handler.
     }
