@@ -385,6 +385,26 @@ function advertisementFormData(data, imageFile) {
 }
 
 export const api = {
+  // Non-financial rural-distribution operations. Admin is server-authorized.
+  adminDistributionTrips: ({ status, after } = {}) =>
+    request('/admin/distribution/trips?' + new URLSearchParams({
+      ...(status ? { status } : {}),
+      ...(after ? { after } : {}),
+    })),
+  createDistributionTrip: (body) => request('/admin/distribution/trips', { method: 'POST', body }),
+  startDistributionTrip: (id, revision) =>
+    request('/admin/distribution/trips/' + encodeURIComponent(id) + '/start',
+      { method: 'POST', body: { revision } }),
+  updateDistributionStop: (id, stopId, body) =>
+    request('/admin/distribution/trips/' + encodeURIComponent(id) + '/stops/' + encodeURIComponent(stopId),
+      { method: 'PATCH', body }),
+  completeDistributionTrip: (id, revision) =>
+    request('/admin/distribution/trips/' + encodeURIComponent(id) + '/complete',
+      { method: 'POST', body: { revision } }),
+  cancelDistributionTrip: (id, revision, reason) =>
+    request('/admin/distribution/trips/' + encodeURIComponent(id) + '/cancel',
+      { method: 'POST', body: { revision, reason } }),
+
   platformAnalytics: ({ period = 'month', force = false } = {}) => request(`/admin/analytics?${new URLSearchParams({ period, ...(force ? { force: '1' } : {}) })}`),
   deliverySettings: () => request('/warehouse/delivery'),
   updateDeliverySettings: (body) => request('/warehouse/delivery', { method: 'PUT', body }),
