@@ -1,6 +1,6 @@
 {
   "session": "42029093717-1",
-  "lastCommand": 50,
+  "lastCommand": 51,
   "credentialEntryPendingRestart": false,
   "finished": false,
   "error": null,
@@ -452,6 +452,22 @@
       "ops": [
         "tap",
         "swipe"
+      ],
+      "error": null
+    },
+    {
+      "id": 51,
+      "ops": [
+        "tap",
+        "tap",
+        "credential",
+        "key",
+        "tap",
+        "credential",
+        "key",
+        "tap",
+        "wait",
+        "restart"
       ],
       "error": null
     }
