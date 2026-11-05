@@ -73,5 +73,10 @@ const driverComplete = asyncHandler(async (req, res) => {
     req.user._id, req.params.id, req.body, 'completed'
   ) });
 });
+const configureRoute = asyncHandler(async (req, res) => {
+  res.json({ success: true, trip: await service.setPlannedRoute(
+    req.user._id, req.params.id, req.body
+  ) });
+});
 module.exports = { create, list, detail, start, stop, complete, cancel,
   assign, driverList, driverDetail, driverStart, driverStop, driverComplete };
