@@ -46,8 +46,17 @@ class _ApprovalPendingViewState extends State<ApprovalPendingView>
     super.dispose();
   }
 
-  void _contactSupport(BuildContext context) {
+  Future<void> _contactSupport(BuildContext context) async {
     final l10n = context.l10n;
+    // Try the same direct WhatsApp handoff as the forgot-password screen.
+    // If no browser/WhatsApp handler exists, retain the copyable number
+    // dialog so a pending or blocked pharmacy is never stranded.
+    try {
+      if (await launchWhatsApp(supportWhatsAppPhone)) return;
+    } catch (_) {
+      // URL launching can fail on devices without an external handler.
+    }
+    if (!context.mounted) return;
     AppDialog.show(
       context: context,
       title: l10n.contactSupportDialogTitle,
