@@ -168,6 +168,31 @@ test('with approval on and no list yet, a registration waits', async () => {
   assert.strictEqual(body.user.status, 'pending');
 });
 
+test('pending pharmacies can check and edit their profile but cannot browse warehouses', async () => {
+  const { status, body } = await register({
+    name: 'غير موجود بقائمة النقابة',
+    pharmacyName: 'صيدلية قيد المراجعة',
+    phone: '0955000008',
+  });
+  assert.strictEqual(status, 201);
+  assert.strictEqual(body.user.status, 'pending');
+  const token = body.token;
+
+  const me = await call('GET', '/auth/me', { token });
+  assert.strictEqual(me.status, 200);
+  assert.strictEqual(me.body.user.status, 'pending');
+
+  const edit = await call('PATCH', '/auth/profile', {
+    token,
+    body: { address: 'عنوان محدّث أثناء الانتظار' },
+  });
+  assert.strictEqual(edit.status, 200);
+  assert.strictEqual(edit.body.pharmacy.address, 'عنوان محدّث أثناء الانتظار');
+
+  const warehouses = await call('GET', '/warehouses', { token });
+  assert.strictEqual(warehouses.status, 403);
+});
+
 test('a file that is not the list is refused and the old list stays', async () => {
   const workbook = new ExcelJS.Workbook();
   workbook.addWorksheet('x').addRow(['اسم', 'هاتف']);
