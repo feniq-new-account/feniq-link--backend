@@ -20,6 +20,9 @@ on:
   schedule:
     - cron: '23 0 * * *'
   workflow_dispatch:
+  # Owner-authorized one-off restore acceptance, without requiring CLI credentials.
+  push:
+    branches: [codex/backup-runner-compatibility-2026-11-05]
 
 permissions:
   contents: read
@@ -30,7 +33,9 @@ concurrency:
 
 jobs:
   backup:
-    runs-on: ubuntu-latest
+    # mongo:8.0 refuses Linux >= 6.19 (SERVER-121912). Match the verified
+    # backend CI runner instead of following ubuntu-latest to a new kernel.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     # The restore drill's throwaway database. Never the production one.
     services:
