@@ -12,6 +12,7 @@ import 'package:feniq/features/rep/presentation/managers/rep_visits_cubit.dart';
 import 'package:feniq/features/rep/presentation/views/rep_pharmacies_tab.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
+import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/rep/presentation/views/rep_profile_tab.dart';
 import 'package:feniq/features/rep/presentation/views/rep_visits_tab.dart';
 import 'package:feniq/routes/route_names.dart';
@@ -65,7 +66,10 @@ class _RepShellViewState extends State<RepShellView> {
             child: IndexedStack(index: _index, children: [
               const RepPharmaciesTab(),
               const RepVisitsTab(),
-              if (driverEnabled) DriverTripsTab(repository: widget.driverTripRepository!),
+              if (driverEnabled) DriverTripsTab(
+                repository: widget.driverTripRepository!,
+                locationProvider: const GeolocatorLocationProvider(),
+              ),
               const RepProfileTab(),
             ]),
           ),
