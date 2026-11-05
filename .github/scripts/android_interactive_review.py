@@ -171,6 +171,13 @@ class Review:
             time.sleep(5)
         elif op == 'network':
             state = 'enable' if action['enabled'] else 'disable'
+            # USB reverse remains available with Wi-Fi/data off. Remove the
+            # actual API tunnel too, so offline acceptance really loses HTTP.
+            for port in ('5085', '5176'):
+                if action['enabled']:
+                    self.adb('reverse', 'tcp:' + port, 'tcp:' + port)
+                else:
+                    self.adb('reverse', '--remove', 'tcp:' + port)
             self.adb('shell', 'svc', 'wifi', state)
             self.adb('shell', 'svc', 'data', state)
         elif op == 'wait':

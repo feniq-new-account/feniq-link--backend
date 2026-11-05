@@ -64,6 +64,15 @@ class ReviewSafety(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'LOCAL_FIXTURE_REQUIRED'):
                 review.Review()
 
+    def test_offline_removes_api_tunnel_even_over_usb(self):
+        instance = review.Review.__new__(review.Review)
+        with patch.object(instance, 'adb') as adb, patch.object(review.time, 'sleep'):
+            instance.action({'op': 'network', 'enabled': False})
+            self.assertIn(('reverse', '--remove', 'tcp:5085'), [call.args for call in adb.call_args_list])
+            adb.reset_mock()
+            instance.action({'op': 'network', 'enabled': True})
+            self.assertIn(('reverse', 'tcp:5085', 'tcp:5085'), [call.args for call in adb.call_args_list])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -37,6 +37,7 @@ jobs:
           cache: true
       - name: Install isolated review dependencies
         run: |
+          python3 -m unittest discover -s .github/scripts -p test_android_interactive_review.py
           npm ci --prefix backend --no-audit --no-fund
           npm ci --prefix web --no-audit --no-fund
           bash phoenix/android/install-ci-sdk.sh
