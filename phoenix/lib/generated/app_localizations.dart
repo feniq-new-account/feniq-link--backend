@@ -203,7 +203,7 @@ abstract class AppLocalizations {
   /// No description provided for @registrationSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Fill in the details below - your account is activated once the administration reviews your documents.'**
+  /// **'Enter your pharmacy details to create an account. Its status will appear after registration, including pending administrator approval when required.'**
   String get registrationSubtitle;
 
   /// No description provided for @fullNameLabel.
@@ -479,13 +479,13 @@ abstract class AppLocalizations {
   /// No description provided for @approvalPendingMessage.
   ///
   /// In en, this message translates to:
-  /// **'We\'re reviewing your registration. You\'ll be able to order as soon as it\'s approved.'**
+  /// **'Your account is awaiting administrator review. Ordering requires account approval and order intake to be open.'**
   String get approvalPendingMessage;
 
   /// No description provided for @approvalPendingMessageWithName.
   ///
   /// In en, this message translates to:
-  /// **'We\'re currently reviewing {pharmacyName}\'s documents. You\'ll be able to order as soon as it\'s approved.'**
+  /// **'The pharmacy account for {pharmacyName} is awaiting administrator review. Ordering requires account approval and order intake to be open.'**
   String approvalPendingMessageWithName(String pharmacyName);
 
   /// No description provided for @approvalPendingBlockedTitle.
@@ -503,7 +503,7 @@ abstract class AppLocalizations {
   /// No description provided for @approvalChecklistReceived.
   ///
   /// In en, this message translates to:
-  /// **'Data and documents received'**
+  /// **'Registration details received'**
   String get approvalChecklistReceived;
 
   /// No description provided for @approvalChecklistReview.
@@ -515,7 +515,7 @@ abstract class AppLocalizations {
   /// No description provided for @approvalChecklistActivate.
   ///
   /// In en, this message translates to:
-  /// **'Account activation and ordering'**
+  /// **'Account activation after approval'**
   String get approvalChecklistActivate;
 
   /// No description provided for @refreshStatusButton.
@@ -539,7 +539,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactSupportDialogMessage.
   ///
   /// In en, this message translates to:
-  /// **'For help with your account, please contact Al-Najah Warehouse support.'**
+  /// **'For help with your account, contact Feniq support on WhatsApp using the number below. Tap Copy to copy it.'**
   String get contactSupportDialogMessage;
 
   /// No description provided for @fieldRequired.
@@ -3683,7 +3683,7 @@ abstract class AppLocalizations {
   /// No description provided for @panelHomeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Warehouse account'**
+  /// **'Control panel'**
   String get panelHomeTitle;
 
   /// No description provided for @panelHomeGreeting.
@@ -3695,13 +3695,13 @@ abstract class AppLocalizations {
   /// No description provided for @panelHomeBody.
   ///
   /// In en, this message translates to:
-  /// **'The warehouse screens inside the app are on their way. For now, orders, products and reps are in the warehouse panel.'**
+  /// **'Open the control panel to manage your work. Available tools and data depend on your account role and permissions.'**
   String get panelHomeBody;
 
   /// No description provided for @panelHomeOpenPanel.
   ///
   /// In en, this message translates to:
-  /// **'Open the warehouse panel'**
+  /// **'Open the control panel'**
   String get panelHomeOpenPanel;
 
   /// No description provided for @panelHomeOpenFailed.

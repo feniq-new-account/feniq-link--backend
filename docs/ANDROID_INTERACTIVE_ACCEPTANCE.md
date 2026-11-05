@@ -135,3 +135,86 @@ not prove an authenticated signed-release upgrade on a real phone.
 
 No new public APK or mandatory update was published. Production health/index
 access and the final physical-phone/target-network checks remain launch gates.
+
+## Follow-up: prelaunch, pending approval and recovery
+
+The owner asked to continue, so a second isolated scenario completed the
+previously unverified pending-approval journey. Source `d73b59b`, based on main
+`f432d12`, runs the same disposable fixture, requires new-account approval and
+sets `registration_only` **before** starting HTTP. Existing seeded users stay
+active for browsing/checkout-guard checks. Unknown scenarios are rejected before
+any fixture is created; default `standard` behavior is unchanged.
+
+[Session42079438769](https://github.com/feniq-new-account/feniq-link--backend/actions/runs/42079438769)
+was explicitly stopped at command42. Final evidence commit:
+`ec1c5157bf91dbaa50699957ffdcf1605115a999`, on
+`qa/android-evidence-42079438769-1`. Status has `scenario=prelaunch`,
+`finished=true`, `error=null`, `production=false`. These are command references,
+not counts of independent tests.
+
+| Journey | Observed result | Screens |
+| --- | --- | --- |
+| Early launch | Accepted account enters, sees closed-ordering notice and can browse | 001, 003–004 |
+| Native checkout guard | Cart available; submit disabled and unresponsive; accessibility confirms enabled=false/clickable=false | 005 |
+| Location denial at registration | Expanded optional map, rejected permission, collapsed it and completed manual fields without selecting a point | 008–011 |
+| Pending persistence | Registration landed on waiting screen and stayed after restart; refresh did not grant access | 011, 014, 016 |
+| Pending profile edits | Address saved and survived restart/reopening while still pending | 012–013 |
+| Admin approval on mobile web | Opened local panel from app, signed into admin in Chrome, saw correct pending account/phone, confirmed approval and saw active | 022–025 |
+| Approved app account | Login entered catalog, with registration-only notice still present: approval did not open ordering | 026 |
+| Profile fixes from PR20 | English indicator matches device; international plus sign at left in Arabic | 002, 027, 041 |
+| Administrative recovery | Real web reset form with a reason; app restart invalidated the old session | 034–035 |
+| Forced password change | Temporary login reached mandatory change; Back could not bypass; save returned to app | 036–038 |
+| Recovery completion | Logout and fresh login with new private password succeeded; account identity survived | 039–041 |
+
+No WhatsApp message, SMS or OTP was sent. Recovery exercised technical controls
+on an owned disposable account; real support still verifies the caller outside
+the software, as the existing admin dialog requires. Actual password entry and
+the one-time valid temporary-password panel were suppressed from screenshots.
+Do not include commands032/033 in published examples: they contain an unused,
+automatically generated candidate replaced before any reset. Authentication
+values used private fixture references. A local browser with non-credential dummy
+input supplied sensitive-form layout coordinates; the reset itself was performed
+through Android Chrome against its real isolated API.
+
+### Reproducible HTTP and safety evidence
+
+Run `python3 tests/acceptance/prelaunch_api.py`. It creates a private temporary
+directory, refuses an existing listener on5087 and starts the guarded localhost
+server. Five real HTTP checks passed: public registration-only status, new
+registration pending without GPS, pending password login, existing active login,
+and a direct order request rejected409/ORDERING_NOT_STARTED. Credentials are
+removed and the owned server stopped; failure retains only a private diagnostic
+log. No external URL or database argument is accepted.
+
+Five fixture-negative tests passed, including unknown-scenario refusal; five
+controller safety tests passed. The two Arabic/English support regressions failed
+before the fix and passed afterward. Registration and panel-view tests also
+passed. Final full CI is recorded in PR21/Notion. Do not combine these overlapping
+groups into an inflated total.
+
+### Display corrections found in this follow-up
+
+- Pending support named Al-Najah and supplied no contact. It now names Feniq,
+  shows the existing support number with LTR isolation and provides Copy. No
+  support identity, phone or recovery policy changed.
+- Registration no longer promises document review when approval is off. Pending
+  copy acknowledges registration data, does not claim document upload and
+  requires both approval and open intake before ordering.
+- Admin landing no longer calls every panel user a warehouse or says native
+  warehouse screens are still being prepared. Neutral control-panel wording
+  respects the existing role and server permissions.
+
+These support/copy changes followed the second APK build: images capture old
+wording and widget tests validate corrections. This second session does visually
+validate both profile fixes inherited from PR20.
+
+Pending approval, native closed-checkout behavior and technical manual recovery
+are resolved from the first session. Notifications, real GPS/QR, full storage,
+complete device reboot, ambiguous server-success/lost-response, authenticated
+signed upgrade on real hardware, live deployment/index access and the target
+network remain separate checks. The signed1067→1068 private-file evidence is not
+an authenticated phone upgrade.
+
+Rollback PR21's scenario, copy and support as code. Preserve PR20 evidence,
+production identity, database and certificate. No production migration/restore,
+contract or financial engine change is required.

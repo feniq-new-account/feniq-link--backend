@@ -1,5 +1,6 @@
 import 'package:feniq/features/profile/presentation/views/edit_profile_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
@@ -12,6 +13,8 @@ import 'package:feniq/core/widgets/app_dialog.dart';
 import 'package:feniq/core/widgets/brand_logo.dart';
 import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/core/widgets/secondary_button.dart';
+import 'package:feniq/core/widgets/app_snackbar.dart';
+import 'package:feniq/core/utils/whatsapp_launcher.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
 import 'package:feniq/routes/home_route.dart';
@@ -48,7 +51,12 @@ class _ApprovalPendingViewState extends State<ApprovalPendingView>
     AppDialog.show(
       context: context,
       title: l10n.contactSupportDialogTitle,
-      content: l10n.contactSupportDialogMessage,
+      content: '${l10n.contactSupportDialogMessage}\n\n\u2066$supportWhatsAppPhone\u2069',
+      actionLabel: l10n.copyAction,
+      onAction: () async {
+        await Clipboard.setData(const ClipboardData(text: supportWhatsAppPhone));
+        if (context.mounted) AppSnackbar.show(context, l10n.phoneCopied);
+      },
     );
   }
 

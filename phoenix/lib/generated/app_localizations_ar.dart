@@ -61,7 +61,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get registrationSubtitle =>
-      'املأ البيانات التالية، وسيتم تفعيل حسابك بعد مراجعة الوثائق من قِبل الإدارة.';
+      'املأ بيانات صيدليتك لإنشاء الحساب. ستظهر حالة حسابك بعد التسجيل، بما فيها انتظار موافقة الإدارة إن كانت مطلوبة.';
 
   @override
   String get fullNameLabel => 'الاسم الكامل';
@@ -212,11 +212,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get approvalPendingMessage =>
-      'نقوم بمراجعة تسجيلك حالياً. ستتمكن من الطلب فور الموافقة على حسابك.';
+      'حسابك بانتظار مراجعة الإدارة. يمكنك إرسال الطلبات بعد الموافقة على الحساب وبدء استقبال الطلبات.';
 
   @override
   String approvalPendingMessageWithName(String pharmacyName) {
-    return 'نقوم بمراجعة وثائق صيدلية $pharmacyName حالياً. ستتمكن من الطلب فور الموافقة على حسابك.';
+    return 'حساب صيدلية $pharmacyName بانتظار مراجعة الإدارة. يمكنك إرسال الطلبات بعد الموافقة على الحساب وبدء استقبال الطلبات.';
   }
 
   @override
@@ -227,13 +227,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'تم حظر هذا الحساب. يرجى التواصل مع الدعم للمساعدة.';
 
   @override
-  String get approvalChecklistReceived => 'تم استلام البيانات والوثائق';
+  String get approvalChecklistReceived => 'تم استلام بيانات التسجيل';
 
   @override
   String get approvalChecklistReview => 'قيد مراجعة الإدارة';
 
   @override
-  String get approvalChecklistActivate => 'تفعيل الحساب والبدء بالطلب';
+  String get approvalChecklistActivate => 'تفعيل الحساب بعد الموافقة';
 
   @override
   String get refreshStatusButton => 'تحقق من الحالة';
@@ -246,7 +246,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get contactSupportDialogMessage =>
-      'للمساعدة بخصوص حسابك، يرجى التواصل مع دعم مستودع النجاح.';
+      'للمساعدة بخصوص حسابك، تواصل مع دعم الفينيق عبر واتساب على الرقم التالي. يمكنك نسخه بزر «نسخ».';
 
   @override
   String get fieldRequired => 'هذا الحقل مطلوب.';
@@ -2165,7 +2165,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'اعرض هذا الباركود لمندوب المستودع ليمسحه عند زيارتك. تُوثَّق الزيارة فقط إذا كان هاتفه عند صيدليتك.';
 
   @override
-  String get panelHomeTitle => 'حساب المستودع';
+  String get panelHomeTitle => 'لوحة التحكم';
 
   @override
   String panelHomeGreeting(String name) {
@@ -2174,10 +2174,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get panelHomeBody =>
-      'شاشات المستودع جوّا التطبيق عم تنجهّز. لهلق، الطلبيات والأصناف والمناديب من لوحة المستودع.';
+      'افتح لوحة التحكم لإدارة العمل. ستظهر الأدوات والبيانات المتاحة حسب دور حسابك وصلاحياته.';
 
   @override
-  String get panelHomeOpenPanel => 'افتح لوحة المستودع';
+  String get panelHomeOpenPanel => 'افتح لوحة التحكم';
 
   @override
   String panelHomeOpenFailed(String url) {

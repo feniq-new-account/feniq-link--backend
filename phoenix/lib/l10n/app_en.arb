@@ -17,7 +17,7 @@
   "home": "Home",
   "profile": "Profile",
   "registrationTitle": "Create your pharmacy account",
-  "registrationSubtitle": "Fill in the details below - your account is activated once the administration reviews your documents.",
+  "registrationSubtitle": "Enter your pharmacy details to create an account. Its status will appear after registration, including pending administrator approval when required.",
   "fullNameLabel": "Full name",
   "fullNameHint": "e.g. Dr. Samer Halabi",
   "pharmacyNameLabel": "Pharmacy name",
@@ -77,8 +77,8 @@
   "resendCodeButton": "Didn't get the code? Resend",
   "codeResent": "A new code has been sent.",
   "approvalPendingTitle": "Your account is under review",
-  "approvalPendingMessage": "We're reviewing your registration. You'll be able to order as soon as it's approved.",
-  "approvalPendingMessageWithName": "We're currently reviewing {pharmacyName}'s documents. You'll be able to order as soon as it's approved.",
+  "approvalPendingMessage": "Your account is awaiting administrator review. Ordering requires account approval and order intake to be open.",
+  "approvalPendingMessageWithName": "The pharmacy account for {pharmacyName} is awaiting administrator review. Ordering requires account approval and order intake to be open.",
   "@approvalPendingMessageWithName": {
     "placeholders": {
       "pharmacyName": {
@@ -88,13 +88,13 @@
   },
   "approvalPendingBlockedTitle": "Account blocked",
   "approvalPendingBlockedMessage": "This account has been blocked. Please contact support for help.",
-  "approvalChecklistReceived": "Data and documents received",
+  "approvalChecklistReceived": "Registration details received",
   "approvalChecklistReview": "Under administration review",
-  "approvalChecklistActivate": "Account activation and ordering",
+  "approvalChecklistActivate": "Account activation after approval",
   "refreshStatusButton": "Check status",
   "contactSupportButton": "Contact support",
   "contactSupportDialogTitle": "Contact support",
-  "contactSupportDialogMessage": "For help with your account, please contact Al-Najah Warehouse support.",
+  "contactSupportDialogMessage": "For help with your account, contact Feniq support on WhatsApp using the number below. Tap Copy to copy it.",
   "fieldRequired": "This field is required.",
   "invalidPhoneNumber": "Please enter a valid phone number.",
   "invalidOtpCode": "Please enter the 6-digit code.",
@@ -1196,7 +1196,7 @@
   "pharmacyVisitCodeTitle": "Visit code",
   "pharmacyVisitCodeSubtitle": "For reps who visit you",
   "pharmacyVisitCodeIntro": "Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy.",
-  "panelHomeTitle": "Warehouse account",
+  "panelHomeTitle": "Control panel",
   "panelHomeGreeting": "Hello {name}",
   "@panelHomeGreeting": {
     "placeholders": {
@@ -1205,8 +1205,8 @@
       }
     }
   },
-  "panelHomeBody": "The warehouse screens inside the app are on their way. For now, orders, products and reps are in the warehouse panel.",
-  "panelHomeOpenPanel": "Open the warehouse panel",
+  "panelHomeBody": "Open the control panel to manage your work. Available tools and data depend on your account role and permissions.",
+  "panelHomeOpenPanel": "Open the control panel",
   "panelHomeOpenFailed": "Could not open the panel. Open {url} in your browser.",
   "@panelHomeOpenFailed": {
     "placeholders": {
