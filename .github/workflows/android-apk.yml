@@ -21,10 +21,11 @@
 name: Build Android APK
 
 on:
-  # One task-specific branch for the owner's explicitly requested signed
-  # launch validation. Ordinary branches/main still require manual dispatch.
+  # Task-specific branches for explicitly requested signed launch validation.
+  # Ordinary branches/main still require manual dispatch. The November branch
+  # is an acceptance build only and cannot publish the production download.
   push:
-    branches: [codex/launch-apk-validation-2026-10-31, codex/launch-upgrade-check-2026-10-31]
+    branches: [codex/launch-apk-validation-2026-10-31, codex/launch-upgrade-check-2026-10-31, codex/release-acceptance-2026-11-05]
   # PRs run Flutter tests only. APK creation requires a manual request.
   # site-deploy.yml only ever takes APKs from main.
   pull_request:
@@ -72,14 +73,14 @@ jobs:
     outputs:
       artifact: ${{ steps.signing.outputs.artifact }}
     # Ammar: never create an APK automatically; wait for an explicit request.
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/codex/launch-apk-validation-2026-10-31') || (github.event_name == 'pull_request' && github.head_ref == 'codex/pharmacist-launch' && github.event.pull_request.head.repo.full_name == github.repository)
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/codex/launch-apk-validation-2026-10-31' || github.ref == 'refs/heads/codex/release-acceptance-2026-11-05')) || (github.event_name == 'pull_request' && github.head_ref == 'codex/pharmacist-launch' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
       run:
         working-directory: phoenix
     env:
-      PHARMACIST_CANDIDATE: ${{ github.head_ref == 'codex/pharmacist-launch' || github.ref == 'refs/heads/codex/pharmacist-launch' }}
+      PHARMACIST_CANDIDATE: ${{ github.head_ref == 'codex/pharmacist-launch' || github.ref == 'refs/heads/codex/pharmacist-launch' || github.ref == 'refs/heads/codex/release-acceptance-2026-11-05' }}
       API_BASE_URL: ${{ inputs.api_base_url || vars.API_BASE_URL || 'https://feniq-connect-api.onrender.com/api' }}
     steps:
       - uses: actions/checkout@v4
