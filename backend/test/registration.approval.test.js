@@ -199,6 +199,18 @@ test('pending pharmacies can check and edit their profile but cannot browse ware
   assert.strictEqual(afterApproval.status, 200);
 });
 
+test('private pharmacy licence fields are not leaked through auth profile', async () => {
+  const { status, body } = await register({ phone: '0955000009' });
+  assert.strictEqual(status, 201);
+  await Pharmacy.updateOne({ userId: body.user.id }, {
+    $set: { licenseNumber: 'PRIVATE-TEST-LICENCE', licenseImage: 'https://private.invalid/document' },
+  });
+  const response = await call('GET', '/auth/me', { token: body.token });
+  assert.strictEqual(response.status, 200);
+  assert.strictEqual(Object.hasOwn(response.body.pharmacy, 'licenseNumber'), false);
+  assert.strictEqual(Object.hasOwn(response.body.pharmacy, 'licenseImage'), false);
+});
+
 test('a file that is not the list is refused and the old list stays', async () => {
   const workbook = new ExcelJS.Workbook();
   workbook.addWorksheet('x').addRow(['اسم', 'هاتف']);
