@@ -429,6 +429,15 @@ export const api = {
   getMyEntitlements: () => request('/warehouse/entitlements'),
   saveMyFeatureConfiguration: (body) => request('/warehouse/entitlements/configuration', { method: 'PUT', body }),
 
+  // Private documents are streamed with Authorization; never public media URLs.
+  listAdminPharmacyLicences: ({ after } = {}) =>
+    request('/admin/pharmacy-licenses' + (after ? '?after=' + encodeURIComponent(after) : '')),
+  reviewAdminPharmacyLicence: (pharmacyId, decision, note = '') =>
+    request('/admin/pharmacy-licenses/' + encodeURIComponent(pharmacyId) + '/review',
+      { method: 'POST', body: { decision, note } }),
+  downloadAdminPharmacyLicence: (pharmacyId) =>
+    requestBlob('/admin/pharmacy-licenses/' + encodeURIComponent(pharmacyId) + '/document'),
+
   // TODO(re-enable-otp): unused by the current login flow - kept for a
   // future re-enable. The backend routes are still live.
   sendOtp: (phone) => request('/auth/otp/send', { method: 'POST', body: { phone } }),
