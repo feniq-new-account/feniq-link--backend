@@ -1,1 +1,1 @@
-{"id":34,"actions":[{"op":"tap","x":354,"y":512}]}
+{"id":35,"actions":[{"op":"tap","x":530,"y":512},{"op":"clear"},{"op":"credential","role":"rep","field":"password"},{"op":"key","value":"BACK"},{"op":"tap","x":360,"y":723},{"op":"text","value":"Owned disposable acceptance account recovery"},{"op":"key","value":"BACK"},{"op":"tap","x":180,"y":1055},{"op":"wait","seconds":3},{"op":"restart"}]}
