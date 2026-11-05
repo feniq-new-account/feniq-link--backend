@@ -44,4 +44,34 @@ const cancel = asyncHandler(async (req, res) => {
     req.user._id, req.params.id, req.body, 'cancelled',
   ) });
 });
-module.exports = { create, list, detail, start, stop, complete, cancel };
+const assign = asyncHandler(async (req, res) => {
+  res.json({ success: true, trip: await service.assignDriver(
+    req.user._id, req.params.id, req.body
+  ) });
+});
+const driverList = asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'private, no-store');
+  res.json({ success: true, trips: await service.driverTrips(req.user._id) });
+});
+const driverDetail = asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'private, no-store');
+  res.json({ success: true, trip: await service.driverTrip(req.user._id, req.params.id) });
+});
+const driverStart = asyncHandler(async (req, res) => {
+  res.json({ success: true, trip: await service.driverTransition(
+    req.user._id, req.params.id, req.body, 'started'
+  ) });
+});
+const driverStop = asyncHandler(async (req, res) => {
+  res.json({ success: true, trip: await service.driverTransition(
+    req.user._id, req.params.id,
+    { ...req.body, stopId: req.params.stopId }, 'stop'
+  ) });
+});
+const driverComplete = asyncHandler(async (req, res) => {
+  res.json({ success: true, trip: await service.driverTransition(
+    req.user._id, req.params.id, req.body, 'completed'
+  ) });
+});
+module.exports = { create, list, detail, start, stop, complete, cancel,
+  assign, driverList, driverDetail, driverStart, driverStop, driverComplete };
