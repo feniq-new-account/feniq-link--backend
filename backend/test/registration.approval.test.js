@@ -168,6 +168,49 @@ test('with approval on and no list yet, a registration waits', async () => {
   assert.strictEqual(body.user.status, 'pending');
 });
 
+test('pending pharmacies can check and edit their profile but cannot browse warehouses', async () => {
+  const { status, body } = await register({
+    name: 'غير موجود بقائمة النقابة',
+    pharmacyName: 'صيدلية قيد المراجعة',
+    phone: '0955000008',
+  });
+  assert.strictEqual(status, 201);
+  assert.strictEqual(body.user.status, 'pending');
+  const token = body.token;
+
+  const me = await call('GET', '/auth/me', { token });
+  assert.strictEqual(me.status, 200);
+  assert.strictEqual(me.body.user.status, 'pending');
+
+  const edit = await call('PATCH', '/auth/profile', {
+    token,
+    body: { address: 'عنوان محدّث أثناء الانتظار' },
+  });
+  assert.strictEqual(edit.status, 200);
+  assert.strictEqual(edit.body.pharmacy.address, 'عنوان محدّث أثناء الانتظار');
+
+  const warehouses = await call('GET', '/warehouses', { token });
+  assert.strictEqual(warehouses.status, 403);
+
+  // A real admin decision should unlock browsing for this same session.
+  const approval = await call('POST', `/admin/accounts/${body.user.id}/approve`, { token: adminToken });
+  assert.strictEqual(approval.status, 200);
+  const afterApproval = await call('GET', '/warehouses', { token });
+  assert.strictEqual(afterApproval.status, 200);
+});
+
+test('private pharmacy licence fields are not leaked through auth profile', async () => {
+  const { status, body } = await register({ phone: '0955000009' });
+  assert.strictEqual(status, 201);
+  await Pharmacy.updateOne({ userId: body.user.id }, {
+    $set: { licenseNumber: 'PRIVATE-TEST-LICENCE', licenseImage: 'https://private.invalid/document' },
+  });
+  const response = await call('GET', '/auth/me', { token: body.token });
+  assert.strictEqual(response.status, 200);
+  assert.strictEqual(Object.hasOwn(response.body.pharmacy, 'licenseNumber'), false);
+  assert.strictEqual(Object.hasOwn(response.body.pharmacy, 'licenseImage'), false);
+});
+
 test('a file that is not the list is refused and the old list stays', async () => {
   const workbook = new ExcelJS.Workbook();
   workbook.addWorksheet('x').addRow(['اسم', 'هاتف']);
