@@ -14,6 +14,7 @@ export function TripLiveLocationPanel({ trip, onRouteSaved, arabic = true }) {
   const [enabled, setEnabled] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [pollFailed, setPollFailed] = useState(false);
   const [routeText, setRouteText] = useState('');
   const [corridor, setCorridor] = useState('300');
   const [saving, setSaving] = useState(false);
@@ -26,10 +27,14 @@ export function TripLiveLocationPanel({ trip, onRouteSaved, arabic = true }) {
         const response = await api.adminTripLiveLocation(trip._id);
         if (live) {
           setResult(response.location);
+          setPollFailed(false);
           setError('');
         }
       } catch (err) {
-        if (live) setError(err?.message || 'GPS unavailable');
+        if (live) {
+          setPollFailed(true);
+          setError(err?.message || 'GPS unavailable');
+        }
       }
     }
     void check();
@@ -89,7 +94,7 @@ export function TripLiveLocationPanel({ trip, onRouteSaved, arabic = true }) {
   if (trip.status !== 'in_progress') return null;
 
   const location = result?.location;
-  const state = result?.state;
+  const state = pollFailed ? 'unreachable' : result?.state;
   const deviation = result?.deviation;
   const offRoute = state === 'live' && deviation?.state === 'off_route';
   return (
@@ -104,7 +109,12 @@ export function TripLiveLocationPanel({ trip, onRouteSaved, arabic = true }) {
             {tr('إيقاف عرض الموقع', 'Stop monitoring')}
           </button>
           {error && <p role="alert">{error}</p>}
-          {!result && <p>{tr('جارٍ قراءة الموقع...', 'Loading GPS position...')}</p>}
+          {!result && !pollFailed && <p>{tr('جارٍ قراءة الموقع...', 'Loading GPS position...')}</p>}
+          {state === 'unreachable' && <p role="status">{location
+            ? tr('تعذّر الاتصال بخادم التتبع — آخر موقع محفوظ (ليس مباشرًا).',
+                'Tracking server unreachable — last known position (not live).')
+            : tr('تعذّر الاتصال بخادم التتبع، ولا توجد قراءة موقع محفوظة.',
+                'Tracking server unreachable; no saved location is available.')}</p>}
           {state === 'no_signal' && <p>{tr('لا توجد قراءة GPS حديثة.', 'No GPS fix received.')}</p>}
           {state === 'stale' && <p role="status">{tr(
             'انقطع التتبع — آخر موقع مسجل (ليس موقعًا مباشرًا).',
