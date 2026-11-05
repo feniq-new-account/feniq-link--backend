@@ -38,6 +38,9 @@ jobs:
     env:
       # Same image the binary is copied from; 8.0 is what Atlas runs.
       MONGO_IMAGE: mongo:8.0
+      # Same official rseq workaround proven by the isolated backup restore.
+      # Kernel versions advance independently of the pinned runner userspace.
+      GLIBC_TUNABLES: glibc.pthread.rseq=1
     steps:
       - uses: actions/checkout@v4
 
