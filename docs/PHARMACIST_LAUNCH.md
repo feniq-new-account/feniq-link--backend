@@ -78,6 +78,14 @@ production credentials and an attached Android phone are not present.
 
 ## Deployment sequence and rollback
 
+Read-only observations are available before any provisioning command:
+`node backend/scripts/check-pharmacist-launch-index.js --check-only` reads index
+metadata with automatic index/collection creation disabled; it needs only database
+access, not the app JWT key. `NODE_USE_ENV_PROXY=1 node backend/scripts/check-launch-http.js`
+checks public health, registration-only status and positive/negative web CORS with
+GET/OPTIONS only. They do not authorize launch or establish phone/download acceptance.
+See [owner-only prerequisites](OWNER_ACTIONS_BEFORE_LAUNCH.md).
+
 1. Verify clean source/checks and back up the unchanged production database.
    Restore only to a separate DB and run the existing financial verifier.
 2. Before registration traffic on the new server, run
