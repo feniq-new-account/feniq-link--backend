@@ -56,6 +56,7 @@ import 'package:feniq/features/returns/data/repositories/return_repository.dart'
 import 'package:feniq/features/returns/presentation/managers/my_returns_cubit.dart';
 import 'package:feniq/features/returns/presentation/views/my_returns_view.dart';
 import 'package:feniq/features/rep/data/repositories/rep_repository.dart';
+import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_home_cubit.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_pharmacies_cubit.dart';
@@ -100,7 +101,7 @@ import 'route_paths.dart';
 import 'scaffold_with_bottom_nav.dart';
 
 class AppRouter {
-  AppRouter() {
+  AppRouter({this.driverTripRepository}) {
     // TEMP DIAGNOSTIC (router-lifecycle) - remove after verifying. `router`
     // below is `late final`, so exactly one GoRouter is built per AppRouter
     // instance: this line must appear ONCE for the whole app session and
@@ -110,6 +111,8 @@ class AppRouter {
       '- GoRouter initialLocation=${RoutePaths.splash}',
     );
   }
+
+  final DriverTripRepository? driverTripRepository;
 
   late final GoRouter router = GoRouter(
     navigatorKey: NavigationService.instance.navigatorKey,
@@ -561,7 +564,7 @@ class AppRouter {
               ),
               BlocProvider(create: (context) => RepVisitsCubit(repository: context.read<RepRepository>())..load()),
             ],
-            child: const RepShellView(),
+            child: RepShellView(driverTripRepository: driverTripRepository),
           ),
         ),
       ),
