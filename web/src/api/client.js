@@ -386,6 +386,10 @@ function advertisementFormData(data, imageFile) {
 
 export const api = {
   // Non-financial rural-distribution operations. Admin is server-authorized.
+  adminDistributionDrivers: () => request('/admin/distribution/drivers'),
+  assignDistributionTripDriver: (tripId, revision, driverUserId) =>
+    request('/admin/distribution/trips/' + encodeURIComponent(tripId) + '/assign-driver',
+      { method: 'POST', body: { revision, driverUserId } }),
   adminDistributionTrips: ({ status, after } = {}) =>
     request('/admin/distribution/trips?' + new URLSearchParams({
       ...(status ? { status } : {}),

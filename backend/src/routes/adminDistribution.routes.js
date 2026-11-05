@@ -4,6 +4,7 @@ const controller = require('../controllers/distributionTrip.controller');
 
 const router = Router();
 router.use(authenticate, authorize('admin'));
+router.get('/drivers', controller.listDrivers);
 router.get('/trips', controller.list);
 router.post('/trips', controller.create);
 router.get('/trips/:id', controller.detail);
