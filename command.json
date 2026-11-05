@@ -1,1 +1,1 @@
-{"id":55,"actions":[{"op":"tap","x":350,"y":870},{"op":"text","value":"DEMO Duplicate Probe"},{"op":"key","value":"TAB"},{"op":"text","value":"DEMO Duplicate Probe"},{"op":"key","value":"TAB"},{"op":"credential","role":"new_pharmacy","field":"phone","phoneMode":"tail"},{"op":"key","value":"TAB"},{"op":"text","value":"DEMO isolated address"},{"op":"key","value":"TAB"},{"op":"text","value":"DEMO duplicate area"},{"op":"key","value":"BACK"}]}
+{"id":56,"actions":[{"op":"swipe","x1":450,"y1":1050,"x2":450,"y2":450,"duration":500}]}
