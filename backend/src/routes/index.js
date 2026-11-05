@@ -116,6 +116,8 @@ router.use('/discount-codes', discountCodeRoutes);
 router.use('/warehouse/reps', warehouseRepRoutes);
 router.use('/rep', repRoutes);
 router.use('/pharmacy/visit-code', pharmacyVisitCodeRoutes);
+router.use('/pharmacy/license', require('./pharmacyLicense.routes'));
+router.use('/admin/pharmacy-licenses', require('./adminPharmacyLicense.routes'));
 
 // Feature routes are mounted here as each day's work adds them:
 // ...
