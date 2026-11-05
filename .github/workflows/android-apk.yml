@@ -267,8 +267,8 @@ jobs:
           path: apk/current
       - uses: actions/download-artifact@v4
         with:
-          name: feniq-prelaunch-universal
-          run-id: ${{ inputs.baseline_validation_run || '40772986713' }}
+          name: ${{ github.ref == 'refs/heads/codex/release-acceptance-2026-11-05' && 'feniq-apk-TEST-ONLY' || 'feniq-prelaunch-universal' }}
+          run-id: ${{ inputs.baseline_validation_run || (github.ref == 'refs/heads/codex/release-acceptance-2026-11-05' && '41988191129') || '40772986713' }}
           github-token: ${{ github.token }}
           path: apk/baseline
       - uses: actions/setup-java@v4

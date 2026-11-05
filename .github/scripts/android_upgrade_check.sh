@@ -5,6 +5,7 @@ mkdir -p apk/evidence
 mapfile -t prior_apks < <(find apk/baseline -type f -name '*.apk')
 mapfile -t current_apks < <(find apk/current -type f -name '*.apk')
 mapfile -t manifests < <(find apk/current -type f -name 'release.json')
+mapfile -t prior_manifests < <(find apk/baseline -type f -name 'release.json')
 [ "${#prior_apks[@]}" = 1 ] && [ "${#current_apks[@]}" = 1 ] && [ "${#manifests[@]}" = 1 ]
 prior=$(realpath "${prior_apks[0]}")
 current=$(realpath "${current_apks[0]}")
@@ -15,18 +16,38 @@ build_tools=$(find "${ANDROID_HOME:?}/build-tools" -mindepth 1 -maxdepth 1 -type
 expected=$(tr -d ' :\r\n' < .github/android-certificate.sha256 | tr 'a-f' 'A-F')
 cert_of() { "$build_tools/apksigner" verify --print-certs "$1" | sed -n 's/^.*certificate SHA-256 digest: //p' | head -1 | tr 'a-f' 'A-F'; }
 code_of() { "$build_tools/aapt2" dump badging "$1" | sed -n "s/^package:.*versionCode='\([0-9]*\)'.*/\1/p"; }
+name_of() { "$build_tools/aapt2" dump badging "$1" | sed -n "s/^package:.*versionName='\([^']*\)'.*/\1/p"; }
+verify_manifest() {
+  local metadata=$1 binary=$2
+  jq -e --arg digest "$(sha256sum "$binary" | cut -d ' ' -f 1)" \
+    --arg build "$(code_of "$binary")" --arg version "$(name_of "$binary")" --arg cert "$expected" \
+    '.applicationId == "com.feniq.link" and .sha256 == $digest and (.build | tostring) == $build
+      and .versionName == $version and (.certificateSha256 | ascii_upcase | gsub(":"; "")) == $cert
+      and (.apiBaseUrl | type == "string" and length > 0)' "$metadata" >/dev/null
+}
 [ "$(cert_of "$prior")" = "$expected" ]
 [ "$(cert_of "$current")" = "$expected" ]
 prior_code=$(code_of "$prior")
 current_code=$(code_of "$current")
 [ "$current_code" -gt "$prior_code" ]
+[ "$("$build_tools/aapt2" dump packagename "$prior")" = com.feniq.link ]
 [ "$("$build_tools/aapt2" dump packagename "$current")" = com.feniq.link ]
 "$build_tools/zipalign" -c -P 16 4 "$current"
 "$build_tools/aapt2" dump badging "$current" > apk/evidence/current-badging.txt
 for abi in arm64-v8a armeabi-v7a x86_64; do
   grep -q "'$abi'" apk/evidence/current-badging.txt
 done
-(cd apk/baseline && sha256sum -c SHA256SUMS)
+baseline_api_compared=false
+if [ "${#prior_manifests[@]}" = 1 ]; then
+  verify_manifest "${prior_manifests[0]}" "$prior"
+  [ "$(jq -r .apiBaseUrl "${prior_manifests[0]}")" = "$(jq -r .apiBaseUrl "$manifest")" ]
+  baseline_api_compared=true
+else
+  [ "${#prior_manifests[@]}" = 0 ]
+  # Compatibility with the original prelaunch artifact, before release.json.
+  (cd apk/baseline && sha256sum -c SHA256SUMS)
+fi
+verify_manifest "$manifest" "$current"
 current_digest=$(jq -r .sha256 "$manifest")
 [ "$(sha256sum "$current" | cut -d ' ' -f 1)" = "$current_digest" ]
 if [ "${VERIFY_ARTIFACT_ONLY:-0}" = 1 ]; then exit 0; fi
@@ -68,5 +89,6 @@ adb logcat -d -b crash > apk/evidence/upgraded-crashes.txt
 if grep -q 'Process: com.feniq.link' apk/evidence/upgraded-crashes.txt; then cat apk/evidence/upgraded-crashes.txt; exit 1; fi
 adb exec-out screencap -p > apk/evidence/upgraded-startup.png
 jq -n --argjson previous "$prior_code" --argjson current "$current_code" --arg cert "$expected" --arg sha "$current_digest" \
-  '{previousBuild:$previous,currentBuild:$current,certificateSha256:$cert,sha256:$sha,signatureVerified:true,upgradeWithoutUninstall:true,privateFileSurvivedCacheClear:true,privateFileSurvivedUpgrade:true,launchVerified:true,scope:"Emulator storage probe; not a physical-phone or logged-in full-catalog test",publication:false}' > apk/evidence/validation.json
+  --argjson sameApi "$baseline_api_compared" \
+  '{previousBuild:$previous,currentBuild:$current,certificateSha256:$cert,sha256:$sha,signatureVerified:true,apiComparedAcrossManifests:$sameApi,upgradeWithoutUninstall:true,privateFileSurvivedCacheClear:true,privateFileSurvivedUpgrade:true,launchVerified:true,scope:"Emulator storage probe; not a physical-phone or logged-in full-catalog test",publication:false}' > apk/evidence/validation.json
 cat apk/evidence/validation.json
