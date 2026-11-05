@@ -1,1 +1,1 @@
-{"id":15,"actions":[{"op":"tap","x":355,"y":1160}]}
+{"id":16,"actions":[{"op":"network","enabled":false},{"op":"tap","x":240,"y":715},{"op":"wait","seconds":15}]}
