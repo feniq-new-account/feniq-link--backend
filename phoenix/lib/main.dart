@@ -44,6 +44,7 @@ import 'package:feniq/features/complaints/data/repositories/complaint_repository
 import 'package:feniq/features/debts/data/repositories/debt_repository.dart';
 import 'package:feniq/features/debts/data/repositories/debt_repository_impl.dart';
 import 'package:feniq/features/rep/data/repositories/rep_repository.dart';
+import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 import 'package:feniq/features/rep/data/repositories/rep_repository_impl.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_management_repository.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_management_repository_impl.dart';
@@ -180,7 +181,9 @@ Future<void> main() async {
   final warehouseManagementRepository = WarehouseManagementRepositoryImpl(
     apiClient: apiClient,
   );
-  final appRouter = AppRouter();
+  final appRouter = AppRouter(
+    driverTripRepository: DriverTripRepositoryImpl(apiClient: apiClient),
+  );
   runApp(
     MyApp(
       onWarehouseActive: () async { await apiClient.dio.get('/warehouse/subscription'); },
