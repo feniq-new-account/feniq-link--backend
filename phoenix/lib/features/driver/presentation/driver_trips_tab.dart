@@ -1,19 +1,27 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 
 /// Operational delivery checklist. No accounting or payment actions.
 class DriverTripsTab extends StatefulWidget {
-  const DriverTripsTab({super.key, required this.repository});
+  const DriverTripsTab({super.key, required this.repository, this.locationProvider});
   final DriverTripRepository repository;
+  final LocationProvider? locationProvider;
   @override
   State<DriverTripsTab> createState() => _DriverTripsTabState();
 }
 
-class _DriverTripsTabState extends State<DriverTripsTab> {
+class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObserver {
   List<DriverTrip> _trips = const [];
   bool _loading = true;
   String? _error;
   String? _busyId;
+  String? _trackingTripId;
+  String? _gpsError;
+  DateTime? _lastGpsSend;
+  Timer? _trackingTimer;
+  bool _sendingLocation = false;
 
   bool get _ar => Localizations.localeOf(context).languageCode == 'ar';
   String _t(String ar, String en) => _ar ? ar : en;
@@ -21,7 +29,69 @@ class _DriverTripsTabState extends State<DriverTripsTab> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _reload();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) _stopTracking();
+  }
+
+  @override
+  void dispose() {
+    _stopTracking();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _stopTracking() {
+    _trackingTimer?.cancel();
+    _trackingTimer = null;
+    if (mounted && _trackingTripId != null) {
+      setState(() => _trackingTripId = null);
+    } else {
+      _trackingTripId = null;
+    }
+  }
+
+  Future<void> _capturePosition(String tripId) async {
+    if (_sendingLocation || _trackingTripId != tripId || widget.locationProvider == null) return;
+    _sendingLocation = true;
+    try {
+      final fix = await widget.locationProvider!.current();
+      if (fix.isMocked) throw StateError('Mock GPS location refused.');
+      if (_trackingTripId != tripId) return;
+      await widget.repository.sendLocation(tripId, fix);
+      if (!mounted || _trackingTripId != tripId) return;
+      setState(() {
+        _gpsError = null;
+        _lastGpsSend = DateTime.now();
+      });
+    } catch (_) {
+      if (mounted && _trackingTripId == tripId) {
+        setState(() => _gpsError = _t(
+          'لم تصل قراءة الموقع إلى الإدارة. تأكد من GPS والإنترنت.',
+          'Location could not be shared. Check GPS and network.',
+        ));
+      }
+    } finally {
+      _sendingLocation = false;
+    }
+  }
+
+  void _startTracking(String tripId) {
+    if (widget.locationProvider == null) return;
+    _stopTracking();
+    setState(() {
+      _trackingTripId = tripId;
+      _gpsError = null;
+      _lastGpsSend = null;
+    });
+    unawaited(_capturePosition(tripId));
+    _trackingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      unawaited(_capturePosition(tripId));
+    });
   }
 
   Future<void> _reload() async {
@@ -31,6 +101,10 @@ class _DriverTripsTabState extends State<DriverTripsTab> {
       if (!mounted) return;
       setState(() {
         _trips = trips;
+        if (_trackingTripId != null && !trips.any((trip) =>
+          trip.id == _trackingTripId && trip.status == 'in_progress')) {
+          _stopTracking();
+        }
         _loading = false;
         _error = null;
       });
@@ -50,6 +124,9 @@ class _DriverTripsTabState extends State<DriverTripsTab> {
     try {
       final updated = await work();
       if (!mounted) return;
+      if (_trackingTripId == updated.id && updated.status != 'in_progress') {
+        _stopTracking();
+      }
       setState(() {
         _trips = updated.status == 'completed' || updated.status == 'cancelled'
           ? _trips.where((x) => x.id != updated.id).toList()
@@ -169,6 +246,26 @@ class _DriverTripsTabState extends State<DriverTripsTab> {
                         ])
                       : null,
                   ),
+                  if (trip.status == 'in_progress' && widget.locationProvider != null) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      icon: Icon(_trackingTripId == trip.id
+                        ? Icons.location_off_outlined : Icons.my_location_outlined),
+                      onPressed: () => _trackingTripId == trip.id
+                        ? _stopTracking() : _startTracking(trip.id),
+                      label: Text(_trackingTripId == trip.id
+                        ? _t('إيقاف مشاركة الموقع', 'Stop sharing location')
+                        : _t('مشاركة الموقع أثناء الرحلة', 'Share location during trip')),
+                    ),
+                    Text(_t('التتبع شغّال فقط والتطبيق مفتوح. الخروج عن الطريق لا يوقفه.',
+                      'Foreground only. Leaving the route does not stop tracking.'),
+                      style: Theme.of(context).textTheme.bodySmall),
+                    if (_trackingTripId == trip.id && _lastGpsSend != null)
+                      Text(_t('آخر إرسال ناجح: ', 'Last sent: ') +
+                        _lastGpsSend!.toLocal().toIso8601String().substring(11, 19)),
+                    if (_trackingTripId == trip.id && _gpsError != null)
+                      Text(_gpsError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ],
                   if (trip.status == 'planned')
                     FilledButton.icon(
                       onPressed: _busyId == null
