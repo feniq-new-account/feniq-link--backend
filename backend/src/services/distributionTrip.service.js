@@ -46,9 +46,9 @@ async function validateDriver(driverUserId) {
   if (driverUserId == null || driverUserId === '') return null;
   id(driverUserId);
   const user = await User.findById(driverUserId).select('role status name phone').lean();
-  if (!user || user.role !== 'rep' || user.status !== 'active' ||
-      !await Rep.exists({ userId: user._id, isActive: true })) {
-    throw bad('Driver must have an active rep account.');
+  if (!user || user.status !== 'active' || !['rep', 'driver'].includes(user.role) ||
+      (user.role === 'rep' && !await Rep.exists({ userId: user._id, isActive: true }))) {
+    throw bad('Driver must have an active driver account or field rep profile.');
   }
   return user;
 }
@@ -196,20 +196,25 @@ async function assignDriver(actorId, tripId, body = {}) {
   });
 }
 
-async function assertActiveRep(userId) {
-  const rep = await Rep.exists({ userId, isActive: true });
-  if (!rep) throw ApiError.forbidden('Active field rep profile required.', 'REP_INACTIVE');
+async function assertActiveTripDriver(userId) {
+  const user = await User.findById(userId).select('role status').lean();
+  if (!user || user.status !== 'active') {
+    throw ApiError.forbidden('Active driver account required.', 'DRIVER_INACTIVE');
+  }
+  if (user.role === 'driver') return;
+  if (user.role === 'rep' && await Rep.exists({ userId, isActive: true })) return;
+  throw ApiError.forbidden('Active field rep profile required.', 'REP_INACTIVE');
 }
 
 async function driverTrips(userId) {
-  await assertActiveRep(userId);
+  await assertActiveTripDriver(userId);
   // Narrow projection: no unrelated pharmacies' commercial/order data.
   return Trip.find({ driverUserId: userId, status: { $in: ['planned', 'in_progress'] } })
     .sort({ serviceDate: 1, _id: 1 }).limit(40).lean();
 }
 
 async function driverTrip(userId, tripId) {
-  await assertActiveRep(userId);
+  await assertActiveTripDriver(userId);
   id(tripId);
   const trip = await Trip.findOne({ _id: tripId, driverUserId: userId }).lean();
   if (!trip) throw ApiError.notFound('Assigned trip not found.', 'DRIVER_TRIP_NOT_FOUND');
@@ -217,22 +222,22 @@ async function driverTrip(userId, tripId) {
 }
 
 async function driverTransition(userId, tripId, body, action) {
-  await assertActiveRep(userId);
+  await assertActiveTripDriver(userId);
   return transition(userId, tripId, body, action, { driverUserId: userId });
 }
 
 async function listDrivers() {
-  // Limited operational directory: no commission, warehouse account or
-  // private permissions from the Rep document leave this endpoint.
-  const users = await User.find({ role: 'rep', status: 'active' })
-    .select('_id name phone').sort({ _id: -1 }).limit(100).lean();
+  // Operational directory only: external drivers have NO rep or financial access.
+  const users = await User.find({ role: { $in: ['rep', 'driver'] }, status: 'active' })
+    .select('_id name phone role').sort({ _id: -1 }).limit(100).lean();
   if (!users.length) return [];
-  const enabled = await Rep.find({
-    userId: { $in: users.map(u => u._id) }, isActive: true,
-  }).select('userId').lean();
+  const reps = users.filter(u => u.role === 'rep');
+  const enabled = reps.length ? await Rep.find({
+    userId: { $in: reps.map(u => u._id) }, isActive: true,
+  }).select('userId').lean() : [];
   const allowed = new Set(enabled.map(r => String(r.userId)));
-  return users.filter(u => allowed.has(String(u._id))).map(u => ({
-    userId: u._id, name: u.name, phone: u.phone,
+  return users.filter(u => u.role === 'driver' || allowed.has(String(u._id))).map(u => ({
+    userId: u._id, name: u.name, phone: u.phone, role: u.role,
   }));
 }
 
