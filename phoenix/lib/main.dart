@@ -24,6 +24,7 @@ import 'package:feniq/core/widgets/system_bars_safe_area.dart';
 import 'package:feniq/core/widgets/offline_banner.dart';
 import 'package:feniq/core/theme/light_theme.dart';
 import 'package:feniq/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:feniq/features/pharmacy_license/data/pharmacy_license_repository.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/advertisements/data/repositories/advertisements_repository.dart';
 import 'package:feniq/features/advertisements/data/repositories/advertisements_repository_impl.dart';
@@ -136,6 +137,7 @@ Future<void> main() async {
   final secureStorage = SecureStorageService();
   final apiClient = ApiClient(secureStorage: secureStorage);
   final authRepository = AuthRepositoryImpl(apiClient: apiClient);
+  final pharmacyLicenseRepository = PharmacyLicenseRepositoryImpl(apiClient: apiClient);
   final notificationRepository = NotificationRepository(storageService);
   // What a sign-out resets, besides the inbox: shared by AuthCubit (which
   // triggers it) and every member below that registers itself.
@@ -187,6 +189,7 @@ Future<void> main() async {
       appUpdateService: appUpdateService,
       secureStorage: secureStorage,
       authRepository: authRepository,
+      pharmacyLicenseRepository: pharmacyLicenseRepository,
       warehouseRepository: warehouseRepository,
       catalogRepository: catalogRepository,
       exchangeRateRepository: exchangeRateRepository,
@@ -261,6 +264,7 @@ class MyApp extends StatelessWidget {
     required this.appUpdateService,
     required this.secureStorage,
     required this.authRepository,
+    this.pharmacyLicenseRepository,
     required this.warehouseRepository,
     required this.catalogRepository,
     required this.exchangeRateRepository,
@@ -289,6 +293,7 @@ class MyApp extends StatelessWidget {
   final AppUpdateService appUpdateService;
   final SecureStorageService secureStorage;
   final AuthRepositoryImpl authRepository;
+  final PharmacyLicenseRepository? pharmacyLicenseRepository;
   final WarehouseRepository warehouseRepository;
   final CatalogRepositoryImpl catalogRepository;
   final ExchangeRateRepository exchangeRateRepository;
@@ -314,6 +319,8 @@ class MyApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<CatalogRepository>.value(value: catalogRepository),
+        if (pharmacyLicenseRepository != null)
+          RepositoryProvider<PharmacyLicenseRepository>.value(value: pharmacyLicenseRepository!),
         RepositoryProvider<OrderRepository>.value(value: orderRepository),
         RepositoryProvider<SavingsRepository>.value(value: savingsRepository),
         RepositoryProvider<ReturnRepository>.value(value: returnRepository),
