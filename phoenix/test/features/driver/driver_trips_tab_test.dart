@@ -70,8 +70,8 @@ void main() {
       '_id': 't1', 'region': 'Kasab',
       'serviceDate': '2026-11-06T00:00:00.000Z',
       'status': 'in_progress', 'revision': 3,
-      'stops': [{' _id': 'unused'}],
-    }.map((key, value) => MapEntry(key, value)));
+      'stops': [{'_id': 'stop-1', 'pharmacyName': 'Pharmacy One', 'address': 'Road', 'status': 'pending'}],
+    });
     expect(parsed.revision, 3);
     expect(parsed.region, 'Kasab');
   });
