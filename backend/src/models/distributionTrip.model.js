@@ -22,6 +22,20 @@ const tripSchema = new Schema({
     enum: ['planned', 'in_progress', 'completed', 'cancelled'],
     default: 'planned',
   },
+  // An explicit road-route polyline, configured by operations before trip start.
+  // No route => deviation is UNKNOWN, never guessed from straight stop lines.
+  routeCorridorMeters: { type: Number, min: 100, max: 2000, default: 300 },
+  routePoints: {
+    type: [[Number]], default: [],
+    validate: {
+      validator: points => Array.isArray(points) &&
+        points.length <= 500 &&
+        points.every(p => Array.isArray(p) && p.length === 2 &&
+          Number.isFinite(p[0]) && p[0] >= -90 && p[0] <= 90 &&
+          Number.isFinite(p[1]) && p[1] >= -180 && p[1] <= 180),
+      message: 'Invalid planned route polyline.',
+    },
+  },
   revision: { type: Number, default: 0 },
   stops: { type: [stopSchema], default: [] },
   startedAt: { type: Date, default: null },
