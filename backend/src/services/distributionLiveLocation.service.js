@@ -3,6 +3,7 @@ const { ApiError } = require('../utils/ApiError');
 const Trip = require('../models/distributionTrip.model');
 const Rep = require('../models/rep.model');
 const Location = require('../models/distributionLiveLocation.model');
+const { routeAssessment } = require('../utils/distributionRouteDeviation');
 
 const MIN_INTERVAL_MS = 15 * 1000;
 const MAX_MEASUREMENT_AGE_MS = 2 * 60 * 1000;
@@ -91,7 +92,8 @@ async function update(driverUserId, tripId, body) {
 }
 
 async function readForAdmin(tripId) {
-  const trip = await Trip.findById(id(tripId)).select('_id status driverUserId').lean();
+  const trip = await Trip.findById(id(tripId))
+    .select('_id status driverUserId routePoints routeCorridorMeters').lean();
   if (!trip) throw ApiError.notFound('Trip not found.', 'DISTRIBUTION_TRIP_NOT_FOUND');
   if (trip.status !== 'in_progress') return null;
   const position = await Location.findOne({
@@ -99,7 +101,17 @@ async function readForAdmin(tripId) {
     driverUserId: trip.driverUserId,
     expiresAt: { $gt: new Date() },
   }).select('latitude longitude accuracyMeters measuredAt receivedAt -_id').lean();
-  return position || null;
+  if (!position) return { state: 'no_signal', location: null, deviation: null };
+  const age = Date.now() - new Date(position.receivedAt).getTime();
+  // Retain the LAST KNOWN point for an hour if connectivity is lost.
+  // A stale fix must never be flagged as an active deviation.
+  if (age > MAX_MEASUREMENT_AGE_MS) {
+    return { state: 'stale', location: position, deviation: null };
+  }
+  return {
+    state: 'live', location: position,
+    deviation: routeAssessment(position, trip),
+  };
 }
 
 module.exports = { update, readForAdmin, MIN_INTERVAL_MS, TTL_MS };
