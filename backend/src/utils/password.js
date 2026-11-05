@@ -24,6 +24,8 @@ const MIN_PASSWORD_LENGTH_BY_ROLE = Object.freeze({
   // A rep's login only reaches the pharmacies assigned to them and their own
   // visits - the same bar as a pharmacy.
   rep: 8,
+  // External transport drivers have live location and assigned deliveries.
+  driver: 10,
   warehouse: 10,
   admin: 12,
 });
