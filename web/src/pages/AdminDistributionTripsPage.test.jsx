@@ -10,6 +10,8 @@ vi.mock('react-i18next', () => ({
 }));
 vi.mock('../api/client', () => ({ api: {
   adminDistributionTrips: vi.fn(),
+  adminDistributionDrivers: vi.fn(),
+  assignDistributionTripDriver: vi.fn(),
   adminAccounts: vi.fn(),
   createDistributionTrip: vi.fn(),
   startDistributionTrip: vi.fn(),
@@ -31,6 +33,8 @@ const accounts = [{
 beforeEach(async () => {
   vi.clearAllMocks();
   api.adminDistributionTrips.mockResolvedValue({ trips: [], pagination: {} });
+  api.adminDistributionDrivers.mockResolvedValue({ drivers: [{ userId: 'bbbbbbbbbbbbbbbbbbbbbbbb', name: 'Driver A', phone: '0931400002' }] });
+  api.assignDistributionTripDriver.mockResolvedValue({ success: true });
   api.adminAccounts.mockResolvedValue({ accounts });
   api.createDistributionTrip.mockResolvedValue({ trip: { _id: 'test-id' } });
   container = document.createElement('div');
@@ -78,4 +82,41 @@ it('trip creation preserves the manually selected stop sequence', async () => {
 it('the screen never calls payment or order APIs', () => {
   expect(api.adminDistributionTrips).toHaveBeenCalledTimes(1);
   expect(container.textContent).toContain('No payments, invoices or amounts are recorded.');
+});
+
+it('offers active rep accounts for creating a trip', () => {
+  expect(api.adminDistributionDrivers).toHaveBeenCalledTimes(1);
+  const picker = container.querySelector('select[aria-label="Driver login"]');
+  expect(picker).not.toBeNull();
+  expect(picker.textContent).toContain('Driver A');
+});
+
+it('admin can assign an existing planned trip with its current revision', async () => {
+  const trip = {
+    _id: 'cccccccccccccccccccccccc',
+    region: 'Kasab',
+    driverName: 'Unassigned',
+    driverPhone: '',
+    driverUserId: null,
+    revision: 4,
+    serviceDate: '2026-11-06T00:00:00.000Z',
+    status: 'planned',
+    stops: [],
+  };
+  api.adminDistributionTrips.mockResolvedValue({ trips: [trip], pagination: {} });
+  await act(async () => {
+    await [...container.querySelectorAll('button')].find(x => x.textContent === 'Refresh').click();
+  });
+  const select = container.querySelector('select[aria-label="Assign driver cccccccccccccccccccccccc"]');
+  expect(select).not.toBeNull();
+  await act(async () => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set;
+    setter.call(select, 'bbbbbbbbbbbbbbbbbbbbbbbb');
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await act(async () => {
+    button('Save driver assignment').click();
+  });
+  expect(api.assignDistributionTripDriver).toHaveBeenCalledWith(
+    trip._id, 4, 'bbbbbbbbbbbbbbbbbbbbbbbb');
 });
