@@ -73,5 +73,9 @@ const driverComplete = asyncHandler(async (req, res) => {
     req.user._id, req.params.id, req.body, 'completed'
   ) });
 });
+const listDrivers = asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'private, no-store');
+  res.json({ success: true, drivers: await service.listDrivers() });
+});
 module.exports = { create, list, detail, start, stop, complete, cancel,
-  assign, driverList, driverDetail, driverStart, driverStop, driverComplete };
+  assign, driverList, driverDetail, driverStart, driverStop, driverComplete, listDrivers };
