@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:feniq/features/pharmacy_license/data/pharmacy_license_repository.dart';
 import 'package:feniq/features/pharmacy_license/presentation/pharmacy_license_view.dart';
+import 'package:feniq/generated/app_localizations.dart';
 
 class FakeLicenceRepository implements PharmacyLicenseRepository {
   FakeLicenceRepository(this.status);
@@ -38,6 +39,8 @@ void main() {
     ));
     await tester.pumpWidget(MaterialApp(
       locale: const Locale('ar'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       home: PharmacyLicenseView(repository: repo),
     ));
     await tester.pumpAndSettle();
@@ -54,6 +57,8 @@ void main() {
     ));
     await tester.pumpWidget(MaterialApp(
       locale: const Locale('en'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       home: PharmacyLicenseView(repository: repo),
     ));
     await tester.pumpAndSettle();
@@ -71,6 +76,8 @@ void main() {
     ));
     await tester.pumpWidget(MaterialApp(
       locale: const Locale('en'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       home: PharmacyLicenseView(repository: repo),
     ));
     await tester.pumpAndSettle();
