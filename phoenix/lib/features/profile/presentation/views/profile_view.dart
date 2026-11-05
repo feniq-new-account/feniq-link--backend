@@ -1,4 +1,6 @@
 import 'edit_profile_view.dart';
+import 'package:feniq/features/pharmacy_license/data/pharmacy_license_repository.dart';
+import 'package:feniq/features/pharmacy_license/presentation/pharmacy_license_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -140,6 +142,25 @@ class ProfileView extends StatelessWidget {
                     const SizedBox(height: AppSizes.spacingSmall),
                     _PersonalInfoCard(rows: infoRows),
                   ],
+
+                  // Private pharmacy licence workflow. The document itself is
+                  // never exposed to other pharmacies or public profile APIs.
+                  const SizedBox(height: AppSizes.spacingXLarge),
+                  _SectionHeader(Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'توثيق الصيدلية' : 'Pharmacy verification'),
+                  const SizedBox(height: AppSizes.spacingSmall),
+                  _ProfileNavCard(
+                    icon: Icons.verified_user_outlined,
+                    title: Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'رخصة الصيدلية' : 'Pharmacy licence',
+                    subtitle: Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'رفع الوثيقة ومتابعة المراجعة' : 'Upload and review status',
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => PharmacyLicenseView(
+                        repository: context.read<PharmacyLicenseRepository>(),
+                      ),
+                    )),
+                  ),
 
                   const SizedBox(height: AppSizes.spacingXLarge),
                   _SectionHeader(l10n.ratingsTitle),
