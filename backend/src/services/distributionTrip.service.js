@@ -3,6 +3,8 @@ const { ApiError } = require('../utils/ApiError');
 const { runInTransaction } = require('../utils/transaction');
 const { normalizePhone, isValidPhone } = require('../utils/phone');
 const Pharmacy = require('../models/pharmacy.model');
+const User = require('../models/user.model');
+const Rep = require('../models/rep.model');
 const Trip = require('../models/distributionTrip.model');
 const Event = require('../models/distributionTripEvent.model');
 
@@ -40,6 +42,17 @@ function parseServiceDate(value) {
   return parsed;
 }
 
+async function validateDriver(driverUserId) {
+  if (driverUserId == null || driverUserId === '') return null;
+  id(driverUserId);
+  const user = await User.findById(driverUserId).select('role status name phone').lean();
+  if (!user || user.role !== 'rep' || user.status !== 'active' ||
+      !await Rep.exists({ userId: user._id, isActive: true })) {
+    throw bad('Driver must have an active rep account.');
+  }
+  return user;
+}
+
 async function create(actorId, body = {}) {
   const region = string(body.region, 160, 'Region');
   const driverName = string(body.driverName, 160, 'Driver name');
@@ -47,6 +60,7 @@ async function create(actorId, body = {}) {
     ? '' : normalizePhone(body.driverPhone);
   if (driverPhone && !isValidPhone(driverPhone)) throw bad('Invalid driver phone.');
   const serviceDate = parseServiceDate(body.serviceDate);
+  const driver = await validateDriver(body.driverUserId);
   if (!Array.isArray(body.pharmacyIds) || body.pharmacyIds.length < 1 ||
       body.pharmacyIds.length > MAX_STOPS) throw bad('Choose 1 to 50 pharmacy stops.');
   const ids = body.pharmacyIds.map(id);
@@ -70,6 +84,7 @@ async function create(actorId, body = {}) {
   return runInTransaction(async (session) => {
     const [trip] = await Trip.create([{
       region, driverName, driverPhone, serviceDate, stops, createdBy: actorId,
+      driverUserId: driver?._id || null,
     }], { session });
     await Event.create([{ tripId: trip._id, actorId,
       event: 'created', revision: 0 }], { session });
@@ -97,13 +112,16 @@ async function list({ status, after, limit = 20 } = {}) {
   };
 }
 
-async function transition(actorId, tripId, body, action) {
+async function transition(actorId, tripId, body, action, { driverUserId = null } = {}) {
   id(tripId);
   const expected = revision(body?.revision);
   const now = new Date();
   return runInTransaction(async (session) => {
     const trip = await Trip.findById(tripId).session(session);
     if (!trip) throw ApiError.notFound('Trip not found.', 'DISTRIBUTION_TRIP_NOT_FOUND');
+    if (driverUserId && String(trip.driverUserId) !== String(driverUserId)) {
+      throw ApiError.forbidden('Trip is not assigned to this driver.', 'DRIVER_TRIP_FORBIDDEN');
+    }
     if (trip.revision !== expected) {
       throw ApiError.conflict('Trip changed; refresh before saving.', 'DISTRIBUTION_TRIP_CHANGED');
     }
@@ -139,7 +157,7 @@ async function transition(actorId, tripId, body, action) {
       throw bad('Invalid trip action.');
     }
     const changed = await Trip.findOneAndUpdate(
-      { _id: tripId, revision: expected },
+      { _id: tripId, revision: expected, ...(driverUserId ? { driverUserId } : {}) },
       { $set: patch, $inc: { revision: 1 } },
       { session, new: true }
     );
@@ -153,4 +171,57 @@ async function transition(actorId, tripId, body, action) {
   });
 }
 
-module.exports = { MAX_STOPS, create, get, list, transition, parseServiceDate };
+async function assignDriver(actorId, tripId, body = {}) {
+  id(tripId);
+  const expected = revision(body.revision);
+  // Assigning a different driver is an admin-only action; never trust a
+  // driver-supplied account id. The endpoint is guarded separately.
+  const driver = await validateDriver(body.driverUserId);
+  if (!driver) throw bad('Choose a driver account.');
+  return runInTransaction(async (session) => {
+    const trip = await Trip.findById(tripId).session(session);
+    if (!trip) throw ApiError.notFound('Trip not found.', 'DISTRIBUTION_TRIP_NOT_FOUND');
+    if (trip.revision !== expected) throw ApiError.conflict('Trip changed; refresh.', 'DISTRIBUTION_TRIP_CHANGED');
+    if (trip.status !== 'planned') throw bad('Driver assignment is locked once a trip starts.');
+    const updated = await Trip.findOneAndUpdate(
+      { _id: tripId, revision: expected, status: 'planned' },
+      { $set: { driverUserId: driver._id, driverName: driver.name, driverPhone: driver.phone },
+        $inc: { revision: 1 } },
+      { session, new: true }
+    );
+    if (!updated) throw ApiError.conflict('Trip changed; refresh.', 'DISTRIBUTION_TRIP_CHANGED');
+    await Event.create([{ tripId: trip._id, actorId, event: 'driver_assigned',
+      revision: expected + 1 }], { session });
+    return updated;
+  });
+}
+
+async function assertActiveRep(userId) {
+  const rep = await Rep.exists({ userId, isActive: true });
+  if (!rep) throw ApiError.forbidden('Active field rep profile required.', 'REP_INACTIVE');
+}
+
+async function driverTrips(userId) {
+  await assertActiveRep(userId);
+  // Narrow projection: no unrelated pharmacies' commercial/order data.
+  return Trip.find({ driverUserId: userId, status: { $in: ['planned', 'in_progress'] } })
+    .sort({ serviceDate: 1, _id: 1 }).limit(40).lean();
+}
+
+async function driverTrip(userId, tripId) {
+  await assertActiveRep(userId);
+  id(tripId);
+  const trip = await Trip.findOne({ _id: tripId, driverUserId: userId }).lean();
+  if (!trip) throw ApiError.notFound('Assigned trip not found.', 'DRIVER_TRIP_NOT_FOUND');
+  return trip;
+}
+
+async function driverTransition(userId, tripId, body, action) {
+  await assertActiveRep(userId);
+  return transition(userId, tripId, body, action, { driverUserId: userId });
+}
+
+module.exports = {
+  MAX_STOPS, create, get, list, transition, parseServiceDate,
+  assignDriver, driverTrips, driverTrip, driverTransition,
+};
