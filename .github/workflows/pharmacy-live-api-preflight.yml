@@ -1,0 +1,20 @@
+name: Read-only pharmacy launch HTTP preflight
+on:
+  push:
+    branches: [test/live-api-readonly-preflight-20261105]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify published API health, launch mode and CORS without authentication
+        run: node backend/scripts/check-launch-http.js
