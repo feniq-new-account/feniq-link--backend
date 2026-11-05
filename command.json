@@ -1,1 +1,1 @@
-{"id":20,"actions":[{"op":"key","value":"BACK"},{"op":"key","value":"BACK"}]}
+{"id":21,"actions":[{"op":"restart"},{"op":"tap","x":500,"y":1170}]}
