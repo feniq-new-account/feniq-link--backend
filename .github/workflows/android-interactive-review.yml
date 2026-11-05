@@ -20,6 +20,11 @@ jobs:
     env:
       GLIBC_TUNABLES: glibc.pthread.rseq=1
     steps:
+      - name: Reserve space for the Android system image
+        run: |
+          # Only preinstalled languages unused by this disposable Ubuntu job.
+          sudo rm -rf /usr/share/dotnet /usr/local/.ghcup /usr/local/share/boost /opt/ghc
+          df -h / /usr/local/lib/android/sdk
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -49,6 +54,12 @@ jobs:
           flutter build apk --debug --target-platform android-x64 --build-number=1 \
             --dart-define=API_BASE_URL=http://127.0.0.1:5085/api \
             --dart-define=PANEL_URL=http://127.0.0.1:5176
+      - name: Release compiler space before emulator installation
+        run: |
+          # The APK is complete; native compilers are unnecessary for UI input.
+          phoenix/android/gradlew -p phoenix/android --stop
+          rm -rf "$ANDROID_HOME/ndk" "$ANDROID_HOME/cmake" "$HOME/.gradle/caches"
+          df -h /
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
