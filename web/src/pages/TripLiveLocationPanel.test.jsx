@@ -2,7 +2,7 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { TripLiveLocationPanel } from './TripLiveLocationPanel';
+import { TripLiveLocationPanel, parseGpxRoute } from './TripLiveLocationPanel';
 import { api } from '../api/client';
 
 vi.mock('../api/client', () => ({ api: {
@@ -81,4 +81,29 @@ it('route configuration is available only before a trip begins', async () => {
   expect(host.textContent).toContain('Set actual route geometry');
   expect(api.adminTripLiveLocation).not.toHaveBeenCalled();
   expect(button('Monitor live driver position')).toBeUndefined();
+});
+
+it('parses one continuous recorded GPX track without estimating roads between stops', () => {
+  const xml = `<gpx xmlns="http://www.topografix.com/GPX/1/1">
+    <trk><trkseg>
+      <trkpt lat="35.51" lon="35.82"/>
+      <trkpt lat="35.52" lon="35.83"/>
+      <trkpt lat="35.53" lon="35.84"/>
+    </trkseg></trk></gpx>`;
+  expect(parseGpxRoute(xml)).toEqual([[35.51, 35.82], [35.52, 35.83], [35.53, 35.84]]);
+});
+
+it('rejects disjoint GPX segments rather than fabricating straight connections', () => {
+  const xml = `<gpx xmlns="http://www.topografix.com/GPX/1/1">
+    <trk>
+      <trkseg><trkpt lat="35.51" lon="35.82"/><trkpt lat="35.52" lon="35.83"/></trkseg>
+      <trkseg><trkpt lat="35.8" lon="36.0"/><trkpt lat="35.9" lon="36.1"/></trkseg>
+    </trk></gpx>`;
+  expect(() => parseGpxRoute(xml)).toThrow(/one continuous route/);
+});
+
+it('rejects GPX without two legitimate geographic positions', () => {
+  expect(() => parseGpxRoute('<gpx><rte><rtept lat="" lon="35"/><rtept lat="35" lon="35.2"/></rte></gpx>')).toThrow();
+  expect(() => parseGpxRoute('<gpx><rte><rtept lat="91" lon="35"/><rtept lat="35" lon="35.2"/></rte></gpx>')).toThrow();
+  expect(() => parseGpxRoute('<gpx><rte><rtept lat="35" lon="35"/></rte></gpx>')).toThrow();
 });
