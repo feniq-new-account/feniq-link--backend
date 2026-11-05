@@ -1,0 +1,14 @@
+const { Router } = require('express');
+const { authenticate, authorize } = require('../middlewares/auth.middleware');
+const controller = require('../controllers/distributionTrip.controller');
+
+const router = Router();
+router.use(authenticate, authorize('admin'));
+router.get('/trips', controller.list);
+router.post('/trips', controller.create);
+router.get('/trips/:id', controller.detail);
+router.post('/trips/:id/start', controller.start);
+router.patch('/trips/:id/stops/:stopId', controller.stop);
+router.post('/trips/:id/complete', controller.complete);
+router.post('/trips/:id/cancel', controller.cancel);
+module.exports = router;
