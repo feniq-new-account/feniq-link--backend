@@ -40,6 +40,7 @@ it('shows an outside-route alert and preserves a live map link for the detouring
   const link = host.querySelector('a');
   expect(link.href).toContain('mlat=35.1');
   expect(link.href).toContain('mlon=35.2');
+  expect(host.textContent).toContain('35.100000, 35.200000');
 });
 
 it('marks a disconnected driver as stale, not as off-route', async () => {
