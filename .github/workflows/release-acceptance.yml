@@ -20,7 +20,7 @@ jobs:
     env:
       # Official workaround for the temporary Mongo target's allocator on new kernels.
       GLIBC_TUNABLES: glibc.pthread.rseq=1
-      FENIQ_ACCEPTANCE_OUTPUT: ${{ runner.temp }}/feniq-acceptance-private.json
+      FENIQ_ACCEPTANCE_OUTPUT: /tmp/feniq-acceptance-private.json
       # Empty selects the Chromium installed by Playwright, not a host-specific path.
       FENIQ_CHROMIUM: ''
     steps:
