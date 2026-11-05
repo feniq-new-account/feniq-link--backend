@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
+import 'package:feniq/features/rep/data/services/location_provider.dart';
 
 class FakeDriverRepository implements DriverTripRepository {
   FakeDriverRepository(this.trips);
@@ -10,6 +11,9 @@ class FakeDriverRepository implements DriverTripRepository {
   int starts = 0;
   int deliveries = 0;
   int finishes = 0;
+  int gpsSends = 0;
+  @override
+  Future<void> sendLocation(String tripId, DeviceLocation fix) async { gpsSends++; }
 
   @override
   Future<List<DriverTrip>> listTrips() async {
