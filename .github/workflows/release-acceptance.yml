@@ -1,0 +1,60 @@
+# Owner-authorized acceptance only; no nightly schedule or production credentials.
+name: Isolated release acceptance
+
+on:
+  push:
+    branches: [codex/five-interface-acceptance-2026-11-05]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      # Official workaround for the temporary Mongo target's allocator on new kernels.
+      GLIBC_TUNABLES: glibc.pthread.rseq=1
+      FENIQ_ACCEPTANCE_OUTPUT: ${{ runner.temp }}/feniq-acceptance-private.json
+      # Empty selects the Chromium installed by Playwright, not a host-specific path.
+      FENIQ_CHROMIUM: ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install isolated acceptance dependencies
+        run: |
+          npm ci --prefix backend --no-audit --no-fund
+          npm ci --prefix web --no-audit --no-fund
+          python3 -m pip install playwright==1.62.0
+          python3 -m playwright install --with-deps chromium
+      - name: Check fixture safety before browser startup
+        run: node --test backend/test/acceptanceServer.safety.test.js
+      - name: Run real API and Arabic browser journeys
+        run: |
+          python3 .claude/skills/webapp-testing/scripts/with_server.py \
+            --server 'exec node backend/scripts/acceptance/server.js' --port 5085 \
+            --server 'cd web && exec env VITE_API_BASE_URL=http://127.0.0.1:5085/api node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5176' --port 5176 \
+            --timeout 120 -- \
+            python3 tests/acceptance/five_interface_web.py \
+              --credentials "$FENIQ_ACCEPTANCE_OUTPUT" \
+              --output "${{ runner.temp }}/feniq-acceptance-report"
+      - name: Retain report and synthetic screenshots only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: feniq-real-api-acceptance-evidence
+          path: ${{ runner.temp }}/feniq-acceptance-report/
+          retention-days: 30
+          if-no-files-found: warn
