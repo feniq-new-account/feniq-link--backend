@@ -221,6 +221,37 @@ async function driverTransition(userId, tripId, body, action) {
   return transition(userId, tripId, body, action, { driverUserId: userId });
 }
 
+async function setPlannedRoute(actorId, tripId, body = {}) {
+  id(tripId);
+  const expected = revision(body.revision);
+  const points = body.routePoints;
+  if (!Array.isArray(points) || points.length < 2 || points.length > 500 ||
+      points.some(p => !Array.isArray(p) || p.length !== 2 ||
+        typeof p[0] !== 'number' || !Number.isFinite(p[0]) || p[0] < -90 || p[0] > 90 ||
+        typeof p[1] !== 'number' || !Number.isFinite(p[1]) || p[1] < -180 || p[1] > 180)) {
+    throw bad('Provide 2 to 500 valid latitude, longitude route coordinates.');
+  }
+  const corridor = body.routeCorridorMeters ?? 300;
+  if (!Number.isInteger(corridor) || corridor < 100 || corridor > 2000) {
+    throw bad('Route corridor must be between 100 and 2000 meters.');
+  }
+  return runInTransaction(async session => {
+    const trip = await Trip.findById(tripId).session(session);
+    if (!trip) throw ApiError.notFound('Trip not found.', 'DISTRIBUTION_TRIP_NOT_FOUND');
+    if (trip.revision !== expected) throw ApiError.conflict('Trip changed; refresh.', 'DISTRIBUTION_TRIP_CHANGED');
+    // Only configure the actual road polyline BEFORE the driver starts.
+    if (trip.status !== 'planned') throw bad('Cannot change a route after trip start.');
+    const result = await Trip.findOneAndUpdate(
+      { _id: tripId, status: 'planned', revision: expected },
+      { $set: { routePoints: points, routeCorridorMeters: corridor },
+        $inc: { revision: 1 } },
+      { session, new: true, runValidators: true }
+    );
+    if (!result) throw ApiError.conflict('Trip changed; refresh.', 'DISTRIBUTION_TRIP_CHANGED');
+    return result;
+  });
+}
+
 module.exports = {
   MAX_STOPS, create, get, list, transition, parseServiceDate,
   assignDriver, driverTrips, driverTrip, driverTransition,
