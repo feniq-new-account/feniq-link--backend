@@ -10,6 +10,8 @@ import 'package:feniq/features/rep/presentation/managers/rep_home_cubit.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_pharmacies_cubit.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_visits_cubit.dart';
 import 'package:feniq/features/rep/presentation/views/rep_pharmacies_tab.dart';
+import 'package:feniq/features/driver/data/driver_trip_repository.dart';
+import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
 import 'package:feniq/features/rep/presentation/views/rep_profile_tab.dart';
 import 'package:feniq/features/rep/presentation/views/rep_visits_tab.dart';
 import 'package:feniq/routes/route_names.dart';
@@ -18,7 +20,9 @@ import 'package:feniq/routes/route_names.dart';
 /// account, with the QR scan one tap away on the first tab. The cubits are
 /// provided by the route (app_router.dart).
 class RepShellView extends StatefulWidget {
-  const RepShellView({super.key});
+  const RepShellView({super.key, this.driverTripRepository});
+
+  final DriverTripRepository? driverTripRepository;
 
   @override
   State<RepShellView> createState() => _RepShellViewState();
@@ -41,7 +45,9 @@ class _RepShellViewState extends State<RepShellView> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final titles = [l10n.repNavPharmacies, l10n.repVisitsTitle, l10n.profileTitle];
+    final driverEnabled = widget.driverTripRepository != null;
+    final titles = [l10n.repNavPharmacies, l10n.repVisitsTitle,
+      if (driverEnabled) 'رحلات التوزيع', l10n.profileTitle];
 
     return ResponsiveRoleScaffold(
       appBar: AppBar(
@@ -54,7 +60,12 @@ class _RepShellViewState extends State<RepShellView> {
         children: [
           const StartupLocationPermission(),
           Expanded(
-            child: IndexedStack(index: _index, children: const [RepPharmaciesTab(), RepVisitsTab(), RepProfileTab()]),
+            child: IndexedStack(index: _index, children: [
+              const RepPharmaciesTab(),
+              const RepVisitsTab(),
+              if (driverEnabled) DriverTripsTab(repository: widget.driverTripRepository!),
+              const RepProfileTab(),
+            ]),
           ),
         ],
       ),
@@ -77,6 +88,11 @@ class _RepShellViewState extends State<RepShellView> {
           icon: const Icon(Icons.place_outlined),
           selectedIcon: Icon(Icons.place, color: AppColors.primaryOf(context)),
           label: l10n.repNavVisits,
+        ),
+        if (driverEnabled) NavigationDestination(
+          icon: const Icon(Icons.local_shipping_outlined),
+          selectedIcon: Icon(Icons.local_shipping, color: AppColors.primaryOf(context)),
+          label: 'رحلاتي',
         ),
         NavigationDestination(
           icon: const Icon(Icons.person_outline),
