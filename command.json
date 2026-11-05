@@ -1,1 +1,1 @@
-{"id":48,"actions":[{"op":"tap","x":350,"y":870},{"op":"text","value":"DEMO Android Pharmacist"},{"op":"key","value":"TAB"},{"op":"text","value":"DEMO Android Pharmacy"},{"op":"key","value":"TAB"},{"op":"credential","role":"new_pharmacy","field":"phone","phoneMode":"tail"},{"op":"key","value":"TAB"},{"op":"text","value":"DEMO isolated address"},{"op":"key","value":"TAB"},{"op":"text","value":"DEMO rural area"},{"op":"key","value":"BACK"}]}
+{"id":49,"actions":[{"op":"tap","x":350,"y":910}]}
