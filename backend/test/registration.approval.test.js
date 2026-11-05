@@ -191,6 +191,12 @@ test('pending pharmacies can check and edit their profile but cannot browse ware
 
   const warehouses = await call('GET', '/warehouses', { token });
   assert.strictEqual(warehouses.status, 403);
+
+  // A real admin decision should unlock browsing for this same session.
+  const approval = await call('POST', `/admin/accounts/${body.user.id}/approve`, { token: adminToken });
+  assert.strictEqual(approval.status, 200);
+  const afterApproval = await call('GET', '/warehouses', { token });
+  assert.strictEqual(afterApproval.status, 200);
 });
 
 test('a file that is not the list is refused and the old list stays', async () => {
