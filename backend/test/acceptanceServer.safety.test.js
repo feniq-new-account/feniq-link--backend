@@ -7,7 +7,7 @@ const { spawnSync } = require('node:child_process');
 const server = path.resolve(__dirname, '../scripts/acceptance/server.js');
 const excluded = ['NODE_ENV', 'MONGODB_URI', 'JWT_SECRET', 'FIREBASE_SERVICE_ACCOUNT_PATH',
   'FIREBASE_PROJECT_ID', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL', 'TELEGRAM_BOT_TOKEN',
-  'SMS_PROVIDER_API_KEY', 'FENIQ_ACCEPTANCE_OUTPUT'];
+  'SMS_PROVIDER_API_KEY', 'FENIQ_ACCEPTANCE_OUTPUT', 'FENIQ_ACCEPTANCE_SCENARIO'];
 
 function refused({ env = {}, dotenv = '', args } = {}) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'feniq-acceptance-safety-'));
@@ -25,6 +25,9 @@ function refused({ env = {}, dotenv = '', args } = {}) {
 
 test('acceptance refuses production before creating a fixture', () => {
   assert.match(refused({ env: { NODE_ENV: 'production' } }), /refuses production/);
+});
+test('unknown acceptance scenarios are refused before creating a fixture', () => {
+  assert.match(refused({ env: { FENIQ_ACCEPTANCE_SCENARIO: 'production-live' } }), /Unknown isolated acceptance scenario/);
 });
 test('acceptance refuses a configured external database without connecting to it', () => {
   assert.match(refused({ env: { MONGODB_URI: 'mongodb://invalid.example/never-connect' } }), /external database/);
