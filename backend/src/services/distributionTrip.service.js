@@ -221,7 +221,22 @@ async function driverTransition(userId, tripId, body, action) {
   return transition(userId, tripId, body, action, { driverUserId: userId });
 }
 
+async function listDrivers() {
+  // Limited operational directory: no commission, warehouse account or
+  // private permissions from the Rep document leave this endpoint.
+  const users = await User.find({ role: 'rep', status: 'active' })
+    .select('_id name phone').sort({ _id: -1 }).limit(100).lean();
+  if (!users.length) return [];
+  const enabled = await Rep.find({
+    userId: { $in: users.map(u => u._id) }, isActive: true,
+  }).select('userId').lean();
+  const allowed = new Set(enabled.map(r => String(r.userId)));
+  return users.filter(u => allowed.has(String(u._id))).map(u => ({
+    userId: u._id, name: u.name, phone: u.phone,
+  }));
+}
+
 module.exports = {
   MAX_STOPS, create, get, list, transition, parseServiceDate,
-  assignDriver, driverTrips, driverTrip, driverTransition,
+  assignDriver, driverTrips, driverTrip, driverTransition, listDrivers,
 };
