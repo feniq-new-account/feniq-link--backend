@@ -1,1 +1,1 @@
-{"id": 0, "actions": []}
+{"id":1,"actions":[{"op":"tap","x":350,"y":780},{"op":"credential","role":"pharmacy","field":"phone","phoneMode":"tail"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":935},{"op":"credential","role":"pharmacy","field":"password"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":1095},{"op":"wait","seconds":5},{"op":"restart"}]}
