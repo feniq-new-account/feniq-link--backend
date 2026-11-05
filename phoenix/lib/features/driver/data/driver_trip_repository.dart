@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:feniq/core/network/api_client.dart';
+import 'package:feniq/features/rep/data/services/location_provider.dart';
 
 class DriverTripStop {
   DriverTripStop({
@@ -60,12 +61,24 @@ abstract class DriverTripRepository {
   Future<DriverTrip> updateStop(String tripId, String stopId, int revision,
       {required String status, String note = ''});
   Future<DriverTrip> complete(String tripId, int revision);
+  Future<void> sendLocation(String tripId, DeviceLocation position);
 }
 
 class DriverTripRepositoryImpl implements DriverTripRepository {
   DriverTripRepositoryImpl({required ApiClient apiClient}) : _dio = apiClient.dio;
   final Dio _dio;
   static const _root = '/driver/distribution/trips';
+
+  @override
+  Future<void> sendLocation(String tripId, DeviceLocation position) async {
+    if (position.isMocked) throw StateError('Mock GPS is not accepted.');
+    await _dio.put<void>('$_root/$tripId/location', data: {
+      'latitude': position.latitude,
+      'longitude': position.longitude,
+      'accuracyMeters': position.accuracy,
+      'measuredAt': (position.capturedAt ?? DateTime.now()).toUtc().toIso8601String(),
+    });
+  }
 
   @override
   Future<List<DriverTrip>> listTrips() async {
