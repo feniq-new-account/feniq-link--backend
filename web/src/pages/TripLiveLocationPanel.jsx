@@ -121,6 +121,10 @@ export function TripLiveLocationPanel({ trip, onRouteSaved, arabic = true }) {
           )}
           {location && <>
             <p>
+              {tr('الإحداثيات: ', 'Coordinates: ')}
+              {Number(location.latitude).toFixed(6)}, {Number(location.longitude).toFixed(6)}
+            </p>
+            <p>
               {tr('وقت آخر قراءة: ', 'Last received: ')}
               {new Date(location.receivedAt).toLocaleString(arabic ? 'ar-SY' : 'en-US')}
               {' — ±'}{Math.round(location.accuracyMeters)} m
