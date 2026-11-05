@@ -2,8 +2,9 @@
 # site or a release, and never exposes the signing key outside GitHub Actions.
 name: Prelaunch Android validation
 on:
-  # Historical one-off review validation; launch builds now use the shared
-  # android-apk.yml counter and the explicitly requested task branch.
+  # Explicit, non-publishing acceptance validation branch requested for the pharmacy pilot.
+  push:
+    branches: [test/pharmacy-android-smoke-20261105]
   workflow_dispatch:
 permissions:
   contents: read
