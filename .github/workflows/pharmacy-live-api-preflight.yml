@@ -1,7 +1,5 @@
 name: Read-only pharmacy launch HTTP preflight
 on:
-  push:
-    branches: [test/live-api-readonly-preflight-20261105]
   workflow_dispatch:
 permissions:
   contents: read
