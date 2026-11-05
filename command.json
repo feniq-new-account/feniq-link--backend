@@ -1,1 +1,1 @@
-{"id":56,"actions":[{"op":"swipe","x1":450,"y1":1050,"x2":450,"y2":450,"duration":500}]}
+{"id":57,"actions":[{"op":"tap","x":665,"y":890},{"op":"tap","x":350,"y":580},{"op":"text","value":"invalid-test-only"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":745},{"op":"text","value":"invalid-test-only"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":1050}]}
