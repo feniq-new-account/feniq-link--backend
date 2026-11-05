@@ -33,14 +33,19 @@ concurrency:
 
 jobs:
   backup:
-    # mongo:8.0 refuses Linux >= 6.19 (SERVER-121912). Match the verified
-    # backend CI runner instead of following ubuntu-latest to a new kernel.
+    # Pin the userspace; the host kernel can still advance independently.
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     # The restore drill's throwaway database. Never the production one.
     services:
       mongo:
         image: mongo:8.0
+        env:
+          # Official image maintainer workaround for SERVER-121912: reserve
+          # rseq for glibc, disabling the incompatible TCMalloc per-CPU path.
+          # Applies ONLY to the disposable restore target, never production.
+          # https://github.com/docker-library/mongo/issues/758#issuecomment-4595141335
+          GLIBC_TUNABLES: glibc.pthread.rseq=1
         ports:
           - 27017:27017
         options: >-
