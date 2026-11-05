@@ -20,10 +20,8 @@ typedef PanelUrlOpener = Future<bool> Function(Uri url);
 
 Future<bool> openPanelExternally(Uri url) => launchUrl(url, mode: LaunchMode.externalApplication);
 
-/// Home of a warehouse (or admin) account signed in to the one Feniq app.
-///
-/// The warehouse screens are not in the app yet, so for now this says so and
-/// opens the web panel, where all of the warehouse's work already is.
+/// Landing page for panel accounts in the one Feniq app. The external panel
+/// supplies the tools allowed by that account's role and permissions.
 class PanelHomeView extends StatelessWidget {
   const PanelHomeView({super.key, this.openUrl = openPanelExternally});
 

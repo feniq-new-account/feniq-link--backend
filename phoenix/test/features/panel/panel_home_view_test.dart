@@ -41,7 +41,7 @@ void main() {
       return true;
     });
     expect(find.text('Hello Al-Najah'), findsOneWidget);
-    await tester.tap(find.text('Open the warehouse panel'));
+    await tester.tap(find.text('Open the control panel'));
     await tester.pump();
     expect(opened, Uri.parse(AppConfig.panelUrl));
     expect(find.byType(SnackBar), findsNothing);
@@ -49,7 +49,7 @@ void main() {
 
   testWidgets('says where to go when the panel cannot be opened', (tester) async {
     await pump(tester, (_) async => false);
-    await tester.tap(find.text('Open the warehouse panel'));
+    await tester.tap(find.text('Open the control panel'));
     await tester.pump();
     expect(find.textContaining(AppConfig.panelUrl), findsOneWidget);
   });

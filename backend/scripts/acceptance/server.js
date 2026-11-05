@@ -9,6 +9,8 @@ async function main() {
   // later must not introduce external credentials after those guards passed.
   require('dotenv').config({ quiet: true });
   if (process.env.NODE_ENV === 'production') throw new Error('Acceptance refuses production.');
+  const scenario = process.env.FENIQ_ACCEPTANCE_SCENARIO || 'standard';
+  if (!['standard', 'prelaunch'].includes(scenario)) throw new Error('Unknown isolated acceptance scenario.');
   const external = ['MONGODB_URI', 'FIREBASE_SERVICE_ACCOUNT_PATH', 'FIREBASE_PROJECT_ID',
     'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL', 'TELEGRAM_BOT_TOKEN', 'SMS_PROVIDER_API_KEY'];
   if (external.some(key => process.env[key])) throw new Error('Acceptance needs an environment without external database/notification credentials.');
@@ -58,18 +60,28 @@ async function main() {
     }
     const accounts = generateAccounts();
     const summary = await seedLaunchPreview(accounts, { nodeEnv: 'test', confirmedDatabase: dbName });
+    if (scenario === 'prelaunch') {
+      // Only after ownership of the fresh localhost database has been proven
+      // and the normal labelled fixture has completed. Never a production flag.
+      await require('../../src/services/platformSettings.service').setApprovalRequired(true);
+      const launch = require('../../src/services/launch.service');
+      const current = await launch.readLaunch();
+      await launch.saveLaunch(summary.users.admin.id, { mode: 'registration_only',
+        message: '[DEMO] التسجيل والتصفح متاحان؛ استقبال الطلبات التجريبية متوقف.',
+        revision: current.revision });
+    }
     const port = Number(process.env.FENIQ_ACCEPTANCE_PORT || 5085);
     if (!Number.isSafeInteger(port) || port < 1024 || port > 65535) throw new Error('Invalid acceptance port.');
     server = require('node:http').createServer(require('../../src/app'));
     io = require('../../src/realtime').initRealtime(server);
     await fs.writeFile(output, JSON.stringify({ environment: 'isolated-local-acceptance',
-      api: `http://127.0.0.1:${port}/api`, accounts, summary }) + '\n', { mode: 0o600 });
+      api: `http://127.0.0.1:${port}/api`, scenario, accounts, summary }) + '\n', { mode: 0o600 });
     await new Promise((resolve, reject) => {
       server.once('error', reject);
       server.listen(port, '127.0.0.1', resolve);
     });
     console.log(JSON.stringify({ ready: true, host: '127.0.0.1', port, database: dbName,
-      fixtureCounts: summary.counts, production: false }));
+      fixtureCounts: summary.counts, scenario, production: false }));
   } catch (error) {
     await stop();
     throw error;

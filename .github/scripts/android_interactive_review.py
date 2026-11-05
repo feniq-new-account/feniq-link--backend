@@ -71,6 +71,7 @@ class Review:
         if fixture.get('environment') != 'isolated-local-acceptance' or fixture.get('api') != 'http://127.0.0.1:5085/api':
             raise ValueError('LOCAL_FIXTURE_REQUIRED')
         self.accounts = fixture['accounts']
+        self.scenario = fixture.get('scenario', 'standard')
         self.accounts['new_pharmacy'] = {'phone': '0944000201', 'password': 'Gui!' + secrets.token_urlsafe(20) + '9a'}
         self.adb_path = str(Path(os.environ['ANDROID_HOME']) / 'platform-tools' / 'adb')
         self.control = 'qa/android-control-' + self.session
@@ -121,7 +122,7 @@ class Review:
             ui = ui.replace(account['password'], '[redacted]')
         if not self.secret_entry:
             self.screen = self.adb('exec-out', 'screencap', '-p', binary=True)
-        status = {'session': self.session, 'lastCommand': self.last_id, 'credentialEntryPendingRestart': self.secret_entry,
+        status = {'session': self.session, 'scenario': self.scenario, 'lastCommand': self.last_id, 'credentialEntryPendingRestart': self.secret_entry,
             'finished': finished, 'error': error, 'production': False, 'debugBuild': True,
             'scope': 'Interactive emulator UI with disposable localhost API; not physical phone/release signing',
             'history': self.history[-160:]}

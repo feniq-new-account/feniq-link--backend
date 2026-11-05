@@ -43,6 +43,7 @@ class ReviewSafety(unittest.TestCase):
         instance.accounts = {'pharmacy': {'password': 'private-fixture-password'}}
         instance.screen = None
         instance.session = '123-1'
+        instance.scenario = 'standard'
         instance.last_id = 1
         instance.history = [{'id': 1, 'ops': ['credential'], 'error': None}]
         instance.head = None

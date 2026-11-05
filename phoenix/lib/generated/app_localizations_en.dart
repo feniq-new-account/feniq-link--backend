@@ -61,7 +61,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get registrationSubtitle =>
-      'Fill in the details below - your account is activated once the administration reviews your documents.';
+      'Enter your pharmacy details to create an account. Its status will appear after registration, including pending administrator approval when required.';
 
   @override
   String get fullNameLabel => 'Full name';
@@ -213,11 +213,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get approvalPendingMessage =>
-      'We\'re reviewing your registration. You\'ll be able to order as soon as it\'s approved.';
+      'Your account is awaiting administrator review. Ordering requires account approval and order intake to be open.';
 
   @override
   String approvalPendingMessageWithName(String pharmacyName) {
-    return 'We\'re currently reviewing $pharmacyName\'s documents. You\'ll be able to order as soon as it\'s approved.';
+    return 'The pharmacy account for $pharmacyName is awaiting administrator review. Ordering requires account approval and order intake to be open.';
   }
 
   @override
@@ -228,13 +228,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'This account has been blocked. Please contact support for help.';
 
   @override
-  String get approvalChecklistReceived => 'Data and documents received';
+  String get approvalChecklistReceived => 'Registration details received';
 
   @override
   String get approvalChecklistReview => 'Under administration review';
 
   @override
-  String get approvalChecklistActivate => 'Account activation and ordering';
+  String get approvalChecklistActivate => 'Account activation after approval';
 
   @override
   String get refreshStatusButton => 'Check status';
@@ -247,7 +247,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contactSupportDialogMessage =>
-      'For help with your account, please contact Al-Najah Warehouse support.';
+      'For help with your account, contact Feniq support on WhatsApp using the number below. Tap Copy to copy it.';
 
   @override
   String get fieldRequired => 'This field is required.';
@@ -2166,7 +2166,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show this code to the warehouse rep so they can scan it when they visit. The visit is verified only if their phone is at your pharmacy.';
 
   @override
-  String get panelHomeTitle => 'Warehouse account';
+  String get panelHomeTitle => 'Control panel';
 
   @override
   String panelHomeGreeting(String name) {
@@ -2175,10 +2175,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get panelHomeBody =>
-      'The warehouse screens inside the app are on their way. For now, orders, products and reps are in the warehouse panel.';
+      'Open the control panel to manage your work. Available tools and data depend on your account role and permissions.';
 
   @override
-  String get panelHomeOpenPanel => 'Open the warehouse panel';
+  String get panelHomeOpenPanel => 'Open the control panel';
 
   @override
   String panelHomeOpenFailed(String url) {

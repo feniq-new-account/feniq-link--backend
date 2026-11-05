@@ -3,6 +3,13 @@ name: Android interactive acceptance
 
 on:
   workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'Disposable fixture only: standard sales or prelaunch with required approval'
+        required: true
+        default: standard
+        type: choice
+        options: [standard, prelaunch]
 
 permissions:
   contents: write
@@ -68,6 +75,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           FENIQ_ACCEPTANCE_OUTPUT: /tmp/feniq-android-ui-private.json
+          FENIQ_ACCEPTANCE_SCENARIO: ${{ inputs.scenario }}
           FENIQ_UI_SESSION: ${{ github.run_id }}-${{ github.run_attempt }}
         with:
           api-level: 35
