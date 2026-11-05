@@ -4,9 +4,9 @@ const controller = require('../controllers/distributionTrip.controller');
 const liveLocation = require('../controllers/distributionLiveLocation.controller');
 const router = Router();
 
-// Existing rep credentials are the non-financial pilot driver identity.
-// A rep can ONLY see trips explicitly assigned to their user id.
-router.use(authenticate, authorize('rep'), requireActiveStatus);
+// Drivers and pilot reps may operate ONLY trips assigned to their user id.
+// External drivers cannot access the general rep/warehouse APIs.
+router.use(authenticate, authorize('rep', 'driver'), requireActiveStatus);
 router.get('/trips', controller.driverList);
 router.get('/trips/:id', controller.driverDetail);
 router.put('/trips/:id/location', liveLocation.update);

@@ -21,7 +21,7 @@ const userSchema = new Schema(
     // the pharmacies the warehouse assigned to them.
     role: {
       type: String,
-      enum: ['admin', 'warehouse', 'pharmacy', 'rep'],
+      enum: ['admin', 'warehouse', 'pharmacy', 'rep', 'driver'],
       required: true,
     },
     // Null is the pre-existing combined warehouse login. New memberships

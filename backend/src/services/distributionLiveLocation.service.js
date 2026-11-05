@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const Trip = require('../models/distributionTrip.model');
 const Rep = require('../models/rep.model');
+const User = require('../models/user.model');
 const Location = require('../models/distributionLiveLocation.model');
 const { routeAssessment } = require('../utils/distributionRouteDeviation');
 
@@ -41,11 +42,15 @@ function validateReading(body, now) {
 }
 
 async function assertTripAccess(tripId, userId) {
-  const [trip, rep] = await Promise.all([
+  const [trip, user] = await Promise.all([
     Trip.findById(id(tripId)).select('_id driverUserId status').lean(),
-    Rep.exists({ userId, isActive: true }),
+    User.findById(userId).select('role status').lean(),
   ]);
-  if (!rep || !trip || String(trip.driverUserId) !== String(userId)) {
+  const authorized = user?.status === 'active' && (
+    user.role === 'driver' ||
+    (user.role === 'rep' && !!await Rep.exists({ userId, isActive: true }))
+  );
+  if (!authorized || !trip || String(trip.driverUserId) !== String(userId)) {
     throw ApiError.forbidden('Trip not assigned to this driver.', 'DRIVER_TRIP_FORBIDDEN');
   }
   if (trip.status !== 'in_progress') {
