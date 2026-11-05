@@ -156,6 +156,8 @@ test('with approval off everyone gets in, and the check is still recorded', asyn
   const { status, body } = await register();
   assert.strictEqual(status, 201, JSON.stringify(body));
   assert.strictEqual(body.user.status, 'active');
+  const approved = await User.findOne({ phone: body.user.phone }).lean();
+  assert.ok(approved.pharmacyApprovedAt instanceof Date);
   const pharmacy = await Pharmacy.findOne({ phone: body.user.phone }).lean();
   assert.strictEqual(pharmacy.syndicateMatch.decision, 'review');
   assert.deepStrictEqual(pharmacy.syndicateMatch.reasons, ['قائمة النقابة لسّا ما انرفعت']);
@@ -228,6 +230,7 @@ test('uploading the list reads the full table and lets in whoever was waiting an
   assert.strictEqual(body.imported, LIST.length);
   assert.strictEqual(body.autoApproved, 1);
   assert.strictEqual(await statusOf('0955000001'), 'active');
+  assert.ok((await User.findOne({ phone: '0955000001' }).lean()).pharmacyApprovedAt instanceof Date);
 
   const page = await call('GET', '/admin/registration', { token: adminToken });
   assert.strictEqual(page.body.registry.count, LIST.length);
