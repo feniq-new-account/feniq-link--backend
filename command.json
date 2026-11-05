@@ -1,1 +1,1 @@
-{"id":1,"actions":[{"op":"tap","x":350,"y":780},{"op":"credential","role":"pharmacy","field":"phone","phoneMode":"tail"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":885},{"op":"credential","role":"pharmacy","field":"password"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":980},{"op":"wait","seconds":5},{"op":"restart"}]}
+{"id":2,"actions":[{"op":"tap","x":650,"y":1170},{"op":"swipe","x1":500,"y1":1000,"x2":500,"y2":350,"duration":500},{"op":"swipe","x1":500,"y1":1000,"x2":500,"y2":350,"duration":500}]}
