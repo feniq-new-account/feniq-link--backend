@@ -47,7 +47,9 @@ class _RepShellViewState extends State<RepShellView> {
     final l10n = context.l10n;
     final driverEnabled = widget.driverTripRepository != null;
     final titles = [l10n.repNavPharmacies, l10n.repVisitsTitle,
-      if (driverEnabled) 'رحلات التوزيع', l10n.profileTitle];
+      if (driverEnabled)
+        (Localizations.localeOf(context).languageCode == 'ar' ? 'رحلات التوزيع' : 'Delivery trips'),
+      l10n.profileTitle];
 
     return ResponsiveRoleScaffold(
       appBar: AppBar(
@@ -92,7 +94,7 @@ class _RepShellViewState extends State<RepShellView> {
         if (driverEnabled) NavigationDestination(
           icon: const Icon(Icons.local_shipping_outlined),
           selectedIcon: Icon(Icons.local_shipping, color: AppColors.primaryOf(context)),
-          label: 'رحلاتي',
+          label: Localizations.localeOf(context).languageCode == 'ar' ? 'رحلاتي' : 'My trips',
         ),
         NavigationDestination(
           icon: const Icon(Icons.person_outline),
