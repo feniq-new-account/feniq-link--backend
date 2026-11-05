@@ -85,3 +85,9 @@ test('disabling a bad update remains possible when the download origin is unavai
   await service.enforceMobileBuild({ headers: { 'x-feniq-client': 'android', 'x-app-build': '1049' } }, { role: 'rep' });
   assert.equal(await AppRelease.countDocuments(), 1);
 });
+
+test('malformed JSON values return a controlled invalid-manifest error, not a server TypeError', async () => {
+  for (const data of [null, false, 123, 'text', [], [manifest]]) {
+    await assert.rejects(service.inspectPublishedRelease(undefined, fakeFetch(data)), { code: 'INVALID_APP_RELEASE', statusCode: 400 });
+  }
+});
