@@ -354,7 +354,7 @@ async function recheckPending() {
 async function releasePending() {
   const { modifiedCount } = await User.updateMany(
     { role: 'pharmacy', status: 'pending' },
-    { $set: { status: 'active' } }
+    { $set: { status: 'active', pharmacyApprovedAt: new Date() } }
   );
   return modifiedCount;
 }

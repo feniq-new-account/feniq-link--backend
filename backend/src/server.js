@@ -80,7 +80,7 @@ async function start() {
     if (!(await platformSettings.isApprovalRequired())) {
       const { modifiedCount } = await User.updateMany(
         { role: 'pharmacy', status: 'pending' },
-        { $set: { status: 'active' } }
+        { $set: { status: 'active', pharmacyApprovedAt: new Date() } }
       );
       if (modifiedCount) {
         // eslint-disable-next-line no-console

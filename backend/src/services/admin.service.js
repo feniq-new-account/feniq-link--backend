@@ -352,6 +352,7 @@ async function unblockAccount(userId) {
     );
   }
   user.status = 'active';
+  if (user.role === 'pharmacy' && !user.pharmacyApprovedAt) user.pharmacyApprovedAt = new Date();
   await user.save();
 
   emitToAdmins(EVENTS.ACCOUNT_STATUS_UPDATED, {
@@ -385,6 +386,7 @@ async function findPendingUserOrThrow(userId) {
 async function approveAccount(userId) {
   const user = await findPendingUserOrThrow(userId);
   user.status = 'active';
+  if (user.role === 'pharmacy' && !user.pharmacyApprovedAt) user.pharmacyApprovedAt = new Date();
   await user.save();
 
   emitToAdmins(EVENTS.ACCOUNT_STATUS_UPDATED, {

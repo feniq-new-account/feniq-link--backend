@@ -36,6 +36,10 @@ const userSchema = new Schema(
       enum: ['pending', 'active', 'blocked', 'deleted'],
       default: 'pending',
     },
+    // First transition into active status for a pharmacy. Used to anchor the
+    // licence-review grace period; never reset on blocking/re-approval.
+    // Legacy accounts keep null until an explicit administrative migration.
+    pharmacyApprovedAt: { type: Date, default: null },
     lang: { type: String, enum: ['ar', 'en'], default: 'ar' },
     deviceTokens: { type: [deviceTokenSchema], default: [] },
 

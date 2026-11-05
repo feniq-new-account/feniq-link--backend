@@ -292,6 +292,7 @@ async function register({
       const [user] = await User.create([{
         name, phone, registrationPhoneKey: phoneKey, password: hashedPassword,
         role: 'pharmacy', status: !approvalRequired || autoApproved ? 'active' : 'pending',
+        pharmacyApprovedAt: !approvalRequired || autoApproved ? new Date() : null,
       }], { session });
       const [pharmacy] = await Pharmacy.create([{
         userId: user._id, nameAr: pharmacyName, nameEn: pharmacyName,
