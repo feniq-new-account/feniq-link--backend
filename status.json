@@ -1,8 +1,8 @@
 {
   "session": "42029093717-1",
-  "lastCommand": 58,
+  "lastCommand": 59,
   "credentialEntryPendingRestart": false,
-  "finished": false,
+  "finished": true,
   "error": null,
   "production": false,
   "debugBuild": true,
@@ -549,6 +549,13 @@
         "wait",
         "restart",
         "tap"
+      ],
+      "error": null
+    },
+    {
+      "id": 59,
+      "ops": [
+        "stop"
       ],
       "error": null
     }
