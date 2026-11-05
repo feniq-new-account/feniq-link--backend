@@ -68,6 +68,18 @@ DriverTrip fakeTrip() => DriverTrip(
   ],
 );
 
+class FakeGpsProvider implements LocationProvider {
+  int reads = 0;
+  @override
+  Future<DeviceLocation> current() async {
+    reads++;
+    return DeviceLocation(
+      latitude: 35.1, longitude: 35.2, accuracy: 12, isMocked: false,
+      capturedAt: DateTime.now(),
+    );
+  }
+}
+
 void main() {
   test('trip parsing retains server revisions and stop IDs', () {
     final parsed = DriverTrip.fromJson({
@@ -104,6 +116,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.finishes, 1);
     expect(find.text('No assigned trips yet.'), findsOneWidget);
+  });
+
+  testWidgets('sharing is opt-in, reports an active trip and stops on demand', (tester) async {
+    final trip = fakeTrip();
+    final active = DriverTrip(
+      id: trip.id, region: trip.region, serviceDate: trip.serviceDate,
+      status: 'in_progress', revision: 1, stops: trip.stops,
+    );
+    final repository = FakeDriverRepository([active]);
+    final gps = FakeGpsProvider();
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('en'),
+      home: Scaffold(body: DriverTripsTab(
+        repository: repository, locationProvider: gps,
+      )),
+    ));
+    await tester.pumpAndSettle();
+    expect(repository.gpsSends, 0);
+    await tester.tap(find.text('Share location during trip'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(repository.gpsSends, 1);
+    expect(gps.reads, 1);
+    expect(find.text('Stop sharing location'), findsOneWidget);
+    await tester.tap(find.text('Stop sharing location'));
+    await tester.pump();
+    expect(find.text('Share location during trip'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('empty assignment has no start control', (tester) async {
