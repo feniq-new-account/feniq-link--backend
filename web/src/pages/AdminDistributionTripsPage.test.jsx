@@ -47,7 +47,8 @@ function button(name) {
 }
 
 it('searches existing active pharmacies and requires a stop before saving', async () => {
-  await act(async () => button('Create trip').click());
+  await act(async () => container.querySelectorAll('form')[1].dispatchEvent(
+    new Event('submit', { bubbles: true, cancelable: true })));
   expect(api.createDistributionTrip).not.toHaveBeenCalled();
   expect(container.textContent).toContain('Choose at least one pharmacy');
   await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
