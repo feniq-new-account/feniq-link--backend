@@ -1,7 +1,7 @@
 import 'package:feniq/features/warehouse/presentation/views/warehouse_delivery_view.dart';
 import 'package:feniq/features/warehouse/presentation/managers/warehouse_insights_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_insights_view.dart';
-import 'package:flutter/widgets.dart'; // BuildContext for the redirect; also debugPrint (TEMP DIAGNOSTIC router-lifecycle)
+import 'package:flutter/material.dart'; // Driver shell, BuildContext and navigation diagnostics
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/services/navigation_service.dart';
@@ -57,6 +57,7 @@ import 'package:feniq/features/returns/presentation/managers/my_returns_cubit.da
 import 'package:feniq/features/returns/presentation/views/my_returns_view.dart';
 import 'package:feniq/features/rep/data/repositories/rep_repository.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
+import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_home_cubit.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_pharmacies_cubit.dart';
@@ -549,6 +550,35 @@ class AppRouter {
         path: RoutePaths.panelHome,
         pageBuilder: (context, state) => buildPageTransition(state: state, child: const PanelHomeView()),
       ),
+      // A transport driver has ONLY a trip dashboard, not the rep/warehouse shell.
+      GoRoute(
+        name: RouteNames.driverHome,
+        path: RoutePaths.driverHome,
+        pageBuilder: (context, state) => buildPageTransition(
+          state: state,
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('رحلات التوزيع'),
+              actions: [
+                IconButton(
+                  tooltip: 'Sign out',
+                  icon: const Icon(Icons.logout),
+                  onPressed: () async {
+                    await context.read<AuthCubit>().logout();
+                    if (context.mounted) context.goNamed(RouteNames.login);
+                  },
+                ),
+              ],
+            ),
+            body: driverTripRepository == null
+                ? const Center(child: Text('Trip service unavailable'))
+                : DriverTripsTab(
+                    repository: driverTripRepository!,
+                    locationProvider: const GeolocatorLocationProvider(),
+                  ),
+          ),
+        ),
+      ),
       // Field reps: the same app, signed in with a rep account. appRedirect
       // keeps a rep inside /rep and everyone else out of it.
       GoRoute(
@@ -763,10 +793,14 @@ String? roleRedirect(BuildContext context, GoRouterState state) {
   if (auth.sessionStatus != SessionStatus.active && auth.sessionStatus != SessionStatus.offline) return null;
 
   final location = state.matchedLocation;
+  final inDriverArea = location == RoutePaths.driverHome || location.startsWith('${RoutePaths.driverHome}/');
   final inRepArea = location == RoutePaths.repHome || location.startsWith('${RoutePaths.repHome}/');
   final inPanelArea = location == RoutePaths.panelHome;
   final inWarehouseArea =
       location == RoutePaths.warehouseHome || location.startsWith('${RoutePaths.warehouseHome}/');
+  if (auth.isDriver) {
+    return inDriverArea || _repOpenPaths.contains(location) ? null : RoutePaths.driverHome;
+  }
   if (auth.isRep) {
     return inRepArea || _repOpenPaths.contains(location) ? null : RoutePaths.repHome;
   }
@@ -779,7 +813,7 @@ String? roleRedirect(BuildContext context, GoRouterState state) {
   if (auth.isPanelUser) {
     return inPanelArea || _repOpenPaths.contains(location) ? null : RoutePaths.panelHome;
   }
-  return inRepArea || inPanelArea || inWarehouseArea ? RoutePaths.warehouseSelection : null;
+  return inDriverArea || inRepArea || inPanelArea || inWarehouseArea ? RoutePaths.warehouseSelection : null;
 }
 
 // RoutePaths.orderTracking with its id: '/orders/<id>'.

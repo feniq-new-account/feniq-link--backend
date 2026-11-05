@@ -11,6 +11,7 @@ import 'package:feniq/routes/route_names.dart';
 /// to the role in the stored token, so a rep opening the app without a
 /// connection still reaches their own screens.
 String homeRouteNameFor(AuthState state) {
+  if (state.isDriver) return RouteNames.driverHome;
   if (state.isRep) return RouteNames.repHome;
   if (state.isWarehouse) return RouteNames.warehouseHome;
   if (state.isPanelUser) return RouteNames.panelHome;

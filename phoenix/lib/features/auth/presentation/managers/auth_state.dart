@@ -55,6 +55,7 @@ class AuthState {
 
   String? get role => user?.role ?? tokenRole;
   bool get isRep => role == 'rep';
+  bool get isDriver => role == 'driver';
   // A warehouse account: its own orders screens (features/warehouse).
   bool get isWarehouse => role == 'warehouse';
   // An admin account signed in to the app: its home is a short landing that

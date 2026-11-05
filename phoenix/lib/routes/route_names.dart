@@ -29,6 +29,7 @@ class RouteNames {
   static const String complaintDetail = 'complaint-detail';
 
   // Field reps (features/rep) and the pharmacy's visit QR they scan.
+  static const String driverHome = 'driver-home';
   static const String repHome = 'rep-home';
   static const String repPharmacy = 'rep-pharmacy';
   static const String repScan = 'rep-scan';
