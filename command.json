@@ -1,1 +1,1 @@
-{"id":13,"actions":[{"op":"tap","x":350,"y":620},{"op":"clear"},{"op":"text","value":"DEMO updated while pending"},{"op":"key","value":"BACK"},{"op":"tap","x":350,"y":1100},{"op":"wait","seconds":2},{"op":"restart"},{"op":"tap","x":350,"y":1185}]}
+{"id":14,"actions":[{"op":"key","value":"BACK"},{"op":"swipe","x1":450,"y1":1050,"x2":450,"y2":450,"duration":500}]}
