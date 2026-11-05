@@ -1,0 +1,12 @@
+{
+  "session": "42079438769-1",
+  "scenario": "prelaunch",
+  "lastCommand": 0,
+  "credentialEntryPendingRestart": false,
+  "finished": false,
+  "error": null,
+  "production": false,
+  "debugBuild": true,
+  "scope": "Interactive emulator UI with disposable localhost API; not physical phone/release signing",
+  "history": []
+}
