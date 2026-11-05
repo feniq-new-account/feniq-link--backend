@@ -2,8 +2,6 @@
 name: Android interactive acceptance
 
 on:
-  push:
-    branches: [codex/android-interactive-acceptance-2026-11-05]
   workflow_dispatch:
 
 permissions:

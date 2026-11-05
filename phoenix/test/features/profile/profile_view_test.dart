@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/theme/dark_theme.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
+import 'package:feniq/features/auth/data/models/user_model.dart';
 import 'package:feniq/features/debts/presentation/widgets/debts_overview.dart';
 import 'package:feniq/features/profile/presentation/views/profile_view.dart';
 import 'package:feniq/features/settings/presentation/managers/settings_cubit.dart';
@@ -151,5 +152,24 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('تغيير كلمة السر'), findsOneWidget);
+  });
+
+  testWidgets('language selection follows the resolved locale without an override', (tester) async {
+    await pump(tester, locale: const Locale('en'));
+    await tester.scrollUntilVisible(find.text('English'), 200,
+      scrollable: find.byType(Scrollable).first);
+    final container = tester.widget<Container>(find.ancestor(
+      of: find.text('English'), matching: find.byType(Container)).first);
+    expect((container.decoration! as BoxDecoration).color, isNot(Colors.transparent));
+  });
+
+  testWidgets('international phone remains left to right in an Arabic profile', (tester) async {
+    const phone = '+963944000201';
+    when(() => auth.state).thenReturn(const AuthState(
+      sessionStatus: SessionStatus.active,
+      user: UserModel(id: 'qa', name: 'Demo', phone: phone, role: 'pharmacy', status: 'active', lang: 'ar'),
+    ));
+    await pump(tester, locale: const Locale('ar'));
+    expect(tester.widget<Text>(find.text(phone)).textDirection, TextDirection.ltr);
   });
 }

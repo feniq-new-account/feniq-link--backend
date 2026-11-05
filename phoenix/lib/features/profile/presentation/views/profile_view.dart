@@ -109,15 +109,15 @@ class ProfileView extends StatelessWidget {
           // The same values the header used to show, now also presented as a
           // labelled record. Nothing new is fetched - these all come straight
           // from the already-loaded auth state.
-          final infoRows = <({String label, String value})>[
+          final infoRows = <({String label, String value, TextDirection? direction})>[
             if ((user?.name ?? '').isNotEmpty)
-              (label: l10n.fullNameLabel, value: user!.name),
+              (label: l10n.fullNameLabel, value: user!.name, direction: null),
             if (pharmacyName != null && pharmacyName.isNotEmpty)
-              (label: l10n.pharmacyNameLabel, value: pharmacyName),
+              (label: l10n.pharmacyNameLabel, value: pharmacyName, direction: null),
             if (city != null && city.isNotEmpty)
-              (label: l10n.cityLabel, value: city),
+              (label: l10n.cityLabel, value: city, direction: null),
             if ((user?.phone ?? '').isNotEmpty)
-              (label: l10n.phoneLabel, value: user!.phone),
+              (label: l10n.phoneLabel, value: user!.phone, direction: TextDirection.ltr),
           ];
 
           // Single column on phones, centred with a comfortable max width on
@@ -181,7 +181,7 @@ class ProfileView extends StatelessWidget {
                   const SizedBox(height: AppSizes.spacingSmall),
                   BlocBuilder<SettingsCubit, SettingsState>(
                     builder: (context, settingsState) {
-                      final currentCode = settingsState.locale?.languageCode ?? 'ar';
+                      final currentCode = Localizations.localeOf(context).languageCode;
                       return _SettingsCard(
                         icon: Icons.translate,
                         label: l10n.language,
@@ -482,7 +482,7 @@ class _IdentityHeader extends StatelessWidget {
 class _PersonalInfoCard extends StatelessWidget {
   const _PersonalInfoCard({required this.rows});
 
-  final List<({String label, String value})> rows;
+  final List<({String label, String value, TextDirection? direction})> rows;
 
   @override
   Widget build(BuildContext context) {
@@ -506,7 +506,8 @@ class _PersonalInfoCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 3),
-                  Text(rows[i].value, style: context.textTheme.bodyLarge),
+                  Text(rows[i].value, style: context.textTheme.bodyLarge,
+                    textDirection: rows[i].direction),
                 ],
               ),
             ),
