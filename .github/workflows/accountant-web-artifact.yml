@@ -1,0 +1,33 @@
+name: Accountant Dashboard web build artifact (isolated)
+on:
+  push:
+    branches: [build/accountant-smoke-apk-20261106]
+    paths:
+      - '.github/workflows/accountant-web-artifact.yml'
+permissions:
+  contents: read
+jobs:
+  build-web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/collection-operator-controls-20261106
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci --prefix web --no-audit --no-fund
+      - name: Build accountant dashboard (preview artifact, not deployed)
+        env:
+          VITE_API_BASE_URL: https://feniq-connect-api.onrender.com/api
+        run: npm run build --prefix web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: feniq-accountant-dashboard-dist
+          path: web/dist/
+          retention-days: 7
+          if-no-files-found: error
