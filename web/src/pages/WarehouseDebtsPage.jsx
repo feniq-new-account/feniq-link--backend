@@ -3,7 +3,7 @@ import { NumericInput } from '../components/NumericInput';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useModalSafety } from '../hooks/useModalSafety';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { LoadMoreControl } from '../components/LoadMoreControl';
@@ -16,7 +16,10 @@ import { QuickPaymentModal } from '../components/QuickPaymentModal';
 import { WarehouseSummaryCard } from '../components/WarehouseSummaryCard';
 import { VoicePaymentModal } from '../components/VoicePaymentModal';
 import { displayName } from '../utils/displayName';
-import { formatBusinessDate, formatBusinessTime } from '../utils/businessDate';
+import { downloadReportCsv } from '../utils/reportCsv';
+import { statementCsvRows } from '../utils/statementExport';
+import './AccountStatement.css';
+import { businessDateInputValue, formatBusinessDateTime, formatBusinessDate, formatBusinessTime } from '../utils/businessDate';
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -392,7 +395,7 @@ function StatementTable({ statement }) {
           </tr>
           {statement.rows.map((row) => (
             <tr key={row.id}>
-              <td className="wh-num">{formatBusinessDate(row.effectiveAt)}</td>
+              <td className="wh-num">{formatBusinessDateTime(row.effectiveAt)}<div className="wh-table-sub">{t('statement.postedAt')}: {formatBusinessDateTime(row.postedAt)}</div></td>
               <td>
                 <div>{t(STATEMENT_KIND_KEYS[row.kind] ?? 'statement.kindOther')}</div>
                 {/* Mandatory on adjustments and reversals - it is the whole
@@ -407,6 +410,11 @@ function StatementTable({ statement }) {
               <td className="wh-num wh-table-total">{formatSyp(row.balanceSyp)}</td>
             </tr>
           ))}
+          <tr className="wh-statement-opening">
+            <td className="wh-num">{formatBusinessDate(statement.period.to)}</td>
+            <td>{t('statement.closing')}</td><td /><td /><td />
+            <td className="wh-num">{formatSyp(statement.closing.syp)}</td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -414,8 +422,11 @@ function StatementTable({ statement }) {
 }
 
 function WarehouseDebtDetail({ pharmacyId, onBack }) {
-  const { user } = useAuth();
-  const canRecord = hasRolePermission(user, 'paymentRecord');
+  const { user, warehouse } = useAuth();
+  const [range, setRange] = useState(null);
+  const canRecord = hasRolePermission(user, 'paymentRecord') && !range;
+  const requestId = useRef(0);
+  const [dates, setDates] = useState({ from: businessDateInputValue(new Date(Date.now() - 90 * 86400000)), to: businessDateInputValue() });
   const { t, i18n } = useTranslation();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -424,16 +435,19 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
   const [reversing, setReversing] = useState(null);
 
   const load = useCallback(async () => {
-    setError(null);
+    const id = ++requestId.current;
+    setError(null); setData(null);
     try {
-      setData(await api.warehouseBalanceDetail(pharmacyId));
+      const result = await api.warehouseBalanceDetail(pharmacyId, range || {});
+      if (id === requestId.current) setData(result);
     } catch (err) {
-      setError(err.message);
+      if (id === requestId.current) setError(err.message);
     }
-  }, [pharmacyId]);
+  }, [pharmacyId, range]);
 
   useEffect(() => {
     load();
+    return () => { requestId.current += 1; };
   }, [load]);
 
   // "Back" points toward where the list is - left in LTR, right in RTL.
@@ -444,10 +458,21 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
     </button>
   );
 
+  const controls = <form className="wh-filters statement-controls" onSubmit={(event) => {
+    event.preventDefault(); setRange({ ...dates });
+  }}>
+    <label>{t('statement.from')}<input type="date" required max={dates.to} value={dates.from}
+      onChange={(event) => setDates({ ...dates, from: event.target.value })} /></label>
+    <label>{t('statement.to')}<input type="date" required min={dates.from} value={dates.to}
+      onChange={(event) => setDates({ ...dates, to: event.target.value })} /></label>
+    <button className="btn-primary" type="submit">{t('statement.applyPeriod')}</button>
+    <button className="btn-secondary" type="button" onClick={() => { if (range) setRange(null); else load(); }}>{t('statement.currentView')}</button>
+  </form>;
+
   if (error) {
     return (
       <div>
-        {backButton}
+        {backButton}{controls}
         <p className="error-text">{error}</p>
       </div>
     );
@@ -456,7 +481,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
   if (!data) {
     return (
       <div>
-        {backButton}
+        {backButton}{controls}
         <p className="hint">{t('common.loading')}</p>
       </div>
     );
@@ -479,17 +504,25 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
 
   return (
     <div>
-      {backButton}
-
+      {backButton}{controls}
+      <div className="statement-controls">
+        <button type="button" className="btn-secondary" onClick={() => window.print()}>{t('statement.print')}</button>{' '}
+        <button type="button" className="btn-secondary" onClick={() => downloadReportCsv(`feniq-statement-${pharmacyId}.csv`, statementCsvRows(statement, t, warehouse))}>{t('statement.exportCsv')}</button>
+      </div>
+      {range && <p className="hint">{t('statement.historyReadOnly')}</p>}
+      <div className="account-statement-print">
+      <h2>{t('statement.title')} — {warehouse?.nameEn || warehouse?.nameAr || ''}</h2>
+      <p className="hint">{t('accounting.updatedAt')}: {formatBusinessDateTime(statement.asOf)} · Asia/Damascus</p>
+      <p>{t('statement.from')}: {formatBusinessDate(statement.period.from)} — {t('statement.to')}: {formatBusinessDate(statement.period.to)}</p>
       <div className="wh-detail-card wh-invoice-header">
         <div className="wh-invoice-identity">
-          <div className="wh-invoice-name">{statement.pharmacy?.nameEn}</div>
+          <div className="wh-invoice-name">{displayName(statement.pharmacy?.nameEn, statement.pharmacy?.nameAr)}</div>
           {statement.pharmacy?.phone && (
             <div className="wh-invoice-phone wh-num">{statement.pharmacy.phone}</div>
           )}
         </div>
         <div className={`wh-invoice-balance ${balanceState}`}>
-          <div className="wh-invoice-balance-label">{t('debts.currentBalance')}</div>
+          <div className="wh-invoice-balance-label">{t('statement.closing')}</div>
           <div className="wh-invoice-balance-value wh-num">{balanceText}</div>
         </div>
       </div>
@@ -532,14 +565,15 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
                 <span className="wh-invoice-count">{statement.rows.length}</span>
               )}
             </h2>
-            {statement.rows.length === 0 ? (
-              <InvoiceEmpty icon="&#128196;">{t('statement.empty')}</InvoiceEmpty>
-            ) : (
-              <StatementTable statement={statement} />
-            )}
+            {statement.rows.length === 0 && <p className="hint">{t('statement.empty')}</p>}
+            <StatementTable statement={statement} />
+            {statement.reconciliation && <p className="hint" role={statement.reconciliation.reconciled ? 'status' : 'alert'}>
+              {t(statement.reconciliation.reconciled ? 'statement.reconciled' : 'statement.notReconciled')}
+            </p>}
           </div>
 
-          <div className="wh-detail-card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="wh-detail-card statement-payment-history" style={{ padding: 0, overflow: 'hidden' }}>
+            <p className="hint">{t(data.paymentsScope === 'period' ? 'statement.periodPayments' : 'statement.allPayments')}</p>
             <h2 className="wh-detail-card-title wh-invoice-section-head" style={cardHeadStyle}>
               <span>{t('debts.payments')}</span>
               {payments.length > 0 && <span className="wh-invoice-count">{payments.length}</span>}
@@ -568,7 +602,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
           </div>
         </div>
 
-        <div className="wh-invoice-side">
+        <div className="wh-invoice-side statement-controls">
           {canRecord && <AddPaymentForm
             pharmacyId={pharmacyId}
             remainingSyp={statement.outstandingDebtSyp}
@@ -577,6 +611,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
         </div>
       </div>
 
+      </div>
       {reversing && (
         <ReversePaymentModal
           payment={reversing}
@@ -610,6 +645,7 @@ export function WarehouseDebtsPage() {
   const [selectedPharmacyId, setSelectedPharmacyId] = useState(selectedFromUrl);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [balanceState, setBalanceState] = useState('');
   // A row's "pay in full" / "part payment" open this: { mode, row }.
   const [paying, setPaying] = useState(null);
   const [payingBusy, setPayingBusy] = useState(false);
@@ -625,12 +661,12 @@ export function WarehouseDebtsPage() {
 
   const fetchPage = useCallback(
     (cursor) =>
-      api.warehouseBalances({ limit: PAGE_SIZE, after: cursor, search: search || undefined }).then((data) => ({
+      api.warehouseBalances({ limit: PAGE_SIZE, after: cursor, search: search || undefined, balanceState: balanceState || undefined }).then((data) => ({
         rows: data.pharmacies,
         hasMore: data.pagination.hasMore,
         nextCursor: data.pagination.nextCursor,
       })),
-    [search]
+    [search, balanceState]
   );
 
   const {
@@ -646,7 +682,7 @@ export function WarehouseDebtsPage() {
   useEffect(() => {
     setSelectedPharmacyId(selectedFromUrl);
     if (!selectedFromUrl) reset();
-  }, [search, selectedFromUrl, reset]);
+  }, [search, balanceState, selectedFromUrl, reset]);
 
   if (selectedPharmacyId) {
     return (
@@ -679,11 +715,15 @@ export function WarehouseDebtsPage() {
         <input
           type="search"
           className="wh-filter-search"
-          placeholder={t('debts.searchPlaceholder')}
+          placeholder={t('statement.searchAccounts')}
+          aria-label={t('statement.searchAccounts')}
           disabled={payingBusy}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
+        <label>{t('statement.balanceState')}<select value={balanceState} disabled={payingBusy} onChange={(event) => setBalanceState(event.target.value)}>
+          {['', 'debt', 'credit', 'settled'].map((state) => <option key={state} value={state}>{t(`statement.balanceState_${state || 'all'}`)}</option>)}
+        </select></label>
         {canRecord && <button type="button" className="btn-secondary wh-voice-btn" disabled={payingBusy} onClick={() => setVoiceOpen(true)}>
           {t('voicePay.title')}
         </button>}

@@ -13,6 +13,7 @@ function serializeRow(row) {
     entryNumber: row.entryNumber,
     kind: row.kind,
     effectiveAt: row.effectiveAt,
+    postedAt: row.postedAt,
     debitSyp: row.debitSyp,
     creditSyp: row.creditSyp,
     amountUsd: row.amountUsd,
@@ -34,11 +35,13 @@ function party(doc) {
 // this already knows which warehouse it is - it needs the pharmacy back, and
 // vice versa. Same convention V1's toBalanceDetailResponse used.
 function toStatementResponse(
-  { pharmacy, warehouse, period, opening, closing, rows, summary },
+  { pharmacy, warehouse, period, opening, closing, rows, summary, asOf, reconciliation },
   viewerRole
 ) {
   return {
     statement: {
+      asOf,
+      reconciliation,
       period,
       opening,
       closing,

@@ -517,8 +517,10 @@ async function reversePayment(id, warehouseId, actorUserId, { reason, idempotenc
 // Every payment on an account, newest first - settlements and reversals alike,
 // each carrying its own status, so the detail view shows the correction as
 // well as the mistake.
-async function listPaymentsForAccount(accountId) {
-  return Payment.find({ accountId }).sort({ paidAt: -1, _id: -1 }).lean();
+async function listPaymentsForAccount(accountId, { from = null, to = null, session = null } = {}) {
+  const filter = { accountId };
+  if (from || to) filter.paidAt = { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) };
+  return Payment.find(filter).sort({ paidAt: -1, _id: -1 }).session(session).lean();
 }
 
 module.exports = {

@@ -1,0 +1,21 @@
+.statement-controls { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; margin-block: 1rem; }
+.statement-controls label { display: grid; gap: .4rem; }
+.statement-controls input { min-height: 2.5rem; }
+.account-statement-print .wh-table-sub { overflow-wrap: anywhere; }
+@media print {
+  body:has(.account-statement-print) * { visibility: hidden; }
+  body:has(.account-statement-print) .account-statement-print,
+  body:has(.account-statement-print) .account-statement-print * { visibility: visible; }
+  body:has(.account-statement-print) .account-statement-print { position: absolute; inset: 0; width: 100%; background: white; color: black; }
+  body:has(.account-statement-print) .statement-controls,
+  body:has(.account-statement-print) .statement-controls *,
+  body:has(.account-statement-print) .statement-payment-history,
+  body:has(.account-statement-print) .statement-payment-history * { display: none !important; }
+  .account-statement-print .wh-detail-grid { display: block; }
+  .account-statement-print .table-scroll { overflow: visible; }
+  .account-statement-print thead { display: table-header-group; }
+  .account-statement-print tr { break-inside: avoid; }
+  .account-statement-print .wh-invoice-summary { display: flex; flex-wrap: wrap; }
+  .account-statement-print table { width: 100%; font-size: 10pt; border-collapse: collapse; }
+  .account-statement-print th, .account-statement-print td { padding: 5pt; border-bottom: 1px solid #bbb; }
+}

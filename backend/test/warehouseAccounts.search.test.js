@@ -108,3 +108,22 @@ test('search combines correctly with the compound (balanceSyp, id) cursor across
     'every matching account was covered, in the balance-descending order the list promises'
   );
 });
+
+test('search also matches the stored pharmacy phone without regex expansion', async () => {
+  const { pharmacy } = await seedAccount({ nameAr: 'أ', nameEn: 'Phone customer', balanceSyp: 10 });
+  const result = await listAccountsForWarehouse(WAREHOUSE_ID, { search: pharmacy.phone });
+  assert.strictEqual(result.rows.length, 1);
+  assert.strictEqual(String(result.rows[0].pharmacyId), String(pharmacy._id));
+  assert.strictEqual((await listAccountsForWarehouse(WAREHOUSE_ID, { search: '.*' })).rows.length, 0);
+});
+test('balance-state filters compose with search, tenant scope and cursor pages', async () => {
+  for (const balanceSyp of [500, 300, 0, -100]) await seedAccount({ nameAr: 'مطابقة', nameEn: 'Match', balanceSyp });
+  const first = await listAccountsForWarehouse(WAREHOUSE_ID, { search: 'Match', balanceState: 'debt', limit: 1 });
+  const second = await listAccountsForWarehouse(WAREHOUSE_ID, { search: 'Match', balanceState: 'debt', limit: 1, after: JSON.parse(first.nextCursor) });
+  assert.strictEqual(first.rows[0].balanceSyp, 500); assert.strictEqual(second.rows[0].balanceSyp, 300);
+  assert.strictEqual(second.hasMore, false);
+  assert.strictEqual((await listAccountsForWarehouse(WAREHOUSE_ID, { balanceState: 'credit' })).rows[0].balanceSyp, -100);
+  assert.strictEqual((await listAccountsForWarehouse(WAREHOUSE_ID, { balanceState: 'settled' })).rows[0].balanceSyp, 0);
+  assert.strictEqual((await listAccountsForWarehouse(new mongoose.Types.ObjectId(), { search: 'Match', balanceState: 'debt' })).rows.length, 0);
+  await assert.rejects(listAccountsForWarehouse(WAREHOUSE_ID, { balanceState: 'bad' }), { code: 'INVALID_QUERY' });
+});

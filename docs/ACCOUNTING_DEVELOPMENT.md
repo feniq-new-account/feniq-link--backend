@@ -48,3 +48,36 @@ boundaries, read-only behavior, reversals, filters and concurrent snapshot read;
 React tests for exact server figures, references, empty/error/retry, stale replies
 and entitlement routing. Require full CI and independent financial review before
 merge. No manual Render deploy or production financial tests.
+
+## C2/C3 — Accounts and statements
+
+Phone/name search and debt/credit/zero filters compose server-side with the
+existing warehouse scope and compound balance cursor; balances retain their
+ledger-cache definition. No per-invoice payment status is fabricated.
+
+Statement opening, movement rows, account identity and optional payment rows
+now share an explicit snapshot transaction. Read helpers accept an optional
+session without changing old call signatures. Reversed periods are rejected.
+Response adds asOf, postedAt and reconciliation (opening + signed movements =
+closing). This is a statement arithmetic check, not a separate cache audit.
+
+Warehouse detail accepts optional from/to. Explicit ranges also filter payment
+receipts by paidAt; paymentsScope declares period vs legacy all-history mode.
+Historical views are read-only in the UI, with a return-to-current action before
+recording/reversing cash. Errors clear old amounts/export actions; request IDs
+prevent late replies from replacing the latest selection. Existing summary
+cards likewise clear old period figures on refresh/failure.
+
+Print view includes warehouse/pharmacy identity, dates, opening/closing and all
+ledger movement rows; native browser print can save PDF. No independent PDF
+engine was added. CSS is scoped to the mounted statement. CSV uses existing
+formula-safe quoting, exports server amounts/references/timestamps and preserves
+phone text. Physical printer/PDF layout acceptance remains unverified: local
+Chromium startup failed, so no generated-PDF acceptance is claimed.
+
+Validation: existing statement15 and account-search5 tests, reporting3 tests
+including a backdated commit injected between opening and rows; React statement,
+CSV, inline-pay and stale-summary tests; full web545 passed before the additional
+summary freshness test (which passed separately), build and lint passed (existing
+warnings). Independent financial review found no blocker. CI required on the
+final PR head. No writes, financial migration, allocation or commission change.
