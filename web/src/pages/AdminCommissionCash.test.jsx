@@ -6,6 +6,7 @@ import { AdminCommissionPage, RecordCollectionForm, ReverseCollectionModal } fro
 import { api } from '../api/client';
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: key => key, i18n: { language: 'ar' } }) }));
 vi.mock('../api/client', () => ({ api: { recordCommissionCollection: vi.fn(), adminCommissionWarehouse: vi.fn(), adminCommissionOverview: vi.fn() } }));
+vi.mock('../components/AdminCollectionControls', () => ({ AdminCollectionControls: () => null }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let root, host;
 const props = { warehouseId: 'w', period: { from: '2026-11-01T00:00:00Z', to: '2026-11-07T23:59:59Z' }, outstandingSyp: 1200 };
