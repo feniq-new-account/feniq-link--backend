@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { TripLiveLocationPanel } from './TripLiveLocationPanel';
@@ -11,6 +11,10 @@ export function AdminDistributionTripsPage() {
   const ar = (i18n.resolvedLanguage || i18n.language || 'ar').startsWith('ar');
   const tr = (a, e) => ar ? a : e;
   const [trips, setTrips] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState({ hasMore: false, nextCursor: null });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sequence = useRef(0);
   const [drivers, setDrivers] = useState([]);
   const [newDriver, setNewDriver] = useState(emptyDriver);
   const [assignment, setAssignment] = useState({});
@@ -23,15 +27,47 @@ export function AdminDistributionTripsPage() {
   const [notice, setNotice] = useState('');
 
   const refresh = useCallback(async () => {
+    const serial = ++sequence.current;
+    setPage({ hasMore: false, nextCursor: null });
     try {
-      const data = await api.adminDistributionTrips();
+      const data = await api.adminDistributionTrips(statusFilter ? { status: statusFilter } : {});
+      // Results from a previous filter must never overwrite the new queue.
+      if (serial !== sequence.current) return;
       setTrips(data.trips || []);
+      setPage(data.pagination || { hasMore: false, nextCursor: null });
     } catch (e) {
+      if (serial !== sequence.current) return;
+      setTrips([]);
       setError(e.message || 'Cannot load trips.');
     }
-  }, []);
+  }, [statusFilter]);
 
   useEffect(() => { void refresh(); }, [refresh]);
+
+  async function loadMoreTrips() {
+    if (loadingMore || busy || !page.hasMore || !page.nextCursor) return;
+    const serial = sequence.current;
+    const after = page.nextCursor;
+    setLoadingMore(true);
+    setError('');
+    try {
+      const data = await api.adminDistributionTrips({
+        ...(statusFilter ? { status: statusFilter } : {}),
+        after,
+      });
+      if (serial !== sequence.current) return;
+      // Defensive deduplication for a changing list under live operations.
+      setTrips(old => {
+        const ids = new Set(old.map(t => t._id));
+        return [...old, ...(data.trips || []).filter(t => !ids.has(t._id))];
+      });
+      setPage(data.pagination || { hasMore: false, nextCursor: null });
+    } catch (e) {
+      if (serial === sequence.current) setError(e.message || 'Could not load older trips.');
+    } finally {
+      setLoadingMore(false);
+    }
+  }
   useEffect(() => {
     let alive = true;
     api.adminDistributionDrivers().then(result => {
@@ -256,6 +292,16 @@ export function AdminDistributionTripsPage() {
       <section className="adm-card reg-card">
         <div className="adm-card-head"><span>{tr('الرحلات الأخيرة', 'Recent trips')}</span></div>
         <div className="reg-card-body">
+          <label>{tr('تصفية الرحلات حسب الحالة', 'Filter trips by status')}
+            <select aria-label="Filter trips by status" value={statusFilter}
+              onChange={event => setStatusFilter(event.target.value)}>
+              <option value="">{tr('كل الحالات', 'All statuses')}</option>
+              <option value="planned">{tr('مخططة', 'Planned')}</option>
+              <option value="in_progress">{tr('جارية', 'In progress')}</option>
+              <option value="completed">{tr('مكتملة', 'Completed')}</option>
+              <option value="cancelled">{tr('ملغاة', 'Cancelled')}</option>
+            </select>
+          </label>
           {trips.map(trip => (
             <article key={trip._id} className="adm-card" style={{ padding: 16, marginBottom: 12 }}>
               <strong>{trip.region}</strong>{' — '}{trip.driverName}
@@ -316,6 +362,13 @@ export function AdminDistributionTripsPage() {
             </article>
           ))}
           {trips.length === 0 && <p className="hint">{tr('لا توجد رحلات.', 'No trips yet.')}</p>}
+          {page.hasMore && (
+            <button type="button" className="btn-secondary"
+              disabled={busy || loadingMore} onClick={loadMoreTrips}>
+              {loadingMore ? tr('جارٍ تحميل الرحلات...', 'Loading older trips...')
+                : tr('عرض رحلات أقدم', 'Load older trips')}
+            </button>
+          )}
         </div>
       </section>
     </div>
