@@ -15,3 +15,10 @@ amounts nor posting rules change. No backend or permission changes are needed.
 Read validation also rejects an explicitly invalid custom report end date; the
 existing omitted-end default is unchanged. Invalid input cannot silently yield
 a report through the current date.
+
+Activity filters additionally support pharmacy name/phone and current account
+balance type (debt/credit/zero), intersecting any exact pharmacy filter inside
+the same snapshot. Only activity rows are filtered; the KPI labels explicitly
+retain whole-warehouse scope. No invoice settlement status is inferred.
+Account-list/summary/statement and settlement routes set no-store to avoid
+reusing financial data from browser/proxy caches.

@@ -1872,6 +1872,8 @@
     }
   },
   "accounting": {
+    "activityPharmacy": "Activity pharmacy name / phone",
+    "activityBalance": "Current account balance type — table only",
     "openOrder": "Open order and invoice",
     "openReturn": "Open return",
     "reversalReference": "Reverses entry",
@@ -1891,7 +1893,7 @@
   "scope": "Period metrics cover the whole warehouse; debt is the current position, independent of period. Period:",
   "invoiceNote": "Payments are account-level. This report does not allocate payments to invoices or establish commission under the new collection policy.",
   "activity": "Recent accounting movements",
-  "activityScope": "Up to 20 movements in the selected period and type. Open a pharmacy statement for full details.",
+  "activityScope": "Up to 20 movements matching the period, pharmacy, balance type and movement type. Open a pharmacy statement for full details.",
   "noActivity": "No movements in this period.",
   "date": "Effective date",
   "pharmacy": "Pharmacy",
