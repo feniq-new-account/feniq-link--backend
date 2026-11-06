@@ -487,6 +487,7 @@ async function openingBalanceFor(accountId, from, session = null) {
 // bearing guarantees that should never be merely "probably built by now".
 async function ensureFinancialIndexes() {
   await Promise.all([LedgerAccount.createIndexes(), LedgerEntry.createIndexes(),
+    require('../models/commissionCollection.model').createIndexes(),
     require('../models/paymentProof.model').createIndexes(),
     require('../models/paymentProofReview.model').createIndexes(),
     require('../models/collectionContract.model').createIndexes(),

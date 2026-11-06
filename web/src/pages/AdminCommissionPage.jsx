@@ -10,7 +10,7 @@ import {
   formatBusinessTime,
   startOfBusinessMonthInputValue,
 } from '../utils/businessDate';
-import { PAYMENT_METHODS } from '../utils/payments';
+import { createIdempotencyKeys, PAYMENT_METHODS } from '../utils/payments';
 import { LoadMoreControl } from '../components/LoadMoreControl';
 import { usePaginatedData } from '../hooks/usePaginatedData';
 
@@ -76,7 +76,7 @@ function StatCard({ label, value, hint, tone }) {
 // The period submitted is the window currently being viewed: that is what the
 // admin was looking at when they decided how much was owed, so it is the
 // honest thing to file the payment against.
-function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) {
+export function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) {
   const { t } = useTranslation();
   const [direction, setDirection] = useState('from_warehouse');
   const [amount, setAmount] = useState('');
@@ -85,6 +85,7 @@ function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) 
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [requestKeys] = useState(() => createIdempotencyKeys());
 
   const owedDirection = outstandingSyp < 0 ? 'to_warehouse' : 'from_warehouse';
 
@@ -101,26 +102,29 @@ function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) 
     setError(null);
 
     const value = Number(amount);
-    if (!Number.isFinite(value) || value <= 0) {
+    if (!Number.isSafeInteger(value) || value <= 0) {
       setError(t('commission.amountPositive'));
       return;
     }
 
     setIsSaving(true);
     try {
-      await api.recordCommissionCollection({
+      const body = {
         warehouseId,
         periodFrom: period.from,
         periodTo: period.to,
-        amountSyp: Math.round(value),
+        amountSyp: value,
         direction,
         method,
         reference: reference.trim() || undefined,
         note: note.trim() || undefined,
+      };
+      await requestKeys.submit({ operation: 'commission-cash', ...body }, async idempotencyKey => {
+        await api.recordCommissionCollection({ ...body, idempotencyKey });
+        await onSaved();
       });
       setReference('');
       setNote('');
-      await onSaved();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -211,11 +215,12 @@ function RecordCollectionForm({ warehouseId, period, outstandingSyp, onSaved }) 
 // A collection is corrected by reversing it, never by editing or deleting -
 // same rule, and same modal shape, as reversing a pharmacy payment. The reason
 // is mandatory here and again on the server.
-function ReverseCollectionModal({ collection, onClose, onConfirm }) {
+export function ReverseCollectionModal({ collection, onClose, onConfirm }) {
   const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [requestKeys] = useState(() => createIdempotencyKeys());
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -226,7 +231,8 @@ function ReverseCollectionModal({ collection, onClose, onConfirm }) {
     setIsBusy(true);
     setError(null);
     try {
-      await onConfirm(reason.trim());
+      await requestKeys.submit({ operation: 'commission-cash-reversal', collectionId: collection.id, reason: reason.trim() },
+        idempotencyKey => onConfirm(reason.trim(), idempotencyKey));
     } catch (err) {
       setError(err.message);
       setIsBusy(false);
@@ -418,7 +424,7 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
   // Both the row above and this view have to move when a collection is
   // recorded or reversed, so every mutation refreshes the two together.
   const reload = async () => {
-    await reset();
+    await reset({ throwOnError: true });
     await onChanged();
   };
 
@@ -561,8 +567,8 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
         <ReverseCollectionModal
           collection={reversing}
           onClose={() => setReversing(null)}
-          onConfirm={async (reason) => {
-            await api.reverseCommissionCollection(reversing.id, { reason });
+          onConfirm={async (reason, idempotencyKey) => {
+            await api.reverseCommissionCollection(reversing.id, { reason, idempotencyKey });
             setReversing(null);
             await reload();
           }}
@@ -581,7 +587,7 @@ export function AdminCommissionPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ throwOnError = false } = {}) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -589,6 +595,7 @@ export function AdminCommissionPage() {
       setOverview(response.overview);
     } catch (err) {
       setError(err.message);
+      if (throwOnError) throw err;
     } finally {
       setIsLoading(false);
     }
@@ -630,7 +637,7 @@ export function AdminCommissionPage() {
           from={from}
           to={to}
           onBack={() => setSelectedWarehouseId(null)}
-          onChanged={load}
+          onChanged={() => load({ throwOnError: true })}
         />
       </div>
     );

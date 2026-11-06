@@ -63,7 +63,7 @@ async function call(method, path, { token, body } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await response.text();
-  return { status: response.status, body: text ? JSON.parse(text) : null };
+  return { status: response.status, headers: response.headers, body: text ? JSON.parse(text) : null };
 }
 
 // A delivered order on warehouse A, through the real transitions so the charge
@@ -100,7 +100,7 @@ function rowFor(data, warehouseId) {
 
 function record(overrides = {}) {
   const range = wideRange();
-  return commissionService.recordCollection({
+  return commissionService.recordCollection({ idempotencyKey: require('node:crypto').randomUUID(),
     warehouseId: ids.warehouseA.toString(),
     periodFrom: range.from,
     periodTo: range.to,
@@ -315,7 +315,7 @@ test('a reversed collection stops counting and the outstanding goes back up', as
   const collection = await record({ amountSyp: 4000 });
   assert.strictEqual(rowFor(await overview(), ids.warehouseA).outstandingSyp, 6000);
 
-  const reversed = await commissionService.reverseCollection({
+  const reversed = await commissionService.reverseCollection({ idempotencyKey: require('node:crypto').randomUUID(),
     collectionId: collection._id.toString(),
     reason: 'the transfer bounced',
     actorId: ids.adminUser,
@@ -332,7 +332,7 @@ test('a reversed collection stops counting and the outstanding goes back up', as
 
 test('the reversed row is kept, not deleted, and stays in the history', async () => {
   const collection = await record({ amountSyp: 4000 });
-  await commissionService.reverseCollection({
+  await commissionService.reverseCollection({ idempotencyKey: require('node:crypto').randomUUID(),
     collectionId: collection._id.toString(), reason: 'duplicate entry', actorId: ids.adminUser,
   });
 
@@ -346,13 +346,13 @@ test('the reversed row is kept, not deleted, and stays in the history', async ()
 
 test('a collection can be reversed at most once', async () => {
   const collection = await record();
-  await commissionService.reverseCollection({
+  await commissionService.reverseCollection({ idempotencyKey: require('node:crypto').randomUUID(),
     collectionId: collection._id.toString(), reason: 'first', actorId: ids.adminUser,
   });
 
   await assert.rejects(
     () =>
-      commissionService.reverseCollection({
+      commissionService.reverseCollection({ idempotencyKey: require('node:crypto').randomUUID(),
         collectionId: collection._id.toString(), reason: 'second', actorId: ids.adminUser,
       }),
     withCode('COLLECTION_ALREADY_REVERSED')
@@ -367,7 +367,7 @@ test('a reversal requires a reason', async () => {
   const collection = await record();
   await assert.rejects(
     () =>
-      commissionService.reverseCollection({
+      commissionService.reverseCollection({ idempotencyKey: require('node:crypto').randomUUID(),
         collectionId: collection._id.toString(), reason: '   ', actorId: ids.adminUser,
       }),
     withCode('REASON_REQUIRED')
@@ -429,7 +429,7 @@ test('recording and reversing both write an audit record', async () => {
   assert.strictEqual(String(created.onBehalfOfWarehouseId), String(ids.warehouseA));
   assert.strictEqual(created.after.amountSyp, 4000);
 
-  await commissionService.reverseCollection({
+  await commissionService.reverseCollection({ idempotencyKey: require('node:crypto').randomUUID(),
     collectionId: collection._id.toString(), reason: 'cheque bounced', actorId: ids.adminUser,
   });
 
@@ -447,7 +447,7 @@ test('recording and reversing both write an audit record', async () => {
 test('the detail view carries the settlement breakdown and the full history', async () => {
   await deliverOrder(2);
   const collection = await record({ amountSyp: 5000 });
-  await commissionService.reverseCollection({
+  await commissionService.reverseCollection({ idempotencyKey: require('node:crypto').randomUUID(),
     collectionId: collection._id.toString(), reason: 'wrong warehouse', actorId: ids.adminUser,
   });
   await record({ amountSyp: 8000 });
@@ -506,7 +506,7 @@ test('the admin can drive the whole flow over HTTP', async () => {
       periodTo: range.to.toISOString(),
       amountSyp: 6000,
       method: 'bank_transfer',
-      reference: 'TRX-778',
+      reference: 'TRX-778', idempotencyKey: 'http-collection-record',
     },
   });
   assert.strictEqual(recorded.status, 201);
@@ -522,7 +522,7 @@ test('the admin can drive the whole flow over HTTP', async () => {
 
   const reversal = await call(
     'POST', `/admin/commission/collections/${recorded.body.collection.id}/reverse`,
-    { token: tokens.admin, body: { reason: 'recorded against the wrong warehouse' } }
+    { token: tokens.admin, body: { reason: 'recorded against the wrong warehouse', idempotencyKey: 'http-collection-reverse' } }
   );
   assert.strictEqual(reversal.status, 200);
   assert.strictEqual(reversal.body.collection.status, 'reversed');
@@ -538,8 +538,69 @@ test('a reversal over HTTP without a reason is refused', async () => {
   const collection = await record();
   const { status, body } = await call(
     'POST', `/admin/commission/collections/${collection._id}/reverse`,
-    { token: tokens.admin, body: {} }
+    { token: tokens.admin, body: { idempotencyKey: 'http-missing-reason' } }
   );
   assert.strictEqual(status, 400);
   assert.strictEqual(body.code ?? body.error?.code, 'REASON_REQUIRED');
+});
+
+test('cash retries and concurrent duplicates create one movement and one audit, while conflicting payloads are refused', async () => {
+  const key = 'synthetic-concurrent-cash';
+  const range = wideRange();
+  const payload = { idempotencyKey: key, periodFrom: range.from, periodTo: range.to };
+  const [first, second, third] = await Promise.all([record(payload), record(payload), record(payload)]);
+  assert.strictEqual(String(first._id), String(second._id)); assert.strictEqual(String(first._id), String(third._id));
+  assert.strictEqual(await CommissionCollection.countDocuments({ idempotencyKey: key }), 1);
+  assert.strictEqual(await FinancialAuditLog.countDocuments({ entityId: first._id, action: 'commission.collected' }), 1);
+  assert.strictEqual([first, second, third].filter(c => c.$locals.idempotentReplay).length, 2);
+  const canonicalReplay = await record({ ...payload, warehouseId: String(ids.warehouseA).toUpperCase(), actorId: String(ids.adminUser).toUpperCase() });
+  assert.strictEqual(String(canonicalReplay._id), String(first._id));
+  assert.strictEqual(canonicalReplay.$locals.idempotentReplay, true);
+  await assert.rejects(() => record({ ...payload, amountSyp: 1001 }), withCode('IDEMPOTENCY_KEY_REUSED'));
+  await assert.rejects(() => record({ ...payload, direction: 'to_warehouse' }), withCode('IDEMPOTENCY_KEY_REUSED'));
+});
+
+test('cash reversal is replayable once and bound to its target and reason', async () => {
+  const original = await record(), other = await record();
+  const body = { collectionId: original._id, actorId: ids.adminUser, reason: 'Synthetic correction', idempotencyKey: 'synthetic-reversal-key' };
+  const [a, b] = await Promise.all([commissionService.reverseCollection(body), commissionService.reverseCollection(body)]);
+  assert.strictEqual(String(a._id), String(b._id)); assert.strictEqual(a.amountSyp, original.amountSyp);
+  assert.strictEqual(await FinancialAuditLog.countDocuments({ entityId: a._id, action: 'commission.collection_reversed' }), 1);
+  const canonicalReplay = await commissionService.reverseCollection({ ...body, collectionId: String(body.collectionId).toUpperCase(), actorId: String(body.actorId).toUpperCase() });
+  assert.strictEqual(canonicalReplay.$locals.idempotentReplay, true);
+  await assert.rejects(() => commissionService.reverseCollection({ ...body, reason: 'different' }), withCode('IDEMPOTENCY_KEY_REUSED'));
+  await assert.rejects(() => commissionService.reverseCollection({ ...body, collectionId: other._id }), withCode('IDEMPOTENCY_KEY_REUSED'));
+  await assert.rejects(() => record({ idempotencyKey: null }), withCode('IDEMPOTENCY_KEY_REQUIRED'));
+});
+
+test('cash record and reversal roll back if their audit fails, and safe integers are mandatory', async () => {
+  await assert.rejects(() => record({ amountSyp: 1.5 }), withCode('INVALID_COLLECTION_AMOUNT'));
+  await assert.rejects(() => record({ amountSyp: Number.MAX_SAFE_INTEGER + 1 }), withCode('INVALID_COLLECTION_AMOUNT'));
+  const audit = require('../src/services/financialAudit.service'), originalAudit = audit.record;
+  const before = await CommissionCollection.countDocuments();
+  try {
+    audit.record = async () => { throw new Error('synthetic audit unavailable'); };
+    await assert.rejects(() => record(), /synthetic audit unavailable/);
+    assert.strictEqual(await CommissionCollection.countDocuments(), before);
+  } finally { audit.record = originalAudit; }
+  const original = await record();
+  try {
+    audit.record = async () => { throw new Error('synthetic audit unavailable'); };
+    await assert.rejects(() => commissionService.reverseCollection({ collectionId: original._id, actorId: ids.adminUser,
+      reason: 'synthetic rollback', idempotencyKey: 'audit-rollback' }), /synthetic audit unavailable/);
+    assert.strictEqual((await CommissionCollection.findById(original._id)).status, 'recorded');
+  } finally { audit.record = originalAudit; }
+  await assert.rejects(() => record({ actorId: ids.whAUser }), err => err.statusCode === 403);
+});
+
+test('HTTP cash recording requires a durable key and returns replay status', async () => {
+  const range = wideRange();
+  const body = { warehouseId: String(ids.warehouseA), periodFrom: range.from.toISOString(), periodTo: range.to.toISOString(), amountSyp: 321 };
+  const missing = await call('POST', '/admin/commission/collections', { token: tokens.admin, body });
+  assert.strictEqual(missing.status, 400); assert.strictEqual(missing.body.code, 'IDEMPOTENCY_KEY_REQUIRED');
+  const first = await call('POST', '/admin/commission/collections', { token: tokens.admin, body: { ...body, idempotencyKey: 'http-safe-cash' } });
+  const retry = await call('POST', '/admin/commission/collections', { token: tokens.admin, body: { ...body, idempotencyKey: 'http-safe-cash' } });
+  assert.strictEqual(first.status, 201); assert.strictEqual(retry.status, 200);
+  assert.strictEqual(retry.headers.get('Idempotent-Replay'), 'true');
+  assert.strictEqual(first.body.collection.id, retry.body.collection.id);
 });

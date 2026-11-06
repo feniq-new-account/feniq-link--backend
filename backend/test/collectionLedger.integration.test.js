@@ -417,7 +417,7 @@ test('warehouse settlement, admin commission and rep totals use the same posted 
   await settlements.confirmWarehouseSettlement(admin._id, warehouse._id, settlementBody([await approve(await payment(50000))]));
   const initial = await settlementReport.getSettlementForWarehouse(warehouse._id);
   assert.equal(initial.totals.netCommissionSyp, 2500);
-  const cash = await commissionCash.recordCollection({ warehouseId: warehouse._id,
+  const cash = await commissionCash.recordCollection({ idempotencyKey: require('node:crypto').randomUUID(), warehouseId: warehouse._id,
     periodFrom: initial.period.from.toISOString(), periodTo: initial.period.to.toISOString(),
     amountSyp: 2500, actorId: admin._id, reference: 'Synthetic actual commission receipt' });
   const frozen = cash.toObject();

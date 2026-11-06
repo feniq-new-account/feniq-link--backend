@@ -1,4 +1,9 @@
 const { asyncHandler } = require('../utils/asyncHandler');
+const { ApiError } = require('../utils/ApiError');
+function requiredKey(body) {
+  if (typeof body.idempotencyKey !== 'string' || !body.idempotencyKey.trim()) throw ApiError.badRequest('An idempotency key is required.', undefined, 'IDEMPOTENCY_KEY_REQUIRED');
+  return body.idempotencyKey;
+}
 const service = require('../services/commissionCollection.service');
 const viewModel = require('../viewmodels/commissionCollection.viewmodel');
 const { parseCursorQuery, parseObjectIdCursor } = require('../utils/pagination');
@@ -37,6 +42,7 @@ const warehouseDetail = asyncHandler(async (req, res) => {
 });
 
 const recordCollection = asyncHandler(async (req, res) => {
+  const idempotencyKey = requiredKey(req.body);
   const collection = await service.recordCollection({
     warehouseId: req.body.warehouseId,
     periodFrom: req.body.periodFrom,
@@ -49,9 +55,10 @@ const recordCollection = asyncHandler(async (req, res) => {
     // 'to_warehouse': the platform paid the warehouse its discount-code
     // compensation.
     direction: req.body.direction,
-    actorId: req.user._id,
+    actorId: req.user._id, idempotencyKey,
   });
-  res.status(201).json({
+  if (collection.$locals.idempotentReplay) res.set('Idempotent-Replay', 'true');
+  res.status(collection.$locals.idempotentReplay ? 200 : 201).json({
     success: true,
     message: collection.direction === 'to_warehouse' ? 'Payout recorded.' : 'Collection recorded.',
     ...viewModel.toCollectionResponse(collection),
@@ -61,11 +68,13 @@ const recordCollection = asyncHandler(async (req, res) => {
 // Undoes a collection recorded in error. The row is kept - reversing is how a
 // mistake is corrected everywhere in Money-Flow V2.
 const reverseCollection = asyncHandler(async (req, res) => {
+  const idempotencyKey = requiredKey(req.body);
   const collection = await service.reverseCollection({
     collectionId: req.params.id,
     reason: req.body.reason,
-    actorId: req.user._id,
+    actorId: req.user._id, idempotencyKey,
   });
+  if (collection.$locals.idempotentReplay) res.set('Idempotent-Replay', 'true');
   res.json({
     success: true,
     message: 'Collection reversed.',

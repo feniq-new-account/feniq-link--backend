@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+const { runInTransaction } = require('../utils/transaction');
+const { requestFingerprint, idempotencyKeyReusedError } = require('../utils/idempotency');
+const User = require('../models/user.model');
 const { ApiError } = require('../utils/ApiError');
 const CommissionCollection = require('../models/commissionCollection.model');
 const Warehouse = require('../models/warehouse.model');
@@ -28,7 +31,7 @@ function normalizeText(value) {
 }
 
 function validateAmount(amountSyp) {
-  if (typeof amountSyp !== 'number' || !Number.isFinite(amountSyp) || amountSyp <= 0) {
+  if (typeof amountSyp !== 'number' || !Number.isSafeInteger(amountSyp) || amountSyp <= 0) {
     throw ApiError.badRequest(
       'Invalid collection amount.',
       undefined,
@@ -265,118 +268,82 @@ async function listCollectionsForWarehouse(warehouseId, { limit = 100, after = n
 // 'to_warehouse', that the platform paid the warehouse the discount-code
 // compensation it owed it (a payout).
 //
-// No transaction, no CAS, no idempotency key - deliberately. Those exist on
-// the pharmacy paths because those are high-frequency, racy, and move a
-// pharmacy's balance. This is an admin typing one bookkeeping row: a duplicate
-// is visible in the history and reversible, which is proportionate. It is
-// still audited, because every financial mutation is.
-async function recordCollection({
-  warehouseId,
-  periodFrom,
-  periodTo,
-  amountSyp,
-  method,
-  reference,
-  note,
-  actorId,
-  direction,
-}) {
-  const warehouse = await loadWarehouseOrThrow(warehouseId);
-  const amount = validateAmount(amountSyp);
-  const period = validatePeriod(periodFrom, periodTo);
-  const resolvedMethod = validateMethod(method);
-  const resolvedDirection = validateDirection(direction);
-
-  const collection = await CommissionCollection.create({
-    warehouseId: warehouse._id,
-    periodFrom: period.from,
-    periodTo: period.to,
-    amountSyp: amount,
-    direction: resolvedDirection,
-    method: resolvedMethod,
-    reference: normalizeText(reference),
-    note: normalizeText(note),
-    recordedBy: actorId,
-    recordedAt: new Date(),
-    status: 'recorded',
-  });
-
-  await financialAudit.record({
-    action: resolvedDirection === 'to_warehouse' ? 'commission.payout_recorded' : 'commission.collected',
-    actorId,
-    actorRole: 'admin',
-    onBehalfOfWarehouseId: warehouse._id,
-    entityType: 'CommissionCollection',
-    entityId: collection._id,
-    after: {
-      amountSyp: amount,
-      direction: resolvedDirection,
-      method: resolvedMethod,
-      periodFrom: period.from,
-      periodTo: period.to,
-    },
-  });
-
+// Financial cash and audit are committed together. Internal callers and HTTP
+// clients use the same mandatory request-key contract.
+const canonicalId = value => mongoose.isObjectIdOrHexString(value) ? new mongoose.Types.ObjectId(value).toHexString() : String(value);
+function operationKey(value) {
+  if (value === undefined || value === null || value === '') throw ApiError.badRequest('An idempotency key is required.', undefined, 'IDEMPOTENCY_KEY_REQUIRED');
+  if (typeof value !== 'string' || !value.trim() || value.length > 100) {
+    throw ApiError.badRequest('Invalid idempotency key.', undefined, 'INVALID_IDEMPOTENCY_KEY');
+  }
+  return value.trim();
+}
+async function requireAdmin(actorId, session) {
+  const actor = mongoose.isObjectIdOrHexString(actorId)
+    ? await User.findById(actorId).select('role status').session(session).lean() : null;
+  if (actor?.role !== 'admin' || actor.status !== 'active') throw ApiError.forbidden('Active platform administration is required.');
+}
+function replay(collection, fingerprint, field) {
+  if (collection[field] !== fingerprint) throw idempotencyKeyReusedError('The key identifies a different commission cash request.');
+  collection.$locals.idempotentReplay = true;
   return collection;
 }
+async function recordCollection({ warehouseId, periodFrom, periodTo, amountSyp, method, reference, note, actorId, direction, idempotencyKey }) {
+  const amount = validateAmount(amountSyp), period = validatePeriod(periodFrom, periodTo);
+  const resolvedMethod = validateMethod(method), resolvedDirection = validateDirection(direction);
+  const key = operationKey(idempotencyKey);
+  const fingerprint = requestFingerprint('commission-cash-v1', { warehouseId: canonicalId(warehouseId), actorId: canonicalId(actorId),
+    from: period.from.toISOString(), to: period.to.toISOString(), amount, method: resolvedMethod, direction: resolvedDirection,
+    reference: normalizeText(reference), note: normalizeText(note) });
+  await CommissionCollection.createIndexes();
+  const work = async session => {
+    await requireAdmin(actorId, session);
+    const warehouse = await loadWarehouseOrThrow(warehouseId, session);
+    if (key) {
+      const existing = await CommissionCollection.findOne({ warehouseId: warehouse._id, idempotencyKey: key }).session(session);
+      if (existing) return replay(existing, fingerprint, 'requestFingerprint');
+    }
+    const [collection] = await CommissionCollection.create([{ warehouseId: warehouse._id, periodFrom: period.from, periodTo: period.to,
+      amountSyp: amount, direction: resolvedDirection, method: resolvedMethod, reference: normalizeText(reference), note: normalizeText(note),
+      recordedBy: actorId, recordedAt: new Date(), status: 'recorded', idempotencyKey: key, requestFingerprint: fingerprint,
+    }], { session });
+    await financialAudit.record({ action: resolvedDirection === 'to_warehouse' ? 'commission.payout_recorded' : 'commission.collected',
+      actorId, actorRole: 'admin', onBehalfOfWarehouseId: warehouse._id, entityType: 'CommissionCollection', entityId: collection._id,
+      idempotencyKey: key, after: { amountSyp: amount, direction: resolvedDirection, method: resolvedMethod, periodFrom: period.from, periodTo: period.to },
+    }, session);
+    return collection;
+  };
+  try { return await runInTransaction(work); }
+  catch (error) { if (error?.code === 11000 && key) return runInTransaction(work); throw error; }
+}
 
-// Undoes a collection recorded in error. The row is kept and stays visible in
-// the history, struck through with its reason - the same treatment a reversed
-// pharmacy payment gets. Once reversed it no longer counts toward
-// alreadyCollectedSyp, so the warehouse's outstanding amount goes back up.
-async function reverseCollection({ collectionId, reason, actorId }) {
+async function reverseCollection({ collectionId, reason, actorId, idempotencyKey }) {
   const trimmedReason = normalizeText(reason);
-  if (!trimmedReason) {
-    throw ApiError.badRequest(
-      'A reason is required to reverse a collection.',
-      undefined,
-      'REASON_REQUIRED'
-    );
-  }
-  if (!mongoose.Types.ObjectId.isValid(collectionId)) {
-    throw ApiError.notFound('Collection not found.', 'COLLECTION_NOT_FOUND');
-  }
-
-  const existing = await CommissionCollection.findById(collectionId);
-  if (!existing) {
-    throw ApiError.notFound('Collection not found.', 'COLLECTION_NOT_FOUND');
-  }
-
-  // Guarded as a conditional update rather than a read-then-save, so a second
-  // reversal matches zero documents instead of overwriting the first one's
-  // reason and actor.
-  const reversed = await CommissionCollection.findOneAndUpdate(
-    { _id: existing._id, status: 'recorded' },
-    {
-      $set: {
-        status: 'reversed',
-        reversedBy: actorId,
-        reversedAt: new Date(),
-        reversalReason: trimmedReason,
-      },
-    },
-    { new: true }
-  );
-  if (!reversed) {
-    throw ApiError.conflict(
-      'This collection has already been reversed.',
-      'COLLECTION_ALREADY_REVERSED'
-    );
-  }
-
-  await financialAudit.record({
-    action: 'commission.collection_reversed',
-    actorId,
-    actorRole: 'admin',
-    onBehalfOfWarehouseId: reversed.warehouseId,
-    entityType: 'CommissionCollection',
-    entityId: reversed._id,
-    before: { status: 'recorded', amountSyp: reversed.amountSyp },
-    after: { status: 'reversed' },
-    reason: trimmedReason,
-  });
-
-  return reversed;
+  if (!trimmedReason) throw ApiError.badRequest('A reason is required to reverse a collection.', undefined, 'REASON_REQUIRED');
+  if (!mongoose.isObjectIdOrHexString(collectionId)) throw ApiError.notFound('Collection not found.', 'COLLECTION_NOT_FOUND');
+  const key = operationKey(idempotencyKey);
+  const fingerprint = requestFingerprint('commission-cash-reversal-v1', { collectionId: canonicalId(collectionId), actorId: canonicalId(actorId), reason: trimmedReason });
+  const work = async session => {
+    await requireAdmin(actorId, session);
+    if (key) {
+      const prior = await CommissionCollection.findOne({ reversalKey: key }).session(session);
+      if (prior) return replay(prior, fingerprint, 'reversalFingerprint');
+    }
+    const existing = await CommissionCollection.findById(collectionId).session(session);
+    if (!existing) throw ApiError.notFound('Collection not found.', 'COLLECTION_NOT_FOUND');
+    const reversed = await CommissionCollection.findOneAndUpdate({ _id: existing._id, status: 'recorded' }, { $set: {
+      status: 'reversed', reversedBy: actorId, reversedAt: new Date(), reversalReason: trimmedReason,
+      reversalKey: key, reversalFingerprint: fingerprint,
+    } }, { new: true, session });
+    if (!reversed) throw ApiError.conflict('This collection has already been reversed.', 'COLLECTION_ALREADY_REVERSED');
+    await financialAudit.record({ action: 'commission.collection_reversed', actorId, actorRole: 'admin',
+      onBehalfOfWarehouseId: reversed.warehouseId, entityType: 'CommissionCollection', entityId: reversed._id,
+      before: { status: 'recorded', amountSyp: reversed.amountSyp }, after: { status: 'reversed' }, reason: trimmedReason, idempotencyKey: key,
+    }, session);
+    return reversed;
+  };
+  try { return await runInTransaction(work); }
+  catch (error) { if (error?.code === 11000 && key) return runInTransaction(work); throw error; }
 }
 
 module.exports = {
