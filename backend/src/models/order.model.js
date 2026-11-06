@@ -1,5 +1,17 @@
 const { Schema, model } = require('mongoose');
 
+const collectionCommissionSchema = new Schema({
+  policyVersion: { type: String, required: true },
+  contractId: { type: Schema.Types.ObjectId, ref: 'CollectionContract', required: true },
+  contractRevision: { type: Number, required: true },
+  contractRef: { type: String, required: true },
+  originalRateBps: { type: Number, required: true },
+  areaType: { type: String, enum: ['city', 'city_ring', 'rural'], required: true },
+  invoiceSyp: { type: Number, required: true },
+  originalCommissionSyp: { type: Number, required: true },
+  deliveryFeeSyp: { type: Number, default: null },
+}, { _id: false });
+
 const statusHistoryEntrySchema = new Schema(
   {
     status: { type: String, required: true },
@@ -113,6 +125,9 @@ const orderSchema = new Schema(
     // never moves an order - and the commission it earned - to someone else.
     // null when the pharmacy had no rep at this warehouse.
     repId: { type: Schema.Types.ObjectId, ref: 'Rep', default: null },
+    commissionEngine: { type: String, enum: ['legacy_delivery', 'collection_v2'], default: 'legacy_delivery' },
+    collectionCommission: { type: collectionCommissionSchema, default: null },
+    returnCreditReservedSyp: { type: Number, default: 0 },
     // The rep commission on this order, frozen with the order like repId (a
     // later change of the rep's rate never rewrites it) and re-derived from
     // the frozen rate when the warehouse edits the order. null when the order

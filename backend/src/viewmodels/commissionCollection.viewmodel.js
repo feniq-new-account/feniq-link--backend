@@ -18,6 +18,7 @@ const { paginationMeta } = require('../utils/pagination');
 function serializeWarehouseRow(row) {
   return {
     warehouseId: row.warehouseId,
+    ...(row.collectionCommission ? { asOf: row.asOf, collectionCommission: row.collectionCommission } : {}),
     nameAr: row.warehouse.nameAr,
     nameEn: row.warehouse.nameEn,
     phone: row.warehouse.phone ?? null,
@@ -75,10 +76,13 @@ function toWarehouseDetailResponse({
   collections,
   hasMoreCollections,
   nextCollectionsCursor,
+  asOf,
+  collectionCommission,
 }) {
   return {
     detail: {
       period,
+      ...(collectionCommission ? { asOf, collectionCommission } : {}),
       warehouse: {
         id: warehouse._id,
         nameAr: warehouse.nameAr,
@@ -88,6 +92,7 @@ function toWarehouseDetailResponse({
       summary: serializeWarehouseRow(summary),
       orders: orders.map((order) => ({
         orderId: order.orderId,
+        ...(order.commissionEngine === 'collection_v2' ? { commissionEngine: order.commissionEngine, commissionPotentialSyp: order.commissionPotentialSyp } : {}),
         orderNumber: order.orderNumber,
         invoiceNumber: order.invoiceNumber,
         deliveredAt: order.deliveredAt,

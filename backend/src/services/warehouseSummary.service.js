@@ -90,6 +90,17 @@ async function periodTotals(warehouseId, { from, to }, session = null) {
     if (family === 'sales') totals.invoiceCount += sign * row.count;
     if (family === 'collections') totals.paymentCount += sign * row.count;
   }
+  // New-model returned goods issue a future credit, not a reduction of the
+  // original receivable. Count the approved goods value once at issuance;
+  // its later use is a payment application and is NOT another goods return.
+  const { ReturnCredit } = require('../models/collectionAccounting.model');
+  const [issued] = await ReturnCredit.aggregate([{ $match: { warehouseId, issuedAt: { $gte: from, $lte: to } } },
+    { $group: { _id: null, amountSyp: { $sum: '$amountSyp' } } },
+  ]).session(session);
+  if (issued?.amountSyp) {
+    totals.returnsSyp += issued.amountSyp;
+    totals.returnCreditIssuedSyp = issued.amountSyp;
+  }
   return totals;
 }
 

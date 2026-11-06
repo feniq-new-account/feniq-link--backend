@@ -32,6 +32,12 @@ const ACTIONS = [
   // Platform-side bookkeeping: a warehouse paid the commission it owed.
   // Not a ledger event - see commissionCollection.model.js.
   'commission.collected',
+  'commission.contract_activated',
+  'commission.allocations_recorded',
+  'commission.settlement_confirmed',
+  'commission.return_adjusted',
+  'commission.return_credit_reserved',
+  'commission.return_credit_released',
   'commission.collection_reversed',
   // The platform paid a warehouse (discount-code compensation) - a
   // CommissionCollection with direction 'to_warehouse'.

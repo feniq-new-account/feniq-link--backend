@@ -24,6 +24,7 @@ const REASON_REQUIRED_KINDS = new Set([
   'charge_reversal',
   'payment_reversal',
   'return_credit_reversal',
+  'return_credit_application_reversal',
   'manual_credit',
   'manual_debit',
   'adjustment_reversal',
@@ -230,6 +231,7 @@ async function postEntry(
           orderId: source.orderId ?? null,
           paymentId: source.paymentId ?? null,
           returnId: source.returnId ?? null,
+          returnCreditUseId: source.returnCreditUseId ?? null,
         },
         reversalOf: reversalOf ?? null,
         createdBy,
@@ -241,6 +243,13 @@ async function postEntry(
     { session }
   );
 
+  // Charge registration needs its frozen invoice first and is completed by
+  // orderLedger.service in this same transaction. Every other financial write
+  // rebuilds an existing collection epoch here, including documented reversals.
+  if (kind !== 'charge') await require('./collectionLedger.service').rebuildAccount({
+    accountId: updatedAccount._id, warehouseId: updatedAccount.warehouseId, actorId: createdBy,
+    sourceKey: `entry:${entry._id}`, reason: trimmedReason || `Ledger ${kind}`,
+  }, session);
   return { entry, account: updatedAccount };
 }
 
@@ -253,6 +262,8 @@ function reversalKindFor(kind) {
       return 'payment_reversal';
     case 'return_credit':
       return 'return_credit_reversal';
+    case 'return_credit_application':
+      return 'return_credit_application_reversal';
     case 'manual_credit':
     case 'manual_debit':
       return 'adjustment_reversal';
@@ -293,6 +304,7 @@ async function postReversal({ targetEntry, createdBy, reason, idempotencyKey, so
         orderId: source.orderId ?? targetEntry.source?.orderId ?? null,
         paymentId: source.paymentId ?? null,
         returnId: source.returnId ?? targetEntry.source?.returnId ?? null,
+        returnCreditUseId: source.returnCreditUseId ?? targetEntry.source?.returnCreditUseId ?? null,
       },
       reversalOf: targetEntry._id,
       createdBy,
@@ -476,7 +488,9 @@ async function openingBalanceFor(accountId, from, session = null) {
 async function ensureFinancialIndexes() {
   await Promise.all([LedgerAccount.createIndexes(), LedgerEntry.createIndexes(),
     require('../models/paymentProof.model').createIndexes(),
-    require('../models/paymentProofReview.model').createIndexes()]);
+    require('../models/paymentProofReview.model').createIndexes(),
+    require('../models/collectionContract.model').createIndexes(),
+    ...Object.values(require('../models/collectionAccounting.model')).map(model => model.createIndexes())]);
 }
 
 // Conflict on the SAME account document that every payment/return posts to.

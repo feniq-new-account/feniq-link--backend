@@ -76,6 +76,7 @@ async function giveBack({ pharmacyId, warehouseId, orderId, amountSyp }, session
 // On delivery: the pharmacy's quarter of this order's rep commission becomes
 // credit. Once per order (pharmacyCreditedAt, and a unique index on the entry).
 async function earnForDelivery(order, session) {
+  if (order.commissionEngine === 'collection_v2') return 0;
   const amountSyp = order.repCommission?.pharmacyAmount ?? 0;
   if (!(amountSyp > 0) || order.repCommission.pharmacyCreditedAt) return 0;
   const now = new Date();
@@ -100,6 +101,9 @@ async function earnForDelivery(order, session) {
 
 // On cancellation: whatever credit the order took goes back. Once per order.
 async function releaseForCancel(order, session) {
+  if (order.commissionEngine === 'collection_v2') await require('./collectionReturnCredit.service').releaseExcess(
+    order, order.cancelledBy ?? order.statusHistory?.[order.statusHistory.length - 1]?.changedBy,
+    0, `cancel:${order._id}`, session);
   const amountSyp = order.creditUsedSyp ?? 0;
   if (!(amountSyp > 0) || order.creditReleasedAt) return 0;
   const now = new Date();

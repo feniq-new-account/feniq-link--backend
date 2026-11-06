@@ -6,6 +6,7 @@ const { getSettlementForWarehouse, resolvePeriod } = require('./settlement.servi
 const { parseRangeStart, parseRangeEnd } = require('../utils/businessTime');
 const { METHODS } = require('./payment.service');
 const financialAudit = require('./financialAudit.service');
+const { financialReadSnapshot } = require('../utils/financialReadSnapshot');
 
 // The platform's side of commission: who owes what across every warehouse, and
 // a record of when one of them actually paid.
@@ -78,11 +79,11 @@ function validatePeriod(periodFrom, periodTo) {
   return { from, to };
 }
 
-async function loadWarehouseOrThrow(warehouseId) {
+async function loadWarehouseOrThrow(warehouseId, session = null) {
   if (!mongoose.Types.ObjectId.isValid(warehouseId)) {
     throw ApiError.notFound('Warehouse not found.', 'WAREHOUSE_NOT_FOUND');
   }
-  const warehouse = await Warehouse.findById(warehouseId).select('nameAr nameEn phone').lean();
+  const warehouse = await Warehouse.findById(warehouseId).select('nameAr nameEn phone').session(session).lean();
   if (!warehouse) {
     throw ApiError.notFound('Warehouse not found.', 'WAREHOUSE_NOT_FOUND');
   }
@@ -103,7 +104,7 @@ function overlappingPeriod(from, to) {
 // The cash that has actually moved for a range, both ways: collected from
 // the warehouse, and paid out to it. A row written before payouts existed has
 // no `direction` and is a collection.
-async function settledForWarehouse(warehouseId, from, to) {
+async function settledForWarehouse(warehouseId, from, to, session = null) {
   const rows = await CommissionCollection.aggregate([
     {
       $match: {
@@ -118,7 +119,7 @@ async function settledForWarehouse(warehouseId, from, to) {
         total: { $sum: '$amountSyp' },
       },
     },
-  ]);
+  ]).session(session);
   const byDirection = new Map(rows.map((row) => [row._id, row.total]));
   return {
     collectedSyp: Math.round(byDirection.get('from_warehouse') ?? 0),
@@ -134,12 +135,16 @@ async function collectedForWarehouse(warehouseId, from, to) {
 // One warehouse's position with the platform for a range: the commission it
 // owes, the discount-code compensation the platform owes it, the cash that has
 // moved each way, and what is left.
-async function getWarehouseCommission(warehouse, period) {
+async function getWarehouseCommission(warehouse, period, session = null) {
+  return session ? readWarehouseCommission(warehouse, period, session)
+    : financialReadSnapshot(snapshot => readWarehouseCommission(warehouse, period, snapshot));
+}
+async function readWarehouseCommission(warehouse, period, session) {
   const settlement = await getSettlementForWarehouse(warehouse._id, {
     from: period.from,
     to: period.to,
-  });
-  const { collectedSyp, paidOutSyp } = await settledForWarehouse(warehouse._id, period.from, period.to);
+  }, session);
+  const { collectedSyp, paidOutSyp } = await settledForWarehouse(warehouse._id, period.from, period.to, session);
 
   // `netCommissionSyp` is already net of the pro-rata clawback on credited
   // returns - that is what the warehouse genuinely owes before anything is
@@ -152,6 +157,7 @@ async function getWarehouseCommission(warehouse, period) {
   return {
     warehouseId: warehouse._id,
     warehouse,
+    ...(settlement.collectionCommission ? { asOf: settlement.asOf, collectionCommission: settlement.collectionCommission } : {}),
     orderCount: settlement.totals.orderCount,
     salesSyp: settlement.totals.grossSalesSyp,
     returnsSyp: settlement.totals.creditedSalesSyp,
@@ -213,17 +219,16 @@ async function getCommissionOverview({ from, to } = {}) {
 // One warehouse's detail: the same figures as its overview row, plus the
 // per-order settlement breakdown and its collection history.
 async function getWarehouseCommissionDetail(warehouseId, { from, to, limit, after } = {}) {
-  const warehouse = await loadWarehouseOrThrow(warehouseId);
+  return financialReadSnapshot(async session => {
+  const warehouse = await loadWarehouseOrThrow(warehouseId, session);
   const period = resolvePeriod({ from, to });
 
-  const [summary, settlement, collectionsPage] = await Promise.all([
-    getWarehouseCommission(warehouse, period),
-    getSettlementForWarehouse(warehouse._id, { from: period.from, to: period.to }),
+  const summary = await getWarehouseCommission(warehouse, period, session);
+  const settlement = await getSettlementForWarehouse(warehouse._id, { from: period.from, to: period.to }, session);
     // The full history, not just the range: a reversed collection from outside
     // the window still explains why an outstanding figure moved. Now cursor-
     // paginated rather than a flat limit:100 - see listCollectionsForWarehouse.
-    listCollectionsForWarehouse(warehouse._id, { limit, after }),
-  ]);
+  const collectionsPage = await listCollectionsForWarehouse(warehouse._id, { limit, after }, session);
 
   return {
     period,
@@ -233,7 +238,9 @@ async function getWarehouseCommissionDetail(warehouseId, { from, to, limit, afte
     collections: collectionsPage.rows,
     hasMoreCollections: collectionsPage.hasMore,
     nextCollectionsCursor: collectionsPage.nextCursor,
+    ...(settlement.collectionCommission ? { asOf: settlement.asOf, collectionCommission: settlement.collectionCommission } : {}),
   };
+  });
 }
 
 // Cursor-paginated on `_id` rather than `recordedAt` - the two orderings
@@ -241,11 +248,12 @@ async function getWarehouseCommissionDetail(warehouseId, { from, to, limit, afte
 // recordCollection creates the row, and is never backdated), and `_id` is
 // what every other cursor-paginated list in the app sorts and cursors on
 // (see offer.service.js's listPaginatedOffers).
-async function listCollectionsForWarehouse(warehouseId, { limit = 100, after = null } = {}) {
+async function listCollectionsForWarehouse(warehouseId, { limit = 100, after = null } = {}, session = null) {
   const filter = after !== null ? { warehouseId, _id: { $lt: after } } : { warehouseId };
   const rows = await CommissionCollection.find(filter)
     .sort({ _id: -1 })
     .limit(limit + 1)
+    .session(session)
     .lean();
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;

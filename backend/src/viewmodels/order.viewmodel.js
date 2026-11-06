@@ -1,9 +1,11 @@
 const { serializeProductWithOffer } = require('./product.viewmodel');
+const { collectionOrderFields } = require('./collectionOrder.viewmodel');
 const { serializeOrderDiscountCode } = require('./discountCode.viewmodel');
 const { FEATURES } = require('../config/features');
 
 function serializeOrder(order) {
   return {
+    ...collectionOrderFields(order),
     id: order._id,
     deliveryEstimate: require('./deliveryEstimate.viewmodel').publicEstimate(order.deliveryEstimate, order.status),
     orderNumber: order.orderNumber,
@@ -139,6 +141,7 @@ function toOrderDetailResponse(
 // OrderModel instead of two slightly-different shapes.
 function toOrderListItemSummary(order, warehouse) {
   return {
+    ...collectionOrderFields(order),
     id: order._id,
     orderNumber: order.orderNumber,
     status: order.status,

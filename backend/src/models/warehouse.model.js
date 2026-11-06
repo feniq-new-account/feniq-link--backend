@@ -3,6 +3,10 @@ const { Schema, model } = require('mongoose');
 const warehouseSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    commissionEngine: { type: String, enum: ['legacy_delivery', 'collection_v2'], default: 'legacy_delivery' },
+    collectionContractId: { type: Schema.Types.ObjectId, ref: 'CollectionContract', default: null },
+    collectionContractRevision: { type: Number, default: 0 },
+    collectionPolicyLock: { type: Number, default: 0 },
     memberUserIds: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
     // Serialize member-role changes across different users in this warehouse.
     memberAccessRevision: { type: Number, default: 0 },

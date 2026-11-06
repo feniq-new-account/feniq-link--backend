@@ -9,12 +9,13 @@ import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContex
 import { formatSyp } from '../utils/currency';
 import { displayName } from '../utils/displayName';
 import { formatBusinessDateTime, businessDateInputValue, startOfBusinessMonthInputValue } from '../utils/businessDate';
+import { CollectionAccountingPanel } from '../components/CollectionAccountingPanel';
 import './AccountantDashboardPage.css';
 
 const KINDS = ['charge', 'charge_reversal', 'payment', 'payment_reversal', 'return_credit',
-  'return_credit_reversal', 'manual_debit', 'manual_credit', 'adjustment_reversal', 'opening_balance', 'migration_adjustment'];
+  'return_credit_reversal', 'return_credit_application', 'return_credit_application_reversal', 'manual_debit', 'manual_credit', 'adjustment_reversal', 'opening_balance', 'migration_adjustment'];
 const KIND_KEYS = { charge: 'kindCharge', charge_reversal: 'kindChargeReversal', payment: 'kindPayment',
-  payment_reversal: 'kindPaymentReversal', return_credit: 'kindReturnCredit', return_credit_reversal: 'kindReturnCreditReversal',
+  payment_reversal: 'kindPaymentReversal', return_credit: 'kindReturnCredit', return_credit_reversal: 'kindReturnCreditReversal', return_credit_application: 'kindReturnCreditApplication', return_credit_application_reversal: 'kindReturnCreditApplicationReversal',
   manual_debit: 'kindManualDebit', manual_credit: 'kindManualCredit', opening_balance: 'kindOpeningBalance',
   migration_adjustment: 'kindMigrationAdjustment', adjustment_reversal: 'kindOther' };
 
@@ -121,6 +122,7 @@ export function AccountantDashboardPage() {
         {data.activityHasMore && <p className="hint">{t('accounting.activityLimit')}</p>}
       </section>
     </>}
+    {data?.collectionAccounting && <CollectionAccountingPanel />}
     <OverduePreview key={JSON.stringify(query)} />
   </div>;
 }

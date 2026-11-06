@@ -25,6 +25,7 @@ function serializeReturn(returnRequest, orderItemById = new Map()) {
     // is no replacement order any more, so no replacementOrderId - what the
     // client shows instead is what the return was worth.
     creditSyp: returnRequest.creditSyp ?? null,
+    ...(returnRequest.creditGrantId ? { creditGrantId: returnRequest.creditGrantId, creditTreatment: returnRequest.creditTreatment } : {}),
     creditUsd: returnRequest.creditUsd ?? null,
     resolvedAt: returnRequest.resolvedAt,
     createdAt: returnRequest.createdAt,

@@ -997,6 +997,7 @@ export function WarehouseOrderDetailPage() {
                   <span className="wh-num">+ {formatSyp(order.platformCompensationSyp)}</span>
                 </div>
               )}
+              {order.collectionAccounting && <div className="wh-summary-row"><span>{t('collectionAccounting.feniq')}</span><span className="wh-num">{formatSyp(order.collectionAccounting.feniqSyp)}</span><time dateTime={order.collectionAccounting.asOf}>{formatBusinessDateTime(order.collectionAccounting.asOf)}</time></div>}
               {/* Money-Flow V2: what this order actually nets the warehouse.
                   V1 stored a commission on every order and showed it nowhere,
                   so a warehouse could not tell what a package deal really
@@ -1007,9 +1008,9 @@ export function WarehouseOrderDetailPage() {
                   <span className="wh-num">− {formatSyp(order.commissionAmount)}</span>
                 </div>
               )}
-              {(order.commissionAmount > 0 || order.platformCompensationSyp > 0) && (
+              {(order.commissionAmount > 0 || order.platformCompensationSyp > 0 || order.collectionAccounting) && (
                 <div className="wh-summary-total wh-summary-net">
-                  <span>{t('orderDetail.warehouseNetLabel')}</span>
+                  <span>{t(order.commissionEngine === 'collection_v2' ? 'collectionAccounting.netScope' : 'orderDetail.warehouseNetLabel')}</span>
                   <span className="wh-num">
                     {formatSyp(order.warehouseNetSyp ?? order.finalPrice - order.commissionAmount)}
                   </span>
@@ -1127,7 +1128,7 @@ export function WarehouseOrderDetailPage() {
       {showCollect && order && (
         <CollectPaymentModal
           orderNumber={order.orderNumber}
-          totalSyp={order.finalPrice}
+          totalSyp={order.netAfterReturnCreditSyp ?? order.finalPrice}
           onChoose={handleCollectChoice}
           onClose={() => setShowCollect(false)}
         />

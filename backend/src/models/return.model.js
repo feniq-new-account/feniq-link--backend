@@ -45,6 +45,8 @@ const returnSchema = new Schema(
     // The authoritative "only one credit per return" guard is the unique
     // partial index on LedgerEntry.source.returnId; this is for cheap reads.
     creditEntryId: { type: Schema.Types.ObjectId, ref: 'LedgerEntry', default: null },
+    creditGrantId: { type: Schema.Types.ObjectId, ref: 'CollectionReturnCredit', default: null },
+    creditTreatment: { type: String, enum: ['legacy_account_credit', 'future_invoice_or_exchange'], default: 'legacy_account_credit' },
     // The credited amounts, frozen at approval, and the full working behind
     // them (returnCredit.service.js's breakdown) - so the statement, the
     // invoice and any later dispute all read the same numbers rather than

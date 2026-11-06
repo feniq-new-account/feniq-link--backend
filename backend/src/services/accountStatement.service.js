@@ -63,8 +63,11 @@ function referenceFor(entry) {
       };
     case 'return_credit':
     case 'return_credit_reversal':
+    case 'return_credit_application':
+    case 'return_credit_application_reversal':
       return {
         returnId: entry.source?.returnId ?? null,
+        ...(entry.source?.returnCreditUseId ? { returnCreditUseId: entry.source.returnCreditUseId } : {}),
         // A credit belongs to the invoice it reduces, which is what makes it
         // legible on a statement ("RET against INV-1042").
         invoiceNumber: meta.invoiceNumber ?? null,
@@ -179,6 +182,7 @@ function emptySummary() {
     chargesSyp: 0,
     paymentsSyp: 0,
     returnCreditsSyp: 0,
+    returnCreditApplicationsSyp: 0,
     adjustmentsSyp: 0,
     entryCount: 0,
   };
@@ -210,6 +214,12 @@ function summarize(entries) {
         break;
       case 'return_credit_reversal':
         summary.returnCreditsSyp -= amount;
+        break;
+      case 'return_credit_application':
+        summary.returnCreditApplicationsSyp += amount;
+        break;
+      case 'return_credit_application_reversal':
+        summary.returnCreditApplicationsSyp -= amount;
         break;
       case 'manual_credit':
         summary.adjustmentsSyp -= amount;

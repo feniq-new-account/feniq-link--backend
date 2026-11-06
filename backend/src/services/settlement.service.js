@@ -3,6 +3,8 @@ const Order = require('../models/order.model');
 const LedgerEntry = require('../models/ledgerEntry.model');
 const { platformCompensationOf } = require('./discountCode.service');
 const { parseRangeStart, parseRangeEnd, startOfBusinessMonth } = require('../utils/businessTime');
+const { financialReadSnapshot } = require('../utils/financialReadSnapshot');
+const { Event: CollectionEvent, ReturnCredit, Invoice } = require('../models/collectionAccounting.model');
 
 // Money-Flow V2. What a warehouse owes the platform, and what it actually
 // nets, for a period.
@@ -87,7 +89,11 @@ function compensationClawbackFor(order, frozenClawbackSyp) {
   return Math.min(platformCompensationOf(order), Math.max(0, round(frozenClawbackSyp)));
 }
 
-async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
+async function getSettlementForWarehouse(warehouseId, query = {}, session = null) {
+  return session ? readSettlement(warehouseId, query, session)
+    : financialReadSnapshot(snapshot => readSettlement(warehouseId, query, snapshot));
+}
+async function readSettlement(warehouseId, { from, to } = {}, session) {
   const period = resolvePeriod({ from, to });
   const whId = toObjectId(warehouseId);
 
@@ -100,8 +106,9 @@ async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
     status: 'delivered',
     deliveredAt: { $gte: period.from, $lte: period.to },
   })
-    .select('orderNumber invoiceNumber deliveredAt totalPrice discountAmount advertisementDiscountAmount discountCode finalPrice commissionAmount pharmacyId')
+    .select('orderNumber invoiceNumber deliveredAt totalPrice discountAmount advertisementDiscountAmount discountCode finalPrice commissionAmount pharmacyId commissionEngine collectionCommission')
     .sort({ deliveredAt: 1 })
+    .session(session)
     .lean();
 
   const orderIds = orders.map((order) => order._id);
@@ -116,6 +123,7 @@ async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
         'metadata.orderId': { $in: orderIds },
       })
         .select('amountSyp effectiveAt metadata')
+        .session(session)
         .lean()
     : [];
 
@@ -137,25 +145,47 @@ async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
   let grossCompensationSyp = 0;
   let compensationClawbackSyp = 0;
 
+  const events = await CollectionEvent.find({ warehouseId: whId, at: { $gte: period.from, $lte: period.to } })
+    .select('feniqSyp repSyp originalCommissionSyp at invoiceId sourceKey').session(session).lean();
+  const grants = await ReturnCredit.find({ warehouseId: whId, issuedAt: { $gte: period.from, $lte: period.to } })
+    .select('amountSyp compensationClawbackSyp returnId invoiceId issuedAt').session(session).lean();
+  const references = await Invoice.find({ warehouseId: whId, _id: { $in: [...events.map(e => e.invoiceId), ...grants.map(g => g.invoiceId)] } })
+    .select('orderId invoiceNumber').session(session).lean();
+  const invoiceById = new Map(references.map(i => [String(i._id), i]));
+  const v2ByOrder = new Map();
+  for (const event of events) {
+    const id = String(invoiceById.get(String(event.invoiceId))?.orderId);
+    const value = v2ByOrder.get(id) ?? { commissionSyp: 0, correctionSyp: 0, creditSyp: 0, compensationSyp: 0 };
+    value.commissionSyp += Math.max(0, event.feniqSyp); value.correctionSyp -= Math.min(0, event.feniqSyp); v2ByOrder.set(id, value);
+  }
+  for (const grant of grants) {
+    const id = String(invoiceById.get(String(grant.invoiceId))?.orderId);
+    const value = v2ByOrder.get(id) ?? { commissionSyp: 0, correctionSyp: 0, creditSyp: 0, compensationSyp: 0 };
+    value.creditSyp += grant.amountSyp; value.compensationSyp += grant.compensationClawbackSyp ?? 0; v2ByOrder.set(id, value);
+  }
   const rows = orders.map((order) => {
     const key = String(order._id);
-    const creditSyp = creditByOrderId.get(key) ?? 0;
+    const v2 = order.commissionEngine === 'collection_v2' ? v2ByOrder.get(key) ?? { commissionSyp: 0, correctionSyp: 0, creditSyp: 0, compensationSyp: 0 } : null;
+    const creditSyp = v2 ? v2.creditSyp : creditByOrderId.get(key) ?? 0;
     const compensationSyp = platformCompensationOf(order);
-    const compClawbackSyp = compensationClawbackFor(order, compensationClawbackByOrderId.get(key) ?? 0);
-    const clawbackSyp = commissionClawbackFor(order, creditSyp, compClawbackSyp);
+    const compClawbackSyp = v2 ? v2.compensationSyp : compensationClawbackFor(order, compensationClawbackByOrderId.get(key) ?? 0);
+    const clawbackSyp = v2 ? v2.correctionSyp : commissionClawbackFor(order, creditSyp, compClawbackSyp);
+    const rowCommissionSyp = v2 ? v2.commissionSyp : order.commissionAmount;
     const netSalesSyp = order.finalPrice - creditSyp;
-    const netCommissionSyp = order.commissionAmount - clawbackSyp;
+    const netCommissionSyp = rowCommissionSyp - clawbackSyp;
     const netCompensationSyp = compensationSyp - compClawbackSyp;
 
     grossSalesSyp += order.finalPrice;
     grossCommissionSyp += order.commissionAmount;
-    creditedSalesSyp += creditSyp;
-    commissionClawbackSyp += clawbackSyp;
+    creditedSalesSyp += v2 ? 0 : creditSyp;
+    commissionClawbackSyp += v2 ? 0 : clawbackSyp;
     grossCompensationSyp += compensationSyp;
-    compensationClawbackSyp += compClawbackSyp;
+    compensationClawbackSyp += v2 ? 0 : compClawbackSyp;
 
     return {
       orderId: order._id,
+      ...(order.commissionEngine === 'collection_v2' ? { commissionEngine: 'collection_v2',
+        commissionPotentialSyp: order.collectionCommission?.originalCommissionSyp ?? 0 } : {}),
       orderNumber: order.orderNumber,
       invoiceNumber: order.invoiceNumber ?? null,
       deliveredAt: order.deliveredAt,
@@ -168,7 +198,7 @@ async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
       discountCodeSyp: order.discountCode?.discountSyp ?? 0,
       discountCodeFundedBy: order.discountCode?.fundedBy ?? null,
       salesSyp: order.finalPrice,
-      commissionSyp: order.commissionAmount,
+      commissionSyp: rowCommissionSyp,
       creditedSyp: creditSyp,
       commissionClawbackSyp: clawbackSyp,
       // What the platform owes the warehouse for an admin code on this order.
@@ -182,12 +212,27 @@ async function getSettlementForWarehouse(warehouseId, { from, to } = {}) {
     };
   });
 
+  const collectionAccrualSyp = events.reduce((n, event) => n + Math.max(0, event.feniqSyp), 0);
+  const collectionCorrectionSyp = events.reduce((n, event) => n + Math.min(0, event.feniqSyp), 0);
+  const legacyDeliveryCommissionSyp = grossCommissionSyp - commissionClawbackSyp;
+  const collectionReturnIssuedSyp = grants.reduce((n, grant) => n + grant.amountSyp, 0);
+  creditedSalesSyp += collectionReturnIssuedSyp;
+  const collectionCompensationClawbackSyp = grants.reduce((n, grant) => n + (grant.compensationClawbackSyp ?? 0), 0);
+  compensationClawbackSyp += collectionCompensationClawbackSyp;
+  grossCommissionSyp += collectionAccrualSyp;
+  commissionClawbackSyp -= collectionCorrectionSyp;
   const netSalesSyp = grossSalesSyp - creditedSalesSyp;
   const netCommissionSyp = grossCommissionSyp - commissionClawbackSyp;
   const netCompensationSyp = grossCompensationSyp - compensationClawbackSyp;
 
   return {
     period: { from: period.from, to: period.to },
+    ...(events.length || grants.length || orders.some(order => order.commissionEngine === 'collection_v2') ? {
+      asOf: new Date(), collectionCommission: { legacyDeliveryCommissionSyp, collectionAccrualSyp, collectionCorrectionSyp,
+        collectionReturnIssuedSyp, collectionCompensationClawbackSyp,
+        outsideDeliveryPeriod: [...v2ByOrder].filter(([orderId]) => !orderById.has(orderId)).map(([orderId, value]) => ({ orderId, ...value })),
+        scope: 'v2_fees_and_goods_returns_by_posting_date_not_rep_share_or_delivery_fees', events },
+    } : {}),
     totals: {
       orderCount: orders.length,
       // Sales: what pharmacies were charged for delivered orders.

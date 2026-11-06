@@ -2,6 +2,7 @@ const { serializeOrderDiscountCode } = require('./discountCode.viewmodel');
 const { platformCompensationOf } = require('../services/discountCode.service');
 const { serializePharmacy } = require('./auth.viewmodel');
 const { FEATURES } = require('../config/features');
+const { collectionOrderFields } = require('./collectionOrder.viewmodel');
 
 function serializeOrderItem(item) {
   return {
@@ -57,6 +58,7 @@ function serializePackageGroups(order) {
 // unlike the pharmacist's own list, which never needs to see itself.
 function toWarehouseOrderItem({ order, items, pharmacy, hasReviewed }) {
   return {
+    ...collectionOrderFields(order),
     id: order._id,
     orderNumber: order.orderNumber,
     status: order.status,
@@ -80,6 +82,7 @@ function toWarehouseOrdersResponse(rows) {
 function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn, hasReviewed }) {
   return {
     order: {
+      ...collectionOrderFields(order, { includeCommission: true }),
       id: order._id,
       deliveryEstimate: require('./deliveryEstimate.viewmodel').publicEstimate(order.deliveryEstimate, order.status),
     orderNumber: order.orderNumber,
@@ -109,7 +112,9 @@ function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn, has
       // what a package deal really netted it. Derived rather than stored -
       // it is a pure function of frozen fields. An admin code's compensation
       // is part of what the warehouse earns.
-      warehouseNetSyp: order.finalPrice + platformCompensationOf(order) - order.commissionAmount,
+      warehouseNetSyp: order.finalPrice + platformCompensationOf(order) - (order.commissionEngine === 'collection_v2'
+        ? (order.$locals?.collectionPosition?.feniqSyp ?? 0) + (order.$locals?.collectionReturns?.goodsSyp ?? 0) +
+          (order.$locals?.collectionReturns?.compensationClawbackSyp ?? 0) : order.commissionAmount),
       // The split of the rep's commission, frozen when the order was placed:
       // half to the rep, a quarter to Feniq (already inside commissionAmount),
       // the rest saved by the warehouse. null when no rep earns on this order.

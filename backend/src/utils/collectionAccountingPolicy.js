@@ -63,13 +63,16 @@ function allocateOldestInvoices(body) {
 // Repeated partial receipts use cumulative entitlement, not a freshly rounded
 // percentage for each receipt. Delivery fees never enter this calculation.
 function collectionIncrement(body) {
-  only(body, ['terms', 'previousCollectedSyp', 'collectedSyp']);
+  only(body, ['terms', 'previousCollectedSyp', 'collectedSyp', 'returnedCommissionSyp']);
   const terms = snapshotTerms(body.terms);
+  const returned = money(body.returnedCommissionSyp ?? 0);
+  if (returned > terms.originalCommissionSyp) throw invalid();
+  const netTerms = { ...terms, originalCommissionSyp: terms.originalCommissionSyp - returned };
   const previous = money(body.previousCollectedSyp);
   const collected = money(body.collectedSyp);
   if (previous > collected) throw invalid();
-  const before = collectionEntitlement(terms, previous);
-  const cumulative = collectionEntitlement(terms, collected);
+  const before = collectionEntitlement(netTerms, previous);
+  const cumulative = collectionEntitlement(netTerms, collected);
   return {
     policyVersion: POLICY_VERSION,
     cumulative,
@@ -84,8 +87,9 @@ function collectionIncrement(body) {
 
 // Only the known return-commission amount from frozen contract/line records
 // is accepted. Goods credit is NOT commission and is NOT automatically used
-// against the original invoice. Partial-collection/return overlap is deliberately
-// blocked until its allocation has an approved accounting treatment.
+// against the original invoice. Partial cash and partial returns use the same
+// approved proportional rule: net eligible commission times collected/original
+// invoice. Always compare cumulative targets, never subtract the return twice.
 function returnCommissionCorrection(body) {
   only(body, ['terms', 'collectedSyp', 'previousReturnedCommissionSyp', 'returnedCommissionSyp', 'settlementId']);
   const terms = snapshotTerms(body.terms);
@@ -93,17 +97,16 @@ function returnCommissionCorrection(body) {
   const previous = money(body.previousReturnedCommissionSyp);
   const returned = money(body.returnedCommissionSyp);
   if (previous > returned || returned > terms.originalCommissionSyp || collectedSyp > terms.invoiceSyp) throw invalid();
-  if (collectedSyp !== 0 && collectedSyp !== terms.invoiceSyp) {
-    throw ApiError.conflict('Partial collection and return require accounting review.', 'PARTIAL_RETURN_REVIEW_REQUIRED');
-  }
   const settlementId = body.settlementId == null ? null : reference(body.settlementId);
   if (collectedSyp === 0 && settlementId) throw invalid();
-  const before = collectionEntitlement({ ...terms, originalCommissionSyp: terms.originalCommissionSyp - previous }, terms.invoiceSyp);
-  const after = collectionEntitlement({ ...terms, originalCommissionSyp: terms.originalCommissionSyp - returned }, terms.invoiceSyp);
+  const before = collectionEntitlement({ ...terms, originalCommissionSyp: terms.originalCommissionSyp - previous }, collectedSyp);
+  const netTerms = { ...terms, originalCommissionSyp: terms.originalCommissionSyp - returned };
+  const after = collectionEntitlement(netTerms, collectedSyp);
   return {
     policyVersion: POLICY_VERSION,
     // Remaining potential before cash, or remaining entitlement after full cash.
-    remaining: after,
+    remaining: collectionEntitlement(netTerms, terms.invoiceSyp),
+    earned: after,
     correction: collectedSyp === 0
       ? { originalCommissionSyp: 0, feniqSyp: 0, repSyp: 0, pharmacySyp: 0 }
       : { originalCommissionSyp: after.originalCommissionSyp - before.originalCommissionSyp,
@@ -114,15 +117,15 @@ function returnCommissionCorrection(body) {
 }
 
 // A transfer may happen immediately; 24h is NOT a prohibition on early payment.
-// Approval must not reset the clock. Weekly cadence is approved, but a week-end
-// day/time has not been selected, so no invented weekly due date is returned.
+// Approval must not reset the clock. Weekly periods are recorded settlement
+// intervals, not an invented fixed weekday or a separate due date per receipt.
 function remittanceSchedule(body) {
   only(body, ['collector', 'paidAt']);
   const paidAt = date(body.paidAt);
   if (!['feniq', 'warehouse'].includes(body.collector)) throw invalid();
   if (body.collector === 'warehouse') return {
     policyVersion: POLICY_VERSION, collector: 'warehouse', paidAt: paidAt.toISOString(),
-    cadence: 'weekly', calendarRequired: true, dueAt: null,
+    cadence: 'weekly', calendarRequired: false, periodBasis: 'recorded_settlement_period', dueAt: null,
   };
   const target = new Date(paidAt.getTime() + 24 * 60 * 60 * 1000);
   const deadline = new Date(paidAt.getTime() + 48 * 60 * 60 * 1000);

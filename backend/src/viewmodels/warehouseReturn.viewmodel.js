@@ -37,6 +37,7 @@ function toResolvedReturnResponse(returnRequest, creditEntry = null) {
       rejectionNote: returnRequest.rejectionNote,
       creditSyp: returnRequest.creditSyp ?? null,
       creditUsd: returnRequest.creditUsd ?? null,
+      ...(returnRequest.creditGrantId ? { creditGrantId: returnRequest.creditGrantId, creditTreatment: returnRequest.creditTreatment } : {}),
       resolvedAt: returnRequest.resolvedAt,
     },
     creditEntry: creditEntry

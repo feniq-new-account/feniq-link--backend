@@ -1059,6 +1059,8 @@ export const api = {
   // browsing needs the second list rather than the registry.
   warehouseManufacturers: ({ inCatalog } = {}) =>
     request(`/warehouse/manufacturers${inCatalog ? '?inCatalog=true' : ''}`),
+  collectionAccounting: (query = {}) => request(`/warehouse/collection-accounting?${new URLSearchParams(query)}`),
+  adminCollectionAccounting: (warehouseId, query = {}) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}?${new URLSearchParams(query)}`),
   accountantDashboard: (query = {}) => request(`/warehouse/balances/dashboard?${new URLSearchParams(query)}`),
   warehouseBalances: ({ limit, after, search, balanceState } = {}) => {
     const params = new URLSearchParams();

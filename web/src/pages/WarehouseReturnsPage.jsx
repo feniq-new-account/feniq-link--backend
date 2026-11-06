@@ -80,7 +80,7 @@ export function WarehouseReturnsPage() {
       return;
     }
     const confirmed = window.confirm(
-      t('returns.confirmApproveCredit', {
+      t(preview.preview.breakdown?.creditTreatment === 'future_invoice_or_exchange' ? 'collectionAccounting.confirmFutureCredit' : 'returns.confirmApproveCredit', {
         number: returnRequest.orderNumber,
         amount: formatSyp(preview.preview.creditSyp),
       })

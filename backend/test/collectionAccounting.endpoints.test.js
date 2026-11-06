@@ -71,11 +71,13 @@ test('unauthenticated and non-admin users cannot use the internal calculation en
   assert.equal((await call(body, null)).status, 401);
   for (const role of ['warehouse', 'pharmacy', 'rep']) assert.equal((await call(body, tokens[role])).status, 403);
 });
-test('partial collection/return and foreign-account allocation fail without a write', async () => {
+test('partial collection/return applies the proportional rule; foreign-account allocation fails without a write', async () => {
   const before = await financialCounts();
   const partial = await call({ return: { terms, collectedSyp: 50000,
     previousReturnedCommissionSyp: 0, returnedCommissionSyp: 2000 } });
-  assert.equal(partial.status, 409); assert.equal(partial.body.code, 'PARTIAL_RETURN_REVIEW_REQUIRED');
+  assert.equal(partial.status, 200);
+  assert.equal(partial.body.return.earned.originalCommissionSyp, 4000);
+  assert.equal(partial.body.return.correction.originalCommissionSyp, -1000);
   const foreign = await call({ fifo: { accountId: 'own', paymentSyp: 10, invoices: [
     { accountId: 'foreign', invoiceId: 'x', deliveredAt: '2026-11-01T12:00:00Z', outstandingSyp: 10, engine: POLICY_VERSION },
   ] } });

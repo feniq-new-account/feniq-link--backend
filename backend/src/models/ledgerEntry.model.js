@@ -23,6 +23,8 @@ const ENTRY_KINDS = {
   payment_reversal: DEBIT,        // that payment was recorded in error
   return_credit: CREDIT,          // an approved return, valued from the order
   return_credit_reversal: DEBIT,  // that credit was issued in error
+  return_credit_application: CREDIT, // approved return credit used on a new invoice
+  return_credit_application_reversal: DEBIT,
   manual_credit: CREDIT,          // goodwill / dispute resolution (admin)
   manual_debit: DEBIT,            // missed charge / correction (admin)
   adjustment_reversal: null,      // opposite of whatever it reverses
@@ -78,6 +80,7 @@ const ledgerEntrySchema = new Schema(
       orderId: { type: Schema.Types.ObjectId, ref: 'Order', default: null },
       paymentId: { type: Schema.Types.ObjectId, ref: 'Payment', default: null },
       returnId: { type: Schema.Types.ObjectId, ref: 'Return', default: null },
+      returnCreditUseId: { type: Schema.Types.ObjectId, ref: 'CollectionReturnCreditUse', default: null },
     },
 
     // Set on every *_reversal: the entry being negated. An entry can be
@@ -147,6 +150,8 @@ ledgerEntrySchema.index(
 ledgerEntrySchema.index({ warehouseId: 1, kind: 1, effectiveAt: 1 });
 
 ledgerEntrySchema.index({ effectiveAt: 1, kind: 1 });
+ledgerEntrySchema.index({ 'source.returnCreditUseId': 1, kind: 1 }, { unique: true,
+  partialFilterExpression: { 'source.returnCreditUseId': { $type: 'objectId' } } });
 
 module.exports = model('LedgerEntry', ledgerEntrySchema);
 module.exports.ENTRY_KINDS = ENTRY_KINDS;

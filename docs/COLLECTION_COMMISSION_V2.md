@@ -49,8 +49,9 @@ The additional admin-only, no-store endpoint
 - `return:{terms,collectedSyp,previousReturnedCommissionSyp,returnedCommissionSyp,settlementId?}`.
   Known frozen return commission reduces potential before collection, corrects
   unsettled entitlement after full collection, or offsets the next settlement
-  referencing the original. Mixed partial collection/return returns409
-  `PARTIAL_RETURN_REVIEW_REQUIRED`; no guessed goods-to-commission allocation.
+  referencing the original. Partial collection/return uses net eligible commission
+  times collection/original frozen invoice; correction is the cumulative target
+  minus previous target. No business decision remains pending for this case.
 - `remittance:{collector,paidAt}`. Feniq gets target24h/deadline48h from actual
   cash time with early transfer allowed. Warehouse gets weekly cadence with
   no invented weekday or rolling seven-day due date. Timestamps require an
@@ -69,7 +70,7 @@ authorize a live financial operation. Receipt approval alone is not settlement.
    Feniq accountant approves; warehouse manual collections need its accountant.
    Recording and approval are one receipt, not two debt reductions. The old
    preview still rejects `returnPending`; the new calculator supports the known
-   return cases while refusing unapproved mixed partial-return formulas.
+   return cases with the same approved proportional rule.
 2. Persist versioned contracts and per-line/invoice snapshots on NEW v2 orders.
    Never reinterpret legacy orders or recalculate their earned credit.
 3. Persist immutable FIFO allocations referencing same-tenant posted receipts,

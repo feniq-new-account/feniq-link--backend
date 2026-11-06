@@ -7,6 +7,7 @@ const { freeQuantityFor, sameBonus, effectiveBonuses } = require('../utils/bonus
 const Order = require('../models/order.model');
 const OrderItem = require('../models/orderItem.model');
 const Warehouse = require('../models/warehouse.model');
+const collectionContracts = require('./collectionContract.service');
 const RepAssignment = require('../models/repAssignment.model');
 const Rep = require('../models/rep.model');
 const { feniqRateFor, splitRepCommission } = require('../utils/repCommission');
@@ -722,6 +723,8 @@ async function createOrder({
   }
 
   const warehouse = await Warehouse.findById(warehouseId);
+  const collectionContract = await collectionContracts.selectedForWarehouse(warehouse);
+  const collectionPharmacy = collectionContract ? await Pharmacy.findById(pharmacyId).select('areaType').lean() : null;
 
   // The rep who covers this pharmacy for this warehouse right now, frozen on
   // the order (order.model.js's repId) so the rep's numbers - and later their
@@ -1049,6 +1052,7 @@ async function createOrder({
   // inserted the items as three independent steps, so a failure on the last
   // one left an order carrying a total but no lines - an invoice for nothing.
   const order = await runInTransaction(async (session) => {
+    await collectionContracts.lockSelection(warehouseId, collectionContract, session);
     // The code's use is taken in the same transaction as the order: if the
     // claim fails (the limit was reached or the code changed a moment ago) no
     // order is written, and if the order fails the use is never taken.
@@ -1065,7 +1069,11 @@ async function createOrder({
           pharmacyId,
           warehouseId,
           repId: repAssignment ? repAssignment.repId : null,
-          repCommission,
+          repCommission: collectionContract ? null : repCommission,
+          commissionEngine: collectionContract ? 'collection_v2' : 'legacy_delivery',
+          collectionCommission: collectionContract ? collectionContracts.invoiceSnapshot(collectionContract, {
+            repId: repAssignment?.repId ?? null, areaType: collectionPharmacy?.areaType, invoiceSyp: finalPrice,
+          }) : null,
           loyaltyDiscountAmount,
           monthlyLoyalty,
           deliveryEstimate,
@@ -1077,7 +1085,7 @@ async function createOrder({
           fx: fx ?? undefined,
           totalPrice,
           discountAmount,
-          commissionAmount,
+          commissionAmount: collectionContract ? 0 : commissionAmount,
           orderPackageGroups: packageGroups,
           // Legacy mirror of the FIRST group only, for the reports and clients
           // that already read it - see the note on order.model.js. The groups
@@ -1129,6 +1137,11 @@ async function createOrder({
       { pharmacyId, warehouseId, orderId: created._id, amountSyp: creditUsedSyp },
       session
     );
+
+    if (created.commissionEngine === 'collection_v2') {
+      created.returnCreditReservedSyp = await require('./collectionReturnCredit.service').reserveForOrder(created, userId, session);
+      if (created.returnCreditReservedSyp) await created.save({ session });
+    }
 
     return created;
   }).catch(async (err) => {

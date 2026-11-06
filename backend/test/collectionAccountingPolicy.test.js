@@ -92,8 +92,12 @@ test('cumulative return corrections sum exactly, including odd-lira city splits'
   assert.deepEqual(correct({ previousReturnedCommissionSyp: 2000 }).correction,
     { originalCommissionSyp: 0, feniqSyp: 0, repSyp: 0, pharmacySyp: 0 });
 });
-test('mixed partial receipt/return fails closed instead of choosing an unapproved formula', () => {
-  assert.throws(() => correct({ collectedSyp: 50000 }), { code: 'PARTIAL_RETURN_REVIEW_REQUIRED' });
+test('partial receipt and partial return use net commission over the original frozen invoice', () => {
+  const result = correct({ collectedSyp: 50000 });
+  assert.equal(result.remaining.originalCommissionSyp, 8000);
+  assert.deepEqual(result.earned, { originalCommissionSyp: 4000, feniqSyp: 2000, repSyp: 2000, pharmacySyp: 0 });
+  assert.deepEqual(result.correction, { originalCommissionSyp: -1000, feniqSyp: -500, repSyp: -500, pharmacySyp: 0 });
+  assert.equal(correct({ collectedSyp: 50000, settlementId: 'closed' }).treatment, 'offset_next_settlement');
   assert.throws(() => correct({ returnedCommissionSyp: 10001 }));
   assert.throws(() => correct({ previousReturnedCommissionSyp: 2001 }));
   assert.throws(() => returnCommissionCorrection({ terms, collectedSyp: 100000,
@@ -107,10 +111,22 @@ test('Feniq transfer clock starts at actual cash time, crosses month boundaries,
   assert.equal(result.earlyTransferAllowed, true);
   assert.throws(() => remittanceSchedule({ collector: 'feniq', paidAt: result.paidAt, approvedAt: '2026-11-01T20:30:00Z' }));
 });
-test('warehouse settlement is weekly without inventing a weekday or rolling receipt due date', () => {
+test('warehouse settlement uses recorded weekly periods without a fixed weekday or rolling receipt due date', () => {
   const result = remittanceSchedule({ collector: 'warehouse', paidAt: '2026-11-06T10:00:00Z' });
-  assert.equal(result.cadence, 'weekly'); assert.equal(result.calendarRequired, true); assert.equal(result.dueAt, null);
+  assert.equal(result.cadence, 'weekly'); assert.equal(result.calendarRequired, false); assert.equal(result.dueAt, null);
+  assert.equal(result.periodBasis, 'recorded_settlement_period');
   for (const paidAt of [null, '', 'bad', 123]) assert.throws(() => remittanceSchedule({ collector: 'warehouse', paidAt }));
+});
+test('cash then return and return then cash reach the same cumulative entitlement', () => {
+  const collectedSyp = 50000;
+  const earnedBeforeReturn = collectionIncrement({ terms, previousCollectedSyp: 0, collectedSyp }).cumulative;
+  const { correction } = correct({ collectedSyp });
+  const earnedAfterReturn = collectionIncrement({ terms, previousCollectedSyp: 0, collectedSyp, returnedCommissionSyp: 2000 }).cumulative;
+  for (const key of ['originalCommissionSyp', 'feniqSyp', 'repSyp']) {
+    assert.equal(earnedBeforeReturn[key] + correction[key], earnedAfterReturn[key]);
+  }
+  const next = collectionIncrement({ terms, previousCollectedSyp: collectedSyp, collectedSyp: 100000, returnedCommissionSyp: 2000 });
+  assert.equal(earnedAfterReturn.originalCommissionSyp + next.increment.originalCommissionSyp, 8000);
 });
 test('invalid calendar dates cannot silently move a remittance deadline or change FIFO order', () => {
   for (const paidAt of ['2026-02-30T10:00:00Z', '2026-02-29T10:00:00Z', '2026-04-31T10:00:00+03:00',

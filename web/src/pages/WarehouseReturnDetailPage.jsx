@@ -82,7 +82,7 @@ export function WarehouseReturnDetailPage() {
       return;
     }
     const confirmed = window.confirm(
-      t('returns.confirmApproveCredit', {
+      t(preview.preview.breakdown?.creditTreatment === 'future_invoice_or_exchange' ? 'collectionAccounting.confirmFutureCredit' : 'returns.confirmApproveCredit', {
         number: returnRequest.orderNumber,
         amount: formatSyp(preview.preview.creditSyp),
       })
@@ -131,6 +131,7 @@ export function WarehouseReturnDetailPage() {
         <div className="wh-detail-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
             <div className="wh-detail-card">
+              {returnRequest.creditTreatment === 'future_invoice_or_exchange' && <p className="hint">{t('collectionAccounting.futureCredit')}</p>}
               <div className="wh-detail-header-row">
                 <h1>{t('returnDetail.header', { number: returnRequest.orderNumber })}</h1>
                 <span className={`status-badge ${statusBadgeClass(returnRequest)}`}>

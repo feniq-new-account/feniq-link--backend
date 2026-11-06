@@ -46,8 +46,10 @@ async function dashboard(warehouseId, query = {}, now = new Date()) {
     const pharmacies = await Pharmacy.find({ _id: { $in: page.map((row) => row.pharmacyId) } })
       .select('nameAr nameEn phone').session(session).lean();
     const names = new Map(pharmacies.map((row) => [String(row._id), row]));
+    const collectionAccounting = await require('./collectionAccountingRead.service').summary(warehouseId, data.period, session);
     return {
       ...toWarehouseSummaryResponse(data),
+      ...(collectionAccounting ? { collectionAccounting } : {}),
       asOf: now, timezone: 'Asia/Damascus',
       activity: page.map((row) => ({
         id: row._id, entryNumber: row.entryNumber, pharmacyId: row.pharmacyId,

@@ -1,5 +1,6 @@
 const Order = require('../models/order.model');
 const Return = require('../models/return.model');
+const { Event: CollectionEvent } = require('../models/collectionAccounting.model');
 
 // What the rep, Feniq and the warehouse earn from the commission on a set of
 // orders, from the split frozen on each order (utils/repCommission.js).
@@ -14,8 +15,8 @@ const Return = require('../models/return.model');
 // the rows are one per repId; without, a single row (or none). Amounts are
 // whole liras, rounded once at the end rather than per order.
 async function sumRepCommission(match, { byRep = false } = {}) {
-  return Order.aggregate([
-    { $match: { ...match, status: 'delivered', repCommission: { $ne: null } } },
+  const legacy = await Order.aggregate([
+    { $match: { ...match, status: 'delivered', commissionEngine: { $ne: 'collection_v2' }, repCommission: { $ne: null } } },
     {
       $lookup: {
         from: Return.collection.name,
@@ -52,6 +53,20 @@ async function sumRepCommission(match, { byRep = false } = {}) {
       },
     },
   ]);
+  if (Object.keys(match).some(key => !['warehouseId', 'repId', 'createdAt'].includes(key))) {
+    throw new Error('Unsupported cross-model commission filter.');
+  }
+  const eventMatch = { ...(match.warehouseId ? { warehouseId: match.warehouseId } : {}),
+    ...(match.repId ? { repId: match.repId } : {}), ...(match.createdAt ? { at: match.createdAt } : {}) };
+  const collection = await CollectionEvent.aggregate([{ $match: eventMatch }, { $group: {
+    _id: byRep ? '$repId' : null, repAmount: { $sum: '$repSyp' }, feniqAmount: { $sum: '$feniqSyp' },
+  } }]);
+  const combined = new Map(legacy.map(row => [String(row._id), row]));
+  for (const row of collection) {
+    const previous = combined.get(String(row._id)) ?? { _id: row._id, repAmount: 0, feniqAmount: 0, pharmacyAmount: 0, savingAmount: 0 };
+    combined.set(String(row._id), { ...previous, repAmount: previous.repAmount + row.repAmount, feniqAmount: previous.feniqAmount + row.feniqAmount });
+  }
+  return [...combined.values()];
 }
 
 module.exports = { sumRepCommission };

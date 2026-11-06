@@ -185,7 +185,7 @@ export function WarehouseOrdersPage() {
       {collecting?.id === order.id && (
         <CollectPaymentModal
           orderNumber={collecting.orderNumber}
-          totalSyp={collecting.finalPrice}
+          totalSyp={collecting.netAfterReturnCreditSyp ?? collecting.finalPrice}
           onChoose={handleCollectChoice}
           onClose={() => setCollecting(null)}
         />

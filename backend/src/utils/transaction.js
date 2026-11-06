@@ -89,6 +89,9 @@ async function runInTransaction(work) {
       // Reset per attempt - a retried transaction must not observe a value
       // computed by the attempt that was rolled back.
       result = undefined;
+      // Compound commission allocations/corrections share one posting instant,
+      // even when several ledger entries are written across a period boundary.
+      session.financialOperationAt = new Date();
       result = await work(session);
     });
   } catch (err) {

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const Payment = require('../models/payment.model');
 const Pharmacy = require('../models/pharmacy.model');
+const Warehouse = require('../models/warehouse.model');
 const Counter = require('../models/counter.model');
 const LedgerEntry = require('../models/ledgerEntry.model');
 const { runInTransaction } = require('../utils/transaction');
@@ -285,6 +286,10 @@ async function createPayment(warehouseId, recordedByUserId, data) {
 
   try {
     return await runInTransaction(async (session) => {
+      const termsWarehouse = await Warehouse.findById(warehouseId).select('commissionEngine').session(session).lean();
+      if (termsWarehouse?.commissionEngine === 'collection_v2') {
+        await require('./collectionLedger.service').initializeAccount(account._id, warehouseId, session);
+      }
       const paymentNumber = await nextPaymentNumber(session);
 
       const [payment] = await Payment.create(

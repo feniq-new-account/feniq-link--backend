@@ -56,9 +56,12 @@ async function priorReturnsForOrder(orderId, session = null) {
   );
   if (session) query.session(session);
   const entries = await query.lean();
+  const { Invoice, ReturnCredit } = require('../models/collectionAccounting.model');
+  const invoice = await Invoice.findOne({ orderId }).select('_id').session(session).lean();
+  const grants = invoice ? await ReturnCredit.find({ invoiceId: invoice._id }).select('amountSyp compensationClawbackSyp').session(session).lean() : [];
   return {
-    creditsSyp: entries.reduce((sum, entry) => sum + entry.amountSyp, 0),
-    compensationClawbackSyp: entries.reduce(
+    creditsSyp: grants.reduce((n, grant) => n + grant.amountSyp, 0) + entries.reduce((sum, entry) => sum + entry.amountSyp, 0),
+    compensationClawbackSyp: grants.reduce((n, grant) => n + (grant.compensationClawbackSyp ?? 0), 0) + entries.reduce(
       (sum, entry) => sum + (entry.metadata?.compensationClawbackSyp ?? 0),
       0
     ),
@@ -172,6 +175,7 @@ function computeCredit({
     // The whole working, frozen onto the return and copied to the ledger
     // entry's metadata, so a statement or a dispute never recomputes it.
     breakdown: {
+      ...(order.commissionEngine === 'collection_v2' ? { creditTreatment: 'future_invoice_or_exchange' } : {}),
       orderId: order._id,
       orderNumber: order.orderNumber,
       invoiceNumber: order.invoiceNumber ?? null,
