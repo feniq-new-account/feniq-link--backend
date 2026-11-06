@@ -12,11 +12,13 @@ export function projectTripRoute(routePoints, location) {
   if (!Array.isArray(routePoints) || routePoints.length < 2 ||
       routePoints.length > 500 || !routePoints.every(valid)) return null;
   const route = routePoints;
-  const pos = Number.isFinite(Number(location?.latitude)) &&
-    Number.isFinite(Number(location?.longitude)) &&
-    Math.abs(Number(location?.latitude)) <= 90 &&
-    Math.abs(Number(location?.longitude)) <= 180
-    ? [Number(location.latitude), Number(location.longitude)] : null;
+  const numeric = value => (typeof value === 'number' && Number.isFinite(value)) ? value : null;
+  const lat = numeric(location?.latitude);
+  const lon = numeric(location?.longitude);
+  // Missing/malformed fields must not draw a fabricated fix at (0,0).
+  const pos = lat !== null && lon !== null &&
+    Math.abs(lat) <= 90 && Math.abs(lon) <= 180
+    ? [lat, lon] : null;
 
   const avgLat = route.reduce((sum, p) => sum + p[0], 0) / route.length;
   const xScale = Math.max(0.01, Math.cos(avgLat * Math.PI / 180));
