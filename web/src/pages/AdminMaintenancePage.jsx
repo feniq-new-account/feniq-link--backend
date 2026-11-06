@@ -83,6 +83,21 @@ export function AdminMaintenancePage() {
         {!preview && !error && <p className="hint">{t('common.loading')}</p>}
         {preview && <>
           <p className="hint">{t('maintenance.generated')}: {new Date(preview.generatedAt).toLocaleString()}</p>
+          {preview.pilotReadiness && <section className="adm-maintenance-readiness" aria-label={t('maintenance.pilotReadiness')}>
+            <h2>{t('maintenance.pilotReadiness')}</h2>
+            <p className="hint">{t('maintenance.readinessNotEndToEnd')}</p>
+            <dl className="adm-maintenance-stats">
+              {['activePharmacies', 'visibleWarehouses', 'warehousesWithCatalog', 'warehousesWithOffers', 'warehousesWithPackages'].map(field =>
+                <div key={field}>
+                  <dt>{t('maintenance.readinessFields.' + field)}</dt>
+                  <dd><DisplayCount value={preview.pilotReadiness[field]} /></dd>
+                </div>)}
+            </dl>
+            <p className="adm-maintenance-warning" role="status">
+              {preview.pilotReadiness.orderingEnabled
+                ? t('maintenance.orderSwitchOn') : t('maintenance.orderSwitchOff')}
+            </p>
+          </section>}
           {preview.needsAccountRecovery > 0 && <div className="adm-maintenance-warning">
             <p role="status">{t('maintenance.accountsBlocked', { count: preview.needsAccountRecovery })}</p>
             <p className="hint">{t('maintenance.recoveryHint')}</p>
@@ -112,6 +127,19 @@ export function AdminMaintenancePage() {
               {preview.warehouses.map(warehouse => <section className="adm-maintenance-warehouse" key={warehouse.id}>
                 <h2>{warehouse.nameAr}</h2>
                 <p className="hint">{warehouse.city} · {t('maintenance.accountStatus')}: {warehouse.accountStatus}</p>
+                {warehouse.readiness && <>
+                  <p className="adm-maintenance-warning">
+                    {warehouse.readiness.visibleToPharmacist
+                      ? t('maintenance.warehouseVisible') : t('maintenance.warehouseHidden')}
+                  </p>
+                  <dl className="adm-maintenance-stats">
+                    {['availableProducts', 'visibleOffers', 'visiblePackages', 'visibleBanners'].map(field =>
+                      <div key={field}>
+                        <dt>{t('maintenance.readinessFields.' + field)}</dt>
+                        <dd><DisplayCount value={warehouse.readiness[field]} /></dd>
+                      </div>)}
+                  </dl>
+                </>}
                 <dl className="adm-maintenance-stats">
                   {inventoryFields.map(field => <div key={field}>
                     <dt>{t('maintenance.fields.' + field)}</dt>

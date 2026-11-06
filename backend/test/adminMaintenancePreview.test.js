@@ -57,3 +57,43 @@ test('maintenance preview is not anonymously accessible', async () => {
   assert.equal(response.status, 401);
   assert.equal(await mongoose.connection.db.collection('orders').countDocuments({}), 1);
 });
+
+test('pilot readiness distinguishes unblocked accounts and unexpired offers/packages from archived data', async () => {
+  const db = mongoose.connection.db;
+  const owner = await User.findOne({ role: 'warehouse', phone: '0930000101' });
+  const warehouse = await Warehouse.findOne({ userId: owner._id });
+  const now = Date.now();
+  const started = new Date(now - 3600 * 1000);
+  const ending = new Date(now + 3600 * 1000);
+  const expired = new Date(now - 1000);
+  await db.collection('offers').insertMany([
+    { warehouseId: warehouse._id, status: 'approved', startDate: started, endDate: ending },
+    { warehouseId: warehouse._id, status: 'approved', startDate: started, endDate: expired },
+  ]);
+  await db.collection('advertisements').insertMany([
+    { warehouseId: warehouse._id, status: 'approved', startDate: started, endDate: ending, isAvailable: true },
+    { warehouseId: warehouse._id, status: 'approved', startDate: started, endDate: ending, isAvailable: false },
+  ]);
+  await db.collection('banners').insertOne({
+    warehouseId: warehouse._id, status: 'approved', startDate: started, endDate: ending,
+  });
+  const before = await previewPilotCleanup();
+  assert.equal(before.warehouses[0].readiness.visibleToPharmacist, false);
+  assert.equal(before.warehouses[0].readiness.availableProducts, 1);
+  assert.equal(before.warehouses[0].readiness.visibleOffers, 1);
+  assert.equal(before.warehouses[0].readiness.visiblePackages, 1);
+  assert.equal(before.warehouses[0].readiness.visibleBanners, 1);
+  assert.equal(before.pilotReadiness.visibleWarehouses, 0);
+  assert.equal(before.pilotReadiness.orderingEnabled, false);
+  assert.equal(before.pilotReadiness.phoneToDashboardVerified, false);
+  assert.equal(before.pilotReadiness.deployVerified, false);
+
+  await User.updateOne({ _id: owner._id }, { $set: { status: 'active' } });
+  const after = await previewPilotCleanup();
+  assert.equal(after.warehouses[0].readiness.visibleToPharmacist, true);
+  assert.equal(after.warehouses[0].readiness.canReceiveOrders, true);
+  assert.equal(after.pilotReadiness.visibleWarehouses, 1);
+  assert.equal(after.pilotReadiness.warehousesWithOffers, 1);
+  assert.equal(after.pilotReadiness.warehousesWithPackages, 1);
+  await User.updateOne({ _id: owner._id }, { $set: { status: 'blocked' } });
+});
