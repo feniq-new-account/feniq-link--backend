@@ -45,3 +45,16 @@ it('warns when opening without an automatic closing time', async () => {
   await act(async () => host.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
   expect(api.updateLaunchSettings).toHaveBeenCalledWith({ mode: 'ordering_open', message: 'Preparing launch', revision: 2, orderingClosesAt: null });
 });
+
+it('labels an expired pilot while retaining editable settings', async () => {
+  api.getLaunchSettings.mockResolvedValue({
+    configuration: {
+      mode: 'ordering_open', message: 'Pilot open', revision: 7,
+      orderingClosesAt: '2026-11-01T21:00:00.000Z',
+    },
+  });
+  await act(async () => root.render(<LaunchSettingsCard key="pilot-expired" />));
+  expect(host.querySelector('[role="status"]').textContent).toContain('launch.pilotExpired');
+  expect(host.querySelector('select').value).toBe('ordering_open');
+  expect(host.querySelector('input[type="datetime-local"]')).not.toBeNull();
+});

@@ -1869,6 +1869,7 @@
     "closesAtHint": "New orders are automatically refused after this time, even if Accept orders remains selected.",
     "autoCloseEnabled": "Stop accepting orders automatically (recommended for pilot)",
     "deadlineWarning": "Warning: Without a deadline, orders will remain open until manually closed.",
+    "pilotExpired": "The automatic order closing deadline has passed. Pharmacists now see ordering as closed. Choose a new deadline and save to reopen.",
     "revision": "Configuration revision: {{revision}}"
   },
   "featureControl": {
