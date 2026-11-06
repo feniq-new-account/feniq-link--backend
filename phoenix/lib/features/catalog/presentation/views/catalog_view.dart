@@ -86,7 +86,7 @@ class _CatalogViewState extends State<CatalogView> {
           onChanged: (value) => context.read<CatalogCubit>().search(value),
         ),
       ),
-      body: CatalogProductList(warehouseId: widget.warehouseId, warehouseName: widget.warehouseName, isGrid: _isGrid),
+      body: CatalogProductList(warehouseId: widget.warehouseId, warehouseName: widget.warehouseName, isGrid: _isGrid, showManufacturer: false),
     );
   }
 }
