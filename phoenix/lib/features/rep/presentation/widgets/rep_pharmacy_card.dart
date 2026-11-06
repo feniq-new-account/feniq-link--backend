@@ -42,6 +42,19 @@ class RepPharmacyCard extends StatelessWidget {
               Icon(Icons.chevron_right, size: AppSizes.iconSizeSmall, color: AppColors.textSecondaryOf(context)),
             ],
           ),
+          if (pharmacy.activity.lastVisitAt != null &&
+              pharmacy.activity.lastVerifiedVisitAt == null) ...[
+            const SizedBox(height: AppSizes.spacingXSmall),
+            Text(
+              Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'آخر مسح QR غير موثّق — الزيارة ما انحسبت'
+                  : 'Last QR scan was unverified — no verified visit recorded',
+              style: context.textTheme.bodySmall?.copyWith(
+                color: AppColors.primaryTextOf(context),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
           if (place.isNotEmpty) ...[
             const SizedBox(height: AppSizes.spacingXSmall),
             Text(place, style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context))),
