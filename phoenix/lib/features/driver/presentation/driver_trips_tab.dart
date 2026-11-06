@@ -2,12 +2,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
+import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
 
 /// Operational delivery checklist. No accounting or payment actions.
 class DriverTripsTab extends StatefulWidget {
-  const DriverTripsTab({super.key, required this.repository, this.locationProvider});
+  const DriverTripsTab({super.key, required this.repository, this.locationProvider,
+    this.stopOutbox});
   final DriverTripRepository repository;
   final LocationProvider? locationProvider;
+  final DriverStopOutbox? stopOutbox;
   @override
   State<DriverTripsTab> createState() => _DriverTripsTabState();
 }
@@ -22,6 +25,10 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
   DateTime? _lastGpsSend;
   Timer? _trackingTimer;
   bool _sendingLocation = false;
+  bool _syncingStops = false;
+  bool _outboxLoaded = false;
+  List<PendingDriverStop> _pendingStops = const [];
+  String? _outboxError;
 
   bool get _ar => Localizations.localeOf(context).languageCode == 'ar';
   String _t(String ar, String en) => _ar ? ar : en;
@@ -31,11 +38,16 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _reload();
+    unawaited(_restoreOutbox());
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.resumed) _stopTracking();
+    if (state != AppLifecycleState.resumed) {
+      _stopTracking();
+    } else {
+      unawaited(_syncOutbox());
+    }
   }
 
   @override
@@ -92,6 +104,56 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
     _trackingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       unawaited(_capturePosition(tripId));
     });
+  }
+
+  Future<void> _restoreOutbox() async {
+    final outbox = widget.stopOutbox;
+    if (outbox == null) return;
+    try {
+      await outbox.restore();
+      if (!mounted) return;
+      setState(() {
+        _pendingStops = outbox.pending;
+        _outboxLoaded = true;
+        _outboxError = null;
+      });
+      if (_pendingStops.isNotEmpty) await _syncOutbox();
+    } catch (_) {
+      if (mounted) setState(() => _outboxError = _t(
+        'تعذّر قراءة أوامر التسليم المحفوظة. لن نستبدلها أو نمسحها.',
+        'Saved delivery queue cannot be read; it has not been overwritten.',
+      ));
+    }
+  }
+
+  Future<void> _syncOutbox() async {
+    final outbox = widget.stopOutbox;
+    if (outbox == null || !_outboxLoaded || _syncingStops || _pendingStops.isEmpty) return;
+    setState(() => _syncingStops = true);
+    try {
+      final result = await outbox.flush();
+      if (!mounted) return;
+      setState(() {
+        _pendingStops = outbox.pending;
+        _outboxError = result.failure == null ? null : _t(
+          'في تسليم محفوظ لم يتأكد من الخادم. أعد المزامنة عند عودة الإنترنت؛ إذا استمر الرفض راجع حالة الرحلة مع الإدارة.',
+          'A saved stop has not been acknowledged. Retry when online; contact operations if the server rejects it.',
+        );
+      });
+      if (result.confirmed > 0) await _reload();
+    } catch (_) {
+      if (mounted) setState(() => _outboxError = _t(
+        'تعذّر حفظ نتيجة المزامنة بأمان. بقي أمر التسليم محفوظاً.',
+        'Could not safely persist the sync result; the stop command remains queued.',
+      ));
+    } finally {
+      if (mounted) setState(() => _syncingStops = false);
+    }
+  }
+
+  Future<void> _refreshAndSync() async {
+    await _syncOutbox();
+    await _reload();
   }
 
   Future<void> _reload() async {
@@ -174,9 +236,38 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
       if (!mounted || entered == null || entered.isEmpty) return;
       note = entered;
     }
-    await _run(trip, () => widget.repository.updateStop(
-      trip.id, stop.id, trip.revision, status: status, note: note,
-    ));
+    final outbox = widget.stopOutbox;
+    if (outbox == null) {
+      await _run(trip, () => widget.repository.updateStop(
+        trip.id, stop.id, trip.revision, status: status, note: note,
+      ));
+      return;
+    }
+    if (!_outboxLoaded || _pendingStops.any((item) => item.tripId == trip.id)) {
+      setState(() => _outboxError = _t(
+        'زامن تسليم هذه الرحلة المحفوظ أولاً، قبل تسجيل تسليم جديد.',
+        'Synchronize the previously saved stop for this trip first.',
+      ));
+      return;
+    }
+    if (_busyId != null) return;
+    setState(() { _busyId = trip.id; _outboxError = null; });
+    try {
+      // This happens BEFORE HTTP: if the connection drops after server commit
+      // the original idempotency key and revision survive an app restart.
+      await outbox.enqueue(tripId: trip.id, stopId: stop.id,
+        revision: trip.revision, status: status, note: note);
+      if (!mounted) return;
+      setState(() => _pendingStops = outbox.pending);
+      await _syncOutbox();
+    } catch (_) {
+      if (mounted) setState(() => _outboxError = _t(
+        'تعذّر حفظ أمر التسليم بأمان، ولم نرسله.',
+        'Could not safely save the delivery decision; nothing was sent.',
+      ));
+    } finally {
+      if (mounted) setState(() => _busyId = null);
+    }
   }
 
   String _status(String value) => switch (value) {
@@ -190,7 +281,7 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: _reload,
+      onRefresh: _refreshAndSync,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -200,6 +291,25 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
           Text(_t('تظهر فقط الرحلات المسندة لحسابك. كل تعديل يحتاج اتصالاً بالخادم.',
             'Only your assigned trips are shown. Changes require a server connection.')),
           const SizedBox(height: 16),
+          if (_pendingStops.isNotEmpty || _outboxError != null) ...[
+            Semantics(
+              liveRegion: true,
+              child: Text(_t(
+                'تسليمات بانتظار المزامنة: ', 'Saved stops awaiting sync: ',
+              ) + _pendingStops.length.toString()),
+            ),
+            if (_outboxError != null)
+              Text(_outboxError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            if (_pendingStops.isNotEmpty)
+              TextButton.icon(
+                onPressed: _syncingStops ? null : _syncOutbox,
+                icon: const Icon(Icons.sync),
+                label: Text(_t('إعادة مزامنة التسليمات', 'Retry saved deliveries')),
+              ),
+            Text(_t('لا ترسل نفس التسليم من جديد قبل التأكد من نتيجته.',
+              'Do not record a saved stop again until its outcome is confirmed.')),
+          ],
+          if (_syncingStops) const LinearProgressIndicator(),
           if (_error != null) ...[
             Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
             TextButton.icon(onPressed: _reload, icon: const Icon(Icons.refresh),
@@ -236,12 +346,14 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
                           IconButton(
                             tooltip: _t('تم التسليم', 'Delivered'),
                             icon: const Icon(Icons.check_circle_outline),
-                            onPressed: _busyId == null ? () => _mark(trip, stop, 'delivered') : null,
+                            onPressed: _busyId == null && !_pendingStops.any((x) => x.tripId == trip.id)
+                              ? () => _mark(trip, stop, 'delivered') : null,
                           ),
                           IconButton(
                             tooltip: _t('تعذر التسليم', 'Delivery failed'),
                             icon: const Icon(Icons.report_problem_outlined),
-                            onPressed: _busyId == null ? () => _mark(trip, stop, 'failed') : null,
+                            onPressed: _busyId == null && !_pendingStops.any((x) => x.tripId == trip.id)
+                              ? () => _mark(trip, stop, 'failed') : null,
                           ),
                         ])
                       : null,
@@ -277,7 +389,7 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
                   if (trip.status == 'in_progress' &&
                       trip.stops.every((s) => s.status != 'pending'))
                     FilledButton.icon(
-                      onPressed: _busyId == null
+                      onPressed: _busyId == null && !_pendingStops.any((x) => x.tripId == trip.id)
                         ? () => _run(trip, () => widget.repository.complete(trip.id, trip.revision))
                         : null,
                       icon: const Icon(Icons.flag_outlined),
