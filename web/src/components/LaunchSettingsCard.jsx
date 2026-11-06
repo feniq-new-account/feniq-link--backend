@@ -33,6 +33,9 @@ export function LaunchSettingsCard() {
   }
   const hasDeadline = Boolean(configuration?.orderingClosesAt);
   const missingDeadline = configuration?.mode === 'ordering_open' && !hasDeadline;
+  const expired = configuration?.mode === 'ordering_open' && hasDeadline &&
+    Number.isFinite(Date.parse(configuration.orderingClosesAt)) &&
+    Date.parse(configuration.orderingClosesAt) <= Date.now();
   return <section className="adm-card reg-card">
     <div className="adm-card-head">{t('launch.title')}</div>
     <div className="reg-card-body">
@@ -57,7 +60,8 @@ export function LaunchSettingsCard() {
               orderingClosesAt: event.target.value ? new Date(event.target.value).toISOString() : null })} />
         </label>}
         <p className="hint">{t('launch.closesAtHint')}</p>
-        {missingDeadline && <p className="hint" role="note">{t('launch.deadlineWarning')}</p>}
+        {expired && <p className="hint" role="status">{t('launch.pilotExpired')}</p>}
+        {missingDeadline && <p className="hint" role="note">{t('launch.deadlineWarning')}</p>
         <label>{t('launch.message')}<textarea required maxLength={500} value={configuration.message} disabled={busy}
           onChange={event => setConfiguration({ ...configuration, message: event.target.value })} /></label>
         <button className="btn btn-primary" disabled={busy || !configuration.message.trim()}>{t('launch.save')}</button>
