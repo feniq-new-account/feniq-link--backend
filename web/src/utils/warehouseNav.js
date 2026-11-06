@@ -19,6 +19,7 @@ import { isFeatureShown } from '../config/features';
 // Every tab, including those behind a switched-off feature (config/features.js).
 export const WAREHOUSE_NAV_ALL = [
   { id: 'orders', labelKey: 'nav.orders', path: '/warehouse/orders' },
+  { id: 'fieldOperations', labelKey: 'nav.fieldOperations', path: '/warehouse/field-operations' },
   { id: 'catalog', labelKey: 'nav.catalog', path: '/warehouse/products' },
   // Deliberately standalone rather than folded into Orders or Promotions: it is
   // an action queue that needs quick access, not a browsing screen.
