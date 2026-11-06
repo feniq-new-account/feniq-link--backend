@@ -1,4 +1,4 @@
-name: Feniq signed staging APK - no publication
+name: Feniq signed upgrade APK 1097 - no publication
 on:
   push:
     branches: [build/accountant-signed-staging-20261106]
@@ -55,7 +55,7 @@ jobs:
       - name: Build phone APK with permanent key
         run: >
           flutter build apk --release --target-platform android-arm64
-          --build-number=1024
+          --build-number=1097
           --dart-define=API_BASE_URL=https://feniq-connect-api.onrender.com/api
       - name: Verify expected original app signature and package
         shell: bash
@@ -72,9 +72,9 @@ jobs:
           fi
           appid=$("$tools/aapt2" dump packagename "$apk")
           [ "$appid" = com.feniq.link ]
-          "$tools/aapt2" dump badging "$apk" | grep -q "versionCode='1024'"
+          "$tools/aapt2" dump badging "$apk" | grep -q "versionCode='1097'"
           sha256sum "$apk" > build/app/outputs/flutter-apk/sha256.txt
-          echo "Original app signing certificate verified; package is $appid; versionCode=1024"
+          echo "Original app signing certificate verified; package is $appid; versionCode=1097"
           echo "No deployment or release publication has occurred."
       - name: Remove signing keys from runner
         if: always()
@@ -82,7 +82,7 @@ jobs:
       - name: Upload non-public permanent-signed test artifact
         uses: actions/upload-artifact@v4
         with:
-          name: feniq-original-signature-staging-arm64
+          name: feniq-original-signature-upgrade-1097-arm64
           path: |
             phoenix/build/app/outputs/flutter-apk/app-release.apk
             phoenix/build/app/outputs/flutter-apk/sha256.txt
