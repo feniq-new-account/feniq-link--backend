@@ -11,6 +11,7 @@ import 'package:feniq/core/widgets/empty_view.dart';
 import 'package:feniq/core/error/error_translator.dart';
 import 'package:feniq/core/widgets/failure_widget.dart';
 import 'package:feniq/features/cart/presentation/widgets/cart_button.dart';
+import 'package:feniq/core/widgets/whatsapp_button.dart';
 import 'package:feniq/features/catalog/data/models/catalog_route_args.dart';
 import 'package:feniq/features/catalog/data/repositories/catalog_repository.dart';
 import 'package:feniq/features/catalog/presentation/managers/catalog_cubit.dart';
@@ -31,11 +32,13 @@ class ManufacturersView extends StatefulWidget {
     super.key,
     required this.warehouseId,
     required this.warehouseName,
+    this.warehousePhone,
     this.autoFilterManufacturer,
   });
 
   final String warehouseId;
   final String warehouseName;
+  final String? warehousePhone;
   // Section: banners - a tapped banner with a linked product skips this
   // screen straight through to its catalog, once the manufacturer list has
   // actually loaded (need it to confirm the manufacturer still has products
@@ -131,7 +134,29 @@ class _ManufacturersViewState extends State<ManufacturersView> {
             );
           },
         ),
-        actions: const [CartButton()],
+        actions: [
+          IconButton(
+            tooltip: l10n.warehouseProfileButtonLabel,
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => context.pushNamed(
+              RouteNames.warehouseProfile,
+              pathParameters: {'warehouseId': widget.warehouseId},
+              extra: widget.warehouseName,
+            ),
+          ),
+          if (widget.warehousePhone?.trim().isNotEmpty == true)
+            Center(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.only(end: 4),
+                child: WhatsAppButton(
+                  key: const ValueKey('warehouseHeaderWhatsApp'),
+                  phone: widget.warehousePhone!,
+                  size: 38,
+                ),
+              ),
+            ),
+          const CartButton(),
+        ],
         bottom: CatalogSearchBar(
           controller: _searchController,
           hintText: l10n.searchWarehouseProductsHint,
