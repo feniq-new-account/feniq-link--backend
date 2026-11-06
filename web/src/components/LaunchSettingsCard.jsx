@@ -61,7 +61,7 @@ export function LaunchSettingsCard() {
         </label>}
         <p className="hint">{t('launch.closesAtHint')}</p>
         {expired && <p className="hint" role="status">{t('launch.pilotExpired')}</p>}
-        {missingDeadline && <p className="hint" role="note">{t('launch.deadlineWarning')}</p>
+        {missingDeadline && <p className="hint" role="note">{t('launch.deadlineWarning')}</p>}
         <label>{t('launch.message')}<textarea required maxLength={500} value={configuration.message} disabled={busy}
           onChange={event => setConfiguration({ ...configuration, message: event.target.value })} /></label>
         <button className="btn btn-primary" disabled={busy || !configuration.message.trim()}>{t('launch.save')}</button>
