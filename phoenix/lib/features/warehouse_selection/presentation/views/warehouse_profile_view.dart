@@ -41,7 +41,7 @@ class WarehouseProfileView extends StatelessWidget {
     context.pushNamed(
       RouteNames.manufacturers,
       pathParameters: {'warehouseId': warehouseId},
-      extra: ManufacturersRouteArgs(warehouseName: name),
+      extra: ManufacturersRouteArgs(warehouseName: name, warehousePhone: profile.phone),
     );
   }
 
