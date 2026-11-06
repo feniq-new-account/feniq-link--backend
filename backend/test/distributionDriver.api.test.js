@@ -182,3 +182,67 @@ test('standalone external driver has only assigned trip and GPS permissions', as
   assert.equal(tracked.status, 200);
   assert.equal(tracked.body.location.location.latitude, 35.51);
 });
+
+test('offline stop retry with same requestId is acknowledged once without duplicate events', async () => {
+  const trip = await Trip.create({
+    region: 'Rural delivery retry', serviceDate: new Date('2026-11-11T00:00:00Z'),
+    driverName: 'Driver B', driverUserId: repB._id, createdBy: admin._id,
+    status: 'in_progress', revision: 7,
+    stops: [{ pharmacyId: pharmacy._id, pharmacyName: 'Pharmacy', address: 'Kasab road' }],
+  });
+  const path = '/driver/distribution/trips/' + trip._id + '/stops/' + trip.stops[0]._id;
+  const body = { revision: 7, status: 'delivered', requestId: 'offline-delivery-uuid-20261106' };
+  const first = await call('PATCH', path, { bearer: repBToken, body });
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  assert.equal(first.body.trip.revision, 8);
+
+  // Simulate an HTTP reply being lost and the device resending its original command.
+  const replay = await call('PATCH', path, { bearer: repBToken, body });
+  assert.equal(replay.status, 200, JSON.stringify(replay.body));
+  assert.equal(replay.body.trip.revision, 8);
+  assert.equal(replay.body.trip.stops[0].status, 'delivered');
+  assert.equal(await Event.countDocuments({ tripId: trip._id, event: 'stop_delivered' }), 1);
+  assert.equal((await Trip.findById(trip._id)).revision, 8);
+
+  // No other actor can use the same identifier to access this trip.
+  assert.equal((await call('PATCH', path, { bearer: repAToken, body })).status, 403);
+  // Key reuse for a different semantic operation must fail, not silently succeed.
+  assert.equal((await call('PATCH', path, {
+    bearer: repBToken, body: { ...body, status: 'failed', note: 'Closed' },
+  })).status, 409);
+  assert.equal((await call('PATCH', path, {
+    bearer: repBToken, body: { ...body, revision: 8 },
+  })).status, 409);
+  assert.equal((await call('PATCH', path, {
+    bearer: repBToken, body: { ...body, requestId: 'short' },
+  })).status, 400);
+
+  // A different key cannot re-record the already completed delivery.
+  const newKey = await call('PATCH', path, {
+    bearer: repBToken, body: { ...body, revision: 8, requestId: 'different-key-delivery-20261106' },
+  });
+  assert.equal(newKey.status, 400);
+  assert.equal(await Event.countDocuments({ tripId: trip._id }), 1);
+});
+
+test('offline retry remains acknowledged after the trip was subsequently completed', async () => {
+  const trip = await Trip.create({
+    region: 'Last stop before closing', serviceDate: new Date('2026-11-12T00:00:00Z'),
+    driverName: 'Driver B', driverUserId: repB._id, createdBy: admin._id,
+    status: 'in_progress', revision: 2,
+    stops: [{ pharmacyId: pharmacy._id, pharmacyName: 'Pharmacy', address: 'Kasab road' }],
+  });
+  const path = '/driver/distribution/trips/' + trip._id;
+  const body = { revision: 2, status: 'failed', note: 'Gate closed',
+    requestId: 'offline-failed-delivery-20261106' };
+  const stopPath = path + '/stops/' + trip.stops[0]._id;
+  assert.equal((await call('PATCH', stopPath, { bearer: repBToken, body })).status, 200);
+  assert.equal((await call('POST', path + '/complete', {
+    bearer: repBToken, body: { revision: 3 },
+  })).status, 200);
+  const retried = await call('PATCH', stopPath, { bearer: repBToken, body });
+  assert.equal(retried.status, 200, JSON.stringify(retried.body));
+  assert.equal(retried.body.trip.status, 'completed');
+  assert.equal(await Event.countDocuments({ tripId: trip._id, event: 'stop_failed' }), 1);
+  assert.equal(await Event.countDocuments({ tripId: trip._id, event: 'completed' }), 1);
+});
