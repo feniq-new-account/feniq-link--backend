@@ -23,8 +23,8 @@ async function user(role, warehouseRole = null, status = 'active') {
   return User.create({ name: role, phone: `+963944${String(++suffix).padStart(6, '0')}`, role, warehouseRole, status });
 }
 async function post(kind, amountSyp, extra = {}) {
-  return runInTransaction((session) => ledger.postEntry({ account, kind, amountSyp, amountUsd: amountSyp / 100,
-    fx: { rate: 100, source: 'manual' }, effectiveAt: at, createdBy: owner._id, ...extra }, session));
+  return (await runInTransaction((session) => ledger.postEntry({ account, kind, amountSyp, amountUsd: amountSyp / 100,
+    fx: { rate: 100, source: 'manual' }, effectiveAt: at, createdBy: owner._id, ...extra }, session))).entry;
 }
 async function request(person, query = '') {
   const token = person ? jwt.sign({ sub: person.id, role: person.role, tokenVersion: 0 }, process.env.JWT_SECRET) : '';
