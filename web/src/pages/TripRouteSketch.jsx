@@ -7,8 +7,11 @@ export function projectTripRoute(routePoints, location) {
   const valid = point => Array.isArray(point) && point.length === 2 &&
     point.every(Number.isFinite) &&
     Math.abs(point[0]) <= 90 && Math.abs(point[1]) <= 180;
-  const route = Array.isArray(routePoints) ? routePoints.filter(valid) : [];
-  if (route.length < 2) return null;
+  // Reject malformed points rather than silently skipping one and drawing
+  // an invented connector across the gap.
+  if (!Array.isArray(routePoints) || routePoints.length < 2 ||
+      routePoints.length > 500 || !routePoints.every(valid)) return null;
+  const route = routePoints;
   const pos = Number.isFinite(Number(location?.latitude)) &&
     Number.isFinite(Number(location?.longitude)) &&
     Math.abs(Number(location?.latitude)) <= 90 &&
