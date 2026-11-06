@@ -1,0 +1,5 @@
+.accountant-dashboard .accounting-links { display: flex; flex-wrap: wrap; gap: 1rem; margin-block: 1rem; }
+.accountant-dashboard .wh-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; }
+.accountant-dashboard .wh-filters label { display: grid; gap: .4rem; }
+.accountant-dashboard .wh-filters select, .accountant-dashboard input { min-height: 2.5rem; max-width: 100%; }
+.accountant-dashboard .wh-table-sub { max-width: 20rem; overflow-wrap: anywhere; }

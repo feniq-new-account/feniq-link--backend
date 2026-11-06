@@ -42,6 +42,7 @@
     "brand": "Feniq Admin"
   },
   "nav": {
+    "accountingDashboard": "Accounting dashboard",
     "adminTitle": "Admin",
     "warehouseTitleFallback": "Warehouse panel",
     "brandName": "Feniq",
@@ -1841,5 +1842,38 @@
       "entitlement.revoked": "Entitlement revoked",
       "warehouse.features.configured": "Warehouse preferences changed"
     }
-  }
+  },
+  "accounting": {
+  "title": "Accounting dashboard",
+  "shortcuts": "Accounting shortcuts",
+  "period": "Period",
+  "period_today": "Today",
+  "period_week": "Last seven days",
+  "period_month": "This month",
+  "period_custom": "Custom range",
+  "from": "From",
+  "to": "To",
+  "activityType": "Activity table type",
+  "allKinds": "All movements",
+  "refresh": "Refresh",
+  "updatedAt": "Data read at",
+  "scope": "Period metrics cover the whole warehouse; debt is the current position, independent of period. Period:",
+  "invoiceNote": "Payments are account-level. This report does not allocate payments to invoices or establish commission under the new collection policy.",
+  "activity": "Recent accounting movements",
+  "activityScope": "Up to 20 movements in the selected period and type. Open a pharmacy statement for full details.",
+  "noActivity": "No movements in this period.",
+  "date": "Effective date",
+  "pharmacy": "Pharmacy",
+  "type": "Type",
+  "reference": "Reference",
+  "debit": "Increase owed — SYP",
+  "credit": "Decrease owed — SYP",
+  "postedAt": "Posted at",
+  "unavailablePharmacy": "Unavailable pharmacy",
+  "activityLimit": "More movements exist; open the pharmacy statement for details.",
+  "overdue": "Overdue receivables follow-up",
+  "agingNote": "Monitoring estimate using oldest debt first and the warehouse threshold; not invoice payment allocation. Read time is independent of the summary above.",
+  "noOverdue": "No overdue receivables under current follow-up settings.",
+  "allOverdue": "View complete overdue list"
+}
 }

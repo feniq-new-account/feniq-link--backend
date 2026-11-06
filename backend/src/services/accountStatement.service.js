@@ -396,4 +396,5 @@ module.exports = {
   getPharmacyAccountsSummary,
   listAccountsForWarehouse,
   resolvePeriod,
+  referenceFor,
 };

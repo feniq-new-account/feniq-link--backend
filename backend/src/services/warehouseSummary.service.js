@@ -65,7 +65,7 @@ function previousWindow({ from, to }) {
   return { from: new Date(from.getTime() - length - 1), to: new Date(from.getTime() - 1) };
 }
 
-async function periodTotals(warehouseId, { from, to }) {
+async function periodTotals(warehouseId, { from, to }, session = null) {
   const rows = await LedgerEntry.aggregate([
     {
       $match: {
@@ -75,7 +75,7 @@ async function periodTotals(warehouseId, { from, to }) {
       },
     },
     { $group: { _id: '$kind', amountSyp: { $sum: '$amountSyp' }, count: { $sum: 1 } } },
-  ]);
+  ]).session(session);
 
   const totals = {
     salesSyp: 0,
@@ -93,10 +93,10 @@ async function periodTotals(warehouseId, { from, to }) {
   return totals;
 }
 
-async function namesFor(pharmacyIds) {
+async function namesFor(pharmacyIds, session = null) {
   const pharmacies = await Pharmacy.find({ _id: { $in: pharmacyIds } })
     .select('nameAr nameEn phone')
-    .lean();
+    .session(session).lean();
   return new Map(pharmacies.map((p) => [String(p._id), p]));
 }
 
@@ -107,7 +107,7 @@ function pharmacyRef(pharmacy) {
 }
 
 // Who bought the most in the window (net of reversed charges).
-async function topBuyers(warehouseId, { from, to }) {
+async function topBuyers(warehouseId, { from, to }, session = null) {
   const grouped = await LedgerEntry.aggregate([
     {
       $match: {
@@ -127,8 +127,8 @@ async function topBuyers(warehouseId, { from, to }) {
     { $match: { salesSyp: { $gt: 0 } } },
     { $sort: { salesSyp: -1, _id: 1 } },
     { $limit: TOP_LIMIT },
-  ]);
-  const names = await namesFor(grouped.map((g) => g._id));
+  ]).session(session);
+  const names = await namesFor(grouped.map((g) => g._id), session);
   return grouped
     .map((g) => ({ pharmacy: pharmacyRef(names.get(String(g._id))), salesSyp: g.salesSyp }))
     .filter((row) => row.pharmacy !== null);
@@ -136,7 +136,7 @@ async function topBuyers(warehouseId, { from, to }) {
 
 // Where the warehouse stands right now - independent of the chosen period,
 // because a debt does not stop being owed when the day ends.
-async function outstanding(warehouseId) {
+async function outstanding(warehouseId, session = null) {
   const [position] = await LedgerAccount.aggregate([
     { $match: { warehouseId } },
     {
@@ -147,14 +147,14 @@ async function outstanding(warehouseId) {
         debtorCount: { $sum: { $cond: [{ $gt: ['$balanceCache.syp', 0] }, 1, 0] } },
       },
     },
-  ]);
+  ]).session(session);
 
   const accounts = await LedgerAccount.find({ warehouseId, 'balanceCache.syp': { $gt: 0 } })
     .select('pharmacyId balanceCache lastActivityAt')
     .sort({ 'balanceCache.syp': -1, _id: 1 })
     .limit(TOP_LIMIT)
-    .lean();
-  const names = await namesFor(accounts.map((a) => a.pharmacyId));
+    .session(session).lean();
+  const names = await namesFor(accounts.map((a) => a.pharmacyId), session);
 
   return {
     totalDebtSyp: position?.totalDebtSyp ?? 0,
@@ -170,14 +170,19 @@ async function outstanding(warehouseId) {
   };
 }
 
-async function getWarehouseSummary(warehouseId, query = {}, now = new Date()) {
+async function getWarehouseSummary(warehouseId, query = {}, now = new Date(), session = null) {
   const window = resolveSummaryPeriod(query, now);
-  const [current, previous, buyers, position] = await Promise.all([
-    periodTotals(warehouseId, window),
-    periodTotals(warehouseId, previousWindow(window)),
-    topBuyers(warehouseId, window),
-    outstanding(warehouseId),
-  ]);
+  // MongoDB sessions do not support parallel operations within a transaction.
+  const tasks = [
+    () => periodTotals(warehouseId, window, session),
+    () => periodTotals(warehouseId, previousWindow(window), session),
+    () => topBuyers(warehouseId, window, session),
+    () => outstanding(warehouseId, session),
+  ];
+  const results = [];
+  if (session) { for (const task of tasks) results.push(await task()); }
+  else results.push(...await Promise.all(tasks.map((task) => task())));
+  const [current, previous, buyers, position] = results;
   return { period: window, current, previous, topBuyers: buyers, outstanding: position };
 }
 
