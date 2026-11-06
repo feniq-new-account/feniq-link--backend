@@ -512,6 +512,8 @@ export const api = {
   // Registration approval page: the syndicate list, the approval switch and the
   // admins' Telegram bot (backend adminRegistration.controller.js).
   getAdminMaintenancePreview: () => request('/admin/maintenance/preview'),
+  getPilotOrderAccess: () => request('/admin/pilot-access'),
+  updatePilotOrderAccess: (body) => request('/admin/pilot-access', { method: 'PUT', body }),
   getLaunchSettings: () => request('/admin/launch'),
   updateLaunchSettings: (body) => request('/admin/launch', { method: 'PUT', body }),
   registrationStatus: () => request('/admin/registration'),
