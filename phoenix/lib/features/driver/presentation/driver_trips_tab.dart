@@ -3,17 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
+import 'package:feniq/features/driver/data/driver_position_stream.dart';
 import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
 import 'package:feniq/features/driver/data/driver_trip_snapshot.dart';
 
 /// Operational delivery checklist. No accounting or payment actions.
 class DriverTripsTab extends StatefulWidget {
   const DriverTripsTab({super.key, required this.repository, this.locationProvider,
-    this.stopOutbox, this.tripCache});
+    this.stopOutbox, this.tripCache, this.positionStream});
   final DriverTripRepository repository;
   final LocationProvider? locationProvider;
   final DriverStopOutbox? stopOutbox;
   final DriverTripSnapshotCache? tripCache;
+  final DriverPositionStream? positionStream;
   @override
   State<DriverTripsTab> createState() => _DriverTripsTabState();
 }
@@ -27,6 +29,9 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
   String? _gpsError;
   DateTime? _lastGpsSend;
   Timer? _trackingTimer;
+  StreamSubscription<DeviceLocation>? _positionSubscription;
+  int _trackingGeneration = 0;
+  bool _streamEstablished = false;
   bool _sendingLocation = false;
   bool _syncingStops = false;
   bool _outboxLoaded = false;
@@ -71,7 +76,10 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) {
-      _stopTracking();
+      // A foreground location service with a persistent OS notification may
+      // continue through pause/screen lock. A normal timer may not.
+      // Do not START a new FGS after the app moves into the background.
+      if (widget.positionStream == null || !_streamEstablished) _stopTracking();
     } else {
       unawaited(_syncOutbox());
     }
@@ -85,12 +93,89 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
   }
 
   void _stopTracking() {
+    ++_trackingGeneration;
     _trackingTimer?.cancel();
     _trackingTimer = null;
+    final subscription = _positionSubscription;
+    _positionSubscription = null;
+    _streamEstablished = false;
+    if (subscription != null) unawaited(subscription.cancel());
     if (mounted && _trackingTripId != null) {
       setState(() => _trackingTripId = null);
     } else {
       _trackingTripId = null;
+    }
+  }
+
+  Future<void> _sendStreamFix(String tripId, DeviceLocation fix) async {
+    if (_sendingLocation || _trackingTripId != tripId) return;
+    // The server permits one update per 15 seconds. Throttle rapid
+    // platform callbacks locally to avoid network floods.
+    final now = DateTime.now();
+    if (_lastGpsSend != null &&
+        now.difference(_lastGpsSend!) < const Duration(seconds: 25)) return;
+    if (fix.isMocked || fix.accuracy < 0 || fix.accuracy > 150 ||
+        fix.capturedAt == null ||
+        now.difference(fix.capturedAt!).abs() > const Duration(minutes: 2)) {
+      if (mounted && _trackingTripId == tripId) {
+        setState(() => _gpsError = _t(
+          'قراءة الموقع غير دقيقة أو قديمة؛ لم تُرسل إلى الإدارة.',
+          'Unreliable, mocked or stale GPS position was not shared.',
+        ));
+      }
+      return;
+    }
+    _sendingLocation = true;
+    try {
+      await widget.repository.sendLocation(tripId, fix);
+      if (!mounted || _trackingTripId != tripId) return;
+      setState(() {
+        _lastGpsSend = DateTime.now();
+        _gpsError = null;
+      });
+    } catch (_) {
+      if (mounted && _trackingTripId == tripId) {
+        setState(() => _gpsError = _t(
+          'فشل إرسال الموقع. سيُجرّب مجدداً عند توفر إشارة GPS والإنترنت.',
+          'GPS upload failed. It will retry when GPS and connectivity permit.',
+        ));
+      }
+    } finally {
+      _sendingLocation = false;
+    }
+  }
+
+  Future<void> _beginBackgroundCapableTracking(String tripId, int generation) async {
+    final source = widget.positionStream;
+    if (source == null) return;
+    try {
+      final stream = await source.start();
+      if (!mounted || generation != _trackingGeneration || _trackingTripId != tripId) {
+        return; // User stopped while permissions were being requested.
+      }
+      // Subscribing starts Android's notification-backed foreground service.
+      _positionSubscription = stream.listen(
+        (fix) { unawaited(_sendStreamFix(tripId, fix)); },
+        onError: (Object error) {
+          if (mounted && _trackingTripId == tripId) {
+            _stopTracking();
+            setState(() => _gpsError = _t(
+              'انقطع التتبع. افتح التطبيق وأعد تفعيل مشاركة الموقع.',
+              'Tracking stopped. Reopen the app and enable sharing again.',
+            ));
+          }
+        },
+        cancelOnError: true,
+      );
+      _streamEstablished = true;
+    } catch (_) {
+      if (mounted && generation == _trackingGeneration && _trackingTripId == tripId) {
+        _stopTracking();
+        setState(() => _gpsError = _t(
+          'تعذر بدء مشاركة الموقع مع الإشعار المستمر. تحقق من الأذونات والموقع.',
+          'Could not start notification-backed location sharing. Check permissions and GPS.',
+        ));
+      }
     }
   }
 
@@ -120,17 +205,22 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
   }
 
   void _startTracking(String tripId) {
-    if (widget.locationProvider == null) return;
+    if (widget.locationProvider == null && widget.positionStream == null) return;
     _stopTracking();
     setState(() {
       _trackingTripId = tripId;
       _gpsError = null;
       _lastGpsSend = null;
     });
-    unawaited(_capturePosition(tripId));
-    _trackingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    if (widget.positionStream != null) {
+      unawaited(_beginBackgroundCapableTracking(tripId, _trackingGeneration));
+    } else {
+      // Compatibility path for older embedded clients and existing tests.
       unawaited(_capturePosition(tripId));
-    });
+      _trackingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+        unawaited(_capturePosition(tripId));
+      });
+    }
   }
 
   Future<void> _restoreOutbox() async {
@@ -482,7 +572,8 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
                         ])
                       : null,
                   ),
-                  if (trip.status == 'in_progress' && widget.locationProvider != null) ...[
+                  if (trip.status == 'in_progress' &&
+                      (widget.locationProvider != null || widget.positionStream != null)) ...[
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
                       icon: Icon(_trackingTripId == trip.id
@@ -493,8 +584,13 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
                         ? _t('إيقاف مشاركة الموقع', 'Stop sharing location')
                         : _t('مشاركة الموقع أثناء الرحلة', 'Share location during trip')),
                     ),
-                    Text(_t('التتبع شغّال فقط والتطبيق مفتوح. الخروج عن الطريق لا يوقفه.',
-                      'Foreground only. Leaving the route does not stop tracking.'),
+                    Text(widget.positionStream != null
+                      ? _t(
+                          'بعد تفعيل المشاركة يظهر إشعار دائم، ويستمر التتبع أثناء قفل الشاشة. إيقافه من هنا أو عند إنهاء الرحلة.',
+                          'After opt-in, an ongoing notification keeps location sharing active while the screen is locked. Stop here or end the trip.',
+                        )
+                      : _t('التتبع شغّال فقط والتطبيق مفتوح. الخروج عن الطريق لا يوقفه.',
+                          'Foreground only. Leaving the route does not stop tracking.'),
                       style: Theme.of(context).textTheme.bodySmall),
                     if (_trackingTripId == trip.id && _lastGpsSend != null)
                       Text(_t('آخر إرسال ناجح: ', 'Last sent: ') +
