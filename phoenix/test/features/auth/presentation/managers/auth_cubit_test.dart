@@ -8,6 +8,7 @@ import 'package:feniq/core/services/auth_event_bus.dart';
 import 'package:feniq/core/services/fcm_service.dart';
 import 'package:feniq/core/services/secure_storage_service.dart';
 import 'package:feniq/features/auth/data/models/me_response.dart';
+import 'package:feniq/features/auth/data/models/auth_response.dart';
 import 'package:feniq/features/auth/data/models/user_model.dart';
 import 'package:feniq/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
@@ -252,6 +253,62 @@ void main() {
 
       expect(cubit.state.sessionStatus, SessionStatus.unauthenticated);
       verify(() => storage.delete(StorageKeys.authToken)).called(1);
+      await cubit.close();
+    });
+  });
+
+  group('remembered login on the same device', () {
+    test('successful login stores only confirmed credentials in secure storage', () async {
+      when(() => repo.loginWithPassword(
+        phone: any(named: 'phone'), password: any(named: 'password'),
+      )).thenAnswer((_) async => AuthResponse(
+        token: 'jwt-new', refreshToken: 'refresh-new', user: _user(),
+      ));
+      final cubit = build();
+      expect(await cubit.loginWithPassword(
+        phone: '+963912345678', password: 'safe-password',
+      ), isTrue);
+      verify(() => storage.write(StorageKeys.rememberedPhone, '+963912345678')).called(1);
+      verify(() => storage.write(StorageKeys.rememberedPassword, 'safe-password')).called(1);
+      await cubit.logout();
+      verify(() => storage.delete(StorageKeys.authToken)).called(1);
+      verify(() => storage.delete(StorageKeys.refreshToken)).called(1);
+      verifyNever(() => storage.delete(StorageKeys.rememberedPhone));
+      verifyNever(() => storage.delete(StorageKeys.rememberedPassword));
+      await cubit.close();
+    });
+
+    test('login screen can read remembered credentials after signing out', () async {
+      when(() => storage.read(StorageKeys.rememberedPhone))
+          .thenAnswer((_) async => '0912345678');
+      when(() => storage.read(StorageKeys.rememberedPassword))
+          .thenAnswer((_) async => 'remembered-pass');
+      final cubit = build();
+      await cubit.logout();
+      expect(await cubit.loadSavedLogin(), {
+        'phone': '0912345678',
+        'password': 'remembered-pass',
+      });
+      await cubit.close();
+    });
+
+    test('partially saved credentials never prefill login', () async {
+      when(() => storage.read(StorageKeys.rememberedPhone))
+          .thenAnswer((_) async => '0912345678');
+      when(() => storage.read(StorageKeys.rememberedPassword))
+          .thenAnswer((_) async => null);
+      final cubit = build();
+      expect(await cubit.loadSavedLogin(), isNull);
+      await cubit.close();
+    });
+
+    test('server revocation forgets saved password as well as both tokens', () async {
+      when(() => storage.read(StorageKeys.authToken)).thenAnswer((_) async => 'jwt');
+      when(() => repo.getMe()).thenThrow(ServerFailure('Unauthorized', statusCode: 401));
+      final cubit = build();
+      await cubit.checkSession();
+      verify(() => storage.delete(StorageKeys.rememberedPhone)).called(1);
+      verify(() => storage.delete(StorageKeys.rememberedPassword)).called(1);
       await cubit.close();
     });
   });
