@@ -100,7 +100,7 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('quickSearch.input')), 'Success');
     await tester.pump(const Duration(milliseconds: 360));
     await tester.pumpAndSettle();
-    expect(find.text('Success'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, 'Success'), findsOneWidget);
     expect(find.text('Healing'), findsNothing);
   });
 
