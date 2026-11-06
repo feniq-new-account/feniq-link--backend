@@ -30,7 +30,7 @@ class FakeDriverRepository implements DriverTripRepository {
   }
   @override
   Future<DriverTrip> updateStop(String tripId, String stopId, int revision,
-      {required String status, String note = ''}) async {
+      {required String status, String note = '', String? requestId}) async {
     deliveries++;
     final current = trips.first;
     final stops = current.stops.map((stop) => DriverTripStop(
