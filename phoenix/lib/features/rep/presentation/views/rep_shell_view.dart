@@ -11,6 +11,7 @@ import 'package:feniq/features/rep/presentation/managers/rep_pharmacies_cubit.da
 import 'package:feniq/features/rep/presentation/managers/rep_visits_cubit.dart';
 import 'package:feniq/features/rep/presentation/views/rep_pharmacies_tab.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
+import 'package:feniq/features/driver/data/driver_position_stream.dart';
 import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
@@ -86,6 +87,7 @@ class _RepShellViewState extends State<RepShellView> {
               if (driverEnabled) DriverTripsTab(
                 repository: widget.driverTripRepository!,
                 locationProvider: const GeolocatorLocationProvider(),
+                positionStream: const GeolocatorDriverPositionStream(),
                 stopOutbox: _stopOutbox,
               ),
               const RepProfileTab(),
