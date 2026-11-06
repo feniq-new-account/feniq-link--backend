@@ -1,4 +1,5 @@
 import 'package:feniq/features/launch/launch_status_banner.dart';
+import 'package:feniq/features/launch/early_launch_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -19,13 +20,16 @@ import 'package:feniq/features/banners/presentation/managers/banners_cubit.dart'
 import 'package:feniq/features/banners/presentation/widgets/banner_slider.dart';
 import 'package:feniq/features/cart/presentation/widgets/cart_button.dart';
 import 'package:feniq/features/catalog/data/models/manufacturers_route_args.dart';
+import 'package:feniq/features/catalog/data/repositories/catalog_repository.dart';
 import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/features/notifications/presentation/widgets/notification_button.dart';
 import 'package:feniq/features/warehouse_selection/data/models/warehouse_model.dart';
+import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_repository.dart';
 import 'package:feniq/features/warehouse_selection/presentation/managers/warehouse_selection_cubit.dart';
 import 'package:feniq/features/warehouse_selection/presentation/managers/warehouse_selection_state.dart';
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_card.dart';
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_city_scope_bar.dart';
+import 'package:feniq/features/warehouse_selection/presentation/widgets/quick_search_sheet.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/core/widgets/brand_header_glow.dart';
 import 'package:feniq/core/widgets/full_text.dart';
@@ -44,9 +48,6 @@ class WarehouseSelectionView extends StatefulWidget {
 }
 
 class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
-  final _searchController = TextEditingController();
-  String _query = '';
-
   @override
   void initState() {
     super.initState();
@@ -68,29 +69,29 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
       // above - no pull-to-refresh/polling for banners (see BannersCubit).
       context.read<BannersCubit>().load();
     });
-    _searchController.addListener(() {
-      setState(() => _query = _searchController.text.trim());
-    });
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  // Client-side only - the already-fetched list is small (a handful of
-  // warehouses), so filtering it here avoids a round trip and any change to
-  // WarehouseRepository/the API for what's fundamentally a local, instant
-  // filter.
-  List<WarehouseModel> _filtered(List<WarehouseModel> warehouses) {
-    if (_query.isEmpty) return warehouses;
-    final query = _query.toLowerCase();
-    return warehouses.where((w) {
-      return w.nameAr.toLowerCase().contains(query) ||
-          w.nameEn.toLowerCase().contains(query) ||
-          w.city.toLowerCase().contains(query);
-    }).toList();
+  void _openQuickSearch() {
+    final warehouses = context.read<WarehouseSelectionCubit>().state.warehouses;
+    final warehouseRepository = context.read<WarehouseRepository>();
+    final catalogRepository = context.read<CatalogRepository>();
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surfaceElevatedOf(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (sheetContext) => SizedBox(
+        height: MediaQuery.sizeOf(sheetContext).height * 0.84,
+        child: QuickSearchSheet(
+          warehouseRepository: warehouseRepository,
+          catalogRepository: catalogRepository,
+          visibleWarehouses: warehouses,
+        ),
+      ),
+    );
   }
 
   void _handleSelect(WarehouseModel warehouse) {
@@ -99,7 +100,7 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
     context.pushNamed(
       RouteNames.manufacturers,
       pathParameters: {'warehouseId': warehouse.id},
-      extra: ManufacturersRouteArgs(warehouseName: name),
+      extra: ManufacturersRouteArgs(warehouseName: name, warehousePhone: warehouse.phone),
     );
   }
 
@@ -110,16 +111,14 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
     context.pushNamed(
       RouteNames.manufacturers,
       pathParameters: {'warehouseId': banner.warehouseId!},
-      extra: ManufacturersRouteArgs(warehouseName: '', autoFilterManufacturer: banner.manufacturerAr),
+      extra: ManufacturersRouteArgs(
+        warehouseName: '',
+        warehousePhone: context.read<WarehouseSelectionCubit>().state.warehouses
+            .where((warehouse) => warehouse.id == banner.warehouseId)
+            .firstOrNull?.phone,
+        autoFilterManufacturer: banner.manufacturerAr,
+      ),
     );
-  }
-
-  // Section 17: a separate entry point from tapping the card - opens the
-  // read-only profile instead of continuing straight to /manufacturers.
-  void _handleViewProfile(WarehouseModel warehouse) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final name = isArabic ? warehouse.nameAr : warehouse.nameEn;
-    context.pushNamed(RouteNames.warehouseProfile, pathParameters: {'warehouseId': warehouse.id}, extra: name);
   }
 
   @override
@@ -127,6 +126,17 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
     final l10n = context.l10n;
 
     return Scaffold(
+      floatingActionButtonLocation: Directionality.of(context) == TextDirection.rtl
+          ? FloatingActionButtonLocation.endFloat
+          : FloatingActionButtonLocation.startFloat,
+      floatingActionButton: FloatingActionButton(
+        key: const ValueKey('homeQuickSearchButton'),
+        tooltip: Localizations.localeOf(context).languageCode == 'ar'
+            ? 'بحث سريع عن دواء أو شركة أو مستودع'
+            : 'Quick search for a medicine, manufacturer or warehouse',
+        onPressed: _openQuickSearch,
+        child: const Icon(Icons.search),
+      ),
       // No pull-to-refresh: the warehouse list refreshes once a day by
       // itself (DailyRefresh).
       body: CustomScrollView(
@@ -161,49 +171,8 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
               },
             ),
             actions: const [NotificationButton(), CartButton()],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(60),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSizes.spacingMedium,
-                  0,
-                  AppSizes.spacingMedium,
-                  AppSizes.spacingMedium,
-                ),
-                child: Container(
-                  height: 46,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.14),
-                    borderRadius: AppRadius.medium,
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.search, color: Colors.white70, size: 20),
-                      const SizedBox(width: AppSizes.spacingSmall),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          style: const TextStyle(color: Colors.white, fontSize: 14),
-                          decoration: InputDecoration(
-                            filled: false,
-                            isDense: true,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            errorBorder: InputBorder.none,
-                            focusedErrorBorder: InputBorder.none,
-                            hintText: l10n.searchWarehouseHint,
-                            hintStyle: const TextStyle(color: Colors.white70, fontSize: 14),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
           ),
+          const SliverToBoxAdapter(child: EarlyLaunchNotice()),
           const SliverToBoxAdapter(child: LaunchStatusBanner()),
           SliverToBoxAdapter(child: BannerSlider(onBannerTap: _handleBannerTap)),
           // The city scope switch, in the open directly above the grid it
@@ -217,22 +186,31 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
                 previous.isChangingScope != current.isChangingScope,
             builder: (context, state) {
               if (!state.cityScopeAvailable) {
-                return const SliverToBoxAdapter(child: SizedBox.shrink());
+                return SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: OfflineCatalogReadiness(
+                        warehouseIds: state.warehouses.map((w) => w.id).toList(),
+                        onRetry: () => context.read<WarehouseSelectionCubit>().retryOfflineCatalogs(),
+                      ),
+                    ),
+                  ),
+                );
               }
               return SliverToBoxAdapter(
                 child: WarehouseCityScopeBar(
                   onlyMyCity: state.onlyMyCity,
                   isBusy: state.isChangingScope,
                   onChanged: (onlyMyCity) => context.read<WarehouseSelectionCubit>().setOnlyMyCity(onlyMyCity),
+                  trailing: OfflineCatalogReadiness(
+                    warehouseIds: state.warehouses.map((w) => w.id).toList(),
+                    onRetry: () => context.read<WarehouseSelectionCubit>().retryOfflineCatalogs(),
+                  ),
                 ),
               );
             },
-          ),
-          BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
-            builder: (context, state) => SliverToBoxAdapter(child: OfflineCatalogReadiness(
-              warehouseIds: state.warehouses.map((w) => w.id).toList(),
-              onRetry: () => context.read<WarehouseSelectionCubit>().retryOfflineCatalogs(),
-            )),
           ),
           BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
             builder: (context, state) {
@@ -280,13 +258,6 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
                       child: EmptyView(message: l10n.noWarehousesAvailable, icon: Icons.storefront_outlined),
                     );
                   }
-                  final filtered = _filtered(state.warehouses);
-                  if (filtered.isEmpty) {
-                    return SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: EmptyView(message: l10n.noSearchResultsFound, icon: Icons.search_off_outlined),
-                    );
-                  }
                   return SliverPadding(
                     padding: AppPadding.screen,
                     sliver: SliverRowGrid(
@@ -294,13 +265,12 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
                       cellAspectRatio: largeText ? null : 1,
                       mainAxisSpacing: _gridSpacing,
                       crossAxisSpacing: _gridSpacing,
-                      itemCount: filtered.length,
+                      itemCount: state.warehouses.length,
                       itemBuilder: (context, index) {
-                        final warehouse = filtered[index];
+                        final warehouse = state.warehouses[index];
                         return WarehouseCard(
                           warehouse: warehouse,
                           onSelect: () => _handleSelect(warehouse),
-                          onViewProfile: () => _handleViewProfile(warehouse),
                         );
                       },
                     ),
