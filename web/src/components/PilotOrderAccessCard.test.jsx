@@ -39,7 +39,8 @@ it('shows existing authorized testers and keeps revision on save', async () => {
 it('sends an empty list to safely stop pilot access, not permanently open orders', async () => {
   await act(async () => {
     const input = host.querySelector('textarea');
-    input.value = '';
+    const nativeSetter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
+    nativeSetter.call(input, '');
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
   await act(async () => host.querySelector('form').dispatchEvent(
