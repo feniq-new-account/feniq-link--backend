@@ -105,3 +105,25 @@ test('snapshot does not mix cached balances with a concurrent ledger commit', as
   });
   assert.equal((await dashboard(wh._id, {}, at)).summary.outstanding.totalDebtSyp, 8983);
 });
+
+test('dashboard activity name/phone and current balance filters preserve warehouse-wide KPI scope', async () => {
+  const debt = await request(accountant, `${range}&search=Pharmacy&balanceState=debt`);
+  assert.equal(debt.status, 200); assert.ok(debt.body.activity.length > 0);
+  const byPhone = await request(accountant, `${range}&search=${encodeURIComponent(pharmacy.phone)}`);
+  assert.equal(byPhone.body.activity.length, debt.body.activity.length);
+  const empty = await request(accountant, `${range}&search=Nonexistent`);
+  assert.deepEqual(empty.body.activity, []); assert.equal(empty.body.summary.outstanding.totalDebtSyp, 8983);
+  const intersection = await request(accountant, `${range}&search=Pharmacy&pharmacyId=${oid()}`);
+  assert.deepEqual(intersection.body.activity, []); assert.equal(intersection.body.summary.outstanding.totalDebtSyp, 8983);
+  const credit = await request(accountant, `${range}&balanceState=credit`);
+  assert.deepEqual(credit.body.activity, []); assert.equal(credit.body.summary.outstanding.totalDebtSyp, 8983);
+  assert.equal((await request(accountant, `${range}&balanceState=bad`)).status, 400);
+});
+
+test('account list, summary and settlement financial reads disallow browser cache reuse', async () => {
+  const token = jwt.sign({ sub: accountant.id, role: accountant.role }, process.env.JWT_SECRET);
+  for (const path of ['/balances', '/balances/summary', '/settlement']) {
+    const response = await fetch(`${base}/api/warehouse${path}`, { headers: { authorization: `Bearer ${token}` } });
+    assert.equal(response.status, 200); assert.equal(response.headers.get('cache-control'), 'no-store');
+  }
+});

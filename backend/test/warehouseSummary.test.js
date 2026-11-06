@@ -307,3 +307,9 @@ test('the response view shapes period, comparison and standing for the clients',
   assert.strictEqual(summary.outstanding.totalDebtSyp, 25000);
   assert.strictEqual(summary.outstanding.topDebtors[0].balanceSyp, 25000);
 });
+
+
+test('an explicitly invalid custom end date is rejected instead of silently using now', () => {
+  const { resolveSummaryPeriod } = require('../src/services/warehouseSummary.service');
+  assert.throws(() => resolveSummaryPeriod({ period: 'custom', from: '2026-10-01', to: 'not-a-date' }), { code: 'INVALID_PERIOD' });
+});
