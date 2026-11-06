@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 import 'package:feniq/features/driver/data/driver_position_stream.dart';
@@ -56,6 +57,8 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
   void didUpdateWidget(covariant DriverTripsTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.tripCache, widget.tripCache)) {
+      // Never keep a GPS foreground service across account/owner changes.
+      _stopTracking(notify: false);
       _trips = const [];
       _showingSavedTrips = false;
       _tripSnapshotAt = null;
@@ -87,12 +90,12 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
 
   @override
   void dispose() {
-    _stopTracking();
+    _stopTracking(notify: false);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  void _stopTracking() {
+  void _stopTracking({bool notify = true}) {
     ++_trackingGeneration;
     _trackingTimer?.cancel();
     _trackingTimer = null;
@@ -100,7 +103,7 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
     _positionSubscription = null;
     _streamEstablished = false;
     if (subscription != null) unawaited(subscription.cancel());
-    if (mounted && _trackingTripId != null) {
+    if (notify && mounted && _trackingTripId != null) {
       setState(() => _trackingTripId = null);
     } else {
       _trackingTripId = null;
@@ -133,12 +136,23 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
         _lastGpsSend = DateTime.now();
         _gpsError = null;
       });
-    } catch (_) {
+    } catch (error) {
       if (mounted && _trackingTripId == tripId) {
-        setState(() => _gpsError = _t(
-          'فشل إرسال الموقع. سيُجرّب مجدداً عند توفر إشارة GPS والإنترنت.',
-          'GPS upload failed. It will retry when GPS and connectivity permit.',
-        ));
+        final statusCode = error is DioException ? error.response?.statusCode : null;
+        if ([401, 403, 404, 409].contains(statusCode)) {
+          // The trip may have been completed remotely or reassigned. Stop
+          // collecting rather than continuing an unauthorized GPS stream.
+          _stopTracking();
+          setState(() => _gpsError = _t(
+            'انتهت صلاحية مشاركة هذه الرحلة؛ توقف تتبع الموقع.',
+            'Trip sharing is no longer authorized; location tracking stopped.',
+          ));
+        } else {
+          setState(() => _gpsError = _t(
+            'فشل إرسال الموقع. سيُجرّب مجدداً عند توفر إشارة GPS والإنترنت.',
+            'GPS upload failed. It will retry when GPS and connectivity permit.',
+          ));
+        }
       }
     } finally {
       _sendingLocation = false;
