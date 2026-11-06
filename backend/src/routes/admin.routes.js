@@ -3,11 +3,21 @@ const { authenticate, authorize } = require('../middlewares/auth.middleware');
 const controller = require('../controllers/admin.controller');
 const registration = require('../controllers/adminRegistration.controller');
 const { syndicateListUpload } = require('../middlewares/upload.middleware');
+const { asyncHandler } = require('../utils/asyncHandler');
+const pilotAccess = require('../services/pilotOrderAccess.service');
 
 const router = Router();
 
 router.use(authenticate, authorize('admin'));
 
+// Admin-only pilot tester allowlist; never writes orders or accounting.
+router.get('/pilot-access', asyncHandler(async (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, configuration: await pilotAccess.readPilotAccess() });
+}));
+router.put('/pilot-access', asyncHandler(async (req, res) => {
+  res.json({ success: true, configuration: await pilotAccess.savePilotAccess(req.user._id, req.body) });
+}));
 router.get('/pending-accounts', controller.listPendingAccounts);
 // The Accounts management page - both roles, every status, filters + search.
 router.get('/accounts', controller.listAccounts);
