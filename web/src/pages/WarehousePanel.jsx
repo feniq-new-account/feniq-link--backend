@@ -1,5 +1,6 @@
 import { AccountantDashboardPage } from './AccountantDashboardPage';
 import { WarehouseInsightsPage } from './WarehouseInsightsPage';
+import { WarehouseFieldOperationsPage } from './WarehouseFieldOperationsPage';
 import { WarehouseSubscriptionProvider } from '../context/WarehouseSubscriptionContext';
 import { useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
@@ -140,6 +141,7 @@ function WarehousePanelContent() {
         <div className="wh-content">
           <DeliveryCollectionsNotice />
           <Routes>
+            <Route path="/warehouse/field-operations" element={<WarehouseFieldOperationsPage />} />
             <Route path="/warehouse/orders" element={<WarehouseOrdersPage />} />
             <Route path="/warehouse/orders/:orderId" element={<WarehouseOrderDetailPage />} />
             <Route path="/warehouse/products" element={<WarehouseProductsPage />} />
