@@ -8,4 +8,9 @@ class StorageKeys {
   /// an app updating from a build that predates refresh tokens keeps its
   /// session instead of being signed out.
   static const String refreshToken = 'auth.refreshToken';
+
+  /// Device-only login convenience. Both values live in Android Keystore-backed
+  /// FlutterSecureStorage, never SharedPreferences or the server response.
+  static const String rememberedPhone = 'auth.rememberedPhone';
+  static const String rememberedPassword = 'auth.rememberedPassword';
 }
