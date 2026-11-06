@@ -1,0 +1,17 @@
+.adm-maintenance { display: grid; gap: 18px; min-width: 0; }
+.adm-maintenance h1 { margin: 0; }
+.adm-maintenance-body { display: grid; gap: 14px; padding: 18px; min-width: 0; }
+.adm-maintenance-warning { margin: 0; padding: 12px 14px; border: 1px solid var(--adm-border, #dfdfdf); border-radius: 10px; }
+.adm-maintenance-warehouses { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.adm-maintenance-warehouse { min-width: 0; padding: 14px; border: 1px solid var(--adm-border, #dcdfe5); border-radius: 12px; }
+.adm-maintenance-warehouse h2 { font-size: 1.05rem; margin: 0 0 4px; }
+.adm-maintenance-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; margin: 14px 0 0; }
+.adm-maintenance-stats > div { min-width: 0; }
+.adm-maintenance-stats dt { font-size: .82rem; overflow-wrap: anywhere; opacity: .8; }
+.adm-maintenance-stats dd { margin: 3px 0 0; font-size: 1.1rem; font-variant-numeric: tabular-nums; font-weight: 700; }
+.adm-maintenance-links { display: flex; flex-wrap: wrap; gap: 10px; }
+.adm-maintenance-links .btn { text-decoration: none; }
+@media (max-width: 540px) {
+  .adm-maintenance-body { padding: 12px; }
+  .adm-maintenance-links > * { width: 100%; text-align: center; }
+}
