@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import { TripRouteSketch } from './TripRouteSketch';
 
 function copyLocationLink(latitude, longitude) {
   // The user opens the external map deliberately; we do not send positions
@@ -144,8 +145,10 @@ export function TripLiveLocationPanel({ trip, onRouteSaved, arabic = true }) {
           {tr('اعتماد خط الطريق', 'Save route polyline')}
         </button>
       </form>
-      {Array.isArray(trip.routePoints) && trip.routePoints.length >= 2 &&
-        <p>{tr('يوجد خط معتمد لهذه الرحلة.', 'A route polyline is already configured.')}</p>}
+      {Array.isArray(trip.routePoints) && trip.routePoints.length >= 2 && <>
+        <p>{tr('يوجد خط معتمد لهذه الرحلة.', 'A route polyline is already configured.')}</p>
+        <TripRouteSketch routePoints={trip.routePoints} arabic={arabic} />
+      </>}
       {error && <p role="alert">{error}</p>}
     </details>
   );
@@ -187,6 +190,8 @@ export function TripLiveLocationPanel({ trip, onRouteSaved, arabic = true }) {
                 ' — ' + deviation.distanceMeters + ' m'}
             </p>
           )}
+          <TripRouteSketch routePoints={trip.routePoints} location={location}
+            gpsState={state} arabic={arabic} />
           {location && <>
             <p>
               {tr('الإحداثيات: ', 'Coordinates: ')}

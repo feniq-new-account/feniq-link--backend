@@ -107,3 +107,18 @@ it('rejects GPX without two legitimate geographic positions', () => {
   expect(() => parseGpxRoute('<gpx><rte><rtept lat="91" lon="35"/><rtept lat="35" lon="35.2"/></rte></gpx>')).toThrow();
   expect(() => parseGpxRoute('<gpx><rte><rtept lat="35" lon="35"/></rte></gpx>')).toThrow();
 });
+
+it('draws the configured GPX trace without sending driver coordinates to a map provider', async () => {
+  const trip = { ...activeTrip, routePoints: [[35.11, 35.20], [35.12, 35.21]] };
+  api.adminTripLiveLocation.mockResolvedValue({ location: {
+    state: 'live', location: { latitude: 35.115, longitude: 35.205,
+      accuracyMeters: 12, receivedAt: '2026-11-06T00:00:00Z' },
+    deviation: { state: 'on_route', distanceMeters: 30 },
+  } });
+  await act(async () => root.render(<TripLiveLocationPanel trip={trip} arabic={false} />));
+  expect(host.querySelector('svg')).toBeNull(); // Disabled until admin opts in.
+  await act(async () => button('Monitor live driver position').click());
+  expect(host.querySelector('polyline')).not.toBeNull();
+  expect(host.querySelector('[aria-label="Recent driver location"]')).not.toBeNull();
+  expect(host.querySelector('iframe')).toBeNull();
+});
