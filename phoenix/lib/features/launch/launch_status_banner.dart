@@ -132,8 +132,6 @@ class _LaunchStatusBannerState extends State<LaunchStatusBanner>
                     (_loading ? l10n.launchPreparing : l10n.launchUnknown),
                 textAlign: TextAlign.center,
               ),
-              if (!_loading)
-                TextButton(onPressed: _refresh, child: Text(l10n.launchRetry)),
             ],
           ),
         ),
