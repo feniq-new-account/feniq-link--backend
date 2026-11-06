@@ -25,7 +25,7 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Verify exact handoff content
         run: |
-          printf '%s  %s\\n' '9c8f2921e100d6016c19ae6c20c1a37e2840bac4b62e4aa3af951278a1dcfb57' '.github/handoffs/collection-controls-20261106.patch' | sha256sum -c -
+          echo '9c8f2921e100d6016c19ae6c20c1a37e2840bac4b62e4aa3af951278a1dcfb57  .github/handoffs/collection-controls-20261106.patch' | sha256sum -c -
       - name: Apply recovered code without resetting any files
         run: |
           git apply --check .github/handoffs/collection-controls-20261106.patch
