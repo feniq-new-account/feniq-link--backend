@@ -12,8 +12,8 @@ class ManufacturerModel {
   // medicine list on.
   final String name;
   // Warehouse-set, always-on discount for this manufacturer's products, as a
-  // percentage. 0 when the warehouse has configured none - the card shows
-  // "0%", it never hides the company.
+  // percentage. Zero when the warehouse has no discount configured;
+  // the card hides this detail unless it is positive.
   final num discountPercentage;
   // The central manufacturer's id - null for an older backend, and for a
   // legacy product's free-text company that matches no manufacturer. Only
