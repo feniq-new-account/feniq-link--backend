@@ -29,6 +29,13 @@ function optionalNote(value) {
   if (typeof value !== 'string' || value.length > 500) throw bad('Invalid note.');
   return value.trim();
 }
+function driverRequestId(value) {
+  if (value === undefined) return null; // Legacy clients remain compatible.
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{12,96}$/.test(value)) {
+    throw bad('Driver stop requestId must be 12–96 URL-safe characters.');
+  }
+  return value;
+}
 function revision(value) {
   if (!Number.isInteger(value) || value < 0) throw bad('Expected current trip revision.');
   return value;
@@ -115,12 +122,35 @@ async function list({ status, after, limit = 20 } = {}) {
 async function transition(actorId, tripId, body, action, { driverUserId = null } = {}) {
   id(tripId);
   const expected = revision(body?.revision);
+  // Only driver stop decisions accept an idempotency key, never money or orders.
+  const requestId = driverUserId && action === 'stop' ? driverRequestId(body?.requestId) : null;
   const now = new Date();
   return runInTransaction(async (session) => {
     const trip = await Trip.findById(tripId).session(session);
     if (!trip) throw ApiError.notFound('Trip not found.', 'DISTRIBUTION_TRIP_NOT_FOUND');
     if (driverUserId && String(trip.driverUserId) !== String(driverUserId)) {
       throw ApiError.forbidden('Trip is not assigned to this driver.', 'DRIVER_TRIP_FORBIDDEN');
+    }
+    if (requestId) {
+      // The device may retry after the first write committed but its reply was lost.
+      // Verify the exact same actor, stop, decision, note AND original revision.
+      const stopId = id(body?.stopId);
+      const decision = body?.status;
+      const note = optionalNote(body?.note);
+      if (!['delivered', 'failed'].includes(decision) || (decision === 'failed' && !note)) {
+        throw bad('Invalid driver stop decision.');
+      }
+      const prior = await Event.findOne({ tripId: trip._id, actorId, requestId }).session(session).lean();
+      if (prior) {
+        const same = prior.revision === expected + 1 && String(prior.stopId) === stopId &&
+          prior.event === (decision === 'delivered' ? 'stop_delivered' : 'stop_failed') &&
+          prior.note === note;
+        if (!same) {
+          throw ApiError.conflict('Request ID was already used for a different stop decision.',
+            'DRIVER_REQUEST_ID_REUSED');
+        }
+        return trip; // Return current trip state; never append a second audit event.
+      }
     }
     if (trip.revision !== expected) {
       throw ApiError.conflict('Trip changed; refresh before saving.', 'DISTRIBUTION_TRIP_CHANGED');
@@ -166,6 +196,7 @@ async function transition(actorId, tripId, body, action, { driverUserId = null }
     }
     await Event.create([{
       tripId, actorId, event, revision: expected + 1, stopId, note,
+      ...(requestId ? { requestId } : {}),
     }], { session });
     return changed;
   });
