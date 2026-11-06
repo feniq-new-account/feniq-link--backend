@@ -52,7 +52,7 @@ class _RepShellViewState extends State<RepShellView> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final driverEnabled = widget.driverTripRepository != null;
-    final driverAccountId = context.read<AuthCubit>().state.user?.id;
+    final driverAccountId = context.read<AuthCubit>().state.localAccountId;
     if (_outboxOwnerId != driverAccountId ||
         !identical(_outboxRepository, widget.driverTripRepository)) {
       _outboxOwnerId = driverAccountId;
