@@ -183,7 +183,8 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
             buildWhen: (previous, current) =>
                 previous.cityScopeAvailable != current.cityScopeAvailable ||
                 previous.onlyMyCity != current.onlyMyCity ||
-                previous.isChangingScope != current.isChangingScope,
+                previous.isChangingScope != current.isChangingScope ||
+                previous.warehouses != current.warehouses,
             builder: (context, state) {
               if (!state.cityScopeAvailable) {
                 return SliverToBoxAdapter(
