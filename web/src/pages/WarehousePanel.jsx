@@ -1,3 +1,4 @@
+import { AccountantDashboardPage } from './AccountantDashboardPage';
 import { WarehouseInsightsPage } from './WarehouseInsightsPage';
 import { WarehouseSubscriptionProvider } from '../context/WarehouseSubscriptionContext';
 import { useState } from 'react';
@@ -174,6 +175,7 @@ function WarehousePanelContent() {
             <Route path="/warehouse/discounts" element={<WarehouseDiscountsPage />} />
             <Route path="/warehouse/discount-codes" element={<WarehouseDiscountCodesPage />} />
             <Route path="/warehouse/insights" element={<WarehouseInsightsPage />} />
+            <Route path="/warehouse/accounting" element={<AccountantDashboardPage />} />
             <Route path="/warehouse/debts" element={<WarehouseDebtsPage />} />
             <Route path="/warehouse/settlement" element={<WarehouseSettlementPage />} />
             <Route path="/warehouse/returns" element={<WarehouseReturnsPage />} />
@@ -184,7 +186,7 @@ function WarehousePanelContent() {
             <Route path="/warehouse/complaints/:complaintId" element={<WarehouseComplaintDetailPage />} />
             <Route path="/warehouse/reviews" element={<WarehouseReviewsPage />} />
             <Route path="/warehouse/settings" element={<WarehouseSettingsPage />} />
-            <Route path="*" element={<Navigate to="/warehouse/orders" replace />} />
+            <Route path="*" element={<Navigate to={user.warehouseRole === 'accountant' ? '/warehouse/accounting' : '/warehouse/orders'} replace />} />
           </Routes>
         </div>
       </div>

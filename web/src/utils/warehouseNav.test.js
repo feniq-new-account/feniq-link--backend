@@ -34,7 +34,7 @@ const LEGACY_DESTINATIONS = [
 ];
 
 // Destinations added since, each a new page rather than a moved one.
-const ADDED_DESTINATIONS = ['/warehouse/discount-codes', '/warehouse/reps', '/warehouse/insights'];
+const ADDED_DESTINATIONS = ['/warehouse/accounting', '/warehouse/discount-codes', '/warehouse/reps', '/warehouse/insights'];
 
 // Every page the sidebar can lead to, a switched-off feature's included.
 function allDestinations() {

@@ -423,7 +423,7 @@ export const api = {
   assignDeliveryPharmacy: (id, body) => request(`/warehouse/delivery/pharmacies/${id}`, { method: 'PUT', body }),
   rescheduleDelivery: (id, body) => request(`/warehouse/delivery/orders/${id}/reschedule`, { method: 'PUT', body }),
   warehouseInsights: ({ period = 'month', from, to, force } = {}) => request(`/warehouse/insights/report?${new URLSearchParams({ period, ...(from ? { from } : {}), ...(to ? { to } : {}), ...(force ? { force: '1' } : {}) })}`),
-  warehouseFollowUp: ({ kind, after, force } = {}) => request(`/warehouse/insights/follow-up?${new URLSearchParams({ kind, ...(after ? { after } : {}), ...(force ? { force: '1' } : {}) })}`),
+  warehouseFollowUp: ({ kind, after, force, limit } = {}) => request(`/warehouse/insights/follow-up?${new URLSearchParams({ kind, ...(limit ? { limit } : {}), ...(after ? { after } : {}), ...(force ? { force: '1' } : {}) })}`),
   warehouseFollowUpExport: (kind) => request(`/warehouse/insights/export?${new URLSearchParams({ kind })}`),
   warehouseInsightAlerts: () => request('/warehouse/insights/alerts'),
   saveWarehouseFollowUp: (body) => request('/warehouse/insights/settings', { method: 'PUT', body }),
@@ -1058,6 +1058,7 @@ export const api = {
   // browsing needs the second list rather than the registry.
   warehouseManufacturers: ({ inCatalog } = {}) =>
     request(`/warehouse/manufacturers${inCatalog ? '?inCatalog=true' : ''}`),
+  accountantDashboard: (query = {}) => request(`/warehouse/balances/dashboard?${new URLSearchParams(query)}`),
   warehouseBalances: ({ limit, after, search } = {}) => {
     const params = new URLSearchParams();
     if (limit) params.set('limit', limit);

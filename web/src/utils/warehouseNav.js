@@ -52,6 +52,7 @@ export const WAREHOUSE_NAV_ALL = [
     labelKey: 'nav.financials',
     aliasPath: '/warehouse/financials',
     children: [
+      { id: 'accounting', labelKey: 'nav.accountingDashboard', path: '/warehouse/accounting' },
       { id: 'debts', labelKey: 'nav.debts', path: '/warehouse/debts' },
       { id: 'insights', labelKey: 'nav.insights', path: '/warehouse/insights' },
       { id: 'settlement', labelKey: 'nav.settlement', path: '/warehouse/settlement' },
