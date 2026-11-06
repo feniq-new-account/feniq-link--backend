@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import { generateTemporaryPassword } from '../utils/passwordPolicy';
 import './AdminMaintenancePage.css';
+
+const legacyPhones = new Set(['0930000101', '0930000102', '0930000103']);
 
 const inventoryFields = ['products', 'offers', 'advertisements', 'banners', 'orders', 'orderitems',
   'returns', 'payments', 'ledgerentries', 'creditentries', 'pharmacycredits', 'complaints'];
@@ -15,6 +18,9 @@ export function AdminMaintenancePage() {
   const { t } = useTranslation();
   const [preview, setPreview] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+  const [credentials, setCredentials] = useState([]);
+  const [recoveryError, setRecoveryError] = useState('');
   const [error, setError] = useState('');
   const refresh = useCallback(async () => {
     setBusy(true); setError('');
@@ -23,6 +29,47 @@ export function AdminMaintenancePage() {
     finally { setBusy(false); }
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
+
+  // Reuses the authenticated, audited admin recovery endpoints. No passwords
+  // are hard-coded, transmitted in URL parameters or persisted in browser storage.
+  // Only known legacy seed identities can be targeted.
+  async function recoverAccounts() {
+    setRecovering(true); setRecoveryError('');
+    try {
+      const page = await api.adminAccounts({ role: 'warehouse', status: 'blocked', limit: 100 });
+      const matches = (page.accounts || []).filter(account =>
+        account.user?.role === 'warehouse' && account.user?.status === 'blocked' &&
+        legacyPhones.has(account.user?.phone));
+      if (matches.length === 0) {
+        setRecoveryError(t('maintenance.noBlockedAccounts'));
+        return;
+      }
+      if (!window.confirm(t('maintenance.recoverConfirm', { count: matches.length }))) return;
+      for (const account of matches) {
+        const password = generateTemporaryPassword('warehouse');
+        // When a reset succeeds but unblocking fails, the password must still
+        // be handed to the admin, not lost in a catch block or page refresh.
+        await api.resetAccountPassword(account.user.id, {
+          password, reason: 'Owner-authorized November 2026 warehouse pilot recovery',
+        });
+        const result = { phone: account.user.phone, password, status: 'reset' };
+        setCredentials(previous => [...previous, result]);
+        try {
+          await api.unblockAccount(account.user.id);
+          result.status = 'active';
+          setCredentials(previous => previous.map(item => item.phone === result.phone ? { ...result } : item));
+        } catch (error) {
+          setRecoveryError(t('maintenance.unblockFailed', { phone: account.user.phone }) + ': ' + error.message);
+          return;
+        }
+      }
+      await refresh();
+    } catch (error) {
+      setRecoveryError(error.message);
+    } finally {
+      setRecovering(false);
+    }
+  }
   return <main className="adm-maintenance">
     <h1>{t('maintenance.title')}</h1>
     <p className="hint">{t('maintenance.intro')}</p>
@@ -36,10 +83,26 @@ export function AdminMaintenancePage() {
         {!preview && !error && <p className="hint">{t('common.loading')}</p>}
         {preview && <>
           <p className="hint">{t('maintenance.generated')}: {new Date(preview.generatedAt).toLocaleString()}</p>
-          {preview.needsAccountRecovery > 0 && <p role="status" className="adm-maintenance-warning">
-            {t('maintenance.accountsBlocked', { count: preview.needsAccountRecovery })}{' '}
-            <Link to="/admin/accounts">{t('maintenance.manageAccounts')}</Link>
-          </p>}
+          {preview.needsAccountRecovery > 0 && <div className="adm-maintenance-warning">
+            <p role="status">{t('maintenance.accountsBlocked', { count: preview.needsAccountRecovery })}</p>
+            <p className="hint">{t('maintenance.recoveryHint')}</p>
+            <button type="button" className="btn btn-primary" disabled={recovering}
+              onClick={recoverAccounts}>{recovering ? t('common.loading') : t('maintenance.recoverAccounts')}</button>
+            {' '}<Link to="/admin/accounts">{t('maintenance.manageAccounts')}</Link>
+          </div>}
+          {recoveryError && <p className="error-text" role="alert">{recoveryError}</p>}
+          {credentials.length > 0 && <section className="adm-maintenance-secrets">
+            <h2>{t('maintenance.newCredentials')}</h2>
+            <p>{t('maintenance.credentialsWarning')}</p>
+            {credentials.map(item => <div className="adm-maintenance-secret-row" key={item.phone}>
+              <span dir="ltr">{item.phone}</span>
+              <code dir="ltr">{item.password}</code>
+              <strong>{item.status === 'active' ? t('maintenance.activated') : t('maintenance.resetOnly')}</strong>
+            </div>)}
+            <button type="button" className="btn btn-secondary" onClick={() => setCredentials([])}>
+              {t('maintenance.clearCredentials')}
+            </button>
+          </section>}
           <p className="adm-maintenance-warning">
             {t('maintenance.cleanupBlocked')}
           </p>
