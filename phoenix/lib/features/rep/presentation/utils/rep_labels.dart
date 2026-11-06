@@ -63,3 +63,26 @@ String lastVisitText(AppLocalizations l10n, DateTime? lastVisit, DateTime now) {
   final days = today.difference(day).inDays;
   return l10n.repLastVisitAgo(days < 0 ? 0 : days);
 }
+
+
+/// Only server-verified visits count as coverage. An attempted QR scan,
+/// including out-of-range or poor accuracy, cannot reset the follow-up clock.
+bool repNeedsVerifiedVisit(RepPharmacy pharmacy, DateTime now, {int afterDays = 7}) {
+  final verified = pharmacy.activity.lastVerifiedVisitAt;
+  if (verified == null) return true;
+  final today = DateTime(now.year, now.month, now.day);
+  final visited = DateTime(verified.year, verified.month, verified.day);
+  return today.difference(visited).inDays >= afterDays;
+}
+
+/// Client-side operational filters on the server's assigned pharmacies list.
+/// Preserve the server's longest-unverified-first priority order.
+List<RepPharmacy> repFollowupPharmacies(
+  List<RepPharmacy> assigned,
+  DateTime now, {
+  bool needsVerifiedVisit = false,
+  bool missingLocation = false,
+}) => assigned.where((pharmacy) =>
+  (!needsVerifiedVisit || repNeedsVerifiedVisit(pharmacy, now)) &&
+  (!missingLocation || !pharmacy.hasLocation)
+).toList(growable: false);
