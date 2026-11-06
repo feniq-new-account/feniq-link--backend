@@ -474,11 +474,25 @@ async function openingBalanceFor(accountId, from, session = null) {
 // unique indexes (one charge per order, one reversal per entry) are load-
 // bearing guarantees that should never be merely "probably built by now".
 async function ensureFinancialIndexes() {
-  await Promise.all([LedgerAccount.createIndexes(), LedgerEntry.createIndexes()]);
+  await Promise.all([LedgerAccount.createIndexes(), LedgerEntry.createIndexes(),
+    require('../models/paymentProof.model').createIndexes(),
+    require('../models/paymentProofReview.model').createIndexes()]);
+}
+
+// Conflict on the SAME account document that every payment/return posts to.
+// A snapshot read or a separate mutex collection would not serialize them.
+// Does not post money, issue an entry sequence or change lastActivityAt.
+async function lockAccountForFinancialChange(accountId, warehouseId, session) {
+  if (!session?.inTransaction()) throw new Error('Account financial lock requires a transaction.');
+  const account = await LedgerAccount.findOneAndUpdate({ _id: accountId, warehouseId },
+    { $inc: { financialRevision: 1 } }, { new: true, session });
+  if (!account) throw ApiError.notFound('Account not found.', 'ACCOUNT_NOT_FOUND');
+  return account;
 }
 
 module.exports = {
   ensureFinancialIndexes,
+  lockAccountForFinancialChange,
   postEntry,
   postReversal,
   resolveAccount,

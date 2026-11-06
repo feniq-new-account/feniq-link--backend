@@ -1095,6 +1095,9 @@ export const api = {
   createPayment: (data) => request('/warehouse/payments', { method: 'POST', body: data }),
   reversePayment: (id, body) =>
     request(`/warehouse/payments/${id}/reverse`, { method: 'POST', body }),
+  paymentProofs: (id, before = null) => request(`/warehouse/payments/${id}/proofs${before === null ? '' : `?before=${encodeURIComponent(before)}`}`),
+  submitPaymentProof: (id, body) => request(`/warehouse/payments/${id}/proofs`, { method: 'POST', body }),
+  reviewPaymentProof: (id, proofId, body) => request(`/warehouse/payments/${id}/proofs/${proofId}/review`, { method: 'POST', body }),
   warehouseSettings: () => request('/warehouse/settings'),
   // `requireDeliverySealPhoto` is optional - omitted keys are left untouched
   // server-side (warehouseSettings.service.js).

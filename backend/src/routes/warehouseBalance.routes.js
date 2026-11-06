@@ -9,6 +9,8 @@ const { dashboard } = require('../services/accountantDashboard.service');
 const router = Router();
 
 router.use(authenticate, authorize('warehouse'), requireActiveStatus);
+// Financial read responses must not be reused from a browser/proxy cache.
+router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
 router.get('/dashboard', stringQueryOnly, asyncHandler(async (req, res) => {
     const warehouse = await loadWarehouseOrThrow(req.user._id);

@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const { authenticate, authorize, requireActiveStatus } = require('../middlewares/auth.middleware');
 const controller = require('../controllers/warehousePayment.controller');
+const proofs = require('../controllers/paymentProof.controller');
 const { rolePermissions } = require('../utils/rolePermissions');
 const { ApiError } = require('../utils/ApiError');
 
@@ -25,5 +26,8 @@ function requireAccountingPermission(permission) {
 }
 router.post('/', requireAccountingPermission('paymentRecord'), controller.create);
 router.post('/:id/reverse', requireAccountingPermission('paymentReverse'), controller.reverse);
+router.get('/:id/proofs', proofs.list);
+router.post('/:id/proofs', requireAccountingPermission('paymentRecord'), proofs.submit);
+router.post('/:id/proofs/:proofId/review', requireAccountingPermission('paymentProofReview'), proofs.review);
 
 module.exports = router;

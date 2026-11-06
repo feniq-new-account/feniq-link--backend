@@ -282,9 +282,9 @@ const WAREHOUSE_ACCOUNTS_DEFAULT_LIMIT = 20;
 // A pharmacy's name lives on Pharmacy, not LedgerAccount, so a name search
 // is resolved to ids first, same two-step every name search across a join in
 // this app uses (see offer.service.js's buildOfferSearchOr).
-async function resolveMatchingPharmacyIds(searchTerm) {
+async function resolveMatchingPharmacyIds(searchTerm, session = null) {
   const pattern = new RegExp(escapeRegex(searchTerm), 'i');
-  const matches = await Pharmacy.find({ $or: [{ nameAr: pattern }, { nameEn: pattern }, { phone: pattern }] }, '_id');
+  const matches = await Pharmacy.find({ $or: [{ nameAr: pattern }, { nameEn: pattern }, { phone: pattern }] }, '_id').session(session);
   return matches.map((p) => p._id);
 }
 
@@ -410,4 +410,5 @@ module.exports = {
   listAccountsForWarehouse,
   resolvePeriod,
   referenceFor,
+  resolveMatchingPharmacyIds,
 };

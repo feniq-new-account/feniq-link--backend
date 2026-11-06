@@ -11,10 +11,12 @@ import { usePaginatedData } from '../hooks/usePaginatedData';
 import { useExchangeRate } from '../context/ExchangeRateContext';
 import { formatSyp, formatUsd, remainingPaymentAmountFromSyp } from '../utils/currency';
 import { PAYMENT_METHODS, PAYMENT_CURRENCIES as CURRENCIES, createIdempotencyKeys } from '../utils/payments';
+import { LedgerMovementReference } from '../components/LedgerMovementReference';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { QuickPaymentModal } from '../components/QuickPaymentModal';
 import { WarehouseSummaryCard } from '../components/WarehouseSummaryCard';
 import { VoicePaymentModal } from '../components/VoicePaymentModal';
+import { PaymentProofDialog } from '../components/PaymentProofDialog';
 import { displayName } from '../utils/displayName';
 import { downloadReportCsv } from '../utils/reportCsv';
 import { statementCsvRows } from '../utils/statementExport';
@@ -259,7 +261,7 @@ function ReversePaymentModal({ payment, onClose, onConfirm }) {
 // One row of the payments table. A reversal is rendered as a negative so the
 // column reads as a running correction rather than two identical credits, and
 // a reversed settlement is struck through with the reason that undid it.
-function PaymentRow({ payment, onReverse }) {
+function PaymentRow({ payment, onReverse, onProof }) {
   const { t } = useTranslation();
 
   const paidAt = new Date(payment.paidAt || payment.createdAt);
@@ -302,6 +304,7 @@ function PaymentRow({ payment, onReverse }) {
       </td>
       <td>
         <div className="table-row-actions">
+          {onProof && !isReversal && <button type="button" className="btn-secondary" onClick={() => onProof(payment)}>{t('paymentProof.title')}</button>}
           {/* Only a posted settlement can be reversed: a reversal is final, and
               an already-reversed payment has nothing left to undo. */}
           {onReverse && !isReversal && !isReversed && (
@@ -335,36 +338,6 @@ const STATEMENT_KIND_KEYS = {
   migration_adjustment: 'statement.kindMigrationAdjustment',
   opening_balance: 'statement.kindOpeningBalance',
 };
-
-// What a human would quote when asking about a row.
-function StatementReference({ row }) {
-  const { t } = useTranslation();
-  const ref = row.reference ?? {};
-
-  if (ref.invoiceNumber != null) {
-    return (
-      <>
-        <div className="wh-table-order-num">
-          {t('settlement.invoiceNumber', { number: ref.invoiceNumber })}
-        </div>
-        {ref.orderNumber != null && (
-          <div className="wh-table-sub">{t('orders.orderNumber', { number: ref.orderNumber })}</div>
-        )}
-      </>
-    );
-  }
-  if (ref.paymentNumber != null) {
-    return (
-      <>
-        <div className="wh-table-order-num">
-          {t('debts.paymentNumber', { number: ref.paymentNumber })}
-        </div>
-        {ref.method && <div className="wh-table-sub">{t(`debts.method_${ref.method}`)}</div>}
-      </>
-    );
-  }
-  return <span className="wh-table-sub">&mdash;</span>;
-}
 
 function StatementTable({ statement }) {
   const { t } = useTranslation();
@@ -403,7 +376,7 @@ function StatementTable({ statement }) {
                 {row.reason && <div className="wh-table-sub">{row.reason}</div>}
               </td>
               <td>
-                <StatementReference row={row} />
+                <LedgerMovementReference row={row} />
               </td>
               <td className="wh-num">{row.debitSyp ? formatSyp(row.debitSyp) : '—'}</td>
               <td className="wh-num">{row.creditSyp ? formatSyp(row.creditSyp) : '—'}</td>
@@ -433,6 +406,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
   // The payment the operator is about to reverse, if any. Held here rather
   // than per row so the modal is a sibling of the table, not a cell inside it.
   const [reversing, setReversing] = useState(null);
+  const [proofPayment, setProofPayment] = useState(null);
 
   const load = useCallback(async () => {
     const id = ++requestId.current;
@@ -593,7 +567,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
                   </thead>
                   <tbody>
                     {payments.map((payment) => (
-                      <PaymentRow key={payment.id} payment={payment} onReverse={canRecord ? setReversing : null} />
+                      <PaymentRow key={payment.id} payment={payment} onReverse={canRecord ? setReversing : null} onProof={setProofPayment} />
                     ))}
                   </tbody>
                 </table>
@@ -612,6 +586,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
       </div>
 
       </div>
+      {proofPayment && <PaymentProofDialog key={proofPayment.id} payment={proofPayment} readOnly={Boolean(range)} onClose={() => setProofPayment(null)} />}
       {reversing && (
         <ReversePaymentModal
           payment={reversing}
