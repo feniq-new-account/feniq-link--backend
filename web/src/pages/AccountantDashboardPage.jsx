@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { LedgerMovementReference } from '../components/LedgerMovementReference';
 import { SummaryFigures } from '../components/WarehouseSummaryCard';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
@@ -106,10 +107,7 @@ export function AccountantDashboardPage() {
             <td className="wh-num">{formatBusinessDateTime(row.effectiveAt)}<div className="wh-table-sub">{t('accounting.postedAt')}: {formatBusinessDateTime(row.postedAt)}</div></td>
             <td><Link to={`/warehouse/debts?pharmacy=${row.pharmacyId}`}>{row.pharmacy ? displayName(row.pharmacy.nameEn, row.pharmacy.nameAr) : t('accounting.unavailablePharmacy')}</Link></td>
             <td>{t(`statement.${KIND_KEYS[row.kind] || 'kindOther'}`)}{row.reason && <div className="wh-table-sub">{row.reason}</div>}</td>
-            <td className="wh-num">LE-{row.entryNumber}
-              {row.reference?.invoiceNumber != null && <div>{t('settlement.invoiceNumber', { number: row.reference.invoiceNumber })}</div>}
-              {row.reference?.paymentNumber != null && <div>{t('debts.paymentNumber', { number: row.reference.paymentNumber })}</div>}
-            </td>
+            <td><LedgerMovementReference row={row} /></td>
             <td className="wh-num">{row.direction === 'debit' ? formatSyp(row.amountSyp) : '—'}</td>
             <td className="wh-num">{row.direction === 'credit' ? formatSyp(row.amountSyp) : '—'}</td>
           </tr>)}</tbody>

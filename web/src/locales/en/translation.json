@@ -429,8 +429,8 @@
     "topDebtors": "Top 3 debtors",
     "topBuyers": "Top 3 buyers",
     "deliveredNote": "Sales count delivered orders only: an order becomes a sale the moment it is delivered.",
-    "invoiceCount": "{{count}} invoices",
-    "paymentCount": "{{count}} payments",
+    "invoiceCount": "Net invoice postings: {{count}}",
+    "paymentCount": "Net payment postings: {{count}}",
     "debtorCount": "{{count}} pharmacies owe you",
     "creditHeld": "Credit held for pharmacies: {{amount}}",
     "changeUp": "▲ {{percent}}% vs previous period",
@@ -1872,6 +1872,9 @@
     }
   },
   "accounting": {
+    "openOrder": "Open order and invoice",
+    "openReturn": "Open return",
+    "reversalReference": "Reverses entry",
   "title": "Accounting dashboard",
   "shortcuts": "Accounting shortcuts",
   "period": "Period",

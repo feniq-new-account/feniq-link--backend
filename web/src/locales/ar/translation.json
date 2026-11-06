@@ -445,8 +445,8 @@
     "topDebtors": "أكبر 3 مدينين",
     "topBuyers": "أكبر 3 مشترين",
     "deliveredNote": "المبيعات تشمل الطلبات المسلَّمة فقط: يصبح الطلب بيعاً لحظة تسليمه.",
-    "invoiceCount": "{{count}} فاتورة",
-    "paymentCount": "{{count}} دفعة",
+    "invoiceCount": "صافي حركات الفواتير: {{count}} فاتورة",
+    "paymentCount": "صافي حركات الدفعات: {{count}} دفعة",
     "debtorCount": "{{count}} صيدلية مدينة لك",
     "creditHeld": "رصيد دائن للصيدليات: {{amount}}",
     "changeUp": "▲ {{percent}}% عن الفترة السابقة",
@@ -1895,6 +1895,9 @@
     }
   },
   "accounting": {
+    "openOrder": "فتح الطلب والفاتورة",
+    "openReturn": "فتح المرتجع",
+    "reversalReference": "عكس القيد",
   "title": "لوحة المحاسبة",
   "shortcuts": "الوظائف المحاسبية",
   "period": "الفترة",
