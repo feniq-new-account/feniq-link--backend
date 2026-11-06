@@ -12,6 +12,7 @@ import 'package:feniq/core/error/error_translator.dart';
 import 'package:feniq/core/widgets/failure_widget.dart';
 import 'package:feniq/features/cart/presentation/widgets/cart_button.dart';
 import 'package:feniq/core/widgets/whatsapp_button.dart';
+import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_repository.dart';
 import 'package:feniq/features/catalog/data/models/catalog_route_args.dart';
 import 'package:feniq/features/catalog/data/repositories/catalog_repository.dart';
 import 'package:feniq/features/catalog/presentation/managers/catalog_cubit.dart';
@@ -51,6 +52,26 @@ class ManufacturersView extends StatefulWidget {
 
 class _ManufacturersViewState extends State<ManufacturersView> {
   bool _autoNavigated = false;
+  String? _warehousePhone;
+
+  @override
+  void initState() {
+    super.initState();
+    _warehousePhone = widget.warehousePhone;
+    if (_warehousePhone?.trim().isNotEmpty == true) return;
+    // Banner/deep-link navigation does not always carry the warehouse phone.
+    // Load only the public, pharmacist-visible warehouse profile as fallback.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      try {
+        final repository = context.read<WarehouseRepository>();
+        final profile = await repository.getWarehouseProfile(widget.warehouseId);
+        if (mounted) setState(() => _warehousePhone = profile.phone);
+      } catch (_) {
+        // The profile icon remains available if offline or access is denied.
+      }
+    });
+  }
 
   // The warehouse-wide search above the manufacturers list: typing shows the
   // matching products from every manufacturer of this warehouse (a CatalogCubit
@@ -144,13 +165,13 @@ class _ManufacturersViewState extends State<ManufacturersView> {
               extra: widget.warehouseName,
             ),
           ),
-          if (widget.warehousePhone?.trim().isNotEmpty == true)
+          if (_warehousePhone?.trim().isNotEmpty == true)
             Center(
               child: Padding(
                 padding: const EdgeInsetsDirectional.only(end: 4),
                 child: WhatsAppButton(
                   key: const ValueKey('warehouseHeaderWhatsApp'),
-                  phone: widget.warehousePhone!,
+                  phone: _warehousePhone!,
                   size: 38,
                 ),
               ),
