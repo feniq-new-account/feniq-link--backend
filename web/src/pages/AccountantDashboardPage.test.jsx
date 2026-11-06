@@ -64,3 +64,13 @@ it('shows empty activity and submits a custom range with a table-only kind filte
   expect(api.accountantDashboard.mock.lastCall[0]).toMatchObject({ period: 'custom' });
   expect(api.accountantDashboard.mock.lastCall[0].from).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 });
+
+it('submits a current balance filter for activity without deriving new KPI totals locally', async () => {
+  await render();
+  await act(async () => {
+    const select = host.querySelectorAll('select')[1]; select.value = 'credit'; select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await act(async () => button().click());
+  expect(api.accountantDashboard.mock.lastCall[0]).toMatchObject({ period: 'month', balanceState: 'credit' });
+  expect(host.textContent).toContain('12,345');
+});

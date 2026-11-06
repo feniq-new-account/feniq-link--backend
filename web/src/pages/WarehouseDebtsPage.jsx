@@ -11,6 +11,7 @@ import { usePaginatedData } from '../hooks/usePaginatedData';
 import { useExchangeRate } from '../context/ExchangeRateContext';
 import { formatSyp, formatUsd, remainingPaymentAmountFromSyp } from '../utils/currency';
 import { PAYMENT_METHODS, PAYMENT_CURRENCIES as CURRENCIES, createIdempotencyKeys } from '../utils/payments';
+import { LedgerMovementReference } from '../components/LedgerMovementReference';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { QuickPaymentModal } from '../components/QuickPaymentModal';
 import { WarehouseSummaryCard } from '../components/WarehouseSummaryCard';
@@ -336,36 +337,6 @@ const STATEMENT_KIND_KEYS = {
   opening_balance: 'statement.kindOpeningBalance',
 };
 
-// What a human would quote when asking about a row.
-function StatementReference({ row }) {
-  const { t } = useTranslation();
-  const ref = row.reference ?? {};
-
-  if (ref.invoiceNumber != null) {
-    return (
-      <>
-        <div className="wh-table-order-num">
-          {t('settlement.invoiceNumber', { number: ref.invoiceNumber })}
-        </div>
-        {ref.orderNumber != null && (
-          <div className="wh-table-sub">{t('orders.orderNumber', { number: ref.orderNumber })}</div>
-        )}
-      </>
-    );
-  }
-  if (ref.paymentNumber != null) {
-    return (
-      <>
-        <div className="wh-table-order-num">
-          {t('debts.paymentNumber', { number: ref.paymentNumber })}
-        </div>
-        {ref.method && <div className="wh-table-sub">{t(`debts.method_${ref.method}`)}</div>}
-      </>
-    );
-  }
-  return <span className="wh-table-sub">&mdash;</span>;
-}
-
 function StatementTable({ statement }) {
   const { t } = useTranslation();
 
@@ -403,7 +374,7 @@ function StatementTable({ statement }) {
                 {row.reason && <div className="wh-table-sub">{row.reason}</div>}
               </td>
               <td>
-                <StatementReference row={row} />
+                <LedgerMovementReference row={row} />
               </td>
               <td className="wh-num">{row.debitSyp ? formatSyp(row.debitSyp) : '—'}</td>
               <td className="wh-num">{row.creditSyp ? formatSyp(row.creditSyp) : '—'}</td>

@@ -42,7 +42,7 @@ function resolveSummaryPeriod({ period = 'today', from, to } = {}, now = new Dat
   }
   if (period === 'custom') {
     const start = parseRangeStart(from);
-    const end = parseRangeEnd(to) ?? now;
+    const end = to ? parseRangeEnd(to) : now;
     if (!start || !end || start > end) {
       throw ApiError.badRequest('Invalid summary period.', undefined, 'INVALID_PERIOD');
     }

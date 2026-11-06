@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { LedgerMovementReference } from '../components/LedgerMovementReference';
 import { SummaryFigures } from '../components/WarehouseSummaryCard';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 import { useWarehouseSubscription } from '../context/WarehouseSubscriptionContext';
@@ -52,7 +53,7 @@ function OverduePreview() {
 
 export function AccountantDashboardPage() {
   const { t } = useTranslation();
-  const [draft, setDraft] = useState({ period: 'month', kind: '', from: startOfBusinessMonthInputValue(), to: businessDateInputValue() });
+  const [draft, setDraft] = useState({ period: 'month', kind: '', search: '', balanceState: '', from: startOfBusinessMonthInputValue(), to: businessDateInputValue() });
   const [query, setQuery] = useState({ period: 'month' });
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -75,6 +76,8 @@ export function AccountantDashboardPage() {
     <form className="wh-filters" onSubmit={(event) => {
       event.preventDefault();
       setQuery({ period: draft.period, ...(draft.kind ? { kind: draft.kind } : {}),
+        ...(draft.search.trim() ? { search: draft.search.trim() } : {}),
+        ...(draft.balanceState ? { balanceState: draft.balanceState } : {}),
         ...(draft.period === 'custom' ? { from: draft.from, to: draft.to } : {}) });
     }}>
       <label>{t('accounting.period')}<select {...field('period')}>
@@ -84,6 +87,10 @@ export function AccountantDashboardPage() {
         <label>{t('accounting.from')}<input type="date" required max={draft.to} {...field('from')} /></label>
         <label>{t('accounting.to')}<input type="date" required min={draft.from} {...field('to')} /></label>
       </>}
+      <label>{t('accounting.activityPharmacy')}<input type="search" maxLength={120} {...field('search')} /></label>
+      <label>{t('accounting.activityBalance')}<select {...field('balanceState')}>
+        {['', 'debt', 'credit', 'settled'].map((state) => <option key={state} value={state}>{t(`statement.balanceState_${state || 'all'}`)}</option>)}
+      </select></label>
       <label>{t('accounting.activityType')}<select {...field('kind')}>
         <option value="">{t('accounting.allKinds')}</option>
         {KINDS.map((kind) => <option key={kind} value={kind}>{t(`statement.${KIND_KEYS[kind]}`)}</option>)}
@@ -106,10 +113,7 @@ export function AccountantDashboardPage() {
             <td className="wh-num">{formatBusinessDateTime(row.effectiveAt)}<div className="wh-table-sub">{t('accounting.postedAt')}: {formatBusinessDateTime(row.postedAt)}</div></td>
             <td><Link to={`/warehouse/debts?pharmacy=${row.pharmacyId}`}>{row.pharmacy ? displayName(row.pharmacy.nameEn, row.pharmacy.nameAr) : t('accounting.unavailablePharmacy')}</Link></td>
             <td>{t(`statement.${KIND_KEYS[row.kind] || 'kindOther'}`)}{row.reason && <div className="wh-table-sub">{row.reason}</div>}</td>
-            <td className="wh-num">LE-{row.entryNumber}
-              {row.reference?.invoiceNumber != null && <div>{t('settlement.invoiceNumber', { number: row.reference.invoiceNumber })}</div>}
-              {row.reference?.paymentNumber != null && <div>{t('debts.paymentNumber', { number: row.reference.paymentNumber })}</div>}
-            </td>
+            <td><LedgerMovementReference row={row} /></td>
             <td className="wh-num">{row.direction === 'debit' ? formatSyp(row.amountSyp) : '—'}</td>
             <td className="wh-num">{row.direction === 'credit' ? formatSyp(row.amountSyp) : '—'}</td>
           </tr>)}</tbody>
