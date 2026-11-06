@@ -73,3 +73,10 @@ describe('discount codes in the admin panel', () => {
     expect(arHtml).toContain('<h1>أكواد الخصم</h1>');
   });
 });
+
+describe('maintenance navigation', () => {
+  it('shows a maintenance and recovery page in both languages', () => {
+    expect(navLinks(renderAt('/admin/dashboard'))).toContain('/admin/maintenance');
+    expect(renderAt('/admin/dashboard', 'ar')).toContain('صيانة النظام والاستعادة');
+  });
+});

@@ -1,6 +1,7 @@
 import { AdminAnalyticsPage } from './AdminAnalyticsPage';
 import { AdminVisitVerificationPage } from './AdminVisitVerificationPage';
 import { AdminAppReleasePage } from './AdminAppReleasePage';
+import { AdminMaintenancePage } from './AdminMaintenancePage';
 import { AdminWarehouseAccessPage } from './AdminWarehouseAccessPage';
 import { FeatureControlCenter } from '../components/FeatureControlCenter';
 import { useRef, useState } from 'react';
@@ -57,6 +58,7 @@ export function AdminPanel() {
     { path: '/admin/warehouse-access', label: t('warehouseAccess.title') },
     { path: '/admin/features', label: t('featureControl.title') },
     { path: '/admin/app-release', label: t('appRelease.title') },
+    { path: '/admin/maintenance', label: t('maintenance.title') },
     { path: '/admin/visit-verification', label: t('visitVerification.title') },
     // Who gets in when a pharmacy signs up: the approval switch, the
     // syndicate list and the Telegram bot.
@@ -156,6 +158,7 @@ export function AdminPanel() {
             <Route path="/admin/warehouse-access" element={<AdminWarehouseAccessPage />} />
             <Route path="/admin/features" element={<FeatureControlCenter />} />
             <Route path="/admin/app-release" element={<AdminAppReleasePage />} />
+            <Route path="/admin/maintenance" element={<AdminMaintenancePage />} />
             <Route path="/admin/visit-verification" element={<AdminVisitVerificationPage />} />
             <Route path="/admin/registration" element={<AdminRegistrationPage />} />
             <Route path="/admin/distribution" element={<AdminDistributionTripsPage />} />
