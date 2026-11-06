@@ -8,7 +8,7 @@
   gap: 8px;
 }
 .launch-settings-form select,
-.launch-settings-form input,
+.launch-settings-form input[type="datetime-local"],
 .launch-settings-form textarea {
   box-sizing: border-box;
   width: 100%;
@@ -28,4 +28,16 @@
 .launch-settings-form :focus-visible {
   outline: 2px solid var(--adm-orange, #f58220);
   outline-offset: 2px;
+}
+
+.launch-settings-form .launch-deadline-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.launch-settings-form input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--adm-orange, #f58220);
 }
