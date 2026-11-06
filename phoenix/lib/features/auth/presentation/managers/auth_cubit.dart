@@ -87,6 +87,49 @@ class AuthCubit extends Cubit<AuthState> {
     if (kDebugMode) debugPrint(message);
   }
 
+  /// The last successfully authenticated credentials stay encrypted on this
+  /// device for users who explicitly sign out and return. Closing the app does
+  /// not need these credentials: the existing access/refresh tokens persist.
+  /// Never log, sync or put the password into SharedPreferences.
+  Future<Map<String, String>?> loadSavedLogin() async {
+    try {
+      final phone = await _secureStorage.read(StorageKeys.rememberedPhone);
+      final password = await _secureStorage.read(StorageKeys.rememberedPassword);
+      if (phone == null || phone.isEmpty || password == null || password.isEmpty) {
+        return null;
+      }
+      return {'phone': phone, 'password': password};
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _rememberLogin({required String phone, required String password}) async {
+    try {
+      await _secureStorage.write(StorageKeys.rememberedPhone, phone);
+      await _secureStorage.write(StorageKeys.rememberedPassword, password);
+    } catch (_) {
+      // Never fail an otherwise successful sign-in because a keystore write
+      // failed; clear partial credentials instead of pairing two users' data.
+      await forgetSavedLogin();
+    }
+  }
+
+  /// User-initiated forget, successful account deletion, or revoked session.
+  /// Ordinary sign-out deliberately keeps these, per remembered-login UX.
+  Future<void> forgetSavedLogin() async {
+    try {
+      await _secureStorage.delete(StorageKeys.rememberedPhone);
+    } catch (_) {
+      // Best effort for an unavailable keystore.
+    }
+    try {
+      await _secureStorage.delete(StorageKeys.rememberedPassword);
+    } catch (_) {
+      // Best effort for an unavailable keystore.
+    }
+  }
+
   // Section 6.10 / audit C1: differentiate the outcomes of validating the
   // stored token instead of treating every failure as "log out".
   //
@@ -262,6 +305,7 @@ class AuthCubit extends Cubit<AuthState> {
         longitude: longitude,
       );
       await _persistSession(result);
+      await _rememberLogin(phone: phone, password: password);
       _onAuthenticated();
       final sessionStatus = _sessionStatusFor(result.user);
       emit(
@@ -304,6 +348,7 @@ class AuthCubit extends Cubit<AuthState> {
         password: password,
       );
       await _persistSession(result);
+      await _rememberLogin(phone: phone, password: password);
       _onAuthenticated();
       final sessionStatus = _sessionStatusFor(result.user);
       emit(
@@ -364,6 +409,7 @@ class AuthCubit extends Cubit<AuthState> {
         newPassword: newPassword,
       );
       await _persistSession(result);
+      await _rememberLogin(phone: result.user.phone, password: newPassword);
       _onAuthenticated();
       final wasForced =
           state.sessionStatus == SessionStatus.passwordChangeRequired;
@@ -427,6 +473,7 @@ class AuthCubit extends Cubit<AuthState> {
     }
 
     await logout();
+    await forgetSavedLogin();
     return true;
   }
 
@@ -555,6 +602,7 @@ class AuthCubit extends Cubit<AuthState> {
     if (!isClosed) {
       emit(const AuthState(sessionStatus: SessionStatus.unauthenticated));
     }
+    await forgetSavedLogin();
     if (!alreadySignedOut) {
       _goToLogin();
     }

@@ -36,6 +36,26 @@ class _PasswordLoginViewState extends State<PasswordLoginView> {
   final _passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final saved = await context.read<AuthCubit>().loadSavedLogin();
+      if (!mounted || saved == null) return;
+      // Do not overwrite anything the user typed while secure storage loaded.
+      if (_phoneController.text.isEmpty) _phoneController.text = saved['phone'] ?? '';
+      if (_passwordController.text.isEmpty) _passwordController.text = saved['password'] ?? '';
+    });
+  }
+
+  Future<void> _forgetSavedLogin() async {
+    await context.read<AuthCubit>().forgetSavedLogin();
+    if (!mounted) return;
+    _phoneController.clear();
+    _passwordController.clear();
+  }
+
+  @override
   void dispose() {
     _phoneController.dispose();
     _passwordController.dispose();
@@ -79,10 +99,8 @@ class _PasswordLoginViewState extends State<PasswordLoginView> {
     final cubit = context.read<AuthCubit>();
 
     final verified = await cubit.loginWithPassword(
-      // The field only ever holds the subscriber digits after the fixed "09"
-      // box (see PhoneTextField) - this composes the full "+963..." the
-      // backend matches on, same helper the validator below uses so the two
-      // can never drift apart.
+      // The full phone field accepts local and international spellings.
+      // Normalize exactly once to the backend's canonical +9639... form.
       phone: phoneTextFieldFullValue(_phoneController.text),
       password: _passwordController.text,
     );
@@ -157,7 +175,19 @@ class _PasswordLoginViewState extends State<PasswordLoginView> {
                     validator: (value) =>
                         Validators.validateRequired(value, l10n.fieldRequired),
                   ),
-                  const SizedBox(height: AppSizes.spacingXLarge),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton.icon(
+                      onPressed: _forgetSavedLogin,
+                      icon: const Icon(Icons.delete_outline, size: 18),
+                      label: Text(
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'مسح بيانات الدخول المحفوظة'
+                            : 'Forget saved login',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.spacingMedium),
                   BlocBuilder<AuthCubit, AuthState>(
                     buildWhen: (previous, current) =>
                         previous.isSubmitting != current.isSubmitting,

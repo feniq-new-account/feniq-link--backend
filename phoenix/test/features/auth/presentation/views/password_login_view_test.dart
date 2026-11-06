@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/widgets/phone_text_field.dart';
+import 'package:feniq/core/widgets/app_text_field.dart';
 import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
@@ -18,6 +19,8 @@ void main() {
   setUp(() {
     authCubit = MockAuthCubit();
     when(() => authCubit.state).thenReturn(const AuthState());
+    when(() => authCubit.loadSavedLogin()).thenAnswer((_) async => null);
+    when(() => authCubit.forgetSavedLogin()).thenAnswer((_) async {});
     // Returning false makes _submit stop right after the call, so the test
     // never needs a GoRouter for the post-login navigation.
     when(
@@ -61,15 +64,13 @@ void main() {
     return captured;
   }
 
-  testWidgets('the phone field is prefixed by the fixed, non-editable "09" box', (
+  testWidgets('the full phone is editable in one field with no fixed 09 prefix', (
     tester,
   ) async {
     await pumpLoginView(tester);
-
-    // Login and registration share PhoneTextField, so the prefix is defined
-    // once - this pins that login is actually wired to it.
     expect(find.byType(PhoneTextField), findsOneWidget);
-    expect(find.text('09'), findsOneWidget);
+    expect(find.text('09'), findsNothing);
+    expect(find.text('09xxxxxxxx / +9639xxxxxxxx'), findsOneWidget);
   });
 
   group('PasswordLoginView sends the international phone to loginWithPassword', () {
@@ -80,6 +81,8 @@ void main() {
       '912345678',
       '963912345678',
       '+963912345678',
+      '9630912345678',
+      '00963912345678',
       '09 1234 5678',
       '+963 912 345 678',
     ]) {
@@ -128,4 +131,34 @@ void main() {
       ),
     );
   });
+
+  testWidgets('stored phone and password are prefilled but password stays hidden', (tester) async {
+    when(() => authCubit.loadSavedLogin()).thenAnswer((_) async => {
+      'phone': '+963912345678',
+      'password': 'saved-secret',
+    });
+    await pumpLoginView(tester);
+    final fields = find.byType(TextFormField);
+    expect(tester.widget<TextFormField>(fields.at(0)).controller!.text, '+963912345678');
+    expect(tester.widget<TextFormField>(fields.at(1)).controller!.text, 'saved-secret');
+    expect(tester.widget<EditableText>(find.byType(EditableText).at(1)).obscureText, isTrue);
+    await tester.tap(find.byKey(appTextFieldVisibilityToggleKey));
+    await tester.pump();
+    expect(tester.widget<EditableText>(find.byType(EditableText).at(1)).obscureText, isFalse);
+  });
+
+  testWidgets('the user can forget saved credentials from the login screen', (tester) async {
+    when(() => authCubit.loadSavedLogin()).thenAnswer((_) async => {
+      'phone': '0912345678',
+      'password': 'saved-secret',
+    });
+    await pumpLoginView(tester);
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pump();
+    verify(() => authCubit.forgetSavedLogin()).called(1);
+    final fields = find.byType(TextFormField);
+    expect(tester.widget<TextFormField>(fields.at(0)).controller!.text, isEmpty);
+    expect(tester.widget<TextFormField>(fields.at(1)).controller!.text, isEmpty);
+  });
+
 }
