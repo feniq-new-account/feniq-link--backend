@@ -42,6 +42,19 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
   }
 
   @override
+  void didUpdateWidget(covariant DriverTripsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.stopOutbox, widget.stopOutbox)) {
+      // A different owner or router instance must reload its own encrypted
+      // commands; never reuse another account's previous pending UI state.
+      _pendingStops = const [];
+      _outboxLoaded = false;
+      _outboxError = null;
+      unawaited(_restoreOutbox());
+    }
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) {
       _stopTracking();
