@@ -46,7 +46,7 @@ void main() {
 
   testWidgets('phone text stays LTR even when app language is Arabic', (tester) async {
     await pumpField(tester, locale: const Locale('ar'));
-    expect(tester.widget<TextFormField>(find.byType(TextFormField)).textDirection,
+    expect(tester.widget<EditableText>(find.byType(EditableText)).textDirection,
         TextDirection.ltr);
   });
 
