@@ -11,6 +11,7 @@ import 'package:feniq/core/widgets/app_refresh_indicator.dart';
 import 'package:feniq/core/widgets/empty_view.dart';
 import 'package:feniq/core/widgets/failure_widget.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_home_cubit.dart';
+import 'package:feniq/features/rep/presentation/utils/rep_labels.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_load_status.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_pharmacies_cubit.dart';
 import 'package:feniq/features/rep/presentation/widgets/rep_pharmacy_card.dart';
@@ -29,6 +30,8 @@ class RepPharmaciesTab extends StatefulWidget {
 class _RepPharmaciesTabState extends State<RepPharmaciesTab> {
   final TextEditingController _search = TextEditingController();
   final Debouncer _debouncer = Debouncer();
+  bool _needsVerifiedVisit = false;
+  bool _missingLocation = false;
 
   @override
   void dispose() {
@@ -62,6 +65,25 @@ class _RepPharmaciesTabState extends State<RepPharmaciesTab> {
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(hintText: l10n.repSearchHint, prefixIcon: const Icon(Icons.search)),
                 onChanged: (text) => _debouncer.run(() => context.read<RepPharmaciesCubit>().load(search: text)),
+              ),
+              const SizedBox(height: AppSizes.spacingSmall),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  FilterChip(
+                    label: Text(Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'تحتاج زيارة موثّقة' : 'Needs verified visit'),
+                    selected: _needsVerifiedVisit,
+                    onSelected: (value) => setState(() => _needsVerifiedVisit = value),
+                  ),
+                  FilterChip(
+                    label: Text(Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'بلا موقع مسجّل' : 'Missing pharmacy location'),
+                    selected: _missingLocation,
+                    onSelected: (value) => setState(() => _missingLocation = value),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSizes.spacingMedium),
               ..._body(context, state),
@@ -103,7 +125,30 @@ class _RepPharmaciesTabState extends State<RepPharmaciesTab> {
         ),
       ];
     }
+    final visible = repFollowupPharmacies(
+      state.pharmacies, DateTime.now(),
+      needsVerifiedVisit: _needsVerifiedVisit,
+      missingLocation: _missingLocation,
+    );
     return [
+      if (visible.isEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: AppSizes.spacingMedium),
+          child: Column(
+            children: [
+              Text(Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'ما في صيدليات مطابقة لفلاتر المتابعة.' : 'No pharmacies match these follow-up filters.'),
+              TextButton(
+                onPressed: () => setState(() {
+                  _needsVerifiedVisit = false;
+                  _missingLocation = false;
+                }),
+                child: Text(Localizations.localeOf(context).languageCode == 'ar'
+                    ? 'إلغاء الفلاتر' : 'Clear filters'),
+              ),
+            ],
+          ),
+        ),
       if (state.status == RepLoadStatus.loading) const LinearProgressIndicator(),
       if (state.status == RepLoadStatus.error)
         FailureWidget(
@@ -111,7 +156,7 @@ class _RepPharmaciesTabState extends State<RepPharmaciesTab> {
           message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
           onRetry: () => context.read<RepPharmaciesCubit>().load(),
         ),
-      for (final pharmacy in state.pharmacies) ...[
+      for (final pharmacy in visible) ...[
         RepPharmacyCard(
           pharmacy: pharmacy,
           onTap: () => context.pushNamed(RouteNames.repPharmacy, pathParameters: {'pharmacyId': pharmacy.id}),

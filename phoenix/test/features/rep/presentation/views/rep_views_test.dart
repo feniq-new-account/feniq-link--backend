@@ -43,14 +43,14 @@ Widget _app(Widget child, {Locale locale = const Locale('en')}) => MaterialApp(
 
 final _now = DateTime(2026, 10, 7, 9);
 
-RepPharmacy _pharmacy({String id = 'p1', DateTime? lastVisit, int orders = 0, String? city = 'Latakia'}) => RepPharmacy(
+RepPharmacy _pharmacy({String id = 'p1', DateTime? lastVisit, DateTime? lastVerified, bool hasLocation = true, int orders = 0, String? city = 'Latakia'}) => RepPharmacy(
   id: id,
   nameAr: 'صيدلية الياسمين',
   nameEn: 'Al-Yasmin Pharmacy',
   city: city,
   address: 'Main street',
-  hasLocation: true,
-  activity: RepPharmacyActivity(lastVisitAt: lastVisit, monthOrdersCount: orders),
+  hasLocation: hasLocation,
+  activity: RepPharmacyActivity(lastVisitAt: lastVisit, lastVerifiedVisitAt: lastVerified, monthOrdersCount: orders),
 );
 
 void main() {
@@ -82,6 +82,30 @@ void main() {
       expect(repPercent(1.25), '1.25%');
       expect(repPercent(0), '0%');
       expect(repPercent(1.2500001), '1.25%');
+    });
+  });
+
+
+  group('rep verified visit priority', () {
+    test('a QR scan that failed verification never resets the follow-up clock', () {
+      final now = DateTime(2026, 11, 6, 12);
+      final falseVisit = _pharmacy(lastVisit: DateTime(2026, 11, 6, 11));
+      expect(repNeedsVerifiedVisit(falseVisit, now), isTrue);
+      final recent = _pharmacy(lastVisit: now, lastVerified: DateTime(2026, 11, 5));
+      expect(repNeedsVerifiedVisit(recent, now), isFalse);
+      final due = _pharmacy(lastVisit: now, lastVerified: DateTime(2026, 10, 30));
+      expect(repNeedsVerifiedVisit(due, now), isTrue);
+    });
+
+    test('filters only assigned rows, preserving backend priority order', () {
+      final rows = [
+        _pharmacy(id: 'never', lastVisit: DateTime(2026, 11, 6), hasLocation: false),
+        _pharmacy(id: 'recent', lastVerified: DateTime(2026, 11, 5)),
+        _pharmacy(id: 'older', lastVerified: DateTime(2026, 10, 15), hasLocation: false),
+      ];
+      final result = repFollowupPharmacies(rows, DateTime(2026, 11, 6),
+          needsVerifiedVisit: true, missingLocation: true);
+      expect(result.map((p) => p.id).toList(), ['never', 'older']);
     });
   });
 
@@ -154,6 +178,16 @@ void main() {
       await tester.pumpWidget(_app(RepPharmacyCard(pharmacy: _pharmacy(), now: _now, onTap: () {})));
       expect(find.text('Never visited'), findsOneWidget);
       expect(find.text('No orders this month'), findsOneWidget);
+    });
+
+
+    testWidgets('unverified scans are explicitly not counted as verified visits', (tester) async {
+      await tester.pumpWidget(_app(RepPharmacyCard(
+        pharmacy: _pharmacy(lastVisit: DateTime(2026, 10, 7), lastVerified: null),
+        now: _now,
+        onTap: () {},
+      )));
+      expect(find.textContaining('Last QR scan was unverified'), findsOneWidget);
     });
 
     testWidgets('names follow the app language', (tester) async {
@@ -273,6 +307,34 @@ void main() {
       expect(find.text('Your rep account has been switched off by the warehouse.'), findsOneWidget);
       await tester.tap(find.text('Retry'));
       verify(() => pharmacies.load()).called(1);
+    });
+
+
+    testWidgets('filters operational follow-up without issuing a financial or mutation request', (tester) async {
+      await pump(tester, RepPharmaciesState(status: RepLoadStatus.loaded, pharmacies: [
+        _pharmacy(id: 'never', hasLocation: false),
+        _pharmacy(id: 'recent', lastVerified: DateTime.now()),
+      ]));
+      expect(find.byType(RepPharmacyCard), findsNWidgets(2));
+      await tester.tap(find.text('Needs verified visit'));
+      await tester.pump();
+      expect(find.byType(RepPharmacyCard), findsOneWidget);
+      await tester.tap(find.text('Missing pharmacy location'));
+      await tester.pump();
+      expect(find.byType(RepPharmacyCard), findsOneWidget);
+      verifyNever(() => pharmacies.load(search: any(named: 'search')));
+    });
+
+    testWidgets('follow-up filters have an explicit clear action when none match', (tester) async {
+      await pump(tester, RepPharmaciesState(status: RepLoadStatus.loaded, pharmacies: [
+        _pharmacy(id: 'recent', lastVerified: DateTime.now(), hasLocation: true),
+      ]));
+      await tester.tap(find.text('Needs verified visit'));
+      await tester.pump();
+      expect(find.text('No pharmacies match these follow-up filters.'), findsOneWidget);
+      await tester.tap(find.text('Clear filters'));
+      await tester.pump();
+      expect(find.byType(RepPharmacyCard), findsOneWidget);
     });
 
     testWidgets('typing in the search box asks for that search after a short pause', (tester) async {
