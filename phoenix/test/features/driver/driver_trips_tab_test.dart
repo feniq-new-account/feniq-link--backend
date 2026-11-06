@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
+import 'package:feniq/features/driver/data/driver_position_stream.dart';
 import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
 import 'package:feniq/features/driver/data/driver_trip_snapshot.dart';
 import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
@@ -15,11 +18,15 @@ class FakeDriverRepository implements DriverTripRepository {
   int deliveries = 0;
   int finishes = 0;
   int gpsSends = 0;
+  Object? gpsSendError;
   bool stopNetworkFails = false;
   Object? tripLoadError;
   final List<String?> stopRequestIds = [];
   @override
-  Future<void> sendLocation(String tripId, DeviceLocation fix) async { gpsSends++; }
+  Future<void> sendLocation(String tripId, DeviceLocation fix) async {
+    if (gpsSendError != null) throw gpsSendError!;
+    gpsSends++;
+  }
 
   @override
   Future<List<DriverTrip>> listTrips() async {
@@ -109,6 +116,22 @@ class TestTripStore implements DriverTripSnapshotStore {
     data[accountId] = value;
   }
 }
+
+class TestDriverPositionStream implements DriverPositionStream {
+  final controller = StreamController<DeviceLocation>.broadcast();
+  int starts = 0;
+  @override
+  Future<Stream<DeviceLocation>> start() async {
+    starts++;
+    return controller.stream;
+  }
+}
+
+DeviceLocation _testFix({bool mocked = false, double accuracy = 9}) =>
+  DeviceLocation(
+    latitude: 35.5, longitude: 35.9, accuracy: accuracy,
+    isMocked: mocked, capturedAt: DateTime.now(),
+  );
 
 void main() {
   test('trip parsing retains server revisions and stop IDs', () {
@@ -267,5 +290,123 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('notification-backed GPS keeps tracking after app pauses and stops on demand', (tester) async {
+    final base = fakeTrip();
+    final active = DriverTrip(
+      id: base.id, region: base.region, serviceDate: base.serviceDate,
+      status: 'in_progress', revision: 2, stops: base.stops,
+    );
+    final repo = FakeDriverRepository([active]);
+    final positions = TestDriverPositionStream();
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('en'),
+      home: Scaffold(body: DriverTripsTab(
+        repository: repo, positionStream: positions,
+      )),
+    ));
+    await tester.pumpAndSettle();
+    expect(positions.starts, 0);
+    await tester.tap(find.text('Share location during trip'));
+    await tester.pump();
+    expect(positions.starts, 1);
+    expect(positions.controller.hasListener, true);
+    positions.controller.add(_testFix());
+    await tester.pump();
+    expect(repo.gpsSends, 1);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    expect(find.text('Stop sharing location'), findsOneWidget);
+    expect(positions.controller.hasListener, true); // Foreground service remains subscribed.
+    await tester.tap(find.text('Stop sharing location'));
+    await tester.pumpAndSettle();
+    expect(positions.controller.hasListener, false);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(find.text('Share location during trip'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await positions.controller.close();
+  });
+
+  testWidgets('spoofed GPS is refused even with a persistent location stream', (tester) async {
+    final base = fakeTrip();
+    final active = DriverTrip(
+      id: base.id, region: base.region, serviceDate: base.serviceDate,
+      status: 'in_progress', revision: 2, stops: base.stops,
+    );
+    final repo = FakeDriverRepository([active]);
+    final positions = TestDriverPositionStream();
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('en'),
+      home: Scaffold(body: DriverTripsTab(
+        repository: repo, positionStream: positions,
+      )),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Share location during trip'));
+    await tester.pump();
+    positions.controller.add(_testFix(mocked: true));
+    await tester.pump();
+    expect(repo.gpsSends, 0);
+    expect(find.textContaining('not shared'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    expect(positions.controller.hasListener, false);
+    await positions.controller.close();
+  });
+
+  testWidgets('ending a trip cancels location service subscription', (tester) async {
+    final base = fakeTrip();
+    final completedStop = DriverTripStop(id: base.stops.first.id,
+      pharmacyName: base.stops.first.pharmacyName,
+      address: base.stops.first.address, status: 'delivered');
+    final active = DriverTrip(
+      id: base.id, region: base.region, serviceDate: base.serviceDate,
+      status: 'in_progress', revision: 2, stops: [completedStop],
+    );
+    final repo = FakeDriverRepository([active]);
+    final positions = TestDriverPositionStream();
+    await tester.pumpWidget(MaterialApp(locale: const Locale('en'),
+      home: Scaffold(body: DriverTripsTab(
+        repository: repo, positionStream: positions,
+      )),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Share location during trip'));
+    await tester.pump();
+    expect(positions.controller.hasListener, true);
+    await tester.tap(find.text('Complete trip'));
+    await tester.pumpAndSettle();
+    expect(repo.finishes, 1);
+    expect(positions.controller.hasListener, false);
+    await tester.pumpWidget(const SizedBox());
+    await positions.controller.close();
+  });
+
+  testWidgets('server revocation immediately stops the GPS foreground service', (tester) async {
+    final base = fakeTrip();
+    final active = DriverTrip(
+      id: base.id, region: base.region, serviceDate: base.serviceDate,
+      status: 'in_progress', revision: 2, stops: base.stops,
+    );
+    final repo = FakeDriverRepository([active])..gpsSendError = DioException(
+      requestOptions: RequestOptions(path: '/driver/distribution/trips/trip-1/location'),
+      response: Response(requestOptions: RequestOptions(path: '/driver/distribution/trips/trip-1/location'), statusCode: 403),
+      type: DioExceptionType.badResponse,
+    );
+    final positions = TestDriverPositionStream();
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('en'),
+      home: Scaffold(body: DriverTripsTab(repository: repo, positionStream: positions)),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Share location during trip'));
+    await tester.pump();
+    positions.controller.add(_testFix());
+    await tester.pumpAndSettle();
+    expect(positions.controller.hasListener, false);
+    expect(find.textContaining('no longer authorized'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await positions.controller.close();
+  });
 
 }
