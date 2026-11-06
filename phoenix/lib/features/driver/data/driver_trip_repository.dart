@@ -59,7 +59,7 @@ abstract class DriverTripRepository {
   Future<List<DriverTrip>> listTrips();
   Future<DriverTrip> start(String tripId, int revision);
   Future<DriverTrip> updateStop(String tripId, String stopId, int revision,
-      {required String status, String note = ''});
+      {required String status, String note = '', String? requestId});
   Future<DriverTrip> complete(String tripId, int revision);
   Future<void> sendLocation(String tripId, DeviceLocation position);
 }
@@ -105,10 +105,11 @@ class DriverTripRepositoryImpl implements DriverTripRepository {
 
   @override
   Future<DriverTrip> updateStop(String tripId, String stopId, int revision,
-      {required String status, String note = ''}) async {
+      {required String status, String note = '', String? requestId}) async {
     final response = await _dio.patch<Map<String, dynamic>>(
       '$_root/$tripId/stops/$stopId',
-      data: {'revision': revision, 'status': status, 'note': note});
+      data: {'revision': revision, 'status': status, 'note': note,
+        if (requestId != null) 'requestId': requestId});
     return DriverTrip.fromJson(
       Map<String, dynamic>.from(response.data!['trip'] as Map));
   }

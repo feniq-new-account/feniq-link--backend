@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
+import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
 import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 
@@ -12,6 +13,8 @@ class FakeDriverRepository implements DriverTripRepository {
   int deliveries = 0;
   int finishes = 0;
   int gpsSends = 0;
+  bool stopNetworkFails = false;
+  final List<String?> stopRequestIds = [];
   @override
   Future<void> sendLocation(String tripId, DeviceLocation fix) async { gpsSends++; }
 
@@ -30,7 +33,9 @@ class FakeDriverRepository implements DriverTripRepository {
   }
   @override
   Future<DriverTrip> updateStop(String tripId, String stopId, int revision,
-      {required String status, String note = ''}) async {
+      {required String status, String note = '', String? requestId}) async {
+    stopRequestIds.add(requestId);
+    if (stopNetworkFails) throw StateError('offline');
     deliveries++;
     final current = trips.first;
     final stops = current.stops.map((stop) => DriverTripStop(
@@ -77,6 +82,17 @@ class FakeGpsProvider implements LocationProvider {
       latitude: 35.1, longitude: 35.2, accuracy: 12, isMocked: false,
       capturedAt: DateTime.now(),
     );
+  }
+}
+
+class TestStopStore implements DriverStopOutboxStore {
+  final Map<String, List<PendingDriverStop>> values = {};
+  @override
+  Future<List<PendingDriverStop>> read(String accountId) async =>
+      List.of(values[accountId] ?? const []);
+  @override
+  Future<void> write(String accountId, List<PendingDriverStop> commands) async {
+    values[accountId] = List.of(commands);
   }
 }
 
@@ -155,4 +171,39 @@ void main() {
     expect(find.text('No assigned trips yet.'), findsOneWidget);
     expect(find.text('Start trip'), findsNothing);
   });
+  testWidgets('offline delivery stays queued and a later retry confirms it once', (tester) async {
+    final seed = fakeTrip();
+    final active = DriverTrip(
+      id: seed.id, region: seed.region, serviceDate: seed.serviceDate,
+      status: 'in_progress', revision: 4, stops: seed.stops,
+    );
+    final repo = FakeDriverRepository([active])..stopNetworkFails = true;
+    final store = TestStopStore();
+    final outbox = DriverStopOutbox(
+      accountId: 'driver-123', repository: repo, store: store,
+    );
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('en'),
+      home: Scaffold(body: DriverTripsTab(
+        repository: repo, stopOutbox: outbox,
+      )),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Delivered'));
+    await tester.pumpAndSettle();
+    expect(store.values['driver-123'], hasLength(1));
+    expect(find.textContaining('Saved stops awaiting sync: 1'), findsOneWidget);
+    expect(repo.deliveries, 0);
+    final stableId = store.values['driver-123']!.single.requestId;
+
+    repo.stopNetworkFails = false;
+    await tester.tap(find.text('Retry saved deliveries'));
+    await tester.pumpAndSettle();
+    expect(store.values['driver-123'], isEmpty);
+    expect(repo.deliveries, 1);
+    expect(repo.stopRequestIds, [stableId, stableId]);
+    expect(find.textContaining('Saved stops awaiting sync: 1'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
 }
