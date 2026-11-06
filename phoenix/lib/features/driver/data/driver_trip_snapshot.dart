@@ -92,6 +92,10 @@ class DriverTripSnapshotCache {
 
   Future<void> save(List<DriverTrip> trips) {
     if (accountId.isEmpty) throw StateError('Missing current driver identity');
+    if (trips.length > 40 || trips.any((trip) =>
+        trip.stops.length > 50 || !['planned', 'in_progress'].contains(trip.status))) {
+      throw StateError('Driver snapshot exceeds operational limits');
+    }
     return store.write(accountId, DriverTripSnapshot(
       trips: trips, savedAt: DateTime.now().toUtc(),
     ));
