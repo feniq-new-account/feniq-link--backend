@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 
@@ -14,22 +14,40 @@ export function AdminPharmacyLicencesPage() {
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const queueGeneration = useRef(0);
 
   const load = useCallback(async (cursor = null) => {
+    // A refresh or successful review invalidates any older load-more response.
+    const generation = cursor ? queueGeneration.current : ++queueGeneration.current;
     setLoading(true);
     setError('');
     try {
       const result = await api.listAdminPharmacyLicences({ after: cursor || undefined });
-      setItems(previous => cursor ? [...previous, ...result.items] : result.items);
+      if (queueGeneration.current !== generation) return;
+      setItems(previous => {
+        if (!cursor) return result.items || [];
+        const seen = new Set(previous.map(row => row.pharmacyId));
+        return [...previous, ...(result.items || []).filter(row => !seen.has(row.pharmacyId))];
+      });
       setNextCursor(result.pagination?.nextCursor || null);
     } catch (err) {
+      if (queueGeneration.current !== generation) return;
+      if (!cursor) {
+        // A failed full refresh must not show a previously reviewed
+        // document as if it were still awaiting approval.
+        setItems([]);
+        setNextCursor(null);
+      }
       setError(err.message || 'Unable to read licence queue.');
     } finally {
-      setLoading(false);
+      if (queueGeneration.current === generation) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    return () => { ++queueGeneration.current; };
+  }, [load]);
 
   const review = async (row, decision) => {
     let note = '';
@@ -103,7 +121,7 @@ export function AdminPharmacyLicencesPage() {
       <section className="adm-card reg-card">
         <div className="adm-card-head"><span>{tr('بانتظار مراجعة الرخصة', 'Awaiting licence review')}</span></div>
         <div className="reg-card-body">
-          {!loading && items.length === 0 && <p className="hint">{tr('ما في وثائق بانتظار المراجعة.', 'No pending licences.')}</p>}
+          {!loading && !error && items.length === 0 && <p className="hint">{tr('ما في وثائق بانتظار المراجعة.', 'No pending licences.')}</p>}
           {items.map(row => (
             <div key={row.pharmacyId} className="adm-card" style={{ padding: 16, marginBottom: 12 }}>
               <strong>{row.pharmacyName}</strong>
@@ -112,15 +130,15 @@ export function AdminPharmacyLicencesPage() {
                 {row.submittedAt ? new Date(row.submittedAt).toLocaleDateString(ar ? 'ar-SY' : 'en-US') : '—'}
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                <button type="button" className="btn-secondary" disabled={busyId !== null}
+                <button type="button" className="btn-secondary" disabled={busyId !== null || loading}
                   onClick={() => download(row)}>
                   {tr('تنزيل الوثيقة', 'Download document')}
                 </button>
-                <button type="button" className="btn-primary" disabled={busyId !== null}
+                <button type="button" className="btn-primary" disabled={busyId !== null || loading}
                   onClick={() => review(row, 'approved')}>
                   {tr('قبول', 'Approve')}
                 </button>
-                <button type="button" className="btn-secondary" disabled={busyId !== null}
+                <button type="button" className="btn-secondary" disabled={busyId !== null || loading}
                   onClick={() => review(row, 'rejected')}>
                   {tr('رفض مع السبب', 'Reject with reason')}
                 </button>
@@ -129,7 +147,7 @@ export function AdminPharmacyLicencesPage() {
           ))}
           {loading && <p className="hint">{tr('جارٍ التحميل...', 'Loading...')}</p>}
           {nextCursor && (
-            <button type="button" className="btn-secondary" disabled={loading}
+            <button type="button" className="btn-secondary" disabled={loading || busyId !== null}
               onClick={() => load(nextCursor)}>
               {tr('عرض المزيد', 'Load more')}
             </button>

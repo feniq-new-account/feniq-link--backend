@@ -25,6 +25,10 @@ function roundRatio(numerator, denominator) {
   return Number((2n * numerator + denominator) / (2n * denominator));
 }
 function collectionEntitlement(terms, collectedSyp) {
+  // Exported for the approved accounting policy. Revalidate monetary fields
+  // and derive scope from area rather than trusting a caller-supplied split.
+  terms = snapshotTerms({ invoiceSyp: terms?.invoiceSyp, originalCommissionSyp: terms?.originalCommissionSyp,
+    areaType: terms?.areaType, contractRef: terms?.contractRef, deliveryFeeSyp: terms?.deliveryFeeSyp });
   integer(collectedSyp);
   if (collectedSyp > terms.invoiceSyp) throw invalid();
   const original = roundRatio(BigInt(terms.originalCommissionSyp) * BigInt(collectedSyp), BigInt(terms.invoiceSyp));
@@ -68,4 +72,4 @@ function validateManualAllocations(body) {
   if (total > BigInt(paymentSyp)) throw invalid();
   return { allocations: allocations.map(item => ({ ...item })), allocatedSyp: Number(total), unallocatedSyp: paymentSyp - Number(total) };
 }
-module.exports = { VERSION, scopeForArea, snapshotTerms, previewCollection, validateManualAllocations };
+module.exports = { VERSION, scopeForArea, snapshotTerms, collectionEntitlement, previewCollection, validateManualAllocations };

@@ -1,4 +1,4 @@
-# Collection v2 implementation contract — pending business gates
+# Collection v2 implementation contract — approved policy, staged implementation
 
 Authority: [approved Notion decisions](https://app.notion.com/p/40e6c91cc9c481e4bc0ef8e47a7426e9).
 This is an implementation specification, not an activated financial engine.
@@ -9,18 +9,30 @@ Current calculators remain previews; historical v1 orders/ledger are unchanged.
 - City: split the original rep commission 50% Feniq / 50% assigned rep.
 - Rural and city_ring: original rep commission 100% Feniq. Delivery charges
   remain a separate explicitly contracted amount, never inferred or invented.
-- Manual receipt entry is approved. **Manual invoice selection/allocation is a
-  proposed design, not part of that approval.** Ratify it before live posting;
-  the proposal shows unapplied cash and never infers an invoice commission.
+- Owner confirmation 2026-11-06: cash is entered manually and allocated
+  automatically to the oldest invoices (FIFO). Keep unapplied cash explicit.
+  Do not retrospectively allocate historical receipts or skip legacy debt.
 - Accrual follows eligible actual collection, proportional to partial collection.
-  Warehouse-collected money additionally needs verified evidence and settlement.
+  Both collection paths need persisted authorized receipt approval; a request
+  boolean is never evidence. Warehouse commission remittance is weekly, separate
+  from collection and from the pharmacy debt reduction.
 - No automatically funded pharmacy discount, Feniq-funded credit or repricing of
   historical entries. Warehouse-approved credit remains its contractual risk.
-- **Unresolved business rules:** return commission before/after settlement,
-  evidence approval roles/disputes and invoice allocation policy. Keep activation
-  disabled while these are unset. Owner approval of development is not approval
-  of them. Existing integer/cumulative rounding is subject to technical money
-  review and reconciliation, not an invented fee or commercial rate.
+- The owner has approved software implementation of the new model. Feniq reps
+  record their collections; Ammar/Feniq accountant approves. Warehouse collections
+  are manually entered and approved by its accountant. Existing warehouse-employed
+  reps must not be inferred to be Feniq employees from their role alone.
+- Feniq remits warehouse net funds within 24–48 elapsed hours of actual cash
+  receipt, never the later approval time. Early transfer is allowed. Warehouse
+  collections settle Feniq commission weekly; no weekday/cutoff is yet specified.
+- Pharmacy return requests: within 24h of actual delivery. Approved goods value
+  goes to a future invoice/exchange or immediate exchange, without double use.
+  The confirmed known return commission reduces future entitlement, or becomes
+  a linked offset in the next settlement after prior settlement. Example:
+  original commission10000 minus returned commission2000 leaves8000.
+- The overlap of partial collection and partial return still requires a reviewed
+  allocation treatment. Do not infer returned commission from goods-credit names
+  or choose a formula silently. Weekly calendar configuration also remains unset.
 
 ## Additive records for NEW v2 orders only
 
@@ -41,7 +53,7 @@ the authorization scope. Feature entitlements never replace accounting roles.
 
 1. The existing payment/ledger service posts a receipt once, reducing pharmacy
    debt and increasing the correct cash custody where applicable.
-2. Validate allocations against the receipt's unallocated remainder and each
+2. Select invoices FIFO and validate allocations against the receipt's unallocated remainder and each
    invoice's current eligible remainder. Reject negative, duplicate, foreign-tenant
    or excessive amounts; show unapplied cash instead of inventing credit terms.
 3. Serialize receipt allocation, relevant invoice changes, returns and payment
@@ -54,18 +66,18 @@ the authorization scope. Feature entitlements never replace accounting roles.
 6. Use cumulative integer-SYP rounding as in the preview; derive incremental
    amounts from cumulative entitlement so partial collections reconcile. Never
    recalculate a frozen event using today's FX or a changed contract.
-7. Warehouse-collected evidence enters pending review and cannot earn commission
-   until the approved evidence/settlement prerequisites are met. No client-supplied
+7. Collection evidence enters pending review and cannot earn commission
+   until persisted approval by the authorized accountant. No client-supplied
    boolean can substitute for the authorized approval record.
 8. Corrections append linked reversal/correction events with actor, time and
    reason. No edit/delete of approved money. Cash custody transfer settles custody,
    not the pharmacy debt again. A sent transfer and confirmed receipt stay separate.
 
-## Interface additions to implement after approval
+## Interface additions remaining before live posting
 
 These endpoints are proposed, **not existing callable production APIs**:
 
-- Account-scoped allocation preview/submit: receipt + selected invoice amounts,
+- Account-scoped FIFO allocation preview/submit: receipt + server-selected oldest invoices,
   expected account revision and stable idempotency key; returns applied/unapplied
   amounts, immutable allocation IDs, resulting revision and event references.
 - Warehouse collection evidence submit/review: attachment/reference and the
@@ -81,7 +93,8 @@ pending/unapplied/reversed states explicitly. None of these depend on Drive.
 
 ## Delivery sequence and mandatory acceptance
 
-1. Ratify the unresolved Notion decisions and the exact posting/rounding examples.
+1. Preserve the owner-confirmed rules above. Isolate the mixed partial-return
+   case and configure a weekly calendar before enforcing weekly due dates.
 2. Add records/indexes and preview/read endpoints with no writer activation.
 3. Implement account-serialized posting, immutable corrections and warehouse
    evidence review in an isolated environment. Preserve all v1 read/write behavior.
@@ -96,3 +109,17 @@ pending/unapplied/reversed states explicitly. None of these depend on Drive.
 Rollback disables only the new writer and preserves all records; do not delete
 v2 events, replay receipts as new payments, restore a database, or reinstate the
 subscription paywall for core account operations.
+
+## Implemented 2026-11-06: deterministic policy core
+
+`collectionAccountingPolicy.js` implements FIFO planning, cumulative collection
+entitlement, known return-commission corrections and actual-cash transfer clocks.
+`POST /api/admin/commission-policy-preview/accounting` exposes these calculations
+with `previewOnly:true,persisted:false`. It is NOT a receipt approval or a writer.
+The earlier preview endpoint remains backward-compatible and represents its
+older assumptions, including manual allocation drafts and settlement booleans;
+those booleans must never be reused as live authorization.
+
+Posting remains incomplete: no v2 order cutover, persisted proof workflow, FIFO
+allocation writer, commission journal, new settlement writer or client rollout
+is claimed. This staged change does not activate the old engine under a new name.
