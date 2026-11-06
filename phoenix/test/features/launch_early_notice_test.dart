@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:feniq/features/launch/early_launch_notice.dart';
+import 'package:feniq/generated/app_localizations.dart';
 
 void main() {
   Future<void> pumpNotice(WidgetTester tester, DateTime at, Locale locale) async {
     await tester.pumpWidget(MaterialApp(
       locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: EarlyLaunchNotice(nowUtc: at)),
     ));
     await tester.pumpAndSettle();
