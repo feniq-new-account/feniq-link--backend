@@ -23,6 +23,16 @@ async function previewPilotCleanup() {
   const warehouses = await Warehouse.find({ userId: { $in: users.map(user => user._id) } })
     .select('_id userId nameAr city isActive').sort({ nameAr: 1 }).lean();
   const db = Warehouse.db.db;
+  const now = new Date();
+  const [activePharmacies, totalPharmacies] = await Promise.all([
+    User.countDocuments({ role: 'pharmacy', status: 'active' }),
+    User.countDocuments({ role: 'pharmacy' }),
+  ]);
+  const liveWindow = { status: 'approved', startDate: { $lte: now }, endDate: { $gte: now } };
+  const liveOffers = {
+    status: 'approved', startDate: { $lte: now },
+    $or: [{ isPermanent: true }, { endDate: { $gte: now } }],
+  };
   const rows = await Promise.all(warehouses.map(async warehouse => {
     const counts = {};
     await Promise.all(SCOPED_COLLECTIONS.map(async name => {
@@ -37,7 +47,16 @@ async function previewPilotCleanup() {
         ? await db.collection('orderitems').countDocuments({ orderId: { $in: orderIds.map(row => row._id) } })
         : 0;
     }
+    // Match the same visibility windows used by the pharmacist offer/package/
+    // banner services, rather than merely counting records whose date expired.
+    const [availableProducts, visibleOffers, visiblePackages, visibleBanners] = await Promise.all([
+      db.collection('products').countDocuments({ warehouseId: warehouse._id, isAvailable: { $ne: false }, isActive: { $ne: false } }),
+      db.collection('offers').countDocuments({ warehouseId: warehouse._id, ...liveOffers }),
+      db.collection('advertisements').countDocuments({ warehouseId: warehouse._id, ...liveWindow, isAvailable: { $ne: false } }),
+      db.collection('banners').countDocuments({ warehouseId: warehouse._id, ...liveWindow }),
+    ]);
     const owner = ownersById.get(String(warehouse.userId));
+    const visibleToPharmacist = warehouse.isActive && owner?.status === 'active';
     return {
       id: String(warehouse._id),
       nameAr: warehouse.nameAr,
@@ -45,6 +64,14 @@ async function previewPilotCleanup() {
       warehouseActive: warehouse.isActive,
       accountStatus: owner?.status || 'missing',
       counts,
+      readiness: {
+        visibleToPharmacist,
+        availableProducts,
+        visibleOffers,
+        visiblePackages,
+        visibleBanners,
+        canReceiveOrders: visibleToPharmacist && availableProducts > 0,
+      },
     };
   }));
   const launch = publicStatus(await readLaunch());
@@ -58,6 +85,20 @@ async function previewPilotCleanup() {
     warehouses: rows,
     ordering: launch,
     needsAccountRecovery: rows.filter(row => row.accountStatus !== 'active').length,
+    pilotReadiness: {
+      activePharmacies,
+      totalPharmacies,
+      visibleWarehouses: rows.filter(row => row.readiness.visibleToPharmacist).length,
+      warehousesWithCatalog: rows.filter(row => row.readiness.visibleToPharmacist && row.readiness.availableProducts > 0).length,
+      warehousesWithOffers: rows.filter(row => row.readiness.visibleToPharmacist && row.readiness.visibleOffers > 0).length,
+      warehousesWithPackages: rows.filter(row => row.readiness.visibleToPharmacist && row.readiness.visiblePackages > 0).length,
+      orderingEnabled: launch.orderingEnabled,
+      // A live order, web deployment and backup are NOT verified by a read-only
+      // database report; never present these counts as end-to-end acceptance.
+      phoneToDashboardVerified: false,
+      deployVerified: false,
+      backupVerifiedForCleanup: false,
+    },
     needsFinancialReview: rows.some(row => Object.entries(row.counts).some(([name, count]) =>
       ['orders', 'returns', 'payments', 'ledgerentries', 'creditentries', 'pharmacycredits'].includes(name) && count > 0)),
     backupWorkflowUrl: 'https://github.com/feniq-new-account/feniq-link--backend/actions/workflows/db-backup.yml',
