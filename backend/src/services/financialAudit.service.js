@@ -12,6 +12,7 @@ const FinancialAuditLog = require('../models/financialAuditLog.model');
 // but this is the last line of defence before it reaches the database.
 const REASON_REQUIRED = new Set([
   'payment.reversed',
+  'payment.proof_rejected',
   'ledger.manual_credit',
   'ledger.manual_debit',
   'ledger.adjustment_reversed',

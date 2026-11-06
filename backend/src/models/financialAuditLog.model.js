@@ -20,6 +20,9 @@ const ACTIONS = [
   'order.charge_reversed',
   'payment.recorded',
   'payment.reversed',
+  'payment.proof_submitted',
+  'payment.proof_approved',
+  'payment.proof_rejected',
   'return.approved',            // credit-only in V2
   'return.rejected',
   'ledger.manual_credit',

@@ -181,7 +181,7 @@ test('GET /auth/me preserves pharmacy fields and adds role permissions', async (
   assert.strictEqual(payload.user.role, 'pharmacy');
   assert.deepStrictEqual(payload.user.permissions, {
     platformManage: false, warehouseOperate: false, financialRead: true,
-    paymentRecord: false, paymentReverse: false, featureConfigure: false,
+    paymentRecord: false, paymentReverse: false, paymentProofReview: false, featureConfigure: false,
     featureGrant: false, visitRecord: false, ownProfileEdit: true,
   });
   assert.strictEqual(payload.user.status, 'active');
@@ -204,7 +204,7 @@ test('GET /auth/me preserves a legacy warehouse profile and identifies its exist
   assert.strictEqual(payload.user.warehouseRole, 'legacy');
   assert.deepStrictEqual(payload.user.permissions, {
     platformManage: false, warehouseOperate: true, financialRead: true,
-    paymentRecord: true, paymentReverse: true, featureConfigure: true,
+    paymentRecord: true, paymentReverse: true, paymentProofReview: false, featureConfigure: true,
     featureGrant: false, visitRecord: false, ownProfileEdit: false,
   });
   assert.strictEqual(payload.pharmacy, null);
@@ -304,7 +304,7 @@ test('register creates an active pharmacy and returns the documented auth shape'
   assert.strictEqual(payload.user.role, 'pharmacy');
   assert.deepStrictEqual(payload.user.permissions, {
     platformManage: false, warehouseOperate: false, financialRead: true,
-    paymentRecord: false, paymentReverse: false, featureConfigure: false,
+    paymentRecord: false, paymentReverse: false, paymentProofReview: false, featureConfigure: false,
     featureGrant: false, visitRecord: false, ownProfileEdit: true,
   });
   assert.strictEqual(payload.user.status, 'active', 'new accounts are auto-approved by default');

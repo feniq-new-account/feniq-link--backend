@@ -1982,5 +1982,26 @@
   "agingNote": "Monitoring estimate using oldest debt first and the warehouse threshold; not invoice payment allocation. Read time is independent of the summary above.",
   "noOverdue": "No overdue receivables under current follow-up settings.",
   "allOverdue": "View complete overdue list"
-}
+},
+  "paymentProof": {
+    "title": "Warehouse receipt proof",
+    "explain": "Evidence and approval refer to the recorded payment. They do not record more cash or reduce the balance again.",
+    "updated": "Last updated",
+    "reversed": "Payment reversed; prior approval is ineffective.",
+    "empty": "No saved proof for this payment.",
+    "revision": "Proof {{revision}}",
+    "cashTime": "Actual cash receipt time",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "pending": "Awaiting accountant approval",
+    "ineffective": "Historical approval is currently ineffective.",
+    "reference": "Receipt proof reference",
+    "note": "Optional note",
+    "submit": "Save proof for review",
+    "reason": "Review note — required for rejection",
+    "approve": "Approve receipt",
+    "reject": "Reject proof",
+    "older": "Older proof records",
+    "refresh": "Refresh latest state"
+  }
 }

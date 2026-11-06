@@ -16,6 +16,9 @@ Current calculators remain previews; historical v1 orders/ledger are unchanged.
   Both collection paths need persisted authorized receipt approval; a request
   boolean is never evidence. Warehouse commission remittance is weekly, separate
   from collection and from the pharmacy debt reduction.
+  The existing approved prerequisite for warehouse-collected money also remains:
+  verified evidence AND a persisted confirmed settlement before recognizing
+  commission entitlement. Receipt approval alone does not satisfy settlement.
 - No automatically funded pharmacy discount, Feniq-funded credit or repricing of
   historical entries. Warehouse-approved credit remains its contractual risk.
 - The owner has approved software implementation of the new model. Feniq reps
@@ -69,6 +72,8 @@ the authorization scope. Feature entitlements never replace accounting roles.
 7. Collection evidence enters pending review and cannot earn commission
    until persisted approval by the authorized accountant. No client-supplied
    boolean can substitute for the authorized approval record.
+   For warehouse collection, a persisted confirmed settlement is additionally
+   required by the approved policy; approval must never bypass that prerequisite.
 8. Corrections append linked reversal/correction events with actor, time and
    reason. No edit/delete of approved money. Cash custody transfer settles custody,
    not the pharmacy debt again. A sent transfer and confirmed receipt stay separate.
@@ -116,9 +121,10 @@ subscription paywall for core account operations.
 entitlement, known return-commission corrections and actual-cash transfer clocks.
 `POST /api/admin/commission-policy-preview/accounting` exposes these calculations
 with `previewOnly:true,persisted:false`. It is NOT a receipt approval or a writer.
-The earlier preview endpoint remains backward-compatible and represents its
-older assumptions, including manual allocation drafts and settlement booleans;
-those booleans must never be reused as live authorization.
+The earlier preview endpoint remains backward-compatible. Manual allocation
+drafts are superseded by the approved FIFO policy. Its warehouse proof-plus-
+settlement prerequisite remains approved; request booleans are calculation
+assumptions and must never be reused as live authorization.
 
 Posting remains incomplete: no v2 order cutover, persisted proof workflow, FIFO
 allocation writer, commission journal, new settlement writer or client rollout

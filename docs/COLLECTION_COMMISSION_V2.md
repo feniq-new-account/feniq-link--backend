@@ -58,8 +58,10 @@ The additional admin-only, no-store endpoint
 
 Every result remains `previewOnly:true,persisted:false`. This is executable
 policy arithmetic, not activation of accounting writes. Existing preview
-contracts remain compatible; their manual drafts and eligibility booleans are
-legacy assumptions and must never authorize a live financial operation.
+contracts remain compatible. Manual drafts are superseded by approved FIFO;
+the warehouse verified-proof AND confirmed-settlement prerequisite remains
+approved. Eligibility booleans remain calculation assumptions and must never
+authorize a live financial operation. Receipt approval alone is not settlement.
 
 ## Remaining before live v2
 
