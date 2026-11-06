@@ -98,18 +98,18 @@ it('a stale load-more result cannot reinsert a licence that was just approved', 
   let finishOldPage;
   api.listAdminPharmacyLicences.mockImplementationOnce(() =>
     new Promise(resolve => { finishOldPage = resolve; }));
-  const oldPage = act(async () => button('Load more').click());
-  // Wait until the pending page request starts without awaiting its response.
-  await act(async () => { await Promise.resolve(); });
+  act(() => button('Load more').click());
+  // Keep the older page unresolved while a review loads the newest state.
   vi.spyOn(window, 'confirm').mockReturnValue(true);
   api.listAdminPharmacyLicences.mockResolvedValueOnce({
     items: [], pagination: { hasMore: false, nextCursor: null },
   });
   await act(async () => button('Approve').click());
-  finishOldPage({
-    items: [row], pagination: { hasMore: false, nextCursor: null },
+  await act(async () => {
+    finishOldPage({
+      items: [row], pagination: { hasMore: false, nextCursor: null },
+    });
   });
-  await oldPage;
   expect(host.textContent).not.toContain('Example Pharmacy');
   expect(host.textContent).toContain('No pending licences');
 });
