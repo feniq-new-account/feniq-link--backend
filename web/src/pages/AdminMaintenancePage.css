@@ -15,3 +15,9 @@
   .adm-maintenance-body { padding: 12px; }
   .adm-maintenance-links > * { width: 100%; text-align: center; }
 }
+
+.adm-maintenance-secrets { border: 1px solid var(--adm-border, #dcdfe5); border-radius: 12px; padding: 14px; }
+.adm-maintenance-secrets h2 { margin: 0; font-size: 1.05rem; }
+.adm-maintenance-secret-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--adm-border, #dcdfe5); }
+.adm-maintenance-secret-row code { user-select: all; overflow-wrap: anywhere; font-size: 1rem; }
+.adm-maintenance-secret-row strong { font-size: .85rem; }
