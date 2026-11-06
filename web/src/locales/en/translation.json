@@ -1856,6 +1856,16 @@
       "complaints": "Complaints"
     }
   },
+  "pilotAccess": {
+    "title": "Select pilot ordering pharmacies",
+    "description": "While ordering is time-limited, only the active pharmacy accounts selected here may order from the three known demo warehouses. All others can still browse.",
+    "safety": "The server enforces access before checkout. This does not change accounting. An empty list blocks all pilot orders. A permanent launch without a closing deadline does not use this list.",
+    "phonesLabel": "Participating pharmacy phone numbers",
+    "phonesHelp": "One number per line, matching the exact account phone shown in Account Management. Maximum 25; each account must be active.",
+    "save": "Save pilot pharmacy list",
+    "saved": "Pilot pharmacy access saved.",
+    "retry": "Retry"
+  },
   "launch": {
     "title": "Pharmacist launch status",
     "mode": "Operating mode",
