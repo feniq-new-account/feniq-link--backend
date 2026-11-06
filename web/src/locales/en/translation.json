@@ -1798,6 +1798,23 @@
     "invalid": "Enter a valid number within the shown limits. Review the amount rather than removing digits to bypass this message."
   },
   "maintenance": {
+    "pilotReadiness": "Ordering pilot readiness",
+    "readinessNotEndToEnd": "These are live database counts only. They do not prove the server release is deployed or that an order reaches the warehouse dashboard.",
+    "orderSwitchOn": "Ordering is enabled in system settings. Check that the current server build has been deployed before pilot testing.",
+    "orderSwitchOff": "Ordering is currently closed. Open it from launch settings after recovering warehouse accounts.",
+    "warehouseVisible": "Warehouse account is active; this warehouse should be visible to pharmacists.",
+    "warehouseHidden": "Warehouse cannot appear in the pharmacy app because the warehouse is disabled or its account is blocked.",
+    "readinessFields": {
+      "activePharmacies": "Active pharmacy accounts",
+      "visibleWarehouses": "Pharmacist-visible warehouses",
+      "warehousesWithCatalog": "Warehouses with visible catalog",
+      "warehousesWithOffers": "Warehouses with active offers",
+      "warehousesWithPackages": "Warehouses with active packages",
+      "availableProducts": "Available products",
+      "visibleOffers": "Active offers now",
+      "visiblePackages": "Active packages now",
+      "visibleBanners": "Active banners now"
+    },
     "title": "System maintenance & recovery",
     "intro": "Inspect legacy demo warehouse records before cleanup. This page is read-only and cannot delete data.",
     "inventoryTitle": "Live data inventory",
