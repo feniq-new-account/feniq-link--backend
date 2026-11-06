@@ -10,6 +10,7 @@
 function serializeSettlementRow(row) {
   return {
     orderId: row.orderId,
+    ...(row.commissionEngine === 'collection_v2' ? { commissionEngine: row.commissionEngine, commissionPotentialSyp: row.commissionPotentialSyp } : {}),
     orderNumber: row.orderNumber,
     invoiceNumber: row.invoiceNumber,
     deliveredAt: row.deliveredAt,
@@ -31,11 +32,12 @@ function serializeSettlementRow(row) {
   };
 }
 
-function toSettlementResponse({ period, totals, rows }) {
+function toSettlementResponse({ period, totals, rows, asOf, collectionCommission }) {
   return {
     settlement: {
       period,
       totals,
+      ...(collectionCommission ? { asOf, collectionCommission } : {}),
       orders: rows.map(serializeSettlementRow),
     },
   };

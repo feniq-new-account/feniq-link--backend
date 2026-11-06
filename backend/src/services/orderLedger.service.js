@@ -47,6 +47,7 @@ function chargeMetadata(order) {
     discountCodeFundedBy: order.discountCode?.fundedBy ?? null,
     platformCompensationSyp: order.discountCode?.platformCompensationSyp ?? 0,
     commissionSyp: order.commissionAmount,
+    commissionEngine: order.commissionEngine ?? 'legacy_delivery',
     finalAmountSyp: order.finalPrice,
     // Kept for the statements and disputes that already read it. Approximate:
     // the first package only - see the note on order.model.js.
@@ -102,6 +103,10 @@ async function postChargeForDelivery({ order, userId, deliveredAt, account = nul
   // Resolving it first is harmless - an account is just a container, and
   // resolveAccount is idempotent.
   const resolved = account ?? (await ledger.resolveAccount(order.pharmacyId, order.warehouseId, session));
+  const collectionLedger = require('./collectionLedger.service');
+  if (order.commissionEngine === 'collection_v2') {
+    await collectionLedger.initializeAccount(resolved._id, order.warehouseId, session);
+  }
 
   // Assigned here rather than at order creation: an invoice number is a claim
   // that something was actually invoiced, and a pending or cancelled order
@@ -130,6 +135,11 @@ async function postChargeForDelivery({ order, userId, deliveredAt, account = nul
   );
 
   order.chargeEntryId = entry._id;
+  await collectionLedger.registerInvoice({ order, entry, account: resolved, deliveredAt }, session);
+  await require('./collectionReturnCredit.service').applyForDelivery(order, resolved, userId, deliveredAt, session);
+  await collectionLedger.rebuildAccount({ accountId: resolved._id, warehouseId: order.warehouseId,
+    actorId: userId, sourceKey: `entry:${entry._id}`, reason: 'Delivered invoice allocation',
+  }, session);
 
   return { entry, alreadyPosted: false };
 }
@@ -140,6 +150,13 @@ async function postChargeForDelivery({ order, userId, deliveredAt, account = nul
 // history. The invoice number is kept (marked void by the order flag) rather
 // than freed - a number that changes meaning is worse than a gap.
 async function reverseChargeForOrder({ order, userId, reason }, session) {
+  if (order.commissionEngine === 'collection_v2') {
+    const { Invoice, ReturnCredit } = require('../models/collectionAccounting.model');
+    const invoice = await Invoice.findOne({ orderId: order._id, warehouseId: order.warehouseId }).session(session).lean();
+    if (invoice && await ReturnCredit.exists({ invoiceId: invoice._id }).session(session)) {
+      throw require('../utils/ApiError').ApiError.conflict('An invoice with issued return credit requires a linked correction.', 'INVOICE_HAS_RETURN_CREDIT');
+    }
+  }
   const charge = await LedgerEntry.findOne({
     'source.orderId': order._id,
     kind: 'charge',
@@ -152,6 +169,7 @@ async function reverseChargeForOrder({ order, userId, reason }, session) {
     { targetEntry: charge, createdBy: userId, reason, source: { orderId: order._id } },
     session
   );
+  await require('./collectionReturnCredit.service').reverseForVoidedInvoice(order, userId, reason, session);
   return { entry, reversed: true };
 }
 

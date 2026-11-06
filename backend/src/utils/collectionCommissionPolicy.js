@@ -44,7 +44,7 @@ function previewCollection(body) {
       (body.settlementConfirmed !== undefined && typeof body.settlementConfirmed !== 'boolean') ||
       (body.returnPending !== undefined && typeof body.returnPending !== 'boolean') ||
       (body.proofReference !== undefined && (typeof body.proofReference !== 'string' || body.proofReference.length > 500))) throw invalid();
-  if (body.returnPending) throw ApiError.conflict('Return commission treatment requires an approved policy.', 'RETURN_POLICY_REVIEW_REQUIRED');
+  if (body.returnPending) throw ApiError.conflict('Use the accounting return calculator with frozen return-commission amounts.', 'RETURN_POLICY_REVIEW_REQUIRED');
   const amount = collectionEntitlement(terms, body.collectedSyp);
   const before = collectionEntitlement(terms, previous);
   const eligible = body.collector === 'feniq' || Boolean(body.proofReference?.trim() && body.settlementConfirmed === true);

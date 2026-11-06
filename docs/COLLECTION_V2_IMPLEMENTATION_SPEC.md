@@ -33,9 +33,12 @@ Current calculators remain previews; historical v1 orders/ledger are unchanged.
   The confirmed known return commission reduces future entitlement, or becomes
   a linked offset in the next settlement after prior settlement. Example:
   original commission10000 minus returned commission2000 leaves8000.
-- The overlap of partial collection and partial return still requires a reviewed
-  allocation treatment. Do not infer returned commission from goods-credit names
-  or choose a formula silently. Weekly calendar configuration also remains unset.
+- All commercial cases above are approved. Partial collection plus partial return
+  uses the same proportional rule: net eligible original commission times actual
+  eligible collection divided by the original frozen invoice amount. Record the
+  difference from prior cumulative events. A returned-goods credit does not
+  reprice the original invoice. Weekly settlement uses its actual recorded
+  period, without requiring a newly chosen fixed weekday.
 
 ## Additive records for NEW v2 orders only
 
@@ -98,8 +101,8 @@ pending/unapplied/reversed states explicitly. None of these depend on Drive.
 
 ## Delivery sequence and mandatory acceptance
 
-1. Preserve the owner-confirmed rules above. Isolate the mixed partial-return
-   case and configure a weekly calendar before enforcing weekly due dates.
+1. Implement all owner-confirmed cases above. Partial collection/return and
+   weekly periods are implementation cases, not missing commercial decisions.
 2. Add records/indexes and preview/read endpoints with no writer activation.
 3. Implement account-serialized posting, immutable corrections and warehouse
    evidence review in an isolated environment. Preserve all v1 read/write behavior.

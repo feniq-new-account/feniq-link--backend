@@ -46,7 +46,7 @@ async function listReturnsForWarehouse(warehouseId, status) {
 
   const returns = await Return.find(filter)
     .select(
-      'orderId pharmacyId items notes images status rejectionNote creditSyp creditUsd creditEntryId resolvedAt createdAt'
+      'orderId pharmacyId items notes images status rejectionNote creditSyp creditUsd creditGrantId creditTreatment creditEntryId resolvedAt createdAt'
     )
     .sort({ createdAt: 1 });
   if (returns.length === 0) return [];
@@ -73,7 +73,7 @@ async function listPaginatedReturnsForWarehouse(
 
   const returns = await Return.find(filter)
     .select(
-      'orderId pharmacyId items notes images status rejectionNote creditSyp creditUsd creditEntryId resolvedAt createdAt'
+      'orderId pharmacyId items notes images status rejectionNote creditSyp creditUsd creditGrantId creditTreatment creditEntryId resolvedAt createdAt'
     )
     .sort({ _id: -1 })
     .limit(limit + 1);
@@ -106,7 +106,7 @@ async function findOwnReturnOrThrow(returnId, warehouseId) {
     throw ApiError.notFound('Return not found.', 'RETURN_NOT_FOUND');
   }
   const returnRequest = await Return.findOne({ _id: returnId, warehouseId }).select(
-    'orderId pharmacyId items notes images status rejectionNote creditSyp creditUsd creditEntryId creditValuation resolvedAt createdAt'
+    'orderId pharmacyId items notes images status rejectionNote creditSyp creditUsd creditGrantId creditTreatment creditEntryId creditValuation resolvedAt createdAt'
   );
   if (!returnRequest) {
     throw ApiError.notFound('Return not found.', 'RETURN_NOT_FOUND');
@@ -197,7 +197,15 @@ async function approveReturn(returnId, warehouseId, userId) {
       );
     }
 
-    const { entry } = await ledger.postEntry(
+    const sourceOrder = await Order.findById(current.orderId).session(session);
+    let entry = null;
+    if (sourceOrder.commissionEngine === 'collection_v2') {
+      const credit = await require('./collectionReturnCredit.service').issue({
+        order: sourceOrder, returnRequest: claimed, valuation, actorId: userId,
+      }, session);
+      claimed.creditGrantId = credit._id;
+      claimed.creditTreatment = 'future_invoice_or_exchange';
+    } else ({ entry } = await ledger.postEntry(
       {
         account,
         kind: 'return_credit',
@@ -216,13 +224,13 @@ async function approveReturn(returnId, warehouseId, userId) {
         metadata: { orderId: returnRequest.orderId, ...valuation.breakdown },
       },
       session
-    );
+    ));
 
     // Saved on the document itself rather than through a separate updateOne,
     // so the object handed back to the caller carries the link too - a bare
     // updateOne would leave `claimed` stale in memory.
     await monthlyLoyalty.reverseForReturn(claimed, valuation.creditSyp, session);
-    claimed.creditEntryId = entry._id;
+    claimed.creditEntryId = entry?._id ?? null;
     await claimed.save({ session });
 
     // A FULL return undoes the order, so a discount code it used is handed
@@ -247,9 +255,10 @@ async function approveReturn(returnId, warehouseId, userId) {
         entityType: 'Return',
         entityId: claimed._id,
         accountId: account._id,
-        ledgerEntryIds: [entry._id],
+        ledgerEntryIds: entry ? [entry._id] : [],
         before: { status: 'pending' },
-        after: { status: 'approved', creditSyp: valuation.creditSyp },
+        after: { status: 'approved', creditSyp: valuation.creditSyp,
+          ...(claimed.creditGrantId ? { creditTreatment: claimed.creditTreatment, creditGrantId: claimed.creditGrantId } : {}) },
       },
       session
     );

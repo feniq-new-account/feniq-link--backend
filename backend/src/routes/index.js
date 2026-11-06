@@ -76,6 +76,8 @@ router.use('/admin/exchange-rate', adminExchangeRateRoutes);
 router.use('/admin/ledger', adminLedgerRoutes);
 router.use('/admin/commission', adminCommissionRoutes);
 router.use('/admin/commission-policy-preview', require('./commissionPolicyPreview.routes'));
+router.use('/admin/collection-accounting', require('./collectionAccounting.routes').admin);
+router.use('/warehouse/collection-accounting', require('./collectionAccounting.routes').warehouse);
 router.use('/exchange-rate', exchangeRateRoutes);
 router.use('/admin/catalog', adminCatalogRoutes);
 router.use('/admin/manufacturers', adminManufacturerRoutes);

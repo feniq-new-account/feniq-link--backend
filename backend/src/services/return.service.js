@@ -292,7 +292,7 @@ async function listReturnsForPharmacy(pharmacyId, { limit = DEFAULT_RETURNS_LIMI
   // exactly these; pharmacyId is the filter, warehouseId/resolvedBy are not
   // part of the pharmacist's list row. Never saved.
   const returns = await Return.find(filter)
-    .select('orderId items notes images status rejectionNote creditSyp creditUsd resolvedAt createdAt')
+    .select('orderId items notes images status rejectionNote creditSyp creditUsd creditGrantId creditTreatment resolvedAt createdAt')
     .sort({ _id: -1 })
     .limit(limit + 1);
   const hasMore = returns.length > limit;

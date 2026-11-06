@@ -333,6 +333,8 @@ const STATEMENT_KIND_KEYS = {
   payment_reversal: 'statement.kindPaymentReversal',
   return_credit: 'statement.kindReturnCredit',
   return_credit_reversal: 'statement.kindReturnCreditReversal',
+  return_credit_application: 'statement.kindReturnCreditApplication',
+  return_credit_application_reversal: 'statement.kindReturnCreditApplicationReversal',
   manual_credit: 'statement.kindManualCredit',
   manual_debit: 'statement.kindManualDebit',
   migration_adjustment: 'statement.kindMigrationAdjustment',
@@ -522,6 +524,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
             {formatSyp(statement.summary.returnCreditsSyp)}
           </div>
         </div>
+        {!!statement.summary.returnCreditApplicationsSyp && <div className="wh-invoice-stat"><div className="wh-invoice-stat-label">{t('statement.returnCreditApplications')}</div><div className="wh-invoice-stat-value wh-num">{formatSyp(statement.summary.returnCreditApplicationsSyp)}</div></div>}
         <div className="wh-invoice-stat">
           <div className="wh-invoice-stat-label">{t('debts.balance')}</div>
           <div className="wh-invoice-stat-value wh-num">

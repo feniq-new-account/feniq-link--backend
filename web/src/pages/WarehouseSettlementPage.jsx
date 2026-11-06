@@ -7,6 +7,7 @@ import {
   formatBusinessDate,
   startOfBusinessMonthInputValue,
 } from '../utils/businessDate';
+import { Link } from 'react-router-dom';
 import { WarehouseGroupSubNav } from '../components/WarehouseGroupSubNav';
 
 // Money-Flow V2. What the warehouse sold in a period, what came back, what the
@@ -191,6 +192,16 @@ export function WarehouseSettlementPage() {
             </div>
           )}
 
+          {data.collectionCommission && <p className="hint">{t('collectionAccounting.scope')}</p>}
+          {!!data.collectionCommission?.outsideDeliveryPeriod?.length && <section>
+            <h2>{t('collectionAccounting.outsideDeliveryPeriod')}</h2>
+            <div className="table-scroll"><table className="wh-table"><thead><tr>
+              {['accounting.reference', 'collectionAccounting.feniq', 'collectionAccounting.credit'].map(key => <th key={key}>{t(key)}</th>)}
+            </tr></thead><tbody>{data.collectionCommission.outsideDeliveryPeriod.map(row => <tr key={row.orderId}>
+              <td><Link to={`/warehouse/orders/${encodeURIComponent(row.orderId)}`}>{t('accounting.openOrder')}</Link></td>
+              <td className="wh-num">{formatSyp(row.commissionSyp - row.correctionSyp)}</td><td className="wh-num">{formatSyp(row.creditSyp)}</td>
+            </tr>)}</tbody></table></div>
+          </section>}
           <p className="wh-table-hint">{t('settlement.footnote')}</p>
         </>
       )}

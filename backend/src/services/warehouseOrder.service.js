@@ -12,6 +12,7 @@ const Return = require('../models/return.model');
 const orderLedger = require('./orderLedger.service');
 const ledgerService = require('./ledger.service');
 const { runInTransaction } = require('../utils/transaction');
+const { financialReadSnapshot } = require('../utils/financialReadSnapshot');
 const notificationService = require('./notification.service');
 const {
   stackedDiscountSyp,
@@ -88,7 +89,7 @@ async function listOrdersForWarehouse(
   // the join key. Never saved - advanceOrderStatus / updateOrderItems each
   // re-load the order themselves.
   const orders = await Order.find(filter)
-    .select('orderNumber status finalPrice notes createdAt pharmacyId')
+    .select('orderNumber status finalPrice notes createdAt pharmacyId commissionEngine returnCreditReservedSyp')
     .sort({ orderNumber: newestFirst ? -1 : 1 })
     .limit(limit + 1);
   const hasMore = orders.length > limit;
@@ -333,7 +334,8 @@ async function autoDeliverStaleOrders(now = new Date()) {
 // pharmacy contact info instead of the warehouse's own name, and just
 // whether a return exists rather than its full detail (that's the returns
 // feature's own page, per WarehouseReturnsPage).
-async function getOrderDetailForWarehouse(orderId, warehouseId) {
+async function getOrderDetailForWarehouse(orderId, warehouseId, session = null) {
+  if (!session) return financialReadSnapshot(snapshot => getOrderDetailForWarehouse(orderId, warehouseId, snapshot));
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }
@@ -341,24 +343,31 @@ async function getOrderDetailForWarehouse(orderId, warehouseId) {
   // toWarehouseOrderDetailResponse reads exactly these order fields.
   const order = await Order.findOne({ _id: orderId, warehouseId })
     .select(
-      'orderNumber status totalPrice discountAmount commissionAmount advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice repCommission loyaltyDiscountAmount creditUsedSyp notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt deliveryEstimate deliveryRevision'
-    );
+      'orderNumber status totalPrice discountAmount commissionAmount commissionEngine collectionCommission returnCreditReservedSyp advertisementId advertisementDiscountAmount orderPackageGroups discountCode finalPrice repCommission loyaltyDiscountAmount creditUsedSyp notes cancelReason createdAt statusHistory pharmacyId requiresDeliverySealPhoto deliverySealPhoto deliverySealConfirmedAt deliveryEstimate deliveryRevision'
+    ).session(session);
   if (!order) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }
 
-  const [items, pharmacy, returnRequest] = await Promise.all([
-    // Detail item shape adds lineTotal (discountPrice*quantity) and savingsUsd.
-    OrderItem.find({ orderId: order._id })
-      .select('productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice savingsUsd packageGroupId freeQuantity bonusApplied'),
-    Pharmacy.findById(order.pharmacyId)
-      .select('nameAr nameEn ownerName address city phone verificationPhoto'),
-    Return.findOne({ orderId: order._id }).select('_id'),
-  ]);
+  if (order.commissionEngine === 'collection_v2') {
+    const { Position, Invoice, ReturnCredit } = require('../models/collectionAccounting.model');
+    order.$locals.collectionPosition = await Position.findOne({ orderId: order._id, warehouseId }).session(session).lean();
+    const invoice = await Invoice.findOne({ orderId: order._id, warehouseId }).select('_id').session(session).lean();
+    const grants = invoice ? await ReturnCredit.find({ invoiceId: invoice._id, warehouseId })
+      .select('amountSyp compensationClawbackSyp').session(session).lean() : [];
+    order.$locals.collectionReturns = { goodsSyp: grants.reduce((n, grant) => n + grant.amountSyp, 0),
+      compensationClawbackSyp: grants.reduce((n, grant) => n + (grant.compensationClawbackSyp ?? 0), 0) };
+  }
+
+  const items = await OrderItem.find({ orderId: order._id })
+    .select('productId productNameAr productNameEn manufacturerAr manufacturerEn quantity unitPrice discountPrice savingsUsd packageGroupId freeQuantity bonusApplied').session(session);
+  const pharmacy = await Pharmacy.findById(order.pharmacyId)
+    .select('nameAr nameEn ownerName address city phone verificationPhoto').session(session);
+  const returnRequest = await Return.findOne({ orderId: order._id }).select('_id').session(session);
   // Whether this warehouse already rated the pharmacy on this order - the
   // rating lives on the order page (not in the orders list).
   const review = order.status === 'delivered'
-    ? await Review.exists({ orderId: order._id, reviewerType: 'warehouse' })
+    ? await Review.exists({ orderId: order._id, reviewerType: 'warehouse' }).session(session)
     : null;
 
   return { order, items, pharmacy, hasReturn: Boolean(returnRequest), hasReviewed: Boolean(review) };
@@ -779,8 +788,11 @@ async function editOrderItemsInTransaction(orderId, warehouseId, userId, payload
   order.creditUsedSyp = creditUsedSyp;
   order.totalPrice = totalPrice;
   order.discountAmount = discountAmount;
-  order.commissionAmount = commissionAmount;
-  order.repCommission = repCommission;
+  order.commissionAmount = order.commissionEngine === 'collection_v2' ? 0 : commissionAmount;
+  order.repCommission = order.commissionEngine === 'collection_v2' ? null : repCommission;
+  if (order.commissionEngine === 'collection_v2') {
+    order.collectionCommission = require('./collectionContract.service').repriceSnapshot(order.collectionCommission, finalPrice);
+  }
   order.advertisementDiscountAmount = advertisementDiscountAmount;
   order.finalPrice = finalPrice;
   if (code) {
@@ -820,6 +832,8 @@ async function editOrderItemsInTransaction(orderId, warehouseId, userId, payload
     );
   }
   order.increment();
+  if (order.commissionEngine === 'collection_v2') await require('./collectionReturnCredit.service').releaseExcess(
+    order, userId, order.finalPrice, `resize:${order._id}:${order.__v}:${order.finalPrice}`, session);
   await order.save({ session });
   return { order, items: allItems };
 }

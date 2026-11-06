@@ -49,7 +49,7 @@ const approve = asyncHandler(async (req, res) => {
   );
   res.json({
     success: true,
-    message: 'Return approved. The pharmacy has been credited.',
+    message: returnRequest.creditGrantId ? 'Return approved. Credit is available for a future invoice or exchange.' : 'Return approved. The pharmacy has been credited.',
     ...warehouseReturnViewModel.toResolvedReturnResponse(returnRequest, creditEntry),
   });
 });
