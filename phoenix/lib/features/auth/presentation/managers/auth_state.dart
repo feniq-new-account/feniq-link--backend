@@ -34,6 +34,7 @@ class AuthState {
     this.user,
     this.pharmacy,
     this.tokenRole,
+    this.tokenSubject,
   });
 
   final SessionStatus sessionStatus;
@@ -52,6 +53,10 @@ class AuthState {
   // trusted for anything the server enforces; it only picks which home screen
   // an offline start opens.
   final String? tokenRole;
+  // Unverified token subject used ONLY for local encrypted-cache partitioning
+  // during a cold offline start; never an authorization identity.
+  final String? tokenSubject;
+  String? get localAccountId => user?.id ?? tokenSubject;
 
   String? get role => user?.role ?? tokenRole;
   bool get isRep => role == 'rep';
@@ -72,6 +77,7 @@ class AuthState {
     UserModel? user,
     PharmacyModel? pharmacy,
     String? tokenRole,
+    String? tokenSubject,
   }) {
     return AuthState(
       sessionStatus: sessionStatus ?? this.sessionStatus,
@@ -82,6 +88,7 @@ class AuthState {
       user: user ?? this.user,
       pharmacy: pharmacy ?? this.pharmacy,
       tokenRole: tokenRole ?? this.tokenRole,
+      tokenSubject: tokenSubject ?? this.tokenSubject,
     );
   }
 }
