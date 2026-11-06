@@ -90,28 +90,23 @@ it('deduplicates licence rows across cursor pages', async () => {
   expect(host.textContent).toContain('Second Pharmacy');
 });
 
-it('a stale load-more result cannot reinsert a licence that was just approved', async () => {
+it('review controls are frozen while an older page is loading', async () => {
   api.listAdminPharmacyLicences.mockResolvedValueOnce({
     items: [row], pagination: { hasMore: true, nextCursor: 'cursor1' },
   });
   await act(async () => button('Refresh').click());
-  let finishOldPage;
+  let finishPage;
   api.listAdminPharmacyLicences.mockImplementationOnce(() =>
-    new Promise(resolve => { finishOldPage = resolve; }));
+    new Promise(resolve => { finishPage = resolve; }));
   act(() => button('Load more').click());
-  // Keep the older page unresolved while a review loads the newest state.
-  vi.spyOn(window, 'confirm').mockReturnValue(true);
-  api.listAdminPharmacyLicences.mockResolvedValueOnce({
-    items: [], pagination: { hasMore: false, nextCursor: null },
-  });
-  await act(async () => button('Approve').click());
+  expect(button('Approve').disabled).toBe(true);
+  expect(button('Reject with reason').disabled).toBe(true);
+  expect(button('Refresh').disabled).toBe(true);
   await act(async () => {
-    finishOldPage({
-      items: [row], pagination: { hasMore: false, nextCursor: null },
-    });
+    finishPage({ items: [row], pagination: { hasMore: false, nextCursor: null } });
   });
-  expect(host.textContent).not.toContain('Example Pharmacy');
-  expect(host.textContent).toContain('No pending licences');
+  expect(button('Approve').disabled).toBe(false);
+  expect(api.reviewAdminPharmacyLicence).not.toHaveBeenCalled();
 });
 
 it('a failed full refresh hides old review candidates instead of treating them as pending', async () => {
