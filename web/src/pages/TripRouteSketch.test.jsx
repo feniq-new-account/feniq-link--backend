@@ -31,6 +31,14 @@ it('never silently bridges a malformed recorded route', () => {
   expect(projectTripRoute(null, null)).toBeNull();
 });
 
+it('missing or nonnumeric driver positions cannot create a fake GPS marker', () => {
+  for (const coordinates of [null, {}, { latitude: null, longitude: null },
+      { latitude: '35.5', longitude: '35.9' }]) {
+    const result = projectTripRoute(route, coordinates);
+    expect(result.location).toBeNull();
+  }
+});
+
 it('shows a live position locally without requesting third-party map images', async () => {
   await act(async () => root.render(<TripRouteSketch routePoints={route}
     location={{ latitude: 35.525, longitude: 35.835 }}
