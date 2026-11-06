@@ -51,7 +51,8 @@ void main() {
       await tester.pump(const Duration(minutes: 1));
       await tester.pumpAndSettle();
       expect(values.last, false);
-      expect(find.byType(TextButton), findsOneWidget);
+      // Rechecks remain automatic; no space-consuming manual verification button.
+      expect(find.byType(TextButton), findsNothing);
       await tester.pumpWidget(const SizedBox());
     },
   );
