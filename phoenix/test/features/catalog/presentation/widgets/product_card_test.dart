@@ -49,6 +49,7 @@ void main() {
     WidgetTester tester, {
     int cartQuantity = 0,
     bool isGrid = true,
+    bool showManufacturer = true,
     Locale? locale,
     ProductModel product = _product,
     double? gridHeight = 316,
@@ -79,6 +80,7 @@ void main() {
                 child: ProductCard(
                   product: product,
                   isGrid: isGrid,
+                  showManufacturer: showManufacturer,
                   cartQuantity: cartQuantity,
                   onAdd: onAdd ?? (_) {},
                   onCartQuantityChanged: onCartQuantityChanged,
@@ -220,6 +222,22 @@ void main() {
       expect(find.text('إضافة إلى السلة'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+  });
+
+
+  testWidgets('company page hides redundant company name but retains medicine name', (tester) async {
+    await pumpCard(tester, isGrid: false, showManufacturer: false);
+    expect(find.text('Med'), findsOneWidget);
+    expect(find.text('Co'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the list add-to-cart action has a slightly larger touch target', (tester) async {
+    await pumpCard(tester, isGrid: false, locale: const Locale('ar'));
+    expect(find.text('إضافة إلى السلة'), findsOneWidget);
+    final button = tester.getSize(find.byType(FilledButton).first);
+    expect(button.height, greaterThanOrEqualTo(44));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('a medicine with no picture shows a medicine placeholder, not a letter or a blank box', (tester) async {
