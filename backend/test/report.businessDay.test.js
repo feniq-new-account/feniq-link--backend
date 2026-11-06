@@ -206,7 +206,7 @@ test('account statements: the warehouse, pharmacy and admin views read ranges th
 });
 
 test('a collection recorded for bare dates covers those whole local days', async () => {
-  const collection = await commissionService.recordCollection({
+  const collection = await commissionService.recordCollection({ idempotencyKey: require('node:crypto').randomUUID(),
     warehouseId: String(ids.warehouse),
     periodFrom: '2026-09-24',
     periodTo: '2026-09-24',

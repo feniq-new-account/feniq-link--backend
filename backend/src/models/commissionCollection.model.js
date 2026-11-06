@@ -60,6 +60,10 @@ const commissionCollectionSchema = new Schema(
     reference: { type: String, default: null, trim: true },
     note: { type: String, default: null, trim: true },
 
+    idempotencyKey: { type: String, default: null },
+    requestFingerprint: { type: String, default: null },
+    reversalKey: { type: String, default: null },
+    reversalFingerprint: { type: String, default: null },
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     recordedAt: { type: Date, required: true, default: Date.now },
 
@@ -79,5 +83,8 @@ const commissionCollectionSchema = new Schema(
 commissionCollectionSchema.index({ warehouseId: 1, status: 1, periodFrom: 1, periodTo: 1 });
 // The history list, newest first.
 commissionCollectionSchema.index({ warehouseId: 1, recordedAt: -1 });
+
+commissionCollectionSchema.index({ warehouseId: 1, idempotencyKey: 1 }, { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } } });
+commissionCollectionSchema.index({ reversalKey: 1 }, { unique: true, partialFilterExpression: { reversalKey: { $type: 'string' } } });
 
 module.exports = model('CommissionCollection', commissionCollectionSchema);

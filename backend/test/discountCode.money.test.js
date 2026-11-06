@@ -324,7 +324,7 @@ test('the commission overview nets the compensation; a payout to the warehouse s
 
   const periodFrom = new Date(Date.now() - 2 * DAY).toISOString();
   const periodTo = new Date(Date.now() + DAY).toISOString();
-  const payout = await commissionService.recordCollection({
+  const payout = await commissionService.recordCollection({ idempotencyKey: require('node:crypto').randomUUID(),
     warehouseId: String(ids.warehouse), periodFrom, periodTo, amountSyp: 172800, direction: 'to_warehouse', actorId: ids.admin,
   });
   assert.strictEqual(payout.direction, 'to_warehouse');
@@ -335,7 +335,7 @@ test('the commission overview nets the compensation; a payout to the warehouse s
   assert.strictEqual(row.outstandingSyp, 0);
 
   // Reversing the payout puts the debt back.
-  await commissionService.reverseCollection({ collectionId: payout._id, reason: 'typo', actorId: ids.admin });
+  await commissionService.reverseCollection({ idempotencyKey: require('node:crypto').randomUUID(), collectionId: payout._id, reason: 'typo', actorId: ids.admin });
   row = await commissionRow();
   assert.strictEqual(row.outstandingSyp, -172800);
 });
@@ -351,7 +351,7 @@ test('HTTP: the admin records a payout and sees the compensation per warehouse',
       warehouseId: String(ids.warehouse),
       periodFrom: new Date(Date.now() - DAY).toISOString(),
       periodTo: new Date(Date.now() + DAY).toISOString(),
-      amountSyp: 50000,
+      amountSyp: 50000, idempotencyKey: 'synthetic-http-payout',
       direction: 'to_warehouse',
     }),
   });

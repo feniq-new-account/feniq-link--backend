@@ -26,7 +26,7 @@ export function usePaginatedData(fetchPage) {
   // `start` rather than just the one this call owns.
   const requestIdRef = useRef(0);
 
-  const run = useCallback(async (cursor, append) => {
+  const run = useCallback(async (cursor, append, throwOnError = false) => {
     const requestId = ++requestIdRef.current;
     dispatch({ type: 'start', requestId, append });
     try {
@@ -34,10 +34,13 @@ export function usePaginatedData(fetchPage) {
       dispatch({ type: 'success', requestId, append, result });
     } catch (err) {
       dispatch({ type: 'fail', requestId, append, error: err.message });
+      if (throwOnError) throw err;
     }
   }, []);
 
-  const reset = useCallback(() => run(null, false), [run]);
+  // Financial forms can await an actual successful refresh before retiring a request key.
+  // Existing readers keep the default state-only error handling.
+  const reset = useCallback((options) => run(null, false, options?.throwOnError === true), [run]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || isLoadingMore) return;
