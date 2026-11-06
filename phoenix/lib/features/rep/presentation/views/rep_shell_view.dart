@@ -33,6 +33,9 @@ class RepShellView extends StatefulWidget {
 
 class _RepShellViewState extends State<RepShellView> {
   int _index = 0;
+  String? _outboxOwnerId;
+  DriverTripRepository? _outboxRepository;
+  DriverStopOutbox? _stopOutbox;
 
   Future<void> _scan() async {
     final logged = await context.pushNamed<bool>(RouteNames.repScan);
@@ -50,6 +53,17 @@ class _RepShellViewState extends State<RepShellView> {
     final l10n = context.l10n;
     final driverEnabled = widget.driverTripRepository != null;
     final driverAccountId = context.read<AuthCubit>().state.user?.id;
+    if (_outboxOwnerId != driverAccountId ||
+        !identical(_outboxRepository, widget.driverTripRepository)) {
+      _outboxOwnerId = driverAccountId;
+      _outboxRepository = widget.driverTripRepository;
+      _stopOutbox = driverAccountId == null || widget.driverTripRepository == null
+        ? null : DriverStopOutbox(
+            accountId: driverAccountId,
+            repository: widget.driverTripRepository!,
+            store: const SecureDriverStopOutboxStore(),
+          );
+    }
     final titles = [l10n.repNavPharmacies, l10n.repVisitsTitle,
       if (driverEnabled)
         (Localizations.localeOf(context).languageCode == 'ar' ? 'رحلات التوزيع' : 'Delivery trips'),
@@ -72,11 +86,7 @@ class _RepShellViewState extends State<RepShellView> {
               if (driverEnabled) DriverTripsTab(
                 repository: widget.driverTripRepository!,
                 locationProvider: const GeolocatorLocationProvider(),
-                stopOutbox: driverAccountId == null ? null : DriverStopOutbox(
-                  accountId: driverAccountId,
-                  repository: widget.driverTripRepository!,
-                  store: const SecureDriverStopOutboxStore(),
-                ),
+                stopOutbox: _stopOutbox,
               ),
               const RepProfileTab(),
             ]),
