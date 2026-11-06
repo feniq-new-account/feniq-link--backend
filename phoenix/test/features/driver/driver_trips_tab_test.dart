@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 import 'package:feniq/features/driver/data/driver_position_stream.dart';
