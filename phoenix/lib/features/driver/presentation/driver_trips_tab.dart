@@ -49,6 +49,7 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
       // commands; never reuse another account's previous pending UI state.
       _pendingStops = const [];
       _outboxLoaded = false;
+      _syncingStops = false;
       _outboxError = null;
       unawaited(_restoreOutbox());
     }
@@ -124,7 +125,7 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
     if (outbox == null) return;
     try {
       await outbox.restore();
-      if (!mounted) return;
+      if (!mounted || !identical(widget.stopOutbox, outbox)) return;
       setState(() {
         _pendingStops = outbox.pending;
         _outboxLoaded = true;
@@ -132,7 +133,7 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
       });
       if (_pendingStops.isNotEmpty) await _syncOutbox();
     } catch (_) {
-      if (mounted) setState(() => _outboxError = _t(
+      if (mounted && identical(widget.stopOutbox, outbox)) setState(() => _outboxError = _t(
         'تعذّر قراءة أوامر التسليم المحفوظة. لن نستبدلها أو نمسحها.',
         'Saved delivery queue cannot be read; it has not been overwritten.',
       ));
@@ -145,7 +146,7 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
     setState(() => _syncingStops = true);
     try {
       final result = await outbox.flush();
-      if (!mounted) return;
+      if (!mounted || !identical(widget.stopOutbox, outbox)) return;
       setState(() {
         _pendingStops = outbox.pending;
         _outboxError = result.failure == null ? null : _t(
@@ -155,12 +156,12 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
       });
       if (result.confirmed > 0) await _reload();
     } catch (_) {
-      if (mounted) setState(() => _outboxError = _t(
+      if (mounted && identical(widget.stopOutbox, outbox)) setState(() => _outboxError = _t(
         'تعذّر حفظ نتيجة المزامنة بأمان. بقي أمر التسليم محفوظاً.',
         'Could not safely persist the sync result; the stop command remains queued.',
       ));
     } finally {
-      if (mounted) setState(() => _syncingStops = false);
+      if (mounted && identical(widget.stopOutbox, outbox)) setState(() => _syncingStops = false);
     }
   }
 
