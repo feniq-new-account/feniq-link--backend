@@ -11,6 +11,11 @@ router.use(authenticate, authorize('admin'));
 router.get('/pending-accounts', controller.listPendingAccounts);
 // The Accounts management page - both roles, every status, filters + search.
 router.get('/accounts', controller.listAccounts);
+// Inventory-only pilot maintenance preview: admin-authenticated, no writes.
+router.get('/maintenance/preview', require('../utils/asyncHandler').asyncHandler(async (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, preview: await require('../services/adminMaintenancePreview.service').previewPilotCleanup() });
+}));
 router.post('/accounts/:userId/approve', controller.approveAccount);
 router.post('/accounts/:userId/reject', controller.rejectAccount);
 // Admin-only administrative actions (router-level authorize('admin') above).
