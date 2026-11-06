@@ -144,3 +144,40 @@ it('admin can create a standalone driver without exposing temporary credentials'
   expect(driverSelect.textContent).toContain('External Driver');
   expect(container.textContent).not.toContain('temporary-secret-123');
 });
+
+it('loads older trip pages using the backend cursor without repeating earlier trips', async () => {
+  const trip = (id, region) => ({
+    _id: id, region, driverName: 'Driver', serviceDate: '2026-11-06T00:00:00.000Z',
+    status: 'completed', revision: 1, stops: [],
+  });
+  api.adminDistributionTrips
+    .mockResolvedValueOnce({ trips: [trip('trip1', 'Kasab')], pagination: {
+      hasMore: true, nextCursor: 'cursor1',
+    } })
+    .mockResolvedValueOnce({ trips: [trip('trip1', 'Kasab'), trip('trip2', 'Salnfa')], pagination: {
+      hasMore: false, nextCursor: null,
+    } });
+  await act(async () => button('Refresh').click());
+  expect(container.textContent).toContain('Kasab');
+  expect(button('Load older trips')).not.toBeUndefined();
+  await act(async () => button('Load older trips').click());
+  expect(api.adminDistributionTrips).toHaveBeenLastCalledWith({ after: 'cursor1' });
+  expect(container.textContent).toContain('Salnfa');
+  expect([...container.querySelectorAll('article')].filter(a => a.textContent.includes('Kasab'))).toHaveLength(1);
+  expect(button('Load older trips')).toBeUndefined();
+});
+
+it('filters the server-side trip queue by status, not only the visible 20 rows', async () => {
+  api.adminDistributionTrips.mockResolvedValue({ trips: [], pagination: {
+    hasMore: false, nextCursor: null,
+  } });
+  const picker = container.querySelector('[aria-label="Filter trips by status"]');
+  expect(picker).not.toBeNull();
+  await act(async () => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set;
+    setter.call(picker, 'in_progress');
+    picker.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  expect(api.adminDistributionTrips).toHaveBeenLastCalledWith({ status: 'in_progress' });
+  expect(container.textContent).toContain('No trips yet.');
+});
