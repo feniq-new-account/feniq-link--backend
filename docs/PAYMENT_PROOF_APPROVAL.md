@@ -72,6 +72,9 @@ No v2 contract/order snapshots, invoice allocation, accrued commission journal,
 return-credit reuse, settlement cutover or production activation is included.
 An approved proof on a legacy payment never authorizes retrospective FIFO or v2
 commission. No old entries are migrated and the launch checkout gate is unchanged.
+The approved warehouse commission gate still requires confirmed settlement in
+addition to verified receipt evidence. This evidence workflow does not implement
+or bypass that settlement gate, and approval never constitutes a second payment.
 
 Validation uses isolated Mongo replica sets and synthetic receipts: tenant/role
 attacks, exact frozen amounts, retry after commit, concurrent same-key and
