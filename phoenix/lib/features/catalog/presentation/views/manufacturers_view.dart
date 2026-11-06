@@ -225,7 +225,7 @@ class _ManufacturersViewState extends State<ManufacturersView> {
                 // Fluid column count (as many as fit at up to ~160px each)
                 // rather than a fixed 1-vs-2 breakpoint - see
                 // WarehouseSelectionView for the same treatment.
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 160,
                   mainAxisSpacing: AppSizes.spacingMedium,
                   crossAxisSpacing: AppSizes.spacingMedium,
