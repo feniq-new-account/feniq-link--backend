@@ -74,3 +74,44 @@ it('rejection sends the entered reason to the authenticated endpoint', async () 
   expect(api.reviewAdminPharmacyLicence).toHaveBeenCalledWith(
     row.pharmacyId, 'rejected', 'Please take another photo');
 });
+
+it('deduplicates licence rows across cursor pages', async () => {
+  const next = { ...row, pharmacyId: 'bbbbbbbbbbbbbbbbbbbbbbbb', pharmacyName: 'Second Pharmacy' };
+  api.listAdminPharmacyLicences.mockResolvedValueOnce({
+    items: [row], pagination: { hasMore: true, nextCursor: 'cursor1' },
+  });
+  await act(async () => button('Refresh').click());
+  api.listAdminPharmacyLicences.mockResolvedValueOnce({
+    items: [row, next], pagination: { hasMore: false, nextCursor: null },
+  });
+  await act(async () => button('Load more').click());
+  expect(api.listAdminPharmacyLicences).toHaveBeenLastCalledWith({ after: 'cursor1' });
+  expect(host.querySelectorAll('.reg-card-body > .adm-card')).toHaveLength(2);
+  expect(host.textContent).toContain('Second Pharmacy');
+});
+
+it('review controls are frozen while an older page is loading', async () => {
+  api.listAdminPharmacyLicences.mockResolvedValueOnce({
+    items: [row], pagination: { hasMore: true, nextCursor: 'cursor1' },
+  });
+  await act(async () => button('Refresh').click());
+  let finishPage;
+  api.listAdminPharmacyLicences.mockImplementationOnce(() =>
+    new Promise(resolve => { finishPage = resolve; }));
+  act(() => button('Load more').click());
+  expect(button('Approve').disabled).toBe(true);
+  expect(button('Reject with reason').disabled).toBe(true);
+  expect(button('Refresh').disabled).toBe(true);
+  await act(async () => {
+    finishPage({ items: [row], pagination: { hasMore: false, nextCursor: null } });
+  });
+  expect(button('Approve').disabled).toBe(false);
+  expect(api.reviewAdminPharmacyLicence).not.toHaveBeenCalled();
+});
+
+it('a failed full refresh hides old review candidates instead of treating them as pending', async () => {
+  api.listAdminPharmacyLicences.mockRejectedValueOnce(new Error('Server unavailable'));
+  await act(async () => button('Refresh').click());
+  expect(host.textContent).not.toContain('Example Pharmacy');
+  expect(host.querySelector('[role="alert"]').textContent).toContain('Server unavailable');
+});
