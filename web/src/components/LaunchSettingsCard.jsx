@@ -31,7 +31,8 @@ export function LaunchSettingsCard() {
     } catch (err) { setError(err.message); }
     finally { setBusy(false); }
   }
-  const missingDeadline = configuration?.mode === 'ordering_open' && !configuration.orderingClosesAt;
+  const hasDeadline = Boolean(configuration?.orderingClosesAt);
+  const missingDeadline = configuration?.mode === 'ordering_open' && !hasDeadline;
   return <section className="adm-card reg-card">
     <div className="adm-card-head">{t('launch.title')}</div>
     <div className="reg-card-body">
@@ -43,17 +44,23 @@ export function LaunchSettingsCard() {
           <option value="registration_only">{t('launch.registrationOnly')}</option>
           <option value="ordering_open">{t('launch.orderingOpen')}</option>
         </select></label>
-        <label>{t('launch.closesAt')}
+        <label className="launch-deadline-toggle">
+          <input type="checkbox" checked={hasDeadline} disabled={busy}
+            onChange={event => setConfiguration({ ...configuration,
+              orderingClosesAt: event.target.checked ? new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() : null })} />
+          {t('launch.autoCloseEnabled')}
+        </label>
+        {hasDeadline && <label>{t('launch.closesAt')}
           <input type="datetime-local" value={localDateTimeValue(configuration.orderingClosesAt)}
-            required={configuration.mode === 'ordering_open'} disabled={busy}
+            required disabled={busy}
             onChange={event => setConfiguration({ ...configuration,
               orderingClosesAt: event.target.value ? new Date(event.target.value).toISOString() : null })} />
-        </label>
+        </label>}
         <p className="hint">{t('launch.closesAtHint')}</p>
-        {missingDeadline && <p className="hint" role="note">{t('launch.deadlineRequired')}</p>}
+        {missingDeadline && <p className="hint" role="note">{t('launch.deadlineWarning')}</p>}
         <label>{t('launch.message')}<textarea required maxLength={500} value={configuration.message} disabled={busy}
           onChange={event => setConfiguration({ ...configuration, message: event.target.value })} /></label>
-        <button className="btn btn-primary" disabled={busy || !configuration.message.trim() || missingDeadline}>{t('launch.save')}</button>
+        <button className="btn btn-primary" disabled={busy || !configuration.message.trim()}>{t('launch.save')}</button>
         <p className="hint">{t('launch.revision', { revision: configuration.revision })}</p>
       </form>}
     </div>
