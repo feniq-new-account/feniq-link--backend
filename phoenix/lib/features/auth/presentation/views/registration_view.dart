@@ -79,10 +79,8 @@ class _RegistrationViewState extends State<RegistrationView> {
     final registered = await cubit.register(
       name: _nameController.text.trim(),
       pharmacyName: _pharmacyNameController.text.trim(),
-      // The field only ever holds local digits (see PhoneTextField) - this
-      // is the one place that composes the full "+963..." value the backend
-      // expects, same helper the validator below uses, so the two can never
-      // drift apart.
+      // The same full-phone parser is shared by registration and login:
+      // 09..., 9..., 9639... and +9639... identify the same account.
       phone: phoneTextFieldFullValue(_phoneController.text),
       address: address,
       areaName: _areaController.text.trim(),
