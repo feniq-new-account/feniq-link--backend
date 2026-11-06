@@ -28,8 +28,8 @@ async function saveLaunch(actorId, body) {
       !body.message.trim() || body.message.length > 500 || !Number.isSafeInteger(body.revision) || body.revision < 0 ||
       (body.orderingClosesAt !== undefined && body.orderingClosesAt !== null &&
         (typeof body.orderingClosesAt !== 'string' ||
-          !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/.test(body.orderingClosesAt) ||
-          !Number.isFinite(Date.parse(body.orderingClosesAt))))) {
+          !Number.isFinite(Date.parse(body.orderingClosesAt)) ||
+          new Date(body.orderingClosesAt).toISOString() !== body.orderingClosesAt))) {
     throw ApiError.badRequest('Invalid launch settings.', undefined, 'INVALID_LAUNCH_SETTINGS');
   }
   await PlatformSetting.init();
