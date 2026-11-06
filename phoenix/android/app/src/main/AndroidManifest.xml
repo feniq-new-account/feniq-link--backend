@@ -6,6 +6,11 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- An opt-in location foreground service while a driver trip is active.
+         It must be started from a visible driver screen, with OS notification. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- Return-request photos: only the "take a photo" option needs this, and
          it is requested at runtime right before the camera opens (see
          request_return_sheet.dart). "Choose from gallery" uses Android's
