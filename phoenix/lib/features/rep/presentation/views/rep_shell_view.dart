@@ -11,6 +11,8 @@ import 'package:feniq/features/rep/presentation/managers/rep_pharmacies_cubit.da
 import 'package:feniq/features/rep/presentation/managers/rep_visits_cubit.dart';
 import 'package:feniq/features/rep/presentation/views/rep_pharmacies_tab.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
+import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
+import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/rep/presentation/views/rep_profile_tab.dart';
@@ -47,6 +49,7 @@ class _RepShellViewState extends State<RepShellView> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final driverEnabled = widget.driverTripRepository != null;
+    final driverAccountId = context.read<AuthCubit>().state.user?.id;
     final titles = [l10n.repNavPharmacies, l10n.repVisitsTitle,
       if (driverEnabled)
         (Localizations.localeOf(context).languageCode == 'ar' ? 'رحلات التوزيع' : 'Delivery trips'),
@@ -69,6 +72,11 @@ class _RepShellViewState extends State<RepShellView> {
               if (driverEnabled) DriverTripsTab(
                 repository: widget.driverTripRepository!,
                 locationProvider: const GeolocatorLocationProvider(),
+                stopOutbox: driverAccountId == null ? null : DriverStopOutbox(
+                  accountId: driverAccountId,
+                  repository: widget.driverTripRepository!,
+                  store: const SecureDriverStopOutboxStore(),
+                ),
               ),
               const RepProfileTab(),
             ]),
