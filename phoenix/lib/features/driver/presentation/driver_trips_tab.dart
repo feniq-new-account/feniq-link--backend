@@ -59,6 +59,7 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
     if (!identical(oldWidget.tripCache, widget.tripCache)) {
       // Never keep a GPS foreground service across account/owner changes.
       _stopTracking(notify: false);
+      _gpsError = null;
       _trips = const [];
       _showingSavedTrips = false;
       _tripSnapshotAt = null;
@@ -513,6 +514,9 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
           ],
           if (_tripCacheError != null)
             Text(_tripCacheError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          if (_gpsError != null)
+            Semantics(liveRegion: true, child: Text(_gpsError!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error))),
           if (_pendingStops.isNotEmpty || _outboxError != null) ...[
             Semantics(
               liveRegion: true,
@@ -609,8 +613,6 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
                     if (_trackingTripId == trip.id && _lastGpsSend != null)
                       Text(_t('آخر إرسال ناجح: ', 'Last sent: ') +
                         _lastGpsSend!.toLocal().toIso8601String().substring(11, 19)),
-                    if (_trackingTripId == trip.id && _gpsError != null)
-                      Text(_gpsError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                   ],
                   if (trip.status == 'planned')
                     FilledButton.icon(
