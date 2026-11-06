@@ -2,7 +2,9 @@
 
 Authority: [Notion decisions](https://app.notion.com/p/40e6c91cc9c481e4bc0ef8e47a7426e9).
 Owner confirmation in this session: city_ring is rural/outside; cash is manually
-entered. No bank integration or automatic FIFO is introduced.
+entered. Subsequent owner confirmation2026-11-06 approves automatic FIFO for
+new receipts, the receipt approval roles, return offsets and remittance timing.
+No bank integration is introduced.
 
 ## Implemented boundary
 
@@ -33,14 +35,42 @@ duplicate or oversized allocations, and expose unapplied cash. They do not check
 a live invoice's remaining debt or persist allocations. Old unallocated receipts
 are not retrospectively assigned to invoices.
 
+## Confirmed rules implemented as calculations — 2026-11-06
+
+The additional admin-only, no-store endpoint
+`POST /api/admin/commission-policy-preview/accounting` accepts any subset of:
+
+- `fifo:{accountId,paymentSyp,invoices:[{invoiceId,accountId,deliveredAt,outstandingSyp,engine}]}`.
+  Oldest delivery first, stable ID tie-break; legacy debt is not skipped.
+  `engine` is `legacy` or `collection-2026-11-06`. Unknown historical allocation
+  cannot be supplied as a guessed outstanding balance to a future live writer.
+- `collection:{terms,previousCollectedSyp,collectedSyp}`. Integer cumulative
+  original/Feniq/rep increments; delivery fees remain separate.
+- `return:{terms,collectedSyp,previousReturnedCommissionSyp,returnedCommissionSyp,settlementId?}`.
+  Known frozen return commission reduces potential before collection, corrects
+  unsettled entitlement after full collection, or offsets the next settlement
+  referencing the original. Mixed partial collection/return returns409
+  `PARTIAL_RETURN_REVIEW_REQUIRED`; no guessed goods-to-commission allocation.
+- `remittance:{collector,paidAt}`. Feniq gets target24h/deadline48h from actual
+  cash time with early transfer allowed. Warehouse gets weekly cadence with
+  no invented weekday or rolling seven-day due date. Timestamps require an
+  explicit timezone. Approval dates cannot reset the clock.
+
+Every result remains `previewOnly:true,persisted:false`. This is executable
+policy arithmetic, not activation of accounting writes. Existing preview
+contracts remain compatible; their manual drafts and eligibility booleans are
+legacy assumptions and must never authorize a live financial operation.
+
 ## Remaining before live v2
 
-1. Approve commission treatment of returns, especially after settlement, and
-   evidence approval/dispute roles. `returnPending` explicitly fails with
-   `RETURN_POLICY_REVIEW_REQUIRED`; no invented clawback.
+1. Persist the approved evidence-review workflow: Feniq rep records and Ammar/
+   Feniq accountant approves; warehouse manual collections need its accountant.
+   Recording and approval are one receipt, not two debt reductions. The old
+   preview still rejects `returnPending`; the new calculator supports the known
+   return cases while refusing unapproved mixed partial-return formulas.
 2. Persist versioned contracts and per-line/invoice snapshots on NEW v2 orders.
    Never reinterpret legacy orders or recalculate their earned credit.
-3. Persist immutable manual allocations referencing same-tenant posted receipts,
+3. Persist immutable FIFO allocations referencing same-tenant posted receipts,
    invoices and frozen FX. Serialize at account level so allocation, invoice edits,
    returns and payment reversal cannot race into an inconsistent result.
 4. Add immutable accrual/reversal events with original references and stable
