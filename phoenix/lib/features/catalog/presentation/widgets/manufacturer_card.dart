@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:feniq/core/constants/app_colors.dart';
-import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/theme/app_text_theme.dart';
