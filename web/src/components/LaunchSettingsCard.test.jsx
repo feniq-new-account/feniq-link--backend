@@ -15,16 +15,18 @@ beforeEach(async () => {
   await act(async () => root.render(<LaunchSettingsCard />));
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
-it('saves the selected mode with a UTC pilot deadline and current revision', async () => {
-  const localDeadline = '2099-11-09T00:00';
-  const orderingClosesAt = new Date(localDeadline).toISOString();
-  api.updateLaunchSettings.mockResolvedValue({ configuration: { mode: 'ordering_open', message: 'Preparing launch', revision: 3, orderingClosesAt } });
+it('saves the selected mode with an automatic UTC pilot deadline and current revision', async () => {
+  const start = Date.now();
+  api.updateLaunchSettings.mockImplementation(async payload => ({ configuration: { ...payload, revision: payload.revision + 1 } }));
   await act(async () => { const input = host.querySelector('select'); input.value = 'ordering_open'; input.dispatchEvent(new Event('change', { bubbles: true })); });
   await act(async () => host.querySelector('input[type="checkbox"]').click());
-  await act(async () => { const input = host.querySelector('input[type="datetime-local"]'); input.value = localDeadline; input.dispatchEvent(new Event('change', { bubbles: true })); });
   await act(async () => host.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-  expect(api.updateLaunchSettings).toHaveBeenCalledWith({ mode: 'ordering_open', message: 'Preparing launch', revision: 2, orderingClosesAt });
-  expect(host.querySelector('input[type="datetime-local"]').value).toBe(localDeadline);
+  expect(api.updateLaunchSettings).toHaveBeenCalledWith({
+    mode: 'ordering_open', message: 'Preparing launch', revision: 2, orderingClosesAt: expect.any(String),
+  });
+  const expiry = Date.parse(api.updateLaunchSettings.mock.calls[0][0].orderingClosesAt);
+  expect(expiry).toBeGreaterThan(start + 47 * 60 * 60 * 1000);
+  expect(host.querySelector('input[type="datetime-local"]').value).not.toBe('');
 });
 it('shows a stale save and reloads the new revision', async () => {
   api.updateLaunchSettings.mockRejectedValue(new Error('Launch settings changed. Reload before saving.'));
