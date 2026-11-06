@@ -3,6 +3,15 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 
+// datetime-local is deliberately expressed in the operator's device time.
+// The API stores canonical UTC instants, which the server checks on each order.
+function localDateTimeValue(utc) {
+  if (!utc) return '';
+  const date = new Date(utc);
+  if (!Number.isFinite(date.getTime())) return '';
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 export function LaunchSettingsCard() {
   const { t } = useTranslation();
   const [configuration, setConfiguration] = useState(null);
@@ -17,11 +26,12 @@ export function LaunchSettingsCard() {
   async function save(event) {
     event.preventDefault(); setBusy(true); setError('');
     try {
-      const { mode, message, revision } = configuration;
-      setConfiguration((await api.updateLaunchSettings({ mode, message, revision })).configuration);
+      const { mode, message, revision, orderingClosesAt = null } = configuration;
+      setConfiguration((await api.updateLaunchSettings({ mode, message, revision, orderingClosesAt })).configuration);
     } catch (err) { setError(err.message); }
     finally { setBusy(false); }
   }
+  const missingDeadline = configuration?.mode === 'ordering_open' && !configuration.orderingClosesAt;
   return <section className="adm-card reg-card">
     <div className="adm-card-head">{t('launch.title')}</div>
     <div className="reg-card-body">
@@ -33,9 +43,17 @@ export function LaunchSettingsCard() {
           <option value="registration_only">{t('launch.registrationOnly')}</option>
           <option value="ordering_open">{t('launch.orderingOpen')}</option>
         </select></label>
+        <label>{t('launch.closesAt')}
+          <input type="datetime-local" value={localDateTimeValue(configuration.orderingClosesAt)}
+            required={configuration.mode === 'ordering_open'} disabled={busy}
+            onChange={event => setConfiguration({ ...configuration,
+              orderingClosesAt: event.target.value ? new Date(event.target.value).toISOString() : null })} />
+        </label>
+        <p className="hint">{t('launch.closesAtHint')}</p>
+        {missingDeadline && <p className="hint" role="note">{t('launch.deadlineRequired')}</p>}
         <label>{t('launch.message')}<textarea required maxLength={500} value={configuration.message} disabled={busy}
           onChange={event => setConfiguration({ ...configuration, message: event.target.value })} /></label>
-        <button className="btn btn-primary" disabled={busy || !configuration.message.trim()}>{t('launch.save')}</button>
+        <button className="btn btn-primary" disabled={busy || !configuration.message.trim() || missingDeadline}>{t('launch.save')}</button>
         <p className="hint">{t('launch.revision', { revision: configuration.revision })}</p>
       </form>}
     </div>
