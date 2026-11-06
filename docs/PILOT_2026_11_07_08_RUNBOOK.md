@@ -9,6 +9,12 @@ Owner authorization: temporary ordering for warehouse pilot, reuse legacy demo c
 - `demoQuarantine.service.js` blocks known public-password demo accounts on production. Never re-enable or distribute shared demo credentials.
 - `backend/scripts/seed-launch-preview.js` explicitly refuses production; do not bypass its guard.
 
+## Actual database findings (2026-11-06)
+- Connected Atlas project `Project 0`, `Cluster0` (Free/M0), database `feniq`: 3 existing warehouses, 352 products, 61 offers, 7 banners, 3 advertised packages, 92 old orders and 109 ledger entries. All 3 warehouse accounts were blocked; their warehouse documents were inactive and subsequently reactivated by the owner-authorized operator. Account credentials remain blocked; password resets must run through the authenticated admin panel with audit and password change on next sign-in.
+- **Do not run a catalog seed or fabricate new financial history**: the historical demo stock is already present. Admin identity exists; do not reactivate old public-password demo admin.
+- Free/M0 backups: optional daily snapshot service is in a gradual private preview and does not support on-demand snapshots. Do not assume this project has it. For a reliable point-in-time pre-cleanup export, use authenticated `mongodump --db feniq --archive=... --gzip` from an approved host; keep archive encrypted and test a `mongorestore` to an isolated database. Source: https://www.mongodb.com/docs/atlas/backup/cloud-backup/free-cluster-backup/ and https://www.mongodb.com/docs/database-tools/mongodump/
+- Never run Monday cleanup unless an independently verified restorable backup exists. Do not store secrets or backup archives in GitHub or a public website.
+
 ## Pilot release gates
 1. Read-only audit of deployed database: warehouse count/IDs, product/offer/banner/package counts, pharmacy/warehouse users, role permissions, admin flags, order counts, and financial dependencies. Record counts without PII.
 2. Take a **verified** MongoDB backup/snapshot; record timestamp, restore procedure, and private storage location. Restore to an isolated database to prove it is usable.
