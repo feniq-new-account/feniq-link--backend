@@ -29,4 +29,18 @@ void main() {
       expect(roleFromJwt(_jwt({'role': ''})), isNull);
     });
   });
+  group('subjectFromJwt (offline cache namespace only)', () {
+    test('accepts an ObjectId-shaped subject without using it for permissions', () {
+      expect(subjectFromJwt(_jwt({'sub': 'aaaaaaaaaaaaaaaaaaaaaaaa', 'role': 'driver'})),
+        'aaaaaaaaaaaaaaaaaaaaaaaa');
+    });
+
+    test('rejects missing, forged-shape or malformed JWT subjects', () {
+      expect(subjectFromJwt(_jwt({'sub': 'u1', 'role': 'driver'})), isNull);
+      expect(subjectFromJwt(_jwt({'sub': '../other-user'})), isNull);
+      expect(subjectFromJwt(_jwt({'sub': 42})), isNull);
+      expect(subjectFromJwt('not-a-token'), isNull);
+    });
+  });
+
 }
