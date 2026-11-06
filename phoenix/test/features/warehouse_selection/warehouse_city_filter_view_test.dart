@@ -323,17 +323,19 @@ void main() {
     expect(find.text('No warehouses in your city'), findsNothing);
   });
 
-  testWidgets('the search box still filters within whichever scope is showing', (tester) async {
+  testWidgets('the home uses a single floating quick-search entry point', (tester) async {
     stubServer(
       inMyCity: [_homeWarehouse, _otherHomeWarehouse],
       everywhere: [_homeWarehouse, _otherHomeWarehouse, _awayWarehouse],
     );
 
     await pumpScreen(tester);
-    await tester.enterText(find.byType(TextField), 'Second');
-    await tester.pumpAndSettle();
 
-    expect(find.text('Second Home Warehouse'), findsOneWidget);
-    expect(find.text('Home Warehouse'), findsNothing);
+    // The old inline TextField no longer consumes vertical space or silently
+    // filters only the current city. The sheet tests cover cross-city search.
+    expect(find.byKey(const ValueKey('homeQuickSearchButton')), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(WarehouseCard), findsNWidgets(2));
+    verifyNever(() => warehouseRepository.getWarehouses(onlyMyCity: false));
   });
 }
