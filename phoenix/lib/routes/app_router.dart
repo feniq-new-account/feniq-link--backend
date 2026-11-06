@@ -58,6 +58,7 @@ import 'package:feniq/features/returns/presentation/views/my_returns_view.dart';
 import 'package:feniq/features/rep/data/repositories/rep_repository.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
+import 'package:feniq/features/driver/data/driver_trip_snapshot.dart';
 import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_home_cubit.dart';
@@ -576,6 +577,11 @@ class AppRouter {
                 : DriverTripsTab(
                     repository: driverTripRepository!,
                     locationProvider: const GeolocatorLocationProvider(),
+                    tripCache: context.read<AuthCubit>().state.localAccountId == null ? null
+                      : DriverTripSnapshotCache(
+                          accountId: context.read<AuthCubit>().state.localAccountId!,
+                          store: const SecureDriverTripSnapshotStore(),
+                        ),
                     stopOutbox: context.read<AuthCubit>().state.localAccountId == null ? null
                       : DriverStopOutbox(
                           accountId: context.read<AuthCubit>().state.localAccountId!,
