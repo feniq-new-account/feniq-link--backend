@@ -23,13 +23,14 @@ import 'package:feniq/core/widgets/sliver_row_grid.dart';
 // ManufacturersView's warehouse-wide search, so both render and add to the
 // cart exactly the same way.
 class CatalogProductList extends StatefulWidget {
-  const CatalogProductList({super.key, required this.warehouseId, required this.warehouseName, this.isGrid = false});
+  const CatalogProductList({super.key, required this.warehouseId, required this.warehouseName, this.isGrid = false, this.showManufacturer = true});
 
   final String warehouseId;
   // Needed for cart operations (CartCubit.addProduct, the conflicting-
   // warehouse dialog).
   final String warehouseName;
   final bool isGrid;
+  final bool showManufacturer;
 
   @override
   State<CatalogProductList> createState() => _CatalogProductListState();
@@ -133,6 +134,7 @@ class _CatalogProductListState extends State<CatalogProductList> {
           return ProductCard(
             product: product,
             isGrid: grid,
+            showManufacturer: widget.showManufacturer,
             cartQuantity: cartQuantityFor(product.id),
             onAdd: (quantity) => _handleAdd(product, quantity),
             onCartQuantityChanged: (quantity) => _setCartQuantity(product, quantity),
