@@ -141,14 +141,13 @@ class _QuickSearchSheetState extends State<QuickSearchSheet> {
 
   void _openWarehouse(WarehouseModel warehouse) {
     final name = _name(warehouse);
-    Navigator.of(context).pop();
-    // Allow the modal route to close before pushing into the application's
-    // router. The app can keep the same shell and navigation history.
+    // Capture the router before closing this sheet's BuildContext.
     final router = GoRouter.of(context);
+    Navigator.of(context).pop();
     router.pushNamed(
       RouteNames.manufacturers,
       pathParameters: {'warehouseId': warehouse.id},
-      extra: ManufacturersRouteArgs(warehouseName: name),
+      extra: ManufacturersRouteArgs(warehouseName: name, warehousePhone: warehouse.phone),
     );
   }
 
