@@ -246,3 +246,64 @@ test('offline retry remains acknowledged after the trip was subsequently complet
   assert.equal(await Event.countDocuments({ tripId: trip._id, event: 'stop_failed' }), 1);
   assert.equal(await Event.countDocuments({ tripId: trip._id, event: 'completed' }), 1);
 });
+
+
+test('six-role distribution matrix keeps admin operations private and driver trips assignment-scoped', async () => {
+  // This is a READ-ONLY contract test: no financial records or shipment state
+  // change. It exercises real HTTP middleware, not only hidden UI controls.
+  const owner = await User.create({
+    name: 'Warehouse Owner', phone: '0931400051',
+    role: 'warehouse', warehouseRole: 'owner', status: 'active',
+  });
+  const accountant = await User.create({
+    name: 'Warehouse Accountant', phone: '0931400052',
+    role: 'warehouse', warehouseRole: 'accountant', status: 'active',
+  });
+  const pharmacist = await User.findById(pharmacy.userId);
+  const standaloneDriver = await User.create({
+    name: 'Unassigned Driver', phone: '0931400053',
+    role: 'driver', status: 'active',
+  });
+  const roles = [
+    ['warehouse owner', token(owner)],
+    ['warehouse accountant', token(accountant)],
+    ['pharmacist', token(pharmacist)],
+    ['field rep', repAToken],
+    ['external driver', token(standaloneDriver)],
+  ];
+  const adminOnly = [
+    '/admin/distribution/overview',
+    '/admin/distribution/trips',
+    '/admin/distribution/drivers',
+  ];
+  for (const endpoint of adminOnly) {
+    assert.equal((await call('GET', endpoint)).status, 401, endpoint);
+    assert.equal((await call('GET', endpoint, { bearer: adminToken })).status, 200, endpoint);
+    for (const [label, bearer] of roles) {
+      const result = await call('GET', endpoint, { bearer });
+      assert.equal(result.status, 403, label + ' accessed ' + endpoint);
+    }
+  }
+  // Warehouse management and accounting roles must not inherit courier rights.
+  for (const bearer of [token(owner), token(accountant), token(pharmacist)]) {
+    assert.equal((await call('GET', '/driver/distribution/trips', { bearer })).status, 403);
+  }
+  assert.equal((await call('GET', '/driver/distribution/trips', { bearer: adminToken })).status, 403);
+
+  // An eligible field rep or driver is allowed the courier API only for
+  // trips assigned to the authenticated user; no other driver trips leak.
+  for (const [user, bearer] of [
+    [repA, repAToken], [repB, repBToken], [standaloneDriver, token(standaloneDriver)],
+  ]) {
+    const response = await call('GET', '/driver/distribution/trips', { bearer });
+    assert.equal(response.status, 200, String(user._id));
+    assert.match(response.body.success ? 'ok' : 'invalid', /ok/);
+    for (const trip of response.body.trips) {
+      assert.equal(String(trip.driverUserId), String(user._id), 'Foreign trip leaked');
+    }
+  }
+  const unassigned = await call('GET', '/driver/distribution/trips', {
+    bearer: token(standaloneDriver),
+  });
+  assert.equal(unassigned.body.trips.length, 0);
+});
