@@ -130,15 +130,15 @@ export function AdminPharmacyLicencesPage() {
                 {row.submittedAt ? new Date(row.submittedAt).toLocaleDateString(ar ? 'ar-SY' : 'en-US') : '—'}
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                <button type="button" className="btn-secondary" disabled={busyId !== null}
+                <button type="button" className="btn-secondary" disabled={busyId !== null || loading}
                   onClick={() => download(row)}>
                   {tr('تنزيل الوثيقة', 'Download document')}
                 </button>
-                <button type="button" className="btn-primary" disabled={busyId !== null}
+                <button type="button" className="btn-primary" disabled={busyId !== null || loading}
                   onClick={() => review(row, 'approved')}>
                   {tr('قبول', 'Approve')}
                 </button>
-                <button type="button" className="btn-secondary" disabled={busyId !== null}
+                <button type="button" className="btn-secondary" disabled={busyId !== null || loading}
                   onClick={() => review(row, 'rejected')}>
                   {tr('رفض مع السبب', 'Reject with reason')}
                 </button>
