@@ -2036,5 +2036,25 @@
     "netScope": "Invoice net after returns, compensation corrections and Feniq share, before rep share and delivery fees (all dates)",
     "futureCredit": "Returned value is credit for a future invoice or exchange; the original invoice is not reduced now.",
     "confirmFutureCredit": "Approve return for order {{number}} and issue {{amount}} credit for a future invoice or exchange? The original invoice debt stays unchanged."
+  },
+  "collectionControls": {
+    "title": "Collection contracts and settlements",
+    "revision": "Active contract revision",
+    "contract": "Activate a contract revision for new orders",
+    "contractNote": "Captures existing agreed rep rates. Does not recalculate old invoices. Subsequent rep rate changes require a new contract revision for later orders.",
+    "agreement": "Approved agreement reference",
+    "deliveryFee": "Agreed delivery fee in SYP (blank means unspecified; zero means free)",
+    "newOnly": "Apply to new orders only, preserving financial history",
+    "activate": "Activate contract revision",
+    "weekly": "Confirm weekly collection settlement",
+    "weeklyNote": "Only warehouse receipts approved by its accountant, in this period and not previously recognized, appear. Confirmation records commission eligibility, not a cash transfer or another pharmacy payment.",
+    "noCandidates": "No eligible unsettled proofs in this period.",
+    "select": "Select proof",
+    "settlementReference": "Settlement document reference",
+    "confirm": "Confirm selected settlement",
+    "contractSaved": "Contract revision saved for new orders.",
+    "settlementSaved": "Settlement saved and commission journal updated; no cash transfer recorded.",
+    "retryContract": "Retry pending contract activation",
+    "retrySettlement": "Retry pending weekly settlement"
   }
 }

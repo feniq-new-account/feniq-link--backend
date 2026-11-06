@@ -1063,6 +1063,8 @@ export const api = {
   warehouseManufacturers: ({ inCatalog } = {}) =>
     request(`/warehouse/manufacturers${inCatalog ? '?inCatalog=true' : ''}`),
   collectionAccounting: (query = {}) => request(`/warehouse/collection-accounting?${new URLSearchParams(query)}`),
+  activateCollectionContract: (warehouseId, body) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}/contracts`, { method: 'POST', body }),
+  confirmCollectionSettlement: (warehouseId, body) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}/settlements`, { method: 'POST', body }),
   adminCollectionAccounting: (warehouseId, query = {}) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}?${new URLSearchParams(query)}`),
   accountantDashboard: (query = {}) => request(`/warehouse/balances/dashboard?${new URLSearchParams(query)}`),
   warehouseBalances: ({ limit, after, search, balanceState } = {}) => {

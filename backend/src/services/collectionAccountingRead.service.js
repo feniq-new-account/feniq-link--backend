@@ -51,7 +51,7 @@ async function summary(warehouseId, period, session, accountId = null) {
 }
 
 async function journal(actorId, query = {}, adminWarehouseId = null) {
-  if (Object.keys(query).some(k => !['period', 'from', 'to', 'after', 'invoiceAfter', 'pharmacyId', 'state', 'search'].includes(k)) ||
+  if (Object.keys(query).some(k => !['period', 'from', 'to', 'after', 'invoiceAfter', 'pharmacyId', 'state', 'search', 'candidateAfter'].includes(k)) ||
       Object.values(query).some(value => typeof value !== 'string') ||
       (query.state && !['open', 'partial', 'paid', 'void'].includes(query.state)) || (query.search && query.search.length > 120)) {
     throw ApiError.badRequest('Invalid collection accounting filter.', undefined, 'INVALID_COLLECTION_QUERY');
@@ -59,6 +59,8 @@ async function journal(actorId, query = {}, adminWarehouseId = null) {
   const period = resolveSummaryPeriod({ period: 'month', ...query });
   const after = query.after ? oid(query.after) : null, invoiceAfter = query.invoiceAfter ? oid(query.invoiceAfter) : null;
   const pharmacyId = query.pharmacyId ? oid(query.pharmacyId) : null;
+  const candidateAfter = query.candidateAfter ? oid(query.candidateAfter) : null;
+  if (candidateAfter && !adminWarehouseId) throw ApiError.forbidden('Settlement evidence is platform scoped.');
   return financialReadSnapshot(async session => {
     const actor = await User.findById(oid(actorId)).select('role status warehouseRole').session(session).lean();
     if (!actor || actor.status !== 'active' || !rolePermissions(actor).financialRead || !['admin', 'warehouse'].includes(actor.role)) {
@@ -123,6 +125,7 @@ async function journal(actorId, query = {}, adminWarehouseId = null) {
     }
     return { asOf: new Date(), timezone: 'Asia/Damascus', warehouse: { id: warehouse._id, nameAr: warehouse.nameAr, nameEn: warehouse.nameEn },
       summary: totals, period,
+      ...(actor.role === 'admin' ? { settlementCandidates: await require('./collectionSettlementCandidates.service').read(warehouse._id, period, candidateAfter, session) } : {}),
       invoices: rows, invoiceScope: 'current_positions_all_dates',
       invoicePagination: { hasMore: invoicePage.length > PAGE, nextCursor: invoicePage.length > PAGE ? positions[positions.length - 1]._id : null },
       events: eventRows.map(row => { const invoice = byInvoice.get(String(row.invoiceId));

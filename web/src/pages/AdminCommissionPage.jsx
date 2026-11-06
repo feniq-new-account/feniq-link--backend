@@ -1,3 +1,4 @@
+import { AdminCollectionControls } from '../components/AdminCollectionControls';
 import { NumericInput } from '../components/NumericInput';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -475,6 +476,7 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
         />
       </div>
 
+      <AdminCollectionControls warehouseId={warehouseId} />
       <div className="adm-detail-grid">
         <div>
           <div className="adm-card-head">

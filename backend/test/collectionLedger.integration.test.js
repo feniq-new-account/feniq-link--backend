@@ -498,3 +498,52 @@ test('v2 returned admin-funded compensation is frozen and deducted exactly once 
   const final = await settlementReport.getSettlementForWarehouse(warehouse._id);
   assert.equal(final.totals.compensationClawbackSyp, totalGrants.reduce((n, grant) => n + grant.compensationClawbackSyp, 0));
 });
+
+test('admin settlement candidates contain only posted, approved, unrecognized post-cutover receipts in the actual period', async () => {
+  await deliver(await order());
+  const old = await payment(100);
+  const oldReview = await approve(old);
+  await contracts.createAndActivate(admin._id, warehouse._id, contractBody());
+  await deliver(await order());
+  const receipt = await payment(5000), accepted = await approve(receipt);
+  await payment(6000); // no proof: not a candidate
+  const reversed = await payment(7000); await approve(reversed);
+  await payments.reversePayment(reversed._id, warehouse._id, accountant._id, { reason: 'Synthetic reversal', idempotencyKey: key() });
+  const before = await Payment.countDocuments(), events = await Event.countDocuments();
+  const response = await call(admin, 'GET', `/admin/collection-accounting/warehouses/${warehouse._id}?period=custom&from=2026-11-01&to=2026-11-07`);
+  assert.equal(response.status, 200);
+  const rows = response.body.settlementCandidates.rows;
+  assert.equal(rows.length, 1); assert.equal(rows[0].id, String(accepted._id));
+  assert.equal(rows[0].amountSyp, 5000); assert.equal(rows[0].paymentId, String(receipt._id));
+  assert.equal(rows[0].pharmacy.nameEn, pharmacy.nameEn);
+  assert.ok(!rows.some(row => row.id === String(oldReview._id)));
+  assert.equal(await Payment.countDocuments(), before); assert.equal(await Event.countDocuments(), events);
+  const ownerRead = await call(owner, 'GET', '/warehouse/collection-accounting');
+  assert.equal(ownerRead.body.settlementCandidates, undefined);
+  const future = await call(admin, 'GET', `/admin/collection-accounting/warehouses/${warehouse._id}?period=custom&from=2026-12-01&to=2026-12-07`);
+  assert.deepEqual(future.body.settlementCandidates.rows, []);
+  const foreignWarehouse = new mongoose.Types.ObjectId();
+  const foreign = await call(admin, 'GET', `/admin/collection-accounting/warehouses/${foreignWarehouse}`);
+  assert.equal(foreign.status, 404);
+  await settlements.confirmWarehouseSettlement(admin._id, warehouse._id, settlementBody([accepted]));
+  const after = await call(admin, 'GET', `/admin/collection-accounting/warehouses/${warehouse._id}`);
+  assert.deepEqual(after.body.settlementCandidates.rows, []);
+});
+
+test('candidate pagination is bounded and tenant-scoped, and never returns the same proof twice', async () => {
+  await contracts.createAndActivate(admin._id, warehouse._id, contractBody());
+  await deliver(await order());
+  const reviewIds = new Set();
+  for (let i = 0; i < 21; i++) reviewIds.add(String((await approve(await payment(10)))._id));
+  const path = `/admin/collection-accounting/warehouses/${warehouse._id}`;
+  const first = await call(admin, 'GET', path);
+  assert.equal(first.status, 200); assert.equal(first.body.settlementCandidates.rows.length, 20);
+  assert.equal(first.body.settlementCandidates.hasMore, true);
+  const second = await call(admin, 'GET', `${path}?candidateAfter=${first.body.settlementCandidates.nextCursor}`);
+  assert.equal(second.status, 200); assert.equal(second.body.settlementCandidates.rows.length, 1);
+  assert.equal(second.body.settlementCandidates.hasMore, false);
+  const got = [...first.body.settlementCandidates.rows, ...second.body.settlementCandidates.rows].map(row => row.id);
+  assert.equal(new Set(got).size, 21); assert.deepEqual(new Set(got), reviewIds);
+  const denied = await call(accountant, 'GET', `/warehouse/collection-accounting?candidateAfter=${got[0]}`);
+  assert.equal(denied.status, 403);
+});
