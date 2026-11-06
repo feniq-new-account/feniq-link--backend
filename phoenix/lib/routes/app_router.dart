@@ -576,9 +576,9 @@ class AppRouter {
                 : DriverTripsTab(
                     repository: driverTripRepository!,
                     locationProvider: const GeolocatorLocationProvider(),
-                    stopOutbox: context.read<AuthCubit>().state.user == null ? null
+                    stopOutbox: context.read<AuthCubit>().state.localAccountId == null ? null
                       : DriverStopOutbox(
-                          accountId: context.read<AuthCubit>().state.user!.id,
+                          accountId: context.read<AuthCubit>().state.localAccountId!,
                           repository: driverTripRepository!,
                           store: const SecureDriverStopOutboxStore(),
                         ),
