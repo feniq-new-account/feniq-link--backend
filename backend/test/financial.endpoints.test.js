@@ -126,7 +126,7 @@ test.before(async () => {
 
   await call('POST', '/warehouse/payments', {
     token: tokens.warehouse,
-    body: { pharmacyId: ids.pharmacy.toString(), amount: 100000, currency: 'SYP', method: 'cash' },
+    body: { pharmacyId: ids.pharmacy.toString(), amount: 100000, currency: 'SYP', method: 'cash', idempotencyKey: 'financial-endpoints-seed-payment' },
   });
 
   const [item] = await OrderItem.find({ orderId: ids.order });

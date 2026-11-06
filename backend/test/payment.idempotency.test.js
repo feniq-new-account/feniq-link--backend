@@ -89,10 +89,10 @@ async function balanceSyp() {
   return (await ledger.findAccount(ids.pharmacy, ids.warehouse)).balanceCache.syp;
 }
 
-async function call(method, path, body) {
+async function call(method, path, body, token = warehouseToken) {
   const response = await fetch(baseUrl + path, {
     method,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${warehouseToken}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await response.text();
@@ -422,4 +422,77 @@ test('POST /warehouse/payments: replay is 200, a reused key is 409 IDEMPOTENCY_K
   assert.strictEqual(reverseReused.body.code, 'IDEMPOTENCY_KEY_REUSED');
 
   assert.strictEqual(await Payment.countDocuments(), 2, 'one payment, one reversal');
+});
+
+test('HTTP cash recording requires a nonblank idempotency key before any financial mutation', async () => {
+  const beforeBalance = await balanceSyp();
+  const beforeEntries = await LedgerEntry.countDocuments();
+  const beforeAudits = await FinancialAuditLog.countDocuments();
+  for (const idempotencyKey of [undefined, null, '', '   ', '\t']) {
+    const result = await call('POST', '/warehouse/payments', {
+      pharmacyId: String(ids.pharmacy), amount: 30000, currency: 'SYP', idempotencyKey,
+    });
+    assert.strictEqual(result.status, 400); assert.strictEqual(result.body.code, 'IDEMPOTENCY_KEY_REQUIRED');
+  }
+  assert.strictEqual(await Payment.countDocuments(), 0);
+  assert.strictEqual(await LedgerEntry.countDocuments(), beforeEntries);
+  assert.strictEqual(await FinancialAuditLog.countDocuments(), beforeAudits);
+  assert.strictEqual(await balanceSyp(), beforeBalance);
+});
+test('HTTP reversal requires its own key and leaves the original posted on validation failure', async () => {
+  const payment = await pay({ idempotencyKey: newKey('reverse-validation') });
+  const before = { balance: await balanceSyp(), entries: await LedgerEntry.countDocuments(), audits: await FinancialAuditLog.countDocuments() };
+  for (const idempotencyKey of [undefined, null, '', '   ', {}, 'x'.repeat(101)]) {
+    const result = await call('POST', `/warehouse/payments/${payment.id}/reverse`, { reason: 'Mistaken cash receipt', idempotencyKey });
+    assert.strictEqual(result.status, 400);
+  }
+  assert.strictEqual((await Payment.findById(payment.id)).status, 'posted');
+  assert.strictEqual(await Payment.countDocuments(), 1);
+  assert.strictEqual(await balanceSyp(), before.balance);
+  assert.strictEqual(await LedgerEntry.countDocuments(), before.entries);
+  assert.strictEqual(await FinancialAuditLog.countDocuments(), before.audits);
+});
+test('concurrent HTTP retries with one key post one receipt and return the same identity', async () => {
+  const body = { pharmacyId: String(ids.pharmacy), amount: 30000, currency: 'SYP', idempotencyKey: newKey('concurrent-http') };
+  const results = await Promise.all(Array.from({ length: 5 }, () => call('POST', '/warehouse/payments', body)));
+  assert.ok(results.every((result) => [200, 201].includes(result.status)));
+  assert.strictEqual(new Set(results.map((result) => result.body.payment.id)).size, 1);
+  assert.strictEqual(await Payment.countDocuments(), 1);
+  assert.strictEqual(await LedgerEntry.countDocuments({ kind: 'payment' }), 1);
+  assert.strictEqual(await balanceSyp(), 70000);
+});
+test('owner, admin, pharmacy, rep and driver cannot record or reverse warehouse cash', async () => {
+  const receipt = await pay({ idempotencyKey: newKey('role-boundaries') });
+  const before = await balanceSyp();
+  let suffix = 0;
+  for (const role of ['warehouse', 'admin', 'pharmacy', 'rep', 'driver']) {
+    const person = await User.create({ name: role, role, status: 'active', phone: `+96395510000${++suffix}`, ...(role === 'warehouse' ? { warehouseRole: 'owner' } : {}) });
+    if (role === 'warehouse') await Warehouse.updateOne({ _id: ids.warehouse }, { $addToSet: { memberUserIds: person._id } });
+    const token = jwt.sign({ sub: person.id }, env.jwtSecret, { expiresIn: '1h' });
+    const body = { pharmacyId: String(ids.pharmacy), amount: 100, currency: 'SYP', idempotencyKey: newKey('forbidden') };
+    assert.strictEqual((await call('POST', '/warehouse/payments', body, token)).status, 403);
+    assert.strictEqual((await call('POST', `/warehouse/payments/${receipt.id}/reverse`, { reason: 'Forbidden', idempotencyKey: newKey('forbidden-reverse') }, token)).status, 403);
+  }
+  assert.strictEqual(await balanceSyp(), before);
+  assert.strictEqual(await Payment.countDocuments(), 1);
+  assert.strictEqual((await Payment.findById(receipt.id)).status, 'posted');
+});
+
+test('case variants of payment routes cannot bypass the owner cash permission', async () => {
+  const receipt = await pay({ idempotencyKey: newKey('owner-route-fixture') });
+  const owner = await User.create({ name: 'Owner route case', role: 'warehouse', warehouseRole: 'owner', status: 'active', phone: '+963955101111' });
+  await Warehouse.updateOne({ _id: ids.warehouse }, { $addToSet: { memberUserIds: owner._id } });
+  const token = jwt.sign({ sub: owner.id }, env.jwtSecret, { expiresIn: '1h' });
+  const before = { balance: await balanceSyp(), audits: await FinancialAuditLog.countDocuments(), entries: await LedgerEntry.countDocuments() };
+  for (const route of ['/WAREHOUSE/PAYMENTS', '/warehouse/PAYMENTS', '/Warehouse/Payments', '/warehouse/payments']) {
+    const create = await call('POST', `${route}?view=accounting`, { pharmacyId: String(ids.pharmacy), amount: 100, idempotencyKey: newKey('case-record') }, token);
+    const reverse = await call('POST', `${route}/${receipt.id}/REVERSE?view=accounting`, { reason: 'Case route probe', idempotencyKey: newKey('case-reverse') }, token);
+    assert.strictEqual(create.status, 403); assert.strictEqual(create.body.code, 'ACCOUNTANT_REQUIRED');
+    assert.strictEqual(reverse.status, 403); assert.strictEqual(reverse.body.code, 'ACCOUNTANT_REQUIRED');
+  }
+  assert.strictEqual(await Payment.countDocuments(), 1);
+  assert.strictEqual(await LedgerEntry.countDocuments(), before.entries);
+  assert.strictEqual(await FinancialAuditLog.countDocuments(), before.audits);
+  assert.strictEqual(await balanceSyp(), before.balance);
+  assert.strictEqual((await Payment.findById(receipt.id)).status, 'posted');
 });

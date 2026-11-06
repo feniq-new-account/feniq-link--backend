@@ -11,7 +11,7 @@ const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 // A client-generated UUID. A retried request carrying the same key returns the
 // payment the first attempt created rather than crediting the pharmacy twice.
 function parseIdempotencyKey(value, { required = false } = {}) {
-  if (value === undefined || value === null || value === '') {
+  if (value === undefined || value === null || (typeof value === 'string' && !value.trim())) {
     if (required) {
       throw ApiError.badRequest(
         'An idempotency key is required.',
@@ -43,7 +43,7 @@ const create = asyncHandler(async (req, res) => {
   const warehouse = await loadWarehouseOrThrow(req.user._id);
   const payment = await paymentService.createPayment(warehouse._id, req.user._id, {
     ...req.body,
-    idempotencyKey: parseIdempotencyKey(req.body.idempotencyKey),
+    idempotencyKey: parseIdempotencyKey(req.body.idempotencyKey, { required: true }),
   });
   respond(res, payment, { message: 'Payment recorded.' });
 });
@@ -54,7 +54,7 @@ const reverse = asyncHandler(async (req, res) => {
   const warehouse = await loadWarehouseOrThrow(req.user._id);
   const reversal = await paymentService.reversePayment(req.params.id, warehouse._id, req.user._id, {
     reason: req.body.reason,
-    idempotencyKey: parseIdempotencyKey(req.body.idempotencyKey),
+    idempotencyKey: parseIdempotencyKey(req.body.idempotencyKey, { required: true }),
   });
   respond(res, reversal, { createdStatus: 201, message: 'Payment reversed.' });
 });
