@@ -1,16 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
+import 'package:feniq/features/driver/data/driver_trip_snapshot.dart';
 
 /// Operational delivery checklist. No accounting or payment actions.
 class DriverTripsTab extends StatefulWidget {
   const DriverTripsTab({super.key, required this.repository, this.locationProvider,
-    this.stopOutbox});
+    this.stopOutbox, this.tripCache});
   final DriverTripRepository repository;
   final LocationProvider? locationProvider;
   final DriverStopOutbox? stopOutbox;
+  final DriverTripSnapshotCache? tripCache;
   @override
   State<DriverTripsTab> createState() => _DriverTripsTabState();
 }
@@ -29,6 +32,9 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
   bool _outboxLoaded = false;
   List<PendingDriverStop> _pendingStops = const [];
   String? _outboxError;
+  bool _showingSavedTrips = false;
+  DateTime? _tripSnapshotAt;
+  String? _tripCacheError;
 
   bool get _ar => Localizations.localeOf(context).languageCode == 'ar';
   String _t(String ar, String en) => _ar ? ar : en;
@@ -44,6 +50,13 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
   @override
   void didUpdateWidget(covariant DriverTripsTab oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.tripCache, widget.tripCache)) {
+      _trips = const [];
+      _showingSavedTrips = false;
+      _tripSnapshotAt = null;
+      _tripCacheError = null;
+      unawaited(_reload());
+    }
     if (!identical(oldWidget.stopOutbox, widget.stopOutbox)) {
       // A different owner or router instance must reload its own encrypted
       // commands; never reuse another account's previous pending UI state.
@@ -205,11 +218,29 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
     await _reload();
   }
 
+  bool _isTransportFailure(Object error) =>
+    error is DioException && [
+      DioExceptionType.connectionError,
+      DioExceptionType.connectionTimeout,
+      DioExceptionType.sendTimeout,
+      DioExceptionType.receiveTimeout,
+    ].contains(error.type);
+
   Future<void> _reload() async {
     if (!_loading && mounted) setState(() => _loading = true);
+    final cache = widget.tripCache;
     try {
       final trips = await widget.repository.listTrips();
-      if (!mounted) return;
+      String? cacheError;
+      if (cache != null) {
+        try {
+          await cache.save(trips);
+        } catch (_) {
+          cacheError = _t('لم يتم حفظ الرحلات للاستخدام دون إنترنت.',
+            'Could not save trips for offline use.');
+        }
+      }
+      if (!mounted || !identical(cache, widget.tripCache)) return;
       setState(() {
         _trips = trips;
         if (_trackingTripId != null && !trips.any((trip) =>
@@ -217,12 +248,39 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
           _stopTracking();
         }
         _loading = false;
+        _showingSavedTrips = false;
+        _tripSnapshotAt = null;
+        _tripCacheError = cacheError;
         _error = null;
       });
-    } catch (_) {
-      if (!mounted) return;
+    } catch (error) {
+      if (!mounted || !identical(cache, widget.tripCache)) return;
+      // Never display cache following 401, 403 or a malformed API response.
+      // A transport-layer failure alone is evidence of an offline situation.
+      if (cache != null && _isTransportFailure(error)) {
+        try {
+          final snapshot = await cache.read();
+          if (!mounted || !identical(cache, widget.tripCache)) return;
+          if (snapshot != null) {
+            setState(() {
+              _trips = snapshot.trips;
+              _showingSavedTrips = true;
+              _tripSnapshotAt = snapshot.savedAt;
+              _tripCacheError = null;
+              _loading = false;
+              _error = null;
+            });
+            return;
+          }
+        } catch (_) {
+          // Corrupted or unavailable secure storage must fail closed.
+        }
+      }
       setState(() {
         _loading = false;
+        _showingSavedTrips = false;
+        _tripSnapshotAt = null;
+        _trips = const [];
         _error = _t('تعذر تحميل الرحلات. تأكد من الاتصال.',
             'Could not load trips. Check the connection.');
       });
@@ -340,6 +398,17 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
           Text(_t('تظهر فقط الرحلات المسندة لحسابك. كل تعديل يحتاج اتصالاً بالخادم.',
             'Only your assigned trips are shown. Changes require a server connection.')),
           const SizedBox(height: 16),
+          if (_showingSavedTrips) ...[
+            Text(_t(
+              '⚠️ هذه نسخة محفوظة من الرحلات، وليست حالة مباشرة من السيرفر. قد تكون تغيرت.',
+              '⚠️ Saved trip snapshot, not live server state. Assignments may have changed.',
+            ), style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            if (_tripSnapshotAt != null)
+              Text(_t('آخر مزامنة: ', 'Last sync: ') +
+                _tripSnapshotAt!.toLocal().toIso8601String().substring(0, 19)),
+          ],
+          if (_tripCacheError != null)
+            Text(_tripCacheError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
           if (_pendingStops.isNotEmpty || _outboxError != null) ...[
             Semantics(
               liveRegion: true,
