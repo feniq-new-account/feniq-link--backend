@@ -149,6 +149,7 @@ class AuthCubit extends Cubit<AuthState> {
             state.copyWith(
               sessionStatus: SessionStatus.offline,
               tokenRole: roleFromJwt(token),
+              tokenSubject: subjectFromJwt(token),
               errorCode: f.code,
               errorMessage: f.errMessage,
             ),
@@ -165,6 +166,7 @@ class AuthCubit extends Cubit<AuthState> {
           state.copyWith(
             sessionStatus: SessionStatus.offline,
             tokenRole: roleFromJwt(storedToken),
+            tokenSubject: subjectFromJwt(storedToken),
           ),
         );
       }
