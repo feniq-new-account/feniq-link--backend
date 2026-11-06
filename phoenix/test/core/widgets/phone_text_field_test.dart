@@ -2,18 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:feniq/core/widgets/phone_text_field.dart';
 
-// The field is a fixed, non-editable "09" box followed by the digits the
-// pharmacist actually types. Both auth screens share this one widget, so the
-// prefix can only ever be in one place.
 void main() {
   late TextEditingController controller;
-
   setUp(() => controller = TextEditingController());
   tearDown(() => controller.dispose());
 
-  Future<void> pumpField(WidgetTester tester) async {
+  Future<void> pumpField(WidgetTester tester, {Locale? locale}) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: locale,
         home: Scaffold(
           body: PhoneTextField(label: 'Phone', controller: controller),
         ),
@@ -22,76 +19,41 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('both Arabic keyboard digit sets become ASCII before the numeric filter', (tester) async {
+  testWidgets('one complete phone input without a fixed 09 box', (tester) async {
     await pumpField(tester);
-    await tester.enterText(find.byType(TextFormField), '١٢٣٤٥٦٧٨');
-    expect(controller.text, '12345678');
-    await tester.enterText(find.byType(TextFormField), '۱۲۳۴۵۶۷۸');
-    expect(controller.text, '12345678');
-  });
-
-  testWidgets('shows a fixed "09" prefix', (tester) async {
-    await pumpField(tester);
-    expect(find.text('09'), findsOneWidget);
-  });
-
-  testWidgets('the prefix is not editable - there is exactly one input', (tester) async {
-    await pumpField(tester);
-
     expect(find.byType(TextFormField), findsOneWidget);
-    // The "09" is a Text, not an EditableText, so it cannot be selected,
-    // focused or backspaced away.
-    expect(
-      find.descendant(of: find.text('09'), matching: find.byType(EditableText)),
-      findsNothing,
-    );
-  });
-
-  testWidgets('the prefix sits before the input in the reading direction', (tester) async {
-    await pumpField(tester);
-
-    // LTR: the box is to the left of the field it prefixes.
-    expect(
-      tester.getTopLeft(find.text('09')).dx,
-      lessThan(tester.getTopLeft(find.byType(TextFormField)).dx),
-    );
-  });
-
-  testWidgets('in Arabic too the 09 box sits on the left, the digits right after it', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('ar'),
-        home: Directionality(
-          textDirection: TextDirection.rtl,
-          child: Scaffold(
-            body: PhoneTextField(label: 'الهاتف', controller: controller),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      tester.getTopRight(find.text('09')).dx,
-      lessThanOrEqualTo(tester.getTopLeft(find.byType(TextFormField)).dx),
-    );
-  });
-
-  testWidgets('the controller holds only what was typed, never the prefix', (tester) async {
-    await pumpField(tester);
-
-    await tester.enterText(find.byType(TextFormField), '12345678');
-
-    expect(controller.text, '12345678');
+    expect(find.text('09'), findsNothing);
+    expect(find.text('09xxxxxxxx / +9639xxxxxxxx'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), '0912345678');
+    expect(controller.text, '0912345678');
     expect(phoneTextFieldFullValue(controller.text), '+963912345678');
   });
 
-  testWidgets('non-digits are rejected by the field itself', (tester) async {
+  testWidgets('accepts plus, country code and separators in the one field', (tester) async {
     await pumpField(tester);
+    await tester.enterText(find.byType(TextFormField), '+963 912-345678');
+    expect(controller.text, '+963 912-345678');
+    expect(phoneTextFieldFullValue(controller.text), '+963912345678');
+  });
 
+  testWidgets('Arabic and Persian number keys become western digits', (tester) async {
+    await pumpField(tester);
+    await tester.enterText(find.byType(TextFormField), '٠٩١٢٣٤٥٦٧٨');
+    expect(controller.text, '0912345678');
+    await tester.enterText(find.byType(TextFormField), '۰۹۱۲۳۴۵۶۷۸');
+    expect(controller.text, '0912345678');
+  });
+
+  testWidgets('phone text stays LTR even when app language is Arabic', (tester) async {
+    await pumpField(tester, locale: const Locale('ar'));
+    expect(tester.widget<TextFormField>(find.byType(TextFormField)).textDirection,
+        TextDirection.ltr);
+  });
+
+  testWidgets('letters are rejected instead of silently modifying the phone', (tester) async {
+    await pumpField(tester);
     await tester.enterText(find.byType(TextFormField), '+963 91a2-345678');
-
-    expect(controller.text, '963912345678');
+    expect(controller.text, '+963 912-345678');
     expect(phoneTextFieldFullValue(controller.text), '+963912345678');
   });
 }
