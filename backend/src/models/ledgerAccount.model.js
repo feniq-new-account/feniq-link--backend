@@ -20,6 +20,9 @@ const ledgerAccountSchema = new Schema(
     // sequence is never issued twice and never leaves a gap - see
     // ledger.service.js's postEntry.
     seqCounter: { type: Number, required: true, default: 0 },
+    // Account-level serialization for evidence/allocation work with no ledger
+    // entry. Kept separate so it cannot issue sequence gaps or alter balances.
+    financialRevision: { type: Number, default: 0 },
 
     // A CACHE, never the source of truth. Its definition is exactly "what a
     // full replay of this account's entries produces" (ledger.service.js's

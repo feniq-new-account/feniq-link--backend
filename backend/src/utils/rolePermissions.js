@@ -11,6 +11,9 @@ function rolePermissions(user) {
     financialRead: admin || warehouse || (active && user?.role === 'pharmacy'),
     paymentRecord: operator,
     paymentReverse: operator,
+    // Proof approval is a NEW action: it requires an explicit accountant,
+    // never owner, admin, rep or an unspecified legacy combined login.
+    paymentProofReview: warehouse && user.warehouseRole === 'accountant',
     featureConfigure: warehouse && user.warehouseRole !== 'accountant',
     featureGrant: admin,
     visitRecord: active && user?.role === 'rep',

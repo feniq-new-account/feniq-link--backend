@@ -56,6 +56,7 @@ LedgerAccount (one per pharmacy ↔ warehouse)
 | `payments` | Append-only. `status` is the only mutable field, `posted → reversed`, once. |
 | `returns` | Carries the frozen credit valuation once approved. |
 | `commissioncollections` | Warehouse-to-platform commission payments. **Not** a ledger. |
+| `paymentproofs` / `paymentproofreviews` | Immutable evidence and accountant decisions for an existing warehouse receipt. No new debt reduction or v2 commission. |
 
 `pharmacybalances` was V1's balance. It is **deleted** — if you see it
 referenced anywhere, that is a bug.
