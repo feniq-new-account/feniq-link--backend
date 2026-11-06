@@ -20,6 +20,7 @@ it('saves the selected mode with a UTC pilot deadline and current revision', asy
   const orderingClosesAt = new Date(localDeadline).toISOString();
   api.updateLaunchSettings.mockResolvedValue({ configuration: { mode: 'ordering_open', message: 'Preparing launch', revision: 3, orderingClosesAt } });
   await act(async () => { const input = host.querySelector('select'); input.value = 'ordering_open'; input.dispatchEvent(new Event('change', { bubbles: true })); });
+  await act(async () => host.querySelector('input[type="checkbox"]').click());
   await act(async () => { const input = host.querySelector('input[type="datetime-local"]'); input.value = localDeadline; input.dispatchEvent(new Event('change', { bubbles: true })); });
   await act(async () => host.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
   expect(api.updateLaunchSettings).toHaveBeenCalledWith({ mode: 'ordering_open', message: 'Preparing launch', revision: 2, orderingClosesAt });
@@ -36,6 +37,9 @@ it('shows a stale save and reloads the new revision', async () => {
 
 it('warns when opening without an automatic closing time', async () => {
   await act(async () => { const input = host.querySelector('select'); input.value = 'ordering_open'; input.dispatchEvent(new Event('change', { bubbles: true })); });
-  expect(host.querySelector('[role="note"]').textContent).toContain('launch.deadlineRequired');
-  expect(host.querySelector('form button.btn-primary').disabled).toBe(true);
+  expect(host.querySelector('[role="note"]').textContent).toContain('launch.deadlineWarning');
+  // Permanent launch remains possible if the admin explicitly leaves auto-close off.
+  expect(host.querySelector('form button.btn-primary').disabled).toBe(false);
+  await act(async () => host.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  expect(api.updateLaunchSettings).toHaveBeenCalledWith({ mode: 'ordering_open', message: 'Preparing launch', revision: 2, orderingClosesAt: null });
 });
