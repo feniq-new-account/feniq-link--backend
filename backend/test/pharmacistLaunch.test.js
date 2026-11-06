@@ -107,3 +107,55 @@ test('an already committed order replays after ordering closes, including an old
   assert.equal(result.status, 409); assert.equal(result.body.code, 'ORDERING_NOT_STARTED');
   assert.equal(await Order.countDocuments({ pharmacyId: own.pharmacy._id }), 1);
 });
+
+test('pilot ordering expires on server time without a cron, including stale mobile clients', async () => {
+  const admin = await User.findOne({ role: 'admin', status: 'active' });
+  const existing = await launch.readLaunch();
+  const deadline = new Date(Date.now() + 60000).toISOString();
+  const config = await launch.saveLaunch(admin.id, {
+    mode: 'ordering_open', message: 'Pilot weekend', revision: existing.revision,
+    orderingClosesAt: deadline,
+  });
+  assert.equal(config.orderingClosesAt, deadline);
+  assert.equal(launch.publicStatus(config, Date.parse(deadline) - 1).orderingEnabled, true);
+  assert.equal(launch.publicStatus(config, Date.parse(deadline)).orderingEnabled, false);
+  assert.equal(launch.publicStatus(config, Date.parse(deadline) + 1).orderingEnabled, false);
+  assert.equal((await call('GET', '/app/status')).body.status.orderingClosesAt, deadline);
+  await launch.assertOrderingOpen();
+
+  await assert.rejects(launch.saveLaunch(admin.id, {
+    mode: 'ordering_open', message: 'Past deadline', revision: config.revision,
+    orderingClosesAt: new Date(Date.now() - 60000).toISOString(),
+  }), error => error.code === 'INVALID_LAUNCH_DEADLINE');
+  await assert.rejects(launch.saveLaunch(admin.id, {
+    mode: 'ordering_open', message: 'Invalid time', revision: config.revision,
+    orderingClosesAt: '2026-11-09 00:00',
+  }), error => error.code === 'INVALID_LAUNCH_SETTINGS');
+
+  // Closing is persistent and leaves history, but no background job or
+  // payment/ledger write is needed to enforce the expiry in createOrder.
+  const closed = await launch.saveLaunch(admin.id, {
+    mode: 'registration_only', message: 'Preparing launch', revision: config.revision,
+    orderingClosesAt: null,
+  });
+  assert.equal(closed.history.at(-1).orderingClosesAt, deadline);
+  await assert.rejects(launch.assertOrderingOpen(), error => error.code === 'ORDERING_NOT_STARTED');
+});
+
+test('older admin clients cannot accidentally erase an existing close deadline', async () => {
+  const admin = await User.findOne({ role: 'admin', status: 'active' });
+  const existing = await launch.readLaunch();
+  const deadline = new Date(Date.now() + 120000).toISOString();
+  const config = await launch.saveLaunch(admin.id, {
+    mode: 'ordering_open', message: 'Testing', revision: existing.revision,
+    orderingClosesAt: deadline,
+  });
+  const fromLegacyClient = await launch.saveLaunch(admin.id, {
+    mode: 'ordering_open', message: 'Old UI saved', revision: config.revision,
+  });
+  assert.equal(fromLegacyClient.orderingClosesAt, deadline);
+  await launch.saveLaunch(admin.id, {
+    mode: 'registration_only', message: 'Closed', revision: fromLegacyClient.revision,
+    orderingClosesAt: null,
+  });
+});
