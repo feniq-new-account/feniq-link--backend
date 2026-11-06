@@ -5,6 +5,7 @@ const LedgerEntry = require('../models/ledgerEntry.model');
 const Pharmacy = require('../models/pharmacy.model');
 const Warehouse = require('../models/warehouse.model');
 const ledger = require('./ledger.service');
+const { financialReadSnapshot } = require('../utils/financialReadSnapshot');
 const { escapeRegex } = require('./productCatalog.service');
 const { parseRangeStart, parseRangeEnd } = require('../utils/businessTime');
 
@@ -32,7 +33,7 @@ function resolvePeriod({ from, to } = {}) {
   const start = from
     ? parseRangeStart(from)
     : new Date(now.getTime() - DEFAULT_STATEMENT_DAYS * 24 * 60 * 60 * 1000);
-  if (!start || !end) {
+  if (!start || !end || start > end) {
     throw ApiError.badRequest('Invalid statement period.', undefined, 'INVALID_PERIOD');
   }
   return { from: start, to: end };
@@ -106,7 +107,10 @@ function toRow(entry, runningSyp, runningUsd) {
 // per-account sequence breaking same-day ties deterministically. Never
 // wall-clock alone: a backdated payment has to land on the day the money moved,
 // not the day someone typed it in.
-async function getStatement({ pharmacyId, warehouseId, from, to }) {
+async function getStatement({ pharmacyId, warehouseId, from, to, session = null }) {
+  if (!session) return financialReadSnapshot((readSession) =>
+    getStatement({ pharmacyId, warehouseId, from, to, session: readSession }));
+  const asOf = new Date();
   if (
     !mongoose.Types.ObjectId.isValid(pharmacyId) ||
     !mongoose.Types.ObjectId.isValid(warehouseId)
@@ -116,11 +120,9 @@ async function getStatement({ pharmacyId, warehouseId, from, to }) {
 
   const period = resolvePeriod({ from, to });
 
-  const [account, pharmacy, warehouse] = await Promise.all([
-    ledger.findAccount(pharmacyId, warehouseId),
-    Pharmacy.findById(pharmacyId).select('nameAr nameEn phone').lean(),
-    Warehouse.findById(warehouseId).select('nameAr nameEn phone').lean(),
-  ]);
+  const account = await ledger.findAccount(pharmacyId, warehouseId, session);
+  const pharmacy = await Pharmacy.findById(pharmacyId).select('nameAr nameEn phone').session(session).lean();
+  const warehouse = await Warehouse.findById(warehouseId).select('nameAr nameEn phone').session(session).lean();
 
   if (!pharmacy || !warehouse) {
     throw ApiError.notFound('Account not found.', 'ACCOUNT_NOT_FOUND');
@@ -130,6 +132,7 @@ async function getStatement({ pharmacyId, warehouseId, from, to }) {
   // than a 404 - the same read-only zero fallback V1's getBalanceDetail gave.
   if (!account) {
     return {
+      asOf,
       account: null,
       pharmacy,
       warehouse,
@@ -138,13 +141,12 @@ async function getStatement({ pharmacyId, warehouseId, from, to }) {
       closing: { syp: 0, usd: 0 },
       rows: [],
       summary: emptySummary(),
+      reconciliation: { netMovementSyp: 0, differenceSyp: 0, reconciled: true },
     };
   }
 
-  const [opening, entries] = await Promise.all([
-    ledger.openingBalanceFor(account._id, period.from),
-    ledger.listEntriesForAccount(account._id, period),
-  ]);
+  const opening = await ledger.openingBalanceFor(account._id, period.from, session);
+  const entries = await ledger.listEntriesForAccount(account._id, { ...period, session });
 
   let runningSyp = opening.syp;
   let runningUsd = opening.usd;
@@ -155,6 +157,7 @@ async function getStatement({ pharmacyId, warehouseId, from, to }) {
   });
 
   return {
+    asOf,
     account,
     pharmacy,
     warehouse,
@@ -163,6 +166,11 @@ async function getStatement({ pharmacyId, warehouseId, from, to }) {
     closing: { syp: Math.round(runningSyp), usd: round2(runningUsd) },
     rows,
     summary: summarize(entries),
+    reconciliation: {
+      netMovementSyp: Math.round(runningSyp - opening.syp),
+      differenceSyp: Math.round(runningSyp) - opening.syp - entries.reduce((sum, entry) => sum + ledger.signedSyp(entry), 0),
+      reconciled: Math.round(runningSyp) === opening.syp + entries.reduce((sum, entry) => sum + ledger.signedSyp(entry), 0),
+    },
   };
 }
 
@@ -276,7 +284,7 @@ const WAREHOUSE_ACCOUNTS_DEFAULT_LIMIT = 20;
 // this app uses (see offer.service.js's buildOfferSearchOr).
 async function resolveMatchingPharmacyIds(searchTerm) {
   const pattern = new RegExp(escapeRegex(searchTerm), 'i');
-  const matches = await Pharmacy.find({ $or: [{ nameAr: pattern }, { nameEn: pattern }] }, '_id');
+  const matches = await Pharmacy.find({ $or: [{ nameAr: pattern }, { nameEn: pattern }, { phone: pattern }] }, '_id');
   return matches.map((p) => p._id);
 }
 
@@ -289,9 +297,14 @@ async function resolveMatchingPharmacyIds(searchTerm) {
 // buildOfferListFilter.
 async function listAccountsForWarehouse(
   warehouseId,
-  { limit = WAREHOUSE_ACCOUNTS_DEFAULT_LIMIT, after = null, search } = {}
+  { limit = WAREHOUSE_ACCOUNTS_DEFAULT_LIMIT, after = null, search, balanceState } = {}
 ) {
   const clauses = [{ warehouseId }];
+  if (balanceState && !['debt', 'credit', 'settled'].includes(balanceState)) {
+    throw ApiError.badRequest('Invalid account balance state.', undefined, 'INVALID_QUERY');
+  }
+  if (balanceState) clauses.push({ 'balanceCache.syp': balanceState === 'debt' ? { $gt: 0 }
+    : balanceState === 'credit' ? { $lt: 0 } : 0 });
 
   if (after !== null) {
     clauses.push({

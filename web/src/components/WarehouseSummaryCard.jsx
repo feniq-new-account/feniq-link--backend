@@ -130,6 +130,7 @@ export function WarehouseSummaryCard() {
     // the one the owner is now looking at.
     let cancelled = false;
     setError(null);
+    setSummary(null);
     api
       .warehouseSummary({ period })
       .then((data) => {

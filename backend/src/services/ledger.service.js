@@ -85,11 +85,11 @@ async function resolveAccount(pharmacyId, warehouseId, session = null) {
 // Read-only: the account as it stands, or null. Never creates a row - the
 // warehouse "invoices" list and the pharmacy debts list both need to render a
 // pharmacy that has no account document yet as a plain zero.
-async function findAccount(pharmacyId, warehouseId) {
+async function findAccount(pharmacyId, warehouseId, session = null) {
   if (!mongoose.Types.ObjectId.isValid(pharmacyId) || !mongoose.Types.ObjectId.isValid(warehouseId)) {
     return null;
   }
-  return LedgerAccount.findOne({ pharmacyId, warehouseId });
+  return LedgerAccount.findOne({ pharmacyId, warehouseId }).session(session);
 }
 
 async function nextEntryNumber(session) {
@@ -421,20 +421,20 @@ async function verifyAllAccounts({ rebuild = true } = {}) {
 // effectiveAt (the business date) first, sequence to break ties - never
 // wall-clock alone, so a backdated payment lands on the day the money actually
 // moved without the ordering becoming ambiguous.
-async function listEntriesForAccount(accountId, { from = null, to = null } = {}) {
+async function listEntriesForAccount(accountId, { from = null, to = null, session = null } = {}) {
   const filter = { accountId };
   if (from || to) {
     filter.effectiveAt = {};
     if (from) filter.effectiveAt.$gte = from;
     if (to) filter.effectiveAt.$lte = to;
   }
-  return LedgerEntry.find(filter).sort({ effectiveAt: 1, sequence: 1 }).lean();
+  return LedgerEntry.find(filter).sort({ effectiveAt: 1, sequence: 1 }).session(session).lean();
 }
 
 // The opening balance for a statement period: everything that happened before
 // it. Summed from the entries themselves, so it always agrees with the rows
 // the period then lists.
-async function openingBalanceFor(accountId, from) {
+async function openingBalanceFor(accountId, from, session = null) {
   if (!from) return { syp: 0, usd: 0 };
   const [row] = await LedgerEntry.aggregate([
     {
@@ -459,7 +459,7 @@ async function openingBalanceFor(accountId, from) {
         },
       },
     },
-  ]);
+  ]).session(session);
   return { syp: Math.round(row?.syp ?? 0), usd: round2(row?.usd ?? 0) };
 }
 

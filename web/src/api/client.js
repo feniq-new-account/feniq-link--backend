@@ -1059,15 +1059,16 @@ export const api = {
   warehouseManufacturers: ({ inCatalog } = {}) =>
     request(`/warehouse/manufacturers${inCatalog ? '?inCatalog=true' : ''}`),
   accountantDashboard: (query = {}) => request(`/warehouse/balances/dashboard?${new URLSearchParams(query)}`),
-  warehouseBalances: ({ limit, after, search } = {}) => {
+  warehouseBalances: ({ limit, after, search, balanceState } = {}) => {
     const params = new URLSearchParams();
     if (limit) params.set('limit', limit);
     if (after) params.set('after', after);
     if (search) params.set('search', search);
+    if (balanceState) params.set('balanceState', balanceState);
     const qs = params.toString();
     return request(`/warehouse/balances${qs ? `?${qs}` : ''}`);
   },
-  warehouseBalanceDetail: (pharmacyId) => request(`/warehouse/balances/${pharmacyId}`),
+  warehouseBalanceDetail: (pharmacyId, range = {}) => request(`/warehouse/balances/${pharmacyId}?${new URLSearchParams(range)}`),
   // The owner's at-a-glance summary: today / week / month (or a custom
   // from-to) sales, collections, returns, plus outstanding debt right now.
   warehouseSummary: ({ period, from, to } = {}) => {

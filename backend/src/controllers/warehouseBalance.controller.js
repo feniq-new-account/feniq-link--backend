@@ -10,6 +10,7 @@ const paymentViewModel = require('../viewmodels/payment.viewmodel');
 const orderLedger = require('../services/orderLedger.service');
 const invoiceViewModel = require('../viewmodels/invoice.viewmodel');
 const { parseCursorQuery, paginationMeta } = require('../utils/pagination');
+const { financialReadSnapshot } = require('../utils/financialReadSnapshot');
 const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
 
 // Money-Flow V2. The warehouse's "Invoices" tab, now read from the ledger.
@@ -32,7 +33,7 @@ function parseAccountCursor(after) {
   }
   if (
     !parsed ||
-    typeof parsed.balanceSyp !== 'number' ||
+    !Number.isSafeInteger(parsed.balanceSyp) ||
     typeof parsed.id !== 'string' ||
     !mongoose.Types.ObjectId.isValid(parsed.id)
   ) {
@@ -47,7 +48,7 @@ const list = asyncHandler(async (req, res) => {
   const search = typeof req.query.search === 'string' ? req.query.search : undefined;
   const { rows, hasMore, nextCursor } = await statementService.listAccountsForWarehouse(
     warehouse._id,
-    { limit, after: parseAccountCursor(after), search }
+    { limit, after: parseAccountCursor(after), search, balanceState: req.query.balanceState }
   );
   res.json({
     success: true,
@@ -72,22 +73,18 @@ const summary = asyncHandler(async (req, res) => {
 // the panel needs in order to offer a reversal on each one.
 const getOne = asyncHandler(async (req, res) => {
   const warehouse = await loadWarehouseOrThrow(req.user._id);
-  const data = await statementService.getStatement({
-    pharmacyId: req.params.pharmacyId,
-    warehouseId: warehouse._id,
-    from: req.query.from,
-    to: req.query.to,
+  const result = await financialReadSnapshot(async (session) => {
+    const data = await statementService.getStatement({
+      pharmacyId: req.params.pharmacyId, warehouseId: warehouse._id,
+      from: req.query.from, to: req.query.to, session,
+    });
+    const filtered = Boolean(req.query.from || req.query.to);
+    const payments = data.account ? await paymentService.listPaymentsForAccount(data.account._id,
+      { ...(filtered ? data.period : {}), session }) : [];
+    return { success: true, ...statementViewModel.toStatementResponse(data, 'warehouse'),
+      payments: payments.map(paymentViewModel.serializePayment), paymentsScope: filtered ? 'period' : 'all' };
   });
-
-  const payments = data.account
-    ? await paymentService.listPaymentsForAccount(data.account._id)
-    : [];
-
-  res.json({
-    success: true,
-    ...statementViewModel.toStatementResponse(data, 'warehouse'),
-    payments: payments.map(paymentViewModel.serializePayment),
-  });
+  res.set('Cache-Control', 'no-store').json(result);
 });
 
 // The invoice for one of this warehouse's own delivered orders, including the
