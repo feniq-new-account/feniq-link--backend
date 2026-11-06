@@ -69,3 +69,30 @@ it('never resets a similarly blocked but non-demo warehouse', async () => {
   expect(api.resetAccountPassword).not.toHaveBeenCalled();
   expect(globalThis.confirm).not.toHaveBeenCalled();
 });
+
+it('reports pilot readiness separately from end-to-end order acceptance', async () => {
+  api.getAdminMaintenancePreview.mockResolvedValueOnce({
+    preview: {
+      ...preview,
+      pilotReadiness: {
+        activePharmacies: 4, visibleWarehouses: 1, warehousesWithCatalog: 1,
+        warehousesWithOffers: 1, warehousesWithPackages: 1, orderingEnabled: false,
+        phoneToDashboardVerified: false,
+      },
+      warehouses: [{
+        ...preview.warehouses[0],
+        readiness: {
+          visibleToPharmacist: true, availableProducts: 118, visibleOffers: 29,
+          visiblePackages: 1, visibleBanners: 1,
+        },
+      }],
+    },
+  });
+  const refresh = [...host.querySelectorAll('button')].find(b => b.textContent.includes('maintenance.refresh'));
+  await act(async () => refresh.click());
+  expect(host.textContent).toContain('maintenance.pilotReadiness');
+  expect(host.textContent).toContain('maintenance.readinessNotEndToEnd');
+  expect(host.textContent).toContain('maintenance.orderSwitchOff');
+  expect(host.textContent).toContain('maintenance.warehouseVisible');
+  expect(host.textContent).toContain('29');
+});
