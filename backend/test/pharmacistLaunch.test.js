@@ -117,9 +117,16 @@ test('pilot ordering expires on server time without a cron, including stale mobi
     orderingClosesAt: deadline,
   });
   assert.equal(config.orderingClosesAt, deadline);
-  assert.equal(launch.publicStatus(config, Date.parse(deadline) - 1).orderingEnabled, true);
-  assert.equal(launch.publicStatus(config, Date.parse(deadline)).orderingEnabled, false);
-  assert.equal(launch.publicStatus(config, Date.parse(deadline) + 1).orderingEnabled, false);
+  const stillOpen = launch.publicStatus(config, Date.parse(deadline) - 1);
+  assert.equal(stillOpen.orderingEnabled, true);
+  assert.equal(stillOpen.mode, 'ordering_open');
+  assert.equal(stillOpen.orderingClosedByDeadline, false);
+  const justExpired = launch.publicStatus(config, Date.parse(deadline));
+  assert.equal(justExpired.orderingEnabled, false);
+  assert.equal(justExpired.mode, 'registration_only');
+  assert.equal(justExpired.orderingClosedByDeadline, true);
+  assert.match(justExpired.message, /انتهت فترة تجربة الطلبات/);
+  assert.equal(launch.publicStatus(config, Date.parse(deadline) + 1).mode, 'registration_only');
   assert.equal((await call('GET', '/app/status')).body.status.orderingClosesAt, deadline);
   await launch.assertOrderingOpen();
 
@@ -158,4 +165,34 @@ test('older admin clients cannot accidentally erase an existing close deadline',
     mode: 'registration_only', message: 'Closed', revision: fromLegacyClient.revision,
     orderingClosesAt: null,
   });
+});
+
+test('expired pilot status is accepted by strict pre-expiry Android clients', async () => {
+  const oldClientParser = (status) => {
+    if (!['registration_only', 'ordering_open'].includes(status.mode) ||
+        typeof status.message !== 'string' ||
+        status.orderingEnabled !== (status.mode === 'ordering_open')) {
+      throw new Error('Invalid launch status');
+    }
+    return status.orderingEnabled;
+  };
+  const expiry = Date.parse('2026-11-08T21:00:00.000Z');
+  const live = launch.publicStatus({
+    mode: 'ordering_open', message: 'Pilot is live', revision: 5,
+    orderingClosesAt: new Date(expiry).toISOString(),
+  }, expiry - 1);
+  const closed = launch.publicStatus({
+    mode: 'ordering_open', message: 'Pilot is live', revision: 5,
+    orderingClosesAt: new Date(expiry).toISOString(),
+  }, expiry);
+  assert.equal(oldClientParser(live), true);
+  assert.equal(oldClientParser(closed), false);
+  assert.equal(closed.orderingClosedByDeadline, true);
+  assert.notEqual(closed.message, 'Pilot is live');
+  // The effective public mode can close without changing persisted config.
+  assert.equal(closed.orderingClosesAt, '2026-11-08T21:00:00.000Z');
+  assert.equal(launch.publicStatus({
+    mode: 'registration_only', message: 'Manual closure', revision: 6,
+    orderingClosesAt: closed.orderingClosesAt,
+  }, expiry).message, 'Manual closure');
 });

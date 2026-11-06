@@ -2,6 +2,7 @@ const PlatformSetting = require('../models/platformSetting.model');
 const { ApiError } = require('../utils/ApiError');
 const KEY = 'pharmacistLaunch';
 const DEFAULT_MESSAGE = 'التسجيل والتصفح متاحان. استقبال الطلبات لم يبدأ بعد.';
+const PILOT_ENDED_MESSAGE = 'انتهت فترة تجربة الطلبات. يمكنك متابعة تصفح الأدوية حتى بدء استقبال الطلبات من جديد.';
 
 // No environment override or stale server cache can silently open ordering.
 async function readLaunch() {
@@ -13,13 +14,19 @@ async function readLaunch() {
 // when the deadline passes; no timer, cron or deployment is required.
 function publicStatus(value, now = Date.now()) {
   const closesAt = value.orderingClosesAt ?? null;
-  const withinWindow = closesAt === null || Date.parse(closesAt) > Number(now);
+  const deadlineExpired = value.mode === 'ordering_open' &&
+    closesAt !== null && !(Date.parse(closesAt) > Number(now));
+  const orderingEnabled = value.mode === 'ordering_open' && !deadlineExpired;
+  // Legacy Android clients require orderingEnabled to agree with the public
+  // mode. Present the EFFECTIVE closed mode after expiry, while GET
+  // /admin/launch preserves the configured mode and its original deadline.
   return {
-    mode: value.mode,
-    orderingEnabled: value.mode === 'ordering_open' && withinWindow,
-    message: value.message,
+    mode: orderingEnabled ? 'ordering_open' : 'registration_only',
+    orderingEnabled,
+    message: deadlineExpired ? PILOT_ENDED_MESSAGE : value.message,
     revision: value.revision,
     orderingClosesAt: closesAt,
+    orderingClosedByDeadline: deadlineExpired,
   };
 }
 async function saveLaunch(actorId, body) {

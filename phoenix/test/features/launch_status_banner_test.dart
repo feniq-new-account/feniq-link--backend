@@ -55,6 +55,37 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+  test('expired pilot response is parsed as a closed launch without errors', () {
+    final status = AppLaunchStatus.fromJson({
+      'mode': 'registration_only',
+      'orderingEnabled': false,
+      'message': 'انتهت فترة تجربة الطلبات.',
+      'revision': 5,
+      'orderingClosesAt': '2026-11-08T21:00:00.000Z',
+      'orderingClosedByDeadline': true,
+    });
+    expect(status.orderingEnabled, isFalse);
+    expect(status.message, contains('انتهت'));
+  });
+
+  testWidgets('expired pilot displays closure explanation instead of network error',
+    (tester) async {
+      final values = <bool>[];
+      await pump(
+        tester,
+        () async => AppLaunchStatus.fromJson({
+          'mode': 'registration_only',
+          'orderingEnabled': false,
+          'message': 'انتهت فترة تجربة الطلبات.',
+          'orderingClosedByDeadline': true,
+        }),
+        values.add,
+      );
+      expect(values.last, false);
+      expect(find.text('انتهت فترة تجربة الطلبات.'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   test('malformed status cannot grant ordering', () {
     expect(
       () => AppLaunchStatus.fromJson({
