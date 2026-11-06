@@ -1808,7 +1808,8 @@
     "hint": "Open ordering only after warehouses, prices and commission agreements are ready. Registration approval is separate.",
     "closesAt": "Automatically stop accepting orders (device local time)",
     "closesAtHint": "New orders are automatically refused after this time, even if Accept orders remains selected.",
-    "deadlineRequired": "Set the order closing time before enabling ordering.",
+    "autoCloseEnabled": "Stop accepting orders automatically (recommended for pilot)",
+    "deadlineWarning": "Warning: Without a deadline, orders will remain open until manually closed.",
     "revision": "Configuration revision: {{revision}}"
   },
   "featureControl": {
