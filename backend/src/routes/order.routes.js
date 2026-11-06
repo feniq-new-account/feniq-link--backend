@@ -2,11 +2,22 @@ const { Router } = require('express');
 const { authenticate, authorize, requireActiveStatus } = require('../middlewares/auth.middleware');
 const { deliverySealPhotoUpload } = require('../middlewares/upload.middleware');
 const controller = require('../controllers/order.controller');
+const { asyncHandler } = require('../utils/asyncHandler');
+const pilotAccess = require('../services/pilotOrderAccess.service');
 const pharmacyDebtController = require('../controllers/pharmacyDebt.controller');
 
 const router = Router();
 
-router.post('/', authenticate, authorize('pharmacy'), requireActiveStatus, controller.create);
+// A time-boxed ordering window is a controlled pilot, not a public launch.
+// This guard executes before the money-flow controller, without modifying it.
+router.post('/', authenticate, authorize('pharmacy'), requireActiveStatus,
+  asyncHandler(async (req, _res, next) => {
+    await pilotAccess.assertPilotOrderAccess({
+      userId: req.user._id, warehouseId: req.body?.warehouseId,
+      idempotencyKey: req.body?.idempotencyKey,
+    });
+    next();
+  }), controller.create);
 router.get('/', authenticate, authorize('pharmacy'), requireActiveStatus, controller.list);
 // Registered before '/:id' - otherwise Express matches 'returnable' /
 // 'savings-summary' as an order id and these routes are never reached.
