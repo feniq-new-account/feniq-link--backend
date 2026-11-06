@@ -206,7 +206,7 @@ class _ManufacturersViewState extends State<ManufacturersView> {
             // land exactly where the manufacturer cards will.
             return SkeletonGrid(
               maxCrossAxisExtent: 160,
-              mainAxisExtent: 198,
+              mainAxisExtent: MediaQuery.textScalerOf(context).scale(14) > 19 ? 186 : 160,
               itemBuilder: (context, index) => const _ManufacturerSkeletonCell(),
             );
           case ManufacturersStatus.error:
@@ -229,9 +229,9 @@ class _ManufacturersViewState extends State<ManufacturersView> {
                   maxCrossAxisExtent: 160,
                   mainAxisSpacing: AppSizes.spacingMedium,
                   crossAxisSpacing: AppSizes.spacingMedium,
-                  // Was 180 - grew to fit the company-discount line the card
-                  // now carries under the name.
-                  mainAxisExtent: 198,
+                  // Compact cards save space: the company name fits two lines,
+                  // and discounts only appear when positive.
+                  mainAxisExtent: MediaQuery.textScalerOf(context).scale(14) > 19 ? 186 : 160,
                 ),
                 itemCount: state.manufacturers.length,
                 itemBuilder: (context, index) {
@@ -248,8 +248,7 @@ class _ManufacturersViewState extends State<ManufacturersView> {
   }
 }
 
-// One manufacturer placeholder: the logo plate, the (two-line) name, and the
-// company-discount line under it.
+// One compact manufacturer placeholder with a small logo and name.
 class _ManufacturerSkeletonCell extends StatelessWidget {
   const _ManufacturerSkeletonCell();
 
@@ -258,11 +257,10 @@ class _ManufacturerSkeletonCell extends StatelessWidget {
     return const SkeletonCard(
       mainAxisSize: MainAxisSize.max,
       children: [
-        SkeletonBar(height: 80, radius: AppRadius.medium),
+        SkeletonBar(height: 72, radius: AppRadius.medium),
         SizedBox(height: AppSizes.spacingSmall),
         SkeletonBar(height: 12),
         SizedBox(height: AppSizes.spacingXSmall),
-        SkeletonBar(width: 78, height: 12),
       ],
     );
   }
