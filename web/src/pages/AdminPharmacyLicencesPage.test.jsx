@@ -74,3 +74,49 @@ it('rejection sends the entered reason to the authenticated endpoint', async () 
   expect(api.reviewAdminPharmacyLicence).toHaveBeenCalledWith(
     row.pharmacyId, 'rejected', 'Please take another photo');
 });
+
+it('deduplicates licence rows across cursor pages', async () => {
+  const next = { ...row, pharmacyId: 'bbbbbbbbbbbbbbbbbbbbbbbb', pharmacyName: 'Second Pharmacy' };
+  api.listAdminPharmacyLicences.mockResolvedValueOnce({
+    items: [row], pagination: { hasMore: true, nextCursor: 'cursor1' },
+  });
+  await act(async () => button('Refresh').click());
+  api.listAdminPharmacyLicences.mockResolvedValueOnce({
+    items: [row, next], pagination: { hasMore: false, nextCursor: null },
+  });
+  await act(async () => button('Load more').click());
+  expect(api.listAdminPharmacyLicences).toHaveBeenLastCalledWith({ after: 'cursor1' });
+  expect(host.querySelectorAll('.reg-card-body > .adm-card')).toHaveLength(2);
+  expect(host.textContent).toContain('Second Pharmacy');
+});
+
+it('a stale load-more result cannot reinsert a licence that was just approved', async () => {
+  api.listAdminPharmacyLicences.mockResolvedValueOnce({
+    items: [row], pagination: { hasMore: true, nextCursor: 'cursor1' },
+  });
+  await act(async () => button('Refresh').click());
+  let finishOldPage;
+  api.listAdminPharmacyLicences.mockImplementationOnce(() =>
+    new Promise(resolve => { finishOldPage = resolve; }));
+  const oldPage = act(async () => button('Load more').click());
+  // Wait until the pending page request starts without awaiting its response.
+  await act(async () => { await Promise.resolve(); });
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  api.listAdminPharmacyLicences.mockResolvedValueOnce({
+    items: [], pagination: { hasMore: false, nextCursor: null },
+  });
+  await act(async () => button('Approve').click());
+  finishOldPage({
+    items: [row], pagination: { hasMore: false, nextCursor: null },
+  });
+  await oldPage;
+  expect(host.textContent).not.toContain('Example Pharmacy');
+  expect(host.textContent).toContain('No pending licences');
+});
+
+it('a failed full refresh hides old review candidates instead of treating them as pending', async () => {
+  api.listAdminPharmacyLicences.mockRejectedValueOnce(new Error('Server unavailable'));
+  await act(async () => button('Refresh').click());
+  expect(host.textContent).not.toContain('Example Pharmacy');
+  expect(host.querySelector('[role="alert"]').textContent).toContain('Server unavailable');
+});
