@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { offerValueLabel } from '../utils/offerValue';
+import { AdminOperationsOverview } from './AdminOperationsOverview';
 
 function accountName(account) {
   return account.pharmacy?.nameEn || account.warehouse?.nameEn || account.user.name;
@@ -106,6 +107,7 @@ export function AdminDashboardPage() {
         <h1>{t('nav.dashboard')}</h1>
       </div>
 
+      <AdminOperationsOverview />
       {error && <p className="error-text">{error}</p>}
 
       {isLoading ? (

@@ -3,9 +3,16 @@ const { authenticate, authorize } = require('../middlewares/auth.middleware');
 const controller = require('../controllers/distributionTrip.controller');
 const liveLocation = require('../controllers/distributionLiveLocation.controller');
 const driverAccounts = require('../controllers/distributionDriverAccount.controller');
+const operations = require('../services/distributionOperations.service');
 
 const router = Router();
 router.use(authenticate, authorize('admin'));
+router.get('/overview', async (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'private, no-store');
+    res.json({ success: true, overview: await operations.overview() });
+  } catch (error) { next(error); }
+});
 router.get('/drivers', controller.listDrivers);
 router.post('/drivers', driverAccounts.create);
 router.get('/trips', controller.list);
