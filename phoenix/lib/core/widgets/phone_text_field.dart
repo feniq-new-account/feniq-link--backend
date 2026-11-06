@@ -102,7 +102,8 @@ String phoneTextFieldSubscriberDigits(String fieldValue) {
 /// Unsupported lengths/prefixes pass through for Validators.validatePhone to
 /// reject; never truncate or silently turn a malformed number into an account.
 String phoneTextFieldFullValue(String fieldValue) {
-  var digits = westernDigits(fieldValue).trim().replaceAll(RegExp(r'[\s()\-]'), '');
+  final original = westernDigits(fieldValue).trim().replaceAll(RegExp(r'[\s()\-]'), '');
+  var digits = original;
   if (digits.isEmpty) return '';
   if (digits.startsWith('+')) {
     digits = digits.substring(1);
@@ -121,5 +122,5 @@ String phoneTextFieldFullValue(String fieldValue) {
     mobile = digits.substring(3);
   }
 
-  return mobile == null ? digits : '+963$mobile';
+  return mobile == null ? original : '+963$mobile';
 }
