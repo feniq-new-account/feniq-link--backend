@@ -12,6 +12,7 @@ import 'package:feniq/features/rep/presentation/managers/rep_visits_cubit.dart';
 import 'package:feniq/features/rep/presentation/views/rep_pharmacies_tab.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
+import 'package:feniq/features/driver/data/driver_trip_snapshot.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
@@ -36,6 +37,7 @@ class _RepShellViewState extends State<RepShellView> {
   String? _outboxOwnerId;
   DriverTripRepository? _outboxRepository;
   DriverStopOutbox? _stopOutbox;
+  DriverTripSnapshotCache? _tripCache;
 
   Future<void> _scan() async {
     final logged = await context.pushNamed<bool>(RouteNames.repScan);
@@ -52,11 +54,15 @@ class _RepShellViewState extends State<RepShellView> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final driverEnabled = widget.driverTripRepository != null;
-    final driverAccountId = context.read<AuthCubit>().state.user?.id;
+    final driverAccountId = context.read<AuthCubit>().state.localAccountId;
     if (_outboxOwnerId != driverAccountId ||
         !identical(_outboxRepository, widget.driverTripRepository)) {
       _outboxOwnerId = driverAccountId;
       _outboxRepository = widget.driverTripRepository;
+      _tripCache = driverAccountId == null ? null : DriverTripSnapshotCache(
+        accountId: driverAccountId,
+        store: const SecureDriverTripSnapshotStore(),
+      );
       _stopOutbox = driverAccountId == null || widget.driverTripRepository == null
         ? null : DriverStopOutbox(
             accountId: driverAccountId,
@@ -87,6 +93,7 @@ class _RepShellViewState extends State<RepShellView> {
                 repository: widget.driverTripRepository!,
                 locationProvider: const GeolocatorLocationProvider(),
                 stopOutbox: _stopOutbox,
+                tripCache: _tripCache,
               ),
               const RepProfileTab(),
             ]),

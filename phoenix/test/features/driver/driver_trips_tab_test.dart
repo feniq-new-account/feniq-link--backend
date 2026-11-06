@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:feniq/features/driver/data/driver_trip_repository.dart';
 import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
+import 'package:feniq/features/driver/data/driver_trip_snapshot.dart';
 import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 
@@ -14,6 +16,7 @@ class FakeDriverRepository implements DriverTripRepository {
   int finishes = 0;
   int gpsSends = 0;
   bool stopNetworkFails = false;
+  Object? tripLoadError;
   final List<String?> stopRequestIds = [];
   @override
   Future<void> sendLocation(String tripId, DeviceLocation fix) async { gpsSends++; }
@@ -21,6 +24,7 @@ class FakeDriverRepository implements DriverTripRepository {
   @override
   Future<List<DriverTrip>> listTrips() async {
     fetches++;
+    if (tripLoadError != null) throw tripLoadError!;
     return trips;
   }
   @override
@@ -93,6 +97,16 @@ class TestStopStore implements DriverStopOutboxStore {
   @override
   Future<void> write(String accountId, List<PendingDriverStop> commands) async {
     values[accountId] = List.of(commands);
+  }
+}
+
+class TestTripStore implements DriverTripSnapshotStore {
+  final Map<String, DriverTripSnapshot> data = {};
+  @override
+  Future<DriverTripSnapshot?> read(String accountId) async => data[accountId];
+  @override
+  Future<void> write(String accountId, DriverTripSnapshot value) async {
+    data[accountId] = value;
   }
 }
 
@@ -205,5 +219,53 @@ void main() {
     expect(find.textContaining('Saved stops awaiting sync: 1'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('offline restart displays a clearly stale, account-scoped saved trip', (tester) async {
+    final seed = fakeTrip();
+    final active = DriverTrip(
+      id: seed.id, region: seed.region, serviceDate: seed.serviceDate,
+      status: 'in_progress', revision: 7, stops: seed.stops,
+    );
+    final store = TestTripStore();
+    final cache = DriverTripSnapshotCache(accountId: 'user-A', store: store);
+    final online = FakeDriverRepository([active]);
+    await tester.pumpWidget(MaterialApp(locale: const Locale('en'),
+      home: Scaffold(body: DriverTripsTab(repository: online, tripCache: cache))));
+    await tester.pumpAndSettle();
+    expect(store.data['user-A']?.trips.single.id, 'trip-1');
+    await tester.pumpWidget(const SizedBox());
+
+    final offline = FakeDriverRepository([])..tripLoadError = DioException(
+      requestOptions: RequestOptions(path: '/driver/distribution/trips'),
+      type: DioExceptionType.connectionError,
+    );
+    await tester.pumpWidget(MaterialApp(locale: const Locale('en'),
+      home: Scaffold(body: DriverTripsTab(repository: offline, tripCache: cache))));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Saved trip snapshot'), findsOneWidget);
+    expect(find.text('Pharmacy One'), findsOneWidget);
+    expect(find.text('Kasab'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('authorization failure never falls back to an old local trip', (tester) async {
+    final store = TestTripStore();
+    final cache = DriverTripSnapshotCache(accountId: 'user-A', store: store);
+    await cache.save([fakeTrip()]);
+    final forbidden = FakeDriverRepository([])..tripLoadError = DioException(
+      requestOptions: RequestOptions(path: '/driver/distribution/trips'),
+      response: Response(requestOptions: RequestOptions(path: '/driver/distribution/trips'),
+        statusCode: 403),
+      type: DioExceptionType.badResponse,
+    );
+    await tester.pumpWidget(MaterialApp(locale: const Locale('en'),
+      home: Scaffold(body: DriverTripsTab(repository: forbidden, tripCache: cache))));
+    await tester.pumpAndSettle();
+    expect(find.text('Pharmacy One'), findsNothing);
+    expect(find.textContaining('Saved trip snapshot'), findsNothing);
+    expect(find.textContaining('Could not load trips'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
 
 }
