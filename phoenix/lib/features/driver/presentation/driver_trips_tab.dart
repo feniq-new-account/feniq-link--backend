@@ -151,6 +151,41 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
     }
   }
 
+  Future<void> _discardOldestAfterReview() async {
+    final outbox = widget.stopOutbox;
+    if (outbox == null || _syncingStops || _pendingStops.isEmpty) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(_t('مراجعة تسليم غير متزامن', 'Review unsynced delivery')),
+        content: Text(_t(
+          'لا تحذف الأمر إلا بعد التأكد من حالة التسليم على الخادم مع الإدارة. قد يكون التسليم قد سُجّل بالفعل ولم يصل الرد.',
+          'Only remove this pending action after verifying the server delivery state with operations. It may already have been recorded despite the lost reply.',
+        )),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(_t('إبقاء الأمر', 'Keep pending'))),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(_t('حذف الأمر بعد التحقق', 'Discard after verification'))),
+        ],
+      ),
+    );
+    if (!mounted || confirm != true) return;
+    try {
+      await outbox.discardFirst();
+      if (mounted) setState(() {
+        _pendingStops = outbox.pending;
+        _outboxError = null;
+      });
+      await _reload();
+    } catch (_) {
+      if (mounted) setState(() => _outboxError = _t(
+        'تعذّر حذف الأمر من التخزين المشفّر؛ بقي محفوظاً.',
+        'Could not remove the encrypted pending command; it was preserved.',
+      ));
+    }
+  }
+
   Future<void> _refreshAndSync() async {
     await _syncOutbox();
     await _reload();
@@ -305,6 +340,12 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
                 onPressed: _syncingStops ? null : _syncOutbox,
                 icon: const Icon(Icons.sync),
                 label: Text(_t('إعادة مزامنة التسليمات', 'Retry saved deliveries')),
+              ),
+            if (_pendingStops.isNotEmpty)
+              TextButton(
+                onPressed: _syncingStops ? null : _discardOldestAfterReview,
+                child: Text(_t('حذف أقدم تسليم بعد التحقق من الإدارة',
+                  'Discard oldest after verifying with operations')),
               ),
             Text(_t('لا ترسل نفس التسليم من جديد قبل التأكد من نتيجته.',
               'Do not record a saved stop again until its outcome is confirmed.')),
