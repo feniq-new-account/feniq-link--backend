@@ -139,6 +139,13 @@ test('pending evidence is idempotent; two-person approval posts one ledger payme
   assert.equal(custody.grossHeldSyp, 50000);
   assert.equal(custody.status, 'awaiting_reconciliation');
   assert.equal(custody.netWarehouseDueSyp, null);
+  const custodyPage = await call(admin, 'GET',
+    '/admin/collection-accounting/warehouses/' + warehouse._id + '/feniq-custody');
+  assert.equal(custodyPage.status, 200);
+  assert.equal(custodyPage.body.rows.length, 1);
+  assert.equal(custodyPage.body.rows[0].grossHeldSyp, 50000);
+  assert.equal(custodyPage.body.rows[0].netWarehouseDueSyp, null);
+  assert.equal(custodyPage.body.grossMeansCollectedCashNotNetWarehouseDue, true);
   assert.equal(custody.targetRemittanceAt.getTime() - custody.actualReceivedAt.getTime(), 24 * 3600 * 1000);
   assert.equal(custody.deadlineAt.getTime() - custody.actualReceivedAt.getTime(), 48 * 3600 * 1000);
   assert.equal(await Audit.countDocuments({ action: 'collection.receipt_approved' }), 1);
