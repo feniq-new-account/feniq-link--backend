@@ -346,6 +346,17 @@ class WarehouseManagementRepositoryImpl
   }
 
   @override
+  Future<Map<String, dynamic>> getCollectionAccounting({
+    String period = 'month',
+  }) async => _run(
+    (dio) => dio.get(
+      '/warehouse/collection-accounting',
+      queryParameters: {'period': period},
+      options: Options(headers: {'Cache-Control': 'no-store'}),
+    ),
+  );
+
+  @override
   Future<void> recordPayment({
     required String pharmacyId,
     required double amountSyp,
