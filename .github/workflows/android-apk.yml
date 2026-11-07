@@ -3,9 +3,13 @@
 # gh workflow run android-apk.yml --ref main). الـ Pull Requests بتنفحص تلقائياً
 # بس ما بتبني APK وما بتنشر شي.
 # الملف الناتج: صفحة التشغيل ← Artifacts ← feniq-apk.
+# Publication of the fixed test-latest download is a SEPARATE explicit
+# workflow_dispatch input (publish_test_release; default false). A manual
+# signed test APK build must never replace the existing phone download by itself.
 #
-# للتجربة: كل بناء يدوي على main يضع آخر نسختين على روابط ثابتة (أسرع من
-# Artifacts، ملف APK مباشر بدون zip):
+# للتجربة: البناء اليدوي يرفع APK للفحص تحت Artifacts فقط. تحديث روابط
+# test-latest الثابتة يحدث حصراً إذا شغّل المالك workflow من main مع
+# publish_test_release=true، وبعد فحص التوقيع (ملف APK مباشر بدون zip):
 #   الموبايل (نسخة شاملة):  https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-test.apk
 #   المحاكي (x86_64): https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-emulator.apk
 #
@@ -34,6 +38,11 @@ on:
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
     inputs:
+      publish_test_release:
+        description: 'Explicitly replace test-latest download only after reviewing this signed main build (default OFF)'
+        required: false
+        type: boolean
+        default: false
       baseline_validation_run:
         description: 'Previous signed APK workflow run for an upgrade/storage check (select its artifact name below)'
         required: false
@@ -223,13 +232,13 @@ jobs:
       # runs 32-bit despite a 64-bit CPU. Reuse the already verified APK; do
       # not replace the stable phone link with an arm64-only build.
       - name: Prepare universal phone APK
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_test_release == true && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
         run: cp build/app/outputs/flutter-apk/app-release.apk feniq-test.apk
 
       # Same app for the Android Studio emulator, which runs x86_64 images and
       # cannot install the arm64-only phone build.
       - name: Build emulator APK (x86_64)
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_test_release == true && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
         run: |
           (cd android && ./gradlew --stop) || true
           flutter build apk --release \
@@ -239,7 +248,7 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk feniq-emulator.apk
 
       - name: Publish to the test-latest release
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_test_release == true && github.ref == 'refs/heads/main' && steps.signing.outputs.artifact == 'feniq-apk'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
