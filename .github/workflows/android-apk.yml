@@ -35,6 +35,7 @@ on:
   pull_request:
     paths:
       - 'phoenix/**'
+      - 'web/src/components/CashCustodyPanel*'
       - 'backend/src/services/feniq*.js'
       - 'backend/src/services/collection*.js'
       - 'backend/src/services/payment.service.js'
