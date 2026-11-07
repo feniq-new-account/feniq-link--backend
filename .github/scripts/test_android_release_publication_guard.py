@@ -58,5 +58,25 @@ class AndroidReleasePublicationGuardTest(unittest.TestCase):
         self.assertIn("name: Verify signature", self.source)
 
 
+    def test_website_has_no_automatic_deployment_triggers(self):
+        website = (WORKFLOW.parent / "site-deploy.yml").read_text(encoding="utf-8")
+        triggers = website.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
+        self.assertIn("workflow_dispatch:", triggers)
+        self.assertIn("apk_run_id:", triggers)
+        self.assertNotRegex(triggers, r"(?m)^  push:")
+        self.assertNotRegex(triggers, r"(?m)^  workflow_run:")
+
+    def test_website_must_select_a_proven_manual_main_signed_artifact(self):
+        website = (WORKFLOW.parent / "site-deploy.yml").read_text(encoding="utf-8")
+        self.assertIn("APPROVED_RUN_ID: ${{ inputs.apk_run_id }}", website)
+        self.assertIn('if [ -z "$APPROVED_RUN_ID" ]; then', website)
+        self.assertIn('echo "id=$APPROVED_RUN_ID" >> "$GITHUB_OUTPUT"', website)
+        for field in (".name", ".event", ".head_branch", ".status", ".conclusion"):
+            self.assertIn(field, website)
+        self.assertIn('.name == "feniq-apk" and .expired == false', website)
+        self.assertNotIn("gh run list", website)
+        self.assertNotIn("continue-on-error: true", website)
+
+
 if __name__ == "__main__":
     unittest.main()
