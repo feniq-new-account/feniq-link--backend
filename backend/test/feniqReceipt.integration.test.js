@@ -123,6 +123,12 @@ test('pending evidence is idempotent; two-person approval posts one ledger payme
   assert.equal(approved.body.receipt.status, 'approved');
   assert.ok(approved.body.receipt.paymentId);
   assert.equal(await Payment.countDocuments(), initialPayments + 1);
+  const payment = await Payment.findById(approved.body.receipt.paymentId).lean();
+  assert.equal(String(payment.recordedBy), String(collector._id));
+  const postingEntry = await Entry.findById(payment.ledgerEntryId).lean();
+  assert.equal(String(postingEntry.createdBy), String(approver._id));
+  const postingAudit = await Audit.findOne({ action: 'payment.recorded' }).lean();
+  assert.equal(String(postingAudit.actorId), String(approver._id));
   assert.equal(await Entry.countDocuments({ kind: 'payment' }), initialLedgerPayments + 1);
   assert.equal(await Recognition.countDocuments({ collector: 'feniq' }), 1);
   assert.equal((await call(approver, 'POST', url, approval)).replay, 'true');
