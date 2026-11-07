@@ -78,7 +78,8 @@ const WAREHOUSE_BUCKETS = [
     id: 'orders',
     path: '/warehouse/orders',
     idField: 'orderId',
-    events: [E.ORDER_CREATED, E.ORDER_CANCELLED],
+    // The sidebar count is NEW ORDERS, not cancellations or status changes.
+    events: [E.ORDER_CREATED],
   },
   {
     id: 'returns',
@@ -213,6 +214,12 @@ export function countUnder(role, state, path) {
 
 export function totalUnread(role, state) {
   return bucketsFor(role).reduce((sum, bucket) => sum + (state[bucket.id]?.length ?? 0), 0);
+}
+
+export function unreadItems(role, state) {
+  return bucketsFor(role)
+    .map((bucket) => ({ id: bucket.id, path: bucket.path, count: state[bucket.id]?.length ?? 0 }))
+    .filter((bucket) => bucket.count > 0);
 }
 
 export const BADGE_DISPLAY_MAX = 99;
