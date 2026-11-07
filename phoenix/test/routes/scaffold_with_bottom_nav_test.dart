@@ -11,6 +11,12 @@ import 'package:feniq/routes/scaffold_with_bottom_nav.dart';
 GoRouter _shellRouter() => GoRouter(
   initialLocation: '/warehouses',
   routes: [
+    // A standalone page pushed above the pharmacy tab shell must still pop
+    // to its previous page, not get intercepted by the tab-root Back rule.
+    GoRoute(
+      path: '/order-detail',
+      builder: (_, __) => const Scaffold(body: Text('DETAIL')),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
           ScaffoldWithBottomNav(navigationShell: navigationShell),
@@ -109,6 +115,61 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('F'), findsOneWidget);
+  });
+
+  testWidgets('Android Back from Orders returns home instead of exiting', (tester) async {
+    await _pump(tester);
+    await tester.tap(find.text('Orders'));
+    await tester.pumpAndSettle();
+    expect(find.text('O'), findsOneWidget);
+
+    // Simulate the phone's system Back button, not an AppBar arrow.
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.text('W'), findsOneWidget);
+    expect(tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex, 0);
+    // The next Back is no longer intercepted: the system may exit the app.
+    final pop = tester.widget<PopScope<Object?>>(find.byType(PopScope<Object?>));
+    expect(pop.canPop, isTrue);
+  });
+
+  for (final (label, body) in [
+    ('Offers', 'F'),
+    ('Accounts', 'A'),
+    ('Profile', 'P'),
+  ]) {
+    testWidgets('system Back from $label returns to home', (tester) async {
+      await _pump(tester);
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+      expect(find.text(body), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('W'), findsOneWidget);
+      expect(tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex, 0);
+    });
+  }
+
+  testWidgets('Back from a full-screen detail page pops only the detail', (tester) async {
+    await _pump(tester);
+    await tester.tap(find.text('Orders'));
+    await tester.pumpAndSettle();
+    final router = GoRouter.of(tester.element(find.text('O')));
+    router.push('/order-detail');
+    await tester.pumpAndSettle();
+    expect(find.text('DETAIL'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('O'), findsOneWidget);
+    expect(find.text('DETAIL'), findsNothing);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('W'), findsOneWidget);
   });
 
   // Five labels in one bar is the reason the Offers tab uses the short
