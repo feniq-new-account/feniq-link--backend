@@ -20,13 +20,26 @@ void main() {
   });
 
   test('return and manual credits reduce debt but are not collections', () {
-    for (final kind in ['return_credit', 'manual_credit']) {
+    for (final kind in ['return_credit', 'return_credit_application', 'manual_credit']) {
       final credit = row(kind, credit: 2000);
       expect(credit.isNonCashCredit, isTrue, reason: kind);
       expect(credit.isCashReceipt, isFalse, reason: kind);
       expect(credit.amountSyp, 2000);
     }
     expect(row('return_credit_reversal', debit: 2000).isNonCashCredit, isFalse);
+    expect(row('return_credit_application_reversal', debit: 2000).isNonCashCredit, isFalse);
     expect(row('charge', debit: 2000).isCashReceipt, isFalse);
   });
+  test('return credit application has its own non-cash summary', () {
+    final summary = StatementSummary.fromJson({
+      'paymentsSyp': 5000,
+      'returnCreditsSyp': 1200,
+      'returnCreditApplicationsSyp': 900,
+    });
+    expect(summary.paymentsSyp, 5000);
+    expect(summary.returnCreditsSyp, 1200);
+    expect(summary.returnCreditApplicationsSyp, 900);
+    expect(StatementSummary.fromJson({}).returnCreditApplicationsSyp, 0);
+  });
+
 }

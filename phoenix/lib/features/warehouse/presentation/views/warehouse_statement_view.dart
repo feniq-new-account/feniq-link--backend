@@ -142,6 +142,8 @@ class _WarehouseStatementViewState extends State<WarehouseStatementView> {
                     '${l10n.statementCharges}: ${formatSyp(statement.summary.chargesSyp, l10n.currencySuffix)}',
                     '${l10n.statementPayments}: ${formatSyp(statement.summary.paymentsSyp, l10n.currencySuffix)}',
                     '${l10n.statementReturnCredits}: ${formatSyp(statement.summary.returnCreditsSyp, l10n.currencySuffix)}',
+                    if (statement.summary.returnCreditApplicationsSyp != 0)
+                      '${l10n.statementReturnCreditApplications}: ${formatSyp(statement.summary.returnCreditApplicationsSyp, l10n.currencySuffix)}',
                   ].join('\n'),
                   style: muted,
                 ),

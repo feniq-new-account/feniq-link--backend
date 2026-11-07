@@ -2828,6 +2828,12 @@ abstract class AppLocalizations {
   /// **'Returned'**
   String get statementReturnCredits;
 
+  /// A previously issued return credit applied to a new invoice, not cash.
+  ///
+  /// In en, this message translates to:
+  /// **'Return credit applied (non-cash)'**
+  String get statementReturnCreditApplications;
+
   /// No description provided for @statementKindCharge.
   ///
   /// In en, this message translates to:
@@ -2863,6 +2869,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Return credit reversed'**
   String get statementKindReturnCreditReversal;
+
+  /// No description provided for @statementKindReturnCreditApplication.
+  ///
+  /// In en, this message translates to:
+  /// **'Return credit applied (non-cash)'**
+  String get statementKindReturnCreditApplication;
+
+  /// No description provided for @statementKindReturnCreditApplicationReversal.
+  ///
+  /// In en, this message translates to:
+  /// **'Return credit application reversed'**
+  String get statementKindReturnCreditApplicationReversal;
 
   /// No description provided for @statementKindManualCredit.
   ///

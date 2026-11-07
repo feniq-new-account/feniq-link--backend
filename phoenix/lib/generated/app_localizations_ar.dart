@@ -1648,6 +1648,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statementReturnCredits => 'المرتجعات';
 
   @override
+  String get statementReturnCreditApplications => 'استخدام رصيد مرتجع (غير نقدي)';
+
+  @override
   String get statementKindCharge => 'تسليم طلب';
 
   @override
@@ -1664,6 +1667,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get statementKindReturnCreditReversal => 'عكس رصيد مرتجع';
+
+  @override
+  String get statementKindReturnCreditApplication => 'استخدام رصيد مرتجع (غير نقدي)';
+
+  @override
+  String get statementKindReturnCreditApplicationReversal => 'عكس استخدام رصيد مرتجع';
 
   @override
   String get statementKindManualCredit => 'إضافة رصيد';
