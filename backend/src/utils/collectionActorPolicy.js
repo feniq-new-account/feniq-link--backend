@@ -25,7 +25,7 @@ function authorizedCollectionAction({ actor, grants, action, warehouseId, record
   if (!actor || actor.status !== 'active' || !identity(actor.id) || !identity(warehouseId) ||
       !Object.values(ACTIONS).includes(action) || !Array.isArray(grants)) return false;
   const eligible = grants.some(grant =>
-    grant && grant.active === true && identity(grant.actorId) === identity(actor.id) &&
+    grant && grant.active === true && !grant.revokedAt && identity(grant.actorId) === identity(actor.id) &&
     identity(grant.warehouseId) === identity(warehouseId) && grant.action === action
   );
   if (!eligible) return false;
