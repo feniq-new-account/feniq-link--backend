@@ -20,6 +20,7 @@ const REASON_REQUIRED = new Set([
   'return.rejected',
   'commission.collection_reversed',
   'collection.grant_revoked',
+  'collection.receipt_rejected',
 ]);
 
 // Written inside the same transaction as the financial effect it describes, so
