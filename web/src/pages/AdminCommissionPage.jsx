@@ -1,3 +1,4 @@
+import { CashCustodyPanel } from '../components/CashCustodyPanel';
 import { AdminCollectionControls } from '../components/AdminCollectionControls';
 import { NumericInput } from '../components/NumericInput';
 import { useCallback, useEffect, useState } from 'react';
@@ -43,6 +44,7 @@ const COLLECTIONS_PAGE_SIZE = 50;
 // pay, not something to tidy away.
 function OutstandingAmount({ amountSyp }) {
   const { t } = useTranslation();
+  if (amountSyp == null) return <span>—</span>;
   if (amountSyp < 0) {
     return (
       <span className="adm-green" title={t('commission.platformOwesHint')}>
@@ -467,7 +469,7 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
         />
         <StatCard
           label={t('commission.outstanding')}
-          value={formatSyp(summary.outstandingSyp)}
+          value={summary.outstandingSyp == null ? '—' : formatSyp(summary.outstandingSyp)}
           hint={t('commission.settledSoFar', {
             collected: formatSyp(summary.alreadyCollectedSyp),
             paidOut: formatSyp(summary.paidOutSyp ?? 0),
@@ -477,6 +479,11 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
       </div>
 
       <AdminCollectionControls warehouseId={warehouseId} />
+      <CashCustodyPanel warehouseId={warehouseId} />
+      {summary.heldByFeniqSyp !== undefined && <p>{t('cashCustody.heldCommission')}: {formatSyp(summary.heldByFeniqSyp)}</p>}
+      {summary.cashDueScope === 'selected_period_bounded_by_current_cash' && <p>{t('cashCustody.periodMovement')}: {formatSyp(summary.periodOutstandingSyp)}</p>}
+      {summary.currentCashOutstandingSyp != null && <p>{t('cashCustody.currentCommissionCash')}: {formatSyp(summary.currentCashOutstandingSyp)}</p>}
+      {summary.custodyUnreconciled && <p role="alert">{t('cashCustody.unverifiedCommission')}</p>}
       <div className="adm-detail-grid">
         <div>
           <div className="adm-card-head">
@@ -556,12 +563,12 @@ function WarehouseCommissionDetail({ warehouseId, from, to, onBack, onChanged })
         </div>
 
         <div>
-          <RecordCollectionForm
+          {summary.outstandingSyp != null && <RecordCollectionForm
             warehouseId={warehouseId}
             period={period}
             outstandingSyp={summary.outstandingSyp}
             onSaved={reload}
-          />
+          />}
         </div>
       </div>
 
@@ -686,7 +693,7 @@ export function AdminCommissionPage() {
             />
             <StatCard
               label={t('commission.outstanding')}
-              value={formatSyp(totals.outstandingSyp)}
+              value={totals.outstandingSyp == null ? '—' : formatSyp(totals.outstandingSyp)}
               hint={t('commission.settledSoFar', {
                 collected: formatSyp(totals.alreadyCollectedSyp),
                 paidOut: formatSyp(totals.paidOutSyp ?? 0),
@@ -707,6 +714,8 @@ export function AdminCommissionPage() {
                   <th className="adm-num">{t('commission.collected')}</th>
                   <th className="adm-num">{t('commission.paidOut')}</th>
                   <th className="adm-num">{t('commission.outstanding')}</th>
+                  <th className="adm-num">{t('cashCustody.auditedNet')}</th>
+                  <th className="adm-num">{t('cashCustody.cashInCustodySyp')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -742,7 +751,12 @@ export function AdminCommissionPage() {
                     <td className="adm-num">{row.paidOutSyp > 0 ? formatSyp(row.paidOutSyp) : '—'}</td>
                     <td className="adm-num">
                       <OutstandingAmount amountSyp={row.outstandingSyp} />
+                      {row.cashDueScope === 'selected_period_bounded_by_current_cash' && <small>{t('cashCustody.periodMovement')}: {formatSyp(row.periodOutstandingSyp)} · {t('cashCustody.currentCommissionCash')}: {row.currentCashOutstandingSyp == null ? '—' : formatSyp(row.currentCashOutstandingSyp)}</small>}
                     </td>
+                    <td className="adm-num">{row.cashCustody?.netWarehouseDueSyp == null ? '—' : formatSyp(row.cashCustody.netWarehouseDueSyp)}
+                      {row.cashCustody && <small>{formatBusinessDateTime(row.cashCustody.asOf)} · {t('cashCustody.overdueCount')}: {row.cashCustody.overdueCount}</small>}
+                    </td>
+                    <td className="adm-num">{row.cashCustody?.cashInCustodySyp == null ? '—' : formatSyp(row.cashCustody.cashInCustodySyp)}</td>
                   </tr>
                 ))}
               </tbody>

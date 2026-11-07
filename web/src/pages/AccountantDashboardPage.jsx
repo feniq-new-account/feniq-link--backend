@@ -1,3 +1,4 @@
+import { CashCustodyPanel } from '../components/CashCustodyPanel';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -122,7 +123,7 @@ export function AccountantDashboardPage() {
         {data.activityHasMore && <p className="hint">{t('accounting.activityLimit')}</p>}
       </section>
     </>}
-    {data?.collectionAccounting && <CollectionAccountingPanel />}
+    {data?.collectionAccounting && <><CollectionAccountingPanel /><CashCustodyPanel /></>}
     <OverduePreview key={JSON.stringify(query)} />
   </div>;
 }
