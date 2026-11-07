@@ -26,7 +26,11 @@ const collectionActorGrantSchema = new Schema({
 // deactivates the existing record; do not create competing active grants.
 collectionActorGrantSchema.index({ actorId: 1, warehouseId: 1, action: 1 }, { unique: true });
 collectionActorGrantSchema.index({ warehouseId: 1, active: 1 });
-collectionActorGrantSchema.index({ warehouseId: 1, issuanceKey: 1 }, { unique: true, sparse: true });
-collectionActorGrantSchema.index({ warehouseId: 1, revocationKey: 1 }, { unique: true, sparse: true });
+collectionActorGrantSchema.index({ warehouseId: 1, issuanceKey: 1 },
+  { unique: true, partialFilterExpression: { issuanceKey: { $type: 'string' } } });
+// A compound sparse index is unsafe: warehouseId is always present, so every
+// unrevoked grant would index a null revocationKey and collide with its peers.
+collectionActorGrantSchema.index({ warehouseId: 1, revocationKey: 1 },
+  { unique: true, partialFilterExpression: { revocationKey: { $type: 'string' } } });
 
 module.exports = model('CollectionActorGrant', collectionActorGrantSchema);
