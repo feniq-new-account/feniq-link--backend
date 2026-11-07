@@ -18,6 +18,7 @@ import 'package:feniq/features/warehouse/presentation/utils/warehouse_order_labe
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_paged_list.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/account_payment.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/warehouse_summary_card.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/warehouse_collection_accounting_card.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/voice_payment_sheet.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_permissions.dart';
@@ -104,7 +105,14 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                 child: WarehousePagedList(
                   header: const Padding(
                     padding: EdgeInsets.only(bottom: AppSizes.spacingSmall),
-                    child: WarehouseSummaryCard(),
+                    child: Column(
+                      children: [
+                        WarehouseCollectionAccountingCard(),
+                        SizedBox(height: AppSizes.spacingSmall),
+                        // Canonical debt and receipts remain ledger-backed.
+                        WarehouseSummaryCard(),
+                      ],
+                    ),
                   ),
                   controller: _controller,
                   itemCount: state.accounts.length,
