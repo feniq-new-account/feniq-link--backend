@@ -33,8 +33,21 @@ class ScaffoldWithBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Scaffold(
-      body: navigationShell,
+    // Each pharmacy tab has its own root navigator. Switching tabs with
+    // goBranch does not push a route, so Android Back used to exit the app
+    // from "My Orders", "Offers", "Accounts" and "Profile". Intercept Back
+    // only on those tab roots: first Back returns to Warehouses (home);
+    // a second Back from home uses Android's normal exit behavior.
+    // Standalone detail routes pushed above the shell still pop normally.
+    return PopScope<Object?>(
+      canPop: navigationShell.currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && navigationShell.currentIndex != 0) {
+          navigationShell.goBranch(0, initialLocation: true);
+        }
+      },
+      child: Scaffold(
+        body: navigationShell,
       // A soft shadow cast upward onto the body content above the bar
       // (Section 1 of the visual-polish pass) - NavigationBar itself has no
       // "shadow above" concept, so this wraps it in a plain decorated box.
@@ -74,6 +87,7 @@ class ScaffoldWithBottomNav extends StatelessWidget {
               ),
           ],
         ),
+      ),
       ),
     );
   }
