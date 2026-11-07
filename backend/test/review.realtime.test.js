@@ -10,6 +10,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-realtime-tes
 process.env.NODE_ENV = 'test';
 
 const test = require('node:test');
+const { FEATURES } = require('../src/config/features');
 const assert = require('node:assert');
 const path = require('node:path');
 const mongoose = require('mongoose');
@@ -62,11 +63,14 @@ const RATE = () =>
   });
 
 test.beforeEach(() => {
+  FEATURES.mutualRatings = true;
   emitted.length = 0;
   orderStatus = 'delivered';
   existingReview = null;
   createBehavior = async (doc) => ({ _id: REVIEW_ID, ...doc });
 });
+
+test.afterEach(() => { FEATURES.mutualRatings = false; });
 
 test('rating a delivered order emits exactly one review.created, to that warehouse only', async () => {
   await RATE();
