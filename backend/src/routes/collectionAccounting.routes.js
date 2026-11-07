@@ -5,6 +5,7 @@ const contracts = require('../services/collectionContract.service');
 const settlements = require('../services/collectionSettlement.service');
 const reads = require('../services/collectionAccountingRead.service');
 const grants = require('../services/collectionGrant.service');
+const feniqReceipts = require('../services/feniqReceipt.service');
 
 const warehouse = Router();
 warehouse.use(authenticate, authorize('warehouse'), requireActiveStatus);
@@ -51,6 +52,21 @@ admin.post('/warehouses/:warehouseId/actor-grants', asyncHandler(async (req, res
 }));
 admin.post('/warehouses/:warehouseId/actor-grants/:grantId/revoke', asyncHandler(async (req, res) => {
   const result = await grants.revoke(req.user._id, req.params.warehouseId, req.params.grantId, req.body);
+  if (result.replay) res.set('Idempotent-Replay', 'true');
+  res.json({ success: true, ...result });
+}));
+// This writer is explicitly OFF unless staging enables
+// FENIQ_COLLECTION_RECEIPTS_ENABLED=true. No real-money pilot by default.
+admin.get('/warehouses/:warehouseId/feniq-receipts', asyncHandler(async (req, res) => {
+  res.json({ success: true, ...await feniqReceipts.list(req.user._id, req.params.warehouseId, req.query) });
+}));
+admin.post('/warehouses/:warehouseId/feniq-receipts', asyncHandler(async (req, res) => {
+  const result = await feniqReceipts.record(req.user._id, req.params.warehouseId, req.body);
+  if (result.replay) res.set('Idempotent-Replay', 'true');
+  res.status(result.replay ? 200 : 201).json({ success: true, ...result });
+}));
+admin.post('/warehouses/:warehouseId/feniq-receipts/:receiptId/review', asyncHandler(async (req, res) => {
+  const result = await feniqReceipts.review(req.user._id, req.params.warehouseId, req.params.receiptId, req.body);
   if (result.replay) res.set('Idempotent-Replay', 'true');
   res.json({ success: true, ...result });
 }));
