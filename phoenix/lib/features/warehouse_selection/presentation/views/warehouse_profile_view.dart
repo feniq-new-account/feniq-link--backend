@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
+import 'package:feniq/core/constants/app_features.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -118,8 +119,8 @@ class WarehouseProfileView extends StatelessWidget {
                           _ContactSection(profile: profile),
                           const SizedBox(height: AppSizes.spacingMedium),
                           _DeliverySection(profile: profile),
-                          const SizedBox(height: AppSizes.spacingMedium),
-                          _ReviewsSection(profile: profile),
+                          if (AppFeatures.mutualRatings) const SizedBox(height: AppSizes.spacingMedium),
+                          if (AppFeatures.mutualRatings) _ReviewsSection(profile: profile),
                           const SizedBox(height: AppSizes.spacingXLarge),
                           PrimaryButton(
                             label: l10n.browseWarehouseProductsButton,
