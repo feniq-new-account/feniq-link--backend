@@ -17,8 +17,8 @@ void main() {
   testWidgets('positive Arabic early launch wording until end of November 15 Damascus', (tester) async {
     await pumpNotice(tester, DateTime.utc(2026, 11, 15, 20, 59), const Locale('ar'));
     expect(find.text('مرحلة الإطلاق المبكر'), findsOneWidget);
-    expect(find.textContaining('يبدأ استقبال الطلبات عبر فينيق اعتباراً من 16 تشرين الثاني'), findsOneWidget);
-    expect(find.textContaining('إضافة مستودعات جديدة أسبوعياً'), findsOneWidget);
+    expect(find.textContaining('يبدأ استقبال الطلبات اعتباراً من 16 تشرين الثاني'), findsOneWidget);
+    expect(find.textContaining('تُضاف مستودعات جديدة باستمرار'), findsOneWidget);
     expect(find.textContaining('أنت من أوائل الصيادلة'), findsNothing);
     expect(find.byIcon(Icons.rocket_launch_outlined), findsOneWidget);
   });
@@ -26,7 +26,7 @@ void main() {
   testWidgets('English translation shows the same early-launch window', (tester) async {
     await pumpNotice(tester, DateTime.utc(2026, 11, 15, 20, 59), const Locale('en'));
     expect(find.text('Early launch phase'), findsOneWidget);
-    expect(find.textContaining('Ordering through Feniq begins November 16'), findsOneWidget);
+    expect(find.textContaining('Orders open November 16'), findsOneWidget);
   });
 
   testWidgets('the badge disappears exactly at midnight November 16 Damascus', (tester) async {
