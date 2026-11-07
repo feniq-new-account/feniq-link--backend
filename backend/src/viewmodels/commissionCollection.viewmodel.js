@@ -31,6 +31,12 @@ function serializeWarehouseRow(row) {
     alreadyCollectedSyp: row.alreadyCollectedSyp,
     paidOutSyp: row.paidOutSyp ?? 0,
     outstandingSyp: row.outstandingSyp,
+    heldByFeniqSyp: row.heldByFeniqSyp,
+    custodyUnreconciled: row.custodyUnreconciled,
+    cashCustody: row.cashCustody,
+    periodOutstandingSyp: row.periodOutstandingSyp,
+    currentCashOutstandingSyp: row.currentCashOutstandingSyp,
+    cashDueScope: row.cashDueScope,
   };
 }
 
