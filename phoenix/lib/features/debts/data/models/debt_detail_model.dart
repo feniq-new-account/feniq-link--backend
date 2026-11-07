@@ -83,6 +83,15 @@ class StatementRowModel {
   final StatementReference reference;
 
   bool get isDebit => debitSyp > 0;
+
+  /// Only an actual posted payment is a cash receipt. A returned-goods
+  /// credit, manual credit or payment reversal must never be shown as cash
+  /// collected merely because it reduces the outstanding balance.
+  bool get isCashReceipt => kind == 'payment' && creditSyp > 0;
+
+  /// Reduces debt without recording any new money received.
+  bool get isNonCashCredit =>
+      creditSyp > 0 && (kind == 'return_credit' || kind == 'manual_credit');
   num get amountSyp => isDebit ? debitSyp : creditSyp;
 
   factory StatementRowModel.fromJson(Map<String, dynamic> json) => StatementRowModel(
