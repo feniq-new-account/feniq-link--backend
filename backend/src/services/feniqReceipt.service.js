@@ -170,6 +170,10 @@ async function review(actorId, warehouseId, receiptId, body) {
     const r = await Receipt.findOne({ _id: receiptId, warehouseId }).session(session).lean();
     if (!r) throw ApiError.notFound('Collection receipt not found.', 'FENIQ_RECEIPT_NOT_FOUND');
     await scope(actorId, warehouseId, ACTIONS.APPROVE_FENIQ, session, r.recordedBy);
+    const reusedDecision = await Receipt.findOne({ warehouseId, decisionKey: key }).session(session).lean();
+    if (reusedDecision && String(reusedDecision._id) !== receiptId) {
+      throw idempotencyKeyReusedError('Review key already belongs to another receipt.');
+    }
     return r;
   };
   if (decision === 'rejected') {
