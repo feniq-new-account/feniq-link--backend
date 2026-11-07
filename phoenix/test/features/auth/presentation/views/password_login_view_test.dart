@@ -70,7 +70,8 @@ void main() {
     await pumpLoginView(tester);
     expect(find.byType(PhoneTextField), findsOneWidget);
     expect(find.text('09'), findsNothing);
-    expect(find.text('09xxxxxxxx / +9639xxxxxxxx'), findsOneWidget);
+    expect(find.text('9xxxxxxxx'), findsOneWidget);
+    expect(find.text('09xxxxxxxx / +9639xxxxxxxx'), findsNothing);
   });
 
   group('PasswordLoginView sends the international phone to loginWithPassword', () {
