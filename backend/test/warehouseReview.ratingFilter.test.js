@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 const { startMemoryMongo, stopMemoryMongo, clearCollections } = require('./helpers/mongo');
 
 const Review = require('../src/models/review.model');
+const { FEATURES } = require('../src/config/features');
 const { listPaginatedReviewsForWarehouse } = require('../src/services/warehouseReview.service');
 
 const WAREHOUSE_ID = new mongoose.Types.ObjectId();
@@ -23,8 +24,10 @@ test.after(async () => {
 });
 
 test.beforeEach(async () => {
+  FEATURES.mutualRatings = true;
   await clearCollections(Review);
 });
+test.afterEach(() => { FEATURES.mutualRatings = false; });
 
 // One review per rating value 1-5, plus a second 5-star and an invisible
 // (moderated-away) 5-star that must never surface regardless of filter.
