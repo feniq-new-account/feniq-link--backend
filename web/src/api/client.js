@@ -1063,6 +1063,17 @@ export const api = {
   // browsing needs the second list rather than the registry.
   warehouseManufacturers: ({ inCatalog } = {}) =>
     request(`/warehouse/manufacturers${inCatalog ? '?inCatalog=true' : ''}`),
+  cashCustody: (warehouseId = null, query = {}) => request(`${warehouseId ? `/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}` : '/warehouse/collection-accounting'}/cash-reconciliation?${new URLSearchParams(query)}`),
+  cashSnapshot: (warehouseId, snapshotId) => request(`${warehouseId ? `/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}` : '/warehouse/collection-accounting'}/cash-reconciliation/${encodeURIComponent(snapshotId)}`),
+  cashOperation: (warehouseId, operation, resourceId, body) => {
+    const base = warehouseId ? `/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}` : '/warehouse/collection-accounting';
+    const encoded = encodeURIComponent(resourceId || '');
+    const suffix = { reconcile: '/cash-reconciliation', receipt: '/feniq-receipts', receiptReview: `/feniq-receipts/${encoded}/review`,
+      transfer: '/remittances', reversal: `/remittances/${encoded}/reversals`, review: `/remittances/${encoded}/review`,
+      grant: '/actor-grants', revoke: `/actor-grants/${encoded}/revoke` }[operation];
+    if (!suffix) throw new Error('Unknown cash operation');
+    return request(base + suffix, { method: 'POST', body });
+  },
   collectionAccounting: (query = {}) => request(`/warehouse/collection-accounting?${new URLSearchParams(query)}`),
   activateCollectionContract: (warehouseId, body) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}/contracts`, { method: 'POST', body }),
   confirmCollectionSettlement: (warehouseId, body) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}/settlements`, { method: 'POST', body }),

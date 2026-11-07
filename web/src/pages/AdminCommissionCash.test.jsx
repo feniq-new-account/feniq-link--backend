@@ -6,6 +6,8 @@ import { AdminCommissionPage, RecordCollectionForm, ReverseCollectionModal } fro
 import { api } from '../api/client';
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: key => key, i18n: { language: 'ar' } }) }));
 vi.mock('../api/client', () => ({ api: { recordCommissionCollection: vi.fn(), adminCommissionWarehouse: vi.fn(), adminCommissionOverview: vi.fn() } }));
+// Cash custody has a separate request/permission suite; keep this suite focused on commission cash retries.
+vi.mock('../components/CashCustodyPanel', () => ({ CashCustodyPanel: () => null }));
 vi.mock('../components/AdminCollectionControls', () => ({ AdminCollectionControls: () => null }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let root, host;
