@@ -238,7 +238,7 @@ async function findReplayOrReject(idempotencyKey, { warehouseId, kind, fingerpri
 
 // Records money received. One transaction: the Payment, its ledger entry, the
 // balance movement and the audit record all land together or not at all.
-async function createPayment(warehouseId, recordedByUserId, data) {
+async function createPayment(warehouseId, recordedByUserId, data, options = {}) {
   await validatePharmacyId(data.pharmacyId);
   validateAmount(data.amount);
   const currency = resolveCurrency(data.currency);
@@ -274,7 +274,9 @@ async function createPayment(warehouseId, recordedByUserId, data) {
   // captureFxSnapshot() right below - the client's rate, even if stale, never
   // reaches the stored record. There is nothing for RATE_CHANGED to protect
   // against here.
-  const fx = await captureFxSnapshot();
+  // Internal callers may supply a rate captured at actual cash recording time.
+  // HTTP warehouse payment routes never pass options; their behavior is unchanged.
+  const fx = options.fxSnapshot ?? await captureFxSnapshot();
   const frozen = freezeAmounts(data.amount, currency, fx);
   if (frozen.amountSyp === null) {
     throw ApiError.badRequest(
@@ -286,6 +288,9 @@ async function createPayment(warehouseId, recordedByUserId, data) {
 
   try {
     return await runInTransaction(async (session) => {
+      // Optional approval hook executes INSIDE the payment transaction, never
+      // after it, so approval, receipt, ledger and audit cannot commit separately.
+      if (options.beforePost) await options.beforePost(session);
       const termsWarehouse = await Warehouse.findById(warehouseId).select('commissionEngine').session(session).lean();
       if (termsWarehouse?.commissionEngine === 'collection_v2') {
         await require('./collectionLedger.service').initializeAccount(account._id, warehouseId, session);
@@ -349,7 +354,7 @@ async function createPayment(warehouseId, recordedByUserId, data) {
         {
           action: 'payment.recorded',
           actorId: recordedByUserId,
-          actorRole: 'warehouse',
+          actorRole: options.actorRole || 'warehouse',
           entityType: 'Payment',
           entityId: payment._id,
           accountId: account._id,
@@ -367,6 +372,7 @@ async function createPayment(warehouseId, recordedByUserId, data) {
         session
       );
 
+      if (options.afterPost) await options.afterPost(session, payment);
       return payment;
     });
   } catch (err) {
