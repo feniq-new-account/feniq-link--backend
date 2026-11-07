@@ -1,6 +1,6 @@
 'use strict';
 
-const { ACTIONS, authorizedCollectionAction } = require('./collectionActorPolicy');
+const { ACTIONS, authorizedCollectionAction, canGrantToActor } = require('./collectionActorPolicy');
 
 // Database-backed authorization boundary. Only server-resolved authenticated
 // identities and persisted grants may be supplied; never pass request-body
@@ -16,7 +16,7 @@ async function authorizePersistedCollectionAction({
   const actor = await User.findById(actorId).session(session).lean();
   if (!actor || actor.status !== 'active') return false;
   const warehouse = await Warehouse.findById(warehouseId).session(session).lean();
-  if (!warehouse || warehouse.isActive !== true) return false;
+  if (!warehouse || !canGrantToActor(action, actor, warehouse)) return false;
   const grants = await CollectionActorGrant.find({
     actorId: actor._id, warehouseId: warehouse._id, action,
     active: true, revokedAt: null,
