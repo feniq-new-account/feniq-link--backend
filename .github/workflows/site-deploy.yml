@@ -4,23 +4,19 @@
 # في commit واحد ويدفعه إلى الفرع site-dist. خدمة feniq-site في render.yaml تنشر
 # ذلك الفرع كما هو، فيصير التطبيق قابلاً للتنزيل من https://<الموقع>/feniq.apk.
 #
-# يعمل تلقائياً: عند أي تعديل على site/ في main، وبعد كل بناء APK ناجح.
-# أو يدوياً: Actions ← Deploy website ← Run workflow.
+# النشر يدوي فقط: Actions ← Deploy website ← Run workflow.
+# إذا لم يحدد المالك رقم APK مؤهلاً، تُحفظ النسخة المنشورة حالياً.
+# لا تستبدل APK الموقع نتيجة بناء Android أو دفع موقع جديد تلقائياً.
 name: Deploy website
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'site/**'
-      - '.github/workflows/site-deploy.yml'
-      - '.github/scripts/assemble-site.py'
-      - '.github/android-certificate.sha256'
-  workflow_run:
-    workflows: ['Build Android APK']
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      apk_run_id:
+        description: 'Approved signed Build Android APK run ID from main; leave blank to preserve currently published APK'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -32,7 +28,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -55,26 +51,39 @@ jobs:
             fi
           fi
 
-      - name: Find the latest available signed production artifact
+      - name: Validate explicitly approved signed APK run
         id: apk
         env:
           GH_TOKEN: ${{ github.token }}
+          APPROVED_RUN_ID: ${{ inputs.apk_run_id }}
         run: |
-          runs=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow android-apk.yml --branch main \
-                --event workflow_dispatch --status success --limit 20 --json databaseId --jq '.[].databaseId')
-          for run_id in $runs; do
-            count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts" \
-              --jq '[.artifacts[] | select(.name == "feniq-apk" and .expired == false)] | length')
-            if [ "$count" -gt 0 ]; then
-              echo "id=$run_id" >> "$GITHUB_OUTPUT"
-              break
-            fi
-          done
+          if [ -z "$APPROVED_RUN_ID" ]; then
+            echo "No APK run approved: preserving the existing website download."
+            exit 0
+          fi
+          if ! [[ "$APPROVED_RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo "::error::apk_run_id must be a numeric workflow run ID."
+            exit 1
+          fi
+          metadata=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APPROVED_RUN_ID" \
+            --jq '[.name, .event, .head_branch, .status, .conclusion] | @tsv')
+          IFS=$'\t' read -r name event branch status conclusion <<< "$metadata"
+          if [ "$name" != 'Build Android APK' ] || [ "$event" != 'workflow_dispatch' ] || \
+             [ "$branch" != main ] || [ "$status" != completed ] || [ "$conclusion" != success ]; then
+            echo "::error::Selected run is not a successful manual main Android build."
+            exit 1
+          fi
+          count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APPROVED_RUN_ID/artifacts" \
+            --jq '[.artifacts[] | select(.name == "feniq-apk" and .expired == false)] | length')
+          if [ "$count" != 1 ]; then
+            echo "::error::Selected run has no unexpired permanently signed feniq-apk artifact."
+            exit 1
+          fi
+          echo "id=$APPROVED_RUN_ID" >> "$GITHUB_OUTPUT"
 
-      # Artifacts expire after 30 days (android-apk.yml); a missing one is not fatal.
+      # Explicitly requested artifacts must download successfully; never fall back silently.
       - name: Download APK
         if: steps.apk.outputs.id != ''
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: feniq-apk
