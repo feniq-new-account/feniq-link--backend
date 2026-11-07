@@ -15,6 +15,32 @@ export function FeatureControlCenter({ warehouseId }) {
   const [grant, setGrant] = useState({ kind: 'addon', sourceCode: '', feature: 'ownerMobileAccess', startsAt: '', endsAt: '', decisionRef: '' });
   const [bundle, setBundle] = useState({ code: '', name: '', tier: 'custom', features: [], decisionRef: '' });
   const [attempt, setAttempt] = useState(0);
+  const [launch, setLaunch] = useState(null);
+  const [launchBusy, setLaunchBusy] = useState(false);
+  const [launchError, setLaunchError] = useState('');
+  useEffect(() => {
+    if (warehouseId) return;
+    let active = true;
+    api.getLaunchSettings().then(result => { if (active) setLaunch(result.configuration); })
+      .catch(err => { if (active) setLaunchError(err.message); });
+    return () => { active = false; };
+  }, [warehouseId, attempt]);
+  async function toggleOrdering() {
+    if (!launch || launchBusy) return;
+    setLaunchBusy(true); setLaunchError('');
+    try {
+      const opening = launch.mode !== 'ordering_open' || (launch.orderingClosesAt && Date.parse(launch.orderingClosesAt) <= Date.now());
+      const result = await api.updateLaunchSettings({
+        mode: opening ? 'ordering_open' : 'registration_only',
+        message: opening ? 'استقبال الطلبات متاح الآن.' : 'التسجيل والتصفح متاحان. استقبال الطلبات متوقف حالياً.',
+        revision: launch.revision,
+        // No timed pilot: no per-pharmacy phone allowlist or demo-warehouse restriction.
+        orderingClosesAt: null,
+      });
+      setLaunch(result.configuration);
+    } catch (err) { setLaunchError(err.message); }
+    finally { setLaunchBusy(false); }
+  }
   const load = useCallback(async () => {
     const [platform, rights, bundles, audit] = await Promise.all([
       api.getFeatureControl(), warehouseId ? api.getWarehouseEntitlements(warehouseId) : Promise.resolve(null),
@@ -42,6 +68,16 @@ export function FeatureControlCenter({ warehouseId }) {
   return <section className="feature-control-center">
     {warehouseId ? <h3>{t('featureControl.title')}</h3> : <h1>{t('featureControl.title')}</h1>}
     <p className="hint">{t('featureControl.help')}</p>
+    {!warehouseId && <section className="adm-card reg-card" aria-label="التحكم باستقبال الطلبات">
+      <h2>مفاتيح التشغيل العامة</h2>
+      <p className="hint">تفعيل الطلبات يسمح لجميع الصيدليات المؤهلة بالطلب من المستودعات النشطة. الإيقاف يمنع إنشاء طلبات جديدة مع إبقاء التصفح متاحاً.</p>
+      {launchError && <p role="alert" className="error-text">{launchError}</p>}
+      {launch ? <button type="button" className={launch.mode === 'ordering_open' && (!launch.orderingClosesAt || Date.parse(launch.orderingClosesAt) > Date.now()) ? 'btn-primary' : 'btn-secondary'}
+        disabled={launchBusy} onClick={toggleOrdering} aria-pressed={launch.mode === 'ordering_open' && (!launch.orderingClosesAt || Date.parse(launch.orderingClosesAt) > Date.now())}>
+        استقبال الطلبات: {launch.mode === 'ordering_open' && (!launch.orderingClosesAt || Date.parse(launch.orderingClosesAt) > Date.now()) ? 'ON' : 'OFF'}
+      </button> : <p role="status">جارٍ تحميل حالة استقبال الطلبات...</p>}
+      <p className="hint">التقييمات وبقية الميزات الاختيارية موجودة ضمن مفاتيح التشغيل العامة أدناه. تبقى العمليات المالية خاضعة لضوابطها المستقلة.</p>
+    </section>}
     {error && <p className="error-text" role="alert">{error}</p>}
     <button type="button" className="btn-secondary" disabled={busy} onClick={() => setAttempt(v => v + 1)}>{t('common.retry')}</button>
     {notice && <p role="status">{notice}</p>}
