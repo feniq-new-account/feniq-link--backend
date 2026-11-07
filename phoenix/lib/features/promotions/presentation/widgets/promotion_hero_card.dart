@@ -21,9 +21,9 @@ class PromotionHeroCard extends StatelessWidget {
   final Promotion promotion;
   final VoidCallback onTap;
 
-  // 208, not 176: room for the badges, meta and price lines at the 12 pt
-  // floor every small label now keeps (they wrapped and overflowed at 176).
-  static const double height = 208;
+  // A compact featured card: product image is centered, never stretched
+  // to the full height of the card.
+  static const double height = 190;
 
   @override
   Widget build(BuildContext context) {
@@ -43,10 +43,20 @@ class PromotionHeroCard extends StatelessWidget {
         onTap: onTap,
         child: Row(
           children: [
-            PromotionThumbnail(promotion: promotion, width: 100, height: height),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 16),
+              child: Center(
+                child: PromotionThumbnail(
+                  promotion: promotion,
+                  width: 94,
+                  height: 128,
+                  borderRadius: AppRadius.medium,
+                ),
+              ),
+            ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(AppSizes.spacingMedium),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -142,12 +152,12 @@ class PromotionListCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.spacingSmall + 2),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             PromotionThumbnail(
               promotion: promotion,
-              width: 64,
-              height: 64,
+              width: 70,
+              height: 70,
               borderRadius: AppRadius.small,
             ),
             const SizedBox(width: AppSizes.spacingMedium),
