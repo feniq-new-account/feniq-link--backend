@@ -150,3 +150,67 @@ test('revocation idempotency key cannot revoke a different grant', async () => {
   assert.equal(unaffected.active, true);
   assert.equal(await Audit.countDocuments({ action: 'collection.grant_revoked' }), 1);
 });
+
+
+test('revocation committed after a stale transaction read prevents financial-write authorization', async () => {
+  const issued = await call(admin, 'POST', route(), issueBody(
+    secondAdmin, ACTIONS.APPROVE_FENIQ, 'write-race-approval-grant',
+  ));
+  assert.equal(issued.status, 201, JSON.stringify(issued.body));
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    // Establish an old MongoDB snapshot before revocation; this is the race
+    // that a permission SELECT alone would not protect against.
+    const snapshotGrant = await Grant.findById(issued.body.grant.id).session(session).lean();
+    assert.equal(snapshotGrant.active, true);
+    const revoke = await call(admin, 'POST',
+      route() + '/' + issued.body.grant.id + '/revoke',
+      { reason: 'Revoke before posting money', idempotencyKey: 'write-race-revoke-grant' });
+    assert.equal(revoke.status, 200, JSON.stringify(revoke.body));
+
+    let allowed = false;
+    let rejected = false;
+    try {
+      allowed = await authorizePersistedCollectionAction({
+        actorId: secondAdmin._id, warehouseId: warehouse._id,
+        action: ACTIONS.APPROVE_FENIQ, recordedBy: admin._id,
+        User, Warehouse, CollectionActorGrant: Grant, session, forMoneyPost: true,
+      });
+    } catch (err) {
+      // MongoDB may reject the stale transaction with WriteConflict.
+      // Either a conflict or an explicit false must abort the money writer.
+      rejected = true;
+      assert.ok(err.hasErrorLabel?.('TransientTransactionError') ||
+        err.code === 112 || /write conflict|transaction/i.test(String(err.message)),
+      String(err));
+    }
+    assert.equal(allowed, false, 'a revoked grant authorized a stale money transaction');
+    assert.equal(rejected || !allowed, true);
+  } finally {
+    try { if (session.inTransaction()) await session.abortTransaction(); } catch { /* already aborted */ }
+    await session.endSession();
+  }
+  assert.equal((await Grant.findById(issued.body.grant.id).lean()).active, false);
+  assert.equal(await Payment.countDocuments(), 0);
+  assert.equal(await Entry.countDocuments(), 0);
+});
+
+test('money-post guard increments a live grant only inside its transaction', async () => {
+  const issued = await call(admin, 'POST', route(), issueBody(
+    secondAdmin, ACTIONS.APPROVE_FENIQ, 'active-guard-approval-grant',
+  ));
+  assert.equal(issued.status, 201);
+  const before = await Grant.findById(issued.body.grant.id).lean();
+  assert.equal(before.authorizationRevision, 0);
+  const authorized = await runInTransaction(session => authorizePersistedCollectionAction({
+    actorId: secondAdmin._id, warehouseId: warehouse._id,
+    action: ACTIONS.APPROVE_FENIQ, recordedBy: admin._id,
+    User, Warehouse, CollectionActorGrant: Grant, session, forMoneyPost: true,
+  }));
+  assert.equal(authorized, true);
+  const after = await Grant.findById(issued.body.grant.id).lean();
+  assert.equal(after.authorizationRevision, 1);
+  assert.equal(await Payment.countDocuments(), 0);
+  assert.equal(await Entry.countDocuments(), 0);
+});
