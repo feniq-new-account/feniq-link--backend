@@ -409,6 +409,12 @@ async function reversePayment(id, warehouseId, actorUserId, { reason, idempotenc
   if (replay) return replay;
 
   const original = await findOwnedPaymentOrThrow(id, warehouseId);
+  // Feniq-held cash is not warehouse cash. The warehouse's ordinary reversal
+  // endpoint must never erase a Feniq custody obligation without the separate
+  // platform approval/custody correction workflow.
+  const feniqReceipt = await require('../models/feniqCollectionReceipt.model').exists({ paymentId: original._id });
+  if (feniqReceipt) throw ApiError.forbidden('Feniq-collected cash needs a separate custody reversal approval.',
+    'FENIQ_CUSTODY_REVERSAL_REQUIRED');
   if (original.kind === 'reversal') {
     throw ApiError.badRequest(
       'A reversal cannot itself be reversed.',
