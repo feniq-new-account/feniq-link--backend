@@ -111,6 +111,7 @@ const WAREHOUSE_COMMENTS = ['صيدلية ملتزمة بالدفع', 'تعام�
 // The pharmacy rates the warehouse on most delivered orders, and the
 // warehouse rates the pharmacy on some.
 async function addReviews({ warehouses, pharmacies }) {
+  if (!(await require('./runtimeFeatures.service').readRuntimeFeatures()).mutualRatings) return 0;
   const reviewService = require('./review.service');
   const warehouseReviewService = require('./warehouseReview.service');
   let created = 0;

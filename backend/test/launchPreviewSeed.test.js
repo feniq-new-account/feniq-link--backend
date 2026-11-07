@@ -18,15 +18,18 @@ test('preview refuses production, unconfirmed targets and incomplete credentials
   assert.deepEqual(await mongoose.connection.db.listCollections().toArray(), []);
 });
 
-test('preview builds connected roles and consistent money examples; real password login opens each role', async () => {
+for (const mutualRatings of [true, false]) test(`preview respects mutualRatings=${mutualRatings}, builds connected roles and consistent money examples; real password login opens each role`, async () => {
+  if (server) { await new Promise(resolve => server.close(resolve)); server = null; }
+  await mongoose.connection.dropDatabase();
   const accounts = generateAccounts();
   const second = generateAccounts();
   for (const key of Object.keys(accounts)) assert.notEqual(accounts[key].password, second[key].password);
-  const summary = await seedLaunchPreview(accounts, options);
+  const summary = await seedLaunchPreview(accounts, { ...options, mutualRatings });
   assert.equal(summary.counts.warehouses, 3);
   assert.equal(summary.counts.pharmacies, 4);
   assert.equal(summary.counts.reps, 1);
   assert.equal(summary.counts.visits, 3);
+  assert.equal(await require('../src/models/review.model').countDocuments(), mutualRatings ? 1 : 0);
   assert.equal(summary.counts.orders, 18);
   assert.equal(summary.counts.payments, 3);
   assert.equal(summary.counts.returns, 2);

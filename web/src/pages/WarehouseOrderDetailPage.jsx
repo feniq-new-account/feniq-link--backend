@@ -1,3 +1,4 @@
+import { useRuntimeFeatures } from '../context/RuntimeFeaturesContext';
 import { hasRolePermission } from '../utils/userPermissions';
 import { NumericInput } from '../components/NumericInput';
 import { DeliveryEstimate } from '../components/DeliveryEstimate';
@@ -553,6 +554,7 @@ function handleCallPharmacyViaWhatsApp(phone) {
 // backend/src/services/warehouseOrder.service.js - one step at a time, no
 // cancel, no item/price edits).
 export function WarehouseOrderDetailPage() {
+  const { mutualRatings } = useRuntimeFeatures();
   const { t } = useTranslation();
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -800,7 +802,7 @@ export function WarehouseOrderDetailPage() {
               <div className="wh-detail-timestamp wh-num">{formatBusinessDateTime(order.createdAt)}</div>
               {/* Rating the pharmacy, once the order is delivered - here on the
                   order page rather than in the orders list. */}
-              {order.status === 'delivered' &&
+              {mutualRatings && order.status === 'delivered' &&
                 (order.hasReviewed ? (
                   <p className="hint">{t('orders.youRatedPharmacy')}</p>
                 ) : (
@@ -1146,7 +1148,7 @@ export function WarehouseOrderDetailPage() {
           onRecorded={handlePaymentRecorded}
         />
       )}
-      {isRating && order && (
+      {mutualRatings && isRating && order && (
         <RatePharmacyModal
           order={order}
           onClose={() => setIsRating(false)}

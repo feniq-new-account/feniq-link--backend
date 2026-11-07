@@ -1,3 +1,4 @@
+import { useRuntimeFeatures } from '../context/RuntimeFeaturesContext';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SubNav } from './SubNav';
@@ -13,6 +14,7 @@ import { findNavGroup } from '../utils/warehouseNav';
 // nothing outside a group, so dropping it into a page is always safe.
 export function WarehouseGroupSubNav() {
   const { t } = useTranslation();
+  const { mutualRatings } = useRuntimeFeatures();
   const { pathname } = useLocation();
 
   const group = findNavGroup(pathname);
@@ -22,7 +24,7 @@ export function WarehouseGroupSubNav() {
     <SubNav
       variant="wh"
       className="wh-pills-group"
-      links={group.children.map((child) => ({ to: child.path, label: t(child.labelKey) }))}
+      links={group.children.filter(child => child.feature !== 'mutualRatings' || mutualRatings).map((child) => ({ to: child.path, label: t(child.labelKey) }))}
     />
   );
 }

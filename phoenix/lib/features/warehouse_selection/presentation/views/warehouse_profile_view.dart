@@ -1,3 +1,4 @@
+import 'package:feniq/core/config/runtime_features_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -119,7 +120,7 @@ class WarehouseProfileView extends StatelessWidget {
                           const SizedBox(height: AppSizes.spacingMedium),
                           _DeliverySection(profile: profile),
                           const SizedBox(height: AppSizes.spacingMedium),
-                          _ReviewsSection(profile: profile),
+                          if (RuntimeFeaturesScope.ratingsEnabled(context)) _ReviewsSection(profile: profile),
                           const SizedBox(height: AppSizes.spacingXLarge),
                           PrimaryButton(
                             label: l10n.browseWarehouseProductsButton,

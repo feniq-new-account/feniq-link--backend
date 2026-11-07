@@ -9,6 +9,8 @@ const { OPTIONAL_FEATURES, SELF_CONFIGURABLE, CORE_FEATURES } = require('../conf
 const { evaluateEntitlements, campaignEligibility } = require('../utils/featureEntitlements');
 const { runInTransaction } = require('../utils/transaction');
 const { ApiError } = require('../utils/ApiError');
+const { RUNTIME_FEATURE_DEFAULTS } = require('./runtimeFeatures.service');
+const PLATFORM_FEATURES = [...OPTIONAL_FEATURES, ...Object.keys(RUNTIME_FEATURE_DEFAULTS)];
 const KEY = 'featureControl';
 const invalid = () => ApiError.badRequest('Invalid feature controls.', undefined, 'INVALID_FEATURE_CONTROL');
 const changed = () => ApiError.conflict('Feature controls changed. Reload before saving.', 'FEATURE_CONTROL_CHANGED');
@@ -48,7 +50,7 @@ async function audit(session, actorId, scope, warehouseId, action, body, before,
 }
 async function savePlatform(actorId, body) {
   fields(body, ['revision', 'reason', 'features']); reason(body);
-  const features = featureMap(body.features, OPTIONAL_FEATURES);
+  const features = featureMap(body.features, PLATFORM_FEATURES);
   await PlatformSetting.init();
   try {
     await runInTransaction(async session => {

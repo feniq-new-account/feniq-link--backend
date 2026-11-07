@@ -1,6 +1,7 @@
 // Features the owner has switched off for now. Their pages and code stay in
 // place (and reachable by URL); only the entry points in the menus are hidden.
 export const FEATURES = {
+  mutualRatings: true, // Runtime provider applies the server switch.
   // Discount codes typed at checkout - hidden for now (owner's call).
   discountCodes: false,
   // The pharmacy's photo of the shipment seal before delivery (psychotropic

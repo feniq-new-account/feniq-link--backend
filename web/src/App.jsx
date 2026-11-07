@@ -1,3 +1,4 @@
+import { RuntimeFeaturesProvider } from './context/RuntimeFeaturesContext';
 import { BrowserRouter } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -63,7 +64,7 @@ function Gate() {
   }
 
   return (
-    <ExchangeRateProvider>
+    <RuntimeFeaturesProvider><ExchangeRateProvider>
       <RealtimeProvider>
         <UnreadBadgesProvider>
           <Suspense fallback={<p className="hint">{t('common.loading')}</p>}>
@@ -71,7 +72,7 @@ function Gate() {
           </Suspense>
         </UnreadBadgesProvider>
       </RealtimeProvider>
-    </ExchangeRateProvider>
+    </ExchangeRateProvider></RuntimeFeaturesProvider>
   );
 }
 

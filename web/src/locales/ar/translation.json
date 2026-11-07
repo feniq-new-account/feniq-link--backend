@@ -1588,6 +1588,7 @@
       "inactivePharmacies": "الصيدليات المنقطعة",
       "ownerAlerts": "تنبيهات صاحب المستودع",
       "deliverySchedule": "جدولة التوزيع",
+      "mutualRatings": "التقييمات المتبادلة",
       "ownerMobileAccess": "صلاحية تطبيق المالك"
     },
     "roleChanged": "تم تغيير الصلاحية. يلزم صاحب الحساب تسجيل الدخول مجدداً.",

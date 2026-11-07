@@ -1,3 +1,4 @@
+import { useRuntimeFeatures } from '../context/RuntimeFeaturesContext';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -15,6 +16,7 @@ const PAGE_SIZE = 15;
 // are a separate, not-yet-built piece; this screen just reads whatever the
 // backend currently exposes).
 export function WarehouseReviewsPage() {
+  const { mutualRatings } = useRuntimeFeatures();
   const { t } = useTranslation();
   // averageRating/totalCount/distribution reflect EVERY visible review (the
   // backend computes them independently of pagination) - only the row list
@@ -46,7 +48,7 @@ export function WarehouseReviewsPage() {
   useEffect(() => {
     reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ratingFilter]);
+  }, [ratingFilter, mutualRatings]);
 
   // A pharmacy rating this warehouse adds a visible review at once. reset()
   // re-reads page one, and with it the average/total/distribution.
@@ -61,6 +63,8 @@ export function WarehouseReviewsPage() {
     count: distributionByStar[star] ?? 0,
   }));
   const maxCount = Math.max(1, ...distribution.map((d) => d.count));
+
+  if (!mutualRatings) return null;
 
   return (
     <div>
