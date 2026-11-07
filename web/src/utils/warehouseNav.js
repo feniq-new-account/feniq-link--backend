@@ -64,7 +64,7 @@ export const WAREHOUSE_NAV_ALL = [
     labelKey: 'nav.feedback',
     aliasPath: '/warehouse/feedback',
     children: [
-      { id: 'reviews', labelKey: 'nav.reviews', path: '/warehouse/reviews' },
+      { id: 'reviews', labelKey: 'nav.reviews', path: '/warehouse/reviews', feature: 'mutualRatings' },
       { id: 'complaints', labelKey: 'nav.complaints', path: '/warehouse/complaints' },
     ],
   },
