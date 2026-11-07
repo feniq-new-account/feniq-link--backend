@@ -56,7 +56,7 @@ class PromotionHeroCard extends StatelessWidget {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
