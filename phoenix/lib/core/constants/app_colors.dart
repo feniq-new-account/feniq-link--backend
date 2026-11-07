@@ -73,6 +73,7 @@ class AppColors {
   static const Color navySurface = _brandNavy;
   static const Color onNavyAccent = Color(0xFFFFA94D);
   static const Color onNavyMuted = Color(0xFFAFC0D6);
+  static const Color notificationBell = Color(0xFF63D6C3); // aqua on navy, distinct from cart orange
 
   static Color get lightPrimary => _lightPrimary;
   static Color get lightSecondary => _lightSecondary;
