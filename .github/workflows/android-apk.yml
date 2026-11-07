@@ -7,8 +7,9 @@
 # workflow_dispatch input (publish_test_release; default false). A manual
 # signed test APK build must never replace the existing phone download by itself.
 #
-# للتجربة: كل بناء يدوي على main يضع آخر نسختين على روابط ثابتة (أسرع من
-# Artifacts، ملف APK مباشر بدون zip):
+# للتجربة: البناء اليدوي يرفع APK للفحص تحت Artifacts فقط. تحديث روابط
+# test-latest الثابتة يحدث حصراً إذا شغّل المالك workflow من main مع
+# publish_test_release=true، وبعد فحص التوقيع (ملف APK مباشر بدون zip):
 #   الموبايل (نسخة شاملة):  https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-test.apk
 #   المحاكي (x86_64): https://github.com/feniq-new-account/feniq-link--backend/releases/download/test-latest/feniq-emulator.apk
 #
