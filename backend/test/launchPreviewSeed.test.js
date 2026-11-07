@@ -53,8 +53,47 @@ for (const mutualRatings of [true, false]) test(`preview respects mutualRatings=
     const mobileLogin = await fromMobile.json();
     assert.equal(fromMobile.status, 200, `${key} international phone login`);
     assert.equal(mobileLogin.user.id, login.user.id);
-    const page = await fetch(base + route[key], { headers: { authorization: `Bearer ${login.token}` } });
-    assert.equal(page.status, 200, `${key} preview data: ${await page.text()}`);
+    const headers = { authorization: `Bearer ${login.token}` };
+    const page = await fetch(base + route[key], { headers });
+    const pageBody = await page.text();
+    assert.equal(page.status, 200, `${key} preview data: ${pageBody}`);
+    if (key === 'pharmacy') {
+      // Launch-blocking journey: the actual HTTP routes must return available
+      // warehouses and their catalog, not merely documents in a seed.
+      // This ran as an ordinary approved pharmacy login against the real
+      // Express/Mongo stack, with ratings both ON and OFF.
+      const visible = JSON.parse(pageBody);
+      assert.equal(visible.success, true);
+      assert.equal(visible.cityFilterApplied, false, 'legacy clients must see all warehouses');
+      assert.equal(visible.warehouses.length, summary.counts.warehouses,
+        'every active preview warehouse must be visible to the pharmacist');
+      assert.equal(new Set(visible.warehouses.map(w => w.id)).size, summary.counts.warehouses);
+      for (const warehouse of visible.warehouses) {
+        assert.ok(warehouse.id && warehouse.nameAr, 'warehouse card is incomplete');
+        const catalog = await fetch(`${base}/warehouses/${warehouse.id}/products?limit=5`, { headers });
+        const products = await catalog.json();
+        assert.equal(catalog.status, 200, JSON.stringify(products));
+        assert.equal(products.success, true);
+        assert.ok(products.products.length > 0,
+          `visible warehouse ${warehouse.id} has an empty catalog`);
+        assert.ok(products.products.every(p => p.id && (p.nameAr || p.nameEn)),
+          'product cards must contain an id and a name');
+      }
+      const selectedCity = await fetch(`${base}/warehouses?cityScope=mine`, { headers });
+      const inCity = await selectedCity.json();
+      assert.equal(selectedCity.status, 200, JSON.stringify(inCity));
+      assert.equal(inCity.cityFilterApplied, true);
+      assert.equal(inCity.warehouses.length, summary.counts.warehouses,
+        'all Latakia preview warehouses must survive the explicit city filter');
+      const showAll = await fetch(`${base}/warehouses?cityScope=all`, { headers });
+      const allCity = await showAll.json();
+      assert.equal(showAll.status, 200, JSON.stringify(allCity));
+      assert.equal(allCity.warehouses.length, summary.counts.warehouses);
+    }
+    if (key === 'owner') {
+      const forbidden = await fetch(base + '/warehouses', { headers });
+      assert.equal(forbidden.status, 403, 'warehouse owner cannot use the pharmacy catalog');
+    }
     if (key === 'owner') {
       const payment = await fetch(`${base}/warehouse/payments`, { method: 'POST', headers: { authorization: `Bearer ${login.token}`, 'content-type': 'application/json' }, body: '{}' });
       assert.equal(payment.status, 403, 'the preview owner does not gain cash-posting rights');
