@@ -173,3 +173,20 @@ test('rejecting an evidence report never moves money and survives retry', async 
   assert.equal(await Payment.countDocuments(), 0);
   assert.equal(await Custody.countDocuments(), 0);
 });
+
+test('a review key cannot approve or reject a different cash receipt', async () => {
+  const first = await call(collector, 'POST', path(), submission());
+  const second = await call(collector, 'POST', path(), submission());
+  assert.equal(first.status, 201);
+  assert.equal(second.status, 201);
+  const decision = { decision: 'rejected', reason: 'Synthetic no cash', idempotencyKey: 'decision-shared-key' };
+  const firstUrl = path() + '/' + first.body.receipt.id + '/review';
+  const secondUrl = path() + '/' + second.body.receipt.id + '/review';
+  assert.equal((await call(approver, 'POST', firstUrl, decision)).status, 200);
+  const collision = await call(approver, 'POST', secondUrl, decision);
+  assert.equal(collision.status, 409);
+  assert.equal(collision.body.code, 'IDEMPOTENCY_KEY_REUSED');
+  assert.equal((await FeniqReceipt.findById(second.body.receipt.id).lean()).status, 'pending');
+  assert.equal(await Payment.countDocuments(), 0);
+  assert.equal(await Audit.countDocuments({ action: 'collection.receipt_rejected' }), 1);
+});
