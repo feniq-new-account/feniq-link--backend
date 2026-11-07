@@ -22,6 +22,8 @@ const { seedDemoFeatures } = require('../src/services/demoFeatures.service');
 const { setManualRate } = require('../src/services/exchangeRate.service');
 const User = require('../src/models/user.model');
 const Warehouse = require('../src/models/warehouse.model');
+const Review = require('../src/models/review.model');
+const { FEATURES } = require('../src/config/features');
 
 let server;
 let baseUrl;
@@ -59,15 +61,17 @@ test('every feature gets demo data, once, visible over the API', async () => {
   await demo.seedDemoOrders();
   await demo.turnOffDemoSealPhoto();
 
+  assert.strictEqual(FEATURES.mutualRatings, false, 'launch ratings are disabled');
   const report = await seedDemoFeatures();
+  assert.strictEqual(report.reviews, 0, 'disabled reviews create no demo data');
+  assert.strictEqual(await Review.countDocuments(), 0, 'disabled reviews never persist');
   for (const [key, value] of Object.entries(report)) {
     assert.strictEqual(typeof value, 'number', `${key}: ${value}`);
-    assert.ok(value > 0, `${key} created nothing`);
+    if (key !== 'reviews') assert.ok(value > 0, `${key} created nothing`);
   }
 
   const again = await seedDemoFeatures();
   for (const [key, value] of Object.entries(again)) {
-    if (key === 'reviews') continue; // new delivered orders could earn ratings; there are none here
     assert.strictEqual(value, 0, `${key} ran twice`);
   }
 
