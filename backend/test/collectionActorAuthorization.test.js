@@ -4,18 +4,21 @@ const { Types } = require('mongoose');
 const { ACTIONS } = require('../src/utils/collectionActorPolicy');
 const { authorizePersistedCollectionAction } = require('../src/utils/collectionActorAuthorization');
 
-function fixture({ status = 'active', warehouseActive = true, grantActive = true, revokedAt = null } = {}) {
+function fixture({ status = 'active', role = 'admin', warehouseRole = null,
+  warehouseActive = true, grantActive = true, revokedAt = null, associated = true,
+  grantAction = ACTIONS.RECORD_FENIQ } = {}) {
   const actorId = new Types.ObjectId(), warehouseId = new Types.ObjectId();
   const session = {};
-  const actor = { _id: actorId, status, role: 'admin' };
-  const warehouse = { _id: warehouseId, isActive: warehouseActive };
+  const actor = { _id: actorId, status, role, warehouseRole };
+  const warehouse = { _id: warehouseId, isActive: warehouseActive,
+    userId: associated ? actorId : new Types.ObjectId(), memberUserIds: [] };
   const calls = [];
   const chain = value => ({ session(s) { assert.equal(s, session); return { lean: async () => value }; } });
   const User = { findById(id) { assert.equal(id, actorId); return chain(actor); } };
   const Warehouse = { findById(id) { assert.equal(id, warehouseId); return chain(warehouse); } };
   const CollectionActorGrant = { find(filter) {
     calls.push(filter);
-    return chain(grantActive ? [{ actorId, warehouseId, action: ACTIONS.RECORD_FENIQ, active: true, revokedAt }] : []);
+    return chain(grantActive ? [{ actorId, warehouseId, action: grantAction, active: true, revokedAt }] : []);
   } };
   return { actorId, warehouseId, session, User, Warehouse, CollectionActorGrant, calls };
 }
@@ -84,4 +87,24 @@ test('rejects unknown collection actions without querying authorization records'
     ...f, User, action: 'approve_anything',
   }), false);
   assert.equal(f.calls.length, 0);
+});
+
+test('role and warehouse membership are rechecked when using a persisted grant', async () => {
+  for (const opts of [
+    { role: 'rep' },
+    { role: 'warehouse', warehouseRole: 'owner', grantAction: ACTIONS.RECORD_WAREHOUSE },
+    { role: 'warehouse', warehouseRole: 'accountant',
+      associated: false, grantAction: ACTIONS.RECORD_WAREHOUSE },
+  ]) {
+    const f = fixture(opts);
+    assert.equal(await authorizePersistedCollectionAction({
+      ...f, action: opts.grantAction || ACTIONS.RECORD_FENIQ,
+    }), false);
+    assert.equal(f.calls.length, 0, 'ineligible actor must not read an active grant');
+  }
+  const f = fixture({ role: 'warehouse', warehouseRole: 'accountant',
+    grantAction: ACTIONS.RECORD_WAREHOUSE });
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, action: ACTIONS.RECORD_WAREHOUSE,
+  }), true);
 });
