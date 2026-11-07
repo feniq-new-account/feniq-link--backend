@@ -51,3 +51,9 @@ test('MongoDB ObjectIds from persisted grants match by value, not object referen
   assert.equal(authorizedCollectionAction({ ...args, warehouseId: new Types.ObjectId() }), false);
   assert.equal(authorizedCollectionAction({ ...args, grants: [{ ...stored, actorId: {} }] }), false);
 });
+
+test('revoked grant is denied even if active flag is stale', () => {
+  const action = ACTIONS.RECORD_FENIQ;
+  assert.equal(can(action, { grants: [{ ...grant(action), revokedAt: new Date('2026-11-07T00:00:00Z') }] }), false);
+  assert.equal(can(action, { grants: [{ ...grant(action), revokedAt: null }] }), true);
+});
