@@ -1,3 +1,4 @@
+import 'package:feniq/core/services/android_startup_permissions.dart';
 import 'package:feniq/features/launch/launch_status_banner.dart';
 import 'package:feniq/features/launch/early_launch_notice.dart';
 import 'package:flutter/material.dart';
@@ -55,6 +56,8 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
       // is up so a cold-start FCM notification deep link can be processed now
       // rather than racing the splash navigation (audit P7).
       context.read<AuthCubit>().notifyAppShellReady();
+      // Native Android dialogs only; no custom permission UI.
+      requestPharmacyStartupPermissions();
       context.read<WarehouseSelectionCubit>().loadWarehouses();
       // This screen is the one guaranteed landing point after every
       // successful auth path (splash/login/register/approval-pending all
