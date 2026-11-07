@@ -26,6 +26,7 @@ Future<void> showCard(
 ) async {
   await tester.pumpWidget(MaterialApp(
     locale: const Locale('ar'),
+    supportedLocales: const [Locale('ar'), Locale('en')],
     home: Scaffold(body: SingleChildScrollView(
       child: WarehouseCollectionAccountingCard(loadJournal: loader),
     )),
