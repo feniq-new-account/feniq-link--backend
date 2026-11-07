@@ -184,7 +184,8 @@ describe('findNavGroup', () => {
     expect(findNavGroup('/warehouse/discounts')?.id).toBe('promotions');
     expect(findNavGroup('/warehouse/advertisements/packages')?.id).toBe('promotions');
     expect(findNavGroup('/warehouse/settlement')?.id).toBe('financials');
-    expect(findNavGroup('/warehouse/reviews')?.id).toBe('feedback');
+    expect(findNavGroup('/warehouse/reviews')).toBeNull(); // paused feature
+    expect(findNavGroup('/warehouse/complaints')?.id).toBe('feedback');
   });
 
   // WarehouseGroupSubNav renders nothing when this is null - that is what keeps
