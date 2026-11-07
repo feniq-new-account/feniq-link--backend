@@ -7,6 +7,8 @@ export const FEATURES = {
   // medicines - not yet; the rep checks the seal for now). Mirrors
   // backend/src/config/features.js.
   deliverySealPhoto: false,
+  // Mutual ratings are paused for both roles while early operations stabilize.
+  mutualRatings: false,
 };
 
 // Whether a menu entry tagged with `feature` should be shown.
