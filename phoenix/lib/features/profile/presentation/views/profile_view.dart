@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
+import 'package:feniq/core/constants/app_features.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -162,6 +163,7 @@ class ProfileView extends StatelessWidget {
                     )),
                   ),
 
+                  if (AppFeatures.mutualRatings) ...[
                   const SizedBox(height: AppSizes.spacingXLarge),
                   _SectionHeader(l10n.ratingsTitle),
                   const SizedBox(height: AppSizes.spacingSmall),
@@ -175,6 +177,7 @@ class ProfileView extends StatelessWidget {
                     onTap: () => context.pushNamed(RouteNames.pharmacyReviews),
                   ),
 
+                  ],
                   const SizedBox(height: AppSizes.spacingXLarge),
                   _SectionHeader(l10n.pharmacyVisitCodeTitle),
                   const SizedBox(height: AppSizes.spacingSmall),
