@@ -21,6 +21,22 @@ function identity(value) {
   return null;
 }
 
+// These are eligibility guards, not the grant itself. In particular, warehouse
+// representatives must never be assumed to be Feniq employees just because
+// their account role is 'rep'. Explicit grants are additionally required.
+function canGrantToActor(action, target, warehouse) {
+  if (!target || target.status !== 'active' || !warehouse?.isActive) return false;
+  if (action === ACTIONS.RECORD_FENIQ || action === ACTIONS.APPROVE_FENIQ) {
+    return target.role === 'admin';
+  }
+  if (![ACTIONS.RECORD_WAREHOUSE, ACTIONS.APPROVE_WAREHOUSE,
+    ACTIONS.CONFIRM_REMITTANCE].includes(action) || target.role !== 'warehouse' ||
+    target.warehouseRole !== 'accountant') return false;
+  const actorId = identity(target._id);
+  return Boolean(actorId && (identity(warehouse.userId) === actorId ||
+    (warehouse.memberUserIds || []).some(id => identity(id) === actorId)));
+}
+
 function authorizedCollectionAction({ actor, grants, action, warehouseId, recordedBy }) {
   if (!actor || actor.status !== 'active' || !identity(actor.id) || !identity(warehouseId) ||
       !Object.values(ACTIONS).includes(action) || !Array.isArray(grants)) return false;
@@ -35,4 +51,4 @@ function authorizedCollectionAction({ actor, grants, action, warehouseId, record
   return true;
 }
 
-module.exports = { ACTIONS, authorizedCollectionAction };
+module.exports = { ACTIONS, authorizedCollectionAction, canGrantToActor };
