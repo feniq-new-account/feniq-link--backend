@@ -4,17 +4,13 @@ const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const { requestFingerprint, idempotencyKeyReusedError } = require('../utils/idempotency');
 const { runInTransaction } = require('../utils/transaction');
-const { ACTIONS } = require('../utils/collectionActorPolicy');
+const { ACTIONS, canGrantToActor } = require('../utils/collectionActorPolicy');
 const User = require('../models/user.model');
 const Warehouse = require('../models/warehouse.model');
 const CollectionActorGrant = require('../models/collectionActorGrant.model');
 const audit = require('./financialAudit.service');
 
 const HEX_ID = /^[a-f0-9]{24}$/i;
-const FENIQ_ACTIONS = new Set([ACTIONS.RECORD_FENIQ, ACTIONS.APPROVE_FENIQ]);
-const WAREHOUSE_ACTIONS = new Set([
-  ACTIONS.RECORD_WAREHOUSE, ACTIONS.APPROVE_WAREHOUSE, ACTIONS.CONFIRM_REMITTANCE,
-]);
 
 function requireId(value, code) {
   if (typeof value !== 'string' || !HEX_ID.test(value)) {
@@ -33,17 +29,6 @@ function strictBody(body, allowed) {
       Object.keys(body).some(key => !allowed.includes(key))) {
     throw ApiError.badRequest('Invalid collection grant request.', undefined, 'INVALID_COLLECTION_GRANT');
   }
-}
-function canGrantToActor(action, target, warehouse) {
-  if (!target || target.status !== 'active' || !warehouse?.isActive) return false;
-  // Until Feniq-employed representative identity is introduced, do NOT infer
-  // employment from the existing 'rep' role (warehouse reps use that role).
-  if (FENIQ_ACTIONS.has(action)) return target.role === 'admin';
-  if (!WAREHOUSE_ACTIONS.has(action) || target.role !== 'warehouse' ||
-      target.warehouseRole !== 'accountant') return false;
-  const actorId = String(target._id);
-  return String(warehouse.userId) === actorId ||
-    (warehouse.memberUserIds || []).some(id => String(id) === actorId);
 }
 async function activeAdmin(adminId, session) {
   const admin = await User.findById(adminId).select('role status').session(session).lean();
