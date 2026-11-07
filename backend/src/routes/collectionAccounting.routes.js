@@ -70,4 +70,7 @@ admin.post('/warehouses/:warehouseId/feniq-receipts/:receiptId/review', asyncHan
   if (result.replay) res.set('Idempotent-Replay', 'true');
   res.json({ success: true, ...result });
 }));
+admin.get('/warehouses/:warehouseId/feniq-custody', asyncHandler(async (req, res) => {
+  res.json({ success: true, ...await feniqReceipts.listCustody(req.user._id, req.params.warehouseId, req.query) });
+}));
 module.exports = { warehouse, admin };
