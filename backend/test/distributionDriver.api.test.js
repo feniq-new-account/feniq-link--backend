@@ -307,3 +307,111 @@ test('six-role distribution matrix keeps admin operations private and driver tri
   });
   assert.equal(unassigned.body.trips.length, 0);
 });
+
+
+test('an integrated admin route, driver GPS, and offline-retried delivery complete safely', async () => {
+  // One synthetic HTTP journey across the operational roles, using a disposable
+  // replica set. No orders, invoices, payment or commission records are touched.
+  const created = await call('POST', '/admin/distribution/trips', {
+    bearer: adminToken,
+    body: {
+      region: 'Integrated rural delivery', serviceDate: '2026-11-14',
+      driverName: 'Driver B', driverUserId: String(repB._id),
+      pharmacyIds: [String(pharmacy._id)],
+    },
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const tripId = created.body.trip._id;
+  const adminPath = '/admin/distribution/trips/' + tripId;
+  const driverPath = '/driver/distribution/trips/' + tripId;
+
+  // These coordinates represent a recorded route imported by the admin UI.
+  // No road path or location is inferred by the server.
+  const route = [[35.51, 35.84], [35.515, 35.845]];
+  const planned = await call('PUT', adminPath + '/route', {
+    bearer: adminToken,
+    body: { revision: 0, routePoints: route, routeCorridorMeters: 300 },
+  });
+  assert.equal(planned.status, 200, JSON.stringify(planned.body));
+  assert.equal(planned.body.trip.revision, 1);
+  assert.deepEqual(planned.body.trip.routePoints, route);
+  assert.equal((await call('PUT', adminPath + '/route', {
+    bearer: repBToken, body: { revision: 1, routePoints: route },
+  })).status, 403);
+
+  // Only the assigned driver may start and publish GPS. The admin sees
+  // no_signal until the first fix, then a real live position on the route.
+  assert.equal((await call('POST', driverPath + '/start', {
+    bearer: repAToken, body: { revision: 1 },
+  })).status, 403);
+  const started = await call('POST', driverPath + '/start', {
+    bearer: repBToken, body: { revision: 1 },
+  });
+  assert.equal(started.status, 200, JSON.stringify(started.body));
+  assert.equal(started.body.trip.revision, 2);
+  const beforeGps = await call('GET', adminPath + '/location', { bearer: adminToken });
+  assert.equal(beforeGps.status, 200);
+  assert.equal(beforeGps.body.location.state, 'no_signal');
+  const fix = await call('PUT', driverPath + '/location', {
+    bearer: repBToken,
+    body: {
+      latitude: route[0][0], longitude: route[0][1],
+      accuracyMeters: 8, measuredAt: new Date().toISOString(),
+    },
+  });
+  assert.equal(fix.status, 200, JSON.stringify(fix.body));
+  const monitored = await call('GET', adminPath + '/location', { bearer: adminToken });
+  assert.equal(monitored.status, 200);
+  assert.equal(monitored.body.location.state, 'live');
+  assert.equal(monitored.body.location.deviation.state, 'on_route');
+  assert.equal((await call('GET', adminPath + '/location', {
+    bearer: repAToken,
+  })).status, 403);
+
+  // Simulate delivery while offline and the identical command being retried
+  // after the server committed it but the phone lost its HTTP response.
+  const stopId = created.body.trip.stops[0]._id;
+  const stopPath = driverPath + '/stops/' + stopId;
+  const command = {
+    revision: 2, status: 'delivered',
+    requestId: 'integrated-offline-delivery-20261107',
+  };
+  const delivered = await call('PATCH', stopPath, {
+    bearer: repBToken, body: command,
+  });
+  assert.equal(delivered.status, 200, JSON.stringify(delivered.body));
+  assert.equal(delivered.body.trip.revision, 3);
+  const replay = await call('PATCH', stopPath, {
+    bearer: repBToken, body: command,
+  });
+  assert.equal(replay.status, 200, JSON.stringify(replay.body));
+  assert.equal(replay.body.trip.revision, 3);
+  assert.equal(await Event.countDocuments({
+    tripId, event: 'stop_delivered',
+  }), 1);
+
+  // An old revision cannot complete twice; a completed trip cannot continue
+  // broadcasting GPS, and replaying delivery still adds no audit event.
+  const closed = await call('POST', driverPath + '/complete', {
+    bearer: repBToken, body: { revision: 3 },
+  });
+  assert.equal(closed.status, 200, JSON.stringify(closed.body));
+  assert.equal(closed.body.trip.status, 'completed');
+  assert.equal(closed.body.trip.revision, 4);
+  assert.equal((await call('GET', adminPath + '/location', {
+    bearer: adminToken,
+  })).body.location, null);
+  assert.equal((await call('PUT', driverPath + '/location', {
+    bearer: repBToken, body: {
+      latitude: route[0][0], longitude: route[0][1],
+      accuracyMeters: 8, measuredAt: new Date().toISOString(),
+    },
+  })).status, 403);
+  const lateReplay = await call('PATCH', stopPath, {
+    bearer: repBToken, body: command,
+  });
+  assert.equal(lateReplay.status, 200);
+  assert.equal(lateReplay.body.trip.revision, 4);
+  assert.equal(await Event.countDocuments({ tripId }), 4);
+  assert.equal((await call('GET', driverPath, { bearer: repAToken })).status, 404);
+});
