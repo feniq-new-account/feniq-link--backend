@@ -163,7 +163,7 @@ describe('badges in the warehouse sidebar', () => {
 
     expect(badgeIn(html, 'الطلبات')).toBe('3');
     expect(badgeIn(html, 'الترويج')).toBe('7');
-    expect(badgeIn(html, 'الملاحظات')).toBe('2');
+    expect(badgeIn(html, 'الملاحظات')).toBe('1'); // reviews are not a visible tab
     for (const label of ['الكتالوج', 'المرتجعات', 'الحسابات المالية', 'الإعدادات']) {
       expect(badgeIn(html, label), label).toBeNull();
     }
