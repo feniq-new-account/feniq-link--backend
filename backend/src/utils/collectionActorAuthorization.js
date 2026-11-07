@@ -1,6 +1,6 @@
 'use strict';
 
-const { authorizedCollectionAction } = require('./collectionActorPolicy');
+const { ACTIONS, authorizedCollectionAction } = require('./collectionActorPolicy');
 
 // Database-backed authorization boundary. Only server-resolved authenticated
 // identities and persisted grants may be supplied; never pass request-body
@@ -9,7 +9,8 @@ async function authorizePersistedCollectionAction({
   actorId, warehouseId, action, recordedBy,
   User, Warehouse, CollectionActorGrant, session,
 }) {
-  if (!actorId || !warehouseId || !User || !Warehouse || !CollectionActorGrant || !session) return false;
+  if (!actorId || !warehouseId || !User || !Warehouse || !CollectionActorGrant || !session ||
+      !Object.values(ACTIONS).includes(action)) return false;
   // MongoDB transactions do not support concurrent operations on one session.
   // Read sequentially to keep the authorization check transaction-safe.
   const actor = await User.findById(actorId).session(session).lean();
