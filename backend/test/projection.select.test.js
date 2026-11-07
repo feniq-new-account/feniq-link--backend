@@ -39,6 +39,7 @@ const orderViewModel = require('../src/viewmodels/order.viewmodel');
 const warehouseOrderService = require('../src/services/warehouseOrder.service');
 const warehouseOrderViewModel = require('../src/viewmodels/warehouseOrder.viewmodel');
 const reviewService = require('../src/services/review.service');
+const { FEATURES } = require('../src/config/features');
 const reviewViewModel = require('../src/viewmodels/review.viewmodel');
 const warehouseReviewService = require('../src/services/warehouseReview.service');
 const warehouseReviewViewModel = require('../src/viewmodels/warehouseReview.viewmodel');
@@ -64,6 +65,8 @@ const statementService = require('../src/services/accountStatement.service');
 const ledger = require('../src/services/ledger.service');
 const { runInTransaction } = require('../src/utils/transaction');
 const statementViewModel = require('../src/viewmodels/accountStatement.viewmodel');
+
+test.afterEach(() => { FEATURES.mutualRatings = false; });
 
 const ids = {
   pharmUser: new mongoose.Types.ObjectId(),
@@ -354,6 +357,7 @@ test('warehouse order detail keeps every field its viewmodel emits', async () =>
 // --- reviews ---------------------------------------------------------------
 
 test('pharmacy received-reviews response keeps all fields', async () => {
+  FEATURES.mutualRatings = true;
   const result = await reviewService.listReviewsForPharmacy(ids.pharmacy);
   const { reviews, averageRating } = reviewViewModel.toReviewsResponse(result);
   assert.strictEqual(averageRating, 4);
@@ -367,6 +371,7 @@ test('pharmacy received-reviews response keeps all fields', async () => {
 });
 
 test('warehouse received-reviews response keeps all fields', async () => {
+  FEATURES.mutualRatings = true;
   const { rows, averageRating } = await warehouseReviewService.listPaginatedReviewsForWarehouse(
     ids.warehouse, { limit: 10 }
   );
@@ -383,6 +388,7 @@ test('warehouse received-reviews response keeps all fields', async () => {
 // --- warehouse profile ---------------------------------------------------
 
 test('warehouse profile response keeps its full field set', async () => {
+  FEATURES.mutualRatings = true;
   const data = await warehouseService.getWarehouseProfile(ids.warehouse);
   const p = warehouseViewModel.toWarehouseProfileResponse(data);
   assert.deepStrictEqual(
