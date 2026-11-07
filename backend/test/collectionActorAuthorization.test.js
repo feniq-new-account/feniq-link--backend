@@ -7,7 +7,7 @@ const { authorizePersistedCollectionAction } = require('../src/utils/collectionA
 function fixture({ status = 'active', warehouseActive = true, grantActive = true, revokedAt = null } = {}) {
   const actorId = new Types.ObjectId(), warehouseId = new Types.ObjectId();
   const session = {};
-  const actor = { _id: actorId, status };
+  const actor = { _id: actorId, status, role: 'admin' };
   const warehouse = { _id: warehouseId, isActive: warehouseActive };
   const calls = [];
   const chain = value => ({ session(s) { assert.equal(s, session); return { lean: async () => value }; } });
@@ -65,7 +65,7 @@ test('serializes database reads sharing one MongoDB transaction session', async 
       } };
     },
   });
-  const User = { findById: () => guarded('actor', { _id: f.actorId, status: 'active' }) };
+  const User = { findById: () => guarded('actor', { _id: f.actorId, status: 'active', role: 'admin' }) };
   const Warehouse = { findById: () => guarded('warehouse', { _id: f.warehouseId, isActive: true }) };
   const CollectionActorGrant = { find: () => guarded('grant', [{
     actorId: f.actorId, warehouseId: f.warehouseId, action: ACTIONS.RECORD_FENIQ,
