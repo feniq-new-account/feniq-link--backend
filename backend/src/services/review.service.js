@@ -1,3 +1,4 @@
+const { readRuntimeFeatures, requireMutualRatings } = require('./runtimeFeatures.service');
 const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const Review = require('../models/review.model');
@@ -10,6 +11,7 @@ const { emitToWarehouse, EVENTS } = require('../realtime');
 // gated behind the one-month rule). Scoped to the caller's own pharmacy,
 // same IDOR pattern as every other pharmacist-facing list.
 async function listReviewsForPharmacy(pharmacyId) {
+  if (!(await readRuntimeFeatures()).mutualRatings) return { reviews: [], averageRating: 0 };
   // .select(): review.viewmodel.js's serializeReceivedReview reads id/orderId/
   // rating/comment/createdAt/reviewerType; warehouseId is the join key below.
   // Never saved - straight into the viewmodel.
@@ -51,6 +53,7 @@ function validateRating(rating) {
 // live from visible reviews instead, see warehouse.service.js's
 // getWarehouseProfile).
 async function createWarehouseReview(pharmacyId, userId, { orderId, rating, comment }) {
+  await requireMutualRatings();
   if (typeof orderId !== 'string' || !mongoose.Types.ObjectId.isValid(orderId)) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }

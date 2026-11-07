@@ -1,3 +1,4 @@
+import 'package:feniq/core/config/runtime_features_scope.dart';
 import 'package:feniq/core/widgets/delivery_estimate_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -311,7 +312,7 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
                   : () => _deleteReturn(order.linkedReturn!.id),
             ),
             const SizedBox(height: AppSizes.spacingMedium),
-            _WarehouseReviewSection(
+            if (RuntimeFeaturesScope.ratingsEnabled(context)) _WarehouseReviewSection(
               myReview: order.myReview,
               isSubmitting: state.isSubmittingReview,
             ),

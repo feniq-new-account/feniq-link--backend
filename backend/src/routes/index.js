@@ -59,6 +59,7 @@ const warehouseAccessRoutes = require('./warehouseAccess.routes');
 router.use('/admin/warehouses', warehouseAccessRoutes.admin);
 router.use('/warehouse/subscription', warehouseAccessRoutes.self);
 const featureControlRoutes = require('./featureControl.routes');
+router.use('/app/features', featureControlRoutes.publicRouter);
 router.use('/admin/feature-control', featureControlRoutes.admin);
 router.use('/admin/warehouses/:warehouseId/entitlements', featureControlRoutes.warehouseAdmin);
 router.use('/warehouse/entitlements', featureControlRoutes.self);

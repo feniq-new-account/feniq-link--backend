@@ -101,3 +101,18 @@ test('every feature gets demo data, once, visible over the API', async () => {
   const banners = await call('GET', '/banners/active', { token: pharmacy });
   assert.ok(banners.body.banners.length >= 3, 'a live banner per demo warehouse');
 });
+
+// A paused seed must neither delete historical reviews nor create new ones.
+test('demo reviews respect the persisted OFF switch without changing saved reviews', async () => {
+  const Setting = require('../src/models/platformSetting.model');
+  const Review = require('../src/models/review.model');
+  const before = await Review.find().sort({ _id: 1 }).lean();
+  assert.ok(before.length > 0);
+  await Setting.create({ key: 'featureControl', value: { revision: 1, features: { mutualRatings: false } } });
+  const report = await seedDemoFeatures();
+  assert.equal(report.reviews, 0);
+  assert.deepEqual(await Review.find().sort({ _id: 1 }).lean(), before);
+  await Setting.updateOne({ key: 'featureControl' }, { $set: { 'value.features.mutualRatings': true } });
+  await seedDemoFeatures();
+  assert.deepEqual(await Review.find().sort({ _id: 1 }).lean(), before);
+});

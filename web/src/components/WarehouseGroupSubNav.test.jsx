@@ -1,3 +1,4 @@
+import { RuntimeFeaturesContext } from '../context/RuntimeFeaturesContext';
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
@@ -112,4 +113,12 @@ describe('the two stacked rows on the Advertisements pages', () => {
     expect(html).not.toContain('wh-');
     expect(html).not.toContain('pills-group');
   });
+});
+
+it('hides rating pills while OFF and restores them while ON, keeping complaints', () => {
+  for (const mutualRatings of [false, true]) {
+    const html = renderAt('/warehouse/complaints', <RuntimeFeaturesContext.Provider value={{ mutualRatings }}><WarehouseGroupSubNav /></RuntimeFeaturesContext.Provider>);
+    expect(html).toContain('/warehouse/complaints');
+    expect(html.includes('/warehouse/reviews')).toBe(mutualRatings);
+  }
 });

@@ -1,3 +1,4 @@
+import 'package:feniq/core/config/runtime_features_scope.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -30,7 +31,7 @@ void main() {
     when(() => settings.state).thenReturn(const SettingsState());
   });
 
-  Future<void> pump(WidgetTester tester, {Locale? locale, ThemeData? theme}) async {
+  Future<void> pump(WidgetTester tester, {Locale? locale, ThemeData? theme, Future<bool> Function()? loadRatings}) async {
     final router = GoRouter(
       initialLocation: '/profile',
       routes: [
@@ -68,15 +69,14 @@ void main() {
       ],
     );
 
-    await tester.pumpWidget(
-      MaterialApp.router(
+    final app = MaterialApp.router(
         routerConfig: router,
         locale: locale,
         theme: theme,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-      ),
-    );
+      );
+    await tester.pumpWidget(loadRatings == null ? app : RuntimeFeaturesScope(load: loadRatings, child: app));
     await tester.pumpAndSettle();
   }
 
@@ -111,6 +111,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('RATINGS PAGE'), findsOneWidget);
+  });
+
+  testWidgets('ratings entry follows the server OFF then ON in the same app', (tester) async {
+    var enabled = false;
+    await pump(tester, loadRatings: () async => enabled);
+    expect(find.text('View Ratings'), findsNothing);
+    enabled = true;
+    await tester.pump(const Duration(seconds: 30));
+    await tester.pumpAndSettle();
+    expect(find.text('View Ratings'), findsOneWidget);
+    enabled = false;
+    await tester.pump(const Duration(seconds: 30));
+    await tester.pumpAndSettle();
+    expect(find.text('View Ratings'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('Test 6: Arabic localization', (tester) async {

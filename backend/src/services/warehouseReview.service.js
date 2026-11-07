@@ -1,3 +1,4 @@
+const { readRuntimeFeatures, requireMutualRatings } = require('./runtimeFeatures.service');
 const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
 const Review = require('../models/review.model');
@@ -13,6 +14,7 @@ const RECEIVED_REVIEW_FILTER_FIELDS = { reviewerType: 'pharmacy', isVisible: tru
 // one cheap $group aggregate rather than fetching every review's full
 // document just to sum ratings.
 async function getReviewStatsForWarehouse(warehouseId) {
+  if (!(await readRuntimeFeatures()).mutualRatings) return { averageRating: 0, totalCount: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
   const grouped = await Review.aggregate([
     { $match: { warehouseId, ...RECEIVED_REVIEW_FILTER_FIELDS } },
     { $group: { _id: '$rating', count: { $sum: 1 } } },
@@ -37,6 +39,7 @@ async function getReviewStatsForWarehouse(warehouseId) {
 // (rather than dropping the clause) so a future moderation need can hide a
 // review without a schema change.
 async function listReviewsForWarehouse(warehouseId) {
+  if (!(await readRuntimeFeatures()).mutualRatings) return { reviews: [], averageRating: 0 };
   // .lean() throughout: the only consumer is getWarehouseProfile
   // (warehouse.service.js), which passes these rows straight to
   // warehouse.viewmodel.js. Nothing is saved.
@@ -95,6 +98,7 @@ async function listPaginatedReviewsForWarehouse(
   warehouseId,
   { limit = WAREHOUSE_REVIEWS_DEFAULT_LIMIT, after = null, rating } = {}
 ) {
+  if (!(await readRuntimeFeatures()).mutualRatings) return { rows: [], averageRating: 0, totalCount: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, hasMore: false, nextCursor: null };
   const ratingFilter = validateRatingFilter(rating);
   const filter = { warehouseId, ...RECEIVED_REVIEW_FILTER_FIELDS };
   if (ratingFilter !== undefined) {
@@ -151,6 +155,7 @@ function validateRating(rating) {
 // into the pharmacy's averageRating/reviewsCount (Section 8) rather than
 // leaving those to be recomputed elsewhere.
 async function createPharmacyReview(warehouseId, userId, { orderId, rating, comment }) {
+  await requireMutualRatings();
   if (typeof orderId !== 'string' || !mongoose.Types.ObjectId.isValid(orderId)) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }

@@ -1,3 +1,4 @@
+import 'package:feniq/core/config/runtime_features_scope.dart';
 import 'package:dio/dio.dart';
 import 'package:feniq/config/app_config.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -185,33 +186,39 @@ Future<void> main() async {
     driverTripRepository: DriverTripRepositoryImpl(apiClient: apiClient),
   );
   runApp(
-    MyApp(
-      onWarehouseActive: () async { await apiClient.dio.get('/warehouse/subscription'); },
-      initialState: initialState,
-      storageService: storageService,
-      appUpdateService: appUpdateService,
-      secureStorage: secureStorage,
-      authRepository: authRepository,
-      pharmacyLicenseRepository: pharmacyLicenseRepository,
-      warehouseRepository: warehouseRepository,
-      catalogRepository: catalogRepository,
-      exchangeRateRepository: exchangeRateRepository,
-      orderRepository: orderRepository,
-      savingsRepository: savingsRepository,
-      returnRepository: returnRepository,
-      complaintRepository: complaintRepository,
-      reviewRepository: reviewRepository,
-      debtRepository: debtRepository,
-      bannersRepository: bannersRepository,
-      advertisementsRepository: advertisementsRepository,
-      offersRepository: offersRepository,
-      repRepository: repRepository,
-      warehouseOrdersRepository: warehouseOrdersRepository,
-      warehouseManagementRepository: warehouseManagementRepository,
-      notificationRepository: notificationRepository,
-      fcmService: fcmService,
-      sessionScope: sessionScope,
-      appRouter: appRouter,
+    RuntimeFeaturesScope(
+      load: () async {
+        final response = await apiClient.dio.get('/app/features');
+        return response.data['features']?['mutualRatings'] == true;
+      },
+      child: MyApp(
+        onWarehouseActive: () async { await apiClient.dio.get('/warehouse/subscription'); },
+        initialState: initialState,
+        storageService: storageService,
+        appUpdateService: appUpdateService,
+        secureStorage: secureStorage,
+        authRepository: authRepository,
+        pharmacyLicenseRepository: pharmacyLicenseRepository,
+        warehouseRepository: warehouseRepository,
+        catalogRepository: catalogRepository,
+        exchangeRateRepository: exchangeRateRepository,
+        orderRepository: orderRepository,
+        savingsRepository: savingsRepository,
+        returnRepository: returnRepository,
+        complaintRepository: complaintRepository,
+        reviewRepository: reviewRepository,
+        debtRepository: debtRepository,
+        bannersRepository: bannersRepository,
+        advertisementsRepository: advertisementsRepository,
+        offersRepository: offersRepository,
+        repRepository: repRepository,
+        warehouseOrdersRepository: warehouseOrdersRepository,
+        warehouseManagementRepository: warehouseManagementRepository,
+        notificationRepository: notificationRepository,
+        fcmService: fcmService,
+        sessionScope: sessionScope,
+        appRouter: appRouter,
+      ),
     ),
   );
 }

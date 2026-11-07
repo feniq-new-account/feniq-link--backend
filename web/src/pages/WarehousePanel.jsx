@@ -1,3 +1,5 @@
+import { useRuntimeFeatures } from '../context/RuntimeFeaturesContext';
+import { runtimeWarehouseNav } from '../utils/warehouseNav';
 import { AccountantDashboardPage } from './AccountantDashboardPage';
 import { WarehouseInsightsPage } from './WarehouseInsightsPage';
 import { WarehouseFieldOperationsPage } from './WarehouseFieldOperationsPage';
@@ -7,8 +9,6 @@ import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import {
-  WAREHOUSE_NAV,
-  WAREHOUSE_NAV_GROUPS,
   isNavItemActive,
   navItemTarget,
 } from '../utils/warehouseNav';
@@ -53,6 +53,9 @@ export function WarehousePanel() {
 }
 
 function WarehousePanelContent() {
+  const { mutualRatings } = useRuntimeFeatures();
+  const navigation = runtimeWarehouseNav(mutualRatings);
+  const groups = navigation.filter(item => item.children);
   const { t } = useTranslation();
   const { user, warehouse, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -84,7 +87,7 @@ function WarehousePanelContent() {
           <div className="wh-sidebar-subtitle">{t('nav.warehouseTitleFallback')}</div>
         </div>
         <nav className="wh-nav">
-          {WAREHOUSE_NAV.map((item) => {
+          {navigation.map((item) => {
             // Link, not NavLink, and the active state computed here: a grouped
             // tab has to light up for ANY of its children, and those children
             // kept their original flat URLs - they share no path prefix with
@@ -167,7 +170,7 @@ function WarehousePanelContent() {
                 have to exist, or the catch-all below would silently bounce them
                 to Orders. Generated from the same model the sidebar renders, so
                 a new group cannot forget its redirect. */}
-            {WAREHOUSE_NAV_GROUPS.map((group) => (
+            {groups.map((group) => (
               <Route
                 key={group.id}
                 path={group.aliasPath}

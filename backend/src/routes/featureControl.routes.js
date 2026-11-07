@@ -8,11 +8,17 @@ const service = require('../services/featureControl.service');
 const Bundle = require('../models/featureBundle.model');
 const Audit = require('../models/featureControlAudit.model');
 const { OPTIONAL_FEATURES, CORE_FEATURES, SELF_CONFIGURABLE, FEATURE_DEFINITIONS } = require('../config/featureCatalog');
+const { RUNTIME_FEATURE_DEFAULTS, readRuntimeFeatures } = require('../services/runtimeFeatures.service');
+const publicRouter = Router();
+publicRouter.get('/', asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store').json({ success: true, features: await readRuntimeFeatures() });
+}));
 const admin = Router();
 admin.use(authenticate, authorize('admin'), requireActiveStatus);
 admin.get('/', asyncHandler(async (req, res) => {
   res.set('Cache-Control', 'no-store').json({ success: true, platform: await service.readPlatform(),
-    featureNames: OPTIONAL_FEATURES, featureDefinitions: FEATURE_DEFINITIONS,
+    platformFeatureNames: [...OPTIONAL_FEATURES, ...Object.keys(RUNTIME_FEATURE_DEFAULTS)],
+    platformFeatureDefaults: RUNTIME_FEATURE_DEFAULTS, featureNames: OPTIONAL_FEATURES, featureDefinitions: FEATURE_DEFINITIONS,
     coreFeatureNames: CORE_FEATURES, selfConfigurable: SELF_CONFIGURABLE });
 }));
 admin.put('/', asyncHandler(async (req, res) => {
@@ -68,4 +74,4 @@ self.put('/configuration', asyncHandler(async (req, res) => {
   const result = await service.configureWarehouse(warehouse._id, req.user._id, req.body);
   res.json({ success: true, revision: result.revision, features: result.features });
 }));
-module.exports = { admin, warehouseAdmin, self };
+module.exports = { admin, warehouseAdmin, self, publicRouter };

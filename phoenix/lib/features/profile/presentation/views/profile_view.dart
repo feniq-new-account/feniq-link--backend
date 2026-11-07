@@ -1,3 +1,4 @@
+import 'package:feniq/core/config/runtime_features_scope.dart';
 import 'edit_profile_view.dart';
 import 'package:feniq/features/pharmacy_license/data/pharmacy_license_repository.dart';
 import 'package:feniq/features/pharmacy_license/presentation/pharmacy_license_view.dart';
@@ -163,19 +164,21 @@ class ProfileView extends StatelessWidget {
                   ),
 
                   const SizedBox(height: AppSizes.spacingXLarge),
-                  _SectionHeader(l10n.ratingsTitle),
-                  const SizedBox(height: AppSizes.spacingSmall),
-                  // The full ratings/reviews list moved to its own page
-                  // (PharmacyReviewsView) - Profile now only links to it, the
-                  // same way the Complaints row below works.
-                  _ProfileNavCard(
-                    icon: Icons.star_outline_rounded,
-                    title: l10n.ratingsTitle,
-                    subtitle: l10n.viewRatingsLabel,
-                    onTap: () => context.pushNamed(RouteNames.pharmacyReviews),
-                  ),
+                  if (RuntimeFeaturesScope.ratingsEnabled(context)) ...[
+                    _SectionHeader(l10n.ratingsTitle),
+                    const SizedBox(height: AppSizes.spacingSmall),
+                    // The full ratings/reviews list moved to its own page
+                    // (PharmacyReviewsView) - Profile now only links to it, the
+                    // same way the Complaints row below works.
+                    _ProfileNavCard(
+                      icon: Icons.star_outline_rounded,
+                      title: l10n.ratingsTitle,
+                      subtitle: l10n.viewRatingsLabel,
+                      onTap: () => context.pushNamed(RouteNames.pharmacyReviews),
+                    ),
 
-                  const SizedBox(height: AppSizes.spacingXLarge),
+                    const SizedBox(height: AppSizes.spacingXLarge),
+                  ],
                   _SectionHeader(l10n.pharmacyVisitCodeTitle),
                   const SizedBox(height: AppSizes.spacingSmall),
                   // The QR a warehouse's rep scans when they visit - see

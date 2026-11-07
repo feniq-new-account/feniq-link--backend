@@ -35,6 +35,7 @@ const ORDER_ID = new mongoose.Types.ObjectId();
 const WAREHOUSE_ID = new mongoose.Types.ObjectId();
 const REVIEW_ID = new mongoose.Types.ObjectId();
 
+let ratingsEnabled;
 let orderStatus;
 let existingReview;
 let createBehavior;
@@ -48,6 +49,7 @@ const reviewModelStub = {
   findOne: modelQuery(() => existingReview),
   create: async (doc) => createBehavior(doc),
 };
+stubModule('models/platformSetting.model.js', { findOne: modelQuery(() => ({ value: { features: { mutualRatings: ratingsEnabled } } })) });
 stubModule('models/order.model.js', orderModelStub);
 stubModule('models/review.model.js', reviewModelStub);
 stubModule('models/warehouse.model.js', { find: modelQuery(() => []) });
@@ -62,6 +64,7 @@ const RATE = () =>
   });
 
 test.beforeEach(() => {
+  ratingsEnabled = true;
   emitted.length = 0;
   orderStatus = 'delivered';
   existingReview = null;
@@ -120,4 +123,13 @@ test('a failed review write emits nothing', async () => {
   };
   await assert.rejects(RATE, /mongo write failed/);
   assert.deepStrictEqual(emitted, []);
+});
+
+test('a paused runtime flag rejects before writing or emitting', async () => {
+  ratingsEnabled = false;
+  let writes = 0;
+  createBehavior = async () => { writes++; };
+  await assert.rejects(RATE(), { code: 'RATINGS_DISABLED' });
+  assert.equal(writes, 0);
+  assert.deepEqual(emitted, []);
 });

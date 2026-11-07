@@ -52,8 +52,8 @@ export function FeatureControlCenter({ warehouseId }) {
       <form onSubmit={e => { e.preventDefault(); action(() => api.saveFeatureControl({ revision: data.platform.revision, features: switches, reason })); }}>
         <fieldset disabled={busy}>
           <legend>{t('featureControl.global')}</legend>
-          {data.featureNames.map(key => <label key={key} className="feature-control-switch">
-            <input type="checkbox" checked={switches[key] !== false} onChange={e => setSwitches({ ...switches, [key]: e.target.checked })} />
+          {(data.platformFeatureNames || data.featureNames).map(key => <label key={key} className="feature-control-switch">
+            <input type="checkbox" checked={(switches[key] ?? data.platformFeatureDefaults?.[key]) !== false} onChange={e => setSwitches({ ...switches, [key]: e.target.checked })} />
             <span>{label(key)}{data.featureDefinitions?.[key] && <small className="feature-state">{t(`featureControl.states.${data.featureDefinitions[key].status}`)}</small>}</span>
           </label>)}
           <button className="btn-primary" disabled={!reason.trim()}>{t('featureControl.saveGlobal')}</button>

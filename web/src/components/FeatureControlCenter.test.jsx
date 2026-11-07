@@ -51,3 +51,21 @@ it('global controls work without a warehouse and do not request or invent wareho
   expect(host.querySelector('a').getAttribute('href')).toBe('/admin/warehouse-access');
   expect(host.textContent).not.toContain('featureControl.grant');
 });
+it('admin saves mutualRatings OFF and ON with the persisted platform revision', async () => {
+  api.getFeatureControl.mockResolvedValue({ platform: { revision: 3, features: { mutualRatings: false } },
+    featureNames: [], platformFeatureNames: ['mutualRatings'], platformFeatureDefaults: { mutualRatings: true } });
+  await act(async () => root.render(<MemoryRouter><FeatureControlCenter /></MemoryRouter>));
+  const checkbox = host.querySelector('input[type="checkbox"]');
+  expect(checkbox.checked).toBe(false);
+  await input(host.querySelector('input:not([type])'), 'Enable mutual ratings');
+  await act(async () => checkbox.click());
+  api.saveFeatureControl.mockResolvedValue({});
+  api.getFeatureControl.mockResolvedValue({ platform: { revision: 4, features: { mutualRatings: true } }, featureNames: [], platformFeatureNames: ['mutualRatings'] });
+  await act(async () => host.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  expect(api.saveFeatureControl).toHaveBeenLastCalledWith({ revision: 3, reason: 'Enable mutual ratings', features: { mutualRatings: true } });
+  expect(host.querySelector('input[type="checkbox"]').checked).toBe(true);
+  await input(host.querySelector('input:not([type])'), 'Pause mutual ratings');
+  await act(async () => host.querySelector('input[type="checkbox"]').click());
+  await act(async () => host.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  expect(api.saveFeatureControl).toHaveBeenLastCalledWith({ revision: 4, reason: 'Pause mutual ratings', features: { mutualRatings: false } });
+});

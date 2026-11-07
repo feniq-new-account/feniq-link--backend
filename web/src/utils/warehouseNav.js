@@ -64,7 +64,7 @@ export const WAREHOUSE_NAV_ALL = [
     labelKey: 'nav.feedback',
     aliasPath: '/warehouse/feedback',
     children: [
-      { id: 'reviews', labelKey: 'nav.reviews', path: '/warehouse/reviews' },
+      { id: 'reviews', labelKey: 'nav.reviews', path: '/warehouse/reviews', feature: 'mutualRatings' },
       { id: 'complaints', labelKey: 'nav.complaints', path: '/warehouse/complaints' },
     ],
   },
@@ -75,6 +75,11 @@ export const WAREHOUSE_NAV_ALL = [
 export const WAREHOUSE_NAV = WAREHOUSE_NAV_ALL.filter((item) => isFeatureShown(item.feature)).map((item) =>
   item.children ? { ...item, children: item.children.filter((child) => isFeatureShown(child.feature)) } : item
 );
+
+export function runtimeWarehouseNav(mutualRatings) {
+  return WAREHOUSE_NAV.map(item => item.children
+    ? { ...item, children: item.children.filter(child => child.feature !== 'mutualRatings' || mutualRatings) } : item);
+}
 
 export const WAREHOUSE_NAV_GROUPS = WAREHOUSE_NAV.filter((item) => Boolean(item.children));
 

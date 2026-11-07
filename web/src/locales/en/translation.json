@@ -1565,6 +1565,7 @@
       "inactivePharmacies": "Inactive pharmacies",
       "ownerAlerts": "Owner alerts",
       "deliverySchedule": "Delivery scheduling",
+      "mutualRatings": "Mutual ratings",
       "ownerMobileAccess": "Owner mobile access"
     },
     "roleChanged": "Role updated. This user must sign in again.",

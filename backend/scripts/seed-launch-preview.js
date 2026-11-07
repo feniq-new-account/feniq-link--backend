@@ -44,6 +44,7 @@ async function seedLaunchPreview(accounts, options) {
       throw new Error('Missing or invalid private preview credentials.');
     }
   }
+  if (options?.mutualRatings !== undefined && typeof options.mutualRatings !== 'boolean') throw new Error('Invalid preview mutualRatings flag.');
   await assertPreviewTarget(options);
   const marker = mongoose.connection.db.collection('launch_preview_seed');
   await marker.insertOne({ _id: 'launch-preview-v1', status: 'building', startedAt: new Date() });
@@ -59,6 +60,10 @@ async function seedLaunchPreview(accounts, options) {
   // This is an explicitly confirmed, empty, isolated sales demo, never production.
   await require('../src/models/platformSetting.model').create({ key: 'pharmacistLaunch',
     value: { mode: 'ordering_open', message: '[DEMO] Isolated preview ordering', revision: 1 } });
+
+  if (options?.mutualRatings !== undefined) await model('platformSetting').create({
+    key: 'featureControl', value: { revision: 1, features: { mutualRatings: options.mutualRatings } },
+  });
 
   const seed = require('../src/services/demoSeed.service');
   await seed.seedDemoDataIfEmpty();
@@ -161,7 +166,7 @@ async function seedLaunchPreview(accounts, options) {
   }
   await require('../src/services/complaint.service').createComplaint({ pharmacyId: pharmacies[0].id, pharmacyUserId: users.pharmacy.id,
     warehouseId: warehouse.id, subject: `${LABEL} استفسار عن التوزيع`, description: 'شكوى وهمية لتجربة متابعة الإدارة والرد عليها.' });
-  await require('../src/services/review.service').createWarehouseReview(pharmacies[0].id, users.pharmacy.id, {
+  if ((await require('../src/services/runtimeFeatures.service').readRuntimeFeatures()).mutualRatings) await require('../src/services/review.service').createWarehouseReview(pharmacies[0].id, users.pharmacy.id, {
     orderId: delivered[0].orderId, rating: 5, comment: 'تقييم تجريبي فقط' });
   await model('offer').create({ warehouseId: warehouse.id, productId: (await Product.findOne({ warehouseId: warehouse.id })).id,
     titleAr: `${LABEL} عرض بانتظار الإدارة`, titleEn: '[DEMO] Pending offer', discountPercentage: 5,

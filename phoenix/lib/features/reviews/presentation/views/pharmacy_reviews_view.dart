@@ -1,3 +1,4 @@
+import 'package:feniq/core/config/runtime_features_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/widgets/app_refresh_indicator.dart';
@@ -23,9 +24,19 @@ import 'package:feniq/core/widgets/full_text.dart';
 // about how a rating is produced or calculated changes here.
 class PharmacyReviewsView extends StatelessWidget {
   const PharmacyReviewsView({super.key});
+  @override
+  Widget build(BuildContext context) => RatingsRefresh(
+    onEnabled: () => context.read<PharmacyReviewsCubit>().load(),
+    child: const _PharmacyReviewsContent(),
+  );
+}
+
+class _PharmacyReviewsContent extends StatelessWidget {
+  const _PharmacyReviewsContent();
 
   @override
   Widget build(BuildContext context) {
+    if (!RuntimeFeaturesScope.ratingsEnabled(context)) return const SizedBox.shrink();
     final l10n = context.l10n;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
