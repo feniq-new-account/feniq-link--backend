@@ -4,6 +4,7 @@ const { asyncHandler } = require('../utils/asyncHandler');
 const contracts = require('../services/collectionContract.service');
 const settlements = require('../services/collectionSettlement.service');
 const reads = require('../services/collectionAccountingRead.service');
+const grants = require('../services/collectionGrant.service');
 
 const warehouse = Router();
 warehouse.use(authenticate, authorize('warehouse'), requireActiveStatus);
@@ -37,5 +38,20 @@ admin.post('/warehouses/:warehouseId/settlements', asyncHandler(async (req, res)
       periodFrom: settlement.periodFrom, periodTo: settlement.periodTo, proofReviewIds: settlement.proofReviewIds,
       reference: settlement.reference, confirmedAt: settlement.confirmedAt },
   });
+}));
+// Explicit administrative provisioning only. An admin role does not grant cash
+// recording, approval or remittance rights without a persisted scoped grant.
+admin.get('/warehouses/:warehouseId/actor-grants', asyncHandler(async (req, res) => {
+  res.json({ success: true, grants: await grants.list(req.user._id, req.params.warehouseId) });
+}));
+admin.post('/warehouses/:warehouseId/actor-grants', asyncHandler(async (req, res) => {
+  const result = await grants.issue(req.user._id, req.params.warehouseId, req.body);
+  if (result.replay) res.set('Idempotent-Replay', 'true');
+  res.status(result.replay ? 200 : 201).json({ success: true, ...result });
+}));
+admin.post('/warehouses/:warehouseId/actor-grants/:grantId/revoke', asyncHandler(async (req, res) => {
+  const result = await grants.revoke(req.user._id, req.params.warehouseId, req.params.grantId, req.body);
+  if (result.replay) res.set('Idempotent-Replay', 'true');
+  res.json({ success: true, ...result });
 }));
 module.exports = { warehouse, admin };

@@ -1,0 +1,110 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { Types } = require('mongoose');
+const { ACTIONS } = require('../src/utils/collectionActorPolicy');
+const { authorizePersistedCollectionAction } = require('../src/utils/collectionActorAuthorization');
+
+function fixture({ status = 'active', role = 'admin', warehouseRole = null,
+  warehouseActive = true, grantActive = true, revokedAt = null, associated = true,
+  grantAction = ACTIONS.RECORD_FENIQ } = {}) {
+  const actorId = new Types.ObjectId(), warehouseId = new Types.ObjectId();
+  const session = {};
+  const actor = { _id: actorId, status, role, warehouseRole };
+  const warehouse = { _id: warehouseId, isActive: warehouseActive,
+    userId: associated ? actorId : new Types.ObjectId(), memberUserIds: [] };
+  const calls = [];
+  const chain = value => ({ session(s) { assert.equal(s, session); return { lean: async () => value }; } });
+  const User = { findById(id) { assert.equal(id, actorId); return chain(actor); } };
+  const Warehouse = { findById(id) { assert.equal(id, warehouseId); return chain(warehouse); } };
+  const CollectionActorGrant = { find(filter) {
+    calls.push(filter);
+    return chain(grantActive ? [{ actorId, warehouseId, action: grantAction, active: true, revokedAt }] : []);
+  } };
+  return { actorId, warehouseId, session, User, Warehouse, CollectionActorGrant, calls };
+}
+
+test('loads persisted scoped grants using the caller transaction session', async () => {
+  const f = fixture();
+  assert.equal(await authorizePersistedCollectionAction({ ...f, action: ACTIONS.RECORD_FENIQ }), true);
+  assert.equal(f.calls.length, 1);
+  assert.deepEqual(f.calls[0], { actorId: f.actorId, warehouseId: f.warehouseId,
+    action: ACTIONS.RECORD_FENIQ, active: true, revokedAt: null });
+});
+
+test('fails closed for inactive actor, inactive warehouse and absent grants', async () => {
+  for (const opts of [{ status: 'blocked' }, { warehouseActive: false }, { grantActive: false }]) {
+    const f = fixture(opts);
+    assert.equal(await authorizePersistedCollectionAction({ ...f, action: ACTIONS.RECORD_FENIQ }), false);
+  }
+});
+
+test('rejects revoked grant and missing transaction session', async () => {
+  const f = fixture({ revokedAt: new Date() });
+  assert.equal(await authorizePersistedCollectionAction({ ...f, action: ACTIONS.RECORD_FENIQ }), false);
+  assert.equal(await authorizePersistedCollectionAction({ ...f, session: null, action: ACTIONS.RECORD_FENIQ }), false);
+});
+
+test('never accepts collection approval from a recorder with the same identity', async () => {
+  const f = fixture();
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, action: ACTIONS.APPROVE_FENIQ, recordedBy: f.actorId,
+  }), false);
+});
+
+test('serializes database reads sharing one MongoDB transaction session', async () => {
+  const f = fixture();
+  let pending = false;
+  const events = [];
+  const guarded = (label, value) => ({
+    session(s) {
+      assert.equal(s, f.session);
+      return { async lean() {
+        assert.equal(pending, false, 'parallel query on one transaction session');
+        pending = true;
+        events.push(label);
+        await Promise.resolve();
+        pending = false;
+        return value;
+      } };
+    },
+  });
+  const User = { findById: () => guarded('actor', { _id: f.actorId, status: 'active', role: 'admin' }) };
+  const Warehouse = { findById: () => guarded('warehouse', { _id: f.warehouseId, isActive: true }) };
+  const CollectionActorGrant = { find: () => guarded('grant', [{
+    actorId: f.actorId, warehouseId: f.warehouseId, action: ACTIONS.RECORD_FENIQ,
+    active: true, revokedAt: null,
+  }]) };
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, User, Warehouse, CollectionActorGrant, action: ACTIONS.RECORD_FENIQ,
+  }), true);
+  assert.deepEqual(events, ['actor', 'warehouse', 'grant']);
+});
+
+test('rejects unknown collection actions without querying authorization records', async () => {
+  const f = fixture();
+  const User = { findById() { throw new Error('unexpected database read'); } };
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, User, action: 'approve_anything',
+  }), false);
+  assert.equal(f.calls.length, 0);
+});
+
+test('role and warehouse membership are rechecked when using a persisted grant', async () => {
+  for (const opts of [
+    { role: 'rep' },
+    { role: 'warehouse', warehouseRole: 'owner', grantAction: ACTIONS.RECORD_WAREHOUSE },
+    { role: 'warehouse', warehouseRole: 'accountant',
+      associated: false, grantAction: ACTIONS.RECORD_WAREHOUSE },
+  ]) {
+    const f = fixture(opts);
+    assert.equal(await authorizePersistedCollectionAction({
+      ...f, action: opts.grantAction || ACTIONS.RECORD_FENIQ,
+    }), false);
+    assert.equal(f.calls.length, 0, 'ineligible actor must not read an active grant');
+  }
+  const f = fixture({ role: 'warehouse', warehouseRole: 'accountant',
+    grantAction: ACTIONS.RECORD_WAREHOUSE });
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, action: ACTIONS.RECORD_WAREHOUSE,
+  }), true);
+});
