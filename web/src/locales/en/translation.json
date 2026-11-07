@@ -2059,6 +2059,8 @@
     "retrySettlement": "Retry pending weekly settlement"
   },
   "cashCustody": {
+    "auditedNet": "Warehouse net — latest audited calculation, all dates",
+    "overdueCount": "Custody past 48 hours",
     "title": "Feniq cash custody and warehouse remittances",
     "scope": "Approved cash custody. A warehouse remittance never reduces pharmacy debt again.",
     "sources": "Source statement",

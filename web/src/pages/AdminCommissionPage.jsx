@@ -714,6 +714,8 @@ export function AdminCommissionPage() {
                   <th className="adm-num">{t('commission.collected')}</th>
                   <th className="adm-num">{t('commission.paidOut')}</th>
                   <th className="adm-num">{t('commission.outstanding')}</th>
+                  <th className="adm-num">{t('cashCustody.auditedNet')}</th>
+                  <th className="adm-num">{t('cashCustody.cashInCustodySyp')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -751,6 +753,10 @@ export function AdminCommissionPage() {
                       <OutstandingAmount amountSyp={row.outstandingSyp} />
                       {row.cashDueScope === 'selected_period_bounded_by_current_cash' && <small>{t('cashCustody.periodMovement')}: {formatSyp(row.periodOutstandingSyp)} · {t('cashCustody.currentCommissionCash')}: {row.currentCashOutstandingSyp == null ? '—' : formatSyp(row.currentCashOutstandingSyp)}</small>}
                     </td>
+                    <td className="adm-num">{row.cashCustody?.netWarehouseDueSyp == null ? '—' : formatSyp(row.cashCustody.netWarehouseDueSyp)}
+                      {row.cashCustody && <small>{formatBusinessDateTime(row.cashCustody.asOf)} · {t('cashCustody.overdueCount')}: {row.cashCustody.overdueCount}</small>}
+                    </td>
+                    <td className="adm-num">{row.cashCustody?.cashInCustodySyp == null ? '—' : formatSyp(row.cashCustody.cashInCustodySyp)}</td>
                   </tr>
                 ))}
               </tbody>
