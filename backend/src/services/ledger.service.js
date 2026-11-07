@@ -491,6 +491,9 @@ async function ensureFinancialIndexes() {
     require('../models/paymentProof.model').createIndexes(),
     require('../models/paymentProofReview.model').createIndexes(),
     require('../models/collectionActorGrant.model').createIndexes(),
+    require('../models/feniqCollectionReceipt.model').createIndexes(),
+    require('../models/feniqCashCustody.model').createIndexes(),
+    ...Object.values(require('../models/feniqRemittance.model')).map(model => model.createIndexes()),
     require('../models/collectionContract.model').createIndexes(),
     ...Object.values(require('../models/collectionAccounting.model')).map(model => model.createIndexes())]);
 }

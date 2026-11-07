@@ -307,6 +307,29 @@ position and nothing else. Pinned in `test/commission.collection.test.js`.
 
 ---
 
+### Collection-v2 Feniq custody extension (2026-11-07)
+
+Feniq-held commission is an immutable `FeniqCommissionWithholding` source,
+not another `CommissionCollection` or pharmacy `Payment`. Signed corrections
+follow the source allocation run. Verified commission is retained even when
+unallocated cash, legacy terms or delivery ownership block **net remittance**;
+missing commission contracts/journal sources still block recognition of custody.
+
+For warehouses using Feniq custody, `periodOutstandingSyp` preserves the signed
+period movement (including negative credits), after deducting period withholding.
+`currentCashOutstandingSyp` independently reconciles all-time earned commission,
+compensation, cash collections/payouts and signed withholding. `outstandingSyp`
+is the selected-period amount that can actually be posted, bounded in **both**
+directions by that current obligation. These scopes are explicitly displayed;
+unknown sources return null, never a fabricated zero. The cash writer takes the
+custody/account locks and enforces the same limit inside its transaction.
+Legacy-only warehouses retain the original signed period behavior above.
+
+`FeniqCustodyReconciliation` snapshots and `FeniqRemittance` evidence settle cash
+custody only; confirmation/reversal never inserts a second pharmacy payment or
+ledger debt reduction. See `docs/FENIQ_CUSTODY_ACCEPTANCE.md` for the staged
+workflow, source blockers, permission grants and activation prerequisites.
+
 ## 9. Discount codes
 
 A pharmacy types a code at checkout (`discountCode.service.js`). Codes are
