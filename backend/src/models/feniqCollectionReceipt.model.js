@@ -26,6 +26,10 @@ const schema = new Schema({
   paymentId: { type: Schema.Types.ObjectId, ref: 'Payment', default: null },
 }, { timestamps: false });
 schema.index({ warehouseId: 1, idempotencyKey: 1 }, { unique: true });
+// One review key identifies exactly one receipt decision, across all receipts.
+schema.index({ warehouseId: 1, decisionKey: 1 }, {
+  unique: true, partialFilterExpression: { decisionKey: { $type: 'string' } },
+});
 schema.index({ warehouseId: 1, decisionKey: 1 }, {
   unique: true, partialFilterExpression: { decisionKey: { $type: 'string' } },
 });
