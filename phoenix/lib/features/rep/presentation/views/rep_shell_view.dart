@@ -1,3 +1,4 @@
+import 'package:feniq/core/services/android_startup_permissions.dart';
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:feniq/core/widgets/startup_location_permission.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +35,13 @@ class RepShellView extends StatefulWidget {
 }
 
 class _RepShellViewState extends State<RepShellView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      requestAndroidNotificationPermission();
+    });
+  }
   int _index = 0;
   String? _outboxOwnerId;
   DriverTripRepository? _outboxRepository;
