@@ -266,6 +266,9 @@ test('Feniq-held commission is journaled as retained, not demanded from the ware
   const { summary } = await cash.getWarehouseCommissionDetail(warehouse.id, period);
   assert.equal(summary.commissionOwedSyp, 500);
   assert.equal(summary.heldByFeniqSyp, 500); assert.equal(summary.outstandingSyp, 0);
+  assert.equal(summary.cashCustody.netWarehouseDueSyp, 49000);
+  assert.equal(summary.cashCustody.cashInCustodySyp, 50000);
+  assert.equal(summary.cashCustody.scope, 'latest_audited_reconciliation');
   await assert.rejects(cash.recordCollection({ warehouseId: warehouse.id, actorId: admin.id,
     periodFrom: period.from, periodTo: period.to, amountSyp: 500, method: 'cash', idempotencyKey: key() }),
   { code: 'FENIQ_COMMISSION_ALREADY_HELD' });
