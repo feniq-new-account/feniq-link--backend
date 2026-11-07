@@ -334,7 +334,7 @@ async function createPayment(warehouseId, recordedByUserId, data, options = {}) 
           // backdated payment lands on the statement where it belongs.
           effectiveAt: paidAt,
           source: { paymentId: payment._id },
-          createdBy: recordedByUserId,
+          createdBy: options.postingActorId || recordedByUserId,
           idempotencyKey,
           metadata: {
             paymentNumber,
@@ -342,6 +342,7 @@ async function createPayment(warehouseId, recordedByUserId, data, options = {}) 
             tenderAmount: data.amount,
             tenderCurrency: currency,
             unlinked: relationship.unlinked,
+            ...(options.postingActorId ? { approvedBy: options.postingActorId } : {}),
           },
         },
         session
@@ -353,7 +354,7 @@ async function createPayment(warehouseId, recordedByUserId, data, options = {}) 
       await financialAudit.record(
         {
           action: 'payment.recorded',
-          actorId: recordedByUserId,
+          actorId: options.postingActorId || recordedByUserId,
           actorRole: options.actorRole || 'warehouse',
           entityType: 'Payment',
           entityId: payment._id,
