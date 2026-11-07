@@ -135,12 +135,17 @@ async function revoke(adminId, warehouseId, grantId, body) {
   const fingerprint = requestFingerprint('collection-actor-revoke-v1', {
     adminId: String(adminId), warehouseId, grantId, reason,
   });
-  return runInTransaction(async session => {
+  try {
+    return await runInTransaction(async session => {
     await activeAdmin(adminId, session);
     await activeWarehouse(warehouseId, session);
     const grant = await CollectionActorGrant.findOne({ _id: grantId, warehouseId })
       .session(session).lean();
     if (!grant) throw ApiError.notFound('Collection grant not found.', 'COLLECTION_GRANT_NOT_FOUND');
+    const used = await CollectionActorGrant.findOne({ warehouseId, revocationKey: key }).session(session).lean();
+    if (used && String(used._id) !== grantId) {
+      throw idempotencyKeyReusedError('Collection revocation key already used for another grant.');
+    }
     if (grant.revokedAt) {
       if (grant.revocationKey !== key || grant.revocationFingerprint !== fingerprint) {
         throw ApiError.conflict('Collection grant was already revoked.', 'COLLECTION_GRANT_REVOKED');
@@ -162,7 +167,11 @@ async function revoke(adminId, warehouseId, grantId, body) {
       after: { active: false, revokedAt: updated.revokedAt },
     }, session);
     return { grant: present(updated), replay: false };
-  });
+    });
+  } catch (err) {
+    if (err?.code === 11000) throw idempotencyKeyReusedError('Collection revocation key already used.');
+    throw err;
+  }
 }
 
 module.exports = { list, issue, revoke, canGrantToActor };
