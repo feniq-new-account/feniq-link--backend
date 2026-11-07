@@ -10,11 +10,12 @@ async function authorizePersistedCollectionAction({
   User, Warehouse, CollectionActorGrant, session,
 }) {
   if (!actorId || !warehouseId || !User || !Warehouse || !CollectionActorGrant || !session) return false;
-  const [actor, warehouse] = await Promise.all([
-    User.findById(actorId).session(session).lean(),
-    Warehouse.findById(warehouseId).session(session).lean(),
-  ]);
-  if (!actor || actor.status !== 'active' || !warehouse || warehouse.isActive !== true) return false;
+  // MongoDB transactions do not support concurrent operations on one session.
+  // Read sequentially to keep the authorization check transaction-safe.
+  const actor = await User.findById(actorId).session(session).lean();
+  if (!actor || actor.status !== 'active') return false;
+  const warehouse = await Warehouse.findById(warehouseId).session(session).lean();
+  if (!warehouse || warehouse.isActive !== true) return false;
   const grants = await CollectionActorGrant.find({
     actorId: actor._id, warehouseId: warehouse._id, action,
     active: true, revokedAt: null,
