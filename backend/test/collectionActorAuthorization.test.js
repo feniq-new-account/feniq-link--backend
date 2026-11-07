@@ -47,3 +47,32 @@ test('never accepts collection approval from a recorder with the same identity',
     ...f, action: ACTIONS.APPROVE_FENIQ, recordedBy: f.actorId,
   }), false);
 });
+
+test('serializes database reads sharing one MongoDB transaction session', async () => {
+  const f = fixture();
+  let pending = false;
+  const events = [];
+  const guarded = (label, value) => ({
+    session(s) {
+      assert.equal(s, f.session);
+      return { async lean() {
+        assert.equal(pending, false, 'parallel query on one transaction session');
+        pending = true;
+        events.push(label);
+        await Promise.resolve();
+        pending = false;
+        return value;
+      } };
+    },
+  });
+  const User = { findById: () => guarded('actor', { _id: f.actorId, status: 'active' }) };
+  const Warehouse = { findById: () => guarded('warehouse', { _id: f.warehouseId, isActive: true }) };
+  const CollectionActorGrant = { find: () => guarded('grant', [{
+    actorId: f.actorId, warehouseId: f.warehouseId, action: ACTIONS.RECORD_FENIQ,
+    active: true, revokedAt: null,
+  }]) };
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, User, Warehouse, CollectionActorGrant, action: ACTIONS.RECORD_FENIQ,
+  }), true);
+  assert.deepEqual(events, ['actor', 'warehouse', 'grant']);
+});
