@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/warehouse_collection_accounting_card.dart';
 
 Map<String, dynamic> journal({
@@ -27,6 +28,11 @@ Future<void> showCard(
   await tester.pumpWidget(MaterialApp(
     locale: const Locale('ar'),
     supportedLocales: const [Locale('ar'), Locale('en')],
+    localizationsDelegates: const [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
     home: Scaffold(body: SingleChildScrollView(
       child: WarehouseCollectionAccountingCard(loadJournal: loader),
     )),
