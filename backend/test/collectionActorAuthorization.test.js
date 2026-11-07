@@ -76,3 +76,12 @@ test('serializes database reads sharing one MongoDB transaction session', async 
   }), true);
   assert.deepEqual(events, ['actor', 'warehouse', 'grant']);
 });
+
+test('rejects unknown collection actions without querying authorization records', async () => {
+  const f = fixture();
+  const User = { findById() { throw new Error('unexpected database read'); } };
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, User, action: 'approve_anything',
+  }), false);
+  assert.equal(f.calls.length, 0);
+});
