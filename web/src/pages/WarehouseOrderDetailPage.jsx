@@ -800,7 +800,7 @@ export function WarehouseOrderDetailPage() {
               <div className="wh-detail-timestamp wh-num">{formatBusinessDateTime(order.createdAt)}</div>
               {/* Rating the pharmacy, once the order is delivered - here on the
                   order page rather than in the orders list. */}
-              {order.status === 'delivered' &&
+              {FEATURES.mutualRatings && order.status === 'delivered' &&
                 (order.hasReviewed ? (
                   <p className="hint">{t('orders.youRatedPharmacy')}</p>
                 ) : (
@@ -1146,7 +1146,7 @@ export function WarehouseOrderDetailPage() {
           onRecorded={handlePaymentRecorded}
         />
       )}
-      {isRating && order && (
+      {FEATURES.mutualRatings && isRating && order && (
         <RatePharmacyModal
           order={order}
           onClose={() => setIsRating(false)}
