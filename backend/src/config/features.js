@@ -7,6 +7,9 @@ const FEATURES = {
   // for now (owner's call, October 2026). Off: no order asks for the photo and
   // none is held back waiting for one - including orders created while it was on.
   deliverySealPhoto: false,
+  // Both directions of mutual ratings are paused during early rollout.
+  // Keep stored review documents intact for a deliberate later reopening.
+  mutualRatings: false,
 };
 
 module.exports = { FEATURES };
