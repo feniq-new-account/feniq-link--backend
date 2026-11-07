@@ -275,4 +275,38 @@ async function list(actorId, warehouseId, { before = null } = {}) {
   });
 }
 
-module.exports = { record, review, list, receiptDate };
+async function listCustody(actorId, warehouseId, { before = null, status = null } = {}) {
+  warehouseId = id(warehouseId);
+  if (before !== null) before = id(before);
+  if (status !== null && !['awaiting_reconciliation', 'remittance_pending',
+    'remitted', 'reversed'].includes(status)) {
+    throw ApiError.badRequest('Invalid custody status.', undefined, 'INVALID_CUSTODY_QUERY');
+  }
+  return runInTransaction(async session => {
+    const actor = await User.findById(actorId).select('role status').session(session).lean();
+    if (!actor || actor.role !== 'admin' || actor.status !== 'active') {
+      throw ApiError.forbidden('Active platform administrator required.', 'ACTIVE_ADMIN_REQUIRED');
+    }
+    const warehouse = await Warehouse.findById(warehouseId).select('_id').session(session).lean();
+    if (!warehouse) throw ApiError.notFound('Warehouse not found.', 'WAREHOUSE_NOT_FOUND');
+    const rows = await Custody.find({ warehouseId, ...(status ? { status } : {}),
+      ...(before ? { _id: { $lt: before } } : {}) })
+      .sort({ _id: -1 }).limit(51).session(session).lean();
+    const now = new Date();
+    return {
+      asOf: now, grossMeansCollectedCashNotNetWarehouseDue: true,
+      rows: rows.slice(0, 50).map(row => ({
+        id: row._id, receiptId: row.receiptId, paymentId: row.paymentId,
+        warehouseId: row.warehouseId, grossHeldSyp: row.grossHeldSyp,
+        netWarehouseDueSyp: row.netWarehouseDueSyp,
+        actualReceivedAt: row.actualReceivedAt, targetRemittanceAt: row.targetRemittanceAt,
+        deadlineAt: row.deadlineAt, status: row.status,
+        overdue: !['remitted', 'reversed'].includes(row.status) &&
+          new Date(row.deadlineAt).getTime() < now.getTime(),
+      })),
+      hasMore: rows.length > 50, nextBefore: rows.length > 50 ? rows[49]._id : null,
+    };
+  });
+}
+
+module.exports = { record, review, list, listCustody, receiptDate };
