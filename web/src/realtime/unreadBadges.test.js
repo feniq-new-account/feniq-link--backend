@@ -41,7 +41,7 @@ describe('what raises a badge', () => {
   });
 
   it('a detail page counts as being in the tab', () => {
-    const state = record({}, 'warehouse', 'order.cancelled', [{ orderId: 'o1' }], '/warehouse/orders/o9');
+    const state = record({}, 'warehouse', 'order.created', [{ orderId: 'o1' }], '/warehouse/orders/o9');
     expect(countUnder('warehouse', state, '/warehouse/orders')).toBe(0);
   });
 
@@ -59,7 +59,6 @@ describe('what raises a badge', () => {
   it('maps each warehouse event to its own tab', () => {
     const cases = [
       ['order.created', { orderId: 'o1' }, '/warehouse/orders'],
-      ['order.cancelled', { orderId: 'o2' }, '/warehouse/orders'],
       ['return.created', { returnId: 'r1', orderId: 'o1' }, '/warehouse/returns'],
       ['offer.status.updated', { offerId: 'f1', status: 'approved' }, '/warehouse/offers'],
       ['banner.status.updated', { bannerId: 'b1', status: 'rejected' }, '/warehouse/advertisements/general'],
@@ -236,11 +235,11 @@ describe('opening a tab', () => {
     expect(totalUnread('warehouse', state)).toBe(1); // the complaint, untouched
   });
 
-  it('an order read and then changed again is new again', () => {
+  it('cancellation of a read order is not a second new-order alert', () => {
     let state = record({}, 'warehouse', 'order.created', [{ orderId: 'o1' }], ELSEWHERE_WH);
     state = markRead(state, 'warehouse', '/warehouse/orders');
     state = record(state, 'warehouse', 'order.cancelled', [{ orderId: 'o1' }], ELSEWHERE_WH);
-    expect(countUnder('warehouse', state, '/warehouse/orders')).toBe(1);
+    expect(countUnder('warehouse', state, '/warehouse/orders')).toBe(0);
   });
 
   it('a page with nothing unread returns the same state (no re-render)', () => {
