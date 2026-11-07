@@ -53,9 +53,9 @@ class EarlyLaunchNotice extends StatelessWidget {
                   children: [
                     Text(
                       isArabic
-                          ? 'مرحلة الإطلاق المبكر • حتى 15 تشرين الثاني'
-                          : 'Early launch • through November 15',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          ? 'مرحلة الإطلاق المبكر'
+                          : 'Early launch phase',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.primaryOf(context),
                         fontWeight: FontWeight.w700,
                       ),
@@ -63,8 +63,8 @@ class EarlyLaunchNotice extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       isArabic
-                          ? 'أنت من أوائل الصيادلة في فينيق. نطوّر خدماتنا باستمرار، ونضيف مزايا جديدة تباعاً. والقادم أكبر.'
-                          : 'You are among Feniq’s first pharmacists. We are improving the experience and adding new features step by step. More is on the way.',
+                          ? 'تصفّح المنتجات والعروض الآن. يبدأ استقبال الطلبات عبر فينيق اعتباراً من 16 تشرين الثاني، مع إضافة مستودعات جديدة أسبوعياً.'
+                          : 'Explore products and offers now. Ordering through Feniq begins November 16, with new warehouses joining every week.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondaryOf(context),
                         height: 1.25,
