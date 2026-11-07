@@ -56,6 +56,9 @@ async function call(actor, method, path, body) {
 }
 test.beforeEach(async () => {
   for (const collection of await mongoose.connection.db.collections()) await collection.deleteMany({});
+  // Pilot ordering is enabled only inside this disposable MongoDB replica set.
+  await mongoose.connection.collection('platformsettings').insertOne({ key: 'pharmacistLaunch',
+    value: { mode: 'ordering_open', message: 'Synthetic accounting acceptance only', revision: 1 } });
   [admin, collector, approver, owner, pharmacyUser] = await User.create([
     { name: 'Synthetic admin', phone: '0988000001', role: 'admin', status: 'active' },
     { name: 'Synthetic Feniq collector', phone: '0988000002', role: 'admin', status: 'active' },
