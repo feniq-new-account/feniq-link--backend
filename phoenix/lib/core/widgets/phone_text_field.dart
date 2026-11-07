@@ -52,7 +52,7 @@ class PhoneTextField extends StatelessWidget {
           textAlign: TextAlign.left,
           style: context.textTheme.bodyMedium,
           decoration: InputDecoration(
-            hintText: '09xxxxxxxx / +9639xxxxxxxx',
+            hintText: '9xxxxxxxx',
             hintStyle: context.textTheme.bodyMedium?.copyWith(
               color: AppColors.textSecondaryOf(context).withValues(alpha: 0.7),
             ),

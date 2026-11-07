@@ -23,7 +23,8 @@ void main() {
     await pumpField(tester);
     expect(find.byType(TextFormField), findsOneWidget);
     expect(find.text('09'), findsNothing);
-    expect(find.text('09xxxxxxxx / +9639xxxxxxxx'), findsOneWidget);
+    expect(find.text('9xxxxxxxx'), findsOneWidget);
+    expect(find.text('09xxxxxxxx / +9639xxxxxxxx'), findsNothing);
     await tester.enterText(find.byType(TextFormField), '0912345678');
     expect(controller.text, '0912345678');
     expect(phoneTextFieldFullValue(controller.text), '+963912345678');

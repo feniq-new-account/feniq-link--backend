@@ -21,12 +21,14 @@ import 'package:feniq/features/app_update/presentation/app_update_gate.dart';
 import 'package:feniq/firebase_options.dart';
 import 'package:feniq/core/theme/dark_theme.dart';
 import 'package:feniq/core/widgets/app_text_scale.dart';
+import 'package:feniq/core/widgets/android_startup_permission_gate.dart';
 import 'package:feniq/core/widgets/system_bars_safe_area.dart';
 import 'package:feniq/core/widgets/offline_banner.dart';
 import 'package:feniq/core/theme/light_theme.dart';
 import 'package:feniq/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:feniq/features/pharmacy_license/data/pharmacy_license_repository.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
+import 'package:feniq/features/auth/presentation/managers/auth_state.dart';
 import 'package:feniq/features/advertisements/data/repositories/advertisements_repository.dart';
 import 'package:feniq/features/advertisements/data/repositories/advertisements_repository_impl.dart';
 import 'package:feniq/features/account_history/data/repositories/savings_repository.dart';
@@ -457,7 +459,14 @@ class MyApp extends StatelessWidget {
                   // phone's saved copy (OfflineBanner). The child keeps one
                   // fixed place in the tree, so the navigator never rebuilds
                   // when the strip appears or goes.
-                  builder: (context, child) => AppTextScale(
+                  builder: (context, child) => AndroidStartupPermissionGate(
+                    requireGps: context.select((AuthCubit cubit) {
+                      final auth = cubit.state;
+                      return (auth.sessionStatus == SessionStatus.active ||
+                              auth.sessionStatus == SessionStatus.offline) &&
+                          (auth.isRep || auth.isDriver);
+                    }),
+                    child: AppTextScale(
                     // Nothing ever sits beneath the phone's navigation
                     // buttons - see SystemBarsSafeArea.
                     child: SystemBarsSafeArea(
@@ -475,6 +484,7 @@ class MyApp extends StatelessWidget {
                           child: child ?? const SizedBox.shrink(),
                         ),
                       ),
+                    ),
                     ),
                   ),
                 );
