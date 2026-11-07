@@ -7,7 +7,7 @@ describe('warehouse rep commission policy copy', () => {
     expect(ar.reps.commissionHint).toContain('قبل تفعيل');
     expect(ar.reps.commissionHint).toContain('50٪');
     expect(ar.reps.commissionHint).toContain('التحصيل الفعلي');
-    expect(ar.reps.commissionSplit).toContain('المحرك القديم فقط');
+    expect(ar.reps.commissionSplit).toContain('للمحرك القديم فقط');
     expect(ar.reps.commissionCountsDelivered).toContain('عند التسليم');
     expect(ar.reps.shareToRepHint).toContain('القديم فقط');
   });
