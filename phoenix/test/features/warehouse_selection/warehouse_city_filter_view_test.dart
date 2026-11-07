@@ -224,7 +224,7 @@ void main() {
     // filters only the current city. The sheet tests cover cross-city search.
     expect(find.byKey(const ValueKey('homeQuickSearchButton')), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
-    expect(find.byType(WarehouseCard), findsNWidgets(2));
+    expect(find.byType(WarehouseCard), findsNWidgets(3));
     verify(() => warehouseRepository.getWarehouses(onlyMyCity: false)).called(1);
   });
 }
