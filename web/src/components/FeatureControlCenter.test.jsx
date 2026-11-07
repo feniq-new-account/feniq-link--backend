@@ -7,7 +7,7 @@ import { api } from '../api/client';
 import { MemoryRouter } from 'react-router-dom';
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: key => key }) }));
 vi.mock('../api/client', () => ({ api: Object.fromEntries(['getFeatureControl', 'getWarehouseEntitlements', 'getFeatureBundles', 'getFeatureAudit',
-  'saveFeatureControl', 'grantWarehouseFeatures', 'revokeWarehouseGrant', 'createFeatureBundle'].map(key => [key, vi.fn()])) }));
+  'saveFeatureControl', 'grantWarehouseFeatures', 'revokeWarehouseGrant', 'createFeatureBundle', 'getLaunchSettings', 'updateLaunchSettings'].map(key => [key, vi.fn()])) }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let host, root;
 const right = { revision: 4, features: { ownerMobileAccess: true }, decisions: { ownerMobileAccess: { reason: 'grant' } }, configuration: { grants: [] } };
@@ -18,6 +18,7 @@ async function input(node, value) {
 beforeEach(async () => {
   vi.clearAllMocks();
   api.getFeatureControl.mockResolvedValue({ platform: { revision: 2, features: {} }, featureNames: ['ownerMobileAccess'] });
+  api.getLaunchSettings.mockResolvedValue({ configuration: { mode: 'registration_only', message: 'Closed', revision: 4, orderingClosesAt: null } });
   api.getWarehouseEntitlements.mockResolvedValue(right);
   api.getFeatureBundles.mockResolvedValue({ bundles: [] }); api.getFeatureAudit.mockResolvedValue({ events: [] });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
@@ -68,4 +69,39 @@ it('admin saves mutualRatings OFF and ON with the persisted platform revision', 
   await act(async () => host.querySelector('input[type="checkbox"]').click());
   await act(async () => host.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
   expect(api.saveFeatureControl).toHaveBeenLastCalledWith({ revision: 4, reason: 'Pause mutual ratings', features: { mutualRatings: false } });
+});
+
+it('dashboard quick switches open ordering globally without enabling a timed restricted pilot, then turn it off', async () => {
+  api.getFeatureControl.mockResolvedValue({ platform: { revision: 5, features: { mutualRatings: false } },
+    featureNames: [], platformFeatureNames: ['mutualRatings'], platformFeatureDefaults: { mutualRatings: true } });
+  api.getLaunchSettings.mockResolvedValue({ configuration: { mode: 'registration_only', message: 'Closed', revision: 4,
+    orderingClosesAt: '2026-11-01T00:00:00.000Z' } });
+  api.updateLaunchSettings.mockImplementation(async payload => ({ configuration: { ...payload, revision: payload.revision + 1 } }));
+  await act(async () => root.render(<MemoryRouter><FeatureControlCenter quickOnly /></MemoryRouter>));
+  const orderButton = [...host.querySelectorAll('button')].find(b => b.textContent.includes('استقبال الطلبات:'));
+  expect(orderButton.textContent).toContain('OFF');
+  expect(host.querySelector('input[type="checkbox"]').checked).toBe(false);
+  await act(async () => orderButton.click());
+  expect(api.updateLaunchSettings).toHaveBeenLastCalledWith({
+    mode: 'ordering_open', revision: 4, orderingClosesAt: null, message: 'استقبال الطلبات متاح الآن.',
+  });
+  expect(orderButton.textContent).toContain('ON');
+  await act(async () => orderButton.click());
+  expect(api.updateLaunchSettings).toHaveBeenLastCalledWith({
+    mode: 'registration_only', revision: 5, orderingClosesAt: null,
+    message: 'التسجيل والتصفح متاحان. استقبال الطلبات متوقف حالياً.',
+  });
+  expect(orderButton.textContent).toContain('OFF');
+  expect(api.saveFeatureControl).not.toHaveBeenCalled();
+  expect(api.grantWarehouseFeatures).not.toHaveBeenCalled();
+  expect(host.textContent).not.toContain('featureControl.defineBundle');
+});
+
+it('dashboard ordering toggle does not falsely switch ON when the server rejects a stale revision', async () => {
+  api.updateLaunchSettings.mockRejectedValue(new Error('Launch settings changed'));
+  await act(async () => root.render(<MemoryRouter><FeatureControlCenter quickOnly /></MemoryRouter>));
+  const orderButton = [...host.querySelectorAll('button')].find(b => b.textContent.includes('استقبال الطلبات:'));
+  await act(async () => orderButton.click());
+  expect(orderButton.textContent).toContain('OFF');
+  expect(host.querySelector('[role="alert"]').textContent).toContain('Launch settings changed');
 });

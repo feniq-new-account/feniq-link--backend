@@ -5,6 +5,7 @@ import { api } from '../api/client';
 import { REALTIME_EVENTS, useRealtimeSync } from '../realtime/useRealtimeSync';
 import { offerValueLabel } from '../utils/offerValue';
 import { AdminOperationsOverview } from './AdminOperationsOverview';
+import { FeatureControlCenter } from '../components/FeatureControlCenter';
 
 function accountName(account) {
   return account.pharmacy?.nameEn || account.warehouse?.nameEn || account.user.name;
@@ -107,6 +108,7 @@ export function AdminDashboardPage() {
         <h1>{t('nav.dashboard')}</h1>
       </div>
 
+      <FeatureControlCenter quickOnly />
       <AdminOperationsOverview />
       {error && <p className="error-text">{error}</p>}
 

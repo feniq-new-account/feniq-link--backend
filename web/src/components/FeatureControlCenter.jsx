@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import './FeatureControlCenter.css';
 import { Link } from 'react-router-dom';
 
-export function FeatureControlCenter({ warehouseId }) {
+export function FeatureControlCenter({ warehouseId, quickOnly = false }) {
   const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [switches, setSwitches] = useState({});
@@ -15,6 +15,32 @@ export function FeatureControlCenter({ warehouseId }) {
   const [grant, setGrant] = useState({ kind: 'addon', sourceCode: '', feature: 'ownerMobileAccess', startsAt: '', endsAt: '', decisionRef: '' });
   const [bundle, setBundle] = useState({ code: '', name: '', tier: 'custom', features: [], decisionRef: '' });
   const [attempt, setAttempt] = useState(0);
+  const [launch, setLaunch] = useState(null);
+  const [launchBusy, setLaunchBusy] = useState(false);
+  const [launchError, setLaunchError] = useState('');
+  useEffect(() => {
+    if (warehouseId) return;
+    let active = true;
+    api.getLaunchSettings().then(result => { if (active) setLaunch(result.configuration); })
+      .catch(err => { if (active) setLaunchError(err.message); });
+    return () => { active = false; };
+  }, [warehouseId, attempt]);
+  async function toggleOrdering() {
+    if (!launch || launchBusy) return;
+    setLaunchBusy(true); setLaunchError('');
+    try {
+      const opening = launch.mode !== 'ordering_open' || (launch.orderingClosesAt && Date.parse(launch.orderingClosesAt) <= Date.now());
+      const result = await api.updateLaunchSettings({
+        mode: opening ? 'ordering_open' : 'registration_only',
+        message: opening ? 'استقبال الطلبات متاح الآن.' : 'التسجيل والتصفح متاحان. استقبال الطلبات متوقف حالياً.',
+        revision: launch.revision,
+        // No timed pilot: no per-pharmacy phone allowlist or demo-warehouse restriction.
+        orderingClosesAt: null,
+      });
+      setLaunch(result.configuration);
+    } catch (err) { setLaunchError(err.message); }
+    finally { setLaunchBusy(false); }
+  }
   const load = useCallback(async () => {
     const [platform, rights, bundles, audit] = await Promise.all([
       api.getFeatureControl(), warehouseId ? api.getWarehouseEntitlements(warehouseId) : Promise.resolve(null),
@@ -42,12 +68,22 @@ export function FeatureControlCenter({ warehouseId }) {
   return <section className="feature-control-center">
     {warehouseId ? <h3>{t('featureControl.title')}</h3> : <h1>{t('featureControl.title')}</h1>}
     <p className="hint">{t('featureControl.help')}</p>
+    {!warehouseId && <section className="adm-card reg-card" aria-label="التحكم باستقبال الطلبات">
+      <h2>مفاتيح التشغيل العامة</h2>
+      <p className="hint">تفعيل الطلبات يسمح لجميع الصيدليات المؤهلة بالطلب من المستودعات النشطة. الإيقاف يمنع إنشاء طلبات جديدة مع إبقاء التصفح متاحاً.</p>
+      {launchError && <p role="alert" className="error-text">{launchError}</p>}
+      {launch ? <button type="button" className={launch.mode === 'ordering_open' && (!launch.orderingClosesAt || Date.parse(launch.orderingClosesAt) > Date.now()) ? 'btn-primary' : 'btn-secondary'}
+        disabled={launchBusy} onClick={toggleOrdering} aria-pressed={launch.mode === 'ordering_open' && (!launch.orderingClosesAt || Date.parse(launch.orderingClosesAt) > Date.now())}>
+        استقبال الطلبات: {launch.mode === 'ordering_open' && (!launch.orderingClosesAt || Date.parse(launch.orderingClosesAt) > Date.now()) ? 'ON' : 'OFF'}
+      </button> : <p role="status">جارٍ تحميل حالة استقبال الطلبات...</p>}
+      <p className="hint">التقييمات وبقية الميزات الاختيارية موجودة ضمن مفاتيح التشغيل العامة أدناه. تبقى العمليات المالية خاضعة لضوابطها المستقلة.</p>
+    </section>}
     {error && <p className="error-text" role="alert">{error}</p>}
     <button type="button" className="btn-secondary" disabled={busy} onClick={() => setAttempt(v => v + 1)}>{t('common.retry')}</button>
     {notice && <p role="status">{notice}</p>}
     {!data && !error && <p role="status">{t('common.loading')}</p>}
     {data && <>
-      <p>{t('featureControl.core')}</p>
+      {!quickOnly && <p>{t('featureControl.core')}</p>}
       <label>{t('featureControl.reason')}<input value={reason} maxLength="1000" disabled={busy} onChange={e => setReason(e.target.value)} /></label>
       <form onSubmit={e => { e.preventDefault(); action(() => api.saveFeatureControl({ revision: data.platform.revision, features: switches, reason })); }}>
         <fieldset disabled={busy}>
@@ -59,7 +95,7 @@ export function FeatureControlCenter({ warehouseId }) {
           <button className="btn-primary" disabled={!reason.trim()}>{t('featureControl.saveGlobal')}</button>
         </fieldset>
       </form>
-      <p className="hint">{t('featureControl.implementationLimits')}</p>
+      {!quickOnly && <><p className="hint">{t('featureControl.implementationLimits')}</p>
       {!data.rights && <p><Link to="/admin/warehouse-access">{t('featureControl.chooseWarehouse')}</Link></p>}
       {data.rights && <><div className="feature-control-decisions" role="list">
         {data.featureNames.map(key => <p key={key} role="listitem"><strong>{label(key)}</strong>: {t(data.rights.features[key] ? 'featureControl.allowed' : 'featureControl.denied')}
@@ -114,7 +150,7 @@ export function FeatureControlCenter({ warehouseId }) {
         <ul>{data.events.map(event => <li key={event._id}><bdi>{new Date(event.createdAt).toLocaleString()}</bdi> ·
           {t(`featureControl.actions.${event.action}`, { defaultValue: event.action })} · {event.reason} ·
           {event.actorId?.name || t('featureControl.previousAccount')} · {event.warehouseId?.nameAr || event.warehouseId?.nameEn || t('featureControl.platformScope')}</li>)}</ul>
-      </details>
+      </details></>}
     </>}
   </section>;
 }
