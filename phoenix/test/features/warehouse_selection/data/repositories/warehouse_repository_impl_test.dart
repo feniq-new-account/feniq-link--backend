@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:feniq/core/offline/offline_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/error/failure.dart';
@@ -66,6 +69,55 @@ void main() {
         expect(warehouses[1].id, equals('wh2'));
         // The unfiltered scope sends no query param at all - that is both the
         // endpoint's own default and exactly what an older app build sends.
+        verify(() => mockDio.get(Endpoints.warehouses, queryParameters: null)).called(1);
+      });
+
+      test('a fresh empty daily cache is revalidated after warehouse activation', () async {
+        final dir = await Directory.systemTemp.createTemp('feniq-empty-warehouses-');
+        addTearDown(() async { if (await dir.exists()) await dir.delete(recursive: true); });
+        final cache = OfflineStore(directoryProvider: () async => dir);
+        expect(await cache.writeConfirmed('warehouses_all', {
+          'warehouses': <Object>[],
+          'cityFilterApplied': false,
+        }), isTrue);
+
+        warehouseRepository = WarehouseRepositoryImpl(
+          apiClient: mockApiClient, offlineStore: cache,
+        );
+        when(() => mockDio.get(Endpoints.warehouses, queryParameters: null))
+            .thenAnswer((_) async => Response(
+              data: {'warehouses': [
+                {'id': 'new-wh', 'nameAr': 'مستودع جديد', 'nameEn': 'New Warehouse',
+                 'city': 'Latakia', 'phone': '0990000000'},
+              ]},
+              statusCode: 200,
+              requestOptions: RequestOptions(path: Endpoints.warehouses),
+            ));
+
+        final result = await warehouseRepository.getWarehouses(onlyMyCity: false);
+        expect(result.warehouses.map((w) => w.id), ['new-wh']);
+        verify(() => mockDio.get(Endpoints.warehouses, queryParameters: null)).called(1);
+      });
+
+      test('offline fallback still serves a cached empty list on network failure', () async {
+        final dir = await Directory.systemTemp.createTemp('feniq-offline-empty-');
+        addTearDown(() async { if (await dir.exists()) await dir.delete(recursive: true); });
+        final cache = OfflineStore(directoryProvider: () async => dir);
+        expect(await cache.writeConfirmed('warehouses_all', {
+          'warehouses': <Object>[],
+          'cityFilterApplied': false,
+        }), isTrue);
+        warehouseRepository = WarehouseRepositoryImpl(
+          apiClient: mockApiClient, offlineStore: cache,
+        );
+        when(() => mockDio.get(Endpoints.warehouses, queryParameters: null))
+            .thenThrow(DioException(
+              requestOptions: RequestOptions(path: Endpoints.warehouses),
+              type: DioExceptionType.connectionError,
+            ));
+
+        final result = await warehouseRepository.getWarehouses(onlyMyCity: false);
+        expect(result.warehouses, isEmpty);
         verify(() => mockDio.get(Endpoints.warehouses, queryParameters: null)).called(1);
       });
 
