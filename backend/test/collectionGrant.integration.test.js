@@ -121,3 +121,16 @@ test('warehouse grant is restricted to its currently assigned accountant', async
   }));
   assert.equal(stale, false);
 });
+
+test('multiple issued grants can coexist before any revocation key is written', async () => {
+  const path = route();
+  const one = await call(admin, 'POST', path, issueBody(secondAdmin,
+    ACTIONS.RECORD_FENIQ, 'first-grant'));
+  const two = await call(admin, 'POST', path, issueBody(secondAdmin,
+    ACTIONS.APPROVE_FENIQ, 'second-grant'));
+  const three = await call(admin, 'POST', path, issueBody(accountant,
+    ACTIONS.APPROVE_WAREHOUSE, 'third-grant'));
+  assert.deepEqual([one.status, two.status, three.status], [201, 201, 201]);
+  assert.equal(await Grant.countDocuments({ warehouseId: warehouse._id }), 3);
+  assert.equal(await Audit.countDocuments({ action: 'collection.grant_issued' }), 3);
+});
