@@ -200,7 +200,7 @@ async function review(actorId, warehouseId, receiptId, body) {
     reference: original.reference, note: original.note,
     idempotencyKey: 'feniq-approved-' + receiptId,
   }, {
-    fxSnapshot: original.fx, actorRole: 'admin',
+    fxSnapshot: original.fx, actorRole: 'admin', postingActorId: actorId,
     beforePost: async session => {
       const receipt = await read(session);
       if (receipt.status !== 'pending') throw ApiError.conflict('Receipt already reviewed.', 'FENIQ_RECEIPT_REVIEWED');
