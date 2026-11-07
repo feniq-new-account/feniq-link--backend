@@ -29,12 +29,15 @@ class WarehouseRepositoryImpl implements WarehouseRepository {
 
   @override
   Future<WarehouseListResult> getWarehouses({required bool onlyMyCity}) async {
-    // Today's list (DailyRefresh) is read from the phone: new warehouses
-    // appear with the next day's refresh.
+    // Non-empty lists follow the normal daily cache schedule. A recently
+    // saved *empty* list is provisional: warehouses may have been approved
+    // since it was stored. Always revalidate it online on screen reopen,
+    // without deleting the saved copy needed for offline fallback.
     final saved = await _store?.read(_listName(onlyMyCity));
     final savedData = saved?.data;
     if (saved != null && savedData is Map<String, dynamic> && DailyRefresh.isCurrent(saved.savedAt)) {
-      return WarehouseListResult.fromJson(savedData);
+      final cached = WarehouseListResult.fromJson(savedData);
+      if (cached.warehouses.isNotEmpty) return cached;
     }
     try {
       final response = await _apiClient.dio.get(
