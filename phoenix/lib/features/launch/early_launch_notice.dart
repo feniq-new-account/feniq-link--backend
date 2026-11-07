@@ -63,8 +63,8 @@ class EarlyLaunchNotice extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       isArabic
-                          ? 'تصفّح المنتجات والعروض الآن. يبدأ استقبال الطلبات عبر فينيق اعتباراً من 16 تشرين الثاني، مع إضافة مستودعات جديدة أسبوعياً.'
-                          : 'Explore products and offers now. Ordering through Feniq begins November 16, with new warehouses joining every week.',
+                          ? 'تصفّح المنتجات والعروض الآن. يبدأ استقبال الطلبات اعتباراً من 16 تشرين الثاني، وتُضاف مستودعات جديدة باستمرار لتمنحك خيارات أكثر.'
+                          : 'Browse products and offers now. Orders open November 16, with more warehouses continually joining to give you more choices.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondaryOf(context),
                         height: 1.25,
