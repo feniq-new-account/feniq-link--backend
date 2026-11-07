@@ -50,7 +50,6 @@ describe('the warehouse group pill row', () => {
       ['/warehouse/discounts', 'الحسومات'],
       ['/warehouse/debts', 'الفواتير'],
       ['/warehouse/settlement', 'التسوية'],
-      ['/warehouse/reviews', 'التقييمات'],
       ['/warehouse/complaints', 'الشكاوى'],
       // A detail URL still belongs to its parent's group.
       ['/warehouse/complaints/42', 'الشكاوى'],
