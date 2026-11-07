@@ -278,6 +278,12 @@ async function rebuildAccount({ accountId, warehouseId, actorId, sourceKey, reas
     after: { revision: run.revision, ledgerSequence: run.ledgerSequence, sourceKey,
       ...(actor?.warehouseRole ? { actorWarehouseRole: actor.warehouseRole } : {}) },
   }, session);
+  if (!session.deferFeniqCustodyReconciliation && await require('../models/feniqCashCustody.model').exists({ accountId, warehouseId }).session(session)) {
+    // A return, reversal, credit use or newly qualified warehouse collection
+    // changes custody attribution too. Journal its signed correction in this
+    // same canonical transaction; never restate an old transfer or snapshot.
+    await require('./feniqRemittance.service').persist(actorId, warehouseId, 'allocation:' + String(run._id), sourceKey, session);
+  }
   return run.toObject();
 }
 

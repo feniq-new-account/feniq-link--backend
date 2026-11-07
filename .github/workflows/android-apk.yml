@@ -31,6 +31,11 @@ on:
   pull_request:
     paths:
       - 'phoenix/**'
+      - 'backend/src/services/feniq*.js'
+      - 'backend/src/services/collection*.js'
+      - 'backend/src/services/payment.service.js'
+      - 'backend/src/models/feniq*.js'
+      - 'backend/src/routes/collectionAccounting.routes.js'
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
     inputs:

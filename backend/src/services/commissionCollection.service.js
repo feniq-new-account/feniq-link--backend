@@ -153,9 +153,36 @@ async function readWarehouseCommission(warehouse, period, session) {
   // returns - that is what the warehouse genuinely owes before anything is
   // collected. Renamed here to the vocabulary the admin screen speaks.
   const commissionOwedSyp = settlement.totals.netCommissionSyp;
+  const held = await require('../models/feniqRemittance.model').Withholding.aggregate([
+    { $match: { warehouseId: warehouse._id, at: { $gte: period.from, $lte: period.to } } },
+    { $group: { _id: null, amount: { $sum: '$amountSyp' } } },
+  ]).session(session);
+  const heldByFeniqSyp = held[0]?.amount || 0;
+  const lastCustody = await require('../models/feniqRemittance.model').Reconciliation.findOne({ warehouseId: warehouse._id }).sort({ _id: -1 }).session(session).lean();
+  const custodyUnreconciled = lastCustody?.result?.ready === false;
+
   // What the platform owes the warehouse for admin discount codes, net of
   // returns - the other side of the same relationship.
   const compensationOwedSyp = settlement.totals.netCompensationSyp ?? 0;
+  const periodOutstandingSyp = commissionOwedSyp - compensationOwedSyp - collectedSyp + paidOutSyp - heldByFeniqSyp;
+  const hasCustody = Boolean(await require('../models/feniqCashCustody.model').exists({ warehouseId: warehouse._id }).session(session));
+  let currentCashOutstandingSyp = null;
+  let postable = periodOutstandingSyp;
+  if (hasCustody && !custodyUnreconciled) {
+    const allTime = { from: new Date(0), to: new Date('9999-12-31T23:59:59.999Z') };
+    const all = await getSettlementForWarehouse(warehouse._id, allTime, session);
+    const allCash = await settledForWarehouse(warehouse._id, allTime.from, allTime.to, session);
+    const allHeld = await require('../models/feniqRemittance.model').Withholding.aggregate([
+      { $match: { warehouseId: warehouse._id } }, { $group: { _id: null, amount: { $sum: '$amountSyp' } } },
+    ]).session(session);
+    currentCashOutstandingSyp = all.totals.netCommissionSyp - (all.totals.netCompensationSyp || 0)
+      - allCash.collectedSyp + allCash.paidOutSyp - (allHeld[0]?.amount || 0);
+    // Period accrual movements are not a second claim on physically held cash.
+    // Bound BOTH directions by the verified current all-time cash obligation.
+    postable = periodOutstandingSyp > 0 && currentCashOutstandingSyp > 0 ? Math.min(periodOutstandingSyp, currentCashOutstandingSyp)
+      : periodOutstandingSyp < 0 && currentCashOutstandingSyp < 0 ? Math.max(periodOutstandingSyp, currentCashOutstandingSyp) : 0;
+  }
+
 
   return {
     warehouseId: warehouse._id,
@@ -165,6 +192,8 @@ async function readWarehouseCommission(warehouse, period, session) {
     salesSyp: settlement.totals.grossSalesSyp,
     returnsSyp: settlement.totals.creditedSalesSyp,
     commissionOwedSyp,
+    heldByFeniqSyp, custodyUnreconciled,
+    periodOutstandingSyp, currentCashOutstandingSyp, cashDueScope: hasCustody ? 'selected_period_bounded_by_current_cash' : 'selected_period',
     compensationOwedSyp,
     alreadyCollectedSyp: collectedSyp,
     paidOutSyp,
@@ -173,7 +202,7 @@ async function readWarehouseCommission(warehouse, period, session) {
     // or it paid for a wider window than the one being viewed). Reported
     // as-is rather than clamped: a negative here is information, and hiding
     // it would make a debt the platform owes look like a settled account.
-    outstandingSyp: commissionOwedSyp - compensationOwedSyp - collectedSyp + paidOutSyp,
+    outstandingSyp: custodyUnreconciled ? null : postable,
   };
 }
 
@@ -203,7 +232,8 @@ async function getCommissionOverview({ from, to } = {}) {
       compensationOwedSyp: acc.compensationOwedSyp + row.compensationOwedSyp,
       alreadyCollectedSyp: acc.alreadyCollectedSyp + row.alreadyCollectedSyp,
       paidOutSyp: acc.paidOutSyp + row.paidOutSyp,
-      outstandingSyp: acc.outstandingSyp + row.outstandingSyp,
+      periodOutstandingSyp: acc.periodOutstandingSyp + row.periodOutstandingSyp,
+      outstandingSyp: acc.outstandingSyp == null || row.outstandingSyp == null ? null : acc.outstandingSyp + row.outstandingSyp,
     }),
     {
       salesSyp: 0,
@@ -212,6 +242,7 @@ async function getCommissionOverview({ from, to } = {}) {
       compensationOwedSyp: 0,
       alreadyCollectedSyp: 0,
       paidOutSyp: 0,
+      periodOutstandingSyp: 0,
       outstandingSyp: 0,
     }
   );
@@ -302,6 +333,13 @@ async function recordCollection({ warehouseId, periodFrom, periodTo, amountSyp, 
     if (key) {
       const existing = await CommissionCollection.findOne({ warehouseId: warehouse._id, idempotencyKey: key }).session(session);
       if (existing) return replay(existing, fingerprint, 'requestFingerprint');
+    }
+    if (await require('../models/feniqCashCustody.model').exists({ warehouseId: warehouse._id }).session(session)) {
+      await require('./feniqRemittance.service').lock(String(warehouse._id), session);
+      const cash = await readWarehouseCommission(warehouse, period, session);
+      if (cash.custodyUnreconciled || (resolvedDirection === 'from_warehouse' ? amount > cash.outstandingSyp : amount > -cash.outstandingSyp)) {
+        throw ApiError.conflict('Feniq-held commission must not be collected again; reconcile the separate cash sources.', 'FENIQ_COMMISSION_ALREADY_HELD');
+      }
     }
     const [collection] = await CommissionCollection.create([{ warehouseId: warehouse._id, periodFrom: period.from, periodTo: period.to,
       amountSyp: amount, direction: resolvedDirection, method: resolvedMethod, reference: normalizeText(reference), note: normalizeText(note),
