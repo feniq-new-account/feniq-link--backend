@@ -13,6 +13,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-pharmacy-rev
 process.env.NODE_ENV = 'test';
 
 const test = require('node:test');
+const { FEATURES } = require('../src/config/features');
 const assert = require('node:assert');
 
 const { startMemoryMongo, stopMemoryMongo } = require('./helpers/mongo');
@@ -73,6 +74,7 @@ test.after(async () => {
 });
 
 test('rating a pharmacy still saves cleanly now that areaType is required', async () => {
+  FEATURES.mutualRatings = true;
   const order = await orderService.createOrder({
     userId: ids.phUser, pharmacyId: ids.pharmacy, warehouseId: ids.warehouse,
     items: [{ productId: ids.product.toString(), quantity: 2 }], notes: null,
@@ -95,4 +97,5 @@ test('rating a pharmacy still saves cleanly now that areaType is required', asyn
   // The unrelated field this write path exists to update must not disturb
   // the pharmacy's own required areaType.
   assert.strictEqual(after.areaType, 'rural');
+  FEATURES.mutualRatings = false;
 });
