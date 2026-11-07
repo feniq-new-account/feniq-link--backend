@@ -23,6 +23,7 @@ const Banner = require('../models/banner.model');
 const Advertisement = require('../models/advertisement.model');
 const DiscountCode = require('../models/discountCode.model');
 const { WAREHOUSES, DEMO_ADMIN } = require('./demoSeed.service');
+const { FEATURES } = require('../config/features');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -111,6 +112,8 @@ const WAREHOUSE_COMMENTS = ['صيدلية ملتزمة بالدفع', 'تعام�
 // The pharmacy rates the warehouse on most delivered orders, and the
 // warehouse rates the pharmacy on some.
 async function addReviews({ warehouses, pharmacies }) {
+  // Paused launch ratings must not attempt forbidden writes or alter existing reviews.
+  if (!FEATURES.mutualRatings) return 0;
   const reviewService = require('./review.service');
   const warehouseReviewService = require('./warehouseReview.service');
   let created = 0;
