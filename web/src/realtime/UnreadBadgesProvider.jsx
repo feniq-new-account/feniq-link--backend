@@ -11,6 +11,7 @@ import {
   recordEvent,
   serializeUnread,
   totalUnread,
+  unreadItems,
   unreadStorageKey,
 } from './unreadBadges';
 
@@ -119,14 +120,14 @@ function UnreadBadgesStore({ user, children }) {
   const countUnderPath = useCallback((path) => countUnder(role, unread, path), [role, unread]);
 
   const value = useMemo(
-    () => ({ countUnder: countUnderPath, total: totalUnread(role, unread) }),
+    () => ({ countUnder: countUnderPath, total: totalUnread(role, unread), items: unreadItems(role, unread) }),
     [countUnderPath, role, unread]
   );
 
   return <UnreadBadgesContext.Provider value={value}>{children}</UnreadBadgesContext.Provider>;
 }
 
-const NO_BADGES = { countUnder: () => 0, total: 0 };
+const NO_BADGES = { countUnder: () => 0, total: 0, items: [] };
 
 // A zero-everywhere shape outside the provider (a component rendered on its
 // own, as in the SubNav tests), same as useRealtime. A badge is never a reason
