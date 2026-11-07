@@ -128,7 +128,7 @@ class _PromotionsViewState extends State<PromotionsView> {
                 children: [
                   SkeletonBar(height: 36, radius: AppRadius.full),
                   SizedBox(height: AppSizes.spacingMedium),
-                  SkeletonBar(height: 168, radius: AppRadius.large),
+                  SkeletonBar(height: 190, radius: AppRadius.large),
                   SizedBox(height: AppSizes.spacingLarge),
                   SkeletonBar(width: 140, height: 16),
                   SizedBox(height: AppSizes.spacingMedium),
@@ -240,7 +240,7 @@ class _LoadedBody extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(
                         AppSizes.spacingMedium,
-                        AppSizes.spacingLarge,
+                        AppSizes.spacingMedium,
                         AppSizes.spacingMedium,
                         AppSizes.spacingSmall,
                       ),
