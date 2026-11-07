@@ -8,11 +8,9 @@ import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_r
 
 import 'warehouse_selection_state.dart';
 
-// Global (main.dart), but scoped to one sign-in: the list is the one the
-// server narrowed to THIS pharmacy's city, and the city scope (the "my city /
-// all cities" choice and the sticky cityScopeAvailable) is this pharmacy's
-// too. A sign-out resets it through SessionScope, so the next account starts
-// from its own city with no toggle it may not be entitled to.
+// Global (main.dart), but scoped to one sign-in. Pharmacies currently load
+// every eligible warehouse; city filtering is retained internally for a
+// future multi-city release, not exposed on today's home screen.
 class WarehouseSelectionCubit extends Cubit<WarehouseSelectionState> implements SessionScoped {
   WarehouseSelectionCubit({
     required WarehouseRepository warehouseRepository,
@@ -49,9 +47,8 @@ class WarehouseSelectionCubit extends Cubit<WarehouseSelectionState> implements 
     return super.close();
   }
 
-  /// Loads the list at the scope currently selected - which on a first load is
-  /// the pharmacy's own city, so the screen opens pre-filtered without the
-  /// pharmacist doing anything.
+  /// Loads all eligible warehouses on first launch. No city selection is
+  /// shown in the current single-city home UI.
   Future<void> loadWarehouses() => _load(onlyMyCity: state.onlyMyCity);
 
   /// The "my city" / "all cities" toggle. Re-fetches at the new scope, keeping

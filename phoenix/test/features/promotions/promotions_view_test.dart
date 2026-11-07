@@ -318,13 +318,13 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('the cart is subtly larger and notifications use a separate aqua accent', (tester) async {
+    testWidgets('the cart is subtly larger and notifications use a white bell', (tester) async {
       stub(offers: [offer(id: 'o1')]);
       await pumpView(tester);
       final cart = tester.widget<Icon>(find.byIcon(Icons.shopping_cart_outlined));
       final bell = tester.widget<Icon>(find.byIcon(Icons.notifications_outlined));
       expect(cart.size, 35);
-      expect(bell.color, AppColors.notificationBell);
+      expect(bell.color, Colors.white);
       expect(cart.color, isNot(bell.color));
     });
 

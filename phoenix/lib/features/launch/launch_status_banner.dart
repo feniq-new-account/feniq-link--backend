@@ -43,9 +43,22 @@ Future<AppLaunchStatus> fetchAppLaunchStatus() async {
 /// Public operational state; never a substitute for the server's checkout guard.
 /// Failure or a resumed app closes checkout until a fresh response arrives.
 class LaunchStatusBanner extends StatefulWidget {
-  const LaunchStatusBanner({super.key, this.load, this.onOrderingChanged});
+  const LaunchStatusBanner({
+    super.key,
+    this.load,
+    this.onOrderingChanged,
+    this.hideRoutinePrelaunchMessage = false,
+    this.nowUtc,
+  });
   final Future<AppLaunchStatus> Function()? load;
   final ValueChanged<bool>? onOrderingChanged;
+
+  /// Suppress redundant routine closed-mode copy on the pharmacy home while
+  /// its dated early-launch notice already explains when orders begin.
+  /// Checkout verification, network failure warnings and post-launch closed
+  /// status messages must still work.
+  final bool hideRoutinePrelaunchMessage;
+  final DateTime? nowUtc;
   @override
   State<LaunchStatusBanner> createState() => _LaunchStatusBannerState();
 }
@@ -116,6 +129,11 @@ class _LaunchStatusBannerState extends State<LaunchStatusBanner>
   @override
   Widget build(BuildContext context) {
     if (_status?.orderingEnabled == true) return const SizedBox.shrink();
+    if (widget.hideRoutinePrelaunchMessage &&
+        _status != null &&
+        (widget.nowUtc ?? DateTime.now().toUtc()).isBefore(DateTime.utc(2026, 11, 15, 21))) {
+      return const SizedBox.shrink();
+    }
     final l10n = context.l10n;
     return ConstrainedBox(
       constraints: BoxConstraints(

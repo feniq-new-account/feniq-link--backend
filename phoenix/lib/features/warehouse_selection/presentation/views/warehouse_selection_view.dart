@@ -13,7 +13,6 @@ import 'package:feniq/core/widgets/app_skeleton.dart';
 import 'package:feniq/core/widgets/brand_logo.dart';
 import 'package:feniq/core/widgets/empty_view.dart';
 import 'package:feniq/core/widgets/failure_widget.dart';
-import 'package:feniq/core/widgets/primary_button.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/banners/data/models/banner_model.dart';
 import 'package:feniq/features/banners/presentation/managers/banners_cubit.dart';
@@ -28,7 +27,6 @@ import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_r
 import 'package:feniq/features/warehouse_selection/presentation/managers/warehouse_selection_cubit.dart';
 import 'package:feniq/features/warehouse_selection/presentation/managers/warehouse_selection_state.dart';
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_card.dart';
-import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_city_scope_bar.dart';
 import 'package:feniq/features/warehouse_selection/presentation/widgets/quick_search_sheet.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/core/widgets/brand_header_glow.dart';
@@ -173,45 +171,26 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
             actions: const [NotificationButton(), CartButton()],
           ),
           const SliverToBoxAdapter(child: EarlyLaunchNotice()),
-          const SliverToBoxAdapter(child: LaunchStatusBanner()),
+          const SliverToBoxAdapter(child: LaunchStatusBanner(hideRoutinePrelaunchMessage: true)),
           SliverToBoxAdapter(child: BannerSlider(onBannerTap: _handleBannerTap)),
-          // The city scope switch, in the open directly above the grid it
-          // controls. Only rendered once the server has confirmed it can
-          // actually narrow this pharmacy's list (cityScopeAvailable) - see
-          // WarehouseSelectionState.
+          // Keep only a compact synchronization timestamp above the
+          // warehouse grid; city scope controls are not part of this release.
           BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
             buildWhen: (previous, current) =>
-                previous.cityScopeAvailable != current.cityScopeAvailable ||
-                previous.onlyMyCity != current.onlyMyCity ||
-                previous.isChangingScope != current.isChangingScope ||
-                previous.warehouses != current.warehouses,
-            builder: (context, state) {
-              if (!state.cityScopeAvailable) {
-                return SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
-                    child: Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: OfflineCatalogReadiness(
-                        warehouseIds: state.warehouses.map((w) => w.id).toList(),
-                        onRetry: () => context.read<WarehouseSelectionCubit>().retryOfflineCatalogs(),
-                      ),
-                    ),
-                  ),
-                );
-              }
-              return SliverToBoxAdapter(
-                child: WarehouseCityScopeBar(
-                  onlyMyCity: state.onlyMyCity,
-                  isBusy: state.isChangingScope,
-                  onChanged: (onlyMyCity) => context.read<WarehouseSelectionCubit>().setOnlyMyCity(onlyMyCity),
-                  trailing: OfflineCatalogReadiness(
+                previous.warehouses != current.warehouses ||
+                previous.status != current.status,
+            builder: (context, state) => SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: OfflineCatalogReadiness(
                     warehouseIds: state.warehouses.map((w) => w.id).toList(),
                     onRetry: () => context.read<WarehouseSelectionCubit>().retryOfflineCatalogs(),
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           ),
           BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
             builder: (context, state) {
@@ -242,18 +221,6 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
                   );
                 case WarehouseListStatus.loaded:
                   if (state.warehouses.isEmpty) {
-                    // A dead end the pharmacist can walk straight out of:
-                    // when the emptiness is the city filter's doing, the way
-                    // to widen the search is offered right here rather than
-                    // left to be found back up the screen.
-                    if (state.isEmptyInOwnCity) {
-                      return SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _NoWarehousesInCityView(
-                          onViewAllCities: () => context.read<WarehouseSelectionCubit>().setOnlyMyCity(false),
-                        ),
-                      );
-                    }
                     return SliverFillRemaining(
                       hasScrollBody: false,
                       child: EmptyView(message: l10n.noWarehousesAvailable, icon: Icons.storefront_outlined),
@@ -285,45 +252,6 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
   }
 }
 
-/// The "nothing in your city" dead end, with the way out attached.
-///
-/// Calm on purpose: this is a normal state of a platform that has not reached
-/// every city yet, not a failure - so it reuses EmptyView rather than
-/// FailureWidget, and offers widening as the obvious next step instead of a
-/// retry that would return the same empty list.
-class _NoWarehousesInCityView extends StatelessWidget {
-  const _NoWarehousesInCityView({required this.onViewAllCities});
-
-  final VoidCallback onViewAllCities;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        EmptyView(
-          message: l10n.noWarehousesInYourCity,
-          subtitle: l10n.noWarehousesInYourCitySubtitle,
-          icon: Icons.location_off_outlined,
-        ),
-        const SizedBox(height: AppSizes.spacingLarge),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingXLarge),
-          child: ConstrainedBox(
-            // PrimaryButton is full-width by design; here it is one choice
-            // offered, not a form's submit, so it stays a button rather than
-            // stretching into a bar across the page.
-            constraints: const BoxConstraints(maxWidth: 280),
-            child: PrimaryButton(label: l10n.viewAllCitiesButton, onPressed: onViewAllCities),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 // Same compact logo and full-size action targets as the loaded card.
 class _WarehouseSkeletonCell extends StatelessWidget {
   const _WarehouseSkeletonCell();
@@ -334,24 +262,11 @@ class _WarehouseSkeletonCell extends StatelessWidget {
       padding: EdgeInsets.all(10),
       mainAxisSize: MainAxisSize.max,
       children: [
-        Row(
-          children: [
-            SkeletonBar(width: 40, height: 40, radius: AppRadius.small),
-            SizedBox(width: 8),
-            Expanded(child: SkeletonBar(height: 24)),
-          ],
-        ),
-        SizedBox(height: 6),
-        SkeletonBar(width: 64, height: 14),
         Spacer(),
+        Center(child: SkeletonBar(width: 92, height: 92, radius: AppRadius.small)),
         SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: SkeletonBar(height: 48)),
-            SizedBox(width: 8),
-            SkeletonBar(width: 48, height: 48),
-          ],
-        ),
+        Center(child: SkeletonBar(width: 110, height: 18)),
+        Spacer(),
       ],
     );
   }

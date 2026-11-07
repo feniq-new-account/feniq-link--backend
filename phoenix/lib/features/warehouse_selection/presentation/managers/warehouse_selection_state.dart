@@ -6,7 +6,7 @@ class WarehouseSelectionState {
   const WarehouseSelectionState({
     this.status = WarehouseListStatus.initial,
     this.warehouses = const [],
-    this.onlyMyCity = true,
+    this.onlyMyCity = false,
     this.cityFilterApplied = false,
     this.cityScopeAvailable = false,
     this.isChangingScope = false,
@@ -17,8 +17,8 @@ class WarehouseSelectionState {
   final WarehouseListStatus status;
   final List<WarehouseModel> warehouses;
 
-  /// What the screen is currently *asking* for. Starts true: a pharmacy sees
-  /// its own city by default without having to do anything.
+  /// Query scope. Starts unrestricted so all authorized warehouses show,
+  /// regardless of the pharmacy's stored city; no city chips on home.
   final bool onlyMyCity;
 
   /// What the server actually did, which isn't always what was asked - a

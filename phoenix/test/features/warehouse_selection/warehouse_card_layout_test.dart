@@ -77,9 +77,9 @@ void main() {
     await pumpCard(tester, theme: LightTheme.data, locale: const Locale('en'));
 
     expect(find.text('Latakia Warehouse'), findsOneWidget);
-    expect(find.text('Latakia'), findsOneWidget);
+    expect(find.text('Latakia'), findsNothing);
     expect(find.byType(OutlinedButton), findsNothing);
-    expect(WarehouseCard.logoHeight, greaterThan(40));
+    expect(WarehouseCard.logoHeight, greaterThanOrEqualTo(90));
     expect(tester.takeException(), isNull);
   });
 
@@ -116,8 +116,8 @@ void main() {
     final name = tester.widget<Text>(find.text('A Very Long Warehouse Name That Will Not Fit On Two Lines Either'));
     expect(name.maxLines, isNull);
     expect(name.overflow, isNot(TextOverflow.ellipsis));
-    // The city pill must survive the name, not be pushed out by it.
-    expect(find.text('Latakia'), findsOneWidget);
+    // City is deliberately absent even when the name wraps.
+    expect(find.text('Latakia'), findsNothing);
     expect(find.byType(OutlinedButton), findsNothing);
   });
 
@@ -139,7 +139,7 @@ void main() {
       textScale: 1.3,
     );
 
-    expect(find.text('Latakia'), findsOneWidget);
+    expect(find.text('Latakia'), findsNothing);
     expect(find.byType(OutlinedButton), findsNothing);
   });
 

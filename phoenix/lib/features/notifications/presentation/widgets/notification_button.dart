@@ -5,7 +5,6 @@ import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/features/notifications/presentation/managers/notification_cubit.dart';
 import 'package:feniq/features/notifications/presentation/managers/notification_state.dart';
 import 'package:feniq/routes/route_names.dart';
-import 'package:feniq/core/constants/app_colors.dart';
 
 /// The bell + unread-count badge for the home AppBar. Deliberately mirrors
 /// [CartButton]: reads the single app-wide [NotificationCubit], only rebuilds
@@ -31,8 +30,8 @@ class NotificationButton extends StatelessWidget {
             child: Icon(
               count > 0 ? Icons.notifications : Icons.notifications_outlined,
               size: 32,
-              // Cool aqua contrasts with the orange cart and red unread badge.
-              color: AppColors.notificationBell,
+              // White against the navy app bar, as used throughout the app.
+              color: Colors.white,
             ),
           ),
         );

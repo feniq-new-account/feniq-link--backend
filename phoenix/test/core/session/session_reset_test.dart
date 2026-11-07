@@ -167,6 +167,8 @@ void main() {
     expect(auth.state.sessionStatus, SessionStatus.active);
 
     await warehouses.loadWarehouses();
+    // Exercise the retained internal scope toggle for session isolation.
+    await warehouses.setOnlyMyCity(true);
     await warehouses.setOnlyMyCity(false);
 
     cart.addProduct(_product('p1'), warehouseId: 'w1', warehouseName: 'Warehouse w1', quantity: 2);
@@ -199,9 +201,8 @@ void main() {
     final s = warehouses.state;
     expect(s.status, WarehouseListStatus.initial);
     expect(s.warehouses, isEmpty);
-    // Back to the pharmacy's own city, with no toggle until the next
-    // account's own list proves it has one.
-    expect(s.onlyMyCity, isTrue);
+    // New sessions default to all eligible warehouses.
+    expect(s.onlyMyCity, isFalse);
     expect(s.cityFilterApplied, isFalse);
     expect(s.cityScopeAvailable, isFalse);
     expect(s.isChangingScope, isFalse);

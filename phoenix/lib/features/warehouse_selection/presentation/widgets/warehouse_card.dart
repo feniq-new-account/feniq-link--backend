@@ -6,7 +6,7 @@ import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/features/warehouse_selection/data/models/warehouse_model.dart';
 
 /// The warehouse tile is one large touch target. Profile and WhatsApp live in
-/// the next screen's app bar, leaving room for a recognizable warehouse logo.
+/// the next screen's app bar. Only the name and slightly larger logo appear.
 class WarehouseCard extends StatelessWidget {
   const WarehouseCard({
     super.key,
@@ -17,7 +17,7 @@ class WarehouseCard extends StatelessWidget {
   final WarehouseModel warehouse;
   final VoidCallback onSelect;
 
-  static const double logoHeight = 80;
+  static const double logoHeight = 92;
 
   @override
   Widget build(BuildContext context) {
@@ -59,14 +59,6 @@ class WarehouseCard extends StatelessWidget {
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
               height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            warehouse.city,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.textSecondaryOf(context),
             ),
           ),
         ],

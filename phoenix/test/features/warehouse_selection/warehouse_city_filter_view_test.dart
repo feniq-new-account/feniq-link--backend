@@ -24,7 +24,6 @@ import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_r
 import 'package:feniq/features/warehouse_selection/presentation/managers/warehouse_selection_cubit.dart';
 import 'package:feniq/features/warehouse_selection/presentation/views/warehouse_selection_view.dart';
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_card.dart';
-import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_city_scope_bar.dart';
 import 'package:feniq/generated/app_localizations.dart';
 import 'package:feniq/routes/route_names.dart';
 
@@ -62,15 +61,8 @@ final _homeWarehouse = _warehouse(id: 'w1', name: 'Home Warehouse', city: 'Latak
 final _otherHomeWarehouse = _warehouse(id: 'w2', name: 'Second Home Warehouse', city: 'Latakia');
 final _awayWarehouse = _warehouse(id: 'w3', name: 'Away Warehouse', city: 'Aleppo');
 
-/// The warehouses screen's city filter: what a pharmacy sees when it opens the
-/// screen, how it widens the search, and what the dead end looks like.
-///
-/// The filtering itself is the server's job (see the backend's
-/// warehouse.service.js and its own tests) - these tests stand in for it with
-/// a repository that answers differently per scope, and pin the half that
-/// lives in the app: that the screen asks for its own city without being told
-/// to, that the toggle actually re-asks, and that an empty city is never a
-/// dead end.
+/// Home lists every eligible warehouse, without city chips or city labels.
+/// Backend city-scoping remains available internally for a future release.
 void main() {
   late _MockWarehouseRepository warehouseRepository;
   late AuthCubit authCubit;
@@ -194,133 +186,30 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the screen opens showing only the pharmacy\'s own city', (tester) async {
+  testWidgets('home requests all warehouses without a city scope toggle', (tester) async {
     stubServer(
-      inMyCity: [_homeWarehouse, _otherHomeWarehouse],
+      inMyCity: [_homeWarehouse],
       everywhere: [_homeWarehouse, _otherHomeWarehouse, _awayWarehouse],
     );
-
     await pumpScreen(tester);
-
-    // Pre-filtered without the pharmacist doing anything: the very first
-    // request already asks for the narrowed scope.
-    verify(() => warehouseRepository.getWarehouses(onlyMyCity: true)).called(1);
-    verifyNever(() => warehouseRepository.getWarehouses(onlyMyCity: false));
-
+    verify(() => warehouseRepository.getWarehouses(onlyMyCity: false)).called(1);
+    verifyNever(() => warehouseRepository.getWarehouses(onlyMyCity: true));
     expect(find.text('Home Warehouse'), findsOneWidget);
     expect(find.text('Second Home Warehouse'), findsOneWidget);
-    expect(find.text('Away Warehouse'), findsNothing);
-    expect(find.byType(WarehouseCard), findsNWidgets(2));
-  });
-
-  testWidgets('the "all cities" toggle widens the list to other cities', (tester) async {
-    stubServer(
-      inMyCity: [_homeWarehouse],
-      everywhere: [_homeWarehouse, _awayWarehouse],
-    );
-
-    await pumpScreen(tester);
-    expect(find.text('Away Warehouse'), findsNothing);
-
-    // The escape hatch is in the open above the list, not behind a menu.
-    expect(find.byType(WarehouseCityScopeBar), findsOneWidget);
-    await tester.tap(find.text('All cities'));
-    await tester.pumpAndSettle();
-
-    verify(() => warehouseRepository.getWarehouses(onlyMyCity: false)).called(1);
-    expect(find.text('Home Warehouse'), findsOneWidget);
     expect(find.text('Away Warehouse'), findsOneWidget);
-    expect(find.byType(WarehouseCard), findsNWidgets(2));
+    expect(find.byType(WarehouseCard), findsNWidgets(3));
+    expect(find.text('All cities'), findsNothing);
+    expect(find.text('My city'), findsNothing);
+    expect(find.text('Latakia'), findsNothing);
+    expect(find.text('Aleppo'), findsNothing);
   });
 
-  testWidgets('switching back to "my city" narrows the list again', (tester) async {
-    stubServer(
-      inMyCity: [_homeWarehouse],
-      everywhere: [_homeWarehouse, _awayWarehouse],
-    );
-
+  testWidgets('empty platform shows generic empty state without city actions', (tester) async {
+    stubServer(inMyCity: const [], everywhere: const []);
     await pumpScreen(tester);
-    await tester.tap(find.text('All cities'));
-    await tester.pumpAndSettle();
-    expect(find.text('Away Warehouse'), findsOneWidget);
-
-    await tester.tap(find.text('My city'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Away Warehouse'), findsNothing);
-    expect(find.text('Home Warehouse'), findsOneWidget);
-  });
-
-  testWidgets('an empty own city shows the calm message and its way out', (tester) async {
-    stubServer(
-      inMyCity: const [],
-      everywhere: [_awayWarehouse],
-    );
-
-    await pumpScreen(tester);
-
-    // The dead end reads as a normal state, not a failure.
-    expect(find.text('No warehouses in your city'), findsOneWidget);
-    expect(find.byType(EmptyView), findsOneWidget);
-    // Not the generic "nothing on the platform" message - the pharmacist is
-    // being told something specific and true.
-    expect(find.text('No warehouses available yet.'), findsNothing);
-
-    // And the way out is right there, not back up the screen.
-    expect(find.text('View all cities'), findsOneWidget);
-    await tester.tap(find.text('View all cities'));
-    await tester.pumpAndSettle();
-
-    verify(() => warehouseRepository.getWarehouses(onlyMyCity: false)).called(1);
-    expect(find.text('Away Warehouse'), findsOneWidget);
-    expect(find.text('No warehouses in your city'), findsNothing);
-  });
-
-  testWidgets('the scope toggle stays reachable from the empty state itself', (tester) async {
-    stubServer(inMyCity: const [], everywhere: [_awayWarehouse]);
-
-    await pumpScreen(tester);
-
-    // Two independent ways out of the dead end - the chip above and the
-    // button in the empty state - and the chip must not vanish just because
-    // the list under it came back empty.
-    expect(find.byType(WarehouseCityScopeBar), findsOneWidget);
-    await tester.tap(find.text('All cities'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Away Warehouse'), findsOneWidget);
-  });
-
-  testWidgets('a pharmacy the server cannot filter gets no toggle and the full list', (tester) async {
-    // The server reports it did not narrow the list (an unusable stored city).
-    // Showing a "my city" chip here would promise something it cannot do.
-    stubServer(
-      inMyCity: [_homeWarehouse, _awayWarehouse],
-      everywhere: [_homeWarehouse, _awayWarehouse],
-      cityFilterApplied: false,
-    );
-
-    await pumpScreen(tester);
-
-    expect(find.byType(WarehouseCityScopeBar), findsNothing);
-    expect(find.text('Home Warehouse'), findsOneWidget);
-    expect(find.text('Away Warehouse'), findsOneWidget);
-  });
-
-  testWidgets('an empty platform still shows the generic message, not the city one', (tester) async {
-    // Nothing anywhere, and no city filter in play: this is the pre-existing
-    // "no warehouses yet" state and it must not be replaced by a message that
-    // would blame the pharmacy's city.
-    stubServer(
-      inMyCity: const [],
-      everywhere: const [],
-      cityFilterApplied: false,
-    );
-
-    await pumpScreen(tester);
-
     expect(find.text('No warehouses available yet.'), findsOneWidget);
-    expect(find.text('No warehouses in your city'), findsNothing);
+    expect(find.byType(EmptyView), findsOneWidget);
+    expect(find.text('View all cities'), findsNothing);
   });
 
   testWidgets('the home uses a single floating quick-search entry point', (tester) async {
@@ -335,7 +224,7 @@ void main() {
     // filters only the current city. The sheet tests cover cross-city search.
     expect(find.byKey(const ValueKey('homeQuickSearchButton')), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
-    expect(find.byType(WarehouseCard), findsNWidgets(2));
-    verifyNever(() => warehouseRepository.getWarehouses(onlyMyCity: false));
+    expect(find.byType(WarehouseCard), findsNWidgets(3));
+    verify(() => warehouseRepository.getWarehouses(onlyMyCity: false)).called(1);
   });
 }
