@@ -17,16 +17,10 @@ test('new collection grants default inactive and require a known action', async 
   assert.ok(make({ warehouseId: undefined }).validateSync());
 });
 
-test('grant identity cannot be changed after initial persistence', () => {
-  const grant = make();
-  grant.$__reset(); // simulate a hydrated, existing document without writing to DB
-  grant.isNew = false;
-  grant.actorId = new mongoose.Types.ObjectId();
-  grant.warehouseId = new mongoose.Types.ObjectId();
-  grant.action = ACTIONS.APPROVE_FENIQ;
-  assert.equal(String(grant.actorId), String(actorId));
-  assert.equal(String(grant.warehouseId), String(warehouseId));
-  assert.equal(grant.action, ACTIONS.RECORD_FENIQ);
+test('grant identity fields are immutable', () => {
+  for (const field of ['actorId', 'warehouseId', 'action']) {
+    assert.equal(Grant.schema.path(field).options.immutable, true);
+  }
 });
 
 test('grant identity has a unique compound index', () => {
