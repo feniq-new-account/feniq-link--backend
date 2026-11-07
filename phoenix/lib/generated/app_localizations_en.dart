@@ -1650,6 +1650,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statementReturnCredits => 'Returned';
 
   @override
+  String get statementReturnCreditApplications => 'Return credit applied (non-cash)';
+
+  @override
   String get statementKindCharge => 'Order delivered';
 
   @override
@@ -1666,6 +1669,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statementKindReturnCreditReversal => 'Return credit reversed';
+
+  @override
+  String get statementKindReturnCreditApplication => 'Return credit applied (non-cash)';
+
+  @override
+  String get statementKindReturnCreditApplicationReversal => 'Return credit application reversed';
 
   @override
   String get statementKindManualCredit => 'Credit added';

@@ -140,6 +140,13 @@ class _BalanceSummaryCard extends StatelessWidget {
               valueSyp: detail.summary.returnCreditsSyp,
             ),
           ],
+          if (detail.summary.returnCreditApplicationsSyp != 0) ...[
+            const SizedBox(height: AppSizes.spacingSmall),
+            _SummaryLine(
+              label: l10n.statementReturnCreditApplications,
+              valueSyp: detail.summary.returnCreditApplicationsSyp,
+            ),
+          ],
           const Divider(height: AppSizes.spacingLarge),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

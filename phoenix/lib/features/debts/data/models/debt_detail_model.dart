@@ -91,7 +91,8 @@ class StatementRowModel {
 
   /// Reduces debt without recording any new money received.
   bool get isNonCashCredit =>
-      creditSyp > 0 && (kind == 'return_credit' || kind == 'manual_credit');
+      creditSyp > 0 &&
+      (kind == 'return_credit' || kind == 'return_credit_application' || kind == 'manual_credit');
   num get amountSyp => isDebit ? debitSyp : creditSyp;
 
   factory StatementRowModel.fromJson(Map<String, dynamic> json) => StatementRowModel(
@@ -117,18 +118,22 @@ class StatementSummary {
     required this.chargesSyp,
     required this.paymentsSyp,
     required this.returnCreditsSyp,
+    this.returnCreditApplicationsSyp = 0,
     required this.adjustmentsSyp,
   });
 
   final num chargesSyp;
   final num paymentsSyp;
   final num returnCreditsSyp;
+  /// Prior return credit used on a new invoice; no new cash was collected.
+  final num returnCreditApplicationsSyp;
   final num adjustmentsSyp;
 
   factory StatementSummary.fromJson(Map<String, dynamic>? json) => StatementSummary(
     chargesSyp: (json?['chargesSyp'] as num?) ?? 0,
     paymentsSyp: (json?['paymentsSyp'] as num?) ?? 0,
     returnCreditsSyp: (json?['returnCreditsSyp'] as num?) ?? 0,
+    returnCreditApplicationsSyp: (json?['returnCreditApplicationsSyp'] as num?) ?? 0,
     adjustmentsSyp: (json?['adjustmentsSyp'] as num?) ?? 0,
   );
 }

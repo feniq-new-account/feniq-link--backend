@@ -30,6 +30,10 @@ class StatementRowTile extends StatelessWidget {
         return l10n.statementKindReturnCredit;
       case 'return_credit_reversal':
         return l10n.statementKindReturnCreditReversal;
+      case 'return_credit_application':
+        return l10n.statementKindReturnCreditApplication;
+      case 'return_credit_application_reversal':
+        return l10n.statementKindReturnCreditApplicationReversal;
       case 'manual_credit':
         return l10n.statementKindManualCredit;
       case 'manual_debit':
@@ -55,7 +59,7 @@ class StatementRowTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final reference = _reference(context);
-    // A debit is money the pharmacy now owes; everything else reduces it.
+    // A debit increases debt. Credits can be non-cash (e.g. return applications).
     final color = row.isDebit ? AppColors.errorOf(context) : AppColors.secondaryOf(context);
 
     return Row(
