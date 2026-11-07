@@ -11,6 +11,8 @@ import 'package:feniq/core/widgets/empty_view.dart';
 import 'package:feniq/core/error/error_translator.dart';
 import 'package:feniq/core/widgets/failure_widget.dart';
 import 'package:feniq/features/cart/presentation/widgets/cart_button.dart';
+import 'package:feniq/core/widgets/whatsapp_button.dart';
+import 'package:feniq/features/warehouse_selection/data/repositories/warehouse_repository.dart';
 import 'package:feniq/features/catalog/data/models/catalog_route_args.dart';
 import 'package:feniq/features/catalog/data/repositories/catalog_repository.dart';
 import 'package:feniq/features/catalog/presentation/managers/catalog_cubit.dart';
@@ -31,11 +33,13 @@ class ManufacturersView extends StatefulWidget {
     super.key,
     required this.warehouseId,
     required this.warehouseName,
+    this.warehousePhone,
     this.autoFilterManufacturer,
   });
 
   final String warehouseId;
   final String warehouseName;
+  final String? warehousePhone;
   // Section: banners - a tapped banner with a linked product skips this
   // screen straight through to its catalog, once the manufacturer list has
   // actually loaded (need it to confirm the manufacturer still has products
@@ -48,6 +52,26 @@ class ManufacturersView extends StatefulWidget {
 
 class _ManufacturersViewState extends State<ManufacturersView> {
   bool _autoNavigated = false;
+  String? _warehousePhone;
+
+  @override
+  void initState() {
+    super.initState();
+    _warehousePhone = widget.warehousePhone;
+    if (_warehousePhone?.trim().isNotEmpty == true) return;
+    // Banner/deep-link navigation does not always carry the warehouse phone.
+    // Load only the public, pharmacist-visible warehouse profile as fallback.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      try {
+        final repository = context.read<WarehouseRepository>();
+        final profile = await repository.getWarehouseProfile(widget.warehouseId);
+        if (mounted) setState(() => _warehousePhone = profile.phone);
+      } catch (_) {
+        // The profile icon remains available if offline or access is denied.
+      }
+    });
+  }
 
   // The warehouse-wide search above the manufacturers list: typing shows the
   // matching products from every manufacturer of this warehouse (a CatalogCubit
@@ -131,7 +155,29 @@ class _ManufacturersViewState extends State<ManufacturersView> {
             );
           },
         ),
-        actions: const [CartButton()],
+        actions: [
+          IconButton(
+            tooltip: l10n.warehouseProfileButtonLabel,
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => context.pushNamed(
+              RouteNames.warehouseProfile,
+              pathParameters: {'warehouseId': widget.warehouseId},
+              extra: widget.warehouseName,
+            ),
+          ),
+          if (_warehousePhone?.trim().isNotEmpty == true)
+            Center(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.only(end: 4),
+                child: WhatsAppButton(
+                  key: const ValueKey('warehouseHeaderWhatsApp'),
+                  phone: _warehousePhone!,
+                  size: 38,
+                ),
+              ),
+            ),
+          const CartButton(),
+        ],
         bottom: CatalogSearchBar(
           controller: _searchController,
           hintText: l10n.searchWarehouseProductsHint,
@@ -160,7 +206,7 @@ class _ManufacturersViewState extends State<ManufacturersView> {
             // land exactly where the manufacturer cards will.
             return SkeletonGrid(
               maxCrossAxisExtent: 160,
-              mainAxisExtent: 198,
+              mainAxisExtent: MediaQuery.textScalerOf(context).scale(14) > 19 ? 186 : 160,
               itemBuilder: (context, index) => const _ManufacturerSkeletonCell(),
             );
           case ManufacturersStatus.error:
@@ -179,13 +225,13 @@ class _ManufacturersViewState extends State<ManufacturersView> {
                 // Fluid column count (as many as fit at up to ~160px each)
                 // rather than a fixed 1-vs-2 breakpoint - see
                 // WarehouseSelectionView for the same treatment.
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 160,
                   mainAxisSpacing: AppSizes.spacingMedium,
                   crossAxisSpacing: AppSizes.spacingMedium,
-                  // Was 180 - grew to fit the company-discount line the card
-                  // now carries under the name.
-                  mainAxisExtent: 198,
+                  // Compact cards save space: the company name fits two lines,
+                  // and discounts only appear when positive.
+                  mainAxisExtent: MediaQuery.textScalerOf(context).scale(14) > 19 ? 186 : 160,
                 ),
                 itemCount: state.manufacturers.length,
                 itemBuilder: (context, index) {
@@ -202,8 +248,7 @@ class _ManufacturersViewState extends State<ManufacturersView> {
   }
 }
 
-// One manufacturer placeholder: the logo plate, the (two-line) name, and the
-// company-discount line under it.
+// One compact manufacturer placeholder with a small logo and name.
 class _ManufacturerSkeletonCell extends StatelessWidget {
   const _ManufacturerSkeletonCell();
 
@@ -212,11 +257,10 @@ class _ManufacturerSkeletonCell extends StatelessWidget {
     return const SkeletonCard(
       mainAxisSize: MainAxisSize.max,
       children: [
-        SkeletonBar(height: 80, radius: AppRadius.medium),
+        SkeletonBar(height: 72, radius: AppRadius.medium),
         SizedBox(height: AppSizes.spacingSmall),
         SkeletonBar(height: 12),
         SizedBox(height: AppSizes.spacingXSmall),
-        SkeletonBar(width: 78, height: 12),
       ],
     );
   }

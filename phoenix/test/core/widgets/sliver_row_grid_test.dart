@@ -72,7 +72,6 @@ void main() {
         logo: 'https://res.cloudinary.com/demo/image/upload/v1/warehouses/w$i.png',
       ),
       onSelect: () {},
-      onViewProfile: () {},
     ), 210);
     await tester.pump();
     expect(tester.takeException(), isNull);

@@ -211,6 +211,7 @@ class AppRouter {
               child: ManufacturersView(
                 warehouseId: warehouseId,
                 warehouseName: args.warehouseName,
+                warehousePhone: args.warehousePhone,
                 autoFilterManufacturer: args.autoFilterManufacturer,
               ),
             ),

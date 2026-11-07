@@ -36,6 +36,7 @@ class ProductCard extends StatelessWidget {
     this.onCartRemove,
     this.onShowAlternatives,
     this.isGrid = true,
+    this.showManufacturer = true,
   });
 
   final ProductModel product;
@@ -51,6 +52,8 @@ class ProductCard extends StatelessWidget {
   // the product has an active ingredient, since that is what the match is on.
   final VoidCallback? onShowAlternatives;
   final bool isGrid;
+  // Hidden inside a selected manufacturer's catalog; retained in cross-company search.
+  final bool showManufacturer;
 
   Future<void> _handleAddTap(BuildContext context) async {
     final quantity = await showQuantityPickerSheet(context);
@@ -71,6 +74,7 @@ class ProductCard extends StatelessWidget {
               onCartQuantityChanged: onCartQuantityChanged,
               onCartRemove: onCartRemove,
               onShowAlternatives: onShowAlternatives,
+              showManufacturer: showManufacturer,
             )
           : _ListRow(
               product: product,
@@ -79,6 +83,7 @@ class ProductCard extends StatelessWidget {
               onCartQuantityChanged: onCartQuantityChanged,
               onCartRemove: onCartRemove,
               onShowAlternatives: onShowAlternatives,
+              showManufacturer: showManufacturer,
             ),
     );
   }
@@ -96,6 +101,7 @@ class _GridCard extends StatelessWidget {
     required this.onCartQuantityChanged,
     required this.onCartRemove,
     required this.onShowAlternatives,
+    required this.showManufacturer,
   });
 
   final ProductModel product;
@@ -104,6 +110,7 @@ class _GridCard extends StatelessWidget {
   final ValueChanged<int>? onCartQuantityChanged;
   final VoidCallback? onCartRemove;
   final VoidCallback? onShowAlternatives;
+  final bool showManufacturer;
 
   @override
   Widget build(BuildContext context) {
@@ -150,9 +157,11 @@ class _GridCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _NameText(name: product.displayName),
-                const SizedBox(height: 2),
-                _ManufacturerText(manufacturer: product.displayManufacturer),
+                _NameText(name: product.displayName, fontSize: 14),
+                if (showManufacturer) ...[
+                  const SizedBox(height: 2),
+                  _ManufacturerText(manufacturer: product.displayManufacturer),
+                ],
                 _IngredientLine(product: product),
                 _BatchDates(product: product),
                 const SizedBox(height: AppSizes.spacingSmall),
@@ -206,6 +215,7 @@ class _ListRow extends StatelessWidget {
     required this.onCartQuantityChanged,
     required this.onCartRemove,
     required this.onShowAlternatives,
+    required this.showManufacturer,
   });
 
   final ProductModel product;
@@ -214,6 +224,7 @@ class _ListRow extends StatelessWidget {
   final ValueChanged<int>? onCartQuantityChanged;
   final VoidCallback? onCartRemove;
   final VoidCallback? onShowAlternatives;
+  final bool showManufacturer;
 
   @override
   Widget build(BuildContext context) {
@@ -246,31 +257,60 @@ class _ListRow extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: AppRadius.medium,
-                child: _ProductImage(url: product.image, dosageForm: product.dosageForm, size: 60),
+                child: _ProductImage(
+                  url: product.image,
+                  dosageForm: product.dosageForm,
+                  size: 68,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _NameText(name: product.displayName, fontSize: 13.5),
-                    const SizedBox(height: 2),
-                    _ManufacturerText(manufacturer: product.displayManufacturer, emphasized: true),
+                    // The medicine title gets the full remaining card width.
+                    // Never truncate a medicine name: dose/form can be critical.
+                    _NameText(name: product.displayName, fontSize: 16),
+                    if (showManufacturer) ...[
+                      const SizedBox(height: 2),
+                      _ManufacturerText(
+                        manufacturer: product.displayManufacturer,
+                        emphasized: true,
+                      ),
+                    ],
                     _IngredientLine(product: product),
                     _BatchDates(product: product),
                   ],
                 ),
               ),
-              const SizedBox(width: AppSizes.spacingSmall),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 104),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    _FormAndStrength(product: product),
-                    _AlternativesLink(product: product, onTap: onShowAlternatives),
+                    if (_hasText(product.dosageForm))
+                      _CornerChip(label: product.dosageForm!),
+                    if (_hasText(product.strength))
+                      _CornerChip(label: product.strength!, emphasized: true),
                   ],
                 ),
+              ),
+              const SizedBox(width: 6),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _AlternativesLink(product: product, onTap: onShowAlternatives),
+                  if (_onOffer(product))
+                    const OfferBadge(compact: true),
+                ],
               ),
             ],
           ),
@@ -278,7 +318,7 @@ class _ListRow extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Expanded(child: _PriceDisplay(product: product, showOfferBadge: true)),
+              Expanded(child: _PriceDisplay(product: product)),
               const SizedBox(width: AppSizes.spacingSmall),
               // Never more than half the row: the price keeps the other half.
               Flexible(child: action),
@@ -332,8 +372,8 @@ class _IngredientLine extends StatelessWidget {
         text,
         style: context.textTheme.bodySmall?.copyWith(
           color: AppColors.textSecondaryOf(context),
-          fontSize: 12,
-          letterSpacing: 0.2,
+          fontSize: 11,
+          letterSpacing: 0.1,
           height: 1.3,
         ),
       ),

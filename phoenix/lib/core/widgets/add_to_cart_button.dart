@@ -40,7 +40,7 @@ class AddToCartButton extends StatelessWidget {
       disabledBackgroundColor: AppColors.borderOf(context),
       shape: const RoundedRectangleBorder(borderRadius: AppRadius.small),
       padding: compact
-          ? const EdgeInsets.symmetric(horizontal: AppSizes.spacingSmall + AppSizes.spacingXSmall)
+          ? const EdgeInsets.symmetric(horizontal: AppSizes.spacingSmall + AppSizes.spacingXSmall + 2)
           : const EdgeInsets.symmetric(vertical: 8),
       elevation: 0,
     );
@@ -68,14 +68,14 @@ class AddToCartButton extends StatelessWidget {
     // its slot once the product is added.
     if (compact) {
       return SizedBox(
-        height: 40,
+        height: 44,
         child: FilledButton(
           onPressed: available ? onTap : null,
           style: style,
           // Shrinks rather than clips when a narrow row squeezes it.
           child: FitLabel(
             l10n.addToCartFullButton,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
         ),
       );

@@ -13,7 +13,7 @@ import 'package:feniq/features/warehouse_selection/data/models/warehouse_model.d
 import 'package:feniq/features/warehouse_selection/presentation/widgets/warehouse_card.dart';
 import 'package:feniq/generated/app_localizations.dart';
 
-// The preferred square tile must retain full names and 48pt actions.
+// The square tile prioritizes a large warehouse logo and full names.
 void main() {
   setUpAll(() async {
     await (FontLoader('MaterialIcons')..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
@@ -61,7 +61,7 @@ void main() {
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: tileSize.height),
                   child: IntrinsicHeight(
-                    child: WarehouseCard(warehouse: model ?? warehouse(), onSelect: () {}, onViewProfile: () {}),
+                    child: WarehouseCard(warehouse: model ?? warehouse(), onSelect: () {}),
                   ),
                 ),
               ),
@@ -78,8 +78,8 @@ void main() {
 
     expect(find.text('Latakia Warehouse'), findsOneWidget);
     expect(find.text('Latakia'), findsOneWidget);
-    expect(find.text('Profile'), findsOneWidget);
-    expect(tester.getSize(find.byType(OutlinedButton)).height, greaterThanOrEqualTo(48));
+    expect(find.byType(OutlinedButton), findsNothing);
+    expect(WarehouseCard.logoHeight, greaterThan(40));
     expect(tester.takeException(), isNull);
   });
 
@@ -93,7 +93,7 @@ void main() {
     expect(find.byType(CustomCard), findsOneWidget);
     // The label was once drawn in navyOf, which in night mode is the card's
     // own fill colour - present in the tree, invisible on screen.
-    expect(tester.widget<Text>(find.text('Profile')).style?.color, isNot(AppColors.darkSurfaceElevated));
+    expect(find.byType(OutlinedButton), findsNothing);
   });
 
   testWidgets('fits its grid tile in Arabic, right to left', (tester) async {
@@ -118,14 +118,14 @@ void main() {
     expect(name.overflow, isNot(TextOverflow.ellipsis));
     // The city pill must survive the name, not be pushed out by it.
     expect(find.text('Latakia'), findsOneWidget);
-    expect(find.text('Profile'), findsOneWidget);
+    expect(find.byType(OutlinedButton), findsNothing);
   });
 
   testWidgets('survives a larger accessibility text scale', (tester) async {
     await pumpCard(tester, theme: LightTheme.data, locale: const Locale('en'), textScale: 1.3);
 
     expect(find.byType(WarehouseCard), findsOneWidget);
-    expect(find.text('Profile'), findsOneWidget);
+    expect(find.byType(OutlinedButton), findsNothing);
   });
 
   testWidgets('survives a long name at a larger text scale together', (tester) async {
@@ -140,7 +140,7 @@ void main() {
     );
 
     expect(find.text('Latakia'), findsOneWidget);
-    expect(find.byType(OutlinedButton), findsOneWidget);
+    expect(find.byType(OutlinedButton), findsNothing);
   });
 
   testWidgets('a warehouse with no logo still draws its placeholder', (tester) async {
@@ -180,8 +180,7 @@ void main() {
                           itemBuilder: (context, index) => WarehouseCard(
                             warehouse: warehouse(name: index == 3 ? 'مستودع النور الطبي للتوزيع' : 'النجاح'),
                             onSelect: () {},
-                            onViewProfile: () {},
-                          ),
+                                                      ),
                         ),
                       ),
                     ],
@@ -195,9 +194,7 @@ void main() {
         expect(tester.takeException(), isNull);
         final first = tester.getSize(find.byType(WarehouseCard).first);
         if (scale == 1 && width >= 360) expect(first.height, closeTo(first.width, 1));
-        for (final button in find.byType(OutlinedButton).evaluate()) {
-          expect(tester.getSize(find.byWidget(button.widget)).height, greaterThanOrEqualTo(48));
-        }
+        expect(find.byType(OutlinedButton), findsNothing);
         final captureDir = Platform.environment['FENIQ_CAPTURE_DIR'];
         if (captureDir != null) {
           final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(const ValueKey('capture')));

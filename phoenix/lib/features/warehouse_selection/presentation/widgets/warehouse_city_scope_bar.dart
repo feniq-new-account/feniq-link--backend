@@ -20,6 +20,7 @@ class WarehouseCityScopeBar extends StatelessWidget {
     required this.onlyMyCity,
     required this.isBusy,
     required this.onChanged,
+    this.trailing,
   });
 
   final bool onlyMyCity;
@@ -30,6 +31,9 @@ class WarehouseCityScopeBar extends StatelessWidget {
   final bool isBusy;
 
   final ValueChanged<bool> onChanged;
+
+  /// Optional compact last-sync metadata, alongside the city chips.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +46,10 @@ class WarehouseCityScopeBar extends StatelessWidget {
         AppSizes.spacingMedium,
         AppSizes.spacingXSmall,
       ),
-      child: Row(
+      child: Wrap(
+        spacing: AppSizes.spacingSmall,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           _ScopeChip(
             label: l10n.warehousesScopeMyCity,
@@ -52,7 +59,6 @@ class WarehouseCityScopeBar extends StatelessWidget {
             // greyed-out pair of chips mid-tap reads as breakage.
             onSelected: isBusy ? null : () => onChanged(true),
           ),
-          const SizedBox(width: AppSizes.spacingSmall),
           _ScopeChip(
             label: l10n.warehousesScopeAllCities,
             icon: Icons.public_outlined,
@@ -60,7 +66,6 @@ class WarehouseCityScopeBar extends StatelessWidget {
             onSelected: isBusy ? null : () => onChanged(false),
           ),
           if (isBusy) ...[
-            const SizedBox(width: AppSizes.spacingSmall),
             SizedBox(
               width: 14,
               height: 14,
@@ -70,6 +75,7 @@ class WarehouseCityScopeBar extends StatelessWidget {
               ),
             ),
           ],
+          if (trailing != null) trailing!,
         ],
       ),
     );

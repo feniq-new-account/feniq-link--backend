@@ -22,7 +22,7 @@ void main() {
           body: Center(
             child: SizedBox(
               width: 160,
-              height: 200,
+              height: 160,
               child: ManufacturerCard(
                 manufacturer: manufacturer,
                 onSelect: onSelect ?? () {},
@@ -44,14 +44,40 @@ void main() {
     expect(find.text('Company Discount: 15%'), findsOneWidget);
   });
 
-  testWidgets('a zero discount is shown as 0%, the card is not hidden', (tester) async {
+  testWidgets('zero discount is omitted while the manufacturer remains selectable', (tester) async {
     await pumpCard(
       tester,
       const ManufacturerModel(name: 'شركة XYZ', discountPercentage: 0),
     );
 
     expect(find.text('شركة XYZ'), findsOneWidget);
-    expect(find.text('Company Discount: 0%'), findsOneWidget);
+    expect(find.textContaining('Company Discount'), findsNothing);
+  });
+
+
+  testWidgets('the company tile stays compact and the full name is accessible', (tester) async {
+    const name = 'A Pharmaceutical Manufacturer With An Extremely Long Brand Name';
+    await pumpCard(
+      tester,
+      const ManufacturerModel(name: name, discountPercentage: 0),
+    );
+    final title = tester.widget<Text>(find.text(name));
+    expect(title.maxLines, 2);
+    expect(title.overflow, TextOverflow.ellipsis);
+    expect(find.byType(Tooltip), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a real logo is shown inside a circular light surface', (tester) async {
+    await pumpCard(
+      tester,
+      const ManufacturerModel(
+        name: 'Asia Pharma',
+        logoUrl: 'https://example.invalid/manufacturer.png',
+      ),
+    );
+    expect(find.byType(ClipOval), findsWidgets);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('renders the Arabic label and value in the ar locale', (tester) async {

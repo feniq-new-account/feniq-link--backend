@@ -89,22 +89,22 @@ class _BannerCarouselState extends State<_BannerCarousel> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSizes.spacingMedium,
-        AppSizes.spacingMedium,
-        AppSizes.spacingMedium,
+        10,
+        AppSizes.spacingSmall,
+        10,
         0,
       ),
       child: Center(
         child: ConstrainedBox(
           // Full width on a phone, capped on a tablet - see
           // RegistrationView for the same treatment.
-          constraints: const BoxConstraints(maxWidth: 560),
+          constraints: const BoxConstraints(maxWidth: 600),
           child: Column(
             children: [
               ClipRRect(
                 borderRadius: AppRadius.large,
                 child: SizedBox(
-                  height: 160,
+                  height: 174,
                   width: double.infinity,
                   child: NotificationListener<ScrollNotification>(
                     onNotification: (notification) {
@@ -185,7 +185,7 @@ class _BannerMedia extends StatelessWidget {
   }
 }
 
-// Ads come in any shape and the slider is a fixed 160-high strip, so a
+// Ads come in any shape and the slider is a fixed 174-high strip, so a
 // covered image lost its top and bottom (owner's report, 2026-10-19). The
 // whole ad is drawn contained; the space around it is the same picture,
 // covered and blurred, so there are no empty bars beside it.
