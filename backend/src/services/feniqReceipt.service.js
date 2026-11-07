@@ -105,6 +105,13 @@ async function record(actorId, warehouseId, body) {
     actorId: String(actorId), warehouseId, pharmacyId, amountSyp,
     actualReceivedAt: actualReceivedAt.toISOString(), reference, note,
   });
+  // An uncertain network reply must still replay even if FX changed or the
+  // provider is temporarily down after the original submission committed.
+  const existing = await runInTransaction(async session => {
+    await scope(actorId, warehouseId, ACTIONS.RECORD_FENIQ, session);
+    return replay(session);
+  });
+  if (existing) return existing;
   const fx = await captureFxSnapshot();
   if (!fx || !Number.isFinite(fx.rate) || fx.rate <= 0) {
     throw ApiError.badRequest('Cash evidence requires a frozen FX reference.', undefined, 'EXCHANGE_RATE_UNAVAILABLE');
@@ -213,7 +220,6 @@ async function review(actorId, warehouseId, receiptId, body) {
         paymentId: posted._id, accountId: posted.accountId, warehouseId, collector: 'feniq',
         actorId, at: new Date(),
       }], { session });
-      await ledger.lockAccountForFinancialChange(posted.accountId, warehouseId, session);
       await require('./collectionLedger.service').rebuildAccount({
         accountId: posted.accountId, warehouseId, actorId,
         sourceKey: 'feniq-approval:' + receiptId, reason: 'Approved actual Feniq cash receipt',
