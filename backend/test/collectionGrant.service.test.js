@@ -124,10 +124,11 @@ test('warehouse collection grant refuses unrelated and non-accountant users with
   assert.equal(db.audits.length, 0);
 });
 
-test('grant schema defines unique issuance and revocation idempotency keys', () => {
+test('grant schema only indexes present idempotency keys, never the missing revocation key', () => {
   const indexes = Grant.schema.indexes();
   for (const key of ['issuanceKey', 'revocationKey']) {
     assert.ok(indexes.some(([fields, options]) => fields.warehouseId === 1 &&
-      fields[key] === 1 && options.unique === true && options.sparse === true));
+      fields[key] === 1 && options.unique === true &&
+      options.partialFilterExpression?.[key]?.$type === 'string'));
   }
 });
