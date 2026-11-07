@@ -134,3 +134,19 @@ test('multiple issued grants can coexist before any revocation key is written', 
   assert.equal(await Grant.countDocuments({ warehouseId: warehouse._id }), 3);
   assert.equal(await Audit.countDocuments({ action: 'collection.grant_issued' }), 3);
 });
+
+test('revocation idempotency key cannot revoke a different grant', async () => {
+  const path = route();
+  const first = await call(admin, 'POST', path, issueBody(secondAdmin,
+    ACTIONS.RECORD_FENIQ, 'grant-revoke-a'));
+  const second = await call(admin, 'POST', path, issueBody(secondAdmin,
+    ACTIONS.APPROVE_FENIQ, 'grant-revoke-b'));
+  assert.equal(first.status, 201); assert.equal(second.status, 201);
+  const revokeBody = { reason: 'Grant closed', idempotencyKey: 'one-revocation-key' };
+  assert.equal((await call(admin, 'POST', path + '/' + first.body.grant.id + '/revoke', revokeBody)).status, 200);
+  const denied = await call(admin, 'POST', path + '/' + second.body.grant.id + '/revoke', revokeBody);
+  assert.equal(denied.status, 409);
+  const unaffected = await Grant.findById(second.body.grant.id).lean();
+  assert.equal(unaffected.active, true);
+  assert.equal(await Audit.countDocuments({ action: 'collection.grant_revoked' }), 1);
+});
