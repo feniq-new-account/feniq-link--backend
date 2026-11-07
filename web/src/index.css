@@ -5441,3 +5441,104 @@ input[type='date'][value='']:not(:focus) {
 .analytics-page{max-width:1400px;margin:auto}.analytics-page .insights-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.analytics-page .insights-tabs button{min-height:44px;padding:10px 18px;border:1px solid #dbe3ee;border-radius:999px;background:white;color:#162c49;font:inherit}.analytics-page .insights-tabs button[aria-selected=true]{background:#102035;color:white}.analytics-row{margin:14px 0}.analytics-row h2{font-size:18px;overflow-wrap:anywhere}.analytics-row dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:12px 0}.analytics-row dd{margin:6px 0;font-weight:700;direction:ltr;unicode-bidi:isolate;white-space:nowrap}.analytics-page .insights-kpis{margin:14px 0}.analytics-page details{margin:16px 0}.analytics-page .wh-detail-card{margin-bottom:16px}.analytics-page p{overflow-wrap:anywhere}
 
 .numeric-input-error{display:block;color:#a73518;font-size:13px;line-height:1.6;margin-top:6px;white-space:normal}
+
+
+/* Warehouse: tables on wide screens scroll inside their card, never off-screen.
+   .wh-card's later "overflow: hidden" previously overrode .table-scroll. */
+.warehouse-shell .wh-card.table-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+}
+.warehouse-shell .wh-content,
+.warehouse-shell .wh-content > * {
+  min-width: 0;
+}
+.warehouse-shell .wh-page-head,
+.warehouse-shell .section-toolbar {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* Compact notification center, scoped to the warehouse panel only. */
+.wh-notice-center { position: relative; flex: none; }
+.wh-notice-trigger {
+  position: relative; display: grid; place-items: center;
+  width: 44px; height: 44px; padding: 0;
+  background: #fff; color: var(--brand-navy); border: 1px solid var(--color-border);
+  border-radius: 14px; cursor: pointer;
+}
+.wh-notice-trigger:focus-visible, .wh-notice-item:focus-visible {
+  outline: 3px solid var(--brand-orange); outline-offset: 2px;
+}
+.wh-notice-count {
+  position: absolute; inset-block-start: -5px; inset-inline-end: -5px;
+  min-width: 20px; height: 20px; padding-inline: 4px;
+  border-radius: 999px; color: #fff; background: #c62828;
+  display: grid; place-items: center; font-size: 11px; line-height: 1;
+  font-weight: 700; direction: ltr;
+}
+.wh-notice-popover {
+  position: absolute; z-index: 140; inset-block-start: calc(100% + 8px);
+  inset-inline-end: 0; width: min(340px, calc(100vw - 24px));
+  max-height: min(65vh, 520px); overflow-y: auto;
+  background: #fff; color: var(--brand-navy);
+  border: 1px solid var(--color-border); border-radius: 16px;
+  box-shadow: var(--shadow-pop); padding: 12px;
+}
+.wh-notice-popover h2 { margin: 0 0 8px; font-size: 16px; }
+.wh-notice-empty, .wh-notice-footnote {
+  font-size: 12px; line-height: 1.6; color: var(--color-text-secondary);
+  margin: 8px 4px; overflow-wrap: anywhere;
+}
+.wh-notice-list { display: grid; gap: 4px; }
+.wh-notice-item {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; padding: 12px; min-height: 44px;
+  background: #f3f5f9; color: inherit; border: none;
+  border-radius: 10px; font: inherit; text-align: start; cursor: pointer;
+}
+.wh-notice-item-count {
+  border-radius: 99px; background: #c62828; color: #fff; direction: ltr;
+  padding: 3px 8px; font-size: 12px; font-weight: 700; flex: none;
+}
+
+@media (max-width: 640px) {
+  .warehouse-shell .wh-content { padding: 12px; }
+  .warehouse-shell .wh-topbar { padding: 8px 12px; gap: 6px; }
+  .warehouse-shell .wh-topbar-actions { gap: 6px; flex-wrap: wrap; }
+  .warehouse-shell .wh-topbar-actions .user-name { display: none; }
+  .warehouse-shell .wh-topbar-title { font-size: 14px; overflow-wrap: anywhere; }
+  .warehouse-shell .wh-page-head h1 { font-size: 21px; overflow-wrap: anywhere; }
+
+  /* The existing order cards replace the orders table at <=760px.
+     Every other warehouse table becomes a stacked, fully visible record. */
+  .warehouse-shell .wh-table { min-width: 0; width: 100%; display: block; }
+  .warehouse-shell .wh-table.wh-table-compact,
+  .warehouse-shell .wh-table.wh-table-narrow { min-width: 0; }
+  .warehouse-shell .wh-table thead { display: none; }
+  .warehouse-shell .wh-table tbody { display: block; }
+  .warehouse-shell .wh-table tbody tr {
+    display: block; padding: 10px 14px; border-bottom: 1px solid var(--color-border);
+    min-width: 0;
+  }
+  .warehouse-shell .wh-table tbody tr:last-child { border-bottom: none; }
+  .warehouse-shell .wh-table tbody td {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; min-width: 0; max-width: 100%; padding: 7px 0;
+    border: 0; text-align: end; white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .warehouse-shell .wh-table tbody td[data-label]::before {
+    content: attr(data-label); flex: 0 0 35%; max-width: 35%;
+    color: var(--color-text-secondary); font-size: 12px; font-weight: 600;
+    text-align: start; white-space: normal; overflow-wrap: anywhere;
+  }
+  .warehouse-shell .wh-table tbody td[data-label='']::before { content: none; }
+  .warehouse-shell .wh-table tbody td > * { min-width: 0; }
+  .warehouse-shell .wh-table tbody td .wh-inline-actions { max-width: 100%; }
+  .warehouse-shell .wh-table tbody td .wh-order-actions { justify-content: flex-end; }
+  .warehouse-shell .wh-table tbody td .wh-num,
+  .warehouse-shell .wh-table tbody td.wh-num { direction: ltr; unicode-bidi: isolate; }
+  .warehouse-shell .wh-pills { flex-wrap: wrap; }
+}

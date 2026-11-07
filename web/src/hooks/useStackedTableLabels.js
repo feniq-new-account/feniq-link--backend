@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 
-// On a phone the admin tables (.adm-table) are drawn as one card per row
-// (index.css, "stacked tables"): the header row is hidden and every cell
-// shows its column name in front of it. That name comes from the matching
-// <th>, copied here into the cell's data-label, so the eleven admin tables
+// On phones, admin and warehouse tables become one readable card per row
+// (index.css, "stacked tables"): headers are hidden and each cell
+// shows its column name in front of it. This label comes from the matching
+// <th>, copied into the cell's data-label, so both dashboard families
 // need no per-page markup. Tables render and re-render on their own (paging,
 // filters, live updates), so the labels are refreshed on every DOM change
 // inside `root`.
 export function labelTableCells(root) {
-  for (const table of root.querySelectorAll('table.adm-table')) {
+  for (const table of root.querySelectorAll('table.adm-table, table.wh-table')) {
     const headers = [...table.querySelectorAll('thead th')].map((th) => th.textContent.trim());
     if (headers.length === 0) continue;
     for (const row of table.querySelectorAll('tbody tr')) {

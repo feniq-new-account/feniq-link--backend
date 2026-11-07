@@ -34,6 +34,17 @@ describe('labelTableCells', () => {
     expect(t.rows[1].children.map((cell) => cell.label())).toEqual(['الصيدلية', 'الحالة']);
   });
 
+  it('labels warehouse table cells too, so their phone cards retain the heading', () => {
+    const names = ['اسم المادة', 'السعر', 'الحالة', 'إجراء'];
+    const wh = table(names, [[{}, {}, {}, {}]]);
+    const root = {
+      querySelectorAll: (selector) =>
+        selector === 'table.adm-table, table.wh-table' ? [wh] : [],
+    };
+    labelTableCells(root);
+    expect(wh.rows[0].children.map((cell) => cell.label())).toEqual(names);
+  });
+
   it('leaves a table without a header row alone', () => {
     const t = table([], [[{}]]);
     labelTableCells({ querySelectorAll: () => [t] });

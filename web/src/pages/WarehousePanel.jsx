@@ -4,7 +4,7 @@ import { AccountantDashboardPage } from './AccountantDashboardPage';
 import { WarehouseInsightsPage } from './WarehouseInsightsPage';
 import { WarehouseFieldOperationsPage } from './WarehouseFieldOperationsPage';
 import { WarehouseSubscriptionProvider } from '../context/WarehouseSubscriptionContext';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
@@ -14,6 +14,8 @@ import {
 } from '../utils/warehouseNav';
 import { LanguageToggle } from '../components/LanguageToggle';
 import { NavBadge } from '../components/NavBadge';
+import { WarehouseNotificationCenter } from '../components/WarehouseNotificationCenter';
+import { useStackedTableLabels } from '../hooks/useStackedTableLabels';
 import { useUnreadBadges } from '../realtime/UnreadBadgesProvider';
 import { WarehouseOrdersPage } from './WarehouseOrdersPage';
 import { WarehouseOrderDetailPage } from './WarehouseOrderDetailPage';
@@ -60,6 +62,8 @@ function WarehousePanelContent() {
   const { user, warehouse, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { pathname } = useLocation();
+  const shellRef = useRef(null);
+  useStackedTableLabels(shellRef);
   // Per-tab "new since you last looked" counts - see realtime/unreadBadges.js.
   // A group tab shows the sum of its children, which is what its pill row
   // (WarehouseGroupSubNav) then breaks down.
@@ -75,7 +79,7 @@ function WarehousePanelContent() {
   const closeSidebar = () => setIsSidebarOpen(false);
 
   return (
-    <div className="warehouse-shell">
+    <div className="warehouse-shell" ref={shellRef}>
       <div
         className={`wh-sidebar-backdrop${isSidebarOpen ? ' wh-sidebar-open' : ''}`}
         onClick={closeSidebar}
@@ -133,6 +137,7 @@ function WarehousePanelContent() {
             </div>
           </div>
           <div className="wh-topbar-actions">
+            <WarehouseNotificationCenter />
             <span className="user-name">{user?.name}</span>
             <LanguageToggle />
             <button className="wh-logout-btn" onClick={logout}>
