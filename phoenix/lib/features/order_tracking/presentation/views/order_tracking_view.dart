@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
+import 'package:feniq/core/constants/app_features.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_radius.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -310,8 +311,8 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
                   ? null
                   : () => _deleteReturn(order.linkedReturn!.id),
             ),
-            const SizedBox(height: AppSizes.spacingMedium),
-            _WarehouseReviewSection(
+            if (AppFeatures.mutualRatings) const SizedBox(height: AppSizes.spacingMedium),
+            if (AppFeatures.mutualRatings) _WarehouseReviewSection(
               myReview: order.myReview,
               isSubmitting: state.isSubmittingReview,
             ),
