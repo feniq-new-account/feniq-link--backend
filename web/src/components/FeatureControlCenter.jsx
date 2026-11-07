@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import './FeatureControlCenter.css';
 import { Link } from 'react-router-dom';
 
-export function FeatureControlCenter({ warehouseId }) {
+export function FeatureControlCenter({ warehouseId, quickOnly = false }) {
   const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [switches, setSwitches] = useState({});
@@ -83,7 +83,7 @@ export function FeatureControlCenter({ warehouseId }) {
     {notice && <p role="status">{notice}</p>}
     {!data && !error && <p role="status">{t('common.loading')}</p>}
     {data && <>
-      <p>{t('featureControl.core')}</p>
+      {!quickOnly && <p>{t('featureControl.core')}</p>}
       <label>{t('featureControl.reason')}<input value={reason} maxLength="1000" disabled={busy} onChange={e => setReason(e.target.value)} /></label>
       <form onSubmit={e => { e.preventDefault(); action(() => api.saveFeatureControl({ revision: data.platform.revision, features: switches, reason })); }}>
         <fieldset disabled={busy}>
@@ -95,7 +95,7 @@ export function FeatureControlCenter({ warehouseId }) {
           <button className="btn-primary" disabled={!reason.trim()}>{t('featureControl.saveGlobal')}</button>
         </fieldset>
       </form>
-      <p className="hint">{t('featureControl.implementationLimits')}</p>
+      {!quickOnly && <><p className="hint">{t('featureControl.implementationLimits')}</p>
       {!data.rights && <p><Link to="/admin/warehouse-access">{t('featureControl.chooseWarehouse')}</Link></p>}
       {data.rights && <><div className="feature-control-decisions" role="list">
         {data.featureNames.map(key => <p key={key} role="listitem"><strong>{label(key)}</strong>: {t(data.rights.features[key] ? 'featureControl.allowed' : 'featureControl.denied')}
@@ -150,7 +150,7 @@ export function FeatureControlCenter({ warehouseId }) {
         <ul>{data.events.map(event => <li key={event._id}><bdi>{new Date(event.createdAt).toLocaleString()}</bdi> ·
           {t(`featureControl.actions.${event.action}`, { defaultValue: event.action })} · {event.reason} ·
           {event.actorId?.name || t('featureControl.previousAccount')} · {event.warehouseId?.nameAr || event.warehouseId?.nameEn || t('featureControl.platformScope')}</li>)}</ul>
-      </details>
+      </details></>}
     </>}
   </section>;
 }
