@@ -32,6 +32,17 @@ import 'package:feniq/core/widgets/full_text.dart';
 // only way forward from here.
 class WarehouseProfileView extends StatelessWidget {
   const WarehouseProfileView({super.key, required this.warehouseId, required this.warehouseName});
+  final String warehouseId;
+  final String warehouseName;
+  @override
+  Widget build(BuildContext context) => RatingsRefresh(
+    onEnabled: () => context.read<WarehouseProfileCubit>().load(),
+    child: _WarehouseProfileContent(warehouseId: warehouseId, warehouseName: warehouseName),
+  );
+}
+
+class _WarehouseProfileContent extends StatelessWidget {
+  const _WarehouseProfileContent({required this.warehouseId, required this.warehouseName});
 
   final String warehouseId;
   final String warehouseName;

@@ -24,6 +24,15 @@ import 'package:feniq/core/widgets/full_text.dart';
 // about how a rating is produced or calculated changes here.
 class PharmacyReviewsView extends StatelessWidget {
   const PharmacyReviewsView({super.key});
+  @override
+  Widget build(BuildContext context) => RatingsRefresh(
+    onEnabled: () => context.read<PharmacyReviewsCubit>().load(),
+    child: const _PharmacyReviewsContent(),
+  );
+}
+
+class _PharmacyReviewsContent extends StatelessWidget {
+  const _PharmacyReviewsContent();
 
   @override
   Widget build(BuildContext context) {

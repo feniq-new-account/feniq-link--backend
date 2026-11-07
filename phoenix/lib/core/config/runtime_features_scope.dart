@@ -58,3 +58,29 @@ class _RatingsSetting extends InheritedWidget {
   @override
   bool updateShouldNotify(_RatingsSetting oldWidget) => enabled != oldWidget.enabled;
 }
+
+/// Reload masked review data when an already-open screen is re-enabled.
+class RatingsRefresh extends StatefulWidget {
+  const RatingsRefresh({super.key, required this.onEnabled, required this.child});
+  final VoidCallback onEnabled;
+  final Widget child;
+  @override
+  State<RatingsRefresh> createState() => _RatingsRefreshState();
+}
+
+class _RatingsRefreshState extends State<RatingsRefresh> {
+  bool? _wasEnabled;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final enabled = RuntimeFeaturesScope.ratingsEnabled(context);
+    if (_wasEnabled == false && enabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _wasEnabled == true) widget.onEnabled();
+      });
+    }
+    _wasEnabled = enabled;
+  }
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
