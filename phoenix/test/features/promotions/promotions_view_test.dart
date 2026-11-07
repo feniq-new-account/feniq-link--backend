@@ -204,6 +204,19 @@ void main() {
       expect(carousel.promotions, hasLength(5));
     });
 
+    testWidgets('featured artwork is centered, compact and not stretched to card height', (tester) async {
+      stub(offers: [offer(id: 'o1')]);
+      await pumpView(tester);
+      final card = find.byType(PromotionHeroCard).first;
+      final picture = find.descendant(
+        of: card, matching: find.byType(PromotionThumbnail),
+      ).first;
+      expect(PromotionHeroCard.height, lessThan(208));
+      expect(tester.getSize(picture).height, lessThan(PromotionHeroCard.height));
+      expect((tester.getCenter(picture).dy - tester.getCenter(card).dy).abs(), lessThan(5));
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('swiping moves to the next card', (tester) async {
       stub(
         offers: [
@@ -252,6 +265,17 @@ void main() {
       expect(find.text('Offer 6'), findsOneWidget);
     });
 
+    testWidgets('list artwork is vertically centered within the promotion card', (tester) async {
+      stub(offers: [offer(id: 'o1', titleEn: 'Offer One')]);
+      await pumpView(tester);
+      final card = find.byType(PromotionListCard).first;
+      final picture = find.descendant(
+        of: card, matching: find.byType(PromotionThumbnail),
+      ).first;
+      expect((tester.getCenter(picture).dy - tester.getCenter(card).dy).abs(), lessThan(5));
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('a type filter narrows it to that kind only', (tester) async {
       stub(
         offers: [offer(id: 'o1', titleEn: 'Offer One')],
@@ -267,6 +291,41 @@ void main() {
 
       expect(find.text('Offer One'), findsNothing);
       expect(find.text('Package One'), findsWidgets);
+    });
+
+    testWidgets('two prominent kinds replace All and tapping selected kind restores both', (tester) async {
+      stub(
+        offers: [offer(id: 'o1', titleEn: 'Offer One')],
+        advertisements: [advertisement(id: 'a1', titleEn: 'Package One')],
+      );
+      await pumpView(tester);
+
+      expect(find.widgetWithText(ChoiceChip, 'All'), findsNothing);
+      expect(find.widgetWithText(ChoiceChip, 'Packages'), findsOneWidget);
+      expect(find.text('Offer One'), findsWidgets);
+      expect(find.text('Package One'), findsWidgets);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Packages'));
+      await tester.pumpAndSettle();
+      expect(find.text('Offer One'), findsNothing);
+      expect(find.text('Package One'), findsWidgets);
+
+      // A second tap clears the category filter without an All chip.
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Packages'));
+      await tester.pumpAndSettle();
+      expect(find.text('Offer One'), findsWidgets);
+      expect(find.text('Package One'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the cart is subtly larger and notifications use a separate aqua accent', (tester) async {
+      stub(offers: [offer(id: 'o1')]);
+      await pumpView(tester);
+      final cart = tester.widget<Icon>(find.byIcon(Icons.shopping_cart_outlined));
+      final bell = tester.widget<Icon>(find.byIcon(Icons.notifications_outlined));
+      expect(cart.size, 35);
+      expect(bell.color, AppColors.notificationBell);
+      expect(cart.color, isNot(bell.color));
     });
 
     testWidgets('a warehouse filter narrows it to that warehouse only', (tester) async {

@@ -4,10 +4,11 @@ import 'package:feniq/core/constants/app_sizes.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/features/promotions/data/models/promotion.dart';
 
-/// The Offers & Ads filters: what kind, and from which warehouse.
+/// The Offers & Ads filters: offers, packages, and a separate warehouse picker.
+/// Tapping the active kind again returns to the combined offers-and-packages list.
 ///
-/// One quiet scrollable row rather than a screen of its own - three choice
-/// chips for the type and a single chip for the warehouse, which opens a small
+/// One quiet scrollable row rather than a screen of its own - two prominent
+/// type chips and a separate warehouse chip, which opens a small
 /// sheet. Nothing is filtered on the server; the whole live list is already in
 /// memory (see PromotionsState.filtered), so every tap is instant.
 ///
@@ -41,25 +42,20 @@ class PromotionFilterBar extends StatelessWidget {
     final selectedWarehouse = matches.isEmpty ? null : matches.first;
 
     return SizedBox(
-      height: 44,
+      height: 50,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
         children: [
           _KindChip(
-            label: l10n.promotionsFilterAllTypes,
-            selected: kindFilter == null,
-            onSelected: () => onKindChanged(null),
-          ),
-          _KindChip(
             label: l10n.promotionsFilterOffers,
             selected: kindFilter == PromotionKind.offer,
-            onSelected: () => onKindChanged(PromotionKind.offer),
+            onSelected: () => onKindChanged(kindFilter == PromotionKind.offer ? null : PromotionKind.offer),
           ),
           _KindChip(
             label: l10n.promotionsFilterPackages,
             selected: kindFilter == PromotionKind.package,
-            onSelected: () => onKindChanged(PromotionKind.package),
+            onSelected: () => onKindChanged(kindFilter == PromotionKind.package ? null : PromotionKind.package),
           ),
           // Only worth offering when there is more than one warehouse to
           // choose between.
@@ -205,7 +201,8 @@ class _KindChip extends StatelessWidget {
         showCheckmark: false,
         labelStyle: context.textTheme.bodySmall?.copyWith(
           color: selected ? AppColors.primaryOf(context) : AppColors.textOf(context),
-          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+          fontSize: 15,
         ),
         backgroundColor: AppColors.surfaceOf(context),
         selectedColor: AppColors.primaryOf(context).withValues(alpha: 0.12),
