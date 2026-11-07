@@ -39,6 +39,8 @@ const ACTIONS = [
   'commission.return_credit_reserved',
   'commission.return_credit_released',
   'commission.collection_reversed',
+  'collection.grant_issued',
+  'collection.grant_revoked',
   // The platform paid a warehouse (discount-code compensation) - a
   // CommissionCollection with direction 'to_warehouse'.
   'commission.payout_recorded',
