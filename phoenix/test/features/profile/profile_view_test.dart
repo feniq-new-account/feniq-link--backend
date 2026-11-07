@@ -88,11 +88,11 @@ void main() {
     expect(find.text('Total debts'), findsNothing);
   });
 
-  testWidgets('Test 3: Profile shows a compact Ratings entry', (tester) async {
+  testWidgets('Test 3: Profile hides mutual ratings entry at launch', (tester) async {
     await pump(tester);
 
-    expect(find.text('Ratings'), findsWidgets); // section header + card title
-    expect(find.text('View Ratings'), findsOneWidget);
+    expect(find.text('Ratings'), findsNothing);
+    expect(find.text('View Ratings'), findsNothing);
   });
 
   testWidgets('Test 4: the full ratings/reviews list is NOT rendered inside Profile', (tester) async {
@@ -104,20 +104,11 @@ void main() {
     expect(find.byIcon(Icons.star), findsNothing);
   });
 
-  testWidgets('Test 5: tapping Ratings opens the existing ratings page', (tester) async {
-    await pump(tester);
-
-    await tester.tap(find.text('View Ratings'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('RATINGS PAGE'), findsOneWidget);
-  });
-
   testWidgets('Test 6: Arabic localization', (tester) async {
     await pump(tester, locale: const Locale('ar'));
 
-    expect(find.text('التقييمات'), findsWidgets);
-    expect(find.text('عرض التقييمات'), findsOneWidget);
+    expect(find.text('التقييمات'), findsNothing);
+    expect(find.text('عرض التقييمات'), findsNothing);
   });
 
   testWidgets('Test 7: renders in dark mode without error', (tester) async {
@@ -125,7 +116,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(ProfileView), findsOneWidget);
-    expect(find.text('View Ratings'), findsOneWidget);
+    expect(find.text('View Ratings'), findsNothing);
   });
 
   testWidgets('Test 8: Settings has a Change password entry that opens the screen', (tester) async {
