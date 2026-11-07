@@ -35,3 +35,19 @@ test('recording and custody confirmation require separate explicit actions', () 
   assert.equal(can(ACTIONS.RECORD_WAREHOUSE, { grants: [grant(ACTIONS.RECORD_FENIQ)] }), false);
   assert.equal(can(ACTIONS.CONFIRM_REMITTANCE, { grants: [grant(ACTIONS.APPROVE_FENIQ)] }), false);
 });
+
+test('MongoDB ObjectIds from persisted grants match by value, not object reference', () => {
+  const { Types } = require('mongoose');
+  const actorId = new Types.ObjectId();
+  const scopeId = new Types.ObjectId();
+  const collectorId = new Types.ObjectId();
+  const stored = { actorId: new Types.ObjectId(actorId.toHexString()),
+    warehouseId: new Types.ObjectId(scopeId.toHexString()),
+    action: ACTIONS.APPROVE_FENIQ, active: true };
+  const args = { actor: { id: actorId, status: 'active' }, warehouseId: scopeId,
+    grants: [stored], action: ACTIONS.APPROVE_FENIQ, recordedBy: collectorId };
+  assert.equal(authorizedCollectionAction(args), true);
+  assert.equal(authorizedCollectionAction({ ...args, recordedBy: new Types.ObjectId(actorId.toHexString()) }), false);
+  assert.equal(authorizedCollectionAction({ ...args, warehouseId: new Types.ObjectId() }), false);
+  assert.equal(authorizedCollectionAction({ ...args, grants: [{ ...stored, actorId: {} }] }), false);
+});
