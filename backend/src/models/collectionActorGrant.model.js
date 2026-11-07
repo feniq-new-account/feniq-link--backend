@@ -11,6 +11,9 @@ const collectionActorGrantSchema = new Schema({
   warehouseId: { type: Schema.Types.ObjectId, ref: 'Warehouse', required: true, immutable: true },
   action: { type: String, enum: Object.values(ACTIONS), required: true, immutable: true },
   active: { type: Boolean, default: false }, // fail closed until explicitly approved
+  // Incremented only by money-post authorization in the posting transaction.
+  // This makes revoke() and a cash post contend on the same MongoDB document.
+  authorizationRevision: { type: Number, default: 0 },
   grantedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   grantReason: { type: String, default: null },
   issuanceKey: { type: String },

@@ -8,7 +8,7 @@ function fixture({ status = 'active', role = 'admin', warehouseRole = null,
   warehouseActive = true, grantActive = true, revokedAt = null, associated = true,
   grantAction = ACTIONS.RECORD_FENIQ } = {}) {
   const actorId = new Types.ObjectId(), warehouseId = new Types.ObjectId();
-  const session = {};
+  const session = { inTransaction: () => true };
   const actor = { _id: actorId, status, role, warehouseRole };
   const warehouse = { _id: warehouseId, isActive: warehouseActive,
     userId: associated ? actorId : new Types.ObjectId(), memberUserIds: [] };
@@ -16,11 +16,21 @@ function fixture({ status = 'active', role = 'admin', warehouseRole = null,
   const chain = value => ({ session(s) { assert.equal(s, session); return { lean: async () => value }; } });
   const User = { findById(id) { assert.equal(id, actorId); return chain(actor); } };
   const Warehouse = { findById(id) { assert.equal(id, warehouseId); return chain(warehouse); } };
-  const CollectionActorGrant = { find(filter) {
-    calls.push(filter);
-    return chain(grantActive ? [{ actorId, warehouseId, action: grantAction, active: true, revokedAt }] : []);
-  } };
-  return { actorId, warehouseId, session, User, Warehouse, CollectionActorGrant, calls };
+  const grantId = new Types.ObjectId();
+  const writes = [];
+  const CollectionActorGrant = {
+    find(filter) {
+      calls.push(filter);
+      return chain(grantActive ? [{ _id: grantId, actorId, warehouseId,
+        action: grantAction, active: true, revokedAt }] : []);
+    },
+    async updateOne(filter, update, options) {
+      writes.push({ filter, update, options });
+      assert.equal(options.session, session);
+      return { matchedCount: grantActive && !revokedAt ? 1 : 0 };
+    },
+  };
+  return { actorId, warehouseId, session, User, Warehouse, CollectionActorGrant, calls, writes, grantId };
 }
 
 test('loads persisted scoped grants using the caller transaction session', async () => {
@@ -107,4 +117,39 @@ test('role and warehouse membership are rechecked when using a persisted grant',
   assert.equal(await authorizePersistedCollectionAction({
     ...f, action: ACTIONS.RECORD_WAREHOUSE,
   }), true);
+});
+
+
+test('money-post authorization touches the grant in the posting transaction', async () => {
+  const f = fixture();
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, action: ACTIONS.RECORD_FENIQ, forMoneyPost: true,
+  }), true);
+  assert.equal(f.writes.length, 1);
+  assert.equal(String(f.writes[0].filter._id), String(f.grantId));
+  assert.deepEqual(f.writes[0].update, { $inc: { authorizationRevision: 1 } });
+  assert.equal(f.writes[0].filter.active, true);
+  assert.equal(f.writes[0].filter.revokedAt, null);
+  assert.equal(f.writes[0].options.session, f.session);
+});
+
+test('read-only authorization never writes grant, and money-post fails closed without transaction', async () => {
+  const f = fixture();
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, action: ACTIONS.RECORD_FENIQ,
+  }), true);
+  assert.equal(f.writes.length, 0);
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, action: ACTIONS.RECORD_FENIQ, forMoneyPost: true,
+    session: { inTransaction: () => false },
+  }), false);
+  assert.equal(f.writes.length, 0);
+});
+
+test('money-post authorization denies a grant lost before the conditional write', async () => {
+  const f = fixture();
+  f.CollectionActorGrant.updateOne = async () => ({ matchedCount: 0 });
+  assert.equal(await authorizePersistedCollectionAction({
+    ...f, action: ACTIONS.RECORD_FENIQ, forMoneyPost: true,
+  }), false);
 });
