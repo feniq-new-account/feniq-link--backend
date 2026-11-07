@@ -36,7 +36,7 @@ class CartButton extends StatelessWidget {
             child: Icon(
               Icons.shopping_cart_outlined,
               color: AppColors.lightPrimary,
-              size: 32,
+              size: 35,
             ),
           ),
         );
