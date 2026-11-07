@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { ApiError } = require('../utils/ApiError');
+const { FEATURES } = require('../config/features');
 const Review = require('../models/review.model');
 const Order = require('../models/order.model');
 const Pharmacy = require('../models/pharmacy.model');
@@ -13,6 +14,7 @@ const RECEIVED_REVIEW_FILTER_FIELDS = { reviewerType: 'pharmacy', isVisible: tru
 // one cheap $group aggregate rather than fetching every review's full
 // document just to sum ratings.
 async function getReviewStatsForWarehouse(warehouseId) {
+  if (!FEATURES.mutualRatings) return { averageRating: 0, totalCount: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
   const grouped = await Review.aggregate([
     { $match: { warehouseId, ...RECEIVED_REVIEW_FILTER_FIELDS } },
     { $group: { _id: '$rating', count: { $sum: 1 } } },
@@ -37,6 +39,7 @@ async function getReviewStatsForWarehouse(warehouseId) {
 // (rather than dropping the clause) so a future moderation need can hide a
 // review without a schema change.
 async function listReviewsForWarehouse(warehouseId) {
+  if (!FEATURES.mutualRatings) return { reviews: [], averageRating: 0 };
   // .lean() throughout: the only consumer is getWarehouseProfile
   // (warehouse.service.js), which passes these rows straight to
   // warehouse.viewmodel.js. Nothing is saved.
@@ -95,6 +98,9 @@ async function listPaginatedReviewsForWarehouse(
   warehouseId,
   { limit = WAREHOUSE_REVIEWS_DEFAULT_LIMIT, after = null, rating } = {}
 ) {
+  if (!FEATURES.mutualRatings) return {
+    rows: [], hasMore: false, nextCursor: null, ...await getReviewStatsForWarehouse(warehouseId),
+  };
   const ratingFilter = validateRatingFilter(rating);
   const filter = { warehouseId, ...RECEIVED_REVIEW_FILTER_FIELDS };
   if (ratingFilter !== undefined) {
@@ -151,6 +157,9 @@ function validateRating(rating) {
 // into the pharmacy's averageRating/reviewsCount (Section 8) rather than
 // leaving those to be recomputed elsewhere.
 async function createPharmacyReview(warehouseId, userId, { orderId, rating, comment }) {
+  if (!FEATURES.mutualRatings) {
+    throw ApiError.forbidden('Ratings are temporarily unavailable.', 'RATINGS_DISABLED');
+  }
   if (typeof orderId !== 'string' || !mongoose.Types.ObjectId.isValid(orderId)) {
     throw ApiError.notFound('Order not found.', 'ORDER_NOT_FOUND');
   }
