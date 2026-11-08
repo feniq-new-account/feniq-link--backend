@@ -20,21 +20,40 @@ void main() {
     required StorageService store,
     required Future<PilotNotice> Function() load,
     Locale locale = const Locale('ar'),
+    bool showHomeSlot = true,
   }) => MaterialApp(
     locale: locale,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
+    builder: (context, child) => PersistentPilotNoticeFrame(
+      storageService: store,
+      refreshInterval: const Duration(minutes: 2),
+      load: load,
+      child: child!,
+    ),
     home: Scaffold(
-      body: PersistentPilotNoticeFrame(
-        storageService: store,
-        refreshInterval: const Duration(minutes: 2),
-        load: load,
-        child: const Center(child: Text('REAL APP CONTENT')),
+      appBar: AppBar(title: const Text('اختر المستودع')),
+      body: Column(
+        children: [
+          if (showHomeSlot) const PilotNoticeInline(),
+          const Expanded(child: Center(child: Text('REAL APP CONTENT'))),
+        ],
       ),
     ),
   );
 
-  testWidgets('Android 15 status icons never overlap the permanent notice and AppBar does not double-pad',
+  test('malformed notice cannot enable an unsourced strip', () {
+    expect(() => PilotNotice.fromJson({'enabled': true, 'textAr': arabic}),
+        throwsFormatException);
+    expect(() => PilotNotice.fromJson({
+      'enabled': 'true', 'textAr': arabic, 'textEn': english,
+    }), throwsFormatException);
+    expect(() => PilotNotice.fromJson({
+      'enabled': true, 'textAr': '', 'textEn': english,
+    }), throwsFormatException);
+  });
+
+  testWidgets('notice displays below the Android status bar, below app header, without background',
       (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -43,36 +62,29 @@ void main() {
     addTearDown(tester.view.reset);
 
     final store = await storage();
-    await tester.pumpWidget(MaterialApp(
-      locale: const Locale('ar'),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => PersistentPilotNoticeFrame(
-        storageService: store,
-        load: () async => const PilotNotice(
-          enabled: true, textAr: arabic, textEn: english),
-        child: child!,
-      ),
-      home: Scaffold(
-        appBar: AppBar(title: const Text('اختر المستودع')),
-        body: const Center(child: Text('REAL APP CONTENT')),
-      ),
+    await tester.pumpWidget(shell(
+      store: store,
+      load: () async => const PilotNotice(enabled: true,
+        textAr: '$arabic — التطبيق قيد الاختبار والتطوير',
+        textEn: english),
     ));
     await tester.pumpAndSettle();
 
     final notice = find.byKey(const ValueKey('persistentPilotNotice'));
     expect(notice, findsOneWidget);
-    expect(tester.getTopLeft(notice).dy, greaterThanOrEqualTo(32),
-      reason: 'Android status bar takes the first 32 logical pixels');
-    final noticeBottom = tester.getBottomLeft(notice).dy;
-    expect(tester.getTopLeft(find.byType(AppBar)).dy, closeTo(noticeBottom, 1),
-      reason: 'the AppBar must follow the notice without a second system inset');
+    expect(tester.getTopLeft(notice).dy, greaterThanOrEqualTo(32));
+    expect(tester.getTopLeft(notice).dy,
+        greaterThanOrEqualTo(tester.getBottomLeft(find.byType(AppBar)).dy),
+        reason: 'notice belongs below the header, never behind status icons');
     expect(find.text(arabic), findsOneWidget);
+    expect(find.text('التطبيق قيد الاختبار والتطوير'), findsOneWidget);
+    final decoration = find.descendant(of: notice, matching: find.byType(DecoratedBox));
+    expect(decoration, findsNothing, reason: 'no colored card or border');
     expect(find.text('REAL APP CONTENT'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('long Arabic admin notice stays inside the screen at large text settings',
+  testWidgets('Arabic notice remains readable at enlarged font size on narrow phones',
       (tester) async {
     tester.view.physicalSize = const Size(320, 720);
     tester.view.devicePixelRatio = 1;
@@ -84,106 +96,95 @@ void main() {
       tester.platformDispatcher.clearTextScaleFactorTestValue();
     });
     final store = await storage();
-    await tester.pumpWidget(MaterialApp(
-      locale: const Locale('ar'),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => PersistentPilotNoticeFrame(
-        storageService: store,
-        load: () async => const PilotNotice(
-          enabled: true,
-          textAr: 'نسخة تجريبية من فينيق — التطبيق قيد الاختبار والتطوير، وقد تتغير بعض الخدمات.',
-          textEn: english),
-        child: child!,
-      ),
-      home: const Scaffold(body: Center(child: Text('CATALOG'))),
+    await tester.pumpWidget(shell(
+      store: store,
+      load: () async => const PilotNotice(
+        enabled: true,
+        textAr: 'نسخة تجريبية من فينيق — التطبيق قيد الاختبار والتطوير، وقد تتغير بعض الخدمات.',
+        textEn: english),
     ));
     await tester.pumpAndSettle();
-    final bar = find.byKey(const ValueKey('persistentPilotNotice'));
-    expect(tester.getTopLeft(bar).dy, greaterThanOrEqualTo(28));
-    expect(tester.getBottomLeft(bar).dy, lessThan(135),
-      reason: 'a long admin message cannot consume the whole home screen');
-    expect(find.text('CATALOG'), findsOneWidget);
+    final notice = find.byKey(const ValueKey('persistentPilotNotice'));
+    expect(tester.getTopLeft(notice).dy, greaterThanOrEqualTo(28));
+    expect(tester.getBottomLeft(notice).dy, lessThan(300));
+    expect(find.text('REAL APP CONTENT'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  test('malformed notice cannot enable an unsourced strip', () {
-    expect(() => PilotNotice.fromJson({'enabled': true, 'textAr': arabic}),
-      throwsFormatException);
-    expect(() => PilotNotice.fromJson({
-      'enabled': 'true', 'textAr': arabic, 'textEn': english,
-    }), throwsFormatException);
-    expect(() => PilotNotice.fromJson({
-      'enabled': true, 'textAr': '', 'textEn': english,
-    }), throwsFormatException);
+  testWidgets('administrator ON notice is persistent and remains inside the home content',
+      (tester) async {
+    final store = await storage();
+    await tester.pumpWidget(shell(
+      store: store,
+      load: () async => const PilotNotice(enabled: true, textAr: arabic, textEn: english),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('persistentPilotNotice')), findsOneWidget);
+    expect(find.text(arabic), findsOneWidget);
+    expect(find.text('REAL APP CONTENT'), findsOneWidget);
+    await tester.pump(const Duration(minutes: 4));
+    await tester.pump();
+    expect(find.text(arabic), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byIcon(Icons.close), findsNothing);
   });
 
-  testWidgets('enabled notice stays visible, is compact and does not replace navigation content',
-    (tester) async {
-      final store = await storage();
-      await tester.pumpWidget(shell(
-        store: store,
-        load: () async => const PilotNotice(enabled: true, textAr: arabic, textEn: english),
-      ));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('persistentPilotNotice')), findsOneWidget);
-      expect(find.text(arabic), findsOneWidget);
-      expect(find.text('REAL APP CONTENT'), findsOneWidget);
-      // It is not a transient snackbar or dismissible modal.
-      await tester.pump(const Duration(minutes: 4));
-      await tester.pump();
-      expect(find.text(arabic), findsOneWidget);
-      expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byIcon(Icons.close), findsNothing);
-    },
-  );
+  testWidgets('administrator OFF hides the message and persists the choice',
+      (tester) async {
+    final store = await storage();
+    var enabled = true;
+    await tester.pumpWidget(shell(
+      store: store,
+      load: () async => PilotNotice(enabled: enabled, textAr: arabic, textEn: english),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text(arabic), findsOneWidget);
+    enabled = false;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('persistentPilotNotice')), findsNothing);
+    expect(find.text('REAL APP CONTENT'), findsOneWidget);
+    expect(jsonDecode(store.getString('launch.persistent_pilot_notice')!)['enabled'], false);
+  });
 
-  testWidgets('an admin OFF response hides the banner on refresh and persists OFF',
-    (tester) async {
-      final store = await storage();
-      var enabled = true;
-      await tester.pumpWidget(shell(
-        store: store,
-        load: () async => PilotNotice(enabled: enabled, textAr: arabic, textEn: english),
-      ));
-      await tester.pumpAndSettle();
-      expect(find.text(arabic), findsOneWidget);
+  testWidgets('last verified admin notice survives offline startup in English',
+      (tester) async {
+    final store = await storage({
+      'launch.persistent_pilot_notice': jsonEncode(
+        const PilotNotice(enabled: true, textAr: arabic, textEn: english).toJson()),
+    });
+    await tester.pumpWidget(shell(
+      store: store,
+      load: () async => throw Exception('offline'),
+      locale: const Locale('en'),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text(english), findsOneWidget);
+    expect(find.text('REAL APP CONTENT'), findsOneWidget);
+  });
 
-      enabled = false;
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('persistentPilotNotice')), findsNothing);
-      expect(find.text('REAL APP CONTENT'), findsOneWidget);
-      expect(jsonDecode(store.getString('launch.persistent_pilot_notice')!)['enabled'], isFalse);
-    },
-  );
+  testWidgets('no network response or saved setting never invents an ON notice',
+      (tester) async {
+    final store = await storage();
+    await tester.pumpWidget(shell(
+      store: store,
+      load: () async => throw Exception('unavailable'),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('persistentPilotNotice')), findsNothing);
+  });
 
-  testWidgets('last verified admin notice survives offline startup',
-    (tester) async {
-      final store = await storage({
-        'launch.persistent_pilot_notice': jsonEncode(
-          const PilotNotice(enabled: true, textAr: arabic, textEn: english).toJson()),
-      });
-      await tester.pumpWidget(shell(
-        store: store,
-        load: () async => throw Exception('offline'),
-        locale: const Locale('en'),
-      ));
-      await tester.pumpAndSettle();
-      expect(find.text(english), findsOneWidget);
-      expect(find.text('REAL APP CONTENT'), findsOneWidget);
-    },
-  );
-
-  testWidgets('no server response and no saved setting never invents an ON state',
-    (tester) async {
-      final store = await storage();
-      await tester.pumpWidget(shell(
-        store: store,
-        load: () async => throw Exception('unavailable'),
-      ));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('persistentPilotNotice')), findsNothing);
-    },
-  );
+  testWidgets('pilot notice does not render outside the pharmacy home inline slot',
+      (tester) async {
+    final store = await storage();
+    await tester.pumpWidget(shell(
+      store: store,
+      load: () async => const PilotNotice(enabled: true, textAr: arabic, textEn: english),
+      showHomeSlot: false,
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('persistentPilotNotice')), findsNothing);
+    expect(find.text(arabic), findsNothing);
+    expect(find.text('REAL APP CONTENT'), findsOneWidget);
+  });
 }
