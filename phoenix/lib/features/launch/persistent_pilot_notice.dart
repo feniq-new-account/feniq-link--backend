@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:feniq/config/app_config.dart';
+import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/services/storage_service.dart';
 
 /// A purely informational admin-controlled notice, independent of the
@@ -156,52 +157,88 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
 
   @override
   Widget build(BuildContext context) {
-    final notice = _notice;
-    final visible = _started && notice != null && notice.enabled;
-    final arabic = Localizations.localeOf(context).languageCode == 'ar';
-    final message = notice == null ? '' : arabic ? notice.textAr : notice.textEn;
-    // Keep the owner's notice location above the navigator with no coloured
-    // background. Account for Android's status-bar inset only while visible;
-    // the navigator must not add that inset a second time.
-    return Column(
-      children: [
-        if (visible)
-          SafeArea(
-            key: const ValueKey('persistentPilotNotice'),
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              // No Material, Card, coloured box or background. Keep the top
-              // edge in its existing place and set the text beneath the
-              // Android status icons, without covering the system bar.
-              child: SizedBox(
-                width: double.infinity,
-                child: Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  maxLines: 4,
-                  softWrap: true,
-                  overflow: TextOverflow.visible,
-                  style: const TextStyle(
-                    color: Color(0xFFFFA94D),
-                    fontSize: 13,
-                    height: 1.4,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+    // The model is shared with the page without painting a global overlay.
+    // The pharmacist announcement belongs below the warehouse page header
+    // (the user's requested position), not inside the Android status bar.
+    return _PilotNoticeScope(
+      notice: _started ? _notice : null,
+      child: widget.child,
+    );
+  }
+}
+
+class _PilotNoticeScope extends InheritedWidget {
+  const _PilotNoticeScope({required this.notice, required super.child});
+
+  final PilotNotice? notice;
+
+  static PilotNotice? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_PilotNoticeScope>()?.notice;
+
+  @override
+  bool updateShouldNotify(_PilotNoticeScope oldWidget) =>
+      oldWidget.notice != notice;
+}
+
+/// An always-present notice in the pharmacist home content, exactly between
+/// the home header and promotional banners; no background, border or overlay.
+/// Its visibility and text remain controlled by the admin's saved settings.
+class PersistentPilotInlineNotice extends StatelessWidget {
+  const PersistentPilotInlineNotice({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final notice = _PilotNoticeScope.maybeOf(context);
+    if (notice == null || !notice.enabled) return const SizedBox.shrink();
+
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final value = (isArabic ? notice.textAr : notice.textEn).trim();
+    final parts = value.split('\n');
+    final heading = parts.first;
+    final detail = parts.skip(1).join('\n');
+    // Match the original launch announcement, without background or border.
+    final headingColor = AppColors.primaryTextOf(context);
+    final detailColor = AppColors.textSecondaryOf(context);
+    return Semantics(
+      key: const ValueKey('persistentPilotNotice'),
+      label: value,
+      container: true,
+      explicitChildNodes: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              heading,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+                color: headingColor,
               ),
             ),
-          ),
-        Expanded(
-          child: visible
-              ? MediaQuery.removePadding(
-                  context: context,
-                  removeTop: true,
-                  child: widget.child,
-                )
-              : widget.child,
+            if (detail.isNotEmpty) ...[
+              const SizedBox(height: 5),
+              Text(
+                detail,
+                textAlign: TextAlign.center,
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  height: 1.45,
+                  color: detailColor,
+                ),
+              ),
+            ],
+          ],
         ),
-      ],
+      ),
     );
   }
 }
