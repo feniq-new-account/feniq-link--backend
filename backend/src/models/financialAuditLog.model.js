@@ -33,6 +33,7 @@ const ACTIONS = [
   // Not a ledger event - see commissionCollection.model.js.
   'commission.collected',
   'commission.contract_activated',
+  'commission.quarter_draft_saved', // admin-only unactivated allocation settings
   'commission.allocations_recorded',
   'commission.settlement_confirmed',
   'commission.return_adjusted',
