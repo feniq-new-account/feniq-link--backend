@@ -174,7 +174,7 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
           // of the scrolling screen. No fixed strip, no background or border.
           const SliverToBoxAdapter(child: PilotNoticeInline()),
           // Keep the operational checkout status separate from the trial notice.
-          const SliverToBoxAdapter(child: LaunchStatusBanner()),
+          const SliverToBoxAdapter(child: LaunchStatusBanner(hideRoutinePrelaunchMessage: true)),
           SliverToBoxAdapter(child: BannerSlider(onBannerTap: _handleBannerTap)),
           // Keep only a compact synchronization timestamp above the
           // warehouse grid; city scope controls are not part of this release.
