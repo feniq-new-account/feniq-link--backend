@@ -143,7 +143,7 @@ void main() {
     );
   }
 
-  Future<void> pumpScreen(WidgetTester tester) async {
+  Future<void> pumpScreen(WidgetTester tester, {Locale locale = const Locale('en')}) async {
     final router = GoRouter(
       initialLocation: '/warehouses',
       routes: [
@@ -176,7 +176,7 @@ void main() {
           BlocProvider<CartCubit>.value(value: cartCubit),
         ],
         child: MaterialApp.router(
-          locale: const Locale('en'),
+          locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
@@ -223,8 +223,24 @@ void main() {
     // The old inline TextField no longer consumes vertical space or silently
     // filters only the current city. The sheet tests cover cross-city search.
     expect(find.byKey(const ValueKey('homeQuickSearchButton')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pharmacyDiscoverSearch')), findsOneWidget);
+    expect(find.text('Find medicines, manufacturers or warehouses'), findsOneWidget);
+    expect(find.text('Browse warehouses'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
     expect(find.byType(WarehouseCard), findsNWidgets(3));
     verify(() => warehouseRepository.getWarehouses(onlyMyCity: false)).called(1);
   });
+  testWidgets('Arabic pharmacist discovery CTA and warehouses remain readable on a narrow phone', (tester) async {
+    tester.view.physicalSize = const Size(360 * 3, 740 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    stubServer(inMyCity: [_homeWarehouse], everywhere: [_homeWarehouse]);
+    await pumpScreen(tester, locale: const Locale('ar'));
+    expect(find.text('ابحث عن دواء أو شركة أو مستودع'), findsOneWidget);
+    expect(find.text('تصفح المستودعات'), findsOneWidget);
+    expect(find.text('تصفح المنتجات'), findsOneWidget);
+    expect(find.byType(WarehouseCard), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
