@@ -19,6 +19,7 @@ import 'package:feniq/features/warehouse/presentation/utils/warehouse_paged_list
 import 'package:feniq/features/warehouse/presentation/widgets/account_payment.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/warehouse_summary_card.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/warehouse_collection_accounting_card.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/warehouse_cash_custody_card.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/voice_payment_sheet.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_permissions.dart';
@@ -125,6 +126,9 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                     padding: EdgeInsets.only(bottom: AppSizes.spacingSmall),
                     child: Column(
                       children: [
+                        // Manager-only monitoring; no cash or transfer action here.
+                        WarehouseCashCustodyCard(),
+                        SizedBox(height: AppSizes.spacingSmall),
                         WarehouseCollectionAccountingCard(),
                         SizedBox(height: AppSizes.spacingSmall),
                         // Canonical debt and receipts remain ledger-backed.
