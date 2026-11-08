@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:feniq/config/app_config.dart';
+import 'package:feniq/features/launch/early_launch_notice.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 
 class AppLaunchStatus {
@@ -129,9 +130,14 @@ class _LaunchStatusBannerState extends State<LaunchStatusBanner>
   @override
   Widget build(BuildContext context) {
     if (_status?.orderingEnabled == true) return const SizedBox.shrink();
+    // Suppress only the routine prelaunch sentence, never a custom closure
+    // reason (e.g. a manually paused storefront or an expired pilot).
+    final message = _status?.message.trim();
+    final routine = message == 'التسجيل والتصفح متاحان. استقبال الطلبات لم يبدأ بعد.' ||
+        message == 'Registration and browsing are available. Ordering has not started yet.';
     if (widget.hideRoutinePrelaunchMessage &&
-        _status != null &&
-        (widget.nowUtc ?? DateTime.now().toUtc()).isBefore(DateTime.utc(2026, 11, 15, 21))) {
+        routine &&
+        (widget.nowUtc ?? DateTime.now().toUtc()).isBefore(EarlyLaunchNotice.opensAtUtc)) {
       return const SizedBox.shrink();
     }
     final l10n = context.l10n;
