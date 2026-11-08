@@ -186,6 +186,7 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
                     Flexible(
                       child: Semantics(
                         label: message,
+                        excludeSemantics: true,
                         child: Text(
                           message,
                           textAlign: TextAlign.center,
