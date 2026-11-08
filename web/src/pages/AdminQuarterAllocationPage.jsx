@@ -9,11 +9,11 @@ const fieldOf = (plan) => ({
   outsideFeniq: String(plan.outside.feniqToPharmacyBps / 100),
 });
 function parseShare(value) {
-  if (value.trim() === '') throw new Error('invalid');
+  // Parse decimal text, not n * 100: 33.33 is a valid percentage even if
+  // floating multiplication produces 3332.9999999999995.
+  if (!/^\\d{1,3}(?:\\.\\d{1,2})?$/.test(value.trim())) throw new Error('invalid');
   const n = Number(value);
-  if (!Number.isFinite(n) || n < 0 || n > 100 || !Number.isInteger(n * 100)) {
-    throw new Error('invalid');
-  }
+  if (!Number.isFinite(n) || n < 0 || n > 100) throw new Error('invalid');
   return Math.round(n * 100);
 }
 function planOf(fields) {
