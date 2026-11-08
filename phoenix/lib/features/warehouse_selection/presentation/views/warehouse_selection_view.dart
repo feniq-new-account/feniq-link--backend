@@ -192,6 +192,51 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
               ),
             ),
           ),
+          // Keep a clear start point after the promotional banners: the
+          // warehouse catalog is the primary job, while offers are one tap
+          // away in their own tab. This never changes warehouse data or state.
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSizes.spacingMedium, AppSizes.spacingSmall,
+                AppSizes.spacingMedium, AppSizes.spacingSmall,
+              ),
+              child: Column(
+                key: const ValueKey('pharmacyBrowseSection'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.warehouseSelectionTitle,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: AppColors.textOf(context),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      TextButton.icon(
+                        key: const ValueKey('pharmacyOffersShortcut'),
+                        onPressed: () => context.goNamed(RouteNames.promotions),
+                        icon: const Icon(Icons.local_offer_outlined, size: 18),
+                        label: Text(l10n.offersAndAdsTitle),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'اختر مستودعاً لعرض الشركات والأدوية المتاحة.'
+                        : 'Choose a warehouse to browse its manufacturers and medicines.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondaryOf(context),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           BlocBuilder<WarehouseSelectionCubit, WarehouseSelectionState>(
             builder: (context, state) {
               final largeText = MediaQuery.textScalerOf(context).scale(14) > 14 * 1.3;

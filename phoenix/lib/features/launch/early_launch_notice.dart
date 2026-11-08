@@ -12,8 +12,9 @@ class EarlyLaunchNotice extends StatelessWidget {
   /// Injectable clock to test the cutoff without changing the device time.
   final DateTime? nowUtc;
 
-  // Exclusive boundary: 16 Nov 2026 00:00 in Damascus (UTC+03).
-  static final DateTime _endsAtUtc = DateTime.utc(2026, 11, 15, 21);
+  // Exclusive boundary: 1 Dec 2026 00:00 in Damascus (UTC+03).
+  // Presentation only; the backend launch gate stays closed until explicitly enabled.
+  static final DateTime _endsAtUtc = DateTime.utc(2026, 11, 30, 21);
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +29,13 @@ class EarlyLaunchNotice extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: AppColors.primaryOf(context).withValues(alpha: 0.09),
-          borderRadius: AppRadius.small,
+          borderRadius: AppRadius.medium,
           border: Border.all(
             color: AppColors.primaryOf(context).withValues(alpha: 0.2),
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -43,7 +44,7 @@ class EarlyLaunchNotice extends StatelessWidget {
                 child: Icon(
                   Icons.rocket_launch_outlined,
                   color: AppColors.primaryOf(context),
-                  size: 19,
+                  size: 22,
                 ),
               ),
               Expanded(
@@ -60,14 +61,14 @@ class EarlyLaunchNotice extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSizes.spacingXSmall),
                     Text(
                       isArabic
-                          ? 'تصفّح المنتجات والعروض الآن. يبدأ استقبال الطلبات اعتباراً من 16 تشرين الثاني، وتُضاف مستودعات جديدة باستمرار لتمنحك خيارات أكثر.'
-                          : 'Browse products and offers now. Orders open November 16, with more warehouses continually joining to give you more choices.',
+                          ? 'تصفّح المنتجات والعروض الآن. يبدأ استقبال الطلبات في 1 كانون الأول، وتُضاف مستودعات جديدة باستمرار لتمنحك خيارات أكثر.'
+                          : 'Browse products and offers now. Orders open December 1, with more warehouses continually joining to give you more choices.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondaryOf(context),
-                        height: 1.25,
+                        height: 1.55,
                       ),
                     ),
                   ],
