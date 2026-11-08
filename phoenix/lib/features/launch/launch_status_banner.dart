@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:feniq/config/app_config.dart';
+import 'package:feniq/features/launch/early_launch_notice.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 
 class AppLaunchStatus {
@@ -131,7 +132,7 @@ class _LaunchStatusBannerState extends State<LaunchStatusBanner>
     if (_status?.orderingEnabled == true) return const SizedBox.shrink();
     if (widget.hideRoutinePrelaunchMessage &&
         _status != null &&
-        (widget.nowUtc ?? DateTime.now().toUtc()).isBefore(DateTime.utc(2026, 11, 15, 21))) {
+        (widget.nowUtc ?? DateTime.now().toUtc()).isBefore(EarlyLaunchNotice.opensAtUtc)) {
       return const SizedBox.shrink();
     }
     final l10n = context.l10n;
