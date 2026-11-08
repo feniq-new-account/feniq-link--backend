@@ -510,3 +510,158 @@ test('isolated backup/restore preserves ledger, custody, remittance evidence and
     await restored.dropDatabase(); await fs.rm(directory, { recursive: true, force: true });
   }
 });
+
+
+/**
+ * Full pilot rehearsal using ONLY disposable in-memory MongoDB data. This test
+ * deliberately joins otherwise independently tested flows: fake pharmacist
+ * order -> delivery -> Feniq cash -> warehouse cash -> evidence/approval ->
+ * weekly commission eligibility -> invoice ledger/journal -> bank remittance
+ * and independent confirmation -> accepted return and signed correction.
+ *
+ * Every assertion is derived from real service operations; no mock DB values
+ * are substituted into the accounting engines, and the test cannot reach
+ * production databases (the test setup uses startMemoryMongo).
+ */
+test('SYNTHETIC PILOT: full order, both cash collectors, evidence, commission, remittance and returned goods reconcile', async () => {
+  const cash = require('../src/services/commissionCollection.service');
+  const proofService = require('../src/services/paymentProof.service');
+  const settlementService = require('../src/services/collectionSettlement.service');
+  const { Event } = require('../src/models/collectionAccounting.model');
+  const itemModel = require('../src/models/orderItem.model');
+  const returnService = require('../src/services/return.service');
+  const warehouseReturnService = require('../src/services/warehouseReturn.service');
+  const broadPeriod = { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2027-12-31T23:59:59Z') };
+  const state = async () => Account.findOne({ warehouseId: warehouse._id, pharmacyId: pharmacy._id }).lean();
+
+  // Fictional invoice: one pack at $10, frozen FX 10,000 => 100,000 SYP.
+  assert.equal(invoice.finalPrice, 100000);
+  assert.equal(invoice.collectionCommission.originalCommissionSyp, 2000);
+  assert.equal(invoice.fx.rate, 10000);
+  assert.equal((await state()).balanceCache.syp, 100000);
+  let journal = await call(owner, 'GET', '/warehouse/collection-accounting?period=month');
+  assert.equal(journal.status, 200);
+  assert.equal(journal.body.summary.model, 'collection_v2');
+  assert.equal(journal.body.summary.originalSyp, 0,
+    'delivered goods alone do not earn collection commissions');
+  assert.equal(journal.body.summary.invoiceStates.open, 1);
+
+  // Feniq collector records 25k, independent Feniq approver authorizes it.
+  // Replay deliberately uses the SAME idempotency key and body.
+  const evidence1 = evidence(25000);
+  const pending1 = await receipts.record(collector.id, warehouse.id, evidence1);
+  assert.equal((await receipts.record(collector.id, warehouse.id, evidence1)).replay, true);
+  assert.equal(await Payment.countDocuments(), 0, 'pending evidence is not a payment');
+  const approval1 = { decision: 'approved', idempotencyKey: key() };
+  const actual1 = await receipts.review(approver.id, warehouse.id, String(pending1.receipt.id), approval1);
+  assert.equal((await receipts.review(approver.id, warehouse.id, String(pending1.receipt.id), approval1)).replay, true);
+  const pending2 = await receive(25000);
+  assert.equal(await Receipt.countDocuments({ status: 'approved' }), 2);
+  assert.equal(await Payment.countDocuments(), 2);
+  assert.equal(await Entry.countDocuments({ kind: 'payment' }), 2);
+  assert.equal((await state()).balanceCache.syp, 50000);
+  assert.equal((await remittances.read(admin.id, warehouse.id)).summary.netWarehouseDueSyp, 49000);
+  assert.equal((await Payment.findById(actual1.receipt.paymentId).lean()).fx.rate, 10000);
+  assert.equal((await Receipt.findById(pending2.receipt.id).lean()).status, 'approved');
+
+  // Change the LIVE quotation in this synthetic DB. Earlier order and cash
+  // remain frozen; the new warehouse receipt records its own FX snapshot.
+  await ExchangeRate.updateOne({ _id: 'singleton' }, { $set: {
+    usdToSyp: 12500, source: 'manual', manualOverride: true, lastUpdated: new Date(),
+  } });
+  assert.equal((await require('../src/models/order.model').findById(invoice._id).lean()).fx.rate, 10000);
+  const warehouseCash = await require('../src/services/payment.service').createPayment(
+    warehouse.id, accountant.id, { pharmacyId: pharmacy.id, amount: 50000,
+      currency: 'SYP', paidAt: '2026-11-06T10:00:00Z', idempotencyKey: key() });
+  assert.equal((await Payment.findById(warehouseCash._id).lean()).fx.rate, 12500);
+  assert.equal((await state()).balanceCache.syp, 0, 'the pharmacy paid exactly its invoice');
+  assert.equal(await Event.countDocuments(), 2,
+    'only approved Feniq cash is eligible until warehouse proof/settlement');
+
+  const proof = await proofService.submit(accountant.id, warehouseCash.id,
+    { proofReference: 'PILOT-WAREHOUSE-RECEIPT-01', idempotencyKey: key() });
+  const acceptedProof = await proofService.review(accountant.id, warehouseCash.id,
+    String(proof.record._id), { decision: 'approved', idempotencyKey: key() });
+  assert.equal((await state()).balanceCache.syp, 0, 'proof review does not post another payment');
+  assert.equal(await Event.countDocuments(), 2, 'proof approval alone does not earn commission');
+  const weekly = { periodFrom: '2026-11-01', periodTo: '2026-11-07',
+    proofReviewIds: [String(acceptedProof.record._id)],
+    reference: 'PILOT-WEEKLY-RECONCILIATION-01', idempotencyKey: key() };
+  await settlementService.confirmWarehouseSettlement(admin.id, warehouse.id, weekly);
+  assert.equal((await settlementService.confirmWarehouseSettlement(admin.id, warehouse.id, weekly)).replay, true);
+
+  // City commission: 2% of 100k = 2k, split equally. Feniq has only
+  // withheld its own 500 share of its 50k cash. Warehouse owes the other 500
+  // but is NOT itself part of Feniq's remittance cash account.
+  const all = await Event.find({ warehouseId: warehouse._id }).lean();
+  assert.equal(all.reduce((n, row) => n + row.originalCommissionSyp, 0), 2000);
+  assert.equal(all.reduce((n, row) => n + row.feniqSyp, 0), 1000);
+  assert.equal(all.reduce((n, row) => n + row.repSyp, 0), 1000);
+  const platform = (await cash.getWarehouseCommissionDetail(warehouse.id, broadPeriod)).summary;
+  assert.equal(platform.commissionOwedSyp, 1000);
+  assert.equal(platform.heldByFeniqSyp, 500);
+  assert.equal(platform.outstandingSyp, 500);
+  journal = await call(owner, 'GET', '/warehouse/collection-accounting?period=month');
+  assert.equal(journal.status, 200);
+  assert.equal(journal.body.summary.originalSyp, 2000);
+  assert.equal(journal.body.summary.feniqSyp, 1000);
+  assert.equal(journal.body.summary.repSyp, 1000);
+  assert.equal(journal.body.summary.invoiceStates.paid, 1);
+  assert.equal(journal.body.invoices[0].outstandingSyp, 0);
+
+  // Platform transfers only its own cash, minus original commission withheld
+  // in its own custody. Independent warehouse accountant confirms the transfer.
+  const stableCounts = { payment: await Payment.countDocuments(), entry: await Entry.countDocuments() };
+  assert.deepEqual(stableCounts, { payment: 3, entry: 4 });
+  const { snapshot, movement, body } = await transfer();
+  assert.equal(snapshot.result.grossCollectedSyp, 50000);
+  assert.equal(snapshot.result.netWarehouseDueSyp, 49000);
+  assert.equal((await call(treasurer, 'POST', path() + '/remittances', body)).replay, 'true');
+  assert.equal((await Remittance.findById(movement._id).lean()).status, 'pending');
+  await decision(movement);
+  const savedRemittance = await Remittance.findById(movement._id).lean();
+  const savedReconciliation = await Reconciliation.findById(snapshot._id).lean();
+  assert.equal(savedRemittance.status, 'confirmed');
+  assert.equal(savedRemittance.amountSyp, 49000);
+  assert.equal((await remittances.read(owner.id, warehouse.id)).summary.netWarehouseDueSyp, 0);
+  assert.equal(await Payment.countDocuments(), stableCounts.payment);
+  assert.equal(await Entry.countDocuments(), stableCounts.entry);
+  assert.equal((await state()).balanceCache.syp, 0, 'cash remittance is not a second pharmacy payment');
+
+  // Full return of the received merchandise: the return CREDIT stays available
+  // for a subsequent invoice, not a cash receipt or an extra debit/credit
+  // posted against the original invoice. Commission is corrected by a signed
+  // event; the already-confirmed bank transfer remains an immutable document.
+  const orderItem = await itemModel.findOne({ orderId: invoice._id });
+  const returned = await returnService.createReturn({ pharmacyId: pharmacy.id,
+    orderId: String(invoice._id),
+    items: [{ orderItemId: orderItem.id, quantity: 1, reasonType: 'damaged' }],
+    notes: 'PILOT-SYNTHETIC-ACCEPTED-RETURN', images: [] });
+  await warehouseReturnService.approveReturn(returned.returnRequest._id, warehouse.id, owner.id);
+  assert.equal(await ReturnCredit.countDocuments(), 1);
+  assert.equal((await ReturnCredit.findOne().lean()).amountSyp, 100000);
+  assert.equal(await Entry.countDocuments({ kind: 'return_credit' }), 0,
+    'new-model return credit is noncash and does not rewrite the original debt');
+  assert.equal(await Entry.countDocuments({ kind: 'payment' }), 3);
+  assert.equal(await Payment.countDocuments(), 3);
+  assert.equal((await state()).balanceCache.syp, 0);
+  assert.equal((await ledger.verifyAccount((await state())._id)).ok, true);
+  assert.deepEqual(await Reconciliation.findById(snapshot._id).lean(), savedReconciliation);
+  assert.deepEqual(await Remittance.findById(movement._id).lean(), savedRemittance);
+  const corrected = await Event.find({ warehouseId: warehouse._id }).lean();
+  assert.equal(corrected.reduce((n, row) => n + row.originalCommissionSyp, 0), 0,
+    '100% return reverses 100% of the original earned commission');
+  assert.equal(corrected.reduce((n, row) => n + row.feniqSyp, 0), 0);
+  assert.equal(corrected.reduce((n, row) => n + row.repSyp, 0), 0);
+
+  console.log('SYNTHETIC_PILOT_FULL_CYCLE_SUCCESS', JSON.stringify({
+    fictitious: true, productionWrites: 0, deliveredInvoiceSyp: 100000,
+    feniqReceiptsSyp: 50000, warehouseReceiptSyp: 50000,
+    approvedFeniqReceipts: 2, approvedWarehouseProofs: 1,
+    earnedCommissionBeforeReturnSyp: 2000, feniqShareBeforeReturnSyp: 1000,
+    repShareBeforeReturnSyp: 1000, bankRemittanceSyp: 49000,
+    remittanceStatus: 'confirmed', approvedReturnCreditSyp: 100000,
+    earnedCommissionAfterReturnSyp: 0, pharmacyBalanceSyp: 0,
+    realPaymentDocuments: 3, refundCashDocuments: 0, ledgerReconciled: true,
+  }));
+});
