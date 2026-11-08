@@ -79,7 +79,7 @@ it('submits a current balance filter for activity without deriving new KPI total
 it('offers clear report hierarchy, accessible source time and mobile table labels', async () => {
   await render();
   expect(host.querySelector('.accounting-hero h1').textContent).toBe('accounting.title');
-  expect(host.querySelector('.accounting-filter-panel [aria-labelledby="accounting-filter-title"]')).not.toBeNull();
+  expect(host.querySelector('.accounting-filter-panel[aria-labelledby="accounting-filter-title"]')).not.toBeNull();
   expect(host.querySelectorAll('.accounting-links a')).toHaveLength(3);
   expect(host.querySelector('td[data-label="accounting.date"]')).not.toBeNull();
   expect(host.querySelector('td[data-label="accounting.debit"]')).not.toBeNull();
