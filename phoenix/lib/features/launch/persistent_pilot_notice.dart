@@ -160,46 +160,33 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
     final visible = _started && notice != null && notice.enabled;
     final arabic = Localizations.localeOf(context).languageCode == 'ar';
     final message = notice == null ? '' : arabic ? notice.textAr : notice.textEn;
-    // MaterialApp.builder is outside the Navigator. Android 15 draws behind
-    // the status bar, and screen AppBars normally account for the top inset.
-    // When this banner appears *above* the Navigator it must own that inset;
-    // otherwise its label is drawn underneath the system clock and icons.
-    //
-    // Hand the already-consumed top inset back as zero to the Navigator, or
-    // its AppBar would reserve that same status-bar height a second time.
+    // Keep the owner's notice location above the navigator with no coloured
+    // background. Account for Android's status-bar inset only while visible;
+    // the navigator must not add that inset a second time.
     return Column(
       children: [
         if (visible)
-          Material(
+          SafeArea(
             key: const ValueKey('persistentPilotNotice'),
-            color: const Color(0xFF1B2A4A),
-            child: SafeArea(
-              bottom: false,
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              // No Material, Card, coloured box or background. Keep the top
+              // edge in its existing place and set the text beneath the
+              // Android status icons, without covering the system bar.
               child: SizedBox(
                 width: double.infinity,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.info_outline_rounded,
-                          size: 16, color: Color(0xFFF26522)),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          message,
-                          textAlign: TextAlign.center,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            height: 1.35,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
+                child: Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  maxLines: 4,
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                  style: const TextStyle(
+                    color: Color(0xFFFFA94D),
+                    fontSize: 13,
+                    height: 1.4,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
