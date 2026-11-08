@@ -14,16 +14,20 @@ class CatalogSearchBar extends StatelessWidget implements PreferredSizeWidget {
   final ValueChanged<String> onChanged;
 
   @override
-  Size get preferredSize => const Size.fromHeight(60);
+  Size get preferredSize => const Size.fromHeight(64);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSizes.spacingMedium, 0, AppSizes.spacingMedium, AppSizes.spacingMedium),
       child: Container(
-        height: 46,
+        height: 48,
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
-        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.14), borderRadius: AppRadius.medium),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.16),
+          borderRadius: AppRadius.medium,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+        ),
         child: Row(
           children: [
             const Icon(Icons.search, color: Colors.white70, size: 20),
@@ -33,6 +37,8 @@ class CatalogSearchBar extends StatelessWidget implements PreferredSizeWidget {
                 controller: controller,
                 style: const TextStyle(color: Colors.white, fontSize: 14),
                 cursorColor: Colors.white,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                 onChanged: onChanged,
                 decoration: InputDecoration(
                   filled: false,
@@ -51,9 +57,9 @@ class CatalogSearchBar extends StatelessWidget implements PreferredSizeWidget {
               builder: (context, value, _) {
                 if (value.text.isEmpty) return const SizedBox.shrink();
                 return IconButton(
-                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                   padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                  icon: const Icon(Icons.close, color: Colors.white, size: 20),
                   tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
                   onPressed: () {
                     controller.clear();
