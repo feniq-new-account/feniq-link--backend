@@ -47,6 +47,10 @@ abstract class WarehouseManagementRepository {
   /// Never infer a zero balance or commission when collection_v2 is off.
   Future<Map<String, dynamic>> getCollectionAccounting({String period = 'month'});
 
+  /// Feniq cash custody/remittances: source-backed read-only warehouse view.
+  /// Pending transfers never count as settled; unknown net remains unavailable.
+  Future<Map<String, dynamic>> getCashCustody();
+
   /// Money received from a pharmacy, in SYP. [idempotencyKey] makes a retry
   /// safe: the same key never credits the pharmacy twice.
   Future<void> recordPayment({
