@@ -14,11 +14,11 @@ class EarlyLaunchNotice extends StatelessWidget {
 
   // Exclusive boundary: 1 Dec 2026 00:00 in Damascus (UTC+03).
   // Presentation only; the backend launch gate stays closed until explicitly enabled.
-  static final DateTime _endsAtUtc = DateTime.utc(2026, 11, 30, 21);
+  static final DateTime opensAtUtc = DateTime.utc(2026, 11, 30, 21);
 
   @override
   Widget build(BuildContext context) {
-    if (!(nowUtc ?? DateTime.now().toUtc()).isBefore(_endsAtUtc)) {
+    if (!(nowUtc ?? DateTime.now().toUtc()).isBefore(opensAtUtc)) {
       return const SizedBox.shrink();
     }
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
