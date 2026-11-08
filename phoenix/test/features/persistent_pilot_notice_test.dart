@@ -34,6 +34,50 @@ void main() {
     ),
   );
 
+  testWidgets('trial notice clears the phone status bar and does not double-pad screens',
+    (tester) async {
+      final store = await storage();
+      var enabled = true;
+      await tester.pumpWidget(MaterialApp(
+        locale: const Locale('ar'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: MediaQuery(
+          data: const MediaQueryData(
+            padding: EdgeInsets.only(top: 32),
+            viewPadding: EdgeInsets.only(top: 32),
+          ),
+          child: Scaffold(
+            body: PersistentPilotNoticeFrame(
+              storageService: store,
+              load: () async => PilotNotice(enabled: enabled, textAr: arabic, textEn: english),
+              child: Builder(
+                builder: (context) => Text(
+                  'app-inset:${MediaQuery.paddingOf(context).top.toInt()}',
+                ),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // The Android status glyphs occupy the first 32 logical pixels.
+      // The banner label must begin entirely below them.
+      expect(find.byKey(const ValueKey('persistentPilotNotice')), findsOneWidget);
+      expect(tester.getTopLeft(find.text(arabic)).dy, greaterThanOrEqualTo(32));
+      expect(find.text('app-inset:0'), findsOneWidget,
+          reason: 'inner navigator must not reserve the same status inset twice');
+
+      // An admin OFF response restores the original screen inset.
+      enabled = false;
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('persistentPilotNotice')), findsNothing);
+      expect(find.text('app-inset:32'), findsOneWidget);
+    },
+  );
+
   test('malformed notice cannot enable an unsourced strip', () {
     expect(() => PilotNotice.fromJson({'enabled': true, 'textAr': arabic}),
       throwsFormatException);
