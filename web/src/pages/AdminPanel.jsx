@@ -159,7 +159,7 @@ export function AdminPanel() {
               <h2 className="adm-nav-section-title">{t('adminUx.sections.' + section.key)}</h2>
               {section.tabs.map((tab) => (
                 <NavLink key={tab.path} to={tab.path} className={navLinkClassName} onClick={closeSidebar}>
-                  <span className="adm-nav-link-label">{tab.label}</span>
+                  {tab.label}
                   <NavBadge count={countUnder(tab.path)} />
                 </NavLink>
               ))}
