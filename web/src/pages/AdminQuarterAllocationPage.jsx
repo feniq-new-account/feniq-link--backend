@@ -11,7 +11,7 @@ const fieldOf = (plan) => ({
 function parseShare(value) {
   // Parse decimal text, not n * 100: 33.33 is a valid percentage even if
   // floating multiplication produces 3332.9999999999995.
-  if (!/^\\d{1,3}(?:\\.\\d{1,2})?$/.test(value.trim())) throw new Error('invalid');
+  if (!/^\d{1,3}(?:\.\d{1,2})?$/.test(value.trim())) throw new Error('invalid');
   const n = Number(value);
   if (!Number.isFinite(n) || n < 0 || n > 100) throw new Error('invalid');
   return Math.round(n * 100);
