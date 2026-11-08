@@ -130,8 +130,13 @@ class _LaunchStatusBannerState extends State<LaunchStatusBanner>
   @override
   Widget build(BuildContext context) {
     if (_status?.orderingEnabled == true) return const SizedBox.shrink();
+    // Suppress only the routine prelaunch sentence, never a custom closure
+    // reason (e.g. a manually paused storefront or an expired pilot).
+    final message = _status?.message.trim();
+    final routine = message == 'التسجيل والتصفح متاحان. استقبال الطلبات لم يبدأ بعد.' ||
+        message == 'Registration and browsing are available. Ordering has not started yet.';
     if (widget.hideRoutinePrelaunchMessage &&
-        _status != null &&
+        routine &&
         (widget.nowUtc ?? DateTime.now().toUtc()).isBefore(EarlyLaunchNotice.opensAtUtc)) {
       return const SizedBox.shrink();
     }
