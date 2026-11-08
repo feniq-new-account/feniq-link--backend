@@ -97,4 +97,55 @@ void main() {
       throwsFormatException,
     );
   });
+  testWidgets('pharmacy keeps the Dec 1 notice in place of routine prelaunch copy through Nov 30', (tester) async {
+    const routine = 'التسجيل والتصفح متاحان. استقبال الطلبات لم يبدأ بعد.';
+    await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: LaunchStatusBanner(
+        nowUtc: DateTime.utc(2026, 11, 30, 20, 59),
+        hideRoutinePrelaunchMessage: true,
+        load: () async => const AppLaunchStatus(
+          orderingEnabled: false, message: routine,
+        ),
+      )),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text(routine), findsNothing);
+  });
+
+  testWidgets('routine server closure is visible from Dec 1 Damascus onward', (tester) async {
+    const routine = 'التسجيل والتصفح متاحان. استقبال الطلبات لم يبدأ بعد.';
+    await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: LaunchStatusBanner(
+        nowUtc: DateTime.utc(2026, 11, 30, 21),
+        hideRoutinePrelaunchMessage: true,
+        load: () async => const AppLaunchStatus(
+          orderingEnabled: false, message: routine,
+        ),
+      )),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text(routine), findsOneWidget);
+  });
+
+  testWidgets('a custom manual closure reason remains visible before Dec 1', (tester) async {
+    const custom = 'استقبال الطلبات متوقف حالياً بقرار الإدارة.';
+    await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: LaunchStatusBanner(
+        nowUtc: DateTime.utc(2026, 11, 22),
+        hideRoutinePrelaunchMessage: true,
+        load: () async => const AppLaunchStatus(
+          orderingEnabled: false, message: custom,
+        ),
+      )),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text(custom), findsOneWidget);
+  });
+
 }

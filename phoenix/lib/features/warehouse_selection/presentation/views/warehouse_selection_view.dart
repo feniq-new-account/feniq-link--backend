@@ -46,6 +46,10 @@ class WarehouseSelectionView extends StatefulWidget {
 }
 
 class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
+  // Once checkout is known to be open, never display the future-opening
+  // announcement again in this session (including during routine refresh).
+  bool _orderingWasOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -170,8 +174,23 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
             ),
             actions: const [NotificationButton(), CartButton()],
           ),
-          const SliverToBoxAdapter(child: EarlyLaunchNotice()),
-          const SliverToBoxAdapter(child: LaunchStatusBanner(hideRoutinePrelaunchMessage: true)),
+          SliverToBoxAdapter(
+            // Keep a stable sliver slot when status changes; no rebuild of the
+            // status fetcher and no accidental duplicate network calls.
+            child: _orderingWasOpen
+                ? const SizedBox.shrink()
+                : const EarlyLaunchNotice(),
+          ),
+          SliverToBoxAdapter(
+            child: LaunchStatusBanner(
+              hideRoutinePrelaunchMessage: true,
+              onOrderingChanged: (enabled) {
+                if (enabled && !_orderingWasOpen && mounted) {
+                  setState(() => _orderingWasOpen = true);
+                }
+              },
+            ),
+          ),
           SliverToBoxAdapter(child: BannerSlider(onBannerTap: _handleBannerTap)),
           // Keep only a compact synchronization timestamp above the
           // warehouse grid; city scope controls are not part of this release.
