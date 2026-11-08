@@ -1,0 +1,26 @@
+name: Public website checks
+on:
+  pull_request:
+    paths:
+      - 'site/**'
+      - '.github/workflows/site-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/site-check.yml'
+permissions:
+  contents: read
+jobs:
+  static-site-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check website JavaScript syntax
+        run: node --check site/app.js
+      - name: Check public website contracts
+        run: node --test site/tests/site_contract.test.mjs
