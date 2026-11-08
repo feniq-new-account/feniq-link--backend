@@ -12,12 +12,12 @@ class EarlyLaunchNotice extends StatelessWidget {
   /// Injectable clock to test the cutoff without changing the device time.
   final DateTime? nowUtc;
 
-  // Exclusive boundary: 16 Nov 2026 00:00 in Damascus (UTC+03).
-  static final DateTime _endsAtUtc = DateTime.utc(2026, 11, 15, 21);
+  // 1 Dec 2026 00:00 in Damascus (UTC+03); informational, not checkout authority.
+  static final DateTime opensAtUtc = DateTime.utc(2026, 11, 30, 21);
 
   @override
   Widget build(BuildContext context) {
-    if (!(nowUtc ?? DateTime.now().toUtc()).isBefore(_endsAtUtc)) {
+    if (!(nowUtc ?? DateTime.now().toUtc()).isBefore(opensAtUtc)) {
       return const SizedBox.shrink();
     }
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -27,23 +27,29 @@ class EarlyLaunchNotice extends StatelessWidget {
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.primaryOf(context).withValues(alpha: 0.09),
-          borderRadius: AppRadius.small,
+          color: AppColors.primaryOf(context).withValues(alpha: 0.08),
+          borderRadius: AppRadius.medium,
           border: Border.all(
             color: AppColors.primaryOf(context).withValues(alpha: 0.2),
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsetsDirectional.only(end: 8, top: 1),
-                child: Icon(
-                  Icons.rocket_launch_outlined,
-                  color: AppColors.primaryOf(context),
-                  size: 19,
+                padding: const EdgeInsetsDirectional.only(end: 12, top: 1),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+                    borderRadius: AppRadius.small,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(9),
+                    child: Icon(Icons.rocket_launch_outlined,
+                      color: AppColors.primaryTextOf(context), size: 22),
+                  ),
                 ),
               ),
               Expanded(
@@ -56,18 +62,18 @@ class EarlyLaunchNotice extends StatelessWidget {
                           ? 'مرحلة الإطلاق المبكر'
                           : 'Early launch phase',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.primaryOf(context),
-                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryTextOf(context),
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 6),
                     Text(
                       isArabic
-                          ? 'تصفّح المنتجات والعروض الآن. يبدأ استقبال الطلبات اعتباراً من 16 تشرين الثاني، وتُضاف مستودعات جديدة باستمرار لتمنحك خيارات أكثر.'
-                          : 'Browse products and offers now. Orders open November 16, with more warehouses continually joining to give you more choices.',
+                          ? 'تصفّح المنتجات والعروض الآن. يبدأ استقبال الطلبات اعتباراً من 1 كانون الأول، وتُضاف مستودعات جديدة باستمرار لتمنحك خيارات أكثر.'
+                          : 'Browse products and offers now. Orders open December 1, with more warehouses continually joining to give you more choices.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondaryOf(context),
-                        height: 1.25,
+                        height: 1.5,
                       ),
                     ),
                   ],
