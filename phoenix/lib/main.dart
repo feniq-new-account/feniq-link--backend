@@ -18,6 +18,7 @@ import 'package:feniq/core/services/secure_storage_service.dart';
 import 'package:feniq/core/services/storage_service.dart';
 import 'package:feniq/core/session/session_scope.dart';
 import 'package:feniq/features/app_update/presentation/app_update_gate.dart';
+import 'package:feniq/features/launch/persistent_pilot_notice.dart';
 import 'package:feniq/firebase_options.dart';
 import 'package:feniq/core/theme/dark_theme.dart';
 import 'package:feniq/core/widgets/app_text_scale.dart';
@@ -480,8 +481,11 @@ class MyApp extends StatelessWidget {
                                 .uri
                                 .path !=
                             RoutePaths.splash,
-                        child: OfflineBannerFrame(
-                          child: child ?? const SizedBox.shrink(),
+                        child: PersistentPilotNoticeFrame(
+                          storageService: storageService,
+                          child: OfflineBannerFrame(
+                            child: child ?? const SizedBox.shrink(),
+                          ),
                         ),
                       ),
                     ),
