@@ -115,6 +115,23 @@ export function FeatureControlCenter({ warehouseId, quickOnly = false }) {
       </button> : <p role="status">جارٍ تحميل حالة استقبال الطلبات...</p>}
       <p className="hint">التقييمات وبقية الميزات الاختيارية موجودة ضمن مفاتيح التشغيل العامة أدناه. تبقى العمليات المالية خاضعة لضوابطها المستقلة.</p>
     </section>}
+    {error && <p className="error-text" role="alert">{error}</p>}
+    <button type="button" className="btn-secondary" disabled={busy} onClick={() => setAttempt(v => v + 1)}>{t('common.retry')}</button>
+    {notice && <p role="status">{notice}</p>}
+    {!data && !error && <p role="status">{t('common.loading')}</p>}
+    {data && <>
+      {!quickOnly && <p>{t('featureControl.core')}</p>}
+      <label>{t('featureControl.reason')}<input value={reason} maxLength="1000" disabled={busy} onChange={e => setReason(e.target.value)} /></label>
+      <form onSubmit={e => { e.preventDefault(); action(() => api.saveFeatureControl({ revision: data.platform.revision, features: switches, reason })); }}>
+        <fieldset disabled={busy}>
+          <legend>{t('featureControl.global')}</legend>
+          {(data.platformFeatureNames || data.featureNames).map(key => <label key={key} className="feature-control-switch">
+            <input type="checkbox" checked={(switches[key] ?? data.platformFeatureDefaults?.[key]) !== false} onChange={e => setSwitches({ ...switches, [key]: e.target.checked })} />
+            <span>{label(key)}{data.featureDefinitions?.[key] && <small className="feature-state">{t(`featureControl.states.${data.featureDefinitions[key].status}`)}</small>}</span>
+          </label>)}
+          <button className="btn-primary" disabled={!reason.trim()}>{t('featureControl.saveGlobal')}</button>
+        </fieldset>
+      </form>
     {!warehouseId && !quickOnly && <section className="adm-card reg-card" aria-label="التنبيه التجريبي الدائم">
       <h2>التنبيه التجريبي داخل التطبيق</h2>
       <p className="hint">يظهر شريط صغير ثابت أعلى التطبيق في كل الصفحات، ويمكن تعديل نصه أو إيقافه من هنا. لا يغيّر استقبال الطلبات أو أي عمليات مالية.</p>
@@ -141,23 +158,6 @@ export function FeatureControlCenter({ warehouseId, quickOnly = false }) {
         </fieldset>
       </form> : <p role="status">جارٍ تحميل إعدادات التنبيه...</p>}
     </section>}
-    {error && <p className="error-text" role="alert">{error}</p>}
-    <button type="button" className="btn-secondary" disabled={busy} onClick={() => setAttempt(v => v + 1)}>{t('common.retry')}</button>
-    {notice && <p role="status">{notice}</p>}
-    {!data && !error && <p role="status">{t('common.loading')}</p>}
-    {data && <>
-      {!quickOnly && <p>{t('featureControl.core')}</p>}
-      <label>{t('featureControl.reason')}<input value={reason} maxLength="1000" disabled={busy} onChange={e => setReason(e.target.value)} /></label>
-      <form onSubmit={e => { e.preventDefault(); action(() => api.saveFeatureControl({ revision: data.platform.revision, features: switches, reason })); }}>
-        <fieldset disabled={busy}>
-          <legend>{t('featureControl.global')}</legend>
-          {(data.platformFeatureNames || data.featureNames).map(key => <label key={key} className="feature-control-switch">
-            <input type="checkbox" checked={(switches[key] ?? data.platformFeatureDefaults?.[key]) !== false} onChange={e => setSwitches({ ...switches, [key]: e.target.checked })} />
-            <span>{label(key)}{data.featureDefinitions?.[key] && <small className="feature-state">{t(`featureControl.states.${data.featureDefinitions[key].status}`)}</small>}</span>
-          </label>)}
-          <button className="btn-primary" disabled={!reason.trim()}>{t('featureControl.saveGlobal')}</button>
-        </fieldset>
-      </form>
       {!quickOnly && <><p className="hint">{t('featureControl.implementationLimits')}</p>
       {!data.rights && <p><Link to="/admin/warehouse-access">{t('featureControl.chooseWarehouse')}</Link></p>}
       {data.rights && <><div className="feature-control-decisions" role="list">
