@@ -2,8 +2,8 @@ const PlatformSetting = require('../models/platformSetting.model');
 const { ApiError } = require('../utils/ApiError');
 
 const KEY = 'persistentPilotNotice';
-const DEFAULT_AR = 'نسخة تجريبية من فينيق — التطبيق قيد الاختبار والتطوير، وقد تتغير بعض الخدمات.';
-const DEFAULT_EN = 'Feniq trial version — the app is being tested and improved; some services may change.';
+const DEFAULT_AR = 'النسخة تجريبية\nيمكنك ارسال الطلبات في 1 كانون الاول\nيتم اضافة المستودعات بشكل مستمر';
+const DEFAULT_EN = 'Trial version\nYou can send orders starting December 1\nWarehouses are being added continuously';
 const DEFAULTS = Object.freeze({ revision: 0, enabled: true, textAr: DEFAULT_AR, textEn: DEFAULT_EN });
 const invalid = () => ApiError.badRequest('Invalid pilot notice settings.', undefined, 'INVALID_PILOT_NOTICE');
 const changed = () => ApiError.conflict('Pilot notice changed. Reload before saving.', 'PILOT_NOTICE_CHANGED');
