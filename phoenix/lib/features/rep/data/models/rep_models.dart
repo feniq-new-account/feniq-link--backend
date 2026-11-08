@@ -8,6 +8,10 @@ int _int(Object? value) => value is num ? value.toInt() : 0;
 
 double _double(Object? value) => value is num ? value.toDouble() : 0;
 
+// Monetary reporting must not coerce absent, fractional or unsafe values to zero.
+int? _safeSyp(Object? value) => value is int &&
+        value.abs() <= 9007199254740991 ? value : null;
+
 /// How a scan turned out. `verified` is the only one that counts as a visit
 /// the warehouse can rely on; the rest are stored too, so the warehouse sees
 /// them (repVisit.model.js).
@@ -69,6 +73,9 @@ class RepStats {
     this.monthOrdersTotal = 0,
     this.ownCommissionRate = 0,
     this.monthCommissionAmount = 0,
+    this.commissionBreakdownVersion,
+    this.monthLegacyDeliveredCommissionSyp,
+    this.monthCollectedCommissionSyp,
   });
 
   final int pharmacyCount;
@@ -80,10 +87,25 @@ class RepStats {
   /// warehouse's rate). 0 when the warehouse gave them no commission.
   final double ownCommissionRate;
 
-  /// The rep's commission on this month's delivered orders.
+  /// Combined historical response, kept only for backward compatibility.
+  /// Never render it as a single earned/payout amount in the updated app.
   final int monthCommissionAmount;
 
-  bool get hasCommission => ownCommissionRate > 0;
+  /// Source-qualified server read model; these are not proof of cash payout.
+  final String? commissionBreakdownVersion;
+  final int? monthLegacyDeliveredCommissionSyp;
+  final int? monthCollectedCommissionSyp;
+
+  bool get commissionBreakdownAvailable =>
+      commissionBreakdownVersion == 'legacy-delivery-and-collected-v1' &&
+      monthLegacyDeliveredCommissionSyp != null &&
+      monthCollectedCommissionSyp != null;
+
+  bool get hasCommission =>
+      ownCommissionRate > 0 ||
+      (commissionBreakdownAvailable &&
+          (monthLegacyDeliveredCommissionSyp != 0 ||
+              monthCollectedCommissionSyp != 0));
 
   factory RepStats.fromJson(Map<String, dynamic>? json) => RepStats(
     pharmacyCount: _int(json?['pharmacyCount']),
@@ -92,6 +114,9 @@ class RepStats {
     monthOrdersTotal: _int(json?['monthOrdersTotal']),
     ownCommissionRate: _double(json?['ownCommissionRate']),
     monthCommissionAmount: _int(json?['monthCommissionAmount']),
+    commissionBreakdownVersion: json?['commissionBreakdownVersion'] is String ? json!['commissionBreakdownVersion'] as String : null,
+    monthLegacyDeliveredCommissionSyp: _safeSyp(json?['monthLegacyDeliveredCommissionSyp']),
+    monthCollectedCommissionSyp: _safeSyp(json?['monthCollectedCommissionSyp']),
   );
 }
 
