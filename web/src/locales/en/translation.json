@@ -41,6 +41,33 @@
   "app": {
     "brand": "Feniq Admin"
   },
+  "adminUx": {
+    "navigation": "Feniq admin navigation",
+    "searchMenu": "Search admin sections",
+    "searchPlaceholder": "Find a section or task...",
+    "closeNavigation": "Close navigation",
+    "noNavigationResults": "No matching sections. Try another search.",
+    "sections": {
+      "overview": "Overview & analytics",
+      "operations": "Accounts & operations",
+      "promotion": "Promotions & ads",
+      "catalog": "Products & catalog",
+      "finance": "Finance",
+      "system": "System & settings"
+    },
+    "commandCenter": "Feniq command center",
+    "dashboardSubtitle": "Review pending work, recent queues and essential admin shortcuts in one place.",
+    "refreshDashboard": "Refresh overview",
+    "invalidDashboardData": "The server returned incomplete or invalid data. Unverified figures are hidden.",
+    "dashboardLoadFailed": "Could not load the admin overview",
+    "quickNavigation": "Admin shortcuts",
+    "pendingTasks": "Work queue overview",
+    "pendingTasksHint": "Pending accounts, offers and advertisements, plus total catalog products.",
+    "recentQueues": "Recently pending items",
+    "queueHint": "A preview of recent items. Open the relevant section to make decisions.",
+    "platformTools": "Platform health and features",
+    "platformToolsHint": "Operational overview and feature switches using the existing administration tools."
+  },
   "nav": {
     "accountingDashboard": "Accounting dashboard",
     "adminTitle": "Admin",

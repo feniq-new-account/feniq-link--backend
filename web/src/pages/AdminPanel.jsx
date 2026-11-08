@@ -4,8 +4,8 @@ import { AdminAppReleasePage } from './AdminAppReleasePage';
 import { AdminMaintenancePage } from './AdminMaintenancePage';
 import { AdminWarehouseAccessPage } from './AdminWarehouseAccessPage';
 import { FeatureControlCenter } from '../components/FeatureControlCenter';
-import { useRef, useState } from 'react';
-import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { isFeatureShown } from '../config/features';
 import { useAuth } from '../auth/AuthContext';
@@ -34,6 +34,7 @@ import { AdminNotificationsPage } from './AdminNotificationsPage';
 import { AdminComplaintsPage } from './AdminComplaintsPage';
 import { AdminComplaintDetailPage } from './AdminComplaintDetailPage';
 import { useStackedTableLabels } from '../hooks/useStackedTableLabels';
+import './AdminUX.css';
 
 function navLinkClassName({ isActive }) {
   return `adm-nav-link${isActive ? ' active' : ''}`;
@@ -51,48 +52,81 @@ export function AdminPanel() {
   // Per-tab "new since you last looked" counts - see realtime/unreadBadges.js.
   const { countUnder, total: unreadTotal } = useUnreadBadges();
 
-  const TABS = [
-    { path: '/admin/dashboard', label: t('nav.dashboard') },
-    { path: '/admin/analytics', label: t('analytics.title') },
-    { path: '/admin/accounts', label: t('nav.accounts') },
-    { path: '/admin/warehouse-access', label: t('warehouseAccess.title') },
-    { path: '/admin/features', label: t('featureControl.title') },
-    { path: '/admin/app-release', label: t('appRelease.title') },
-    { path: '/admin/maintenance', label: t('maintenance.title') },
-    { path: '/admin/visit-verification', label: t('visitVerification.title') },
-    // Who gets in when a pharmacy signs up: the approval switch, the
-    // syndicate list and the Telegram bot.
-    { path: '/admin/registration', label: t('nav.registration') },
-    { path: '/admin/distribution', label: t('nav.distributionTrips') },
-    { path: '/admin/pharmacy-licences', label: t('nav.pharmacyLicences') },
-    { path: '/admin/offers', label: t('nav.offers') },
-    // Review queue for warehouse codes, the platform's own codes, every code.
-    { path: '/admin/discount-codes', label: t('nav.discountCodes'), feature: 'discountCodes' },
-    // One tab, two sub-sections (general ads / package ads) - see
-    // AdvertisementsSubNav. They were separate tabs until it turned out both
-    // render as "الإعلانات" in Arabic.
-    { path: '/admin/advertisements', label: t('nav.advertisements') },
-    { path: '/admin/products', label: t('nav.products') },
-    { path: '/admin/catalog', label: t('nav.centralCatalog') },
-    // Catalog overhaul Phase 5: warehouses' new-item requests and the
-    // manufacturer list.
-    { path: '/admin/catalog-requests', label: t('nav.catalogRequests') },
-    // Duplicate review (/admin/catalog-duplicates, route kept below) is hidden: the unique identityKey index prevents duplicates, so it is only needed after migrating a legacy database.
-    { path: '/admin/manufacturers', label: t('nav.manufacturers') },
-    // Where the categories the catalog import creates get renamed or merged.
-    { path: '/admin/categories', label: t('nav.categories') },
-    // The platform's side of the money: what each warehouse owes in
-    // commission for a chosen window, and what it has actually handed over.
-    { path: '/admin/commission', label: t('nav.commission') },
-    { path: '/admin/exchange-rate', label: t('nav.exchangeRate') },
-    { path: '/admin/notifications', label: t('nav.notifications') },
-    { path: '/admin/complaints', label: t('nav.complaints') },
+  // Keep the exact existing routes and role/feature rules. Groups are a
+  // presentation affordance, not a permission or endpoint change.
+  const SECTIONS = [
+    { key: 'overview', tabs: [
+      { path: '/admin/dashboard', label: t('nav.dashboard') },
+      { path: '/admin/analytics', label: t('analytics.title') },
+    ] },
+    { key: 'operations', tabs: [
+      { path: '/admin/accounts', label: t('nav.accounts') },
+      { path: '/admin/registration', label: t('nav.registration') },
+      { path: '/admin/pharmacy-licences', label: t('nav.pharmacyLicences') },
+      { path: '/admin/warehouse-access', label: t('warehouseAccess.title') },
+      { path: '/admin/visit-verification', label: t('visitVerification.title') },
+      { path: '/admin/distribution', label: t('nav.distributionTrips') },
+      { path: '/admin/notifications', label: t('nav.notifications') },
+      { path: '/admin/complaints', label: t('nav.complaints') },
+    ] },
+    { key: 'promotion', tabs: [
+      { path: '/admin/offers', label: t('nav.offers') },
+      { path: '/admin/discount-codes', label: t('nav.discountCodes'), feature: 'discountCodes' },
+      { path: '/admin/advertisements', label: t('nav.advertisements') },
+    ] },
+    { key: 'catalog', tabs: [
+      { path: '/admin/products', label: t('nav.products') },
+      { path: '/admin/catalog', label: t('nav.centralCatalog') },
+      { path: '/admin/catalog-requests', label: t('nav.catalogRequests') },
+      { path: '/admin/manufacturers', label: t('nav.manufacturers') },
+      { path: '/admin/categories', label: t('nav.categories') },
+    ] },
+    { key: 'finance', tabs: [
+      { path: '/admin/commission', label: t('nav.commission') },
+      { path: '/admin/exchange-rate', label: t('nav.exchangeRate') },
+    ] },
+    { key: 'system', tabs: [
+      { path: '/admin/features', label: t('featureControl.title') },
+      { path: '/admin/app-release', label: t('appRelease.title') },
+      { path: '/admin/maintenance', label: t('maintenance.title') },
+    ] },
   ];
+
+  const { pathname } = useLocation();
+  const [navigationSearch, setNavigationSearch] = useState('');
+  const normalizedSearch = navigationSearch.trim().toLocaleLowerCase();
+  const visibleSections = SECTIONS
+    .map((section) => ({
+      ...section,
+      tabs: section.tabs.filter((tab) =>
+        isFeatureShown(tab.feature) &&
+        (!normalizedSearch || (tab.label + ' ' + t('adminUx.sections.' + section.key))
+          .toLocaleLowerCase().includes(normalizedSearch))),
+    }))
+    .filter((section) => section.tabs.length > 0);
+  const currentTab = SECTIONS.flatMap((section) => section.tabs)
+    .find((tab) => pathname === tab.path || pathname.startsWith(tab.path + '/'));
+  const activePageTitle = currentTab?.label || t('nav.dashboard');
+
+  // The mobile drawer closes on browser back, programmatic navigation, and
+  // escape, not only when a sidebar link is clicked.
+  useEffect(() => { setIsSidebarOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!isSidebarOpen) return;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setIsSidebarOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isSidebarOpen]);
 
   // Closing on every route change covers both a tab click and any in-page
   // "back" navigation - anything that changes the URL while the mobile
   // drawer happens to be open.
-  const closeSidebar = () => setIsSidebarOpen(false);
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+    setNavigationSearch('');
+  };
   // Phone-width tables become cards whose cells name their column.
   const shellRef = useRef(null);
   useStackedTableLabels(shellRef);
@@ -102,20 +136,36 @@ export function AdminPanel() {
       <div
         className={`adm-sidebar-backdrop${isSidebarOpen ? ' adm-sidebar-open' : ''}`}
         onClick={closeSidebar}
+        aria-hidden="true"
       />
-      <aside className={`adm-sidebar${isSidebarOpen ? ' adm-sidebar-open' : ''}`}>
+      <aside id="admin-sidebar-navigation" aria-label={t('adminUx.navigation')} className={`adm-sidebar${isSidebarOpen ? ' adm-sidebar-open' : ''}`}>
         <div className="adm-sidebar-header">
-          <img className="adm-sidebar-logo" src="/images/feniq-mark-dark.png" alt={t('nav.brandName')} />
-          <div className="adm-sidebar-brand">{t('nav.brandName')}</div>
-          <div className="adm-sidebar-subtitle">{t('nav.adminTitle')}</div>
+          <div className="adm-brand-lockup">
+            <img className="adm-sidebar-logo" src="/images/feniq-mark-dark.png" alt={t('nav.brandName')} />
+            <div>
+              <div className="adm-sidebar-brand">{t('nav.brandName')}</div>
+              <div className="adm-sidebar-subtitle">{t('nav.adminTitle')}</div>
+            </div>
+            <button type="button" className="adm-close-nav" aria-label={t('adminUx.closeNavigation')} onClick={closeSidebar}>×</button>
+          </div>
+          <label className="adm-nav-search-label" htmlFor="admin-nav-search">{t('adminUx.searchMenu')}</label>
+          <input id="admin-nav-search" className="adm-nav-search" type="search" autoComplete="off"
+            value={navigationSearch} onChange={(event) => setNavigationSearch(event.target.value)}
+            placeholder={t('adminUx.searchPlaceholder')} />
         </div>
-        <nav className="adm-nav">
-          {TABS.filter((tab) => isFeatureShown(tab.feature)).map((tab) => (
-            <NavLink key={tab.path} to={tab.path} className={navLinkClassName} onClick={closeSidebar}>
-              {tab.label}
-              <NavBadge count={countUnder(tab.path)} />
-            </NavLink>
+        <nav className="adm-nav" aria-label={t('adminUx.navigation')}>
+          {visibleSections.map((section) => (
+            <section key={section.key} className="adm-nav-section" aria-label={t('adminUx.sections.' + section.key)}>
+              <h2 className="adm-nav-section-title">{t('adminUx.sections.' + section.key)}</h2>
+              {section.tabs.map((tab) => (
+                <NavLink key={tab.path} to={tab.path} className={navLinkClassName} onClick={closeSidebar}>
+                  {tab.label}
+                  <NavBadge count={countUnder(tab.path)} />
+                </NavLink>
+              ))}
+            </section>
           ))}
+          {!visibleSections.length && <p className="adm-nav-empty" role="status">{t('adminUx.noNavigationResults')}</p>}
         </nav>
       </aside>
 
@@ -127,12 +177,17 @@ export function AdminPanel() {
               className="adm-hamburger"
               aria-label={unreadTotal > 0 ? t('nav.openMenuWithUpdates') : t('nav.openMenu')}
               onClick={() => setIsSidebarOpen((open) => !open)}
+              aria-controls="admin-sidebar-navigation"
+              aria-expanded={isSidebarOpen}
             >
               &#9776;
               {/* The sidebar - and its badges - is off-canvas on a phone. */}
               {unreadTotal > 0 && <span className="nav-menu-dot" aria-hidden="true" />}
             </button>
-            <div className="adm-topbar-title">{t('nav.adminTitle')}</div>
+            <div className="adm-topbar-context">
+              <span className="adm-topbar-overline">{t('nav.adminTitle')}</span>
+              <div className="adm-topbar-title">{activePageTitle}</div>
+            </div>
           </div>
           <div className="adm-topbar-actions">
             <span className="user-name">{user?.name}</span>
