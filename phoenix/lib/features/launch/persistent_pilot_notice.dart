@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/config/app_config.dart';
 import 'package:feniq/core/services/storage_service.dart';
 
@@ -157,75 +157,92 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
 
   @override
   Widget build(BuildContext context) {
-    final notice = _notice;
-    final visible = _started && notice != null && notice.enabled;
-    final arabic = Localizations.localeOf(context).languageCode == 'ar';
-    final message = notice == null ? '' : arabic ? notice.textAr : notice.textEn;
-    // Android 15 draws content edge-to-edge. The global notice is ABOVE the
-    // Navigator, unlike an AppBar: it must reserve the status-bar inset itself.
-    // SafeArea also removes that inset from the descendant MediaQuery so the
-    // underlying AppBar does not reserve it a second time.
-    const navy = Color(0xFF1B2A4A);
-    const strip = Color(0xFF273D59);
-    const orange = Color(0xFFF26522);
-    final content = Column(
-      children: [
-        if (visible)
-          Material(
-            key: const ValueKey('persistentPilotNotice'),
-            color: strip,
-            child: SizedBox(
-              width: double.infinity,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.info_outline_rounded, size: 16, color: orange),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Semantics(
-                        label: message,
-                        excludeSemantics: true,
-                        child: Text(
-                          message,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            height: 1.25,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
+    // Keep the server-driven ON/OFF state above the navigator, but render no
+    // banner here: the pharmacist landing page has its own inline slot below
+    // "Choose warehouse". This leaves the Android status bar and AppBars alone.
+    final notice = _started && _notice?.enabled == true ? _notice : null;
+    return PilotNoticeScope(notice: notice, child: widget.child);
+  }
+}
+
+/// The last verified administrator notice, inherited without recreating the
+/// router or resetting any page when its text / ON-OFF flag changes.
+class PilotNoticeScope extends InheritedWidget {
+  const PilotNoticeScope({super.key, required this.notice, required super.child});
+
+  final PilotNotice? notice;
+
+  static PilotNotice? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PilotNoticeScope>()?.notice;
+
+  @override
+  bool updateShouldNotify(PilotNoticeScope oldWidget) => 
+      notice?.enabled != oldWidget.notice?.enabled ||
+      notice?.textAr != oldWidget.notice?.textAr ||
+      notice?.textEn != oldWidget.notice?.textEn;
+}
+
+/// Plain text only, in the existing announcement slot below the warehouse
+/// screen header. No card, background, border, or fixed system-bar overlay.
+/// Splitting on the em dash keeps both styled parts editable in one Admin field.
+class PilotNoticeInline extends StatelessWidget {
+  const PilotNoticeInline({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final notice = PilotNoticeScope.of(context);
+    if (notice == null || !notice.enabled) {
+      return const SizedBox.shrink();
+    }
+
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final message = (isArabic ? notice.textAr : notice.textEn).trim();
+    final separatorIndex = message.indexOf('—');
+    final heading = separatorIndex >= 0
+        ? message.substring(0, separatorIndex).trim()
+        : message;
+    final description = separatorIndex >= 0
+        ? message.substring(separatorIndex + 1).trim()
+        : '';
+
+    return Padding(
+      key: const ValueKey('persistentPilotNotice'),
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 8, top: 1),
+            child: Icon(Icons.rocket_launch_outlined,
+                size: 22, color: AppColors.primaryOf(context)),
+          ),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (heading.isNotEmpty)
+                  Text(
+                    heading,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.primaryOf(context),
+                      fontWeight: FontWeight.w700,
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                if (description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondaryOf(context),
+                      height: 1.55,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-        Expanded(child: widget.child),
-      ],
-    );
-
-    if (!visible) return content;
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: navy,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-      ),
-      child: ColoredBox(
-        color: navy,
-        child: SafeArea(
-          top: true,
-          bottom: false,
-          left: false,
-          right: false,
-          child: content,
-        ),
+        ],
       ),
     );
   }
