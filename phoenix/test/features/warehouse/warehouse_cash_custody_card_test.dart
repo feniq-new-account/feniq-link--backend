@@ -22,6 +22,7 @@ Map<String, dynamic> custodyResponse({
     'originalCommissionSyp': ready ? 6000 : null,
     'netWarehouseDueSyp': ready ? netDue : null,
     'remittedSyp': 20000,
+    'cashInCustodySyp': 40000,
     'blockers': ready ? [] : [{'code': 'CUSTODY_FROZEN_CONTRACT_REQUIRED'}],
   },
   'movements': movements,
@@ -68,6 +69,7 @@ void main() {
     expect(find.text('60,000 ل.س'), findsOneWidget);
     expect(find.text('6,000 ل.س'), findsOneWidget);
     expect(find.text('20,000 ل.س'), findsOneWidget);
+    expect(find.text('40,000 ل.س'), findsOneWidget);
     expect(find.text('34,000 ل.س'), findsNWidgets(2));
     expect(find.text('بانتظار تأكيد المحاسب'), findsOneWidget);
     expect(find.textContaining('الحوالة المعلقة لا تُحسب مسددة'), findsOneWidget);
