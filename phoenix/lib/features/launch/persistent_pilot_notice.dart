@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:feniq/config/app_config.dart';
 import 'package:feniq/core/services/storage_service.dart';
 
@@ -160,32 +161,42 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
     final visible = _started && notice != null && notice.enabled;
     final arabic = Localizations.localeOf(context).languageCode == 'ar';
     final message = notice == null ? '' : arabic ? notice.textAr : notice.textEn;
-    final palette = Theme.of(context).colorScheme;
-    return Column(
+    // Android 15 draws content edge-to-edge. The global notice is ABOVE the
+    // Navigator, unlike an AppBar: it must reserve the status-bar inset itself.
+    // SafeArea also removes that inset from the descendant MediaQuery so the
+    // underlying AppBar does not reserve it a second time.
+    const navy = Color(0xFF1B2A4A);
+    const strip = Color(0xFF273D59);
+    const orange = Color(0xFFF26522);
+    final content = Column(
       children: [
         if (visible)
           Material(
             key: const ValueKey('persistentPilotNotice'),
-            color: palette.secondaryContainer,
+            color: strip,
             child: SizedBox(
               width: double.infinity,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.info_outline_rounded, size: 16, color: palette.onSecondaryContainer),
-                    const SizedBox(width: 7),
+                    const Icon(Icons.info_outline_rounded, size: 16, color: orange),
+                    const SizedBox(width: 8),
                     Flexible(
-                      child: Text(
-                        message,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          height: 1.2,
-                          color: palette.onSecondaryContainer,
+                      child: Semantics(
+                        label: message,
+                        child: Text(
+                          message,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            height: 1.25,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
@@ -196,6 +207,25 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
           ),
         Expanded(child: widget.child),
       ],
+    );
+
+    if (!visible) return content;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: navy,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: ColoredBox(
+        color: navy,
+        child: SafeArea(
+          top: true,
+          bottom: false,
+          left: false,
+          right: false,
+          child: content,
+        ),
+      ),
     );
   }
 }
