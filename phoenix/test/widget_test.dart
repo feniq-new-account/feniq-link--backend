@@ -127,6 +127,9 @@ void main() {
   testWidgets('App boots to the splash screen', (tester) async {
     await _pumpApp(tester);
     expect(find.byType(SplashView), findsOneWidget);
+    // Dispose the full app before the test invariant check: its global
+    // admin-notice refresh is a legitimate periodic timer while mounted.
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   // Regression: a SettingsCubit change (theme / locale) rebuilds
