@@ -33,9 +33,30 @@ class WarehouseSummaryCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                l10n.warehouseSummaryTitle,
-                style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              Row(
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(Icons.insights_outlined,
+                        color: AppColors.primaryTextOf(context)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.warehouseSummaryTitle,
+                      style: context.textTheme.titleMedium?.copyWith(
+                        color: AppColors.textOf(context),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSizes.spacingSmall),
               Wrap(
@@ -107,25 +128,32 @@ class SummaryFigures extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ResponsiveStatsGrid(
-          minTileWidth: 150,
+          minTileWidth: 156,
           maxColumns: 4,
           children: [
             _Stat(
               label: l10n.warehouseSummarySales,
+              icon: Icons.trending_up_outlined,
               value: formatSyp(current.salesSyp, suffix),
               sub: l10n.warehouseSummaryInvoices(current.invoiceCount),
               change: _Change(current: current.salesSyp, previous: previous.salesSyp),
             ),
             _Stat(
               label: l10n.warehouseSummaryCollections,
+              icon: Icons.payments_outlined,
               value: formatSyp(current.collectionsSyp, suffix),
               valueColor: AppColors.secondaryOf(context),
               sub: l10n.warehouseSummaryPayments(current.paymentCount),
               change: _Change(current: current.collectionsSyp, previous: previous.collectionsSyp),
             ),
-            _Stat(label: l10n.warehouseSummaryReturns, value: formatSyp(current.returnsSyp, suffix)),
+            _Stat(
+              label: l10n.warehouseSummaryReturns,
+              icon: Icons.assignment_return_outlined,
+              value: formatSyp(current.returnsSyp, suffix),
+            ),
             _Stat(
               label: l10n.warehouseSummaryTotalDebts,
+              icon: Icons.account_balance_wallet_outlined,
               value: formatSyp(outstanding.totalDebtSyp, suffix),
               valueColor: AppColors.errorOf(context),
               sub: l10n.warehouseSummaryDebtors(outstanding.debtorCount),
@@ -153,10 +181,11 @@ class SummaryFigures extends StatelessWidget {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value, this.valueColor, this.sub, this.extraSub, this.change});
+  const _Stat({required this.label, required this.value, required this.icon, this.valueColor, this.sub, this.extraSub, this.change});
 
   final String label;
   final String value;
+  final IconData icon;
   final Color? valueColor;
   final String? sub;
   final String? extraSub;
@@ -164,20 +193,40 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: muted),
-        const SizedBox(height: AppSizes.spacingXSmall),
-        Text(
-          value,
-          style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: valueColor),
+    final muted = context.textTheme.bodySmall?.copyWith(
+      color: AppColors.textSecondaryOf(context));
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceOf(context),
+        border: Border.all(color: AppColors.borderOf(context)),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 19, color: valueColor ?? AppColors.primaryTextOf(context)),
+            const SizedBox(height: 8),
+            Text(label, style: muted),
+            const SizedBox(height: AppSizes.spacingXSmall),
+            Text(
+              value,
+              softWrap: true,
+              style: context.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: valueColor ?? AppColors.textOf(context),
+              ),
+            ),
+            if (sub != null) ...[
+              const SizedBox(height: 5),
+              Text(sub!, style: muted),
+            ],
+            if (extraSub != null) Text(extraSub!, style: muted),
+            ?change,
+          ],
         ),
-        if (sub != null) Text(sub!, style: muted),
-        if (extraSub != null) Text(extraSub!, style: muted),
-        ?change,
-      ],
+      ),
     );
   }
 }
