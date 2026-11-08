@@ -101,7 +101,7 @@ export function AdminPanel() {
       tabs: section.tabs.filter((tab) =>
         isFeatureShown(tab.feature) &&
         (!normalizedSearch || (tab.label + ' ' + t('adminUx.sections.' + section.key))
-          .toLocaleLowerCase().includes(normalizedSearch)),
+          .toLocaleLowerCase().includes(normalizedSearch))),
     }))
     .filter((section) => section.tabs.length > 0);
   const currentTab = SECTIONS.flatMap((section) => section.tabs)
