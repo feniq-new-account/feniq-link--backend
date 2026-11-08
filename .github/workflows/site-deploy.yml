@@ -9,7 +9,12 @@
 # لا تستبدل APK الموقع نتيجة بناء Android أو دفع موقع جديد تلقائياً.
 name: Deploy website
 
+# One-off user-approved publication of verified, signed build 1143.
+# Kept on this dedicated release branch only; main remains manual-only.
 on:
+  push:
+    branches: [release/approved-site-apk-1143-20261108]
+    paths: ['.github/workflows/site-deploy.yml']
   workflow_dispatch:
     inputs:
       apk_run_id:
@@ -28,7 +33,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/release/approved-site-apk-1143-20261108')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -55,7 +60,7 @@ jobs:
         id: apk
         env:
           GH_TOKEN: ${{ github.token }}
-          APPROVED_RUN_ID: ${{ inputs.apk_run_id }}
+          APPROVED_RUN_ID: ${{ github.event_name == 'push' && '42384297238' || inputs.apk_run_id }}
         run: |
           if [ -z "$APPROVED_RUN_ID" ]; then
             echo "No APK run approved: preserving the existing website download."
