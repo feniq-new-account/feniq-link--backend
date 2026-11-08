@@ -16,8 +16,8 @@ import 'package:feniq/core/widgets/app_dialog.dart';
 import 'package:feniq/core/widgets/custom_card.dart';
 import 'package:feniq/features/auth/presentation/managers/auth_cubit.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_home_cubit.dart';
-import 'package:feniq/features/rep/presentation/utils/rep_labels.dart';
 import 'package:feniq/features/rep/presentation/widgets/rep_stat_tile.dart';
+import 'package:feniq/features/rep/presentation/widgets/rep_commission_summary.dart';
 import 'package:feniq/routes/route_names.dart';
 
 /// The rep's own account: who they are, which warehouse they work for, their
@@ -126,17 +126,12 @@ class RepProfileTab extends StatelessWidget {
                   ),
                 ],
               ),
-              if (stats.hasCommission) ...[
+              // Do not display financial amounts from a failed/stale /rep/me
+              // request. The new summary distinguishes legacy deliveries
+              // from collection_v2 events posted on verified cash.
+              if (state.status == RepLoadStatus.loaded && stats.hasCommission) ...[
                 const SizedBox(height: AppSizes.spacingSmall),
-                RepStatTile(
-                  value: formatSyp(stats.monthCommissionAmount, l10n.currencySuffix),
-                  label: l10n.repStatCommissionMonth,
-                ),
-                const SizedBox(height: AppSizes.spacingSmall),
-                Text(
-                  l10n.repCommissionHint(repPercent(stats.ownCommissionRate)),
-                  style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
-                ),
+                RepCommissionSummary(stats: stats),
               ],
             ],
             const SizedBox(height: AppSizes.spacingMedium),
