@@ -60,3 +60,14 @@ test('public text contains no hard-coded current APK build', () => {
   assert.doesNotMatch(html, /Build 22|19 تشرين الأول 2026/);
   assert.match(script, /v\.build/);
 });
+
+test('public contact is consistently the approved Syrian number', () => {
+  const contact = '963938456457';
+  for (const page of [html, privacy]) {
+    assert.match(page, new RegExp('wa\\.me/' + contact));
+    assert.match(page, new RegExp('tel:\\+' + contact));
+    assert.doesNotMatch(page, /963982001415|0982-001415/);
+  }
+  assert.match(html, /0938456457/);
+  assert.match(privacy, /0938456457/);
+});
