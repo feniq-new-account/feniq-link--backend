@@ -3,12 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>فينيق | طلب الأدوية بين المستودعات والصيدليات</title>
-<meta name="description" content="فينيق يربط مستودعات الأدوية بالصيدليات: الصيدلية تطلب من التطبيق، والمستودع يستلم الطلبية مرتبة على لوحة تحكم. مرحلة الإطلاق في اللاذقية.">
+<title>فينيق لينك | منصة الصيدليات ومستودعات الأدوية</title>
+<meta name="description" content="فينيق لينك منصة للصيدليات ومستودعات الأدوية في اللاذقية: اكتشف الأصناف والعروض، وتابع العمل حسب صلاحية كل حساب. التسجيل والتصفح متاحان في مرحلة الإطلاق.">
 <meta name="theme-color" content="#0E1A2C">
-<meta property="og:title" content="فينيق | طلب الأدوية بين المستودعات والصيدليات">
-<meta property="og:description" content="طلبيات الصيدليات، مرتّبة من أول صنف لحد التسليم.">
-<meta property="og:image" content="img/og.jpg">
+<meta property="og:title" content="فينيق لينك | شغلك الدوائي بمكان واحد">
+<meta property="og:description" content="كتالوج وعروض للصيدليات، وأدوات للمستودع والمندوب والمحاسب، كل حساب بصلاحياته.">
+<meta property="og:image" content="https://feniq-site.onrender.com/img/og.jpg">
+<meta property="og:image:alt" content="فينيق لينك — منصة الصيدليات والمستودعات">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="فينيق لينك">
+<meta property="og:url" content="https://feniq-site.onrender.com/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://feniq-site.onrender.com/">
 <meta property="og:locale" content="ar_SY">
 <link rel="icon" href="img/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
@@ -27,33 +33,45 @@
     </a>
     <nav class="bar__nav" aria-label="أقسام الصفحة">
       <a href="#sides">للصيدليات والمستودعات</a>
-      <a href="#screens">لوحة المحاسب</a>
+      <a href="#roles">واجهات الفريق</a>
       <a href="#start">كيف نبدأ</a>
       <a href="#contact">تواصل</a>
     </nav>
+    <button type="button" class="mobile-menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="mobile-menu" aria-label="افتح قائمة الموقع"><span aria-hidden="true">☰</span><span class="mobile-menu-toggle__label">القائمة</span></button>
     <a class="btn btn--pull btn--sm" href="#download">نزّل التطبيق</a>
   </div>
+  <nav class="mobile-menu" id="mobile-menu" aria-label="قائمة الموقع على الهاتف" hidden>
+    <a href="#sides">للصيدليات والمستودعات</a>
+    <a href="#roles">واجهات الفريق</a>
+    <a href="#demo">جرّب المنصة</a>
+    <a href="#start">كيف نبدأ</a>
+    <a href="#faq">الأسئلة الشائعة</a>
+    <a href="#contact">تواصل معنا</a>
+  </nav>
 </header>
 
 <main id="main">
 
-<section class="hero" id="top">
+<section class="hero" id="top" aria-labelledby="hero-title">
   <div class="hero__copy">
-    <p class="eyebrow">فينيق · للصيدليات ومستودعات الأدوية</p>
-    <h1>طلبيات الصيدليات، مرتّبة من أول صنف لحد التسليم.</h1>
-    <p class="lede">تطبيق واحد للصيدلي والمندوب وصاحب المستودع، كل حساب بواجهته. ولوحة للمحاسب يرتّب فيها الطلبيات والحسابات، إلى جانب طريقة شغله الحالية.</p>
+    <p class="eyebrow"><span class="hero-bullet" aria-hidden="true"></span> فينيق لينك · نبدأ من اللاذقية</p>
+    <h1 id="hero-title">صيدليتك ومستودعك، <em>على اتصال.</em></h1>
+    <p class="lede">من البحث عن الصنف ومتابعة العروض إلى تنظيم الطلبات والحسابات: منصة واحدة، وواجهة مناسبة لكل دور.</p>
     <div class="actions">
       <a class="btn btn--pull" href="#download">نزّل تطبيق فينيق</a>
-      <a class="btn btn--plate" href="#contact">احجز زيارة لمستودعك</a>
+      <a class="btn btn--plate" href="#contact">للمستودعات: احجز تواصلاً</a>
     </div>
-    <p class="where"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>مرحلة الإطلاق: اللاذقية</p>
+    <p class="launch-pill"><span aria-hidden="true">●</span> التسجيل والتصفح متاحان الآن؛ إرسال الطلبات مرتبط بموعد تفعيل الخدمة داخل التطبيق.</p>
   </div>
-
-  <figure class="hero-preview">
-    <div class="hero-preview__label"><span class="status-dot"></span>لوحة مستودعك · كل طلبية بمرحلتها</div>
-    <img src="img/screen-orders.webp" width="1280" height="720" alt="واجهة فينيق لعرض الطلبيات حسب حالتها" fetchpriority="high">
-    <figcaption>لقطة فعلية من اللوحة ببيانات تجريبية.</figcaption>
-    <a href="#demo">جرّب كيف بتمشي الطلبية ←</a>
+  <figure class="hero-preview hero-preview--journey" aria-label="مخطط تعريفي مبسط لتجربة فينيق">
+    <div class="journey-top"><span class="journey-brand">✦ فينيق لينك</span><span class="journey-label">تجربة مبسطة</span></div>
+    <div class="journey-title">كل طرف يعرف وين صارت الطلبية</div>
+    <ol class="journey-steps">
+      <li><span class="journey-number">01</span><span><strong>الصيدلية</strong><small>تبحث عن الأصناف والعروض وتجهّز الطلبية</small></span></li>
+      <li><span class="journey-number">02</span><span><strong>المستودع</strong><small>يراجع الطلبات وفق حالة الإطلاق والصلاحيات</small></span></li>
+      <li><span class="journey-number">03</span><span><strong>المندوب والمدير والمحاسب</strong><small>لكل شخص أدواته ومعلوماته المسموحة</small></span></li>
+    </ol>
+    <figcaption>رسم توضيحي لمسار العمل، وليس بيانات طلبات حقيقية.</figcaption>
   </figure>
 </section>
 
@@ -71,34 +89,54 @@
 
 <section class="sides" id="sides" aria-labelledby="sides-h">
   <div class="wrap">
-    <h2 id="sides-h">للصيدلية والمستودع، كل واحد إله مساحة شغله.</h2>
-    <p class="sec-lede">من البحث عن الصنف لحد متابعة الطلبية والحساب.</p>
+    <p class="eyebrow">منصة واحدة، احتياجات مختلفة</p>
+    <h2 id="sides-h">بنتعامل مع يومك، مو بنغيّر طريقة شغلك بالقوة.</h2>
+    <p class="sec-lede">ابحث واطّلع على الأصناف المتاحة، وتابع عملك بحسب دورك. تفعيل إرسال الطلبات مرتبط بمرحلة الإطلاق وإعدادات المنصة.</p>
     <div class="audiences">
       <article class="audience">
-        <p class="eyebrow">للصيدلية · تطبيق Android</p>
-        <h3>اطلب وتابع من موبايلك.</h3>
-        <ul><li><b>الأصناف قدامك.</b> أسعار وتوفر وعروض وبونص، مع بدائل للأصناف.</li><li><b>طلبية واضحة.</b> اختار الكميات وتابع الحالة والإشعارات.</li><li><b>سجلك محفوظ.</b> طلبيات سابقة وإعادة طلب ومرتجعات ورصيدك عند كل مستودع.</li></ul>
-        <a class="btn btn--pull" href="#download">نزّل تطبيق فينيق</a>
+        <p class="eyebrow">للصيدلية · Android</p>
+        <h3>كل ما تحتاجه لتبدأ من موبايلك.</h3>
+        <ul>
+          <li><b>كتالوج واضح</b>تصفّح الأصناف والأسعار والعروض المسموح بعرضها لحسابك.</li>
+          <li><b>تجهيز الطلب</b>كوّن سلتك وتابع حالة تفعيل الطلبات من داخل التطبيق.</li>
+          <li><b>استمرار الوصول</b>راجع البيانات المحفوظة دون اتصال عند توفر نسخة مزامنة سابقة.</li>
+        </ul>
+        <a class="btn btn--pull" href="#download">التطبيق للصيدليات</a>
       </article>
       <article class="audience">
-        <p class="eyebrow">للمستودع · تطبيق للمدير ولوحة للمحاسب</p>
-        <h3>مديرك بيتابع، ومحاسبك بينظّم.</h3>
-        <ul><li><b>طلبيات مرتّبة.</b> استقبل الطلبات وتابع مراحلها، وحدّث الأصناف والأسعار من اللوحة أو Excel.</li><li><b>متابعة للمدير.</b> يشوف الطلبات والتحصيل والمستحقات وفريقه من التطبيق، دون إدخال قيود قبض.</li><li><b>لوحة للمحاسب.</b> مشتريات ودفعات وأرصدة وفواتير، وتسجيل القبض بالصوت أو الكتابة.</li><li><b>أدوات لمندوبك.</b> حساب لكل مندوب، صيدلياته وزياراته وطلبياته وعمولته.</li></ul>
-        <a class="btn btn--plate" href="#contact">احجز زيارة لمستودعك</a>
+        <p class="eyebrow">للمستودع · الويب وAndroid</p>
+        <h3>فريقك يشتغل، وكل حساب بصلاحياته.</h3>
+        <ul>
+          <li><b>الطلبات والأصناف</b>متابعة الطلبات وتحديث الكتالوج ضمن الصلاحيات الممنوحة.</li>
+          <li><b>متابعة المدير</b>رؤية النشاط والتقارير والمستحقات دون تسجيل قبض أو تغيير قيود.</li>
+          <li><b>عمل المحاسب والمندوب</b>أدوات مالية وميدانية منفصلة مع ضبط صلاحيات كل دور.</li>
+        </ul>
+        <a class="btn btn--plate" href="#contact">تواصل لتفعيل مستودعك</a>
       </article>
     </div>
-    <p class="pay">الدفع حسب اتفاق الصيدلية والمستودع. فينيق يسجّل التعامل، وما بيطلب بطاقات أو دفعاً إلكترونياً.</p>
   </div>
 </section>
 
-
+<section class="roles" id="roles" aria-labelledby="roles-h">
+  <div class="wrap">
+    <p class="eyebrow">خمس واجهات حسب الصلاحية</p>
+    <h2 id="roles-h">نفس المنصة، وما حدا بيشوف إلا شغله.</h2>
+    <div class="role-grid">
+      <article class="role"><span class="role-index">01</span><h3>الصيدلاني</h3><p>كتالوج، عروض، سلة، وسجل الطلبات عند تفعيلها.</p></article>
+      <article class="role"><span class="role-index">02</span><h3>المندوب</h3><p>صيدلياته ومتابعة الزيارات والمهام المصرح بها.</p></article>
+      <article class="role"><span class="role-index">03</span><h3>مدير المستودع</h3><p>إشراف وتقارير للقراءة، دون تنفيذ عمليات قبض.</p></article>
+      <article class="role"><span class="role-index">04</span><h3>المحاسب</h3><p>سجلات المستودع والتحصيل والتسويات ضمن الصلاحيات.</p></article>
+      <article class="role"><span class="role-index">05</span><h3>إدارة فينيق</h3><p>التحكم بالمنصة، ومراجعة الحسابات، وتفعيل الميزات.</p></article>
+    </div>
+  </div>
+</section>
 
 <section class="demo" id="demo" aria-labelledby="demo-h">
   <div class="wrap demo__in"><div>
     <p class="eyebrow">كل أصناف المستودع، بدرج واحد بجيبتك.</p>
-    <h2 id="demo-h">جرّب طلبية، بدون تسجيل.</h2>
-    <p class="sec-lede">ابحث عن دواء أو افتح درج، أضف صنف، وبعدين جرّب إرسال الطلبية وشوف مراحلها.</p>
-    <p class="demo-help">هاي محاكاة للتعريف بفينيق. ما فيها أسعار، وما بينبعت منها أي طلب حقيقي.</p>
+    <h2 id="demo-h">جرّب فكرة الطلبية، بدون تسجيل.</h2>
+    <p class="sec-lede">ابحث عن دواء أو افتح درج، أضف صنف، وبعدين جرّب محاكاة إرسال الطلبية وشوف مراحلها الافتراضية.</p>
+    <p class="demo-help">هذه محاكاة مستقلة للتعريف بالتجربة. لا تعرض أسعاراً حقيقية ولا تنشئ طلباً أو حساباً.</p>
   </div>  <div class="cabinet-wrap">
     <div class="cabinet" id="cabinet">
       <form class="labeler" role="search" id="labeler" autocomplete="off">
@@ -137,34 +175,24 @@
         </ol>
       </div>
     </div>
-    <p class="demo-note" id="demo-note">تجربة فقط: أسماء الأصناف من سجل وزارة الصحة السورية، ولا شيء يُرسل فعلاً.</p>
+    <p class="demo-note" id="demo-note">محاكاة توضيحية لا ترتبط ببيانات المستودعات الحقيقية؛ لا يُرسل منها أي طلب.</p>
   </div></div>
 </section>
 <section class="launch" aria-labelledby="launch-h"><div class="wrap launch__in">
-  <div><p class="eyebrow">عم نبدأ من اللاذقية</p><h2 id="launch-h">منجهّز البداية معكم، خطوة بخطوة.</h2></div>
-  <p>فينيق بمرحلة الإطلاق. فريقنا بيسجّل المستودعات، بيساعد بإعداد الأصناف، وبيعرّف الصيدليات على المنصة. منعرض عليكم التطبيق واللوحة بشكل مباشر، ومنطوّر التجربة من ملاحظاتكم.</p>
+  <div><p class="eyebrow">الإطلاق التدريجي · اللاذقية</p><h2 id="launch-h">ابدأ بالتسجيل والتصفح. والباقي خطوة بخطوة.</h2></div>
+  <p>تفعيل الطلبات تحدّده إدارة فينيق ويظهر داخل التطبيق. نضيف المستودعات تدريجياً، ونعرّف الصيدليات على الخدمات الفعلية دون وعود بتواريخ أو ميزات غير مفعّلة.</p>
 </div></section>
+
 <section class="screens" id="screens" aria-labelledby="screens-h">
   <div class="wrap">
-    <h2 id="screens-h">لوحة المستودع: ما تراه كل يوم.</h2>
-    <p class="sec-lede">لقطات من لوحة التحكم ببيانات تجريبية: «مستودع تجريبي» والصيدليات والأسعار توضيحية.</p>
-    <div class="shots">
-      <figure class="wide">
-        <img src="img/screen-orders.webp" width="1280" height="720" alt="لوحة الطلبات بحالاتها: جديدة ومقبولة وبالطريق وتم التسليم" loading="lazy">
-        <figcaption><b>طلبياتك مرتّبة.</b> جديدة، مقبولة، بالطريق، تم التسليم. زر واحد ينقل الطلبية للمرحلة التالية.</figcaption>
-      </figure>
-      <figure>
-        <img src="img/screen-collect.webp" width="1000" height="562" alt="سؤال قبضت؟ مع ثلاثة أزرار: كامل، جزء، بعدين" loading="lazy">
-        <figcaption><b>«قبضت؟»</b> عند التسليم: كامل، جزء، أو بعدين. والدفعة تنسجّل لحالها على حساب الصيدلية.</figcaption>
-      </figure>
-      <figure>
-        <img src="img/screen-voice.webp" width="1000" height="562" alt="تسجيل دفعة بالصوت مع بطاقة تأكيد قبل الحفظ" loading="lazy">
-        <figcaption><b>سجّل بصوتك.</b> قل «صيدلية الياسمين دفعت ثلاثة آلاف»، فتظهر بطاقة تأكيد قبل أي حفظ. أو اكتب الجملة.</figcaption>
-      </figure>
-      <figure class="wide">
-        <img src="img/screen-accounts.webp" width="1280" height="721" alt="جدول حسابات الصيدليات: المشتريات والمدفوع والباقي وآخر دفعة" loading="lazy">
-        <figcaption><b>حسابات واضحة.</b> لكل صيدلية: مشترياتها، ما دفعته، الباقي، وآخر دفعة. دفع كامل بكبسة أو دفعة جزئية.</figcaption>
-      </figure>
+    <p class="eyebrow">كيف بننظّم العمل</p>
+    <h2 id="screens-h">متابعة واضحة من دون خلط الصلاحيات.</h2>
+    <p class="sec-lede">كل عملية لها صاحب صلاحية. التفاصيل والخيارات المتاحة تتحدد حسب حساب المستودع وحالة تفعيل الخدمة.</p>
+    <div class="capability-grid">
+      <article class="capability"><span aria-hidden="true">01 /</span><h3>إدارة الطلبات</h3><p>خطوات متابعة منظمة للحالة من الطلب حتى التسليم عند السماح باستقبال الطلبات.</p></article>
+      <article class="capability"><span aria-hidden="true">02 /</span><h3>المحاسبة والتحصيل</h3><p>عرض السجلات وتنفيذ العمليات المالية المخوّلة من خلال المحاسب، مع الفصل بين القبض والمستحقات.</p></article>
+      <article class="capability"><span aria-hidden="true">03 /</span><h3>متابعة المدير</h3><p>مؤشرات وتقارير للقراءة دون إعطاء المدير صلاحية تسجيل قبض أو تعديل القيود المالية.</p></article>
+      <article class="capability"><span aria-hidden="true">04 /</span><h3>التحكم المركزي</h3><p>تدير فينيق حالة الإطلاق وتفعيل الميزات من لوحة الإدارة، بما فيها الميزات الاختيارية.</p></article>
     </div>
   </div>
 </section>
@@ -174,9 +202,9 @@
     <h2 id="start-h">كيف نبدأ مع مستودعك</h2>
     <p class="sec-lede">فريق فينيق بيسجّل مستودعك وبيرتّب البداية معك:</p>
     <ol class="steps">
-      <li><span class="num" aria-hidden="true">1</span><h3>حساب المستودع</h3><p>فريقنا بينشئ حساب صاحب المستودع وحساب المحاسب لنفس المستودع. وأنتم بتنشئوا حسابات مندوبيكم.</p></li>
+      <li><span class="num" aria-hidden="true">1</span><h3>حساب المستودع</h3><p>بنساعدكم في إنشاء حسابات المستودع وتحديد أدوار المدير والمحاسب والمندوب.</p></li>
       <li><span class="num" aria-hidden="true">2</span><h3>الأصناف والأسعار</h3><p>منساعدكم بأول رفع للأصناف من ملف Excel، ومنعرّف الصيدليات بمستودعكم.</p></li>
-      <li><span class="num" aria-hidden="true">3</span><h3>استقبال الطلبيات</h3><p>تبدأ الطلبيات بالوصول إلى لوحة التحكم، وتجهزونها بالطريقة التي نتفق عليها.</p></li>
+      <li><span class="num" aria-hidden="true">3</span><h3>استقبال الطلبيات</h3><p>عندما تفعّل إدارة المنصة استقبال الطلبات، تظهر في لوحة المستودع وفق صلاحيات الحساب.</p></li>
       <li><span class="num" aria-hidden="true">4</span><h3>متابعة وتطوير</h3><p>دعم فني مستمر، ونحسّن التجربة بناءً على ملاحظاتكم.</p></li>
     </ol>
   </div>
@@ -187,19 +215,19 @@
     <img class="dl__logo" src="img/logo-dark.webp" width="160" height="260" alt="شعار فينيق" loading="lazy">
     <div class="dl__copy">
       <h2 id="dl-h">تطبيق فينيق — واجهتك حسب حسابك</h2>
-      <p>نفس ملف Android للصيدلي والمندوب وصاحب المستودع؛ الواجهة بتظهر حسب الحساب. التنزيل مباشر، بلا حاجة لمتجر Google Play.</p>
+      <p>ملف Android واحد بواجهة مختلفة بحسب الحساب. التنزيل المباشر متاح عند نشر نسخة موقّعة ومعتمدة؛ لا تحتاج إلى Google Play.</p>
       <a class="btn btn--pull btn--lg" id="apk" href="feniq.apk" download>
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg>
         <span id="apk-label">نزّل التطبيق</span>
       </a>
-      <p class="dl__meta" id="apk-meta"></p>
+      <p class="dl__meta" id="apk-meta" aria-live="polite">جارٍ التحقق من نسخة التطبيق المتاحة…</p>
       <details class="how">
         <summary>كيف أثبّته؟</summary>
         <ol>
           <li>اضغط «نزّل التطبيق» وانتظر حتى يكتمل التنزيل.</li>
           <li>افتح الملف من الإشعارات أو من مجلد التنزيلات.</li>
           <li>إذا طلب الموبايل السماح بالتثبيت من هذا المصدر، اسمح لمتصفحك مرة واحدة ثم ارجع واضغط «تثبيت».</li>
-          <li>سجّل برقم هاتفك واسم صيدليتك.</li>
+          <li>افتح التطبيق واختر تسجيل الدخول أو إنشاء حساب، ثم اتبع الحقول المناسبة لدورك.</li>
         </ol>
       </details>
       <p class="dl__ios">نسخة iPhone ليست جاهزة بعد.</p>
@@ -214,10 +242,10 @@
 <details><summary>مين بيشوف أسعار المستودع؟</summary><p>الصيدليات المسجّلة والمفعّلة داخل التطبيق. الأسعار مو منشورة للعامة على هالموقع؛ والتجربة هون بدون أسعار.</p></details>
 <details><summary>مين بيشوف طلبياتي وحساباتي؟</summary><p>البيانات مو متاحة للعامة. الوصول حسب صلاحيات الحساب: أطراف التعامل والمستخدمون المخوّلون، ومشرفو المنصة لأغراض التشغيل والدعم. التفاصيل في <a href="privacy.html">سياسة الخصوصية</a> وداخل التطبيق.</p></details>
 <details><summary>هل فينيق بيستبدل المندوب؟</summary><p>لا. المندوب بيكمل علاقته مع الصيدليات، ومعه أدوات لمتابعة صيدلياته وزياراته وطلبياته وعمولته.</p></details>
-<details><summary>شو الكلفة؟</summary><p>التطبيق مجاني للصيدليات. للمستودع تجربة 30 يوماً، وبعدها الميزات حسب الاشتراك المتفق عليه. فريقنا بيوضح الباقة والعمولة قبل التفعيل.</p></details>
-<details><summary>بيشتغل بلا إنترنت؟</summary><p>بعد تنزيل الكتالوج كاملاً مرة واحدة، فيك تتصفح الأصناف والأسعار المحفوظة بلا اتصال. آخر مزامنة ظاهرة بالتطبيق، والأسعار بتتأكد عند إرسال الطلب المتصل. مسح الكاش وحده ما بيحذف النسخة؛ حذف التطبيق أو مسح بياناته بيحذفها.</p></details>
-<details><summary>كيف بتوصلني التحديثات؟</summary><p>بتنزل التحديث من داخل التطبيق، وAndroid ممكن يطلب السماح بالتثبيت من هذا المصدر. التحديث فوق النسخة السابقة بيحافظ على بيانات التطبيق؛ ما في داعي تحذفه أولاً.</p></details>
-<details><summary>شو الأجهزة اللي بحتاجها؟</summary><p>التطبيق بواجهاته الثلاث بيشتغل على موبايلات وتابلت Android. لوحة المحاسب ولوحة إدارة فينيق بتفتح من المتصفح. نسخة iPhone مو متوفرة حالياً.</p></details>
+<details><summary>شو الكلفة؟</summary><p>تسجيل الصيدليات واستخدام الوظائف الأساسية مجاني. الوظائف الأساسية للمستودعات متاحة بنظام Freemium، أما الميزات المتقدمة فتخضع للعروض والباقات وحالة الحساب. نوضح رسوم الاشتراك وأي عمولة أو توزيع باتفاق منفصل قبل تفعيل الخدمات المدفوعة.</p></details>
+<details><summary>بيشتغل بلا إنترنت؟</summary><p>بتقدر تراجع بيانات الكتالوج التي سبق مزامنتها من داخل التطبيق حتى لو انقطع الاتصال. تحديث الأسعار وإرسال الطلبات يحتاجان إلى الإنترنت، ولا تُنفّذ العمليات المالية دون تأكيد اتصال الخدمة.</p></details>
+<details><summary>كيف بتوصلني التحديثات؟</summary><p>عند توفر إصدار معتمد، يمكن تنزيله من رابط فينيق أو من مسار التحديث داخل التطبيق إذا كان متاحاً. يجب تثبيت النسخة الجديدة فوق القديمة بنفس التوقيع للحفاظ على بيانات التطبيق.</p></details>
+<details><summary>شو الأجهزة اللي بحتاجها؟</summary><p>تطبيق فينيق مخصص لهواتف Android، وتعمل لوحة المحاسب ولوحة إدارة فينيق من المتصفح. لا تتوفر نسخة iPhone حالياً.</p></details>
 <details><summary>إذا نفد صنف أو صار في مشكلة بطلبية؟</summary><p>المستودع بيقدر يخفي الصنف من الكتالوج، والتطبيق بيعرض بدائل حسب المادة الفعالة والعيار. وللمتابعة في تواصل مع المستودع وطلبات إرجاع، وشكاوى بتوصل للإدارة.</p></details>
 </div></div></section>
 
@@ -225,7 +253,7 @@
   <div class="wrap contact__in">
     <h2 id="contact-h">نزوركم في المستودع.</h2>
     <p class="sec-lede">نشرح فينيق عملياً في زيارة قصيرة ونتفق معكم على طريقة التعاون المناسبة. نعمل حالياً في اللاذقية.</p>
-    <p class="deck-link"><a class="btn btn--plate" href="feniq-warehouses.pdf" download>حمّل عرض المستودعات (PDF)</a></p>
+    <p class="deck-link"><a class="btn btn--plate" href="https://wa.me/963982001415?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D8%8C%20%D8%A8%D8%AF%D9%8A%20%D8%B9%D8%B1%D8%B6%20%D9%81%D9%8A%D9%86%D9%8A%D9%82%20%D9%84%D9%84%D9%85%D8%B3%D8%AA%D9%88%D8%AF%D8%B9" rel="noopener">اطلب عرض المستودعات</a></p>
     <div class="phones">
       <div class="phone">
         <a class="phone__num" href="tel:+963982001415" dir="ltr">0982-001415</a>
@@ -241,7 +269,8 @@
   <div class="wrap foot__in">
     <a class="brand" href="#top"><img src="img/mark-dark.webp" width="28" height="34" alt=""><span>فينيق</span></a>
     <a href="https://feniq-connect-web.onrender.com">دخول المستودعات</a>
-    <a href="#faq">أسئلة وخصوصية</a>
+    <a href="#faq">الأسئلة الشائعة</a>
+    <a href="privacy.html">الخصوصية</a>
     <small>© 2026 فينيق</small>
   </div>
 </footer>
