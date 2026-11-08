@@ -483,6 +483,8 @@ class MyApp extends StatelessWidget {
                             RoutePaths.splash,
                         child: PersistentPilotNoticeFrame(
                           storageService: storageService,
+                          routeChanges: appRouter.router.routerDelegate,
+                          startWhen: () => appRouter.router.routerDelegate.currentConfiguration.uri.path != RoutePaths.splash,
                           child: OfflineBannerFrame(
                             child: child ?? const SizedBox.shrink(),
                           ),
