@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:feniq/core/services/storage_service.dart';
 import 'package:feniq/features/launch/persistent_pilot_notice.dart';
+import 'package:feniq/generated/app_localizations.dart';
 
 void main() {
   const arabic = 'نسخة تجريبية من فينيق';
@@ -21,6 +22,8 @@ void main() {
     Locale locale = const Locale('ar'),
   }) => MaterialApp(
     locale: locale,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(
       body: PersistentPilotNoticeFrame(
         storageService: store,
