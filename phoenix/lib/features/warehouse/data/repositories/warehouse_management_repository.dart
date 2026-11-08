@@ -43,6 +43,10 @@ abstract class WarehouseManagementRepository {
   /// The owner's summary for [period]: 'today', 'week' or 'month'.
   Future<WarehouseSummary> getSummary({String period = 'today'});
 
+  /// Read-only collection_v2 journal; null summary means no active contract.
+  /// Never infer a zero balance or commission when collection_v2 is off.
+  Future<Map<String, dynamic>> getCollectionAccounting({String period = 'month'});
+
   /// Money received from a pharmacy, in SYP. [idempotencyKey] makes a retry
   /// safe: the same key never credits the pharmacy twice.
   Future<void> recordPayment({
