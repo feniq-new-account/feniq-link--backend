@@ -357,6 +357,14 @@ class WarehouseManagementRepositoryImpl
   );
 
   @override
+  Future<Map<String, dynamic>> getCashCustody() => _run(
+    (dio) => dio.get(
+      '/warehouse/collection-accounting/cash-reconciliation',
+      options: Options(headers: {'Cache-Control': 'no-store'}),
+    ),
+  );
+
+  @override
   Future<void> recordPayment({
     required String pharmacyId,
     required double amountSyp,
