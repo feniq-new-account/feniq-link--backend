@@ -153,6 +153,11 @@ void main() {
           builder: (context, state) => const WarehouseSelectionView(),
         ),
         GoRoute(
+          path: '/offers',
+          name: RouteNames.promotions,
+          builder: (context, state) => const Scaffold(body: Text('Offers route opened')),
+        ),
+        GoRoute(
           path: '/manufacturers/:warehouseId',
           name: RouteNames.manufacturers,
           builder: (context, state) => const Scaffold(body: Text('manufacturers')),
@@ -210,6 +215,25 @@ void main() {
     expect(find.text('No warehouses available yet.'), findsOneWidget);
     expect(find.byType(EmptyView), findsOneWidget);
     expect(find.text('View all cities'), findsNothing);
+  });
+
+  testWidgets('the pharmacy browse section has helpful hierarchy and a working offers shortcut',
+      (tester) async {
+    stubServer(
+      inMyCity: [_homeWarehouse],
+      everywhere: [_homeWarehouse, _otherHomeWarehouse],
+    );
+    await pumpScreen(tester);
+    expect(find.byKey(const ValueKey('pharmacyBrowseSection')), findsOneWidget);
+    expect(find.text('Choose a warehouse to browse its manufacturers and medicines.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('pharmacyOffersShortcut')), findsOneWidget);
+    // The existing single quick-search FAB remains intact; no duplicate search.
+    expect(find.byKey(const ValueKey('homeQuickSearchButton')), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    await tester.ensureVisible(find.byKey(const ValueKey('pharmacyOffersShortcut')));
+    await tester.tap(find.byKey(const ValueKey('pharmacyOffersShortcut')));
+    await tester.pumpAndSettle();
+    expect(find.text('Offers route opened'), findsOneWidget);
   });
 
   testWidgets('the home uses a single floating quick-search entry point', (tester) async {
