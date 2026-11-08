@@ -160,41 +160,47 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
     final visible = _started && notice != null && notice.enabled;
     final arabic = Localizations.localeOf(context).languageCode == 'ar';
     final message = notice == null ? '' : arabic ? notice.textAr : notice.textEn;
-    final palette = Theme.of(context).colorScheme;
+    // Keep the owner's notice location above the navigator with no coloured
+    // background. Account for Android's status-bar inset only while visible;
+    // the navigator must not add that inset a second time.
     return Column(
       children: [
         if (visible)
-          Material(
+          SafeArea(
             key: const ValueKey('persistentPilotNotice'),
-            color: palette.secondaryContainer,
-            child: SizedBox(
-              width: double.infinity,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.info_outline_rounded, size: 16, color: palette.onSecondaryContainer),
-                    const SizedBox(width: 7),
-                    Flexible(
-                      child: Text(
-                        message,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          height: 1.2,
-                          color: palette.onSecondaryContainer,
-                        ),
-                      ),
-                    ),
-                  ],
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              // No Material, Card, coloured box or background. Keep the top
+              // edge in its existing place and set the text beneath the
+              // Android status icons, without covering the system bar.
+              child: SizedBox(
+                width: double.infinity,
+                child: Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  maxLines: 4,
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                  style: const TextStyle(
+                    color: Color(0xFFFFA94D),
+                    fontSize: 13,
+                    height: 1.4,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
           ),
-        Expanded(child: widget.child),
+        Expanded(
+          child: visible
+              ? MediaQuery.removePadding(
+                  context: context,
+                  removeTop: true,
+                  child: widget.child,
+                )
+              : widget.child,
+        ),
       ],
     );
   }

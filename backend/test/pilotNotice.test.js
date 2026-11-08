@@ -49,7 +49,11 @@ test('public notice is ON by default, visible without login, and excludes admin 
   assert.equal(status, 200);
   assert.equal(cacheControl, 'no-store');
   assert.equal(body.notice.enabled, true);
-  assert.match(body.notice.textAr, /نسخة تجريبية/);
+  assert.equal(
+    body.notice.textAr,
+    ['النسخة تجريبية', 'يمكنك ارسال الطلبات في 1 كانون الاول',
+      'يتم اضافة المستودعات بشكل مستمر'].join('\n'),
+  );
   assert.equal(body.notice.history, undefined);
   assert.equal(body.notice.updatedBy, undefined);
   assert.equal(body.notice.revision, undefined);
