@@ -157,92 +157,89 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
 
   @override
   Widget build(BuildContext context) {
-    // Keep the server-driven ON/OFF state above the navigator, but render no
-    // banner here: the pharmacist landing page has its own inline slot below
-    // "Choose warehouse". This leaves the Android status bar and AppBars alone.
-    final notice = _started && _notice?.enabled == true ? _notice : null;
-    return PilotNoticeScope(notice: notice, child: widget.child);
+    // The model is shared with the page without painting a global overlay.
+    // The pharmacist announcement belongs below the warehouse page header
+    // (the user's requested position), not inside the Android status bar.
+    return _PilotNoticeScope(
+      notice: _started ? _notice : null,
+      child: widget.child,
+    );
   }
 }
 
-/// The last verified administrator notice, inherited without recreating the
-/// router or resetting any page when its text / ON-OFF flag changes.
-class PilotNoticeScope extends InheritedWidget {
-  const PilotNoticeScope({super.key, required this.notice, required super.child});
+class _PilotNoticeScope extends InheritedWidget {
+  const _PilotNoticeScope({required this.notice, required super.child});
 
   final PilotNotice? notice;
 
-  static PilotNotice? of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<PilotNoticeScope>()?.notice;
+  static PilotNotice? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_PilotNoticeScope>()?.notice;
 
   @override
-  bool updateShouldNotify(PilotNoticeScope oldWidget) => 
-      notice?.enabled != oldWidget.notice?.enabled ||
-      notice?.textAr != oldWidget.notice?.textAr ||
-      notice?.textEn != oldWidget.notice?.textEn;
+  bool updateShouldNotify(_PilotNoticeScope oldWidget) =>
+      oldWidget.notice != notice;
 }
 
-/// Plain text only, in the existing announcement slot below the warehouse
-/// screen header. No card, background, border, or fixed system-bar overlay.
-/// Splitting on the em dash keeps both styled parts editable in one Admin field.
-class PilotNoticeInline extends StatelessWidget {
-  const PilotNoticeInline({super.key});
+/// An always-present notice in the pharmacist home content, exactly between
+/// the home header and promotional banners; no background, border or overlay.
+/// Its visibility and text remain controlled by the admin's saved settings.
+class PersistentPilotInlineNotice extends StatelessWidget {
+  const PersistentPilotInlineNotice({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final notice = PilotNoticeScope.of(context);
-    if (notice == null || !notice.enabled) {
-      return const SizedBox.shrink();
-    }
+    final notice = _PilotNoticeScope.maybeOf(context);
+    if (notice == null || !notice.enabled) return const SizedBox.shrink();
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final message = (isArabic ? notice.textAr : notice.textEn).trim();
-    final separatorIndex = message.indexOf('—');
-    final heading = separatorIndex >= 0
-        ? message.substring(0, separatorIndex).trim()
-        : message;
-    final description = separatorIndex >= 0
-        ? message.substring(separatorIndex + 1).trim()
-        : '';
-
-    return Padding(
+    final value = (isArabic ? notice.textAr : notice.textEn).trim();
+    final parts = value.split('\\n');
+    final heading = parts.first;
+    final detail = parts.skip(1).join('\\n');
+    final theme = Theme.of(context);
+    // The original announcement used the brand orange heading and muted
+    // explanatory copy, not a solid coloured banner.
+    final headingColor = theme.colorScheme.primary;
+    final detailColor = theme.colorScheme.onSurface.withValues(alpha: 0.76);
+    return Semantics(
       key: const ValueKey('persistentPilotNotice'),
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.only(end: 8, top: 1),
-            child: Icon(Icons.rocket_launch_outlined,
-                size: 22, color: AppColors.primaryOf(context)),
-          ),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (heading.isNotEmpty)
-                  Text(
-                    heading,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.primaryOf(context),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                if (description.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondaryOf(context),
-                      height: 1.55,
-                    ),
-                  ),
-                ],
-              ],
+      label: value,
+      container: true,
+      explicitChildNodes: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              heading,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+                color: headingColor,
+              ),
             ),
-          ),
-        ],
+            if (detail.isNotEmpty) ...[
+              const SizedBox(height: 5),
+              Text(
+                detail,
+                textAlign: TextAlign.center,
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  height: 1.45,
+                  color: detailColor,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
