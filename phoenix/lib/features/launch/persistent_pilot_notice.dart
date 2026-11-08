@@ -63,12 +63,18 @@ class PersistentPilotNoticeFrame extends StatefulWidget {
     required this.child,
     this.load,
     this.refreshInterval = const Duration(minutes: 2),
+    this.routeChanges,
+    this.startWhen,
   });
 
   final StorageService storageService;
   final Widget child;
   final Future<PilotNotice> Function()? load;
   final Duration refreshInterval;
+  /// The application router is observed without rebuilding the navigator.
+  /// Do not run a network request over the initial brand splash animation.
+  final Listenable? routeChanges;
+  final bool Function()? startWhen;
 
   @override
   State<PersistentPilotNoticeFrame> createState() =>
@@ -80,6 +86,7 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
   static const _cacheKey = 'launch.persistent_pilot_notice';
   Timer? _timer;
   PilotNotice? _notice;
+  bool _started = false;
   int _generation = 0;
 
   @override
@@ -94,17 +101,39 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
       // Invalid local data is unknown, not a presumed active notice.
     }
     WidgetsBinding.instance.addObserver(this);
-    _timer = Timer.periodic(widget.refreshInterval, (_) => _refresh());
-    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
+    widget.routeChanges?.addListener(_activateIfReady);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _activateIfReady());
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _refresh();
+    if (state != AppLifecycleState.resumed) return;
+    if (_started) {
+      _refresh();
+    } else {
+      _activateIfReady();
+    }
+  }
+
+  void _activateIfReady() {
+    if (!mounted || _started || !(widget.startWhen?.call() ?? true)) return;
+    setState(() => _started = true);
+    _timer = Timer.periodic(widget.refreshInterval, (_) => _refresh());
+    _refresh();
+  }
+
+  @override
+  void didUpdateWidget(covariant PersistentPilotNoticeFrame oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.routeChanges != widget.routeChanges) {
+      oldWidget.routeChanges?.removeListener(_activateIfReady);
+      widget.routeChanges?.addListener(_activateIfReady);
+      _activateIfReady();
+    }
   }
 
   Future<void> _refresh() async {
-    if (!mounted) return;
+    if (!mounted || !_started) return;
     final request = ++_generation;
     try {
       final notice = await (widget.load ?? fetchPilotNotice)();
@@ -120,6 +149,7 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
   void dispose() {
     _generation++;
     _timer?.cancel();
+    widget.routeChanges?.removeListener(_activateIfReady);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -127,7 +157,7 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
   @override
   Widget build(BuildContext context) {
     final notice = _notice;
-    final visible = notice != null && notice.enabled;
+    final visible = _started && notice != null && notice.enabled;
     final arabic = Localizations.localeOf(context).languageCode == 'ar';
     final message = notice == null ? '' : arabic ? notice.textAr : notice.textEn;
     final palette = Theme.of(context).colorScheme;
