@@ -7,7 +7,7 @@ import { api } from '../api/client';
 import { MemoryRouter } from 'react-router-dom';
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: key => key }) }));
 vi.mock('../api/client', () => ({ api: Object.fromEntries(['getFeatureControl', 'getWarehouseEntitlements', 'getFeatureBundles', 'getFeatureAudit',
-  'saveFeatureControl', 'grantWarehouseFeatures', 'revokeWarehouseGrant', 'createFeatureBundle', 'getLaunchSettings', 'updateLaunchSettings'].map(key => [key, vi.fn()])) }));
+  'saveFeatureControl', 'grantWarehouseFeatures', 'revokeWarehouseGrant', 'createFeatureBundle', 'getLaunchSettings', 'updateLaunchSettings', 'getPilotNotice', 'savePilotNotice'].map(key => [key, vi.fn()])) }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let host, root;
 const right = { revision: 4, features: { ownerMobileAccess: true }, decisions: { ownerMobileAccess: { reason: 'grant' } }, configuration: { grants: [] } };
@@ -19,6 +19,9 @@ beforeEach(async () => {
   vi.clearAllMocks();
   api.getFeatureControl.mockResolvedValue({ platform: { revision: 2, features: {} }, featureNames: ['ownerMobileAccess'] });
   api.getLaunchSettings.mockResolvedValue({ configuration: { mode: 'registration_only', message: 'Closed', revision: 4, orderingClosesAt: null } });
+  api.getPilotNotice.mockResolvedValue({ configuration: {
+    revision: 1, enabled: true, textAr: 'نسخة تجريبية من فينيق', textEn: 'Feniq trial version',
+  } });
   api.getWarehouseEntitlements.mockResolvedValue(right);
   api.getFeatureBundles.mockResolvedValue({ bundles: [] }); api.getFeatureAudit.mockResolvedValue({ events: [] });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
@@ -104,4 +107,32 @@ it('dashboard ordering toggle does not falsely switch ON when the server rejects
   await act(async () => orderButton.click());
   expect(orderButton.textContent).toContain('OFF');
   expect(host.querySelector('[role="alert"]').textContent).toContain('Launch settings changed');
+});
+
+it('admin can edit the persistent trial notice separately from the ordering switch', async () => {
+  api.savePilotNotice.mockResolvedValue({ configuration: {
+    revision: 2, enabled: false, textAr: 'نسخة تجريبية من فينيق', textEn: 'Feniq trial version',
+  } });
+  await act(async () => root.render(<MemoryRouter><FeatureControlCenter /></MemoryRouter>));
+  const section = host.querySelector('section[aria-label="التنبيه التجريبي الدائم"]');
+  expect(section).not.toBeNull();
+  const checkbox = section.querySelector('input[type="checkbox"]');
+  expect(checkbox.checked).toBe(true);
+  expect(section.querySelector('textarea').value).toBe('نسخة تجريبية من فينيق');
+  await act(async () => checkbox.click());
+  await act(async () => section.querySelector('form').dispatchEvent(new Event('submit',
+    { bubbles: true, cancelable: true })));
+  expect(api.savePilotNotice).toHaveBeenCalledWith({
+    revision: 1, enabled: false,
+    textAr: 'نسخة تجريبية من فينيق', textEn: 'Feniq trial version',
+  });
+  expect(checkbox.checked).toBe(false);
+  expect(api.updateLaunchSettings).not.toHaveBeenCalled();
+  expect(api.saveFeatureControl).not.toHaveBeenCalled();
+  expect(host.textContent).toContain('تم حفظ التنبيه');
+});
+
+it('warehouse-specific feature settings never request the admin pilot notice', async () => {
+  expect(api.getPilotNotice).not.toHaveBeenCalled();
+  expect(host.querySelector('section[aria-label="التنبيه التجريبي الدائم"]')).toBeNull();
 });
