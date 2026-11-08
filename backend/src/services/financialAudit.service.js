@@ -19,6 +19,7 @@ const REASON_REQUIRED = new Set([
   'order.charge_reversed',
   'return.rejected',
   'commission.collection_reversed',
+  'commission.quarter_draft_saved',
   'collection.grant_revoked',
   'collection.receipt_rejected',
   'collection.remittance_rejected',
