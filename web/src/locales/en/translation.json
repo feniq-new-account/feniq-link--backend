@@ -1949,6 +1949,13 @@
     }
   },
   "accounting": {
+    "overviewLabel": "Financial overview",
+    "overviewHint": "Sales, collections and receivables at a glance, from the warehouse ledger.",
+    "filterTitle": "Report filters",
+    "filterHint": "Period changes the headline metrics and activity. Pharmacy, balance and type filter only the activity table.",
+    "filtersApplied": "Filters applied",
+    "resetFilters": "Clear filters",
+    "loadFailed": "Could not load accounting data",
     "activityPharmacy": "Activity pharmacy name / phone",
     "activityBalance": "Current account balance type — table only",
     "openOrder": "Open order and invoice",

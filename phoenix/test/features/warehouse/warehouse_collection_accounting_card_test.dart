@@ -92,4 +92,37 @@ void main() {
     expect(find.text('—'), findsWidgets);
     expect(find.text('75,000 ل.س'), findsNothing);
   });
+
+  testWidgets('inactive commission is visually distinguished from ledger debts', (tester) async {
+    await showCard(tester, (_) async => journal());
+    expect(find.byIcon(Icons.info_outline), findsOneWidget);
+    expect(find.textContaining('غير مفعّل'), findsOneWidget);
+    expect(find.text('حصة فينيق'), findsNothing);
+  });
+
+  testWidgets('failed journal can be retried without showing a stale financial value', (tester) async {
+    var attempts = 0;
+    await showCard(tester, (_) async {
+      attempts++;
+      if (attempts == 1) throw StateError('isolated network failure');
+      return journal(summary: posted());
+    });
+    expect(find.textContaining('لا تُعتمد الأرقام السابقة'), findsOneWidget);
+    expect(find.text('125,000 ل.س'), findsNothing);
+    await tester.tap(find.text('إعادة المحاولة'));
+    await tester.pumpAndSettle();
+    expect(attempts, 2);
+    expect(find.text('125,000 ل.س'), findsOneWidget);
+  });
+
+  testWidgets('financial tiles reflow on a narrow RTL manager phone', (tester) async {
+    tester.view.physicalSize = const Size(320 * 3, 760 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await showCard(tester, (_) async => journal(summary: posted()));
+    expect(find.text('125,000 ل.س'), findsOneWidget);
+    expect(find.text('75,000 ل.س'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }

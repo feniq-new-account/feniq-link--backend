@@ -74,3 +74,41 @@ it('submits a current balance filter for activity without deriving new KPI total
   expect(api.accountantDashboard.mock.lastCall[0]).toMatchObject({ period: 'month', balanceState: 'credit' });
   expect(host.textContent).toContain('12,345');
 });
+
+
+it('offers clear report hierarchy, accessible source time and mobile table labels', async () => {
+  await render();
+  expect(host.querySelector('.accounting-hero h1').textContent).toBe('accounting.title');
+  expect(host.querySelector('.accounting-filter-panel[aria-labelledby="accounting-filter-title"]')).not.toBeNull();
+  expect(host.querySelectorAll('.accounting-links a')).toHaveLength(3);
+  expect(host.querySelector('td[data-label="accounting.date"]')).not.toBeNull();
+  expect(host.querySelector('td[data-label="accounting.debit"]')).not.toBeNull();
+  expect(host.querySelector('.accounting-activity-table .accounting-pharmacy-link')).not.toBeNull();
+  expect(host.querySelector('.accounting-freshness time').dateTime).toBe(result.asOf);
+  expect(host.querySelector('.accounting-debit').textContent).toContain('500');
+});
+
+it('clear filters resets editable controls and re-reads the default unfiltered period', async () => {
+  await render();
+  await act(async () => {
+    const balance = host.querySelectorAll('select')[1];
+    balance.value = 'credit';
+    balance.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await act(async () => button().click());
+  expect(api.accountantDashboard.mock.lastCall[0]).toMatchObject({ period: 'month', balanceState: 'credit' });
+  expect(host.textContent).toContain('accounting.filtersApplied');
+  await act(async () => host.querySelector('.accounting-filter-actions .accounting-reset').click());
+  expect(api.accountantDashboard.mock.lastCall[0]).toEqual({ period: 'month' });
+  expect(host.querySelectorAll('select')[1].value).toBe('');
+  expect(host.textContent).not.toContain('accounting.filtersApplied');
+});
+
+it('error panel retries without retaining old financial totals', async () => {
+  api.accountantDashboard.mockRejectedValueOnce(new Error('Disconnected'));
+  await render();
+  expect(host.querySelector('[role=alert]').textContent).toContain('Disconnected');
+  expect(host.textContent).not.toContain('12,345');
+  await act(async () => host.querySelector('.accounting-feedback-error button').click());
+  expect(host.textContent).toContain('12,345');
+});

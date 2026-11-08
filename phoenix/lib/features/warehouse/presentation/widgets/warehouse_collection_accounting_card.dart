@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_management_repository.dart';
 
@@ -90,21 +91,38 @@ class _WarehouseCollectionAccountingCardState
     return value;
   }
 
-  Widget _figure(String label, Object? value, String suffix) {
+  Widget _figure(String label, Object? value, String suffix, IconData symbol) {
     final amount = _safeMoney(value);
     return SizedBox(
       width: 150,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
-          Text(
-            amount == null ? kMoneyUnavailable : formatSyp(amount, suffix),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceOf(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderOf(context)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(symbol, size: 17, color: AppColors.textSecondaryOf(context)),
+              const SizedBox(height: 8),
+              Text(label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondaryOf(context),
+                )),
+              const SizedBox(height: 5),
+              Text(
+                amount == null ? kMoneyUnavailable : formatSyp(amount, suffix),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppColors.textOf(context),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -113,7 +131,21 @@ class _WarehouseCollectionAccountingCardState
       String ar, String en) {
     final raw = states[key];
     final count = raw is int && raw >= 0 ? raw.toString() : '—';
-    return Text('${_tr(ar, en)}: $count');
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceOf(context),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: AppColors.borderOf(context)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Text('${_tr(ar, en)}: $count',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textOf(context),
+          )),
+      ),
+    );
   }
 
   @override
@@ -122,6 +154,13 @@ class _WarehouseCollectionAccountingCardState
     final summary = _journal?['summary'];
     final v2 = summary is Map && summary['model'] == 'collection_v2';
     return Card(
+      color: AppColors.surfaceElevatedOf(context),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: AppColors.borderOf(context)),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -129,8 +168,18 @@ class _WarehouseCollectionAccountingCardState
           children: [
             Row(
               children: [
-                const Icon(Icons.account_balance_outlined),
-                const SizedBox(width: 8),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Icon(Icons.account_balance_outlined,
+                      color: AppColors.primaryTextOf(context)),
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     _tr('محاسبة التحصيل الجديدة', 'Collection accounting'),
@@ -152,12 +201,51 @@ class _WarehouseCollectionAccountingCardState
                 child: LinearProgressIndicator(),
               )
             else if (_error != null)
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.errorOf(context).withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_error!, style: TextStyle(color: AppColors.errorOf(context))),
+                    const SizedBox(height: 6),
+                    TextButton.icon(
+                      onPressed: () => _load(),
+                      icon: const Icon(Icons.refresh),
+                      label: Text(_tr('إعادة المحاولة', 'Try again')),
+                    ),
+                  ],
+                ),
+              )
             else if (!v2)
-              Text(
-                _tr(
-                  'نظام عمولات التحصيل غير مفعّل لهذا المستودع. الأرصدة أدناه هي من دفتر الذمم الحالي، وليست عمولات تحصيل جديدة.',
-                  'Collection commission is not active for this warehouse. The account balances below come from the existing ledger, not new earned commissions.',
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.only(top: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.warningSurfaceOf(context),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.warningOf(context).withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, color: AppColors.warningOf(context)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(_tr(
+                        'نظام عمولات التحصيل غير مفعّل لهذا المستودع. الأرصدة أدناه هي من دفتر الذمم الحالي، وليست عمولات تحصيل جديدة.',
+                        'Collection commission is not active for this warehouse. The account balances below come from the existing ledger, not new earned commissions.',
+                      )),
+                    ),
+                  ],
                 ),
               )
             else ...[
@@ -187,17 +275,17 @@ class _WarehouseCollectionAccountingCardState
               ),
               const SizedBox(height: 8),
               Wrap(
-                spacing: 16,
-                runSpacing: 12,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   _figure(_tr('إجمالي العمولة', 'Total commission'),
-                      summary['originalSyp'], suffix),
+                      summary['originalSyp'], suffix, Icons.receipt_long_outlined),
                   _figure(_tr('حصة فينيق', 'Feniq share'),
-                      summary['feniqSyp'], suffix),
+                      summary['feniqSyp'], suffix, Icons.account_balance_wallet_outlined),
                   _figure(_tr('حصة المندوب', 'Rep share'),
-                      summary['repSyp'], suffix),
+                      summary['repSyp'], suffix, Icons.badge_outlined),
                   _figure(_tr('تصحيحات حصة فينيق', 'Feniq corrections'),
-                      summary['correctionsFeniqSyp'], suffix),
+                      summary['correctionsFeniqSyp'], suffix, Icons.tune),
                 ],
               ),
               const Divider(height: 28),
@@ -207,13 +295,13 @@ class _WarehouseCollectionAccountingCardState
               ),
               const SizedBox(height: 8),
               Wrap(
-                spacing: 16,
-                runSpacing: 12,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   _figure(_tr('رصيد المرتجعات المتاح', 'Available return credit'),
-                      summary['returnCreditAvailableSyp'], suffix),
+                      summary['returnCreditAvailableSyp'], suffix, Icons.assignment_return_outlined),
                   _figure(_tr('التزام رصيد المرتجعات', 'Return credit liability'),
-                      summary['returnCreditLiabilitySyp'], suffix),
+                      summary['returnCreditLiabilitySyp'], suffix, Icons.shield_outlined),
                 ],
               ),
               const SizedBox(height: 12),
