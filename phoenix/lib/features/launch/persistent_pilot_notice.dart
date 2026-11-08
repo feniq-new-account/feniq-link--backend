@@ -160,41 +160,60 @@ class _PersistentPilotNoticeFrameState extends State<PersistentPilotNoticeFrame>
     final visible = _started && notice != null && notice.enabled;
     final arabic = Localizations.localeOf(context).languageCode == 'ar';
     final message = notice == null ? '' : arabic ? notice.textAr : notice.textEn;
-    final palette = Theme.of(context).colorScheme;
+    // MaterialApp.builder is outside the Navigator. Android 15 draws behind
+    // the status bar, and screen AppBars normally account for the top inset.
+    // When this banner appears *above* the Navigator it must own that inset;
+    // otherwise its label is drawn underneath the system clock and icons.
+    //
+    // Hand the already-consumed top inset back as zero to the Navigator, or
+    // its AppBar would reserve that same status-bar height a second time.
     return Column(
       children: [
         if (visible)
           Material(
             key: const ValueKey('persistentPilotNotice'),
-            color: palette.secondaryContainer,
-            child: SizedBox(
-              width: double.infinity,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.info_outline_rounded, size: 16, color: palette.onSecondaryContainer),
-                    const SizedBox(width: 7),
-                    Flexible(
-                      child: Text(
-                        message,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          height: 1.2,
-                          color: palette.onSecondaryContainer,
+            color: const Color(0xFF1B2A4A),
+            child: SafeArea(
+              bottom: false,
+              child: SizedBox(
+                width: double.infinity,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.info_outline_rounded,
+                          size: 16, color: Color(0xFFF26522)),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          message,
+                          textAlign: TextAlign.center,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            height: 1.35,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        Expanded(child: widget.child),
+        Expanded(
+          child: visible
+              ? MediaQuery.removePadding(
+                  context: context,
+                  removeTop: true,
+                  child: widget.child,
+                )
+              : widget.child,
+        ),
       ],
     );
   }
