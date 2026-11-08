@@ -119,9 +119,12 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
     );
   }
 
+  bool _orderingOpen = false;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       floatingActionButtonLocation: Directionality.of(context) == TextDirection.rtl
@@ -170,8 +173,47 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
             ),
             actions: const [NotificationButton(), CartButton()],
           ),
-          const SliverToBoxAdapter(child: EarlyLaunchNotice()),
-          const SliverToBoxAdapter(child: LaunchStatusBanner(hideRoutinePrelaunchMessage: true)),
+          if (!_orderingOpen)
+            const SliverToBoxAdapter(child: EarlyLaunchNotice()),
+          SliverToBoxAdapter(
+            child: LaunchStatusBanner(
+              hideRoutinePrelaunchMessage: true,
+              onOrderingChanged: (enabled) {
+                if (mounted && _orderingOpen != enabled) {
+                  setState(() => _orderingOpen = enabled);
+                }
+              },
+            ),
+          ),
+          // Discovery first: users can search across warehouses without
+          // knowing a manufacturer's name or scrolling past promotional cards.
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSizes.spacingMedium, 12, AppSizes.spacingMedium, 10,
+              ),
+              child: OutlinedButton.icon(
+                key: const ValueKey('pharmacyDiscoverSearch'),
+                onPressed: _openQuickSearch,
+                icon: const Icon(Icons.search_rounded, size: 22),
+                label: Text(
+                  isArabic
+                      ? 'ابحث عن دواء أو شركة أو مستودع'
+                      : 'Find medicines, manufacturers or warehouses',
+                  softWrap: true,
+                ),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: AppColors.surfaceElevatedOf(context),
+                  foregroundColor: AppColors.textOf(context),
+                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+                  minimumSize: const Size.fromHeight(54),
+                  alignment: AlignmentDirectional.centerStart,
+                  side: BorderSide(color: AppColors.borderOf(context)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ),
+          ),
           SliverToBoxAdapter(child: BannerSlider(onBannerTap: _handleBannerTap)),
           // Keep only a compact synchronization timestamp above the
           // warehouse grid; city scope controls are not part of this release.
@@ -189,6 +231,29 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
                     onRetry: () => context.read<WarehouseSelectionCubit>().retryOfflineCatalogs(),
                   ),
                 ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSizes.spacingMedium, 14, AppSizes.spacingMedium, 9,
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warehouse_outlined,
+                    size: 19, color: AppColors.primaryTextOf(context)),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      isArabic ? 'تصفح المستودعات' : 'Browse warehouses',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.textOf(context),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
