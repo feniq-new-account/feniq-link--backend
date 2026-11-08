@@ -166,6 +166,9 @@ test('a warehouse creates a rep who signs in from the app and must pick a passwo
     monthOrdersTotal: 0,
     ownCommissionRate: 0,
     monthCommissionAmount: 0,
+    commissionBreakdownVersion: 'legacy-delivery-and-collected-v1',
+    monthLegacyDeliveredCommissionSyp: 0,
+    monthCollectedCommissionSyp: 0,
   });
 });
 
