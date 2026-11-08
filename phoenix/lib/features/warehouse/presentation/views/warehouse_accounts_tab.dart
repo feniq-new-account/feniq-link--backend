@@ -34,6 +34,7 @@ class WarehouseAccountsTab extends StatefulWidget {
 
 class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
   final ScrollController _controller = ScrollController();
+  final TextEditingController _search = TextEditingController();
   final Debouncer _debouncer = Debouncer(duration: const Duration(milliseconds: 400));
 
   @override
@@ -45,6 +46,7 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
   @override
   void dispose() {
     _controller.dispose();
+    _search.dispose();
     _debouncer.cancel();
     super.dispose();
   }
@@ -70,14 +72,30 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
             children: [
               Expanded(
                 child: TextField(
+                  controller: _search,
+                  textInputAction: TextInputAction.search,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: l10n.warehouseAccountsSearch,
+                    prefixIcon: const Icon(Icons.search_outlined),
+                    labelText: l10n.warehouseAccountsSearch,
                     isDense: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    suffixIcon: _search.text.isEmpty ? null : IconButton(
+                      tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        _debouncer.cancel();
+                        _search.clear();
+                        context.read<WarehouseAccountsCubit>().setSearch('');
+                        setState(() {});
+                      },
+                    ),
                   ),
-                  onChanged: (text) => _debouncer.run(() {
-                    if (mounted) context.read<WarehouseAccountsCubit>().setSearch(text);
-                  }),
+                  onChanged: (text) {
+                    setState(() {});
+                    _debouncer.run(() {
+                      if (mounted) context.read<WarehouseAccountsCubit>().setSearch(text);
+                    });
+                  },
                 ),
               ),
               if (canRecordWarehousePayments(context)) IconButton(
@@ -127,41 +145,95 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                   emptyIcon: Icons.account_balance_wallet_outlined,
                   itemBuilder: (context, index) {
                     final row = state.accounts[index];
-                    final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
+                    final muted = context.textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondaryOf(context));
                     final suffix = l10n.currencySuffix;
+                    final balanceColor = row.balanceSyp > 0
+                        ? AppColors.errorOf(context)
+                        : row.balanceSyp < 0
+                            ? AppColors.secondaryOf(context)
+                            : AppColors.textSecondaryOf(context);
                     return CustomCard(
                       onTap: () => _open(row),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Wrap(
-                            alignment: WrapAlignment.spaceBetween,
-                            spacing: 12,
-                            runSpacing: 8,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                warehouseLocalName(context, row.nameAr, row.nameEn),
-                                style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                              DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryOf(context).withValues(alpha: 0.11),
+                                  borderRadius: BorderRadius.circular(11),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Icon(Icons.local_pharmacy_outlined,
+                                    size: 22, color: AppColors.primaryTextOf(context)),
+                                ),
                               ),
-                              WarehouseBalanceText(balanceSyp: row.balanceSyp),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  warehouseLocalName(context, row.nameAr, row.nameEn),
+                                  style: context.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textOf(context),
+                                  ),
+                                ),
+                              ),
+                              Icon(Icons.arrow_forward_ios_rounded,
+                                size: 15, color: AppColors.textSecondaryOf(context)),
                             ],
                           ),
-                          const SizedBox(height: AppSizes.spacingSmall),
-                          Text(
-                            '${l10n.warehouseAccountPurchases(formatSyp(row.purchasesSyp, suffix))} · '
-                            '${l10n.warehouseAccountPaid(formatSyp(row.paidSyp, suffix))}',
-                            style: muted,
+                          const SizedBox(height: 12),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: balanceColor.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: balanceColor.withValues(alpha: 0.15)),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.account_balance_wallet_outlined,
+                                    size: 19, color: balanceColor),
+                                  const SizedBox(width: 9),
+                                  Expanded(child: WarehouseBalanceText(balanceSyp: row.balanceSyp)),
+                                ],
+                              ),
+                            ),
                           ),
-                          Text(
-                            row.lastPaymentAt == null
-                                ? l10n.warehouseAccountNoPayment
-                                : l10n.warehouseAccountLastPayment(
-                                    DateFormatter.formatDate(row.lastPaymentAt!.toLocal(), locale: l10n.localeName),
-                                  ),
-                            style: muted,
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 14,
+                            runSpacing: 6,
+                            children: [
+                              Text(l10n.warehouseAccountPurchases(formatSyp(row.purchasesSyp, suffix)), style: muted),
+                              Text(l10n.warehouseAccountPaid(formatSyp(row.paidSyp, suffix)), style: muted),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(Icons.history, size: 15,
+                                color: AppColors.textSecondaryOf(context)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  row.lastPaymentAt == null
+                                      ? l10n.warehouseAccountNoPayment
+                                      : l10n.warehouseAccountLastPayment(
+                                          DateFormatter.formatDate(row.lastPaymentAt!.toLocal(), locale: l10n.localeName),
+                                        ),
+                                  style: muted,
+                                ),
+                              ),
+                            ],
                           ),
                           if (row.balanceSyp > 0 && canRecordWarehousePayments(context)) ...[
-                            const SizedBox(height: AppSizes.spacingSmall),
+                            const SizedBox(height: AppSizes.spacingMedium),
                             Row(
                               children: [
                                 Expanded(
@@ -183,6 +255,7 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                         ],
                       ),
                     );
+
                   },
                 ),
               ),
