@@ -17,7 +17,7 @@ class WarehouseCard extends StatelessWidget {
   final WarehouseModel warehouse;
   final VoidCallback onSelect;
 
-  static const double logoHeight = 92;
+  static const double logoHeight = 78;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class WarehouseCard extends StatelessWidget {
     final name = isArabic ? warehouse.nameAr : warehouse.nameEn;
 
     return CustomCard(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       onTap: onSelect,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -43,7 +43,7 @@ class WarehouseCard extends StatelessWidget {
                   fallback: ColoredBox(
                     color: AppColors.textOf(context).withValues(alpha: 0.06),
                     child: Icon(
-                      Icons.local_shipping_outlined,
+                      Icons.warehouse_outlined,
                       color: AppColors.textSecondaryOf(context),
                       size: 36,
                     ),
@@ -52,14 +52,39 @@ class WarehouseCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 9),
           Text(
             name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              height: 1.2,
+              color: AppColors.textOf(context),
+              fontWeight: FontWeight.w800,
+              height: 1.25,
             ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  isArabic ? 'تصفح المنتجات' : 'Browse products',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.primaryTextOf(context),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                isArabic ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                size: 17,
+                color: AppColors.primaryTextOf(context),
+              ),
+            ],
           ),
         ],
       ),
