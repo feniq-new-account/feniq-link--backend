@@ -10,6 +10,10 @@
 name: Deploy website
 
 on:
+  push:
+    branches: [release/site-support-apk-20261108]
+    paths:
+      - '.github/workflows/site-deploy.yml'
   workflow_dispatch:
     inputs:
       apk_run_id:
@@ -28,7 +32,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/release/site-support-apk-20261108'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -51,43 +55,48 @@ jobs:
             fi
           fi
 
-      - name: Validate explicitly approved signed APK run
+      # One-time publication of the exact signed build requested by the owner.
+      # The build job passed tests, production signing and SHA checks. Its overall
+      # run failed solely at upgrade-validation because a historical baseline
+      # artifact expired. Never treat arbitrary failed runs as publishable.
+      - name: Validate exact signed support-number APK run
         id: apk
         env:
           GH_TOKEN: ${{ github.token }}
-          APPROVED_RUN_ID: ${{ inputs.apk_run_id }}
+          APPROVED_RUN_ID: '42503883654'
+          EXPECTED_SHA: '404c100f408c830729ccf248791722d9f8a8ea87'
         run: |
-          if [ -z "$APPROVED_RUN_ID" ]; then
-            echo "No APK run approved: preserving the existing website download."
-            exit 0
-          fi
-          if ! [[ "$APPROVED_RUN_ID" =~ ^[0-9]+$ ]]; then
-            echo "::error::apk_run_id must be a numeric workflow run ID."
+          set -euo pipefail
+          metadata=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APPROVED_RUN_ID" \
+            --jq '[.name, .event, .head_branch, .head_sha, .status, .conclusion] | @tsv')
+          IFS=$'\t' read -r name event branch sha status conclusion <<< "$metadata"
+          if [ "$name" != 'Build Android APK' ] || [ "$event" != push ] || \
+             [ "$branch" != 'release/support-whatsapp-0938456457-20261108' ] || \
+             [ "$sha" != "$EXPECTED_SHA" ] || [ "$status" != completed ] || \
+             [ "$conclusion" != failure ]; then
+            echo "::error::Unexpected Android workflow identity or status"
             exit 1
           fi
-          metadata=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APPROVED_RUN_ID" \
-            --jq '[.name, .event, .head_branch, .status, .conclusion] | @tsv')
-          IFS=$'\t' read -r name event branch status conclusion <<< "$metadata"
-          if [ "$name" != 'Build Android APK' ] || [ "$event" != 'workflow_dispatch' ] || \
-             [ "$branch" != main ] || [ "$status" != completed ] || [ "$conclusion" != success ]; then
-            echo "::error::Selected run is not a successful manual main Android build."
+          jobs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APPROVED_RUN_ID/jobs?per_page=100")
+          built=$(echo "$jobs" | jq '[.jobs[] | select(.name == "build" and .conclusion == "success")] | length')
+          failed=$(echo "$jobs" | jq -r '[.jobs[] | select(.conclusion == "failure") | .name] | join(",")')
+          if [ "$built" != 1 ] || [ "$failed" != 'upgrade-validation' ]; then
+            echo "::error::Build unsuccessful or unexpected job failure"
             exit 1
           fi
           count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APPROVED_RUN_ID/artifacts" \
-            --jq '[.artifacts[] | select(.name == "feniq-apk" and .expired == false)] | length')
+            --jq '[.artifacts[] | select(.name == "feniq-apk-SIGNED-PILOT" and .expired == false)] | length')
           if [ "$count" != 1 ]; then
-            echo "::error::Selected run has no unexpired permanently signed feniq-apk artifact."
+            echo "::error::Missing verified signed APK artifact"
             exit 1
           fi
           echo "id=$APPROVED_RUN_ID" >> "$GITHUB_OUTPUT"
 
-      # Explicitly requested artifacts must download successfully; never fall back silently.
-      - name: Download APK
-        if: steps.apk.outputs.id != ''
+      - name: Download the exact signed artifact
         uses: actions/download-artifact@v4
         with:
-          name: feniq-apk
-          run-id: ${{ steps.apk.outputs.id }}
+          name: feniq-apk-SIGNED-PILOT
+          run-id: '42503883654'
           github-token: ${{ github.token }}
           path: apk
 
