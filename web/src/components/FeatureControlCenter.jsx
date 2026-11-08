@@ -18,6 +18,43 @@ export function FeatureControlCenter({ warehouseId, quickOnly = false }) {
   const [launch, setLaunch] = useState(null);
   const [launchBusy, setLaunchBusy] = useState(false);
   const [launchError, setLaunchError] = useState('');
+  const [pilot, setPilot] = useState(null);
+  const [pilotDraft, setPilotDraft] = useState(null);
+  const [pilotBusy, setPilotBusy] = useState(false);
+  const [pilotError, setPilotError] = useState('');
+  const [pilotSaved, setPilotSaved] = useState(false);
+  useEffect(() => {
+    if (warehouseId || quickOnly) return;
+    let active = true;
+    api.getPilotNotice().then(({ configuration }) => {
+      if (!active) return;
+      setPilot(configuration);
+      setPilotDraft({
+        enabled: configuration.enabled,
+        textAr: configuration.textAr,
+        textEn: configuration.textEn,
+      });
+      setPilotError('');
+    }).catch(err => { if (active) setPilotError(err.message); });
+    return () => { active = false; };
+  }, [warehouseId, quickOnly, attempt]);
+  async function savePilot(event) {
+    event.preventDefault();
+    if (!pilot || !pilotDraft || pilotBusy) return;
+    setPilotBusy(true); setPilotError(''); setPilotSaved(false);
+    try {
+      const result = await api.savePilotNotice({ revision: pilot.revision, ...pilotDraft });
+      setPilot(result.configuration);
+      setPilotDraft({
+        enabled: result.configuration.enabled,
+        textAr: result.configuration.textAr,
+        textEn: result.configuration.textEn,
+      });
+      setPilotSaved(true);
+    } catch (err) { setPilotError(err.message); }
+    finally { setPilotBusy(false); }
+  }
+
   useEffect(() => {
     if (warehouseId) return;
     let active = true;
@@ -95,6 +132,32 @@ export function FeatureControlCenter({ warehouseId, quickOnly = false }) {
           <button className="btn-primary" disabled={!reason.trim()}>{t('featureControl.saveGlobal')}</button>
         </fieldset>
       </form>
+    {!warehouseId && !quickOnly && <section className="adm-card reg-card" aria-label="التنبيه التجريبي الدائم">
+      <h2>التنبيه التجريبي داخل التطبيق</h2>
+      <p className="hint">يظهر شريط صغير ثابت أعلى التطبيق في كل الصفحات، ويمكن تعديل نصه أو إيقافه من هنا. لا يغيّر استقبال الطلبات أو أي عمليات مالية.</p>
+      {pilotError && <p role="alert" className="error-text">{pilotError}</p>}
+      {pilotSaved && <p role="status">تم حفظ التنبيه. سيظهر التحديث على الأجهزة عند المزامنة التالية.</p>}
+      {pilot && pilotDraft ? <form onSubmit={savePilot}>
+        <fieldset disabled={pilotBusy}>
+          <label className="feature-control-switch">
+            <input type="checkbox" checked={pilotDraft.enabled}
+              onChange={e => { setPilotDraft({ ...pilotDraft, enabled: e.target.checked }); setPilotSaved(false); }} />
+            عرض التنبيه دائماً (ON / OFF)
+          </label>
+          <label>نص التنبيه بالعربية
+            <textarea rows="3" maxLength="240" required value={pilotDraft.textAr}
+              onChange={e => { setPilotDraft({ ...pilotDraft, textAr: e.target.value }); setPilotSaved(false); }} />
+          </label>
+          <label>نص التنبيه بالإنكليزية
+            <textarea rows="3" maxLength="240" required value={pilotDraft.textEn}
+              onChange={e => { setPilotDraft({ ...pilotDraft, textEn: e.target.value }); setPilotSaved(false); }} />
+          </label>
+          <button type="submit" className="btn-primary" disabled={pilotBusy || !pilotDraft.textAr.trim() || !pilotDraft.textEn.trim()}>
+            حفظ التنبيه
+          </button>
+        </fieldset>
+      </form> : <p role="status">جارٍ تحميل إعدادات التنبيه...</p>}
+    </section>}
       {!quickOnly && <><p className="hint">{t('featureControl.implementationLimits')}</p>
       {!data.rights && <p><Link to="/admin/warehouse-access">{t('featureControl.chooseWarehouse')}</Link></p>}
       {data.rights && <><div className="feature-control-decisions" role="list">

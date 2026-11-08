@@ -517,6 +517,8 @@ export const api = {
   updatePilotOrderAccess: (body) => request('/admin/pilot-access', { method: 'PUT', body }),
   getLaunchSettings: () => request('/admin/launch'),
   updateLaunchSettings: (body) => request('/admin/launch', { method: 'PUT', body }),
+  getPilotNotice: () => request('/admin/pilot-notice'),
+  savePilotNotice: (body) => request('/admin/pilot-notice', { method: 'PUT', body }),
   registrationStatus: () => request('/admin/registration'),
   // The signed-in user's own password. The response carries a fresh session
   // (token + refreshToken): every other device is signed out.
