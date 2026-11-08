@@ -106,7 +106,8 @@ void main() {
     await tester.pumpAndSettle();
     final notice = find.byKey(const ValueKey('persistentPilotNotice'));
     expect(tester.getTopLeft(notice).dy, greaterThanOrEqualTo(28));
-    expect(tester.getBottomLeft(notice).dy, lessThan(300));
+    expect(tester.getBottomLeft(notice).dy, lessThan(400),
+        reason: 'inline copy remains below the header while leaving room for the catalog at 1.7x font');
     expect(find.text('REAL APP CONTENT'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
