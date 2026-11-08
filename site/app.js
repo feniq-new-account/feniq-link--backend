@@ -1,6 +1,30 @@
 (() => {
   "use strict";
 
+  // Responsive navigation: explicit state, Escape, link selection and resize.
+  const menuToggle = document.getElementById("menu-toggle");
+  const mobileMenu = document.getElementById("mobile-menu");
+  if (menuToggle && mobileMenu) {
+    const closeMenu = () => {
+      mobileMenu.hidden = true;
+      menuToggle.setAttribute("aria-expanded", "false");
+      menuToggle.setAttribute("aria-label", "افتح قائمة الموقع");
+    };
+    menuToggle.addEventListener("click", () => {
+      const opening = mobileMenu.hidden;
+      mobileMenu.hidden = !opening;
+      menuToggle.setAttribute("aria-expanded", String(opening));
+      menuToggle.setAttribute("aria-label", opening ? "أغلق قائمة الموقع" : "افتح قائمة الموقع");
+    });
+    mobileMenu.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !mobileMenu.hidden) { closeMenu(); menuToggle.focus(); }
+    });
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 760 && !mobileMenu.hidden) closeMenu();
+    });
+  }
+
   // ── the cabinet demo ────────────────────────────────────
   // Sixteen drawers, lettered like a pharmacy's shelf. Items come from
   // demo-catalog.json: real trade names from the Syrian MoH register.
@@ -245,27 +269,39 @@
     }, reduce ? 1200 : 250 + steps.length * 900 + 1400);
   });
 
-  // ── the APK link ────────────────────────────────────────
-  // version.json is written by .github/workflows/site-deploy.yml next to feniq.apk.
+  // ── approved APK download: fail closed on legacy/incomplete manifests ──
+  // The historical site build only had {apk,build,date,size}; never advertise
+  // that legacy file as the current signed production release.
   const apk = $("apk");
   const meta = $("apk-meta");
+  const apkLabel = $("apk-label");
+  const contactHref = apk.href;
+  const isVerifiedManifest = (v) => {
+    if (!v || v.apk !== true || v.applicationId !== "com.feniq.link") return false;
+    if (!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(v.versionName || "")) return false;
+    if (!/^[0-9a-f]{64}$/i.test(v.sha256 || "") || !/^[0-9a-f:]{64,95}$/i.test(v.certificateSha256 || "")) return false;
+    const build = String(v.build || "");
+    return /^[1-9][0-9]{0,9}$/.test(build) &&
+      typeof v.size === "number" && v.size > 1000000 &&
+      v.file === "releases/" + build + "-" + v.sha256.slice(0, 12) + ".apk";
+  };
   fetch("version.json", { cache: "no-store" })
-    .then((r) => (r.ok ? r.json() : null))
+    .then((response) => response.ok ? response.json() : null)
     .catch(() => null)
     .then((v) => {
-      if (v && v.apk) {
-        const mb = v.size ? ` · ${(v.size / 1048576).toFixed(0)} ميغابايت` : "";
-        const d = v.date
-          ? ` · ${new Date(v.date).toLocaleDateString("ar-SY-u-nu-latn", { day: "numeric", month: "long", year: "numeric" })}`
-          : "";
-        meta.textContent = `النسخة ${v.build || ""}${mb}${d}`.trim();
+      if (!isVerifiedManifest(v)) {
+        apk.removeAttribute("download");
+        apk.href = contactHref;
+        apkLabel.textContent = "اطلب رابط النسخة المعتمدة";
+        meta.textContent = "التنزيل المباشر يُتاح بعد اعتماد نسخة موقّعة؛ لا نعرض إصداراً قديماً على أنه أحدث نسخة.";
         return;
       }
-      // no build published yet: send pharmacies to WhatsApp instead of a dead link
-      apk.removeAttribute("download");
-      apk.href = "https://wa.me/963982001415?text=" + encodeURIComponent("مرحبا، بدي أنزّل تطبيق فينيق");
-      $("apk-label").textContent = "اطلب رابط التطبيق على واتساب";
-      meta.textContent = "رابط التنزيل المباشر يُضاف قريباً.";
+      apk.href = "feniq.apk";
+      apk.setAttribute("download", "feniq.apk");
+      apkLabel.textContent = "نزّل تطبيق فينيق";
+      const size = (v.size / 1048576).toFixed(0) + " ميغابايت";
+      const date = v.date ? " · " + new Date(v.date).toLocaleDateString("ar-SY-u-nu-latn", { year: "numeric", month: "long", day: "numeric" }) : "";
+      meta.textContent = "الإصدار " + v.versionName + " · Build " + v.build + " · " + size + date;
     });
 
   // ── فيديو التعريف ───────────────────────────────────────
