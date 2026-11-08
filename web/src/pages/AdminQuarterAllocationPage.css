@@ -1,0 +1,32 @@
+/* Draft commission allocation only; isolated from posted accounting UI. */
+.quarter-settings { display: grid; gap: 18px; max-width: 1200px; margin-inline: auto; color: #18304a; }
+.quarter-head { background: linear-gradient(130deg, #162841, #294765); padding: 24px; border-radius: 18px; color: #fff; }
+.quarter-head > span { font-size: 12px; font-weight: 700; color: #ffc083; }
+.quarter-head h1 { font-size: clamp(21px, 3vw, 28px); color: #fff; margin: 6px 0 8px; }
+.quarter-head p { color: #d9e3ee; line-height: 1.75; margin: 0; }
+.quarter-warning { padding: 16px 18px; border-radius: 13px; border: 1px solid #e8caa0; border-inline-start: 4px solid #c9742e; background: #fff9ef; }
+.quarter-warning strong { font-weight: 750; }
+.quarter-warning p { color: #5d4f38; line-height: 1.8; margin: 5px 0 0; font-size: 13px; }
+.quarter-form { display: grid; gap: 16px; }
+.quarter-layout { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 15px; }
+.quarter-panel,.quarter-result-card { min-width: 0; padding: clamp(16px, 2.5vw, 23px); background: #fff; border: 1px solid #e0e7ef; border-radius: 16px; }
+.quarter-panel h2 { color: #18304a; font-size: 19px; margin: 0 0 9px; }
+.quarter-panel p { color: #576b7d; font-size: 13px; line-height: 1.7; margin: 0 0 17px; }
+.quarter-panel label { display: grid; gap: 7px; font-size: 13px; font-weight: 650; color: #344c62; margin-block: 12px; }
+.quarter-panel input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #c4d0df; border-radius: 9px; padding: 9px 12px; font: inherit; }
+.quarter-panel :is(button,input):focus-visible { outline: 3px solid #f1a154; outline-offset: 2px; }
+.quarter-panel small { display: block; color: #607286; line-height: 1.7; font-size: 12px; }
+.quarter-percentage { position: relative; max-width: 190px; direction: ltr; }
+.quarter-percentage input { padding-right: 35px; }
+.quarter-percentage span { position: absolute; right: 14px; top: 12px; font-weight: 800; }
+.quarter-example-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.quarter-results { margin-top: 17px; }
+.quarter-result-card { border-color: #d4dfea; background: #f7f9fc; }
+.quarter-result-card h3 { color: #18304a; font-size: 16px; margin: 0 0 6px; }
+.quarter-result-card p { margin: 0 0 12px; }
+.quarter-money-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 7px 16px; border-bottom: 1px solid #e1e8f0; padding: 11px 0; font-size: 13px; }
+.quarter-money-row strong { color: #1c5c72; font-size: 15px; font-variant-numeric: tabular-nums; }
+.quarter-detail { padding-top: 10px; font-size: 12px; }
+.quarter-success { color: #145e36; padding: 12px; border: 1px solid #9cd2ad; border-radius: 10px; background: #f1fcf5; }
+@media (max-width: 850px) { .quarter-example-fields { grid-template-columns: 1fr; } }
+@media (max-width: 710px) { .quarter-layout { grid-template-columns: 1fr; } .quarter-head { padding: 18px; } }
