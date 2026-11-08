@@ -266,6 +266,8 @@ class _WarehouseCashCustodyCardState extends State<WarehouseCashCustodyCard> {
                 _figure(_tr('العمولة الأصلية المستحقة', 'Original earned commission'),
                     summary['originalCommissionSyp'], Icons.receipt_long_outlined,
                     available: ready),
+                _figure(_tr('النقد المتبقي بعهدة فينيق', 'Feniq cash still in custody'),
+                    summary['cashInCustodySyp'], Icons.inventory_2_outlined),
                 _figure(_tr('التحويلات المؤكدة بالصافي', 'Net confirmed transfers'),
                     summary['remittedSyp'], Icons.check_circle_outline),
                 _figure(_tr('الصافي المستحق للمستودع', 'Net due to warehouse'),
@@ -274,8 +276,8 @@ class _WarehouseCashCustodyCardState extends State<WarehouseCashCustodyCard> {
               ]),
               const SizedBox(height: 8),
               Text(_tr(
-                'الصافي يستبعد التحويلات المؤكدة فقط؛ الحوالة المعلقة لا تُحسب مسددة. هذه ليست أرصدة ذمم الصيدليات.',
-                'Net due subtracts confirmed transfers only; pending transfers are not paid. This is separate from pharmacy debt.',
+                'الصافي يستبعد التحويلات المؤكدة فقط؛ الحوالة المعلقة لا تُحسب مسددة. النقد بالعهدة يخص هذا المسار فقط وليس رصيد الخزينة الكلي أو ذمم الصيدليات.',
+                'Net due subtracts confirmed transfers only; pending transfers are not paid. Cash in custody covers this flow only, not total treasury cash or pharmacy debt.',
               ), style: Theme.of(context).textTheme.bodySmall),
               if (custody.isNotEmpty) ...[
                 const Divider(height: 26),
