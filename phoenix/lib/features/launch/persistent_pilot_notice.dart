@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/config/app_config.dart';
+import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/services/storage_service.dart';
 
 /// A purely informational admin-controlled notice, independent of the
@@ -193,14 +194,12 @@ class PersistentPilotInlineNotice extends StatelessWidget {
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final value = (isArabic ? notice.textAr : notice.textEn).trim();
-    final parts = value.split('\\n');
+    final parts = value.split('\n');
     final heading = parts.first;
-    final detail = parts.skip(1).join('\\n');
-    final theme = Theme.of(context);
-    // The original announcement used the brand orange heading and muted
-    // explanatory copy, not a solid coloured banner.
-    final headingColor = theme.colorScheme.primary;
-    final detailColor = theme.colorScheme.onSurface.withValues(alpha: 0.76);
+    final detail = parts.skip(1).join('\n');
+    // Match the original launch announcement, without background or border.
+    final headingColor = AppColors.primaryTextOf(context);
+    final detailColor = AppColors.textSecondaryOf(context);
     return Semantics(
       key: const ValueKey('persistentPilotNotice'),
       label: value,
