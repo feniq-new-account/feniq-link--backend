@@ -32,6 +32,33 @@ void main() {
       expect(me.stats.monthOrdersTotal, 15502575);
     });
 
+    test('source-breakdown treats signed corrections as commission, not cash payout', () {
+      final stats = RepStats.fromJson({
+        'ownCommissionRate': 0,
+        'monthCommissionAmount': 7000,
+        'commissionBreakdownVersion': 'legacy-delivery-and-collected-v1',
+        'monthLegacyDeliveredCommissionSyp': 8000,
+        'monthCollectedCommissionSyp': -1000,
+      });
+      expect(stats.commissionBreakdownAvailable, isTrue);
+      expect(stats.monthLegacyDeliveredCommissionSyp, 8000);
+      expect(stats.monthCollectedCommissionSyp, -1000);
+      expect(stats.hasCommission, isTrue);
+    });
+
+    test('incomplete or malformed money fields fail closed', () {
+      final stats = RepStats.fromJson({
+        'ownCommissionRate': 0,
+        'monthCommissionAmount': 9000,
+        'commissionBreakdownVersion': 'legacy-delivery-and-collected-v1',
+        'monthLegacyDeliveredCommissionSyp': 100.5,
+        'monthCollectedCommissionSyp': 20,
+      });
+      expect(stats.commissionBreakdownAvailable, isFalse);
+      expect(stats.monthLegacyDeliveredCommissionSyp, isNull);
+      expect(stats.hasCommission, isFalse);
+    });
+
     test('reads the rep\'s own commission, and an older server without it reads as none', () {
       final withCommission = RepMe.fromJson({
         'rep': {'id': 'r1', 'name': 'أحمد', 'phone': '+963940000201'},
@@ -40,6 +67,9 @@ void main() {
       expect(withCommission.stats.ownCommissionRate, 1.25);
       expect(withCommission.stats.monthCommissionAmount, 4500);
       expect(withCommission.stats.hasCommission, isTrue);
+      expect(withCommission.stats.commissionBreakdownAvailable, isFalse);
+      expect(withCommission.stats.monthLegacyDeliveredCommissionSyp, isNull);
+
 
       final without = RepMe.fromJson({
         'rep': {'id': 'r1', 'name': 'أحمد', 'phone': '+963940000201'},

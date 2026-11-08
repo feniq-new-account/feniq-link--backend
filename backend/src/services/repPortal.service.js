@@ -51,10 +51,10 @@ async function getMe(rep, now = new Date()) {
       { $match: { repId: rep._id, createdAt: { $gte: monthStart }, status: { $ne: 'cancelled' } } },
       { $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$finalPrice' } } },
     ]),
-    // What the rep has earned this month: their half of the commission on
-    // delivered orders, less any credited return. Only their own share - not
-    // Feniq's or the warehouse's.
-    sumRepCommission({ repId: rep._id, createdAt: { $gte: monthStart } }),
+    // Report these sources separately: legacy delivered orders versus actual
+    // collection_v2 commission journal events (including signed corrections).
+    // Neither number proves that the rep has received a payout.
+    sumRepCommission({ repId: rep._id, createdAt: { $gte: monthStart } }, { sourceBreakdown: true }),
   ]);
   return {
     rep,
@@ -64,11 +64,15 @@ async function getMe(rep, now = new Date()) {
       visitsLast7Days: weekVisits,
       monthOrdersCount: monthOrders[0]?.count ?? 0,
       monthOrdersTotal: monthOrders[0]?.total ?? 0,
-      // What the rep earns, as a percentage of their orders: their quarter of
-      // the warehouse's rate, or half when the warehouse gives them its own. The warehouse's own rate and Feniq's share are not
-      // the rep's business, so they are never sent here.
+      // Legacy delivery-based effective rate only; active collection_v2
+      // contracts freeze area-specific terms independently. Do not market this
+      // value as the current collection_v2 rate.
       ownCommissionRate: repRateFor(rep.commissionRate ?? 0, rep.warehouseShareToRep ?? false),
+      // Compatibility for older clients; new clients must use the source split.
       monthCommissionAmount: monthCommission[0]?.repAmount ?? 0,
+      commissionBreakdownVersion: 'legacy-delivery-and-collected-v1',
+      monthLegacyDeliveredCommissionSyp: monthCommission[0]?.legacyDeliveredRepAmount ?? 0,
+      monthCollectedCommissionSyp: monthCommission[0]?.collectedRepAmount ?? 0,
     },
   };
 }

@@ -136,12 +136,41 @@ void main() {
       );
     }
 
-    testWidgets('a rep with a commission sees their own month and rate', (tester) async {
-      await pump(tester, const RepStats(monthOrdersCount: 4, ownCommissionRate: 1, monthCommissionAmount: 6000));
+    testWidgets('legacy and collected commission are labelled separately, not combined or paid', (tester) async {
+      await pump(tester, const RepStats(
+        monthOrdersCount: 4,
+        ownCommissionRate: 1,
+        monthCommissionAmount: 6000,
+        commissionBreakdownVersion: 'legacy-delivery-and-collected-v1',
+        monthLegacyDeliveredCommissionSyp: 4000,
+        monthCollectedCommissionSyp: 2000,
+      ));
 
-      expect(find.text('Your commission this month'), findsOneWidget);
-      expect(find.textContaining('6,000'), findsOneWidget);
-      expect(find.textContaining('You earn 1% of the value of delivered orders'), findsOneWidget);
+      expect(find.text('Delivered-order commission (legacy)'), findsOneWidget);
+      expect(find.text('Posted collected commission (new system)'), findsOneWidget);
+      expect(find.textContaining('4,000'), findsOneWidget);
+      expect(find.textContaining('2,000'), findsOneWidget);
+      expect(find.textContaining('6,000'), findsNothing);
+      expect(find.textContaining('does not confirm a rep payout'), findsOneWidget);
+      expect(find.textContaining('You earn 1%'), findsNothing);
+    });
+
+    testWidgets('old backend combined-only figure is not displayed as earned cash', (tester) async {
+      await pump(tester, const RepStats(
+        ownCommissionRate: 1, monthCommissionAmount: 6000,
+      ));
+      expect(find.textContaining('breakdown is unavailable'), findsOneWidget);
+      expect(find.textContaining('6,000'), findsNothing);
+    });
+
+    testWidgets('collection-only commission appears even with zero legacy rate', (tester) async {
+      await pump(tester, const RepStats(
+        commissionBreakdownVersion: 'legacy-delivery-and-collected-v1',
+        monthLegacyDeliveredCommissionSyp: 0,
+        monthCollectedCommissionSyp: -1200,
+      ));
+      expect(find.text('Posted collected commission (new system)'), findsOneWidget);
+      expect(find.textContaining('-1,200'), findsOneWidget);
     });
 
     testWidgets('a rep with no commission is not shown a zero-rate line', (tester) async {

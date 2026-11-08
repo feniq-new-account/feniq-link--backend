@@ -14,7 +14,7 @@ const { Event: CollectionEvent } = require('../models/collectionAccounting.model
 // `match` is a plain aggregation $match (ObjectIds already cast). With `byRep`
 // the rows are one per repId; without, a single row (or none). Amounts are
 // whole liras, rounded once at the end rather than per order.
-async function sumRepCommission(match, { byRep = false } = {}) {
+async function sumRepCommission(match, { byRep = false, sourceBreakdown = false } = {}) {
   const legacy = await Order.aggregate([
     { $match: { ...match, status: 'delivered', commissionEngine: { $ne: 'collection_v2' }, repCommission: { $ne: null } } },
     {
@@ -65,6 +65,18 @@ async function sumRepCommission(match, { byRep = false } = {}) {
   for (const row of collection) {
     const previous = combined.get(String(row._id)) ?? { _id: row._id, repAmount: 0, feniqAmount: 0, pharmacyAmount: 0, savingAmount: 0 };
     combined.set(String(row._id), { ...previous, repAmount: previous.repAmount + row.repAmount, feniqAmount: previous.feniqAmount + row.feniqAmount });
+  }
+  // Additive, opt-in read model for the rep's own profile. Legacy delivered-order
+  // sums and collection_v2 posted cash events have different recognition times.
+  // Never present their sum as one homogeneous earned/paid amount.
+  if (sourceBreakdown) {
+    const legacyById = new Map(legacy.map(row => [String(row._id), row.repAmount]));
+    const collectedById = new Map(collection.map(row => [String(row._id), row.repAmount]));
+    return [...combined.values()].map(row => ({
+      ...row,
+      legacyDeliveredRepAmount: legacyById.get(String(row._id)) ?? 0,
+      collectedRepAmount: collectedById.get(String(row._id)) ?? 0,
+    }));
   }
   return [...combined.values()];
 }

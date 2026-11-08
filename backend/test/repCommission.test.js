@@ -23,6 +23,8 @@ const Order = require('../src/models/order.model');
 const Return = require('../src/models/return.model');
 const OrderItem = require('../src/models/orderItem.model');
 const Rep = require('../src/models/rep.model');
+const mongoose = require('mongoose');
+const { Event: CollectionEvent } = require('../src/models/collectionAccounting.model');
 const orderService = require('../src/services/order.service');
 const warehouseOrderService = require('../src/services/warehouseOrder.service');
 const { zeroLegacyPlatformRates } = require('../src/services/platformRatesPolicy.service');
@@ -360,6 +362,10 @@ test('the warehouse\'s Reps page and the rep\'s own app total the commission on 
   assert.strictEqual(me.body.stats.ownCommissionRate, 0.5, 'the rep is told their own 0.5%, not the warehouse\'s 2%');
   assert.strictEqual(me.body.stats.commissionRate, undefined);
   assert.strictEqual(me.body.stats.monthCommissionAmount, 300, 'the rep sees only their own quarter');
+  assert.strictEqual(me.body.stats.commissionBreakdownVersion, 'legacy-delivery-and-collected-v1');
+  assert.strictEqual(me.body.stats.monthLegacyDeliveredCommissionSyp, 300);
+  assert.strictEqual(me.body.stats.monthCollectedCommissionSyp, 0);
+
   assert.strictEqual(me.body.stats.feniqAmount, undefined, 'Feniq\'s and the warehouse\'s shares are not the rep\'s business');
 });
 
@@ -399,6 +405,10 @@ test('a credited return takes its proportion back from the rep\'s and Feniq\'s s
   now = await totals();
   assert.deepStrictEqual(now.row, { repAmount: 150, feniqAmount: 150, pharmacyAmount: 150, savingAmount: 150 });
   assert.strictEqual(now.mine, 150);
+  const afterCredit = await call('GET', '/rep/me', { token: await login(appPhone) });
+  assert.strictEqual(afterCredit.body.stats.monthLegacyDeliveredCommissionSyp, 150);
+  assert.strictEqual(afterCredit.body.stats.monthCollectedCommissionSyp, 0);
+
 
   // A credit larger than the order can never push the commission below zero.
   await Return.updateOne({ _id: returnRequest._id }, { $set: { creditSyp: 90000 } });
@@ -411,4 +421,40 @@ test('a rep\'s rate is stored on the rep and survives a reload', async () => {
   const { res } = await createRep(ctx.wh.token, 1.5);
   const stored = await Rep.findById(res.body.rep.id).lean();
   assert.strictEqual(stored.commissionRate, 1.5);
+});
+
+
+// Source-qualified reporting only: v2 earnings come from signed posted
+// collection journal events, not delivery time or the rep's configured
+// legacy rate. This synthetic test inserts no payment or remittance.
+test('rep profile separates signed collection_v2 commission events from legacy delivered totals', async () => {
+  const wh = await createWarehouse();
+  const { res, appPhone } = await createRep(wh.token, 0);
+  assert.strictEqual(res.status, 201);
+  const rep = await Rep.findById(res.body.rep.id).lean();
+  const oid = () => new mongoose.Types.ObjectId();
+  const source = {
+    invoiceId: oid(), accountId: oid(), warehouseId: wh.warehouse._id,
+    repId: rep._id, allocationRunId: oid(), actorId: wh.user._id,
+    reason: 'synthetic collection reconciliation', at: new Date(),
+    eligibleCollectedSyp: 10000, returnedCommissionSyp: 0,
+    originalCommissionSyp: 1000, feniqSyp: 500, repSyp: 500,
+    targetOriginalCommissionSyp: 1000, targetFeniqSyp: 500, targetRepSyp: 500,
+  };
+  await CollectionEvent.create([
+    { ...source, sourceKey: 'rep-report-posted-cash-positive' },
+    { ...source, invoiceId: oid(), sourceKey: 'rep-report-return-correction',
+      eligibleCollectedSyp: 0, returnedCommissionSyp: 400,
+      originalCommissionSyp: -400, feniqSyp: -200, repSyp: -200,
+      targetOriginalCommissionSyp: 600, targetFeniqSyp: 300, targetRepSyp: 300 },
+  ]);
+  const me = await call('GET', '/rep/me', { token: await login(appPhone) });
+  assert.strictEqual(me.status, 200, JSON.stringify(me.body));
+  assert.strictEqual(me.body.stats.ownCommissionRate, 0);
+  assert.strictEqual(me.body.stats.monthLegacyDeliveredCommissionSyp, 0);
+  assert.strictEqual(me.body.stats.monthCollectedCommissionSyp, 300,
+    'signed return corrections reduce posted collection commission');
+  assert.strictEqual(me.body.stats.monthCommissionAmount, 300,
+    'old compatibility sum is retained but the new UI never renders it directly');
+  assert.strictEqual(me.body.stats.feniqAmount, undefined);
 });
