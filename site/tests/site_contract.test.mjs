@@ -52,7 +52,7 @@ test('SEO canonical, sharing metadata and index files agree', () => {
   assert.match(robots, /Sitemap: https:\/\/feniq-site\.onrender\.com\/sitemap\.xml/);
 });
 test('privacy matches the permissions and signed-release approach', () => {
-  assert.match(privacy, /الموقع في الخلفية/);
+  assert.match(privacy, /للموقع في الخلفية/);
   assert.match(privacy, /التوقيع/);
   assert.doesNotMatch(privacy, /Firebase خدمات الإشعارات وإعدادات التحديث/);
 });
