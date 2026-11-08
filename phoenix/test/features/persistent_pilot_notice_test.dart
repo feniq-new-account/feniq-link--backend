@@ -35,7 +35,7 @@ void main() {
       appBar: AppBar(title: const Text('اختر المستودع')),
       body: Column(
         children: [
-          if (showHomeSlot) const PilotNoticeInline(),
+          if (showHomeSlot) const PersistentPilotInlineNotice(),
           const Expanded(child: Center(child: Text('REAL APP CONTENT'))),
         ],
       ),
@@ -65,7 +65,7 @@ void main() {
     await tester.pumpWidget(shell(
       store: store,
       load: () async => const PilotNotice(enabled: true,
-        textAr: '$arabic — التطبيق قيد الاختبار والتطوير',
+        textAr: 'النسخة تجريبية\nيمكنك ارسال الطلبات في 1 كانون الاول\nيتم اضافة المستودعات بشكل مستمر',
         textEn: english),
     ));
     await tester.pumpAndSettle();
@@ -76,8 +76,8 @@ void main() {
     expect(tester.getTopLeft(notice).dy,
         greaterThanOrEqualTo(tester.getBottomLeft(find.byType(AppBar)).dy),
         reason: 'notice belongs below the header, never behind status icons');
-    expect(find.text(arabic), findsOneWidget);
-    expect(find.text('التطبيق قيد الاختبار والتطوير'), findsOneWidget);
+    expect(find.text('النسخة تجريبية'), findsOneWidget);
+    expect(find.text('يمكنك ارسال الطلبات في 1 كانون الاول\nيتم اضافة المستودعات بشكل مستمر'), findsOneWidget);
     final decoration = find.descendant(of: notice, matching: find.byType(DecoratedBox));
     expect(decoration, findsNothing, reason: 'no colored card or border');
     expect(find.text('REAL APP CONTENT'), findsOneWidget);
@@ -100,7 +100,7 @@ void main() {
       store: store,
       load: () async => const PilotNotice(
         enabled: true,
-        textAr: 'نسخة تجريبية من فينيق — التطبيق قيد الاختبار والتطوير، وقد تتغير بعض الخدمات.',
+        textAr: 'النسخة تجريبية\nيمكنك ارسال الطلبات في 1 كانون الاول\nيتم اضافة المستودعات بشكل مستمر',
         textEn: english),
     ));
     await tester.pumpAndSettle();
