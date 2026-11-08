@@ -172,7 +172,7 @@ class _WarehouseSelectionViewState extends State<WarehouseSelectionView> {
           ),
           // Admin-editable trial notice follows the header naturally as part
           // of the scrolling screen. No fixed strip, no background or border.
-          const SliverToBoxAdapter(child: PilotNoticeInline()),
+          const SliverToBoxAdapter(child: PersistentPilotInlineNotice()),
           // Keep the operational checkout status separate from the trial notice.
           const SliverToBoxAdapter(child: LaunchStatusBanner(hideRoutinePrelaunchMessage: true)),
           SliverToBoxAdapter(child: BannerSlider(onBannerTap: _handleBannerTap)),
