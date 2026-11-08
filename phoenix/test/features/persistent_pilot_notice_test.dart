@@ -34,6 +34,79 @@ void main() {
     ),
   );
 
+  testWidgets('Android 15 status icons never overlap the permanent notice and AppBar does not double-pad',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 32, bottom: 24);
+    tester.view.viewPadding = const FakeViewPadding(top: 32, bottom: 24);
+    addTearDown(tester.view.reset);
+
+    final store = await storage();
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('ar'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => PersistentPilotNoticeFrame(
+        storageService: store,
+        load: () async => const PilotNotice(
+          enabled: true, textAr: arabic, textEn: english),
+        child: child!,
+      ),
+      home: Scaffold(
+        appBar: AppBar(title: const Text('اختر المستودع')),
+        body: const Center(child: Text('REAL APP CONTENT')),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    final notice = find.byKey(const ValueKey('persistentPilotNotice'));
+    expect(notice, findsOneWidget);
+    expect(tester.getTopLeft(notice).dy, greaterThanOrEqualTo(32),
+      reason: 'Android status bar takes the first 32 logical pixels');
+    final noticeBottom = tester.getBottomLeft(notice).dy;
+    expect(tester.getTopLeft(find.byType(AppBar)).dy, closeTo(noticeBottom, 1),
+      reason: 'the AppBar must follow the notice without a second system inset');
+    expect(find.text(arabic), findsOneWidget);
+    expect(find.text('REAL APP CONTENT'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('long Arabic admin notice stays inside the screen at large text settings',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 720);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 28);
+    tester.view.viewPadding = const FakeViewPadding(top: 28);
+    tester.platformDispatcher.textScaleFactorTestValue = 1.7;
+    addTearDown(() {
+      tester.view.reset();
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+    });
+    final store = await storage();
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('ar'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => PersistentPilotNoticeFrame(
+        storageService: store,
+        load: () async => const PilotNotice(
+          enabled: true,
+          textAr: 'نسخة تجريبية من فينيق — التطبيق قيد الاختبار والتطوير، وقد تتغير بعض الخدمات.',
+          textEn: english),
+        child: child!,
+      ),
+      home: const Scaffold(body: Center(child: Text('CATALOG'))),
+    ));
+    await tester.pumpAndSettle();
+    final bar = find.byKey(const ValueKey('persistentPilotNotice'));
+    expect(tester.getTopLeft(bar).dy, greaterThanOrEqualTo(28));
+    expect(tester.getBottomLeft(bar).dy, lessThan(135),
+      reason: 'a long admin message cannot consume the whole home screen');
+    expect(find.text('CATALOG'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('malformed notice cannot enable an unsourced strip', () {
     expect(() => PilotNotice.fromJson({'enabled': true, 'textAr': arabic}),
       throwsFormatException);
