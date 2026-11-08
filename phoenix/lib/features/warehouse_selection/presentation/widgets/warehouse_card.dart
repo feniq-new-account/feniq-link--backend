@@ -58,15 +58,18 @@ class WarehouseCard extends StatelessWidget {
                 ),
               ),
               SizedBox(height: gap),
-              Text(
-                name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.textOf(context),
-                  fontWeight: FontWeight.w800,
-                  height: 1.15,
+              Tooltip(
+                message: name,
+                child: Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColors.textOf(context),
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                  ),
                 ),
               ),
               SizedBox(height: gap),
