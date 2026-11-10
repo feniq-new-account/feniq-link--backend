@@ -879,6 +879,14 @@ export const api = {
   //
   // `from`/`to` are free - the admin picks any window - and are applied to the
   // whole table, so the figures on every row describe the same period.
+  // Explicit draft only. These admin settings DO NOT touch live commission
+  // posting, historical invoices or pharmacy balances.
+  getQuarterAllocationDraft: () => request('/admin/commission/allocation-draft'),
+  saveQuarterAllocationDraft: (body) =>
+    request('/admin/commission/allocation-draft', { method: 'PUT', body }),
+  previewQuarterAllocationDraft: (body) =>
+    request('/admin/commission/allocation-draft/preview', { method: 'POST', body }),
+
   adminCommissionOverview: ({ from, to } = {}) => {
     const params = new URLSearchParams();
     if (from) params.set('from', from);

@@ -29,6 +29,7 @@ import { AdminManufacturersPage } from './AdminManufacturersPage';
 import { AdminCategoriesPage } from './AdminCategoriesPage';
 import { AdminBannersPage } from './AdminBannersPage';
 import { AdminCommissionPage } from './AdminCommissionPage';
+import { AdminQuarterAllocationPage } from './AdminQuarterAllocationPage';
 import { AdminExchangeRatePage } from './AdminExchangeRatePage';
 import { AdminNotificationsPage } from './AdminNotificationsPage';
 import { AdminComplaintsPage } from './AdminComplaintsPage';
@@ -83,6 +84,7 @@ export function AdminPanel() {
     ] },
     { key: 'finance', tabs: [
       { path: '/admin/commission', label: t('nav.commission') },
+      { path: '/admin/quarter-allocation', label: t('quarterPolicy.nav') },
       { path: '/admin/exchange-rate', label: t('nav.exchangeRate') },
     ] },
     { key: 'system', tabs: [
@@ -240,6 +242,7 @@ export function AdminPanel() {
             <Route path="/admin/manufacturers" element={<AdminManufacturersPage />} />
             <Route path="/admin/categories" element={<AdminCategoriesPage />} />
             <Route path="/admin/commission" element={<AdminCommissionPage />} />
+            <Route path="/admin/quarter-allocation" element={<AdminQuarterAllocationPage />} />
             <Route path="/admin/exchange-rate" element={<AdminExchangeRatePage />} />
             <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
             <Route path="/admin/complaints" element={<AdminComplaintsPage />} />
