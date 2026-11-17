@@ -513,7 +513,8 @@ export const api = {
   // Registration approval page: the syndicate list, the approval switch and the
   // admins' Telegram bot (backend adminRegistration.controller.js).
   getAdminMaintenancePreview: () => request('/admin/maintenance/preview'),
-  previewTrialOrderReset: (before) => request(`/admin/maintenance/trial-orders?before=${encodeURIComponent(before)}`),
+  previewTrialOrderReset: (before, includeOutForDelivery = false) =>
+    request(`/admin/maintenance/trial-orders?before=${encodeURIComponent(before)}&includeOutForDelivery=${includeOutForDelivery ? 'true' : 'false'}`),
   executeTrialOrderReset: (body) => request('/admin/maintenance/trial-orders/cancel', { method: 'POST', body }),
   getPilotOrderAccess: () => request('/admin/pilot-access'),
   updatePilotOrderAccess: (body) => request('/admin/pilot-access', { method: 'PUT', body }),

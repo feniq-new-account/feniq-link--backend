@@ -6,15 +6,24 @@ import { api } from '../api/client';
 // chosen moment. Delivered orders already carry real debts and are only
 // reported. Nothing loads or writes until the admin asks for a preview, and the
 // write repeats the previewed count so a stale screen can never act.
-function localNow() {
-  const now = new Date();
-  now.setSeconds(0, 0);
-  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+// The cutoff is always Damascus time (UTC+03:00 all year), whatever the
+// admin's device clock zone, so "00:00 on 1 December" means the same moment
+// for everyone.
+const DAMASCUS_OFFSET_MS = 3 * 60 * 60 * 1000;
+function damascusNow() {
+  return new Date(Date.now() + DAMASCUS_OFFSET_MS).toISOString().slice(0, 16);
+}
+function damascusIso(value) {
+  return new Date(`${value}:00+03:00`).toISOString();
+}
+function damascusLabel(iso) {
+  return new Date(iso).toLocaleString('ar-SY', { timeZone: 'Asia/Damascus', dateStyle: 'medium', timeStyle: 'short' });
 }
 
 export function TrialOrderResetCard() {
   const { t } = useTranslation();
-  const [before, setBefore] = useState(localNow);
+  const [before, setBefore] = useState(damascusNow);
+  const [includeRoad, setIncludeRoad] = useState(false);
   const [preview, setPreview] = useState(null);
   const [reason, setReason] = useState(() => t('maintenance.trialReset.defaultReason'));
   const [sure, setSure] = useState(false);
@@ -25,7 +34,7 @@ export function TrialOrderResetCard() {
   async function loadPreview() {
     setBusy(true); setError(''); setResult(null); setSure(false);
     try {
-      setPreview((await api.previewTrialOrderReset(new Date(before).toISOString())).preview);
+      setPreview((await api.previewTrialOrderReset(damascusIso(before), includeRoad)).preview);
     } catch (err) {
       setPreview(null); setError(err.message);
     } finally { setBusy(false); }
@@ -37,6 +46,7 @@ export function TrialOrderResetCard() {
     try {
       const response = await api.executeTrialOrderReset({
         before: preview.before, reason: reason.trim(), confirmCount: preview.resettableCount,
+        includeOutForDelivery: preview.includeOutForDelivery,
       });
       setResult(response.result);
       setPreview(response.result.after);
@@ -54,14 +64,29 @@ export function TrialOrderResetCard() {
     <div className="adm-maintenance-body">
       <p className="hint">{t('maintenance.trialReset.intro')}</p>
       <label>{t('maintenance.trialReset.before')}
-        <input type="datetime-local" value={before} max={localNow()}
+        <input type="datetime-local" value={before} max={damascusNow()}
           onChange={(event) => { setBefore(event.target.value); setPreview(null); }} />
+        <span className="hint"> {t('maintenance.trialReset.damascusTime')}</span>
+      </label>
+      <label>
+        <input type="checkbox" checked={includeRoad}
+          onChange={(event) => { setIncludeRoad(event.target.checked); setPreview(null); }} />
+        {t('maintenance.trialReset.includeRoad')}
       </label>
       <button type="button" className="btn btn-secondary" onClick={loadPreview} disabled={busy || !before}>
         {busy ? t('common.loading') : t('maintenance.trialReset.preview')}
       </button>
       {error && <p role="alert" className="error-text">{error}</p>}
       {preview && <div className="adm-maintenance-readiness" data-testid="trial-reset-preview">
+        <p className="hint">{t('maintenance.trialReset.cutoffShown', { at: damascusLabel(preview.before) })}</p>
+        {preview.onTheRoad.orders > 0 && <div className="adm-maintenance-warning" role="status" data-testid="trial-reset-road">
+          <p>{t(preview.includeOutForDelivery ? 'maintenance.trialReset.roadIncluded' : 'maintenance.trialReset.roadExcluded',
+            { count: preview.onTheRoad.orders })}</p>
+          <ul>{preview.onTheRoad.list.map(row => <li key={row.id}>
+            #{row.orderNumber} · {row.nameAr || row.nameEn || row.id} · {Number(row.finalPriceSyp || 0).toLocaleString()} {t('maintenance.trialReset.syp')}
+            {row.sentAt && <> · {damascusLabel(row.sentAt)}</>}
+          </li>)}</ul>
+        </div>}
         <dl className="adm-maintenance-stats">
           <div><dt>{t('maintenance.trialReset.resettable')}</dt><dd>{preview.resettableCount}</dd></div>
           <div><dt>{t('maintenance.trialReset.pharmacies')}</dt><dd>{preview.affectedPharmacies}</dd></div>
@@ -94,7 +119,7 @@ export function TrialOrderResetCard() {
       </div>}
       {result && <p role="status" className="adm-maintenance-warning" data-testid="trial-reset-result">
         {t('maintenance.trialReset.done', { cancelled: result.cancelled, skipped: result.skipped,
-          failed: result.failed.length, notified: result.notifiedPharmacies })}
+          failed: result.failed.length, notified: result.notifiedPharmacies, warehouses: result.notifiedWarehouses })}
       </p>}
     </div>
   </section>;

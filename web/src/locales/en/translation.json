@@ -1852,7 +1852,13 @@
       "execute": "Cancel {{count}} orders",
       "confirm": "{{count}} orders will be cancelled and pharmacies notified. This cannot be undone. Continue?",
       "changed": "Orders changed since the preview. Preview again.",
-      "done": "Done: {{cancelled}} cancelled, {{skipped}} skipped (status changed), {{failed}} failed, {{notified}} pharmacies notified."
+      "done": "Done: {{cancelled}} cancelled, {{skipped}} skipped (status changed), {{failed}} failed, {{notified}} pharmacies and {{warehouses}} warehouses notified.",
+      "damascusTime": "(Damascus time)",
+      "includeRoad": "Also include orders that are on the way (only if you are sure they did not arrive)",
+      "cutoffShown": "Cutoff: {{at}} Damascus time",
+      "roadExcluded": "{{count}} orders on the way will not be cancelled: the goods may have arrived. Have the warehouse mark them delivered or check them, or include them once you are sure.",
+      "roadIncluded": "Careful: {{count}} orders on the way will be cancelled. If the goods arrived, their debt is lost. Check each one:",
+      "syp": "SYP"
     },
     "pilotReadiness": "Ordering pilot readiness",
     "readinessNotEndToEnd": "These are live database counts only. They do not prove the server release is deployed or that an order reaches the warehouse dashboard.",

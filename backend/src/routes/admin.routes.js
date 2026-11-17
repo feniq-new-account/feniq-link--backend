@@ -30,7 +30,7 @@ router.get('/maintenance/preview', require('../utils/asyncHandler').asyncHandler
 // cutoff. Preview is read-only; the write needs the previewed count + a reason.
 router.get('/maintenance/trial-orders', asyncHandler(async (req, res) => {
   res.set('Cache-Control', 'no-store');
-  res.json({ success: true, preview: await require('../services/trialOrderReset.service').previewTrialOrderReset({ before: req.query.before }) });
+  res.json({ success: true, preview: await require('../services/trialOrderReset.service').previewTrialOrderReset({ before: req.query.before, includeOutForDelivery: req.query.includeOutForDelivery === 'true' }) });
 }));
 router.post('/maintenance/trial-orders/cancel', asyncHandler(async (req, res) => {
   res.set('Cache-Control', 'no-store');

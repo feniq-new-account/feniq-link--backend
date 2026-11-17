@@ -71,6 +71,7 @@ test.before(async () => {
   ]);
   ids.pharmacyUser = pharmacyUser._id;
   ids.admin = admin._id;
+  ids.warehouseUser = warehouseUser._id;
   const base = { ownerName: 'Owner', address: 'a', city: 'Latakia', areaType: 'city', addedBy: 'self' };
   const [a, b] = await Pharmacy.create([
     { ...base, userId: pharmacyUser._id, nameAr: 'صيدلية أ', nameEn: 'A', phone: '0931111201' },
@@ -89,7 +90,7 @@ test.after(stopMemoryMongo);
 
 const reason = 'انتهت فترة التجربة، أعد الطلب من فضلك';
 
-test('preview counts trial orders by status, reports delivered ones and writes nothing', async () => {
+test('preview counts trial orders by status, lists on-the-road ones separately and writes nothing', async () => {
   await makeOrder('pending');
   await makeOrder('confirmed', { pharmacy: ids.pharmacyB });
   await makeOrder('out_for_delivery', { creditUsedSyp: 200 });
@@ -98,12 +99,19 @@ test('preview counts trial orders by status, reports delivered ones and writes n
   await makeOrder('pending', { createdAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365) }); // after any sane cutoff
   const before = new Date().toISOString();
   const preview = await service.previewTrialOrderReset({ before });
-  assert.equal(preview.resettableCount, 3);
+  // On-the-road orders are NOT cancelled by default: the goods may already be there.
+  assert.equal(preview.resettableCount, 2);
+  assert.equal(preview.includeOutForDelivery, false);
+  assert.deepEqual(preview.resettableStatuses, ['pending', 'confirmed', 'preparing']);
+  assert.equal(preview.onTheRoad.orders, 1);
+  assert.equal(preview.onTheRoad.list[0].finalPriceSyp, 1000);
+  assert.equal(preview.onTheRoad.list[0].nameAr, 'مستودع التجربة');
+  assert.ok(preview.onTheRoad.list[0].sentAt);
   assert.equal(preview.statusCounts.delivered, 1);
-  assert.equal(preview.statusCounts.cancelled, 1);
   assert.equal(preview.affectedPharmacies, 2);
   assert.equal(preview.deliveredUntouched.orders, 1);
-  assert.equal(preview.warehouses[0].nameAr, 'مستودع التجربة');
+  const withRoad = await service.previewTrialOrderReset({ before, includeOutForDelivery: true });
+  assert.equal(withRoad.resettableCount, 3);
   assert.equal(await Order.countDocuments({ status: 'cancelled' }), 1);
 });
 
@@ -111,28 +119,31 @@ test('the cutoff, reason and confirmation are all required', async () => {
   const before = new Date().toISOString();
   await assert.rejects(service.previewTrialOrderReset({ before: undefined }), { code: 'INVALID_TRIAL_RESET' });
   await assert.rejects(service.previewTrialOrderReset({ before: new Date(Date.now() + DAY).toISOString() }), { code: 'INVALID_TRIAL_RESET' });
-  await assert.rejects(service.executeTrialOrderReset(ids.admin, { before, reason: 'short', confirmCount: 3 }), { code: 'INVALID_TRIAL_RESET' });
+  await assert.rejects(service.executeTrialOrderReset(ids.admin, { before, reason: 'short', confirmCount: 2 }), { code: 'INVALID_TRIAL_RESET' });
   await assert.rejects(service.executeTrialOrderReset(ids.admin, { before, reason, confirmCount: 0 }), { code: 'INVALID_TRIAL_RESET' });
-  await assert.rejects(service.executeTrialOrderReset(ids.admin, { before, reason, confirmCount: 3, extra: 1 }), { code: 'INVALID_TRIAL_RESET' });
-  // A stale preview: nothing is written.
-  await assert.rejects(service.executeTrialOrderReset(ids.admin, { before, reason, confirmCount: 2 }), { code: 'TRIAL_RESET_CHANGED' });
+  await assert.rejects(service.executeTrialOrderReset(ids.admin, { before, reason, confirmCount: 2, extra: 1 }), { code: 'INVALID_TRIAL_RESET' });
+  await assert.rejects(service.executeTrialOrderReset(ids.admin, { before, reason, confirmCount: 2, includeOutForDelivery: 'yes' }), { code: 'INVALID_TRIAL_RESET' });
+  // A stale preview (it counted the on-the-road order, the request does not): nothing is written.
+  await assert.rejects(service.executeTrialOrderReset(ids.admin, { before, reason, confirmCount: 3 }), { code: 'TRIAL_RESET_CHANGED' });
   assert.equal(await Order.countDocuments({ status: 'cancelled' }), 1);
 });
 
-test('execute cancels only undelivered trial orders, leaves the ledger alone and tells each pharmacy once', async () => {
+test('execute cancels only unsent trial orders, leaves the ledger alone and tells each pharmacy and warehouse once', async () => {
   const ledgerBefore = await LedgerEntry.countDocuments({});
   const delivered = await Order.findOne({ status: 'delivered' }).lean();
   const before = new Date().toISOString();
-  const result = await service.executeTrialOrderReset(ids.admin, { before, reason, confirmCount: 3 });
+  const result = await service.executeTrialOrderReset(ids.admin, { before, reason, confirmCount: 2 });
   assert.deepEqual(result.failed, [], JSON.stringify(result.failed));
-  assert.equal(result.cancelled, 3);
+  assert.equal(result.cancelled, 2);
   assert.equal(result.skipped, 0);
-  assert.deepEqual(result.failed, []);
   assert.equal(result.after.resettableCount, 0);
+  assert.equal(result.after.onTheRoad.orders, 1);
   assert.equal(result.notifiedPharmacies, 2);
+  assert.equal(result.notifiedWarehouses, 1);
+  assert.equal(await Order.countDocuments({ status: 'out_for_delivery' }), 1);
 
   const cancelled = await Order.find({ status: 'cancelled', cancelReason: reason }).lean();
-  assert.equal(cancelled.length, 3);
+  assert.equal(cancelled.length, 2);
   for (const order of cancelled) {
     assert.equal(String(order.cancelledBy), String(ids.admin));
     const last = order.statusHistory.at(-1);
@@ -144,27 +155,54 @@ test('execute cancels only undelivered trial orders, leaves the ledger alone and
   assert.equal(await LedgerEntry.countDocuments({}), ledgerBefore);
 
   const audits = await FinancialAuditLog.find({ action: 'order.admin_cancelled' }).lean();
-  assert.equal(audits.length, 3);
+  assert.equal(audits.length, 2);
   assert.ok(audits.every(row => row.reason === reason && String(row.actorId) === String(ids.admin)));
-  assert.deepEqual(new Set(audits.map(row => row.before.status)), new Set(['pending', 'confirmed', 'out_for_delivery']));
+  assert.deepEqual(new Set(audits.map(row => row.before.status)), new Set(['pending', 'confirmed']));
 
-  // The credit the on-the-road order used went back to the pharmacy.
+  assert.equal(emitted.filter(e => e.event === 'order.cancelled').length, 2);
+  const pharmacyNotes = notifications.filter(n => n.userId !== String(ids.warehouseUser));
+  assert.deepEqual(pharmacyNotes.map(n => n.userId).sort(), [String(ids.pharmacyUser), String(ids.pharmacyUserB)].sort());
+  assert.ok(pharmacyNotes.every(n => n.bodyAr.includes(reason)));
+  const warehouseNotes = notifications.filter(n => n.userId === String(ids.warehouseUser));
+  assert.equal(warehouseNotes.length, 1);
+  assert.match(warehouseNotes[0].bodyAr, /لا تشحنها/);
+});
+
+test('on-the-road orders are cancelled only when explicitly included, and their credit goes back', async () => {
+  const before = new Date().toISOString();
+  const preview = await service.previewTrialOrderReset({ before, includeOutForDelivery: true });
+  assert.equal(preview.resettableCount, 1);
+  const result = await service.executeTrialOrderReset(ids.admin, { before, reason, confirmCount: 1, includeOutForDelivery: true });
+  assert.equal(result.cancelled, 1);
+  assert.equal(result.after.onTheRoad.orders, 0);
+  const audit = await FinancialAuditLog.findOne({ action: 'order.admin_cancelled', 'before.status': 'out_for_delivery' }).lean();
+  assert.ok(audit);
   const credit = await PharmacyCredit.findOne({ pharmacyId: ids.pharmacyA, warehouseId: ids.warehouse }).lean();
   assert.equal(credit.balanceSyp, 200);
-
-  assert.equal(emitted.filter(e => e.event === 'order.cancelled').length, 3);
-  const targets = notifications.map(n => n.userId).sort();
-  assert.deepEqual(targets, [String(ids.pharmacyUser), String(ids.pharmacyUserB)].sort());
-  assert.ok(notifications.every(n => n.bodyAr.includes(reason)));
 });
 
 test('a cancelled on-the-road order is never auto-delivered and a rerun finds nothing', async () => {
   const closed = await warehouseOrderService.autoDeliverStaleOrders(new Date(Date.now() + 3 * DAY));
   assert.equal(closed, 0);
-  const preview = await service.previewTrialOrderReset({ before: new Date().toISOString() });
+  const preview = await service.previewTrialOrderReset({ before: new Date().toISOString(), includeOutForDelivery: true });
   assert.equal(preview.resettableCount, 0);
   await assert.rejects(service.executeTrialOrderReset(ids.admin, { before: new Date().toISOString(), reason, confirmCount: 1 }),
     { code: 'TRIAL_RESET_CHANGED' });
+});
+
+test('a real delivery racing the reset ends either delivered with one charge or cancelled with none', async () => {
+  for (let round = 0; round < 3; round += 1) {
+    const order = await makeOrder('out_for_delivery');
+    const before = new Date().toISOString();
+    await Promise.allSettled([
+      warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser),
+      service.executeTrialOrderReset(ids.admin, { before, reason, confirmCount: 1, includeOutForDelivery: true }),
+    ]);
+    const final = await Order.findById(order._id).lean();
+    const charges = await LedgerEntry.countDocuments({ 'source.orderId': order._id, kind: 'charge' });
+    assert.ok(['delivered', 'cancelled'].includes(final.status), final.status);
+    assert.equal(charges, final.status === 'delivered' ? 1 : 0, `round ${round}: ${final.status} with ${charges} charges`);
+  }
 });
 
 test('an order delivered between preview and execute is skipped, not cancelled', async () => {
