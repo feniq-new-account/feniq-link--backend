@@ -1085,6 +1085,7 @@ export const api = {
   activateCollectionContract: (warehouseId, body) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}/contracts`, { method: 'POST', body }),
   confirmCollectionSettlement: (warehouseId, body) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}/settlements`, { method: 'POST', body }),
   adminCollectionAccounting: (warehouseId, query = {}) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}?${new URLSearchParams(query)}`),
+  dailyReceipts: (date) => request(`/warehouse/payments/receipts${date ? `?date=${encodeURIComponent(date)}` : ''}`),
   accountantDashboard: (query = {}) => request(`/warehouse/balances/dashboard?${new URLSearchParams(query)}`),
   warehouseBalances: ({ limit, after, search, balanceState } = {}) => {
     const params = new URLSearchParams();

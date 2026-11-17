@@ -29,6 +29,13 @@ function requireAccountingPermission(permission) {
     next();
   };
 }
+// Read-only: one business day's receipts (total, by method, by who recorded).
+router.get('/receipts', require('../utils/asyncHandler').asyncHandler(async (req, res) => {
+  const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
+  const warehouse = await loadWarehouseOrThrow(req.user._id, { select: '_id', lean: true });
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, receipts: await require('../services/dailyReceipts.service').dailyReceipts(warehouse._id, { date: req.query.date }) });
+}));
 router.post('/', requireAccountingPermission('paymentRecord'), controller.create);
 router.post('/:id/reverse', requireAccountingPermission('paymentReverse'), controller.reverse);
 router.get('/:id/proofs', proofs.list);

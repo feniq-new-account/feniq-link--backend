@@ -246,11 +246,11 @@ async function executeDemoPurge(actorId, { planToken: token, confirm } = {}) {
   // The big catalogue/notification tables first, outside the transaction:
   // no money in them, and the warehouses still exist if anything after this
   // fails, so a re-run finds and finishes the rest.
-  const deleted = {};
+  const bulkDeleted = {};
   for (const step of first.steps) {
     if (!step.bulk) continue;
     const n = await deleteInBatches(step.model, step.filter);
-    if (n) deleted[step.label] = (deleted[step.label] || 0) + n;
+    if (n) bulkDeleted[step.label] = (bulkDeleted[step.label] || 0) + n;
   }
   const Review = optionalModel('Review');
   const ratedPharmacyIds = Review
@@ -264,6 +264,8 @@ async function executeDemoPurge(actorId, { planToken: token, confirm } = {}) {
       throw ApiError.conflict('The data changed since the preview. Preview again.', 'DEMO_PURGE_PLAN_CHANGED');
     }
     const releasedCodeUses = await releaseAdminCodeUses(warehouseIds, session);
+    // Fresh on every attempt: a retried transaction must not add up twice.
+    const deleted = { ...bulkDeleted };
     for (const step of current.steps) {
       if (step.bulk) continue;
       const { deletedCount } = await step.model.deleteMany(step.filter, { session });

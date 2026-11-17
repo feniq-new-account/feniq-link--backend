@@ -11,6 +11,7 @@ import { formatSyp } from '../utils/currency';
 import { displayName } from '../utils/displayName';
 import { formatBusinessDateTime, businessDateInputValue, startOfBusinessMonthInputValue } from '../utils/businessDate';
 import { CollectionAccountingPanel } from '../components/CollectionAccountingPanel';
+import { DailyReceiptsCard } from '../components/DailyReceiptsCard';
 import './AccountantDashboardPage.css';
 
 const KINDS = ['charge', 'charge_reversal', 'payment', 'payment_reversal', 'return_credit',
@@ -124,6 +125,8 @@ export function AccountantDashboardPage() {
         <Link to="/warehouse/returns">{t('nav.returns')}</Link>
       </nav>
     </header>
+
+    <DailyReceiptsCard />
 
     <section className="accounting-filter-panel" aria-labelledby="accounting-filter-title">
       <div className="accounting-section-heading">

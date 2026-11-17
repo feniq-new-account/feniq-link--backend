@@ -96,6 +96,10 @@ const paymentSchema = new Schema(
 paymentSchema.index({ pharmacyId: 1, warehouseId: 1 });
 // Statement / detail reads, in business-date order.
 paymentSchema.index({ accountId: 1, paidAt: -1 });
+// The accountant's day view (dailyReceipts.service.js): a warehouse's
+// payments by the day they are dated, and by the day they were entered.
+paymentSchema.index({ warehouseId: 1, paidAt: -1 });
+paymentSchema.index({ warehouseId: 1, createdAt: -1 });
 // Dedupes a retried submission. Partial so the V1 rows (no key) don't collide.
 paymentSchema.index(
   { idempotencyKey: 1 },

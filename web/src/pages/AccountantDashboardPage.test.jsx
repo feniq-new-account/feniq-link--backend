@@ -9,7 +9,8 @@ let flags;
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key) => key }) }));
 vi.mock('../context/WarehouseSubscriptionContext', () => ({ useWarehouseSubscription: () => ({ hasFeature: (key) => !!flags[key], loading: false }) }));
 vi.mock('../components/WarehouseGroupSubNav', () => ({ WarehouseGroupSubNav: () => null }));
-vi.mock('../api/client', () => ({ api: { accountantDashboard: vi.fn(), warehouseFollowUp: vi.fn() } }));
+vi.mock('../api/client', () => ({ api: { accountantDashboard: vi.fn(), warehouseFollowUp: vi.fn(),
+  dailyReceipts: vi.fn(() => new Promise(() => {})) } }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let host, root;
 const result = { asOf: '2026-11-06T10:00:00Z', summary: { period: { from: '2026-11-01', to: '2026-11-06' },
@@ -59,7 +60,7 @@ it('shows empty activity and submits a custom range with a table-only kind filte
   api.accountantDashboard.mockResolvedValue({ ...result, activity: [] }); await render();
   expect(host.textContent).toContain('accounting.noActivity');
   await act(async () => { const select = host.querySelector('select'); select.value = 'custom'; select.dispatchEvent(new Event('change', { bubbles: true })); });
-  expect(host.querySelectorAll('input[type=date]').length).toBe(2);
+  expect(host.querySelector('.accounting-filter-panel').querySelectorAll('input[type=date]').length).toBe(2);
   await act(async () => button().click());
   expect(api.accountantDashboard.mock.lastCall[0]).toMatchObject({ period: 'custom' });
   expect(api.accountantDashboard.mock.lastCall[0].from).toMatch(/^\d{4}-\d{2}-\d{2}$/);
