@@ -6073,6 +6073,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fix it'**
   String get pushDelayedBannerAction;
+
+  /// No description provided for @invoicePdfAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save invoice as PDF'**
+  String get invoicePdfAction;
+
+  /// No description provided for @invoicePdfShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share or save to Files'**
+  String get invoicePdfShare;
+
+  /// No description provided for @invoicePdfShareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp, Drive, or Files on your phone'**
+  String get invoicePdfShareHint;
+
+  /// No description provided for @invoicePdfPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print or \"Save as PDF\"'**
+  String get invoicePdfPrint;
+
+  /// No description provided for @invoicePdfFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t prepare the invoice. Try again.'**
+  String get invoicePdfFailed;
+
+  /// No description provided for @invoicePdfItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get invoicePdfItem;
+
+  /// No description provided for @invoicePdfQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty'**
+  String get invoicePdfQuantity;
+
+  /// No description provided for @invoicePdfUnitPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit price'**
+  String get invoicePdfUnitPrice;
+
+  /// No description provided for @invoicePdfLineTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get invoicePdfLineTotal;
+
+  /// No description provided for @invoicePdfFree.
+  ///
+  /// In en, this message translates to:
+  /// **'free'**
+  String get invoicePdfFree;
+
+  /// No description provided for @invoicePdfFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse: {name}'**
+  String invoicePdfFrom(String name);
+
+  /// No description provided for @invoicePdfTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy: {name}'**
+  String invoicePdfTo(String name);
+
+  /// No description provided for @invoicePdfFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice from the Feniq app'**
+  String get invoicePdfFooter;
+
+  /// No description provided for @invoicePdfTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get invoicePdfTitle;
 }
 
 class _AppLocalizationsDelegate

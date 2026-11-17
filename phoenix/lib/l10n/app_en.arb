@@ -1991,5 +1991,21 @@
   "permActionOpenPage": "Open page",
   "permAutostartOpenFailed": "Couldn't open that page. Open it from Settings using the steps.",
   "pushDelayedBannerText": "Order notifications may be delayed on this phone.",
-  "pushDelayedBannerAction": "Fix it"
+  "pushDelayedBannerAction": "Fix it",
+  "invoicePdfAction": "Save invoice as PDF",
+  "invoicePdfShare": "Share or save to Files",
+  "invoicePdfShareHint": "WhatsApp, Drive, or Files on your phone",
+  "invoicePdfPrint": "Print or \"Save as PDF\"",
+  "invoicePdfFailed": "Couldn't prepare the invoice. Try again.",
+  "invoicePdfItem": "Item",
+  "invoicePdfQuantity": "Qty",
+  "invoicePdfUnitPrice": "Unit price",
+  "invoicePdfLineTotal": "Total",
+  "invoicePdfFree": "free",
+  "invoicePdfFrom": "Warehouse: {name}",
+  "invoicePdfTo": "Pharmacy: {name}",
+  "invoicePdfFooter": "Invoice from the Feniq app",
+  "@invoicePdfFrom": {"placeholders": {"name": {"type": "String"}}},
+  "@invoicePdfTo": {"placeholders": {"name": {"type": "String"}}},
+  "invoicePdfTitle": "Invoice"
 }

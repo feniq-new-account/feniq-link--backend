@@ -3559,4 +3559,50 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pushDelayedBannerAction => 'صلّحها';
+
+  @override
+  String get invoicePdfAction => 'حفظ الفاتورة PDF';
+
+  @override
+  String get invoicePdfShare => 'مشاركة أو حفظ بالملفات';
+
+  @override
+  String get invoicePdfShareHint => 'واتساب، Drive، أو «الملفات» على موبايلك';
+
+  @override
+  String get invoicePdfPrint => 'طباعة أو «حفظ كـ PDF»';
+
+  @override
+  String get invoicePdfFailed => 'ما قدرنا نجهّز الفاتورة. جرّب مرة تانية.';
+
+  @override
+  String get invoicePdfItem => 'الصنف';
+
+  @override
+  String get invoicePdfQuantity => 'الكمية';
+
+  @override
+  String get invoicePdfUnitPrice => 'سعر الوحدة';
+
+  @override
+  String get invoicePdfLineTotal => 'المجموع';
+
+  @override
+  String get invoicePdfFree => 'مجاني';
+
+  @override
+  String invoicePdfFrom(String name) {
+    return 'المستودع: $name';
+  }
+
+  @override
+  String invoicePdfTo(String name) {
+    return 'الصيدلية: $name';
+  }
+
+  @override
+  String get invoicePdfFooter => 'فاتورة من تطبيق فينيق';
+
+  @override
+  String get invoicePdfTitle => 'فاتورة';
 }

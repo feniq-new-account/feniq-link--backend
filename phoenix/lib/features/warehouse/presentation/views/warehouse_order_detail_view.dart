@@ -1,4 +1,6 @@
 import 'package:feniq/core/widgets/delivery_estimate_card.dart';
+import 'package:feniq/core/pdf/invoice_pdf_button.dart';
+import 'package:feniq/core/pdf/invoice_pdf_mappers.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_permissions.dart';
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:uuid/uuid.dart';
@@ -158,6 +160,13 @@ class WarehouseOrderDetailView extends StatelessWidget {
               backgroundColor: AppColors.navyOf(context),
               foregroundColor: Colors.white,
               title: FullText(order == null ? '' : l10n.warehouseOrderTitle(order.orderNumber), minScale: 0.6),
+              actions: [
+                if (order != null && order.items.isNotEmpty)
+                  InvoicePdfButton(
+                    data: () => warehouseInvoicePdf(l10n, order,
+                        arabic: Localizations.localeOf(context).languageCode == 'ar'),
+                  ),
+              ],
             ),
             body: ResponsiveRoleBody(child: _body(context, state)),
             bottomNavigationBar: order == null ? null : _actions(context, state, order),

@@ -3570,4 +3570,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pushDelayedBannerAction => 'Fix it';
+
+  @override
+  String get invoicePdfAction => 'Save invoice as PDF';
+
+  @override
+  String get invoicePdfShare => 'Share or save to Files';
+
+  @override
+  String get invoicePdfShareHint => 'WhatsApp, Drive, or Files on your phone';
+
+  @override
+  String get invoicePdfPrint => 'Print or \"Save as PDF\"';
+
+  @override
+  String get invoicePdfFailed => 'Couldn\'t prepare the invoice. Try again.';
+
+  @override
+  String get invoicePdfItem => 'Item';
+
+  @override
+  String get invoicePdfQuantity => 'Qty';
+
+  @override
+  String get invoicePdfUnitPrice => 'Unit price';
+
+  @override
+  String get invoicePdfLineTotal => 'Total';
+
+  @override
+  String get invoicePdfFree => 'free';
+
+  @override
+  String invoicePdfFrom(String name) {
+    return 'Warehouse: $name';
+  }
+
+  @override
+  String invoicePdfTo(String name) {
+    return 'Pharmacy: $name';
+  }
+
+  @override
+  String get invoicePdfFooter => 'Invoice from the Feniq app';
+
+  @override
+  String get invoicePdfTitle => 'Invoice';
 }

@@ -1476,5 +1476,19 @@
   "permActionOpenPage": "افتح الصفحة",
   "permAutostartOpenFailed": "ما قدرنا نفتح الصفحة. افتحها من الإعدادات حسب الخطوات.",
   "pushDelayedBannerText": "ممكن تتأخر إشعارات الطلبيات على هالموبايل.",
-  "pushDelayedBannerAction": "صلّحها"
+  "pushDelayedBannerAction": "صلّحها",
+  "invoicePdfAction": "حفظ الفاتورة PDF",
+  "invoicePdfShare": "مشاركة أو حفظ بالملفات",
+  "invoicePdfShareHint": "واتساب، Drive، أو «الملفات» على موبايلك",
+  "invoicePdfPrint": "طباعة أو «حفظ كـ PDF»",
+  "invoicePdfFailed": "ما قدرنا نجهّز الفاتورة. جرّب مرة تانية.",
+  "invoicePdfItem": "الصنف",
+  "invoicePdfQuantity": "الكمية",
+  "invoicePdfUnitPrice": "سعر الوحدة",
+  "invoicePdfLineTotal": "المجموع",
+  "invoicePdfFree": "مجاني",
+  "invoicePdfFrom": "المستودع: {name}",
+  "invoicePdfTo": "الصيدلية: {name}",
+  "invoicePdfFooter": "فاتورة من تطبيق فينيق",
+  "invoicePdfTitle": "فاتورة"
 }

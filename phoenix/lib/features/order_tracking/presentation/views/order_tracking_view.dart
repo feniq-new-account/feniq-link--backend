@@ -1,4 +1,6 @@
 import 'package:feniq/core/config/runtime_features_scope.dart';
+import 'package:feniq/core/pdf/invoice_pdf_button.dart';
+import 'package:feniq/core/pdf/invoice_pdf_mappers.dart';
 import 'package:feniq/core/widgets/delivery_estimate_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -200,6 +202,8 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
                     ],
                   ),
             actions: [
+              if (order != null && order.items.isNotEmpty)
+                InvoicePdfButton(data: () => pharmacyInvoicePdf(l10n, order, arabic: isArabic)),
               if (state.warehousePhone != null)
                 Padding(
                   padding: const EdgeInsets.only(left: AppSizes.spacingSmall),
