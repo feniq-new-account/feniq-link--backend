@@ -33,6 +33,13 @@ const financialAudit = require('./financialAudit.service');
 const PILOT_PHONES = Object.freeze(['0930000101', '0930000102', '0930000103']);
 const CONFIRM_PHRASE = 'احذف المستودعات التجريبية';
 
+// Big catalogue/import/notification tables with no money in them: deleted in
+// batches BEFORE the money transaction (a demo catalogue can run to tens of
+// thousands of rows - too much for one transaction's time and cache limits).
+const BULK_FIRST = new Set(['Product', 'ImportBatchRow', 'ImportBatch', 'ImportColumnMapping',
+  'WarehouseProductAlias', 'OrderRoutingLog', 'CatalogRequest']);
+const BULK_BATCH = 2000;
+
 // Models that must never be swept even if they carry a warehouseId-like path.
 const NEVER_SWEEP = new Set(['User', 'Pharmacy', 'FinancialAuditLog', 'Warehouse']);
 
@@ -44,6 +51,12 @@ function loadAllModels() {
     if (file.endsWith('.model.js')) require(path.join(dir, file));
   }
   modelsLoaded = true;
+}
+
+// Index builds must not start inside the transaction (they contend with it).
+async function initAllModels() {
+  loadAllModels();
+  await Promise.all(mongoose.modelNames().map((name) => mongoose.model(name).init()));
 }
 
 // Every registered model with a warehouseId path, sorted for a stable plan.
@@ -112,20 +125,22 @@ async function buildSteps(warehouses, logins, session = null) {
   if (OrderItem) steps.push({ label: 'OrderItem', model: OrderItem, filter: { orderId: { $in: orderIds } } });
   const Notification = optionalModel('Notification');
   if (Notification) {
-    steps.push({ label: 'Notification', model: Notification, filter: { $or: [
+    steps.push({ label: 'Notification', bulk: true, model: Notification, filter: { $or: [
       { relatedOrderId: { $in: orderIds } }, { relatedWarehouseId: { $in: warehouseIds } },
       { userId: { $in: logins.map((u) => u._id) } },
     ] } });
   }
   const LedgerEntry = optionalModel('LedgerEntry');
   if (LedgerEntry) {
-    steps.push({ label: 'LedgerEntry (by account)', model: LedgerEntry, filter: { accountId: { $in: accountIds } } });
+    // Only entries the warehouseId sweep below would miss (no double count).
+    steps.push({ label: 'LedgerEntry (by account)', model: LedgerEntry,
+      filter: { accountId: { $in: accountIds }, warehouseId: { $nin: warehouseIds } } });
   }
   const Usage = optionalModel('DiscountCodePharmacyUsage');
   if (Usage) steps.push({ label: 'DiscountCodePharmacyUsage', model: Usage, filter: { codeId: { $in: codeIds } } });
 
   for (const model of warehouseScopedModels()) {
-    steps.push({ label: model.modelName, model, filter: inWarehouses });
+    steps.push({ label: model.modelName, model, filter: inWarehouses, bulk: BULK_FIRST.has(model.modelName) });
   }
   return steps;
 }
@@ -148,7 +163,9 @@ async function plan(session = null) {
     logins: logins.map((u) => ({ id: String(u._id), name: u.name, phone: u.phone, role: u.role })),
     counts,
   };
-  return { summary, steps, warehouses, logins };
+  const bulkLabels = new Set(steps.filter((st) => st.bulk).map((st) => st.label));
+  const moneyCounts = Object.fromEntries(Object.entries(counts).filter(([label]) => !bulkLabels.has(label)));
+  return { summary, steps, warehouses, logins, moneyCounts };
 }
 
 // Read-only: what would be deleted, and the token the delete must echo.
@@ -159,6 +176,48 @@ async function previewDemoPurge() {
     confirmPhrase: CONFIRM_PHRASE };
 }
 
+async function deleteInBatches(model, filter) {
+  let total = 0;
+  for (;;) {
+    const ids = (await model.find(filter).select('_id').limit(BULK_BATCH).lean()).map((d) => d._id);
+    if (ids.length === 0) return total;
+    total += (await model.deleteMany({ _id: { $in: ids } })).deletedCount;
+  }
+}
+
+// Admin discount codes (warehouseId null) are not deleted, but the demo
+// orders that used them are: give each use back, exactly as a cancellation
+// does, or a real pharmacist could be locked out of a code for good.
+async function releaseAdminCodeUses(warehouseIds, session) {
+  const Order = mongoose.model('Order');
+  const orders = await Order.find({ warehouseId: { $in: warehouseIds },
+    'discountCode.codeId': { $ne: null }, 'discountCode.releasedAt': null })
+    .select('_id pharmacyId discountCode').session(session);
+  const discountCodes = require('./discountCode.service');
+  let released = 0;
+  for (const order of orders) {
+    if (await discountCodes.releaseUse(order, 'cancelled', session)) released += 1;
+  }
+  return released;
+}
+
+// The warehouses rated pharmacies; once those reviews go, each pharmacy's
+// average and count are recomputed from the reviews that remain.
+async function recomputePharmacyRatings(pharmacyIds, session) {
+  const Review = optionalModel('Review');
+  const Pharmacy = optionalModel('Pharmacy');
+  if (!Review || !Pharmacy || pharmacyIds.length === 0) return;
+  const rows = await Review.aggregate([
+    { $match: { pharmacyId: { $in: pharmacyIds }, reviewerType: 'warehouse' } },
+    { $group: { _id: '$pharmacyId', avg: { $avg: '$rating' }, count: { $sum: 1 } } },
+  ]).session(session);
+  const byId = new Map(rows.map((r) => [String(r._id), r]));
+  for (const id of pharmacyIds) {
+    const row = byId.get(String(id));
+    await Pharmacy.updateOne({ _id: id }, { $set: { averageRating: row ? row.avg : 0, reviewsCount: row ? row.count : 0 } }, { session });
+  }
+}
+
 async function executeDemoPurge(actorId, { planToken: token, confirm } = {}) {
   if (confirm !== CONFIRM_PHRASE) {
     throw ApiError.badRequest('Type the confirmation phrase exactly.', undefined, 'DEMO_PURGE_CONFIRM_REQUIRED');
@@ -166,36 +225,71 @@ async function executeDemoPurge(actorId, { planToken: token, confirm } = {}) {
   if (typeof token !== 'string' || !token) {
     throw ApiError.badRequest('Preview first, then confirm that plan.', undefined, 'DEMO_PURGE_PLAN_REQUIRED');
   }
+  await initAllModels();
+  const first = await plan();
+  if (planToken(first.summary) !== token) {
+    throw ApiError.conflict('The data changed since the preview. Preview again.', 'DEMO_PURGE_PLAN_CHANGED');
+  }
+  if (first.warehouses.length === 0) return { deleted: {}, warehouses: [], logins: [], pharmacyAccountsKept: await User.countDocuments({ role: 'pharmacy' }), pharmacyAccountsUnchanged: true };
+
+  // Stop the demo warehouses first, so nothing new lands on them while they
+  // are being deleted: hidden from pharmacies, and their logins blocked and
+  // signed out. A change that slipped in since the preview fails the plan
+  // check inside the transaction and the admin previews again.
+  const warehouseIds = first.warehouses.map((w) => w._id);
+  const loginIds = first.logins.map((u) => u._id);
+  await Warehouse.updateMany({ _id: { $in: warehouseIds } }, { $set: { isActive: false } });
+  await User.updateMany({ _id: { $in: loginIds }, role: { $in: ['warehouse', 'rep'] } },
+    { $set: { status: 'blocked' }, $inc: { tokenVersion: 1 } });
+
   const pharmacyUsersBefore = await User.countDocuments({ role: 'pharmacy' });
+  // The big catalogue/notification tables first, outside the transaction:
+  // no money in them, and the warehouses still exist if anything after this
+  // fails, so a re-run finds and finishes the rest.
+  const deleted = {};
+  for (const step of first.steps) {
+    if (!step.bulk) continue;
+    const n = await deleteInBatches(step.model, step.filter);
+    if (n) deleted[step.label] = (deleted[step.label] || 0) + n;
+  }
+  const Review = optionalModel('Review');
+  const ratedPharmacyIds = Review
+    ? await Review.distinct('pharmacyId', { warehouseId: { $in: warehouseIds }, reviewerType: 'warehouse' })
+    : [];
+
   const result = await runInTransaction(async (session) => {
     const current = await plan(session);
-    if (planToken(current.summary) !== token) {
+    // The money side must be exactly what was previewed.
+    if (JSON.stringify(current.moneyCounts) !== JSON.stringify(first.moneyCounts)) {
       throw ApiError.conflict('The data changed since the preview. Preview again.', 'DEMO_PURGE_PLAN_CHANGED');
     }
-    if (current.warehouses.length === 0) return { deleted: {}, warehouses: [], logins: [] };
-    const deleted = {};
+    const releasedCodeUses = await releaseAdminCodeUses(warehouseIds, session);
     for (const step of current.steps) {
+      if (step.bulk) continue;
       const { deletedCount } = await step.model.deleteMany(step.filter, { session });
       if (deletedCount) deleted[step.label] = (deleted[step.label] || 0) + deletedCount;
     }
-    const loginIds = current.logins.map((u) => u._id);
+    await recomputePharmacyRatings(ratedPharmacyIds, session);
     const RefreshToken = optionalModel('RefreshToken');
     if (RefreshToken && loginIds.length) await RefreshToken.deleteMany({ userId: { $in: loginIds } }, { session });
     // Belt and braces: the login list is role-filtered already.
     const users = await User.deleteMany({ _id: { $in: loginIds }, role: { $in: ['warehouse', 'rep'] } }, { session });
     deleted.User = users.deletedCount;
-    const warehouseDocs = await Warehouse.deleteMany({ _id: { $in: current.warehouses.map((w) => w._id) } }, { session });
+    const warehouseDocs = await Warehouse.deleteMany({ _id: { $in: warehouseIds } }, { session });
     deleted.Warehouse = warehouseDocs.deletedCount;
     for (const w of current.warehouses) {
       await financialAudit.record({
         action: 'maintenance.demo_purge', actorId, actorRole: 'admin',
         entityType: 'Warehouse', entityId: w._id,
         before: { nameAr: w.nameAr, nameEn: w.nameEn, city: w.city },
-        after: { deletedCounts: current.summary.counts, logins: current.summary.logins.length },
+        // The counts are for the whole purge (all demo warehouses together).
+        after: { purgeTotals: first.summary.counts, warehousesInPurge: current.warehouses.length,
+          loginsDeleted: first.summary.logins.length, adminCodeUsesReleased: releasedCodeUses },
       }, session);
     }
-    return { deleted, warehouses: current.summary.warehouses, logins: current.summary.logins };
+    return { deleted, releasedCodeUses, warehouses: first.summary.warehouses, logins: first.summary.logins };
   });
+
   // Never part of it - checked after the commit as well.
   const pharmacyUsersAfter = await User.countDocuments({ role: 'pharmacy' });
   return { ...result, pharmacyAccountsKept: pharmacyUsersAfter, pharmacyAccountsUnchanged: pharmacyUsersAfter === pharmacyUsersBefore };

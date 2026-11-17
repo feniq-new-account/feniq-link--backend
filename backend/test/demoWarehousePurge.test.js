@@ -31,6 +31,9 @@ const LedgerAccount = require('../src/models/ledgerAccount.model');
 const FinancialAuditLog = require('../src/models/financialAuditLog.model');
 const warehouseOrderService = require('../src/services/warehouseOrder.service');
 const service = require('../src/services/demoWarehousePurge.service');
+const DiscountCode = require('../src/models/discountCode.model');
+const DiscountCodePharmacyUsage = require('../src/models/discountCodePharmacyUsage.model');
+const Review = require('../src/models/review.model');
 
 const ids = {};
 let seq = 5000;
@@ -75,6 +78,23 @@ test.before(async () => {
     await Product.create({ warehouseId: w, nameAr: 'دواء', nameEn: 'Drug', price: 1 });
     await deliveredOrder(w, u);
   }
+  // An admin code (works on every warehouse, never deleted) used once by the
+  // pharmacy on a demo order - its use must come back after the purge.
+  const now = Date.now();
+  const code = await DiscountCode.create({ code: 'WELCOME', ownerRole: 'admin', type: 'fixed', value: 100,
+    startDate: new Date(now - 86400000), endDate: new Date(now + 86400000), maxUsesPerPharmacy: 1, usedCount: 1,
+    createdBy: ids.admin, status: 'approved' });
+  ids.adminCode = code._id;
+  await DiscountCodePharmacyUsage.create({ codeId: code._id, pharmacyId: ids.pharmacy, count: 1 });
+  await Order.updateOne({ warehouseId: wa._id }, { $set: { discountCode: { codeId: code._id, code: 'WELCOME', ownerRole: 'admin',
+    fundedBy: 'platform', type: 'fixed', value: 100, preCodeSyp: 1100, discountSyp: 100 } } });
+  // Each warehouse rated the pharmacy: 1 (demo A) and 5 (Asfoura).
+  const ordersByWh = Object.fromEntries((await Order.find().lean()).map((o) => [String(o.warehouseId), o._id]));
+  await Review.create([
+    { orderId: ordersByWh[String(wa._id)], pharmacyId: pharmacy._id, warehouseId: wa._id, reviewerType: 'warehouse', rating: 1, isVisible: true },
+    { orderId: ordersByWh[String(wr._id)], pharmacyId: pharmacy._id, warehouseId: wr._id, reviewerType: 'warehouse', rating: 5, isVisible: true },
+  ]);
+  await Pharmacy.updateOne({ _id: pharmacy._id }, { $set: { averageRating: 3, reviewsCount: 2 } });
 });
 test.after(stopMemoryMongo);
 
@@ -128,6 +148,14 @@ test('the purge removes the demo warehouses and everything of theirs, and nothin
 
   // The pharmacist's notifications about deleted orders go; the real one stays.
   assert.equal(await Notification.countDocuments({ userId: ids.pharmacyUser }), 1);
+
+  // The admin code's use on the deleted demo order is given back.
+  assert.equal((await DiscountCode.findById(ids.adminCode)).usedCount, 0);
+  assert.equal((await DiscountCodePharmacyUsage.findOne({ codeId: ids.adminCode, pharmacyId: ids.pharmacy })).count, 0);
+  assert.equal(result.releasedCodeUses, 1);
+  // The pharmacy's rating now counts only the real warehouse's review.
+  const ph = await Pharmacy.findById(ids.pharmacy).lean();
+  assert.equal(ph.reviewsCount, 1); assert.equal(ph.averageRating, 5);
 
   // The trail stays: one audit row per deleted warehouse.
   assert.equal(await FinancialAuditLog.countDocuments({ action: 'maintenance.demo_purge' }), 2);
