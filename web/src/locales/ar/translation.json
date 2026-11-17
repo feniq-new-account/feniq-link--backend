@@ -2112,7 +2112,8 @@
       "reversedTotal": "انلغى",
       "reversal": "إلغاء دفعة",
       "unknown": "{{count}} دفعة قديمة بلا مبلغ بالسوري (مش محسوبة).",
-      "backdated": "{{count}} دفعة انسجّلت اليوم بتاريخ أقدم (محسوبة بيومها):"
+      "backdated": "{{count}} دفعة انسجّلت اليوم بتاريخ أقدم (محسوبة بيومها):",
+      "methodReceived": "{{method}} (مقبوض)"
     }
   },
   "paymentProof": {

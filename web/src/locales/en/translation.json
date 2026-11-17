@@ -2089,7 +2089,8 @@
       "reversedTotal": "Reversed",
       "reversal": "Reversal",
       "unknown": "{{count}} old payment(s) with no SYP amount (not counted).",
-      "backdated": "{{count}} payment(s) entered today with an earlier date (counted on their own day):"
+      "backdated": "{{count}} payment(s) entered today with an earlier date (counted on their own day):",
+      "methodReceived": "{{method}} (received)"
     }
   },
   "paymentProof": {

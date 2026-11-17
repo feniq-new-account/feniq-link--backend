@@ -53,11 +53,11 @@ async function dailyReceipts(warehouseId, { date } = {}, now = new Date()) {
     // Entered that day, dated earlier: shown, counted on their own day.
     Payment.find({ warehouseId: wid, createdAt: { $gte: from, $lte: to }, paidAt: { $lt: from } })
       .select('paymentNumber pharmacyId amountSyp method paidAt createdAt recordedBy status kind')
-      .sort({ createdAt: -1 }).limit(MAX_ROWS).lean(),
+      .sort({ createdAt: -1 }).limit(MAX_ROWS + 1).lean(),
   ]);
   const truncated = rows.length > MAX_ROWS;
   const listed = rows.slice(0, MAX_ROWS);
-  const everyone = [...listed, ...backdated];
+  const everyone = [...listed, ...backdated.slice(0, MAX_ROWS)];
 
   const userIds = [...new Set([...everyone.map((p) => String(p.recordedBy)), ...byRecorder.map((r) => String(r._id))])];
   const [pharmacies, users] = await Promise.all([
@@ -88,7 +88,8 @@ async function dailyReceipts(warehouseId, { date } = {}, now = new Date()) {
     byRecorder: byRecorder.map((r) => ({ userId: String(r._id), ...(who(r._id) || { name: null, role: null }),
       amountSyp: r.amountSyp, count: r.count })),
     payments: listed.map(row), truncated,
-    enteredTodayDatedEarlier: backdated.map(row),
+    enteredTodayDatedEarlier: backdated.slice(0, MAX_ROWS).map(row),
+    enteredTodayDatedEarlierTruncated: backdated.length > MAX_ROWS,
   };
 }
 

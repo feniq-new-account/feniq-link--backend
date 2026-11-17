@@ -31,9 +31,9 @@ test.before(async () => {
   await Payment.create([
     pay({ amount: 100000, amountSyp: 100000, method: 'cash', paidAt: new Date('2026-11-20T06:00:00Z'), paymentNumber: 1 }),
     pay({ amount: 50000, amountSyp: 50000, method: 'bank_transfer', paidAt: new Date('2026-11-20T05:00:00Z'), recordedBy: accountant._id, paymentNumber: 2 }),
-    // Reversed later: listed, not totalled.
+    // Reversed later: still counts on its own day (the reversal takes it off).
     pay({ amount: 7000, amountSyp: 7000, method: 'cash', paidAt: new Date('2026-11-20T04:00:00Z'), status: 'reversed', paymentNumber: 3 }),
-    // The reversal document itself is not a receipt.
+    // The reversal, dated today: a minus today.
     pay({ amount: 7000, amountSyp: 7000, method: 'cash', paidAt: new Date('2026-11-20T04:30:00Z'), kind: 'reversal', paymentNumber: 4 }),
     // 23:30 Damascus the day before (20:30 UTC on the 19th): yesterday.
     pay({ amount: 999, amountSyp: 999, method: 'cash', paidAt: new Date('2026-11-19T20:30:00Z'), paymentNumber: 5 }),

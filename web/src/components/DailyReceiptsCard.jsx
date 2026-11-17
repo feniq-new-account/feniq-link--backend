@@ -62,7 +62,7 @@ export function DailyReceiptsCard() {
         <div><dt>{t('accounting.receipts.received')}</dt><dd>{formatSyp(data.receivedSyp)} · {data.receivedCount}</dd></div>
         {data.reversedCount > 0 && <div><dt>{t('accounting.receipts.reversedTotal')}</dt><dd>−{formatSyp(data.reversedSyp)} · {data.reversedCount}</dd></div>}
         {Object.entries(data.byMethod).map(([method, amount]) => <div key={method}>
-          <dt>{t('accounting.receipts.method_' + method)}</dt><dd>{formatSyp(amount)}</dd>
+          <dt>{t('accounting.receipts.methodReceived', { method: t('accounting.receipts.method_' + method) })}</dt><dd>{formatSyp(amount)}</dd>
         </div>)}
       </dl>
       {data.byRecorder.length > 0 && <ul className="daily-receipts-recorders" data-testid="daily-receipts-recorders">
