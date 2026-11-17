@@ -202,7 +202,8 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
                     ],
                   ),
             actions: [
-              if (order != null && order.items.isNotEmpty)
+              // No invoice for a cancelled order: nothing was ever charged.
+              if (order != null && order.items.isNotEmpty && !order.isCancelled)
                 InvoicePdfButton(data: () => pharmacyInvoicePdf(l10n, order, arabic: isArabic)),
               if (state.warehousePhone != null)
                 Padding(

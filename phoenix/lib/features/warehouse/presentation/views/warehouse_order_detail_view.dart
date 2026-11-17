@@ -161,7 +161,8 @@ class WarehouseOrderDetailView extends StatelessWidget {
               foregroundColor: Colors.white,
               title: FullText(order == null ? '' : l10n.warehouseOrderTitle(order.orderNumber), minScale: 0.6),
               actions: [
-                if (order != null && order.items.isNotEmpty)
+                // No invoice for a cancelled order: nothing was ever charged.
+                if (order != null && order.items.isNotEmpty && order.status != 'cancelled')
                   InvoicePdfButton(
                     data: () => warehouseInvoicePdf(l10n, order,
                         arabic: Localizations.localeOf(context).languageCode == 'ar'),
