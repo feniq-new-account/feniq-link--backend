@@ -1648,7 +1648,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statementReturnCredits => 'المرتجعات';
 
   @override
-  String get statementReturnCreditApplications => 'استخدام رصيد مرتجع (غير نقدي)';
+  String get statementReturnCreditApplications =>
+      'استخدام رصيد مرتجع (غير نقدي)';
 
   @override
   String get statementKindCharge => 'تسليم طلب';
@@ -1669,10 +1670,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statementKindReturnCreditReversal => 'عكس رصيد مرتجع';
 
   @override
-  String get statementKindReturnCreditApplication => 'استخدام رصيد مرتجع (غير نقدي)';
+  String get statementKindReturnCreditApplication =>
+      'استخدام رصيد مرتجع (غير نقدي)';
 
   @override
-  String get statementKindReturnCreditApplicationReversal => 'عكس استخدام رصيد مرتجع';
+  String get statementKindReturnCreditApplicationReversal =>
+      'عكس استخدام رصيد مرتجع';
 
   @override
   String get statementKindManualCredit => 'إضافة رصيد';
@@ -2222,6 +2225,23 @@ class AppLocalizationsAr extends AppLocalizations {
   String warehouseOrderItemsCount(int count) {
     return 'الأصناف: $count';
   }
+
+  @override
+  String warehouseNewOrdersArrived(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'وصل $count طلب جديد',
+      one: 'وصل طلب جديد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warehouseNewOrdersSeen => 'تمام';
+
+  @override
+  String get warehouseOrderNewBadge => 'جديد';
 
   @override
   String get warehouseNoOrdersTitle => 'ما في طلبيات هون';

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:feniq/core/error/failure.dart';
@@ -152,6 +154,115 @@ void main() {
       expect(cubit.state.orders.single.status, 'out_for_delivery');
       expect(cubit.state.orders.single.finalPrice, 1100);
       expect(cubit.state.orders.single.itemCount, 1);
+    });
+  });
+
+  group('WarehouseOrdersCubit background refresh', () {
+    test('a new order is added quietly, marked new and counted, and the marker can be cleared', () async {
+      var calls = 0;
+      when(() => repository.getOrders(status: 'pending')).thenAnswer((_) async {
+        calls++;
+        return calls == 1
+            ? WarehouseOrdersPage(orders: [_summary('o1')])
+            : WarehouseOrdersPage(orders: [_summary('o1'), _summary('o2', number: 2)]);
+      });
+      final cubit = WarehouseOrdersCubit(repository: repository);
+      await cubit.load();
+      final states = <WarehouseOrdersState>[];
+      final sub = cubit.stream.listen(states.add);
+      expect(await cubit.refreshSilently(), 1);
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+      expect(states.every((s) => s.status == RepLoadStatus.loaded), isTrue, reason: 'no spinner');
+      expect(cubit.state.orders.map((o) => o.id), ['o1', 'o2']);
+      expect(cubit.state.newOrderIds, {'o2'});
+      expect(cubit.state.pendingCount, 2);
+      cubit.acknowledgeNewOrders();
+      expect(cubit.state.newOrderIds, isEmpty);
+    });
+
+    test('a status changed elsewhere (cancelled by the pharmacist) shows without being called new', () async {
+      var calls = 0;
+      when(() => repository.getOrders(status: 'pending')).thenAnswer((_) async {
+        calls++;
+        return calls == 1
+            ? WarehouseOrdersPage(orders: [_summary('o1'), _summary('o2', number: 2)])
+            : WarehouseOrdersPage(orders: [_summary('o2', number: 2)]);
+      });
+      final cubit = WarehouseOrdersCubit(repository: repository);
+      await cubit.load();
+      expect(await cubit.refreshSilently(), 0);
+      expect(cubit.state.orders.map((o) => o.id), ['o2']);
+      expect(cubit.state.newOrderIds, isEmpty);
+    });
+
+    test('never runs while an order is being moved, so it cannot undo the step', () async {
+      when(() => repository.getOrders(status: 'pending')).thenAnswer(
+        (_) async => WarehouseOrdersPage(orders: [_summary('o1')]),
+      );
+      final gate = Completer<AdvancedOrderStatus>();
+      when(() => repository.advance('o1', expectedStatus: any(named: 'expectedStatus'), targetStatus: any(named: 'targetStatus')))
+          .thenAnswer((_) => gate.future);
+      final cubit = WarehouseOrdersCubit(repository: repository);
+      await cubit.load();
+      final advancing = cubit.advance('o1');
+      expect(await cubit.refreshSilently(), 0);
+      verify(() => repository.getOrders(status: 'pending')).called(1);
+      gate.complete(const AdvancedOrderStatus(status: 'confirmed'));
+      await advancing;
+      expect(cubit.state.orders.single.status, 'confirmed');
+    });
+
+    test('with several pages open, only orders after the last row are fetched and appended', () async {
+      when(() => repository.getOrders(status: 'pending')).thenAnswer(
+        (_) async => WarehouseOrdersPage(orders: [_summary('o1')], hasMore: true, nextCursor: '1'),
+      );
+      var after = 0;
+      when(() => repository.getOrders(status: 'pending', after: '1')).thenAnswer(
+        (_) async => WarehouseOrdersPage(orders: [_summary('o2', number: 2)]),
+      );
+      when(() => repository.getOrders(status: 'pending', after: '2')).thenAnswer((_) async {
+        after++;
+        return WarehouseOrdersPage(orders: [_summary('o3', number: 3)]);
+      });
+      final cubit = WarehouseOrdersCubit(repository: repository);
+      await cubit.load();
+      await cubit.loadMore();
+      expect(await cubit.refreshSilently(), 1);
+      expect(after, 1);
+      expect(cubit.state.orders.map((o) => o.id), ['o1', 'o2', 'o3']);
+      expect(cubit.state.newOrderIds, {'o3'});
+    });
+
+    test('a failed check changes nothing and shows no error', () async {
+      var calls = 0;
+      when(() => repository.getOrders(status: 'pending')).thenAnswer((_) async {
+        calls++;
+        if (calls == 1) return WarehouseOrdersPage(orders: [_summary('o1')]);
+        throw ServerFailure('offline', code: 'NETWORK');
+      });
+      final cubit = WarehouseOrdersCubit(repository: repository);
+      await cubit.load();
+      expect(await cubit.refreshSilently(), 0);
+      expect(cubit.state.orders.single.id, 'o1');
+      expect(cubit.state.errorCode, isNull);
+      expect(cubit.state.actionErrorCode, isNull);
+    });
+
+    test('other tabs refresh their rows but never call a row new', () async {
+      var calls = 0;
+      when(() => repository.getOrders(status: 'confirmed')).thenAnswer((_) async {
+        calls++;
+        return calls == 1
+            ? WarehouseOrdersPage(orders: [_summary('o1', status: 'confirmed')])
+            : WarehouseOrdersPage(orders: [_summary('o9', number: 9, status: 'confirmed'), _summary('o1', status: 'confirmed')]);
+      });
+      final cubit = WarehouseOrdersCubit(repository: repository);
+      await cubit.setFilter('confirmed');
+      expect(await cubit.refreshSilently(), 0);
+      expect(cubit.state.orders.length, 2);
+      expect(cubit.state.newOrderIds, isEmpty);
+      expect(cubit.state.pendingCount, isNull);
     });
   });
 

@@ -19,12 +19,15 @@ class WarehouseOrderCard extends StatelessWidget {
     required this.onTap,
     required this.onAdvance,
     this.isAdvancing = false,
+    this.isNew = false,
   });
 
   final WarehouseOrderSummary order;
   final VoidCallback onTap;
   final VoidCallback onAdvance;
   final bool isAdvancing;
+  // Arrived through a background refresh and not acknowledged yet.
+  final bool isNew;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +51,13 @@ class WarehouseOrderCard extends StatelessWidget {
                 l10n.warehouseOrderTitle(order.orderNumber),
                 style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-              StatusBadge(label: orderStatusLabel(l10n, order.status), tone: warehouseStatusTone(order.status)),
+              Wrap(
+                spacing: 6,
+                children: [
+                  if (isNew) StatusBadge(label: l10n.warehouseOrderNewBadge, tone: StatusBadgeTone.info),
+                  StatusBadge(label: orderStatusLabel(l10n, order.status), tone: warehouseStatusTone(order.status)),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: AppSizes.spacingSmall),

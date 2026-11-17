@@ -2828,7 +2828,7 @@ abstract class AppLocalizations {
   /// **'Returned'**
   String get statementReturnCredits;
 
-  /// A previously issued return credit applied to a new invoice, not cash.
+  /// No description provided for @statementReturnCreditApplications.
   ///
   /// In en, this message translates to:
   /// **'Return credit applied (non-cash)'**
@@ -3775,6 +3775,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Items: {count}'**
   String warehouseOrderItemsCount(int count);
+
+  /// No description provided for @warehouseNewOrdersArrived.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 new order arrived} other{{count} new orders arrived}}'**
+  String warehouseNewOrdersArrived(int count);
+
+  /// No description provided for @warehouseNewOrdersSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get warehouseNewOrdersSeen;
+
+  /// No description provided for @warehouseOrderNewBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get warehouseOrderNewBadge;
 
   /// No description provided for @warehouseNoOrdersTitle.
   ///

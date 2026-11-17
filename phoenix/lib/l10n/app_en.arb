@@ -1247,6 +1247,10 @@
       }
     }
   },
+  "warehouseNewOrdersArrived": "{count, plural, =1{1 new order arrived} other{{count} new orders arrived}}",
+  "@warehouseNewOrdersArrived": {"placeholders": {"count": {"type": "int"}}},
+  "warehouseNewOrdersSeen": "Got it",
+  "warehouseOrderNewBadge": "New",
   "warehouseNoOrdersTitle": "No orders here",
   "warehouseNoOrdersSubtitle": "New orders show up here as soon as they arrive, with a notification.",
   "warehouseSectionPharmacy": "Pharmacy",

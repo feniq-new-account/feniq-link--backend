@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
+import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/error/error_translator.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/widgets/app_dialog.dart';
@@ -162,6 +163,40 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
             ),
           ),
         ),
+        BlocBuilder<WarehouseOrdersCubit, WarehouseOrdersState>(
+          buildWhen: (a, b) => a.newOrderIds.length != b.newOrderIds.length,
+          builder: (context, state) => state.newOrderIds.isEmpty
+              ? const SizedBox.shrink()
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Material(
+                      color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.only(start: AppSizes.spacingMedium),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.notifications_active_outlined),
+                            const SizedBox(width: AppSizes.spacingSmall),
+                            Expanded(
+                              child: Text(
+                                l10n.warehouseNewOrdersArrived(state.newOrderIds.length),
+                                style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => context.read<WarehouseOrdersCubit>().acknowledgeNewOrders(),
+                              child: Text(l10n.warehouseNewOrdersSeen),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+        ),
         Expanded(
           child: BlocConsumer<WarehouseOrdersCubit, WarehouseOrdersState>(
             listenWhen: (a, b) => b.actionErrorCode != null && a.actionErrorCode != b.actionErrorCode,
@@ -227,6 +262,7 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
         return WarehouseOrderCard(
           order: order,
           isAdvancing: state.advancingIds.contains(order.id),
+          isNew: state.newOrderIds.contains(order.id),
           onTap: () => _open(order),
           onAdvance: () => _confirmAdvance(order),
         );

@@ -17,6 +17,7 @@ class WarehouseOrdersState {
     this.errorCode,
     this.actionErrorCode,
     this.actionErrorMessage,
+    this.newOrderIds = const {},
   });
 
   final RepLoadStatus status;
@@ -33,6 +34,15 @@ class WarehouseOrdersState {
   // The last advance that failed, for a one-off message under the list.
   final String? actionErrorCode;
   final String? actionErrorMessage;
+  // Orders that arrived through a background refresh and the manager has not
+  // acknowledged yet: marked "new" on their row and counted in a banner.
+  final Set<String> newOrderIds;
+
+  /// The orders still waiting for the warehouse in the loaded list, for the
+  /// badge on the Orders tab. Only known while the "awaiting" tab is shown.
+  int? get pendingCount => filter == 'pending' && status == RepLoadStatus.loaded
+      ? orders.where((order) => order.status == 'pending').length
+      : null;
 
   WarehouseOrdersState copyWith({
     RepLoadStatus? status,
@@ -48,6 +58,7 @@ class WarehouseOrdersState {
     String? actionErrorCode,
     String? actionErrorMessage,
     bool clearActionError = false,
+    Set<String>? newOrderIds,
   }) => WarehouseOrdersState(
     status: status ?? this.status,
     filter: filter,
@@ -64,6 +75,7 @@ class WarehouseOrdersState {
     actionErrorMessage: clearActionError
         ? null
         : (actionErrorMessage ?? this.actionErrorMessage),
+    newOrderIds: newOrderIds ?? this.newOrderIds,
   );
 }
 
@@ -78,6 +90,10 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
   final WarehouseOrdersRepository _repository;
   // Bumped on every fresh load, so a slow answer for an older tab is dropped.
   int _generation = 0;
+  // Pages loaded since the last fresh load: a background refresh may replace
+  // the list only while it is still the first page alone.
+  int _pagesLoaded = 0;
+  bool _refreshing = false;
 
   Future<void> setFilter(String? filter) async {
     if (filter == state.filter && state.status != RepLoadStatus.initial) return;
@@ -98,6 +114,7 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
     try {
       final page = await _repository.getOrders(status: filter);
       if (generation != _generation || isClosed) return;
+      _pagesLoaded = 1;
       emit(
         WarehouseOrdersState(
           status: RepLoadStatus.loaded,
@@ -130,6 +147,7 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
         after: cursor,
       );
       if (generation != _generation || isClosed) return;
+      _pagesLoaded += 1;
       final seen = state.orders.map((o) => o.id).toSet();
       emit(
         state.copyWith(
@@ -153,6 +171,78 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
         ),
       );
     }
+  }
+
+  /// A quiet check for what changed since the list was loaded - run every
+  /// minute while the orders are on screen and whenever the app comes back to
+  /// the foreground. No spinner, no error shown: a failed check just waits for
+  /// the next one. It never runs while an order is being moved or another page
+  /// is loading, so it can never undo a step the manager just took.
+  /// Returns how many orders are new to this list.
+  Future<int> refreshSilently() async {
+    if (_refreshing || state.status != RepLoadStatus.loaded ||
+        state.advancingIds.isNotEmpty || state.isLoadingMore) {
+      return 0;
+    }
+    _refreshing = true;
+    final generation = _generation;
+    final filter = state.filter;
+    try {
+      final List<WarehouseOrderSummary> merged;
+      bool hasMore = state.hasMore;
+      String? nextCursor = state.nextCursor;
+      if (_pagesLoaded <= 1) {
+        final page = await _repository.getOrders(status: filter);
+        merged = page.orders;
+        hasMore = page.hasMore;
+        nextCursor = page.nextCursor;
+      } else if (filter == 'pending' && !state.hasMore && state.orders.isNotEmpty) {
+        // Several pages are open and the oldest-first list is complete: only
+        // what came after the last row can be new.
+        final page = await _repository.getOrders(
+          status: filter,
+          after: '${state.orders.last.orderNumber}',
+        );
+        merged = [...state.orders, ...page.orders];
+        hasMore = page.hasMore;
+        nextCursor = page.nextCursor ?? state.nextCursor;
+      } else {
+        return 0;
+      }
+      if (generation != _generation || isClosed || state.filter != filter ||
+          state.advancingIds.isNotEmpty || state.isLoadingMore) {
+        return 0;
+      }
+      final known = state.orders.map((order) => order.id).toSet();
+      final unique = <String>{};
+      final rows = [for (final order in merged) if (unique.add(order.id)) order];
+      final arrived = filter == 'pending'
+          ? rows.where((order) => !known.contains(order.id)).map((order) => order.id).toSet()
+          : <String>{};
+      emit(
+        state.copyWith(
+          orders: rows,
+          hasMore: hasMore,
+          nextCursor: nextCursor,
+          clearCursor: nextCursor == null,
+          newOrderIds: {
+            ...state.newOrderIds.where(unique.contains),
+            ...arrived,
+          },
+        ),
+      );
+      return arrived.length;
+    } on Failure {
+      return 0;
+    } finally {
+      _refreshing = false;
+    }
+  }
+
+  /// The manager saw the new orders: the markers and the banner go away.
+  void acknowledgeNewOrders() {
+    if (state.newOrderIds.isEmpty) return;
+    emit(state.copyWith(newOrderIds: const {}));
   }
 
   /// One tap on a row's button: approve & send, or mark delivered.

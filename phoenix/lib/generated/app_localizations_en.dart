@@ -1650,7 +1650,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statementReturnCredits => 'Returned';
 
   @override
-  String get statementReturnCreditApplications => 'Return credit applied (non-cash)';
+  String get statementReturnCreditApplications =>
+      'Return credit applied (non-cash)';
 
   @override
   String get statementKindCharge => 'Order delivered';
@@ -1671,10 +1672,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statementKindReturnCreditReversal => 'Return credit reversed';
 
   @override
-  String get statementKindReturnCreditApplication => 'Return credit applied (non-cash)';
+  String get statementKindReturnCreditApplication =>
+      'Return credit applied (non-cash)';
 
   @override
-  String get statementKindReturnCreditApplicationReversal => 'Return credit application reversed';
+  String get statementKindReturnCreditApplicationReversal =>
+      'Return credit application reversed';
 
   @override
   String get statementKindManualCredit => 'Credit added';
@@ -2223,6 +2226,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String warehouseOrderItemsCount(int count) {
     return 'Items: $count';
   }
+
+  @override
+  String warehouseNewOrdersArrived(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new orders arrived',
+      one: '1 new order arrived',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warehouseNewOrdersSeen => 'Got it';
+
+  @override
+  String get warehouseOrderNewBadge => 'New';
 
   @override
   String get warehouseNoOrdersTitle => 'No orders here';
