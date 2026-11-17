@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 
-const ROLES = ['pharmacy', 'rep', 'warehouse'];
+const ROLES = ['pharmacy', 'rep', 'warehouse', 'driver'];
 function localDate(value) {
   if (!value) return '';
   const date = new Date(value);

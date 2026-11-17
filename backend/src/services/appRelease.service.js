@@ -1,7 +1,11 @@
 const AppRelease = require('../models/appRelease.model');
 const { ApiError } = require('../utils/ApiError');
 
-const ROLES = ['pharmacy', 'rep', 'warehouse'];
+// 'driver' joined 2026-11-17: drivers run the same APK and must be forceable too.
+// Rows saved before then have no driver policy; evaluateRole treats that as 'none'.
+const ROLES = ['pharmacy', 'rep', 'warehouse', 'driver'];
+// A driver policy may be omitted (older admin clients); the driver is then never forced.
+const OPTIONAL_ROLES = ['driver'];
 const CERTIFICATE = (process.env.ANDROID_CERT_SHA256 || 'D4D2C93E38086E9B4847A74C822C527DF9336DB85752465B83593F8585FA5DD4').replace(/[: ]/g, '').toUpperCase();
 const DEFAULT_ORIGIN = 'https://feniq-site.onrender.com';
 const allowedOrigins = (process.env.APK_UPDATE_ORIGINS || DEFAULT_ORIGIN).split(',').map((value) => value.trim());
@@ -50,7 +54,7 @@ async function inspectPublishedRelease(sourceOrigin, fetcher = fetch) {
 
 function validateRoles(value, latestBuild) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some((key) => !ROLES.includes(key))) throw invalid();
-  return Object.fromEntries(ROLES.map((role) => {
+  return Object.fromEntries(ROLES.filter((role) => !(OPTIONAL_ROLES.includes(role) && value[role] == null)).map((role) => {
     const policy = value[role];
     if (!policy || typeof policy !== 'object' || Array.isArray(policy) ||
         Object.keys(policy).some((key) => !['recommendedBuild', 'minimumBuild', 'mandatoryAfter'].includes(key))) throw invalid();

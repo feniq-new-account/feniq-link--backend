@@ -20,7 +20,11 @@ class AndroidReleasePolicy {
     required this.size,
     required this.roles,
   });
-  static const roleNames = ['pharmacy', 'rep', 'warehouse'];
+  static const roleNames = ['pharmacy', 'rep', 'warehouse', 'driver'];
+
+  /// Roles a server may omit (saved before the role existed). A role without
+  /// a policy is judged like a signed-out user against the policies present.
+  static const optionalRoleNames = ['driver'];
   final int latestBuild;
   final String versionName;
   final String apkUrl;
@@ -53,6 +57,7 @@ class AndroidReleasePolicy {
     final policies = <String, AndroidRolePolicy>{};
     for (final name in roleNames) {
       final role = rawRoles[name];
+      if (role == null && optionalRoleNames.contains(name)) continue;
       if (role is! Map) throw const FormatException('Missing update role');
       final minimum = role['minimumBuild'];
       final recommended = role['recommendedBuild'];
@@ -91,7 +96,7 @@ class AndroidReleasePolicy {
     if (!roles.containsKey(role)) {
       // Do not lock a rep out of sign-in because the pharmacy role alone
       // requires a newer build. The actual role is checked after sign-in.
-      final statuses = roleNames
+      final statuses = roles.keys
           .map((name) => statusFor(name, installedBuild, now))
           .toList();
       if (statuses.every((status) => status == ReleaseUpdateStatus.mandatory)) {

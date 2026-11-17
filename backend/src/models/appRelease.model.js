@@ -15,7 +15,7 @@ const schema = new Schema({
   size: { type: Number, required: true },
   certificateSha256: { type: String, required: true },
   applicationId: { type: String, default: 'com.feniq.link' },
-  roles: { pharmacy: rolePolicy, rep: rolePolicy, warehouse: rolePolicy },
+  roles: { pharmacy: rolePolicy, rep: rolePolicy, warehouse: rolePolicy, driver: { type: rolePolicy, default: undefined } },
   notes: { type: String, default: '' },
   revision: { type: Number, default: 1 },
   updatedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },

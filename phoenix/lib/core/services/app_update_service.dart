@@ -140,7 +140,7 @@ class AppUpdateService {
         } catch (_) { _requiredRoles = {}; }
       }
       final required = _requiredRoles!;
-      final roleKey = AndroidReleasePolicy.roleNames.contains(role)
+      final roleKey = _release!.roles.containsKey(role)
           ? role!
           : 'anonymous';
       if (required[roleKey] is int &&
