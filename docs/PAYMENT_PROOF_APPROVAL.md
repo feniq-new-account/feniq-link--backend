@@ -17,8 +17,10 @@ It does not activate collection-v2 commission or change how that payment posts.
   body `{decision:'approved'|'rejected',reason?,idempotencyKey}`. Reject needs a
   nonblank reason. Exactly one immutable review per proof.
 
-Owner monitors; legacy combined login can submit evidence under its existing
-cash permission but cannot gain the new approval permission implicitly. Admin,
+Manager (owner login) records payments and can submit evidence (owner's call,
+2026-11-17), but does not reverse payments or review proofs; legacy combined
+login can submit evidence under its existing cash permission but cannot gain
+the new approval permission implicitly. Admin,
 pharmacy and rep cannot review warehouse receipt proof. Tenant is derived from
 current authenticated membership; body cannot supply warehouse, amount, FX,
 paidAt, collector or an approval boolean. Services recheck role/status/scope in
@@ -56,8 +58,8 @@ external message is performed. The authorized accountant verifies evidence.
   A deployment with index conflicts must fail boot; never bypass the indexes.
 
 The warehouse statement payment row opens a translated proof dialog. It displays
-server values/cash time/update time; owner, reversed-payment, historical-report
-and older-history views are read-only. Failed reads/uncertain write responses
+server values/cash time/update time; reversed-payment, historical-report and
+older-history views are read-only, and the manager (owner) cannot review. Failed reads/uncertain write responses
 hide old facts until refresh. Durable account-scoped keys prevent retry duplication.
 
 ## Explicit remaining scope

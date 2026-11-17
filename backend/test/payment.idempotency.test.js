@@ -488,6 +488,8 @@ test('the manager (owner login) records a payment but cannot reverse one', async
   const created = await call('POST', '/warehouse/payments', { pharmacyId: String(ids.pharmacy), amount: 100, currency: 'SYP', idempotencyKey: newKey('owner-records') }, token);
   assert.strictEqual(created.status, 201, JSON.stringify(created.body));
   assert.strictEqual(await balanceSyp(), before - 100);
+  // The audit trail names the manager who recorded it.
+  assert.strictEqual(String((await Payment.findById(created.body.payment.id)).recordedBy), owner.id);
   const reverse = await call('POST', `/warehouse/payments/${receipt.id}/reverse`, { reason: 'Owner tries', idempotencyKey: newKey('owner-reverse') }, token);
   assert.strictEqual(reverse.status, 403); assert.strictEqual(reverse.body.code, 'ACCOUNTANT_REQUIRED');
   assert.strictEqual((await Payment.findById(receipt.id)).status, 'posted');

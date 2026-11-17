@@ -396,10 +396,20 @@ function StatementTable({ statement }) {
   );
 }
 
+// What a statement allows: recording a payment is open to every warehouse
+// login (manager and accountant); reversing one stays with the accountant and
+// the original login (owner's call, 2026-11-17). Neither on a past date range.
+export function debtDetailActions(user, range) {
+  return {
+    canRecord: hasRolePermission(user, 'paymentRecord') && !range,
+    canReverse: hasRolePermission(user, 'paymentReverse') && !range,
+  };
+}
+
 function WarehouseDebtDetail({ pharmacyId, onBack }) {
   const { user, warehouse } = useAuth();
   const [range, setRange] = useState(null);
-  const canRecord = hasRolePermission(user, 'paymentRecord') && !range;
+  const { canRecord, canReverse } = debtDetailActions(user, range);
   const requestId = useRef(0);
   const [dates, setDates] = useState({ from: businessDateInputValue(new Date(Date.now() - 90 * 86400000)), to: businessDateInputValue() });
   const { t, i18n } = useTranslation();
@@ -570,7 +580,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
                   </thead>
                   <tbody>
                     {payments.map((payment) => (
-                      <PaymentRow key={payment.id} payment={payment} onReverse={canRecord ? setReversing : null} onProof={setProofPayment} />
+                      <PaymentRow key={payment.id} payment={payment} onReverse={canReverse ? setReversing : null} onProof={setProofPayment} />
                     ))}
                   </tbody>
                 </table>
