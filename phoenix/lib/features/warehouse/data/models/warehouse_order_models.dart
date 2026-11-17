@@ -20,9 +20,9 @@ List<Map<String, dynamic>> _maps(Object? value) => value is List
     ? value.whereType<Map>().map(Map<String, dynamic>.from).toList()
     : const [];
 
-/// The warehouse's three stages: accept -> on the way -> delivered (the
-/// warehouse marks it when it collects; 24 hours on the way close it too, with
-/// the amount owed). The pharmacist taps nothing. Items can
+/// The warehouse's three stages: accept -> on the way -> delivered (only the
+/// warehouse - manager or accountant - marks it, and records then how it is
+/// paid; automatic delivery is off). The pharmacist taps nothing. Items can
 /// change until the order leaves. 'preparing' is no longer reached; an older
 /// order left in it counts as accepted.
 /// Mirrors NEXT_STATUS in backend/src/services/warehouseOrder.service.js.

@@ -3,6 +3,8 @@
 // paid. The hourly job stays in the code behind FEATURES.autoDelivery, off.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-auto-delivery-switch-pad';
 process.env.NODE_ENV = 'test';
+// Requiring server.js loads the config, which needs a database URI (any).
+process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/unused';
 
 const test = require('node:test');
 const assert = require('node:assert');

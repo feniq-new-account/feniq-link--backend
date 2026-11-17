@@ -248,8 +248,9 @@ async function notifyPharmacyOfStage(order, status) {
   }
 }
 
-// out_for_delivery -> delivered, whoever triggers it: the warehouse or the
-// day-old automatic close. One
+// out_for_delivery -> delivered, whoever triggers it: the warehouse (manager
+// or accountant), or the day-old automatic close when FEATURES.autoDelivery
+// is on (it is off). One
 // transaction: the status move (a compare-and-swap, so it can never be
 // delivered twice), the pharmacy's credit, and the ledger charge - an order
 // cannot end up delivered without its charge.

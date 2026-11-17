@@ -1,8 +1,9 @@
-// The owner's rule: an order on the road for a day without anyone marking it
-// delivered counts as delivered (warehouseOrder.service.js's
-// autoDeliverStaleOrders, run hourly from server.js). It is then charged to
-// the pharmacy like any delivered order, so the manager is shown when that
-// will happen (autoDeliverAt on the warehouse order responses).
+// Automatic delivery: an order on the road for a day without anyone marking
+// it delivered is closed as delivered and charged to the pharmacy
+// (warehouseOrder.service.js's autoDeliverStaleOrders, run hourly from
+// server.js) - but only while FEATURES.autoDelivery is on. It is OFF (owner's
+// call, 2026-11-17): the manager or accountant marks every delivery. The rule
+// and the countdown (autoDeliverAt) are kept here for when it comes back.
 const { FEATURES } = require('../config/features');
 
 const AUTO_DELIVER_AFTER_MS = 24 * 60 * 60 * 1000;
