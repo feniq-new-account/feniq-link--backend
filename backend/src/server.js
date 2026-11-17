@@ -181,13 +181,17 @@ function startKeepAlive() {
   }, KEEP_ALIVE_INTERVAL_MS).unref();
 }
 
-// An order on the road for a day without anyone marking it delivered is closed
-// on its own (warehouseOrder.service.js's autoDeliverStaleOrders). Hourly;
-// AUTO_DELIVERY=false turns it off.
+// When FEATURES.autoDelivery is on, an order on the road for a day without
+// anyone marking it delivered is closed on its own (warehouseOrder.service.js's
+// autoDeliverStaleOrders). Hourly. Currently off.
 const AUTO_DELIVERY_INTERVAL_MS = 60 * 60 * 1000;
 
 function startAutoDelivery() {
-  if (process.env.AUTO_DELIVERY === 'false') return;
+  // Off in code (FEATURES.autoDelivery, owner's call 2026-11-17): only the
+  // manager or the accountant marks an order delivered. AUTO_DELIVERY=false
+  // still turns it off even if the feature is switched back on.
+  const { FEATURES } = require('./config/features');
+  if (!FEATURES.autoDelivery || process.env.AUTO_DELIVERY === 'false') return;
   const { autoDeliverStaleOrders } = require('./services/warehouseOrder.service');
   const run = () =>
     autoDeliverStaleOrders().catch((err) => {
@@ -202,4 +206,4 @@ if (require.main === module) {
   start().catch(() => process.exit(1));
 }
 
-module.exports = { start };
+module.exports = { start, _startAutoDelivery: startAutoDelivery };

@@ -346,8 +346,9 @@ test('while the countdown is switched off (the default), no response carries a d
 
 test('with the countdown switched on, the warehouse list, detail and advance responses carry autoDeliverAt', async (t) => {
   const { FEATURES } = require('../src/config/features');
+  FEATURES.autoDelivery = true;
   FEATURES.autoDeliverCountdown = true;
-  t.after(() => { FEATURES.autoDeliverCountdown = false; });
+  t.after(() => { FEATURES.autoDeliverCountdown = false; FEATURES.autoDelivery = false; });
   const order = await makeOrder('confirmed');
   const advanced = await warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser,
     { expectedStatus: 'confirmed', targetStatus: 'out_for_delivery' });

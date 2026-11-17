@@ -36,9 +36,10 @@ const monthlyLoyalty = require('./monthlyLoyalty.service');
 // a time - no skipping, no picking an arbitrary status. Three stages, one
 // notification each (the owner's call, October 2026): accepted ('confirmed')
 // -> on the way ('out_for_delivery') -> delivered. The pharmacist taps
-// nothing: the warehouse marks it delivered (when it collects the money), or
-// it closes on its own a day after it left (autoDeliverStaleOrders) - as a
-// delivered order whose amount is owed, never as paid.
+// nothing: the warehouse (manager or accountant) marks it delivered and says
+// then how it is paid - cash, on credit, or part. Closing it on its own a day
+// after it left (autoDeliverStaleOrders) exists but is switched off
+// (FEATURES.autoDelivery, owner's call 2026-11-17).
 // 'preparing' is no longer reached; an older order left in it moves straight
 // on to the road. 'cancelled' isn't part of it: only the pharmacist can cancel
 // (order.service.js), and only before 'out_for_delivery'.
