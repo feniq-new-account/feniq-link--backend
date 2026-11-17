@@ -11,7 +11,7 @@ it('uses explicit backend denial and preserves legacy roles only for older serve
 });
 
 it('on a statement the manager records but cannot reverse; the accountant does both', async () => {
-  const { debtDetailActions } = await import('../pages/WarehouseDebtsPage');
+  const { debtDetailActions } = await import('./userPermissions');
   const base = { role: 'warehouse', status: 'active' };
   const owner = { ...base, warehouseRole: 'owner', permissions: { paymentRecord: true, paymentReverse: false } };
   const accountant = { ...base, warehouseRole: 'accountant', permissions: { paymentRecord: true, paymentReverse: true } };

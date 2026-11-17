@@ -1,4 +1,4 @@
-import { hasRolePermission } from '../utils/userPermissions';
+import { hasRolePermission, debtDetailActions } from '../utils/userPermissions';
 import { NumericInput } from '../components/NumericInput';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -394,16 +394,6 @@ function StatementTable({ statement }) {
       </table>
     </div>
   );
-}
-
-// What a statement allows: recording a payment is open to every warehouse
-// login (manager and accountant); reversing one stays with the accountant and
-// the original login (owner's call, 2026-11-17). Neither on a past date range.
-export function debtDetailActions(user, range) {
-  return {
-    canRecord: hasRolePermission(user, 'paymentRecord') && !range,
-    canReverse: hasRolePermission(user, 'paymentReverse') && !range,
-  };
 }
 
 function WarehouseDebtDetail({ pharmacyId, onBack }) {
