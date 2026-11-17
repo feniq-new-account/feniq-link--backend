@@ -27,4 +27,11 @@ function autoDeliverAtFor(order) {
   return earliest === null ? null : new Date(earliest + AUTO_DELIVER_AFTER_MS);
 }
 
-module.exports = { AUTO_DELIVER_AFTER_MS, autoDeliverAtFor };
+// What the warehouse order responses carry: the deadline only while the
+// countdown feature is on (FEATURES.autoDeliverCountdown), else null so the
+// app shows nothing.
+function shownAutoDeliverAt(order) {
+  return FEATURES.autoDeliverCountdown ? autoDeliverAtFor(order) : null;
+}
+
+module.exports = { AUTO_DELIVER_AFTER_MS, autoDeliverAtFor, shownAutoDeliverAt };

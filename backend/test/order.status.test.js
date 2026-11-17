@@ -331,7 +331,23 @@ test('the hourly job closes an order exactly when its autoDeliverAt has passed, 
   assert.strictEqual((await Order.findById(order._id)).status, 'delivered');
 });
 
-test('the warehouse list, detail and advance responses carry autoDeliverAt for an order on the road', async () => {
+test('while the countdown is switched off (the default), no response carries a deadline', async () => {
+  const { FEATURES } = require('../src/config/features');
+  assert.strictEqual(FEATURES.autoDeliverCountdown, false);
+  const order = await makeOrder('confirmed');
+  const advanced = await warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser,
+    { expectedStatus: 'confirmed', targetStatus: 'out_for_delivery' });
+  assert.strictEqual(warehouseOrderViewModel.toWarehouseOrderStatusResponse(advanced).order.autoDeliverAt, null);
+  const { rows } = await warehouseOrderService.listOrdersForWarehouse(ids.warehouse, 'out_for_delivery', { limit: 100 });
+  assert.ok(warehouseOrderViewModel.toWarehouseOrdersResponse(rows).orders.every((o) => o.autoDeliverAt === null));
+  // The hourly auto-delivery itself is not switched off by this.
+  assert.ok(autoDeliverAtFor(advanced));
+});
+
+test('with the countdown switched on, the warehouse list, detail and advance responses carry autoDeliverAt', async (t) => {
+  const { FEATURES } = require('../src/config/features');
+  FEATURES.autoDeliverCountdown = true;
+  t.after(() => { FEATURES.autoDeliverCountdown = false; });
   const order = await makeOrder('confirmed');
   const advanced = await warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser,
     { expectedStatus: 'confirmed', targetStatus: 'out_for_delivery' });

@@ -7,6 +7,13 @@ const FEATURES = {
   // for now (owner's call, October 2026). Off: no order asks for the photo and
   // none is held back waiting for one - including orders created while it was on.
   deliverySealPhoto: false,
+  // The manager's "marked delivered automatically in X hours" countdown on an
+  // order on the road (autoDeliverAt on the warehouse order responses). Off
+  // (owner's call, 2026-11-17): delivery times can't be promised yet, and what
+  // the manager needs first is when the pharmacy settles. Display only - the
+  // hourly auto-delivery itself is unaffected. On: the app shows it again with
+  // no new release (it shows whatever the server sends).
+  autoDeliverCountdown: false,
 };
 
 module.exports = { FEATURES };
