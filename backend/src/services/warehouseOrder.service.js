@@ -50,8 +50,9 @@ const NEXT_STATUS = {
   out_for_delivery: 'delivered',
 };
 
-// How long an order may sit on the road before it counts as delivered.
-const AUTO_DELIVER_AFTER_MS = 24 * 60 * 60 * 1000;
+// How long an order may sit on the road before it counts as delivered
+// (shared with the viewmodels, which show the manager the deadline).
+const { AUTO_DELIVER_AFTER_MS } = require('../utils/autoDelivery');
 
 function nextStatus(current) {
   return NEXT_STATUS[current] ?? null;
@@ -85,11 +86,12 @@ async function listOrdersForWarehouse(
   }
 
   // .select(): warehouseOrder.viewmodel.js's toWarehouseOrderItem (the list
-  // row) reads orderNumber/status/finalPrice/notes/createdAt; pharmacyId is
+  // row) reads orderNumber/status/finalPrice/notes/createdAt, and
+  // statusHistory for autoDeliverAt on an order on the road; pharmacyId is
   // the join key. Never saved - advanceOrderStatus / updateOrderItems each
   // re-load the order themselves.
   const orders = await Order.find(filter)
-    .select('orderNumber status finalPrice notes createdAt pharmacyId commissionEngine returnCreditReservedSyp')
+    .select('orderNumber status finalPrice notes createdAt pharmacyId commissionEngine returnCreditReservedSyp statusHistory requiresDeliverySealPhoto deliverySealPhoto')
     .sort({ orderNumber: newestFirst ? -1 : 1 })
     .limit(limit + 1);
   const hasMore = orders.length > limit;
@@ -308,10 +310,11 @@ async function deliverOrder(order, { userId, note = null }) {
 // closed on its own, so one failure never stops the rest. Returns how many.
 async function autoDeliverStaleOrders(now = new Date()) {
   const cutoff = new Date(now.getTime() - AUTO_DELIVER_AFTER_MS);
+  // Oldest first, so a backlog over 200 is worked through in order.
   const stale = await Order.find({
     status: 'out_for_delivery',
     statusHistory: { $elemMatch: { status: 'out_for_delivery', changedAt: { $lte: cutoff } } },
-  }).limit(200);
+  }).sort({ orderNumber: 1 }).limit(200);
   let closed = 0;
   for (const order of stale) {
     try {

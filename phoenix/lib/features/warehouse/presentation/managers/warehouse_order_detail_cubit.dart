@@ -123,7 +123,7 @@ class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {
       emit(
         state.copyWith(
           isActing: false,
-          order: order.withStatus(result.status, result.statusHistory),
+          order: order.withStatus(result.status, result.statusHistory, autoDeliverAt: result.autoDeliverAt),
         ),
       );
       return true;

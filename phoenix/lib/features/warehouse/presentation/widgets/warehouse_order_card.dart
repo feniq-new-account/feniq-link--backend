@@ -9,6 +9,7 @@ import 'package:feniq/core/widgets/status_badge.dart';
 import 'package:feniq/features/cart/presentation/utils/order_status_label.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_order_models.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_order_labels.dart';
+import 'package:feniq/features/warehouse/presentation/utils/auto_deliver_label.dart';
 
 /// One order in the warehouse's list: who it is for, how much, where it
 /// stands, and the one button that moves it on.
@@ -20,6 +21,7 @@ class WarehouseOrderCard extends StatelessWidget {
     required this.onAdvance,
     this.isAdvancing = false,
     this.isNew = false,
+    this.now,
   });
 
   final WarehouseOrderSummary order;
@@ -28,6 +30,8 @@ class WarehouseOrderCard extends StatelessWidget {
   final bool isAdvancing;
   // Arrived through a background refresh and not acknowledged yet.
   final bool isNew;
+  // Tests pin the clock; the list refreshes every minute, which re-reads it.
+  final DateTime? now;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +39,7 @@ class WarehouseOrderCard extends StatelessWidget {
     final advanceLabel = warehouseAdvanceLabel(l10n, order.status);
     final city = order.pharmacy?.city;
     final createdAt = order.createdAt;
+    final autoDeliver = autoDeliverLabel(l10n, order.autoDeliverAt, now ?? DateTime.now(), status: order.status);
 
     return CustomCard(
       onTap: onTap,
@@ -74,6 +79,25 @@ class WarehouseOrderCard extends StatelessWidget {
             ].join(' · '),
             style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
           ),
+          if (autoDeliver != null) ...[
+            const SizedBox(height: AppSizes.spacingXSmall),
+            Row(
+              key: const ValueKey('auto-deliver-countdown'),
+              children: [
+                Icon(Icons.timer_outlined, size: 16, color: AppColors.warningOf(context)),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    autoDeliver,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: AppColors.warningOf(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: AppSizes.spacingSmall),
           Wrap(
             alignment: WrapAlignment.spaceBetween,

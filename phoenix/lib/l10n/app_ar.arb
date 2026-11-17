@@ -1490,5 +1490,9 @@
   "invoicePdfFrom": "المستودع: {name}",
   "invoicePdfTo": "الصيدلية: {name}",
   "invoicePdfFooter": "فاتورة من تطبيق فينيق",
-  "invoicePdfTitle": "فاتورة"
+  "invoicePdfTitle": "فاتورة",
+  "warehouseAutoDeliverHours": "{hours, plural, =1{بيتسجّل مُسلّم لحاله بعد ساعة} =2{بيتسجّل مُسلّم لحاله بعد ساعتين} few{بيتسجّل مُسلّم لحاله بعد {hours} ساعات} other{بيتسجّل مُسلّم لحاله بعد {hours} ساعة}}",
+  "warehouseAutoDeliverMinutes": "{minutes, plural, =1{بيتسجّل مُسلّم لحاله بعد دقيقة} =2{بيتسجّل مُسلّم لحاله بعد دقيقتين} few{بيتسجّل مُسلّم لحاله بعد {minutes} دقائق} other{بيتسجّل مُسلّم لحاله بعد {minutes} دقيقة}}",
+  "warehouseAutoDeliverDue": "بيتسجّل مُسلّم لحاله خلال ساعة",
+  "warehouseAutoDeliverExplain": "إذا ما سجّلت التسليم بنفسك، النظام بيعلّم الطلب مُسلّم لحاله بعد يوم من خروجه، ومبلغه بينكتب دين عالصيدلية. تأجيل موعد التوصيل ما بيوقّف هالعدّاد."
 }

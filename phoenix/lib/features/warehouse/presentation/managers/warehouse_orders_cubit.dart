@@ -269,7 +269,7 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
         state.copyWith(
           orders: [
             for (final o in state.orders)
-              o.id == orderId ? o.copyWith(status: result.status) : o,
+              o.id == orderId ? o.advancedTo(result) : o,
           ],
           advancingIds: {...state.advancingIds}..remove(orderId),
         ),
@@ -300,6 +300,7 @@ class WarehouseOrdersCubit extends Cubit<WarehouseOrdersState> {
                     status: detail.status,
                     finalPrice: detail.finalPrice,
                     itemCount: detail.items.length,
+                    autoDeliverAt: () => detail.autoDeliverAt,
                   )
                 : o,
         ],

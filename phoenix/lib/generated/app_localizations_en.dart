@@ -3616,4 +3616,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invoicePdfTitle => 'Invoice';
+
+  @override
+  String warehouseAutoDeliverHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: 'Marked delivered automatically in $hours hours',
+      one: 'Marked delivered automatically in 1 hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String warehouseAutoDeliverMinutes(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'Marked delivered automatically in $minutes minutes',
+      one: 'Marked delivered automatically in 1 minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warehouseAutoDeliverDue =>
+      'Marked delivered automatically within the hour';
+
+  @override
+  String get warehouseAutoDeliverExplain =>
+      'If you don\'t mark the delivery yourself, the order is marked delivered automatically a day after it left, and its amount becomes the pharmacy\'s debt. Rescheduling the delivery does not stop this countdown.';
 }

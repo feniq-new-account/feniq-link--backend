@@ -3605,4 +3605,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get invoicePdfTitle => 'فاتورة';
+
+  @override
+  String warehouseAutoDeliverHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: 'بيتسجّل مُسلّم لحاله بعد $hours ساعة',
+      few: 'بيتسجّل مُسلّم لحاله بعد $hours ساعات',
+      two: 'بيتسجّل مُسلّم لحاله بعد ساعتين',
+      one: 'بيتسجّل مُسلّم لحاله بعد ساعة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String warehouseAutoDeliverMinutes(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'بيتسجّل مُسلّم لحاله بعد $minutes دقيقة',
+      few: 'بيتسجّل مُسلّم لحاله بعد $minutes دقائق',
+      two: 'بيتسجّل مُسلّم لحاله بعد دقيقتين',
+      one: 'بيتسجّل مُسلّم لحاله بعد دقيقة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warehouseAutoDeliverDue => 'بيتسجّل مُسلّم لحاله خلال ساعة';
+
+  @override
+  String get warehouseAutoDeliverExplain =>
+      'إذا ما سجّلت التسليم بنفسك، النظام بيعلّم الطلب مُسلّم لحاله بعد يوم من خروجه، ومبلغه بينكتب دين عالصيدلية. تأجيل موعد التوصيل ما بيوقّف هالعدّاد.';
 }

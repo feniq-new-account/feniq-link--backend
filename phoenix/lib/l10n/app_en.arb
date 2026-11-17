@@ -2007,5 +2007,11 @@
   "invoicePdfFooter": "Invoice from the Feniq app",
   "@invoicePdfFrom": {"placeholders": {"name": {"type": "String"}}},
   "@invoicePdfTo": {"placeholders": {"name": {"type": "String"}}},
-  "invoicePdfTitle": "Invoice"
+  "invoicePdfTitle": "Invoice",
+  "warehouseAutoDeliverHours": "{hours, plural, =1{Marked delivered automatically in 1 hour} other{Marked delivered automatically in {hours} hours}}",
+  "warehouseAutoDeliverMinutes": "{minutes, plural, =1{Marked delivered automatically in 1 minute} other{Marked delivered automatically in {minutes} minutes}}",
+  "warehouseAutoDeliverDue": "Marked delivered automatically within the hour",
+  "warehouseAutoDeliverExplain": "If you don't mark the delivery yourself, the order is marked delivered automatically a day after it left, and its amount becomes the pharmacy's debt. Rescheduling the delivery does not stop this countdown.",
+  "@warehouseAutoDeliverHours": {"placeholders": {"hours": {"type": "int"}}},
+  "@warehouseAutoDeliverMinutes": {"placeholders": {"minutes": {"type": "int"}}}
 }

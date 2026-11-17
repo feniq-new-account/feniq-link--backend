@@ -141,6 +141,7 @@ class WarehouseOrderSummary {
     this.pharmacy,
     this.notes,
     this.createdAt,
+    this.autoDeliverAt,
   });
 
   final String id;
@@ -151,11 +152,16 @@ class WarehouseOrderSummary {
   final WarehouseOrderPharmacy? pharmacy;
   final String? notes;
   final DateTime? createdAt;
+  // On the road: when the server closes it as delivered (and charges it) on
+  // its own if nobody marks it. Null otherwise.
+  final DateTime? autoDeliverAt;
 
+  /// [autoDeliverAt] is a getter so it can be set to null (delivered).
   WarehouseOrderSummary copyWith({
     String? status,
     double? finalPrice,
     int? itemCount,
+    DateTime? Function()? autoDeliverAt,
   }) => WarehouseOrderSummary(
     id: id,
     orderNumber: orderNumber,
@@ -165,6 +171,21 @@ class WarehouseOrderSummary {
     pharmacy: pharmacy,
     notes: notes,
     createdAt: createdAt,
+    autoDeliverAt: autoDeliverAt != null ? autoDeliverAt() : this.autoDeliverAt,
+  );
+
+  /// After a one-tap advance: the new status and the deadline the server sent
+  /// with it (set when it went on the road, cleared once delivered).
+  WarehouseOrderSummary advancedTo(AdvancedOrderStatus result) => WarehouseOrderSummary(
+    id: id,
+    orderNumber: orderNumber,
+    status: result.status,
+    finalPrice: finalPrice,
+    itemCount: itemCount,
+    pharmacy: pharmacy,
+    notes: notes,
+    createdAt: createdAt,
+    autoDeliverAt: result.autoDeliverAt,
   );
 
   factory WarehouseOrderSummary.fromJson(Map<String, dynamic> json) {
@@ -180,6 +201,7 @@ class WarehouseOrderSummary {
           : null,
       notes: _strOrNull(json['notes']),
       createdAt: _date(json['createdAt']),
+      autoDeliverAt: _date(json['autoDeliverAt']),
     );
   }
 }
@@ -311,6 +333,7 @@ class WarehouseOrderDetail {
     this.requiresDeliverySealPhoto = false,
     this.deliverySealPhoto,
     this.hasReturn = false,
+    this.autoDeliverAt,
   });
 
   final String id;
@@ -341,6 +364,8 @@ class WarehouseOrderDetail {
   final bool requiresDeliverySealPhoto;
   final String? deliverySealPhoto;
   final bool hasReturn;
+  // See WarehouseOrderSummary.autoDeliverAt.
+  final DateTime? autoDeliverAt;
 
   bool get isEditable => isAwaitingApproval(status);
 
@@ -355,8 +380,9 @@ class WarehouseOrderDetail {
 
   WarehouseOrderDetail withStatus(
     String status,
-    List<WarehouseOrderHistoryEntry> history,
-  ) => WarehouseOrderDetail(
+    List<WarehouseOrderHistoryEntry> history, {
+    DateTime? autoDeliverAt,
+  }) => WarehouseOrderDetail(
     id: id,
     orderNumber: orderNumber,
     status: status,
@@ -381,6 +407,7 @@ class WarehouseOrderDetail {
     requiresDeliverySealPhoto: requiresDeliverySealPhoto,
     deliverySealPhoto: deliverySealPhoto,
     hasReturn: hasReturn,
+    autoDeliverAt: autoDeliverAt,
   );
 
   factory WarehouseOrderDetail.fromJson(Map<String, dynamic> json) {
@@ -422,6 +449,7 @@ class WarehouseOrderDetail {
       notes: _strOrNull(order['notes']),
       cancelReason: _strOrNull(order['cancelReason']),
       createdAt: _date(order['createdAt']),
+      autoDeliverAt: _date(order['autoDeliverAt']),
       requiresDeliverySealPhoto: order['requiresDeliverySealPhoto'] == true,
       deliverySealPhoto: _strOrNull(order['deliverySealPhoto']),
       hasReturn: order['hasReturn'] == true,
@@ -434,10 +462,12 @@ class AdvancedOrderStatus {
   const AdvancedOrderStatus({
     required this.status,
     this.statusHistory = const [],
+    this.autoDeliverAt,
   });
 
   final String status;
   final List<WarehouseOrderHistoryEntry> statusHistory;
+  final DateTime? autoDeliverAt;
 
   factory AdvancedOrderStatus.fromJson(Map<String, dynamic> json) {
     final order = json['order'] is Map<String, dynamic>
@@ -448,6 +478,7 @@ class AdvancedOrderStatus {
       statusHistory: _maps(
         order['statusHistory'],
       ).map(WarehouseOrderHistoryEntry.fromJson).toList(),
+      autoDeliverAt: _date(order['autoDeliverAt']),
     );
   }
 }

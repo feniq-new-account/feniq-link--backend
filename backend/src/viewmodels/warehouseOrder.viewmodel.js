@@ -3,6 +3,7 @@ const { platformCompensationOf } = require('../services/discountCode.service');
 const { serializePharmacy } = require('./auth.viewmodel');
 const { FEATURES } = require('../config/features');
 const { collectionOrderFields } = require('./collectionOrder.viewmodel');
+const { autoDeliverAtFor } = require('../utils/autoDelivery');
 
 function serializeOrderItem(item) {
   return {
@@ -65,6 +66,9 @@ function toWarehouseOrderItem({ order, items, pharmacy, hasReviewed }) {
     finalPrice: order.finalPrice,
     notes: order.notes,
     createdAt: order.createdAt,
+    // On the road: when it is closed as delivered (and charged) on its own if
+    // nobody marks it. null otherwise.
+    autoDeliverAt: autoDeliverAtFor(order),
     pharmacy: serializePharmacy(pharmacy),
     items: items.map(serializeOrderItem),
     hasReviewed: Boolean(hasReviewed),
@@ -135,6 +139,7 @@ function toWarehouseOrderDetailResponse({ order, items, pharmacy, hasReturn, has
       notes: order.notes,
       cancelReason: order.cancelReason,
       createdAt: order.createdAt,
+      autoDeliverAt: autoDeliverAtFor(order),
       statusHistory: (order.statusHistory || []).map((entry) => ({
         status: entry.status,
         changedAt: entry.changedAt,
@@ -163,6 +168,7 @@ function toWarehouseOrderStatusResponse(order) {
     order: {
       id: order._id,
       status: order.status,
+      autoDeliverAt: autoDeliverAtFor(order),
       statusHistory: (order.statusHistory || []).map((entry) => ({
         status: entry.status,
         changedAt: entry.changedAt,

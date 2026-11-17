@@ -1,4 +1,5 @@
 import 'package:feniq/core/widgets/delivery_estimate_card.dart';
+import 'package:feniq/features/warehouse/presentation/utils/auto_deliver_label.dart';
 import 'package:feniq/core/pdf/invoice_pdf_button.dart';
 import 'package:feniq/core/pdf/invoice_pdf_mappers.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_permissions.dart';
@@ -203,6 +204,10 @@ class WarehouseOrderDetailView extends StatelessWidget {
         children: [
           _statusCard(context, order),
           const SizedBox(height: AppSizes.spacingMedium),
+          if (autoDeliverLabel(l10n, order.autoDeliverAt, DateTime.now(), status: order.status) case final countdown?) ...[
+            _autoDeliverCard(context, countdown),
+            const SizedBox(height: AppSizes.spacingMedium),
+          ],
           if (order.pharmacy != null) ...[
             _pharmacyCard(context, order.pharmacy!),
             const SizedBox(height: AppSizes.spacingMedium),
@@ -226,6 +231,34 @@ class WarehouseOrderDetailView extends StatelessWidget {
       ),
     );
   }
+
+  // On the road: when it becomes delivered (and the pharmacy's debt) on its
+  // own, and what that means, so the manager marks it - or chases it - first.
+  Widget _autoDeliverCard(BuildContext context, String countdown) => Material(
+    key: const ValueKey('auto-deliver-card'),
+    color: AppColors.warningSurfaceOf(context),
+    borderRadius: BorderRadius.circular(12),
+    child: Padding(
+      padding: const EdgeInsets.all(AppSizes.spacingMedium),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.timer_outlined, color: AppColors.warningOf(context)),
+          const SizedBox(width: AppSizes.spacingSmall),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(countdown, style: context.textTheme.titleSmall),
+                const SizedBox(height: AppSizes.spacingXSmall),
+                Text(context.l10n.warehouseAutoDeliverExplain, style: context.textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _section(BuildContext context, String title, List<Widget> children) => CustomCard(
     child: Column(

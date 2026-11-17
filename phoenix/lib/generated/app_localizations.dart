@@ -6157,6 +6157,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invoice'**
   String get invoicePdfTitle;
+
+  /// No description provided for @warehouseAutoDeliverHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours, plural, =1{Marked delivered automatically in 1 hour} other{Marked delivered automatically in {hours} hours}}'**
+  String warehouseAutoDeliverHours(int hours);
+
+  /// No description provided for @warehouseAutoDeliverMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, =1{Marked delivered automatically in 1 minute} other{Marked delivered automatically in {minutes} minutes}}'**
+  String warehouseAutoDeliverMinutes(int minutes);
+
+  /// No description provided for @warehouseAutoDeliverDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked delivered automatically within the hour'**
+  String get warehouseAutoDeliverDue;
+
+  /// No description provided for @warehouseAutoDeliverExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'If you don\'t mark the delivery yourself, the order is marked delivered automatically a day after it left, and its amount becomes the pharmacy\'s debt. Rescheduling the delivery does not stop this countdown.'**
+  String get warehouseAutoDeliverExplain;
 }
 
 class _AppLocalizationsDelegate
