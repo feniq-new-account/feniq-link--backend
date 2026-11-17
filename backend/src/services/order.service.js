@@ -49,6 +49,7 @@ const { loadActiveAdvertisementOrThrow, isAdvertisementAvailable } = require('./
 const { emitToWarehouse, EVENTS } = require('../realtime');
 const notificationService = require('./notification.service');
 const Pharmacy = require('../models/pharmacy.model');
+const User = require('../models/user.model');
 const { FEATURES } = require('../config/features');
 
 // Section 15: the SYP stacking lives with its USD twin now
@@ -1176,17 +1177,38 @@ async function createOrder({
 // The realtime events above only reach an open panel; this reaches the Feniq
 // app on the warehouse's phone. Never throws: sendToUser swallows its own
 // errors, and a failed lookup here only skips the push.
+//
+// Recipients: the warehouse's own login plus every active member signed in as
+// an owner (warehouseRole 'owner' or the legacy combined login). Managers run
+// orders from those owner accounts on their phones; an accountant handles
+// money on the panel and is left out of order alerts.
+async function warehouseOrderRecipients(warehouse) {
+  const memberIds = (warehouse.memberUserIds || []).filter(
+    (id) => String(id) !== String(warehouse.userId),
+  );
+  if (memberIds.length === 0) return [warehouse.userId];
+  const owners = await User.find({
+    _id: { $in: memberIds },
+    role: 'warehouse',
+    status: 'active',
+    warehouseRole: { $in: ['owner', null] },
+  }).select('_id').lean();
+  // The primary login is always notified, as it always was.
+  return [warehouse.userId, ...owners.map((m) => m._id)];
+}
+
 async function notifyWarehouseOfOrder(order, kind) {
   try {
     const [warehouse, pharmacy] = await Promise.all([
-      Warehouse.findById(order.warehouseId).select('userId').lean(),
+      Warehouse.findById(order.warehouseId).select('userId memberUserIds').lean(),
       Pharmacy.findById(order.pharmacyId).select('nameAr nameEn').lean(),
     ]);
     if (!warehouse?.userId) return;
+    const recipients = await warehouseOrderRecipients(warehouse);
     const fromAr = pharmacy?.nameAr || pharmacy?.nameEn;
     const fromEn = pharmacy?.nameEn || pharmacy?.nameAr;
     const created = kind === 'created';
-    await notificationService.sendToUser(warehouse.userId, {
+    await notificationService.sendToAll(recipients, {
       titleAr: created ? 'طلبية جديدة' : 'طلبية ملغاة',
       titleEn: created ? 'New order' : 'Order cancelled',
       bodyAr: created
@@ -1197,6 +1219,7 @@ async function notifyWarehouseOfOrder(order, kind) {
         : `${fromEn ? `${fromEn} cancelled` : 'Cancelled:'} order #${order.orderNumber}`,
       type: 'order_update',
       relatedOrderId: order._id,
+      androidChannel: notificationService.NEW_ORDERS_ANDROID_CHANNEL,
     });
   } catch (err) {
     // eslint-disable-next-line no-console
@@ -1830,4 +1853,6 @@ module.exports = {
   normalizePackageRequests,
   computeOrderFingerprint,
   bonusSnapshotFor,
+  // Tests only.
+  _notifyWarehouseOfOrder: notifyWarehouseOfOrder,
 };

@@ -37,6 +37,48 @@ const DEAD_TOKEN_ERROR_CODES = new Set([
   'messaging/invalid-argument',
 ]);
 
+// Android notification channels the app creates (phoenix fcm_service.dart).
+// A push naming a channel the device does not have yet (an older APK) falls
+// back to the manifest's default channel, so naming a new one here is safe.
+const DEFAULT_ANDROID_CHANNEL = 'phoenix_default_channel';
+const NEW_ORDERS_ANDROID_CHANNEL = 'feniq_new_orders';
+const ANDROID_CHANNELS = new Set([DEFAULT_ANDROID_CHANNEL, NEW_ORDERS_ANDROID_CHANNEL]);
+
+// How long FCM keeps trying a phone that is off or out of coverage. A new
+// order is worth a late banner within a day; after that the order list and
+// the in-app inbox already tell the warehouse, so FCM's 4-week default would
+// only surface stale alerts.
+const ORDER_PUSH_TTL_MS = 24 * 60 * 60 * 1000;
+
+// Platform blocks for one push. Every Feniq push is a user-visible banner, so
+// all of them go as high priority: a normal-priority message is held back by
+// Android's Doze until the phone wakes on its own, which is exactly the
+// "the order notification came an hour late" failure. The new-orders channel
+// also plays the default sound and vibration at maximum importance.
+function platformOptions(payload) {
+  const channelId = ANDROID_CHANNELS.has(payload.androidChannel)
+    ? payload.androidChannel
+    : DEFAULT_ANDROID_CHANNEL;
+  const urgent = channelId === NEW_ORDERS_ANDROID_CHANNEL;
+  return {
+    android: {
+      priority: 'high',
+      ...(urgent ? { ttl: ORDER_PUSH_TTL_MS } : {}),
+      notification: {
+        channelId,
+        sound: 'default',
+        defaultVibrateTimings: true,
+        visibility: 'public',
+        ...(urgent ? { priority: 'max' } : {}),
+      },
+    },
+    apns: {
+      headers: { 'apns-priority': '10' },
+      payload: { aps: { sound: 'default' } },
+    },
+  };
+}
+
 function pickLang(user, payload) {
   const isArabic = (user.lang || 'ar') === 'ar';
   return {
@@ -131,10 +173,14 @@ async function sendToUser(userId, payload) {
     }
 
     const { title, body } = pickLang(user, payload);
+    const options = platformOptions(payload);
     const baseMessage = {
       notification: { title, body },
+      ...options,
       data: {
         type: payload.type,
+        // The foreground copy (shown by the app itself) uses the same channel.
+        androidChannel: options.android.notification.channelId,
         ...(payload.relatedOrderId ? { relatedOrderId: String(payload.relatedOrderId) } : {}),
         ...(payload.relatedComplaintId
           ? { relatedComplaintId: String(payload.relatedComplaintId) }
@@ -231,4 +277,11 @@ async function sendToAll(userIds, payload) {
   await mapWithConcurrency(userIds, FANOUT_CONCURRENCY, (userId) => sendToUser(userId, payload));
 }
 
-module.exports = { sendToUser, sendToAll, _mapWithConcurrency: mapWithConcurrency, FANOUT_CONCURRENCY };
+module.exports = {
+  sendToUser,
+  sendToAll,
+  _mapWithConcurrency: mapWithConcurrency,
+  _platformOptions: platformOptions,
+  FANOUT_CONCURRENCY,
+  NEW_ORDERS_ANDROID_CHANNEL,
+};

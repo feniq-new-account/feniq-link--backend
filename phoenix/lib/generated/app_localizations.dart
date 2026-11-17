@@ -5899,6 +5899,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Feature settings changed. Reload before saving.'**
   String get errorFeatureControlChanged;
+
+  /// No description provided for @appPermissionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App permissions'**
+  String get appPermissionsTitle;
+
+  /// No description provided for @appPermissionsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything Feniq asks your phone for, and why. Nothing we don\'t need, and you can change any of it here.'**
+  String get appPermissionsIntro;
+
+  /// No description provided for @appPermissionsWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Why?'**
+  String get appPermissionsWhy;
+
+  /// No description provided for @permNotificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get permNotificationsTitle;
+
+  /// No description provided for @permNotificationsWhyWarehouse.
+  ///
+  /// In en, this message translates to:
+  /// **'So every new order rings and vibrates, even with the app closed.'**
+  String get permNotificationsWhyWarehouse;
+
+  /// No description provided for @permNotificationsWhyOther.
+  ///
+  /// In en, this message translates to:
+  /// **'So you hear when your order changes or a new offer arrives.'**
+  String get permNotificationsWhyOther;
+
+  /// No description provided for @permBatteryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unrestricted battery'**
+  String get permBatteryTitle;
+
+  /// No description provided for @permBatteryWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery savers on Xiaomi, Huawei and Samsung put the app to sleep and delay order notifications. This keeps them on time.'**
+  String get permBatteryWhy;
+
+  /// No description provided for @permAutostartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Autostart'**
+  String get permAutostartTitle;
+
+  /// No description provided for @permAutostartWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'This phone has an Autostart switch that is off by default. Turn it on for Feniq so notifications still arrive after you close the app or restart the phone.'**
+  String get permAutostartWhy;
+
+  /// No description provided for @permAutostartSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'On Xiaomi: Settings → Apps → Manage apps → Feniq → turn on Autostart, and set Battery saver to No restrictions.'**
+  String get permAutostartSteps;
+
+  /// No description provided for @permLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get permLocationTitle;
+
+  /// No description provided for @permLocationWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'To pin the pharmacy on the map, and for rep visits and driver routes.'**
+  String get permLocationWhy;
+
+  /// No description provided for @permBackgroundLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Background location'**
+  String get permBackgroundLocationTitle;
+
+  /// No description provided for @permBackgroundLocationWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Only during an active delivery trip, so your position keeps updating with the phone in your pocket. Choose \"Allow all the time\".'**
+  String get permBackgroundLocationWhy;
+
+  /// No description provided for @permCameraTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get permCameraTitle;
+
+  /// No description provided for @permCameraWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'For return photos, the delivery seal and scanning a visit code. Photos from the gallery need no permission.'**
+  String get permCameraWhy;
+
+  /// No description provided for @permMicrophoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone'**
+  String get permMicrophoneTitle;
+
+  /// No description provided for @permMicrophoneWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'To record a payment by voice instead of typing.'**
+  String get permMicrophoneWhy;
+
+  /// No description provided for @permStateGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get permStateGranted;
+
+  /// No description provided for @permStateDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get permStateDenied;
+
+  /// No description provided for @permStateBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Refused, change in Settings'**
+  String get permStateBlocked;
+
+  /// No description provided for @permStateUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Check it yourself'**
+  String get permStateUnknown;
+
+  /// No description provided for @permActionEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get permActionEnable;
+
+  /// No description provided for @permActionOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get permActionOpenSettings;
+
+  /// No description provided for @permActionOpenPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open page'**
+  String get permActionOpenPage;
+
+  /// No description provided for @permAutostartOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open that page. Open it from Settings using the steps.'**
+  String get permAutostartOpenFailed;
+
+  /// No description provided for @pushDelayedBannerText.
+  ///
+  /// In en, this message translates to:
+  /// **'Order notifications may be delayed on this phone.'**
+  String get pushDelayedBannerText;
+
+  /// No description provided for @pushDelayedBannerAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix it'**
+  String get pushDelayedBannerAction;
 }
 
 class _AppLocalizationsDelegate

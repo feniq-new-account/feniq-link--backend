@@ -3471,4 +3471,103 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorFeatureControlChanged =>
       'Feature settings changed. Reload before saving.';
+
+  @override
+  String get appPermissionsTitle => 'App permissions';
+
+  @override
+  String get appPermissionsIntro =>
+      'Everything Feniq asks your phone for, and why. Nothing we don\'t need, and you can change any of it here.';
+
+  @override
+  String get appPermissionsWhy => 'Why?';
+
+  @override
+  String get permNotificationsTitle => 'Notifications';
+
+  @override
+  String get permNotificationsWhyWarehouse =>
+      'So every new order rings and vibrates, even with the app closed.';
+
+  @override
+  String get permNotificationsWhyOther =>
+      'So you hear when your order changes or a new offer arrives.';
+
+  @override
+  String get permBatteryTitle => 'Unrestricted battery';
+
+  @override
+  String get permBatteryWhy =>
+      'Battery savers on Xiaomi, Huawei and Samsung put the app to sleep and delay order notifications. This keeps them on time.';
+
+  @override
+  String get permAutostartTitle => 'Autostart';
+
+  @override
+  String get permAutostartWhy =>
+      'This phone has an Autostart switch that is off by default. Turn it on for Feniq so notifications still arrive after you close the app or restart the phone.';
+
+  @override
+  String get permAutostartSteps =>
+      'On Xiaomi: Settings → Apps → Manage apps → Feniq → turn on Autostart, and set Battery saver to No restrictions.';
+
+  @override
+  String get permLocationTitle => 'Location';
+
+  @override
+  String get permLocationWhy =>
+      'To pin the pharmacy on the map, and for rep visits and driver routes.';
+
+  @override
+  String get permBackgroundLocationTitle => 'Background location';
+
+  @override
+  String get permBackgroundLocationWhy =>
+      'Only during an active delivery trip, so your position keeps updating with the phone in your pocket. Choose \"Allow all the time\".';
+
+  @override
+  String get permCameraTitle => 'Camera';
+
+  @override
+  String get permCameraWhy =>
+      'For return photos, the delivery seal and scanning a visit code. Photos from the gallery need no permission.';
+
+  @override
+  String get permMicrophoneTitle => 'Microphone';
+
+  @override
+  String get permMicrophoneWhy =>
+      'To record a payment by voice instead of typing.';
+
+  @override
+  String get permStateGranted => 'On';
+
+  @override
+  String get permStateDenied => 'Off';
+
+  @override
+  String get permStateBlocked => 'Refused, change in Settings';
+
+  @override
+  String get permStateUnknown => 'Check it yourself';
+
+  @override
+  String get permActionEnable => 'Turn on';
+
+  @override
+  String get permActionOpenSettings => 'Open Settings';
+
+  @override
+  String get permActionOpenPage => 'Open page';
+
+  @override
+  String get permAutostartOpenFailed =>
+      'Couldn\'t open that page. Open it from Settings using the steps.';
+
+  @override
+  String get pushDelayedBannerText =>
+      'Order notifications may be delayed on this phone.';
+
+  @override
+  String get pushDelayedBannerAction => 'Fix it';
 }

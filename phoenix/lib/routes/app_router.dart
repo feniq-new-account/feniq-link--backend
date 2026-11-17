@@ -61,6 +61,7 @@ import 'package:feniq/features/driver/data/driver_position_stream.dart';
 import 'package:feniq/features/driver/data/driver_stop_outbox.dart';
 import 'package:feniq/features/driver/data/driver_trip_snapshot.dart';
 import 'package:feniq/features/driver/presentation/driver_trips_tab.dart';
+import 'package:feniq/features/settings/presentation/views/app_permissions_view.dart';
 import 'package:feniq/features/rep/data/services/location_provider.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_home_cubit.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_pharmacies_cubit.dart';
@@ -143,6 +144,13 @@ class AppRouter {
       // Outside the shell: from Settings it pushes full-screen over the nav
       // bar, and as the forced change after an admin reset it is the only
       // screen there is (see forcePasswordChangeRedirect).
+      // Every role reaches this from its own account screen (see _repOpenPaths).
+      GoRoute(
+        name: RouteNames.appPermissions,
+        path: RoutePaths.appPermissions,
+        pageBuilder: (context, state) =>
+            buildPageTransition(state: state, child: const AppPermissionsView()),
+      ),
       GoRoute(
         name: RouteNames.changePassword,
         path: RoutePaths.changePassword,
@@ -565,6 +573,11 @@ class AppRouter {
               title: const Text('رحلات التوزيع'),
               actions: [
                 IconButton(
+                  tooltip: 'صلاحيات التطبيق',
+                  icon: const Icon(Icons.verified_user_outlined),
+                  onPressed: () => context.pushNamed(RouteNames.appPermissions),
+                ),
+                IconButton(
                   tooltip: 'Sign out',
                   icon: const Icon(Icons.logout),
                   onPressed: () async {
@@ -786,6 +799,7 @@ const Set<String> _repOpenPaths = {
   RoutePaths.splash,
   RoutePaths.login,
   RoutePaths.changePassword,
+  RoutePaths.appPermissions,
   RoutePaths.approvalPending,
   RoutePaths.privacyPolicy,
 };

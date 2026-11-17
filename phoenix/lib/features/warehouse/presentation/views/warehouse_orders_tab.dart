@@ -22,6 +22,7 @@ import 'package:feniq/features/warehouse/presentation/managers/warehouse_orders_
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_order_labels.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/warehouse_order_card.dart';
 import 'package:feniq/routes/route_names.dart';
+import 'package:feniq/features/settings/presentation/widgets/push_reliability_banner.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_permissions.dart';
 
 /// The warehouse's orders: a status tab at a time, oldest first, with the
@@ -163,6 +164,7 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
             ),
           ),
         ),
+        const PushReliabilityBanner(),
         BlocBuilder<WarehouseOrdersCubit, WarehouseOrdersState>(
           buildWhen: (a, b) => a.newOrderIds.length != b.newOrderIds.length,
           builder: (context, state) => state.newOrderIds.isEmpty

@@ -3461,4 +3461,102 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get errorFeatureControlChanged =>
       'تغيّرت إعدادات الميزات. أعد تحميلها قبل الحفظ.';
+
+  @override
+  String get appPermissionsTitle => 'صلاحيات التطبيق';
+
+  @override
+  String get appPermissionsIntro =>
+      'هون كل شي بيطلبه فينيق من موبايلك وليش. ما منطلب شي ما منحتاجه، وفيك تغيّر أي وحدة من هون.';
+
+  @override
+  String get appPermissionsWhy => 'ليش؟';
+
+  @override
+  String get permNotificationsTitle => 'الإشعارات';
+
+  @override
+  String get permNotificationsWhyWarehouse =>
+      'لحتى يوصلك صوت واهتزاز مع كل طلبية جديدة، حتى والتطبيق مسكّر.';
+
+  @override
+  String get permNotificationsWhyOther =>
+      'لحتى يوصلك خبر لما يتغيّر وضع طلبك أو يجي عرض جديد.';
+
+  @override
+  String get permBatteryTitle => 'بلا قيود على البطارية';
+
+  @override
+  String get permBatteryWhy =>
+      'توفير البطارية بشاومي وهواوي وسامسونج بينيّم التطبيق وبيأخّر إشعارات الطلبيات. هالخيار بيخلّيها توصل بوقتها.';
+
+  @override
+  String get permAutostartTitle => 'التشغيل التلقائي';
+
+  @override
+  String get permAutostartWhy =>
+      'بهالموبايل في مفتاح «تشغيل تلقائي» مسكّر من المصنع. شغّله لفينيق لحتى توصل الإشعارات بعد ما تسكّر التطبيق أو تعيد تشغيل الموبايل.';
+
+  @override
+  String get permAutostartSteps =>
+      'بشاومي: الإعدادات ← التطبيقات ← إدارة التطبيقات ← Feniq ← شغّل «التشغيل التلقائي»، وبـ«توفير البطارية» اختار «بلا قيود».';
+
+  @override
+  String get permLocationTitle => 'الموقع';
+
+  @override
+  String get permLocationWhy =>
+      'لتحديد مكان الصيدلية عالخريطة، ولتسجيل زيارات المندوب ومسار السائق.';
+
+  @override
+  String get permBackgroundLocationTitle => 'الموقع بالخلفية';
+
+  @override
+  String get permBackgroundLocationWhy =>
+      'بس أثناء رحلة توزيع شغّالة، لحتى يضل موقعك يتحدّث والموبايل بالجيبة. اختار «السماح طول الوقت».';
+
+  @override
+  String get permCameraTitle => 'الكاميرا';
+
+  @override
+  String get permCameraWhy =>
+      'لتصوير المرتجعات وختم التسليم ومسح رمز الزيارة. الصور من المعرض ما بدها صلاحية.';
+
+  @override
+  String get permMicrophoneTitle => 'المايكروفون';
+
+  @override
+  String get permMicrophoneWhy => 'لتسجيل الدفعة بالصوت بدل الكتابة.';
+
+  @override
+  String get permStateGranted => 'مفعّلة';
+
+  @override
+  String get permStateDenied => 'مو مفعّلة';
+
+  @override
+  String get permStateBlocked => 'مرفوضة، من الإعدادات';
+
+  @override
+  String get permStateUnknown => 'تأكد بنفسك';
+
+  @override
+  String get permActionEnable => 'فعّل';
+
+  @override
+  String get permActionOpenSettings => 'افتح الإعدادات';
+
+  @override
+  String get permActionOpenPage => 'افتح الصفحة';
+
+  @override
+  String get permAutostartOpenFailed =>
+      'ما قدرنا نفتح الصفحة. افتحها من الإعدادات حسب الخطوات.';
+
+  @override
+  String get pushDelayedBannerText =>
+      'ممكن تتأخر إشعارات الطلبيات على هالموبايل.';
+
+  @override
+  String get pushDelayedBannerAction => 'صلّحها';
 }

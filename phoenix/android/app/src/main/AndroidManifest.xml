@@ -11,6 +11,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <!-- Lets the "App permissions" screen show Android's own "stop optimising
+         Feniq?" prompt, so battery savers (Xiaomi, Huawei, Samsung) stop
+         holding back new-order pushes. Asked only from that screen, never on
+         its own. Google Play restricts this permission; the app ships as a
+         direct APK, and it must be revisited before any Play listing. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <!-- Return-request photos: only the "take a photo" option needs this, and
          it is requested at runtime right before the camera opens (see
          request_return_sheet.dart). "Choose from gallery" uses Android's
