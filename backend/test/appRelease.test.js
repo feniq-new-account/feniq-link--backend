@@ -91,3 +91,28 @@ test('malformed JSON values return a controlled invalid-manifest error, not a se
     await assert.rejects(service.inspectPublishedRelease(undefined, fakeFetch(data, manifest.size)), { code: 'INVALID_APP_RELEASE', statusCode: 400 });
   }
 });
+
+test('driver is a forceable role, and a missing driver policy never locks drivers out', () => {
+  const withDriver = service.validateRoles({ ...roles, driver: { minimumBuild: 1050, recommendedBuild: 1050, mandatoryAfter: '2026-12-10T21:00:00Z' } }, 1050);
+  assert.equal(withDriver.driver.minimumBuild, 1050);
+  const row = { enabled: true, roles: withDriver };
+  assert.equal(service.evaluateRole(row, 'driver', 1049, new Date('2026-12-10T20:59:59Z')), 'optional');
+  assert.equal(service.evaluateRole(row, 'driver', 1049, new Date('2026-12-10T21:00:00Z')), 'mandatory');
+  assert.equal(service.evaluateRole(row, 'driver', 1050, new Date('2026-12-11T00:00:00Z')), 'none');
+
+  const legacy = service.validateRoles(roles, 1050);
+  assert.equal(Object.hasOwn(legacy, 'driver'), false);
+  assert.equal(service.evaluateRole({ enabled: true, roles: legacy }, 'driver', 1, new Date('2027-01-01T00:00:00Z')), 'none');
+  assert.throws(() => service.validateRoles({ ...roles, driver: { minimumBuild: 1051, recommendedBuild: 1051, mandatoryAfter: null } }, 1050), { code: 'INVALID_APP_RELEASE' });
+  assert.throws(() => service.validateRoles({ ...roles, courier: roles.rep }, 1050), { code: 'INVALID_APP_RELEASE' });
+});
+
+test('the server blocks an outdated driver build after its deadline', async () => {
+  await AppRelease.deleteMany({});
+  await AppRelease.create({ _id: 'android', enabled: true, latestBuild: 1050, versionName: '1.0.1', apkUrl: 'https://feniq-site.onrender.com/releases/1050-aaaaaaaaaaaa.apk', sha256: 'a'.repeat(64), size: 80000000, certificateSha256: service.CERTIFICATE, roles: { ...roles, driver: { minimumBuild: 1050, recommendedBuild: 1050, mandatoryAfter: new Date(Date.now() - 1000) } }, updatedBy: actor._id });
+  await service.readRelease({ fresh: true });
+  const req = (build) => ({ headers: { 'x-feniq-client': 'android', 'x-app-build': String(build) } });
+  await assert.rejects(service.enforceMobileBuild(req(1049), { role: 'driver' }), (error) => error.statusCode === 426 && error.code === 'APP_UPDATE_REQUIRED');
+  await service.enforceMobileBuild(req(1050), { role: 'driver' });
+  await service.enforceMobileBuild(req(1049), { role: 'pharmacy' });
+});

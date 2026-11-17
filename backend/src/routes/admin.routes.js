@@ -26,6 +26,16 @@ router.get('/maintenance/preview', require('../utils/asyncHandler').asyncHandler
   res.set('Cache-Control', 'no-store');
   res.json({ success: true, preview: await require('../services/adminMaintenancePreview.service').previewPilotCleanup() });
 }));
+// Pre-launch "clean page": cancel undelivered trial orders created before a
+// cutoff. Preview is read-only; the write needs the previewed count + a reason.
+router.get('/maintenance/trial-orders', asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, preview: await require('../services/trialOrderReset.service').previewTrialOrderReset({ before: req.query.before }) });
+}));
+router.post('/maintenance/trial-orders/cancel', asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, result: await require('../services/trialOrderReset.service').executeTrialOrderReset(req.user._id, req.body) });
+}));
 router.post('/accounts/:userId/approve', controller.approveAccount);
 router.post('/accounts/:userId/reject', controller.rejectAccount);
 // Admin-only administrative actions (router-level authorize('admin') above).

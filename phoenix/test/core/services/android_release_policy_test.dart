@@ -184,4 +184,21 @@ void main() {
       }
     },
   );
+
+  test('a driver policy forces drivers only, and an older payload without one still parses', () {
+    final now = DateTime.utc(2026, 10, 31);
+    final payload = Map<String, dynamic>.from(releasePayload(now)['release'] as Map);
+    final roles = Map<String, dynamic>.from(payload['roles'] as Map);
+    roles['driver'] = {'minimumBuild': 1050, 'recommendedBuild': 1050, 'mandatoryAfter': '2026-10-30T10:00:00Z'};
+    final withDriver = AndroidReleasePolicy.fromJson({...payload, 'roles': roles});
+    expect(withDriver.statusFor('driver', 1049, now), ReleaseUpdateStatus.mandatory);
+    expect(withDriver.statusFor('pharmacy', 1049, now), ReleaseUpdateStatus.none);
+
+    final legacyRoles = Map<String, dynamic>.from(roles)..remove('driver');
+    final legacy = AndroidReleasePolicy.fromJson({...payload, 'roles': legacyRoles});
+    expect(legacy.roles.containsKey('driver'), isFalse);
+    // Judged like a signed-out user: optional, never a lock while any role still works.
+    expect(legacy.statusFor('driver', 1049, now), ReleaseUpdateStatus.optional);
+    expect(() => AndroidReleasePolicy.fromJson({...payload, 'roles': Map<String, dynamic>.from(legacyRoles)..remove('rep')}), throwsFormatException);
+  });
 }

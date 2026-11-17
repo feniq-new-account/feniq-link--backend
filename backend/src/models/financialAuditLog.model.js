@@ -18,6 +18,9 @@ const { Schema, model } = require('mongoose');
 const ACTIONS = [
   'order.delivered',            // posts the charge
   'order.charge_reversed',
+  // An admin cancelled an UNDELIVERED order (no charge exists) - the
+  // pre-launch trial reset, trialOrderReset.service.js.
+  'order.admin_cancelled',
   'payment.recorded',
   'payment.reversed',
   'payment.proof_submitted',

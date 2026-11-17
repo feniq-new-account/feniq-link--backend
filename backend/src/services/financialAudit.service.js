@@ -17,6 +17,7 @@ const REASON_REQUIRED = new Set([
   'ledger.manual_debit',
   'ledger.adjustment_reversed',
   'order.charge_reversed',
+  'order.admin_cancelled',
   'return.rejected',
   'commission.collection_reversed',
   'collection.grant_revoked',
