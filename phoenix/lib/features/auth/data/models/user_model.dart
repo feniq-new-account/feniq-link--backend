@@ -20,12 +20,12 @@ class UserModel {
   final String warehouseRole;
   final Map<String, bool>? permissions;
 
+  // Every warehouse login records payments (manager and accountant alike,
+  // owner's call 2026-11-17); the server's permission map decides when sent.
   bool get canRecordPayments =>
       isActive &&
       role == 'warehouse' &&
-      (permissions == null
-          ? warehouseRole != 'owner'
-          : permissions!['paymentRecord'] == true);
+      (permissions == null ? true : permissions!['paymentRecord'] == true);
   bool get canConfigureFeatures =>
       isActive &&
       role == 'warehouse' &&

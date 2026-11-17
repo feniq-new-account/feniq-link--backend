@@ -66,7 +66,9 @@ test('legacy order history stays consistent while core cash survives subscriptio
   const credit = await Credit.findOne({ pharmacyId: pharmacy.id, warehouseId: warehouse.id });
   assert.equal(credit.loyaltyBalanceSyp, 1000); assert.equal(credit.balanceSyp, 1000);
   const payment = { pharmacyId: pharmacy.id, amount: 100000, currency: 'SYP', method: 'cash', idempotencyKey: 'launch-payment-001' };
-  await call(owner, '/warehouse/payments', 'POST', payment, 403);
+  // The manager (owner) may record payments too (owner's call 2026-11-17):
+  // it gets past the permission check; an empty body is then refused.
+  await call(owner, '/warehouse/payments', 'POST', {}, 400);
   await call(accountant, '/warehouse/payments', 'POST', payment, 201);
   await call(admin, `/admin/warehouses/${warehouse.id}/subscription`, 'PUT', { revision: 0, features: { accounting: false, loyalty: false, repTracking: false, deliverySchedule: false } });
   await call(accountant, '/warehouse/payments', 'POST', payment, 200); // Lost acknowledgement survives feature expiry.

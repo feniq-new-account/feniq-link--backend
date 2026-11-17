@@ -461,13 +461,12 @@ test('concurrent HTTP retries with one key post one receipt and return the same 
   assert.strictEqual(await LedgerEntry.countDocuments({ kind: 'payment' }), 1);
   assert.strictEqual(await balanceSyp(), 70000);
 });
-test('owner, admin, pharmacy, rep and driver cannot record or reverse warehouse cash', async () => {
+test('admin, pharmacy, rep and driver cannot record or reverse warehouse cash', async () => {
   const receipt = await pay({ idempotencyKey: newKey('role-boundaries') });
   const before = await balanceSyp();
   let suffix = 0;
-  for (const role of ['warehouse', 'admin', 'pharmacy', 'rep', 'driver']) {
-    const person = await User.create({ name: role, role, status: 'active', phone: `+96395510000${++suffix}`, ...(role === 'warehouse' ? { warehouseRole: 'owner' } : {}) });
-    if (role === 'warehouse') await Warehouse.updateOne({ _id: ids.warehouse }, { $addToSet: { memberUserIds: person._id } });
+  for (const role of ['admin', 'pharmacy', 'rep', 'driver']) {
+    const person = await User.create({ name: role, role, status: 'active', phone: `+96395510000${++suffix}` });
     const token = jwt.sign({ sub: person.id }, env.jwtSecret, { expiresIn: '1h' });
     const body = { pharmacyId: String(ids.pharmacy), amount: 100, currency: 'SYP', idempotencyKey: newKey('forbidden') };
     assert.strictEqual((await call('POST', '/warehouse/payments', body, token)).status, 403);
@@ -478,19 +477,33 @@ test('owner, admin, pharmacy, rep and driver cannot record or reverse warehouse 
   assert.strictEqual((await Payment.findById(receipt.id)).status, 'posted');
 });
 
-test('case variants of payment routes cannot bypass the owner cash permission', async () => {
+// Owner's call, 2026-11-17: the manager (an 'owner' login) records payments
+// too - at delivery or later. Reversing one stays with the accountant.
+test('the manager (owner login) records a payment but cannot reverse one', async () => {
+  const receipt = await pay({ idempotencyKey: newKey('owner-records-fixture') });
+  const owner = await User.create({ name: 'Owner records', role: 'warehouse', warehouseRole: 'owner', status: 'active', phone: '+963955101112' });
+  await Warehouse.updateOne({ _id: ids.warehouse }, { $addToSet: { memberUserIds: owner._id } });
+  const token = jwt.sign({ sub: owner.id }, env.jwtSecret, { expiresIn: '1h' });
+  const before = await balanceSyp();
+  const created = await call('POST', '/warehouse/payments', { pharmacyId: String(ids.pharmacy), amount: 100, currency: 'SYP', idempotencyKey: newKey('owner-records') }, token);
+  assert.strictEqual(created.status, 201, JSON.stringify(created.body));
+  assert.strictEqual(await balanceSyp(), before - 100);
+  const reverse = await call('POST', `/warehouse/payments/${receipt.id}/reverse`, { reason: 'Owner tries', idempotencyKey: newKey('owner-reverse') }, token);
+  assert.strictEqual(reverse.status, 403); assert.strictEqual(reverse.body.code, 'ACCOUNTANT_REQUIRED');
+  assert.strictEqual((await Payment.findById(receipt.id)).status, 'posted');
+});
+
+test('case variants of the reverse route cannot bypass the accountant-only reverse permission', async () => {
   const receipt = await pay({ idempotencyKey: newKey('owner-route-fixture') });
   const owner = await User.create({ name: 'Owner route case', role: 'warehouse', warehouseRole: 'owner', status: 'active', phone: '+963955101111' });
   await Warehouse.updateOne({ _id: ids.warehouse }, { $addToSet: { memberUserIds: owner._id } });
   const token = jwt.sign({ sub: owner.id }, env.jwtSecret, { expiresIn: '1h' });
   const before = { balance: await balanceSyp(), audits: await FinancialAuditLog.countDocuments(), entries: await LedgerEntry.countDocuments() };
   for (const route of ['/WAREHOUSE/PAYMENTS', '/warehouse/PAYMENTS', '/Warehouse/Payments', '/warehouse/payments']) {
-    const create = await call('POST', `${route}?view=accounting`, { pharmacyId: String(ids.pharmacy), amount: 100, idempotencyKey: newKey('case-record') }, token);
     const reverse = await call('POST', `${route}/${receipt.id}/REVERSE?view=accounting`, { reason: 'Case route probe', idempotencyKey: newKey('case-reverse') }, token);
-    assert.strictEqual(create.status, 403); assert.strictEqual(create.body.code, 'ACCOUNTANT_REQUIRED');
     assert.strictEqual(reverse.status, 403); assert.strictEqual(reverse.body.code, 'ACCOUNTANT_REQUIRED');
   }
-  assert.strictEqual(await Payment.countDocuments(), 1);
+  assert.strictEqual(await Payment.countDocuments({ _id: receipt.id }), 1);
   assert.strictEqual(await LedgerEntry.countDocuments(), before.entries);
   assert.strictEqual(await FinancialAuditLog.countDocuments(), before.audits);
   assert.strictEqual(await balanceSyp(), before.balance);

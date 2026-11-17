@@ -91,8 +91,8 @@ function authorize(...roles) {
     if (req.user.role === 'admin' && !rolePermissions(req.user).platformManage) {
       throw ApiError.forbidden('An active administrator account is required.', 'ACTIVE_ADMIN_REQUIRED');
     }
-    // Owners monitor accounts; only an accounting operator posts cash. The
-    // old combined login retains its existing scope until explicitly split.
+    // Every active warehouse login records payments (paymentRecord); the
+    // reverse route adds its own paymentReverse check (accounting operators).
     if (req.user.role === 'warehouse' && !rolePermissions(req.user).paymentRecord &&
         !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
         /\/warehouse\/payments(?:\/|$)/.test(req.originalUrl || '')) {

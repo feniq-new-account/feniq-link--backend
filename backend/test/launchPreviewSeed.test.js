@@ -96,7 +96,7 @@ for (const mutualRatings of [true, false]) test(`preview respects mutualRatings=
     }
     if (key === 'owner') {
       const payment = await fetch(`${base}/warehouse/payments`, { method: 'POST', headers: { authorization: `Bearer ${login.token}`, 'content-type': 'application/json' }, body: '{}' });
-      assert.equal(payment.status, 403, 'the preview owner does not gain cash-posting rights');
+      assert.equal(payment.status, 400, 'the preview manager may record payments; an empty body is refused');
     }
   }
   const User = require('../src/models/user.model');

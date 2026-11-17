@@ -9,7 +9,11 @@ function rolePermissions(user) {
     platformManage: admin,
     warehouseOperate: warehouse,
     financialRead: admin || warehouse || (active && user?.role === 'pharmacy'),
-    paymentRecord: operator,
+    // Recording a payment (at delivery or later: cash, credit, part) is open to
+    // every warehouse login - manager (owner), accountant and the original
+    // combined login (owner's call, 2026-11-17). Reversing one stays with the
+    // accounting operators.
+    paymentRecord: warehouse,
     paymentReverse: operator,
     // Proof approval is a NEW action: it requires an explicit accountant,
     // never owner, admin, rep or an unspecified legacy combined login.

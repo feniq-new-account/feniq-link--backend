@@ -130,7 +130,9 @@ test('owner/legacy/admin/rep/pharmacy do not gain proof review permissions; tena
   assert.equal((await call('GET', `/${receipt._id}/proofs`, undefined, 'foreign')).status, 404);
   assert.equal((await call('POST', `/${receipt._id}/proofs`, submission(), 'foreign')).status, 404);
   assert.equal((await call('POST', `/${receipt._id}/proofs/${submitted.record._id}/review`, decision(), 'foreign')).status, 404);
-  assert.equal((await call('POST', `/${receipt._id}/proofs`, submission(), 'owner')).status, 403);
+  // The manager records payments, so it may attach evidence too; this one
+  // already has a pending proof. Reviewing stays with the accountant (above).
+  assert.equal((await call('POST', `/${receipt._id}/proofs`, submission(), 'owner')).status, 409);
   assert.equal((await call('GET', `/${receipt._id}/proofs`, undefined, 'owner')).status, 200);
   assert.equal((await call('GET', `/${receipt._id}/proofs`, undefined, null)).status, 401);
   await assert.rejects(proofs.review(users.admin._id, receipt._id, submitted.record._id, decision()), { statusCode: 403 });
