@@ -66,6 +66,11 @@ const ACTIONS = [
   // auth.service.js's adminResetPassword, and the note below about this
   // model's scope.
   'account.password_reset',
+  // An admin deleted one of the known demo/pilot warehouses and everything
+  // scoped to it before real ordering (demoWarehousePurge.service.js). One
+  // row per warehouse, with the deleted counts. Pharmacy accounts are never
+  // part of it.
+  'maintenance.demo_purge',
 ];
 
 const financialAuditLogSchema = new Schema(

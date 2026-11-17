@@ -516,6 +516,8 @@ export const api = {
   previewTrialOrderReset: (before, includeOutForDelivery = false) =>
     request(`/admin/maintenance/trial-orders?before=${encodeURIComponent(before)}&includeOutForDelivery=${includeOutForDelivery ? 'true' : 'false'}`),
   executeTrialOrderReset: (body) => request('/admin/maintenance/trial-orders/cancel', { method: 'POST', body }),
+  previewDemoWarehousePurge: () => request('/admin/maintenance/demo-warehouses'),
+  executeDemoWarehousePurge: (body) => request('/admin/maintenance/demo-warehouses/purge', { method: 'POST', body }),
   getPilotOrderAccess: () => request('/admin/pilot-access'),
   updatePilotOrderAccess: (body) => request('/admin/pilot-access', { method: 'PUT', body }),
   getLaunchSettings: () => request('/admin/launch'),

@@ -36,6 +36,17 @@ router.post('/maintenance/trial-orders/cancel', asyncHandler(async (req, res) =>
   res.set('Cache-Control', 'no-store');
   res.json({ success: true, result: await require('../services/trialOrderReset.service').executeTrialOrderReset(req.user._id, req.body) });
 }));
+// Before the first real warehouse: delete the three demo warehouses and
+// everything scoped to them. Never pharmacy accounts. Preview is read-only;
+// the delete needs the previewed planToken + the typed confirmation phrase.
+router.get('/maintenance/demo-warehouses', asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, preview: await require('../services/demoWarehousePurge.service').previewDemoPurge() });
+}));
+router.post('/maintenance/demo-warehouses/purge', asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, result: await require('../services/demoWarehousePurge.service').executeDemoPurge(req.user._id, req.body) });
+}));
 router.post('/accounts/:userId/approve', controller.approveAccount);
 router.post('/accounts/:userId/reject', controller.rejectAccount);
 // Admin-only administrative actions (router-level authorize('admin') above).

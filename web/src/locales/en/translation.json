@@ -1916,6 +1916,20 @@
       "creditentries": "Credit entries",
       "pharmacycredits": "Pharmacy credits",
       "complaints": "Complaints"
+    },
+    "demoPurge": {
+      "title": "Delete demo warehouses",
+      "intro": "Deletes the three demo warehouses (0930000101 to 0930000103) and everything of theirs: products, orders, payments, debts and ledger, returns, offers, reps and staff logins. Pharmacy and admin accounts are never deleted. Back up first.",
+      "preview": "What will be deleted?",
+      "nothing": "No demo warehouses left to delete.",
+      "warehouses": "Warehouses:",
+      "logins": "Logins to delete (warehouse staff only):",
+      "pharmaciesKept": "Pharmacy accounts: {{count}} — untouched.",
+      "backedUp": "I made today's backup and checked it",
+      "typePhrase": "To confirm, type: {{phrase}}",
+      "execute": "Permanently delete {{count}} demo warehouse(s)",
+      "changed": "The data changed since the preview. Preview again.",
+      "done": "Deleted {{warehouses}} warehouse(s) and {{logins}} staff login(s). Pharmacy accounts remaining: {{pharmacies}}."
     }
   },
   "pilotAccess": {
