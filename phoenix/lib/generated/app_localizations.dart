@@ -6181,6 +6181,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'If you don\'t mark the delivery yourself, the order is marked delivered automatically a day after it left, and its amount becomes the pharmacy\'s debt. Rescheduling the delivery does not stop this countdown.'**
   String get warehouseAutoDeliverExplain;
+
+  /// No description provided for @dailyReceiptsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s receipts'**
+  String get dailyReceiptsTitle;
+
+  /// No description provided for @dailyReceiptsNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get dailyReceiptsNet;
+
+  /// No description provided for @dailyReceiptsReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Received: {amount} · {count} payment(s)'**
+  String dailyReceiptsReceived(String amount, int count);
+
+  /// No description provided for @dailyReceiptsReversed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reversed: −{amount}'**
+  String dailyReceiptsReversed(String amount);
+
+  /// No description provided for @dailyReceiptsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing received today.'**
+  String get dailyReceiptsNone;
+
+  /// No description provided for @dailyReceiptsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load today\'s receipts.'**
+  String get dailyReceiptsFailed;
+
+  /// No description provided for @dailyReceiptsCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get dailyReceiptsCash;
+
+  /// No description provided for @dailyReceiptsTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get dailyReceiptsTransfer;
+
+  /// No description provided for @dailyReceiptsCheque.
+  ///
+  /// In en, this message translates to:
+  /// **'Cheque'**
+  String get dailyReceiptsCheque;
+
+  /// No description provided for @dailyReceiptsOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get dailyReceiptsOther;
+
+  /// No description provided for @dailyReceiptsRoleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager'**
+  String get dailyReceiptsRoleOwner;
+
+  /// No description provided for @dailyReceiptsRoleAccountant.
+  ///
+  /// In en, this message translates to:
+  /// **'Accountant'**
+  String get dailyReceiptsRoleAccountant;
+
+  /// No description provided for @dailyReceiptsRoleLegacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse account'**
+  String get dailyReceiptsRoleLegacy;
 }
 
 class _AppLocalizationsDelegate

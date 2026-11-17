@@ -3646,4 +3646,47 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get warehouseAutoDeliverExplain =>
       'If you don\'t mark the delivery yourself, the order is marked delivered automatically a day after it left, and its amount becomes the pharmacy\'s debt. Rescheduling the delivery does not stop this countdown.';
+
+  @override
+  String get dailyReceiptsTitle => 'Today\'s receipts';
+
+  @override
+  String get dailyReceiptsNet => 'Net';
+
+  @override
+  String dailyReceiptsReceived(String amount, int count) {
+    return 'Received: $amount · $count payment(s)';
+  }
+
+  @override
+  String dailyReceiptsReversed(String amount) {
+    return 'Reversed: −$amount';
+  }
+
+  @override
+  String get dailyReceiptsNone => 'Nothing received today.';
+
+  @override
+  String get dailyReceiptsFailed => 'Couldn\'t load today\'s receipts.';
+
+  @override
+  String get dailyReceiptsCash => 'Cash';
+
+  @override
+  String get dailyReceiptsTransfer => 'Transfer';
+
+  @override
+  String get dailyReceiptsCheque => 'Cheque';
+
+  @override
+  String get dailyReceiptsOther => 'Other';
+
+  @override
+  String get dailyReceiptsRoleOwner => 'Manager';
+
+  @override
+  String get dailyReceiptsRoleAccountant => 'Accountant';
+
+  @override
+  String get dailyReceiptsRoleLegacy => 'Warehouse account';
 }

@@ -346,6 +346,20 @@ class WarehouseManagementRepositoryImpl
   }
 
   @override
+  Future<Map<String, dynamic>> getDailyReceipts({String? date}) async {
+    final data = await _run(
+      (dio) => dio.get(
+        '/warehouse/payments/receipts',
+        queryParameters: {if (date != null) 'date': date},
+        options: Options(headers: {'Cache-Control': 'no-store'}),
+      ),
+    );
+    final receipts = data['receipts'];
+    if (receipts is! Map) throw const FormatException('Missing receipts');
+    return Map<String, dynamic>.from(receipts);
+  }
+
+  @override
   Future<Map<String, dynamic>> getCollectionAccounting({
     String period = 'month',
   }) async => _run(

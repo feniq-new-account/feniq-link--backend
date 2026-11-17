@@ -1,0 +1,47 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/daily_receipts_card.dart';
+import 'package:feniq/generated/app_localizations.dart';
+
+Widget _app(Widget child) => MaterialApp(
+      locale: const Locale('ar'),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: SingleChildScrollView(child: child)),
+    );
+
+void main() {
+  testWidgets("today's net, what was received by method, and who took what", (tester) async {
+    await tester.pumpWidget(_app(DailyReceiptsCard(load: () async => {
+          'netSyp': 151000, 'receivedSyp': 158000, 'receivedCount': 4, 'reversedSyp': 7000, 'reversedCount': 1,
+          'byMethod': {'cash': 108000, 'bank_transfer': 50000},
+          'byRecorder': [
+            {'name': 'Manager', 'role': 'owner', 'amountSyp': 108000, 'count': 3},
+            {'name': 'Accountant', 'role': 'accountant', 'amountSyp': 50000, 'count': 1},
+          ],
+        })));
+    await tester.pumpAndSettle();
+    expect(find.text('مقبوضات اليوم'), findsOneWidget);
+    expect(find.textContaining('الصافي: 151,000'), findsOneWidget);
+    expect(find.textContaining('انلغى: −7,000'), findsOneWidget);
+    expect(find.textContaining('نقداً: 108,000'), findsOneWidget);
+    expect(find.textContaining('Manager (مدير): 108,000'), findsOneWidget);
+    expect(find.textContaining('Accountant (محاسب): 50,000'), findsOneWidget);
+  });
+
+  testWidgets('a quiet day says so, and a failed load says it could not load', (tester) async {
+    await tester.pumpWidget(_app(DailyReceiptsCard(load: () async => {'receivedCount': 0, 'reversedCount': 0})));
+    await tester.pumpAndSettle();
+    expect(find.text('ما انقبض شي اليوم.'), findsOneWidget);
+
+    await tester.pumpWidget(_app(DailyReceiptsCard(key: const ValueKey('b'), load: () async => throw Exception('down'))));
+    await tester.pumpAndSettle();
+    expect(find.text('ما قدرنا نجيب مقبوضات اليوم.'), findsOneWidget);
+  });
+}

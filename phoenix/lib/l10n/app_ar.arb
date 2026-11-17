@@ -1494,5 +1494,18 @@
   "warehouseAutoDeliverHours": "{hours, plural, =1{بيتسجّل مُسلّم لحاله بعد ساعة} =2{بيتسجّل مُسلّم لحاله بعد ساعتين} few{بيتسجّل مُسلّم لحاله بعد {hours} ساعات} other{بيتسجّل مُسلّم لحاله بعد {hours} ساعة}}",
   "warehouseAutoDeliverMinutes": "{minutes, plural, =1{بيتسجّل مُسلّم لحاله بعد دقيقة} =2{بيتسجّل مُسلّم لحاله بعد دقيقتين} few{بيتسجّل مُسلّم لحاله بعد {minutes} دقائق} other{بيتسجّل مُسلّم لحاله بعد {minutes} دقيقة}}",
   "warehouseAutoDeliverDue": "بيتسجّل مُسلّم لحاله خلال ساعة",
-  "warehouseAutoDeliverExplain": "إذا ما سجّلت التسليم بنفسك، النظام بيعلّم الطلب مُسلّم لحاله بعد يوم من خروجه، ومبلغه بينكتب دين عالصيدلية. تأجيل موعد التوصيل ما بيوقّف هالعدّاد."
+  "warehouseAutoDeliverExplain": "إذا ما سجّلت التسليم بنفسك، النظام بيعلّم الطلب مُسلّم لحاله بعد يوم من خروجه، ومبلغه بينكتب دين عالصيدلية. تأجيل موعد التوصيل ما بيوقّف هالعدّاد.",
+  "dailyReceiptsTitle": "مقبوضات اليوم",
+  "dailyReceiptsNet": "الصافي",
+  "dailyReceiptsReceived": "انقبض: {amount} · {count} دفعة",
+  "dailyReceiptsReversed": "انلغى: −{amount}",
+  "dailyReceiptsNone": "ما انقبض شي اليوم.",
+  "dailyReceiptsFailed": "ما قدرنا نجيب مقبوضات اليوم.",
+  "dailyReceiptsCash": "نقداً",
+  "dailyReceiptsTransfer": "تحويل",
+  "dailyReceiptsCheque": "شيك",
+  "dailyReceiptsOther": "غير ذلك",
+  "dailyReceiptsRoleOwner": "مدير",
+  "dailyReceiptsRoleAccountant": "محاسب",
+  "dailyReceiptsRoleLegacy": "حساب المستودع"
 }

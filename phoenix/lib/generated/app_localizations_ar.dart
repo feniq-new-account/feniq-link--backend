@@ -3638,4 +3638,47 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get warehouseAutoDeliverExplain =>
       'إذا ما سجّلت التسليم بنفسك، النظام بيعلّم الطلب مُسلّم لحاله بعد يوم من خروجه، ومبلغه بينكتب دين عالصيدلية. تأجيل موعد التوصيل ما بيوقّف هالعدّاد.';
+
+  @override
+  String get dailyReceiptsTitle => 'مقبوضات اليوم';
+
+  @override
+  String get dailyReceiptsNet => 'الصافي';
+
+  @override
+  String dailyReceiptsReceived(String amount, int count) {
+    return 'انقبض: $amount · $count دفعة';
+  }
+
+  @override
+  String dailyReceiptsReversed(String amount) {
+    return 'انلغى: −$amount';
+  }
+
+  @override
+  String get dailyReceiptsNone => 'ما انقبض شي اليوم.';
+
+  @override
+  String get dailyReceiptsFailed => 'ما قدرنا نجيب مقبوضات اليوم.';
+
+  @override
+  String get dailyReceiptsCash => 'نقداً';
+
+  @override
+  String get dailyReceiptsTransfer => 'تحويل';
+
+  @override
+  String get dailyReceiptsCheque => 'شيك';
+
+  @override
+  String get dailyReceiptsOther => 'غير ذلك';
+
+  @override
+  String get dailyReceiptsRoleOwner => 'مدير';
+
+  @override
+  String get dailyReceiptsRoleAccountant => 'محاسب';
+
+  @override
+  String get dailyReceiptsRoleLegacy => 'حساب المستودع';
 }
