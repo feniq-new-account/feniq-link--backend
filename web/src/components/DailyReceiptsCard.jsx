@@ -22,8 +22,10 @@ function ReceiptsTable({ rows, t }) {
       </td>
       <td data-label={t('accounting.receipts.col_by')}>{p.recordedBy?.name || '—'}</td>
       <td className="wh-num" data-label={t('accounting.receipts.col_amount')}>
-        {p.amountSyp == null ? '—' : p.kind === 'reversal' ? `−${formatSyp(p.amountSyp)}`
-          : p.status === 'reversed' ? <s>{formatSyp(p.amountSyp)}</s> : formatSyp(p.amountSyp)}
+        {p.amountSyp == null ? '—' : p.kind === 'reversal' ? <bdi>−{formatSyp(p.amountSyp)}</bdi>
+          : p.status === 'reversed'
+            ? <><s>{formatSyp(p.amountSyp)}</s> <span className="wh-table-sub">{t('accounting.receipts.reversedLater')}</span></>
+            : formatSyp(p.amountSyp)}
       </td>
     </tr>)}</tbody>
   </table></div>;
@@ -57,17 +59,23 @@ export function DailyReceiptsCard() {
     {error && <p role="alert" className="error-text">{error}</p>}
     {!data && !error && <p role="status" className="hint">{t('common.loading')}</p>}
     {data && <>
-      <dl className="adm-maintenance-stats" data-testid="daily-receipts-total">
-        <div><dt>{t('accounting.receipts.net')}</dt><dd>{formatSyp(data.netSyp)}</dd></div>
-        <div><dt>{t('accounting.receipts.received')}</dt><dd>{formatSyp(data.receivedSyp)} · {data.receivedCount}</dd></div>
-        {data.reversedCount > 0 && <div><dt>{t('accounting.receipts.reversedTotal')}</dt><dd>−{formatSyp(data.reversedSyp)} · {data.reversedCount}</dd></div>}
-        {Object.entries(data.byMethod).map(([method, amount]) => <div key={method}>
-          <dt>{t('accounting.receipts.methodReceived', { method: t('accounting.receipts.method_' + method) })}</dt><dd>{formatSyp(amount)}</dd>
+      <div className="wh-invoice-summary wh-summary-stats" data-testid="daily-receipts-total">
+        <div className="wh-invoice-stat">
+          <div className="wh-invoice-stat-label">{t('accounting.receipts.net')}</div>
+          <div className="wh-invoice-stat-value wh-num is-paid">{formatSyp(data.netSyp)}</div>
+          <div className="wh-summary-sub">{t('accounting.receipts.received')}: <bdi className="wh-num">{formatSyp(data.receivedSyp)}</bdi> · {data.receivedCount}</div>
+          {data.reversedCount > 0 && <div className="wh-summary-sub">
+            {t('accounting.receipts.reversedTotal')}: <bdi className="wh-num">−{formatSyp(data.reversedSyp)}</bdi> · {data.reversedCount}
+          </div>}
+        </div>
+        {Object.entries(data.byMethod).map(([method, amount]) => <div className="wh-invoice-stat" key={method}>
+          <div className="wh-invoice-stat-label">{t('accounting.receipts.methodReceived', { method: t('accounting.receipts.method_' + method) })}</div>
+          <div className="wh-invoice-stat-value wh-num">{formatSyp(amount)}</div>
         </div>)}
-      </dl>
+      </div>
       {data.byRecorder.length > 0 && <ul className="daily-receipts-recorders" data-testid="daily-receipts-recorders">
         {data.byRecorder.map((r) => <li key={r.userId}>
-          {r.name || '—'} ({t('accounting.receipts.role_' + (r.role || 'legacy'))}): {formatSyp(r.amountSyp)} · {t('accounting.receipts.payments', { count: r.count })}
+          {r.name || '—'} ({t('accounting.receipts.role_' + (r.role || 'legacy'))}): <bdi className="wh-num">{formatSyp(r.amountSyp)}</bdi> · {t('accounting.receipts.payments', { count: r.count })}
         </li>)}
       </ul>}
       {data.unknownAmountCount > 0 && <p className="hint" role="status">{t('accounting.receipts.unknown', { count: data.unknownAmountCount })}</p>}
