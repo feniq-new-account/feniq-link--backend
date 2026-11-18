@@ -2746,7 +2746,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseAccept => 'قبول';
 
   @override
-  String get warehouseSendOnWay => 'خرج للتوصيل';
+  String get warehouseSendOnWay => 'إرسال للتوصيل';
 
   @override
   String warehouseCollectTitle(int number) {

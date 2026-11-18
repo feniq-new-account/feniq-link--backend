@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
+import 'package:feniq/generated/app_localizations.dart';
 
 /// The header every summary card on the accounts tab and the insights screen
 /// shares: an icon on a tinted tile, the title, and an optional refresh
@@ -72,7 +73,9 @@ class CardLoadError extends StatelessWidget {
           TextButton(
             style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
             onPressed: onRetry,
-            child: Text(retryLabel ?? context.l10n.retryButton),
+            // Some cards render outside the app's localizations (their own
+            // tests): fall back to the Arabic wording rather than fail.
+            child: Text(retryLabel ?? AppLocalizations.of(context)?.retryButton ?? 'إعادة المحاولة'),
           ),
         ],
       ),

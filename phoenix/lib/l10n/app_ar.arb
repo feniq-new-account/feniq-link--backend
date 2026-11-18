@@ -1160,7 +1160,7 @@
   "stageAccepted": "تم القبول",
   "stageAcceptedDesc": "قبل المستودع طلبك",
   "warehouseAccept": "قبول",
-  "warehouseSendOnWay": "خرج للتوصيل",
+  "warehouseSendOnWay": "إرسال للتوصيل",
   "warehouseCollectTitle": "تسليم الطلب رقم {number}: هل تم تحصيل المبلغ؟",
   "warehouseCollectTotal": "المبلغ: {amount}",
   "warehouseCollectFull": "تم استلام المبلغ كاملاً",

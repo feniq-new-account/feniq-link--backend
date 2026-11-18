@@ -202,7 +202,7 @@ class _WarehouseCollectionAccountingCardState
                 child: LinearProgressIndicator(),
               )
             else if (_error != null)
-              CardLoadError(message: _error!, onRetry: () => _load())
+              CardLoadError(message: _error!, onRetry: () => _load(), retryLabel: _tr('إعادة المحاولة', 'Try again'))
             else if (!v2)
               Container(
                 width: double.infinity,

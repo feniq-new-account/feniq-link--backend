@@ -225,7 +225,7 @@ class _WarehouseCashCustodyCardState extends State<WarehouseCashCustodyCard> {
                 child: LinearProgressIndicator(),
               )
             else if (_error != null)
-              CardLoadError(message: _error!, onRetry: _load)
+              CardLoadError(message: _error!, onRetry: _load, retryLabel: _tr('إعادة المحاولة', 'Retry'))
             else if (inactive)
               _notice(_tr(
                 'تحصيل فينيق غير مفعّل لهذا المستودع، ولا توجد تحويلات مسجلة. الذمم أدناه من دفتر الحسابات المعتمد.',

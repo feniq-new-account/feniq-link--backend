@@ -1,9 +1,10 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:feniq/core/widgets/card_parts.dart';
+import 'package:feniq/core/widgets/failure_widget.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:feniq/core/widgets/failure_widget.dart';
 import 'package:feniq/features/rep/data/models/rep_models.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_load_status.dart';
 import 'package:feniq/features/rep/presentation/managers/rep_visits_cubit.dart';
@@ -93,8 +94,9 @@ void main() {
         await tester.pump();
       }
       final retry = find.descendant(
-        of: find.byType(FailureWidget),
-        matching: find.byWidgetPredicate((widget) => widget is OutlinedButton),
+        // The rep's list shows the compact error line, the manager's the full one.
+        of: find.byWidgetPredicate((widget) => widget is CardLoadError || widget is FailureWidget),
+        matching: find.byWidgetPredicate((widget) => widget is TextButton || widget is OutlinedButton),
       );
       expect(
         retry.hitTestable(),
