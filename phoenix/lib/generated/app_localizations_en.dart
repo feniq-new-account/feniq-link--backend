@@ -3751,7 +3751,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dailyReceiptsVsYesterday => 'Net compared with yesterday';
 
   @override
-  String get orderPipelineTitle => 'Today\'s orders';
+  String get orderPipelineTitle => 'Orders now';
 
   @override
   String get orderPipelinePending => 'Waiting for approval';

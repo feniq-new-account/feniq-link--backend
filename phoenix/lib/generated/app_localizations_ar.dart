@@ -2712,7 +2712,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseRepWarehouseShareToRep => 'ربع المستودع (للمندوب)';
 
   @override
-  String get warehouseRepShareToRep => 'أعطِ ربعي للمندوب';
+  String get warehouseRepShareToRep => 'إعطاء ربعي للمندوب';
 
   @override
   String get warehouseRepShareToRepOn =>
@@ -3744,7 +3744,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dailyReceiptsVsYesterday => 'الصافي مقارنة بالأمس';
 
   @override
-  String get orderPipelineTitle => 'طلبات اليوم';
+  String get orderPipelineTitle => 'الطلبات الآن';
 
   @override
   String get orderPipelinePending => 'بانتظار الموافقة';

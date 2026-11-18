@@ -2045,7 +2045,7 @@
   "dailyReceiptsToday": "Today",
   "dailyReceiptsYesterday": "Yesterday",
   "dailyReceiptsVsYesterday": "Net compared with yesterday",
-  "orderPipelineTitle": "Today's orders",
+  "orderPipelineTitle": "Orders now",
   "orderPipelinePending": "Waiting for approval",
   "orderPipelineAccepted": "Accepted",
   "orderPipelineOnTheWay": "On the way",

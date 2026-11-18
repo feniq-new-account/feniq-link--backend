@@ -69,7 +69,8 @@ class _DailyReceiptsCardState extends State<DailyReceiptsCard> {
             ? (String date) => context.read<WarehouseManagementRepository>().getDailyReceipts(date: date)
             : null);
     if (day == null || loadDay == null) return;
-    final previous = day.subtract(const Duration(days: 1));
+    // Calendar arithmetic in UTC: a phone on daylight-saving time must not skip a day.
+    final previous = DateTime.utc(day.year, day.month, day.day - 1);
     final date = '${previous.year.toString().padLeft(4, '0')}-${previous.month.toString().padLeft(2, '0')}-'
         '${previous.day.toString().padLeft(2, '0')}';
     try {

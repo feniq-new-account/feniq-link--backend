@@ -20,7 +20,7 @@ void main() {
           'stalePendingCount': 1,
         })));
     await tester.pumpAndSettle();
-    expect(find.text('طلبات اليوم'), findsOneWidget);
+    expect(find.text('الطلبات الآن'), findsOneWidget);
     expect(find.text('بانتظار الموافقة'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(find.text('سُلّمت اليوم'), findsOneWidget);

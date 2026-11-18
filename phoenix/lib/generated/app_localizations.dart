@@ -6371,7 +6371,7 @@ abstract class AppLocalizations {
   /// No description provided for @orderPipelineTitle.
   ///
   /// In en, this message translates to:
-  /// **'Today\'s orders'**
+  /// **'Orders now'**
   String get orderPipelineTitle;
 
   /// No description provided for @orderPipelinePending.
