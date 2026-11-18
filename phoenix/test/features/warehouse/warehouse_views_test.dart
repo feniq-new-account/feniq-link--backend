@@ -174,6 +174,27 @@ void main() {
       expect(find.widgetWithText(FilledButton, 'Save changes'), findsOneWidget);
     });
 
+    testWidgets('editing offers "add an item" and shows a picked product as a new line', (tester) async {
+      await pump(
+        tester,
+        WarehouseOrderDetailState(
+          status: RepLoadStatus.loaded,
+          order: _detail(),
+          isEditing: true,
+          draftAdditions: const {
+            'pX': DraftAddition(
+              product: WarehouseProductHit(id: 'pX', nameAr: 'بديل', nameEn: 'SUBSTITUTE 500', priceUsd: 2),
+              quantity: 3,
+            ),
+          },
+        ),
+      );
+      expect(find.text('Add an item'), findsOneWidget);
+      expect(find.textContaining('SUBSTITUTE 500'), findsOneWidget);
+      expect(find.text('New'), findsOneWidget);
+      expect(find.byType(QuantityStepper), findsNWidgets(2));
+    });
+
     testWidgets('an order on its way waiting for the seal photo cannot be marked delivered yet', (tester) async {
       await pump(
         tester,

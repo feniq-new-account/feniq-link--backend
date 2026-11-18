@@ -3929,8 +3929,74 @@ abstract class AppLocalizations {
   /// No description provided for @warehouseEditHint.
   ///
   /// In en, this message translates to:
-  /// **'Adding a product or changing a package is done in the warehouse panel.'**
+  /// **'Packages are changed in the warehouse panel.'**
   String get warehouseEditHint;
+
+  /// No description provided for @warehouseAddItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an item'**
+  String get warehouseAddItem;
+
+  /// No description provided for @warehouseAddItemTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an item to the order'**
+  String get warehouseAddItemTitle;
+
+  /// No description provided for @warehouseAddItemSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by product or company'**
+  String get warehouseAddItemSearchHint;
+
+  /// No description provided for @warehouseAddItemEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No available product matches.'**
+  String get warehouseAddItemEmpty;
+
+  /// No description provided for @warehouseAddItemFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the products. Try again.'**
+  String get warehouseAddItemFailed;
+
+  /// No description provided for @warehouseAddItemOnOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Already on the order - change its quantity in the list.'**
+  String get warehouseAddItemOnOrder;
+
+  /// No description provided for @warehouseAddItemPriceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'List price before offers. The final price is worked out when you save.'**
+  String get warehouseAddItemPriceNote;
+
+  /// No description provided for @warehouseAddItemConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get warehouseAddItemConfirm;
+
+  /// No description provided for @warehouseAddItemBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get warehouseAddItemBack;
+
+  /// No description provided for @warehouseAddedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get warehouseAddedLine;
+
+  /// No description provided for @warehouseAddItemUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'That product is no longer available. Pick another.'**
+  String get warehouseAddItemUnavailable;
 
   /// No description provided for @warehouseConfirmSaveTitle.
   ///

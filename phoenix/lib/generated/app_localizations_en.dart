@@ -2317,7 +2317,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseEditHint =>
-      'Adding a product or changing a package is done in the warehouse panel.';
+      'Packages are changed in the warehouse panel.';
+
+  @override
+  String get warehouseAddItem => 'Add an item';
+
+  @override
+  String get warehouseAddItemTitle => 'Add an item to the order';
+
+  @override
+  String get warehouseAddItemSearchHint => 'Search by product or company';
+
+  @override
+  String get warehouseAddItemEmpty => 'No available product matches.';
+
+  @override
+  String get warehouseAddItemFailed =>
+      'Couldn\'t load the products. Try again.';
+
+  @override
+  String get warehouseAddItemOnOrder =>
+      'Already on the order - change its quantity in the list.';
+
+  @override
+  String get warehouseAddItemPriceNote =>
+      'List price before offers. The final price is worked out when you save.';
+
+  @override
+  String get warehouseAddItemConfirm => 'Add';
+
+  @override
+  String get warehouseAddItemBack => 'Back';
+
+  @override
+  String get warehouseAddedLine => 'New';
+
+  @override
+  String get warehouseAddItemUnavailable =>
+      'That product is no longer available. Pick another.';
 
   @override
   String get warehouseConfirmSaveTitle => 'Save the changes?';

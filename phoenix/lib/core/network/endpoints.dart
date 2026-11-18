@@ -77,6 +77,9 @@ class Endpoints {
   static String warehouseOrder(String orderId) => '/warehouse/orders/$orderId';
   static String warehouseOrderAdvance(String orderId) => '/warehouse/orders/$orderId/advance-status';
   static String warehouseOrderItems(String orderId) => '/warehouse/orders/$orderId/items';
+  // The warehouse's own products, searched a page at a time (the order-edit
+  // "add an item" picker - warehouseProduct.routes.js).
+  static const String warehouseProductSearch = '/warehouse/products/search';
   // Its reps (warehouseRep.routes.js), pharmacy accounts and payments
   // (warehouseBalance / warehousePayment), and returns (warehouseReturn).
   static const String warehouseReps = '/warehouse/reps';

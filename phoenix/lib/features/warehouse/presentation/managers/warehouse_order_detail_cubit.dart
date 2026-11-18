@@ -4,6 +4,19 @@ import 'package:feniq/features/rep/presentation/managers/rep_load_status.dart';
 import 'package:feniq/features/warehouse/data/models/warehouse_order_models.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_orders_repository.dart';
 
+/// A product the warehouse is adding to the order (a substitute for one that
+/// ran out, say), not sent yet. Its price is the list price; the server
+/// reprices the order, offers included, on save.
+class DraftAddition {
+  const DraftAddition({required this.product, required this.quantity});
+
+  final WarehouseProductHit product;
+  final int quantity;
+
+  DraftAddition withQuantity(int value) =>
+      DraftAddition(product: product, quantity: value);
+}
+
 class WarehouseOrderDetailState {
   const WarehouseOrderDetailState({
     this.status = RepLoadStatus.initial,
@@ -12,6 +25,7 @@ class WarehouseOrderDetailState {
     this.isEditing = false,
     this.draftQuantities = const {},
     this.draftRemovals = const {},
+    this.draftAdditions = const {},
     this.errorMessage,
     this.errorCode,
     this.actionErrorMessage,
@@ -26,6 +40,8 @@ class WarehouseOrderDetailState {
   final bool isEditing;
   final Map<String, int> draftQuantities;
   final Set<String> draftRemovals;
+  // Products to add, by product id, in the order they were picked.
+  final Map<String, DraftAddition> draftAdditions;
   final String? errorMessage;
   final String? errorCode;
   final String? actionErrorMessage;
@@ -36,14 +52,28 @@ class WarehouseOrderDetailState {
       draftQuantities[item.id] ?? item.quantity;
 
   bool get hasDraftChanges =>
-      draftRemovals.isNotEmpty || draftQuantities.isNotEmpty;
+      draftRemovals.isNotEmpty ||
+      draftQuantities.isNotEmpty ||
+      draftAdditions.isNotEmpty;
 
   /// The edit would leave the order with no lines at all - the pharmacy
-  /// cancels an order, the warehouse never empties one.
+  /// cancels an order, the warehouse never empties one. A product being added
+  /// counts as a line that stays.
   bool get draftRemovesEverything {
     final items = order?.items ?? const [];
-    return items.isNotEmpty && items.every((i) => draftRemovals.contains(i.id));
+    return draftAdditions.isEmpty &&
+        items.isNotEmpty &&
+        items.every((i) => draftRemovals.contains(i.id));
   }
+
+  /// The product is already a line of the order (outside a package) that is
+  /// not being dropped - change that line's quantity instead of adding it twice.
+  bool isOnOrder(String productId) => (order?.items ?? const []).any(
+    (i) =>
+        i.productId == productId &&
+        !i.isPackageLine &&
+        !draftRemovals.contains(i.id),
+  );
 
   WarehouseOrderDetailState copyWith({
     RepLoadStatus? status,
@@ -52,6 +82,7 @@ class WarehouseOrderDetailState {
     bool? isEditing,
     Map<String, int>? draftQuantities,
     Set<String>? draftRemovals,
+    Map<String, DraftAddition>? draftAdditions,
     String? errorMessage,
     String? errorCode,
     bool clearError = false,
@@ -65,6 +96,7 @@ class WarehouseOrderDetailState {
     isEditing: isEditing ?? this.isEditing,
     draftQuantities: draftQuantities ?? this.draftQuantities,
     draftRemovals: draftRemovals ?? this.draftRemovals,
+    draftAdditions: draftAdditions ?? this.draftAdditions,
     errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     errorCode: clearError ? null : (errorCode ?? this.errorCode),
     actionErrorMessage: clearActionError
@@ -147,6 +179,7 @@ class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {
         isEditing: true,
         draftQuantities: const {},
         draftRemovals: const {},
+        draftAdditions: const {},
         clearActionError: true,
       ),
     );
@@ -158,6 +191,7 @@ class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {
         isEditing: false,
         draftQuantities: const {},
         draftRemovals: const {},
+        draftAdditions: const {},
         clearActionError: true,
       ),
     );
@@ -183,6 +217,45 @@ class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {
     emit(state.copyWith(draftRemovals: removals, draftQuantities: quantities));
   }
 
+  /// Puts a product on the draft (or adds to its quantity if it is there
+  /// already). False when it can't be added: not editing, a bad quantity, or
+  /// the product is already a line of the order.
+  bool addProduct(WarehouseProductHit product, int quantity) {
+    if (!state.isEditing || quantity < 1 || product.id.isEmpty) return false;
+    if (state.isOnOrder(product.id)) return false;
+    final next = {...state.draftAdditions};
+    final current = next[product.id];
+    next[product.id] = current == null
+        ? DraftAddition(product: product, quantity: quantity)
+        : current.withQuantity(current.quantity + quantity);
+    emit(state.copyWith(draftAdditions: next));
+    return true;
+  }
+
+  void setAddedQuantity(String productId, int quantity) {
+    final current = state.draftAdditions[productId];
+    if (!state.isEditing || current == null || quantity < 1) return;
+    emit(
+      state.copyWith(
+        draftAdditions: {
+          ...state.draftAdditions,
+          productId: current.withQuantity(quantity),
+        },
+      ),
+    );
+  }
+
+  void removeAdded(String productId) {
+    if (!state.isEditing || !state.draftAdditions.containsKey(productId)) {
+      return;
+    }
+    emit(
+      state.copyWith(
+        draftAdditions: {...state.draftAdditions}..remove(productId),
+      ),
+    );
+  }
+
   /// Sends the corrections. True when the server took them (or there were none).
   Future<bool> saveEdits() async {
     if (!state.isEditing || state.isActing) return false;
@@ -197,6 +270,10 @@ class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {
         orderId,
         quantities: state.draftQuantities,
         removals: state.draftRemovals.toList(),
+        additions: {
+          for (final entry in state.draftAdditions.entries)
+            entry.key: entry.value.quantity,
+        },
       );
       if (isClosed) return true;
       emit(

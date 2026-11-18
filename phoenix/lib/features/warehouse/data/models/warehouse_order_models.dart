@@ -482,3 +482,44 @@ class AdvancedOrderStatus {
     );
   }
 }
+
+/// One of the warehouse's own products, as the "add an item" search on an
+/// order shows it (GET /warehouse/products/search, warehouseProduct.viewmodel.js).
+/// [priceUsd] is the list price before offers: the server reprices the whole
+/// order, offers included, when the edit is saved.
+class WarehouseProductHit {
+  const WarehouseProductHit({
+    required this.id,
+    required this.nameAr,
+    this.nameEn,
+    this.manufacturerAr,
+    this.manufacturerEn,
+    this.priceUsd = 0,
+    this.isAvailable = true,
+  });
+
+  final String id;
+  final String nameAr;
+  final String? nameEn;
+  final String? manufacturerAr;
+  final String? manufacturerEn;
+  final double priceUsd;
+  final bool isAvailable;
+
+  factory WarehouseProductHit.fromJson(Map<String, dynamic> json) =>
+      WarehouseProductHit(
+        id: _str(json['id']),
+        nameAr: _str(json['nameAr']),
+        nameEn: _strOrNull(json['nameEn']),
+        manufacturerAr: _strOrNull(json['manufacturerAr']),
+        manufacturerEn: _strOrNull(json['manufacturerEn']),
+        priceUsd: _double(json['priceUsd']),
+        isAvailable: json['isAvailable'] != false,
+      );
+
+  static List<WarehouseProductHit> listFromJson(Map<String, dynamic> json) =>
+      _maps(json['products'])
+          .map(WarehouseProductHit.fromJson)
+          .where((p) => p.id.isNotEmpty && p.isAvailable)
+          .toList();
+}

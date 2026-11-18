@@ -16,10 +16,17 @@ abstract class WarehouseOrdersRepository {
   });
 
   /// Corrects an order still awaiting approval: new quantities by order-item
-  /// id, and the lines to drop. The server reprices the whole order.
+  /// id, the lines to drop, and products to add (quantity by product id - a
+  /// substitute for one that ran out, say). The server reprices the whole
+  /// order and tells the pharmacy it was changed.
   Future<WarehouseOrderDetail> updateItems(
     String orderId, {
     Map<String, int> quantities = const {},
     List<String> removals = const [],
+    Map<String, int> additions = const {},
   });
+
+  /// The warehouse's own products a pharmacy could receive now, matching
+  /// [query] (name or manufacturer). One page, enough for a picker.
+  Future<List<WarehouseProductHit>> searchProducts(String query);
 }

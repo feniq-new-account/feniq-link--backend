@@ -2316,7 +2316,42 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseEditHint =>
-      'إضافة صنف جديد أو تعديل عرض بتصير من لوحة المستودع.';
+      'تعديل العروض (الباقات) بيصير من لوحة المستودع.';
+
+  @override
+  String get warehouseAddItem => 'إضافة صنف';
+
+  @override
+  String get warehouseAddItemTitle => 'إضافة صنف للطلبية';
+
+  @override
+  String get warehouseAddItemSearchHint => 'دوّر باسم الصنف أو الشركة';
+
+  @override
+  String get warehouseAddItemEmpty => 'ما في صنف متوفر بهالاسم.';
+
+  @override
+  String get warehouseAddItemFailed => 'ما قدرنا نجيب الأصناف. جرّب كمان مرة.';
+
+  @override
+  String get warehouseAddItemOnOrder =>
+      'موجود بالطلبية، عدّل كميته من القائمة.';
+
+  @override
+  String get warehouseAddItemPriceNote =>
+      'السعر قبل العروض. السعر النهائي بينحسب لما تحفظ.';
+
+  @override
+  String get warehouseAddItemConfirm => 'أضف';
+
+  @override
+  String get warehouseAddItemBack => 'رجوع';
+
+  @override
+  String get warehouseAddedLine => 'جديد';
+
+  @override
+  String get warehouseAddItemUnavailable => 'هالصنف ما عاد متوفر. اختار غيره.';
 
   @override
   String get warehouseConfirmSaveTitle => 'حفظ التعديلات؟';

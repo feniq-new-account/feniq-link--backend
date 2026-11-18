@@ -7,6 +7,9 @@ import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/collect_payment_sheet.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/add_order_item_sheet.dart';
+import 'package:feniq/features/warehouse/data/repositories/warehouse_orders_repository.dart';
+import 'package:feniq/features/exchange_rate/presentation/managers/exchange_rate_cubit.dart';
 import 'package:feniq/features/warehouse/data/repositories/warehouse_management_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -348,6 +351,19 @@ class WarehouseOrderDetailView extends StatelessWidget {
         if (item != order.items.last) const Divider(height: AppSizes.spacingMedium),
       ],
       if (state.isEditing) ...[
+        for (final addition in state.draftAdditions.values) ...[
+          const Divider(height: AppSizes.spacingMedium),
+          _addedRow(context, addition, cubit),
+        ],
+        const SizedBox(height: AppSizes.spacingSmall),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: OutlinedButton.icon(
+            onPressed: state.isActing ? null : () => _openAddItem(context),
+            icon: const Icon(Icons.add),
+            label: Text(l10n.warehouseAddItem),
+          ),
+        ),
         const SizedBox(height: AppSizes.spacingSmall),
         Text(
           l10n.warehouseEditHint,
@@ -355,6 +371,64 @@ class WarehouseOrderDetailView extends StatelessWidget {
         ),
       ],
     ]);
+  }
+
+  Future<void> _openAddItem(BuildContext context) async {
+    final cubit = context.read<WarehouseOrderDetailCubit>();
+    final repository = context.read<WarehouseOrdersRepository>();
+    final pick = await showAddOrderItemSheet(
+      context,
+      search: repository.searchProducts,
+      isOnOrder: cubit.state.isOnOrder,
+      usdToSyp: context.read<ExchangeRateCubit?>()?.state.usdToSyp,
+    );
+    if (pick == null) return;
+    cubit.addProduct(pick.product, pick.quantity);
+  }
+
+  /// A product being added to the order: not priced by the server yet, so it
+  /// shows its list price until the edit is saved.
+  Widget _addedRow(BuildContext context, DraftAddition addition, WarehouseOrderDetailCubit cubit) {
+    final l10n = context.l10n;
+    final product = addition.product;
+    final manufacturer = englishFirstOrNull(product.manufacturerEn, product.manufacturerAr);
+    final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
+    final usdToSyp = context.read<ExchangeRateCubit?>()?.state.usdToSyp;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: NameText(
+                englishFirst(product.nameEn, product.nameAr),
+                style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+            StatusBadge(label: l10n.warehouseAddedLine, tone: StatusBadgeTone.info),
+          ],
+        ),
+        if (manufacturer != null) Text(manufacturer, style: muted),
+        Text(formatMoneyFromUsd(product.priceUsd, usdToSyp, l10n.currencySuffix), style: muted),
+        const SizedBox(height: 4),
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            QuantityStepper(
+              quantity: addition.quantity,
+              onChanged: (value) => cubit.setAddedQuantity(product.id, value),
+            ),
+            TextButton(
+              onPressed: () => cubit.removeAdded(product.id),
+              child: Text(l10n.warehouseRemoveLine),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _itemRow(
@@ -518,7 +592,9 @@ class WarehouseOrderDetailView extends StatelessWidget {
         ),
       ];
     } else {
-      final canEdit = order.isEditable && order.items.any((i) => !i.isPackageLine);
+      // Any order still awaiting approval can be corrected: even one made of
+      // package lines only can take an added product.
+      final canEdit = order.isEditable;
       if (advanceLabel == null && !canEdit) return null;
       buttons = [
         if (canEdit)

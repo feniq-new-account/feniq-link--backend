@@ -68,6 +68,7 @@ class WarehouseOrdersRepositoryImpl implements WarehouseOrdersRepository {
     String orderId, {
     Map<String, int> quantities = const {},
     List<String> removals = const [],
+    Map<String, int> additions = const {},
   }) async {
     try {
       final response = await _apiClient.dio.patch(
@@ -78,9 +79,33 @@ class WarehouseOrdersRepositoryImpl implements WarehouseOrdersRepository {
               {'orderItemId': entry.key, 'quantity': entry.value},
           ],
           'removeItems': removals,
+          if (additions.isNotEmpty)
+            'addItems': [
+              for (final entry in additions.entries)
+                {'productId': entry.key, 'quantity': entry.value},
+            ],
         },
       );
       return WarehouseOrderDetail.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw ServerFailure.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<List<WarehouseProductHit>> searchProducts(String query) async {
+    try {
+      final response = await _apiClient.dio.get(
+        Endpoints.warehouseProductSearch,
+        queryParameters: {
+          if (query.trim().isNotEmpty) 'search': query.trim(),
+          'available': 'true',
+          'limit': 20,
+        },
+      );
+      return WarehouseProductHit.listFromJson(
         response.data as Map<String, dynamic>,
       );
     } on DioException catch (e) {
