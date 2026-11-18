@@ -18,7 +18,7 @@ import 'package:feniq/routes/scaffold_with_bottom_nav.dart';
 // These pin the fix from both ends: every label stays one line, and every icon
 // therefore resolves to the same vertical offset.
 
-const _arabicLabels = ['المستودعات', 'العروض', 'طلباتي', 'الحسابات', 'البروفايل'];
+const _arabicLabels = ['المستودعات', 'العروض', 'طلباتي', 'الحسابات', 'الملف الشخصي'];
 const _englishLabels = ['Warehouses', 'Offers', 'Orders', 'Accounts', 'Profile'];
 
 // The real face matters here - this is a measurement test, and the stand-in

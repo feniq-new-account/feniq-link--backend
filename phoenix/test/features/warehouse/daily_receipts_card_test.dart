@@ -45,4 +45,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('تعذّر تحميل مقبوضات اليوم.'), findsOneWidget);
   });
+
+  testWidgets("today's net is compared with yesterday's, read for the day before", (tester) async {
+    String? asked;
+    await tester.pumpWidget(_app(DailyReceiptsCard(
+      key: const ValueKey('c'),
+      load: () async => {'date': '2026-12-01', 'netSyp': 50000, 'receivedSyp': 50000, 'receivedCount': 1, 'reversedCount': 0},
+      loadDay: (date) async {
+        asked = date;
+        return {'date': date, 'netSyp': 80000};
+      },
+    )));
+    await tester.pumpAndSettle();
+    expect(asked, '2026-11-30');
+    expect(find.text('الصافي مقارنة بالأمس'), findsOneWidget);
+    expect(find.text('أمس'), findsOneWidget);
+    expect(find.textContaining('80,000'), findsOneWidget);
+  });
 }

@@ -59,4 +59,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(TextButton), findsNothing);
   });
+  testWidgets('the note is two lines until tapped, and nothing shows while the first check runs', (tester) async {
+    await pump(tester);
+    Text note() => tester.widget<Text>(find.textContaining('Location helps'));
+    expect(note().maxLines, 2);
+    await tester.tap(find.textContaining('Location helps')); await tester.pumpAndSettle();
+    expect(note().maxLines, isNull);
+  });
 }

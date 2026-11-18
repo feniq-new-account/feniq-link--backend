@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/order_pipeline_card.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
@@ -85,6 +86,10 @@ class WarehouseInsightsView extends StatelessWidget {
                   ),
                   if (state.tab == 'overview' &&
                       state.tabs.contains('overview')) ...[
+                    const SizedBox(height: 12),
+                    // Today's orders by step: always today, whatever period
+                    // is picked below.
+                    const OrderPipelineCard(),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,

@@ -29,9 +29,9 @@ void main() {
 
     test('Arabic', () {
       expect(orderStatusLabel(ar, 'pending'), 'بانتظار الموافقة');
-      expect(orderStatusLabel(ar, 'confirmed'), 'انقبلت');
-      expect(orderStatusLabel(ar, 'preparing'), 'انقبلت');
-      expect(orderStatusLabel(ar, 'out_for_delivery'), 'بالطريق');
+      expect(orderStatusLabel(ar, 'confirmed'), 'تم القبول');
+      expect(orderStatusLabel(ar, 'preparing'), 'تم القبول');
+      expect(orderStatusLabel(ar, 'out_for_delivery'), 'في الطريق');
       expect(orderStatusLabel(ar, 'delivered'), 'تم التسليم');
       expect(orderStatusLabel(ar, 'modified'), 'تم تعديل الطلب');
     });
@@ -41,8 +41,8 @@ void main() {
     test('the first entry is the moment it was sent', () {
       expect(orderHistoryLabel(ar, 'pending'), 'تم الإرسال');
       expect(orderHistoryLabel(ar, 'modified'), 'تم تعديل الطلب');
-      expect(orderHistoryLabel(ar, 'out_for_delivery'), 'بالطريق');
-      expect(orderHistoryLabel(ar, 'confirmed'), 'انقبلت');
+      expect(orderHistoryLabel(ar, 'out_for_delivery'), 'في الطريق');
+      expect(orderHistoryLabel(ar, 'confirmed'), 'تم القبول');
     });
   });
 
@@ -53,9 +53,9 @@ void main() {
       expect(orderStatusDescription(en, 'delivered'), 'You received the order');
 
       expect(orderStatusDescription(ar, 'pending'), 'وصل طلبك إلى المستودع');
-      expect(orderStatusDescription(ar, 'confirmed'), 'المستودع قبل طلبيتك');
-      expect(orderStatusDescription(ar, 'out_for_delivery'), 'طلبك طلع من المستودع');
-      expect(orderStatusDescription(ar, 'delivered'), 'استلمت الطلب');
+      expect(orderStatusDescription(ar, 'confirmed'), 'قبل المستودع طلبك');
+      expect(orderStatusDescription(ar, 'out_for_delivery'), 'خرج طلبك من المستودع');
+      expect(orderStatusDescription(ar, 'delivered'), 'تم استلام الطلب');
     });
 
     test('cancelled / modified / unknown carry none', () {
@@ -120,8 +120,8 @@ void main() {
       expect(OrderStage.values.map((stage) => orderStageLabel(ar, stage)), [
         'تم الإرسال',
         'تم تعديل الطلب',
-        'انقبلت',
-        'بالطريق',
+        'تم القبول',
+        'في الطريق',
         'تم التسليم',
       ]);
     });

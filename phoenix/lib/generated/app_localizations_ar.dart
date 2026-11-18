@@ -142,7 +142,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get passwordMismatch => 'كلمتا المرور غير متطابقتين.';
 
   @override
-  String get alreadyHaveAccountLink => 'عندك حساب؟ سجّل دخول بكلمة السر';
+  String get alreadyHaveAccountLink => 'لديك حساب؟ سجّل الدخول بكلمة المرور';
 
   @override
   String get sendCodeButton => 'إرسال رمز التحقق';
@@ -161,13 +161,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get passwordsMustMatchHint => 'يجب أن تتطابق كلمتا المرور.';
 
   @override
-  String get passwordLoginTitle => 'تسجيل الدخول بكلمة السر';
+  String get passwordLoginTitle => 'تسجيل الدخول بكلمة المرور';
 
   @override
-  String get passwordLoginSubtitle => 'أدخل رقم هاتفك وكلمة السر';
+  String get passwordLoginSubtitle => 'أدخل رقم هاتفك وكلمة المرور';
 
   @override
-  String get backToRegistrationLink => 'جديد هون؟ أنشئ حساب';
+  String get backToRegistrationLink => 'مستخدم جديد؟ أنشئ حساباً';
 
   @override
   String get forgotPasswordSupportLink =>
@@ -323,10 +323,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchWarehouseHint => 'ابحث عن مستودع أو مدينة';
 
   @override
-  String get noSearchResultsFound => 'ما في نتائج مطابقة لبحثك.';
+  String get noSearchResultsFound => 'لا توجد نتائج مطابقة لبحثك.';
 
   @override
-  String get warehouseProfileButtonLabel => 'البروفايل';
+  String get warehouseProfileButtonLabel => 'الملف التعريفي';
 
   @override
   String get warehousesScopeMyCity => 'مدينتي';
@@ -338,7 +338,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get viewAllCitiesButton => 'عرض كل المدن';
 
   @override
-  String get noWarehousesInYourCity => 'لا يوجد مستودعات بمدينتك';
+  String get noWarehousesInYourCity => 'لا توجد مستودعات في مدينتك';
 
   @override
   String get noWarehousesInYourCitySubtitle =>
@@ -644,7 +644,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get advertisementTotalToPay => 'المبلغ المطلوب';
 
   @override
-  String get advertisementAddToCartButton => 'أضف للسلة';
+  String get advertisementAddToCartButton => 'إضافة إلى السلة';
 
   @override
   String get advertisementReplaceCartTitle => 'استبدال السلة؟';
@@ -689,7 +689,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get advertisementPackageBrokenMessage =>
-      'حذف منتج يُنهي سعر السلة. المنتجات المتبقية صار سعرها عادي.';
+      'حذف منتج يُبطل سعر السلة. تُحتسب المنتجات المتبقية بسعرها العادي.';
 
   @override
   String get advertisementsLoading => 'جارٍ تحميل السلات...';
@@ -782,7 +782,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorPriceChanged(String name, String newPrice, String oldPrice) {
-    return '$name أصبح بـ $newPrice (كان $oldPrice).';
+    return 'أصبح سعر $name $newPrice (كان $oldPrice).';
   }
 
   @override
@@ -825,7 +825,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get stagePreparing => 'قيد التحضير';
 
   @override
-  String get stageOutForDelivery => 'بالطريق';
+  String get stageOutForDelivery => 'في الطريق';
 
   @override
   String get stageDelivered => 'تم التسليم';
@@ -840,13 +840,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get stageUnderReviewDesc => 'وصل طلبك إلى المستودع';
 
   @override
-  String get stagePreparingDesc => 'المستودع عم يجهز طلبك';
+  String get stagePreparingDesc => 'المستودع يجهّز طلبك';
 
   @override
-  String get stageOutForDeliveryDesc => 'طلبك طلع من المستودع';
+  String get stageOutForDeliveryDesc => 'خرج طلبك من المستودع';
 
   @override
-  String get stageDeliveredDesc => 'استلمت الطلب';
+  String get stageDeliveredDesc => 'تم استلام الطلب';
 
   @override
   String get statusHistoryTitle => 'سجل الحالة';
@@ -954,7 +954,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'عند تقديم طلب إرجاع على طلب تم تسليمه، سيظهر هنا لتتابع حالته.';
 
   @override
-  String get noReturnableOrdersTitle => 'لا يوجد طلبات مؤهلة للإرجاع';
+  String get noReturnableOrdersTitle => 'لا توجد طلبات مؤهلة للإرجاع';
 
   @override
   String get myReturnsListSectionTitle => 'طلبات الإرجاع الخاصة بك';
@@ -968,7 +968,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noEligibleOrdersForReturn =>
-      'لا يوجد طلبات مسلّمة حالياً يمكن طلب إرجاع لها.';
+      'لا توجد طلبات مسلّمة حالياً يمكن طلب إرجاع لها.';
 
   @override
   String get requestReturnTitle => 'طلب إرجاع';
@@ -1050,7 +1050,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get returnStatusRejected => 'مرفوض';
 
   @override
-  String get returnPickItemsLabel => 'اختر الأصناف يلي بدك ترجعها';
+  String get returnPickItemsLabel => 'اختر الأصناف التي تريد إرجاعها';
 
   @override
   String get returnRejectionNoteLabel => 'سبب الرفض';
@@ -1101,10 +1101,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorCustomReasonRequired => 'يرجى وصف سبب الإرجاع.';
 
   @override
-  String get errorTooManyReturnPhotos => 'ممكن ترفق حتى 5 صور.';
+  String get errorTooManyReturnPhotos => 'يمكنك إرفاق 5 صور كحد أقصى.';
 
   @override
-  String get errorInvalidReturnPhoto => 'إحدى الصور المرفقة مش صورة صالحة.';
+  String get errorInvalidReturnPhoto => 'إحدى الصور المرفقة ليست صورة صالحة.';
 
   @override
   String get errorReturnAlreadyExists =>
@@ -1119,7 +1119,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorDuplicateReturnItem =>
-      'كل صنف ممكن يظهر مرة وحدة بس بطلب الإرجاع.';
+      'يمكن أن يظهر كل صنف مرة واحدة فقط في طلب الإرجاع.';
 
   @override
   String get errorRejectionNoteRequired => 'يرجى توضيح سبب رفض هذا المرتجع.';
@@ -1129,7 +1129,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get returnPhotosHint =>
-      'يمكنك إرفاق صور للمنتج تساعد المستودع يتحقق من السبب';
+      'يمكنك إرفاق صور للمنتج تساعد المستودع على التحقق من السبب';
 
   @override
   String get addPhotoButton => 'إضافة صورة';
@@ -1172,7 +1172,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navOrders => 'طلباتي';
 
   @override
-  String get profileTitle => 'البروفايل';
+  String get profileTitle => 'الملف الشخصي';
 
   @override
   String get personalInfoTitle => 'المعلومات الشخصية';
@@ -1231,7 +1231,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get viewRatingsLabel => 'عرض التقييمات';
 
   @override
-  String get noRatingsYet => 'ما في مستودع قيّمك لهلق.';
+  String get noRatingsYet => 'لم يقيّمك أي مستودع حتى الآن.';
 
   @override
   String ratingSummary(String average, String count) {
@@ -1304,7 +1304,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String addMoreToReachMinimum(String amount) {
-    return 'أضف $amount للوصول للحد الأدنى';
+    return 'أضف $amount للوصول إلى الحد الأدنى';
   }
 
   @override
@@ -1344,7 +1344,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String returnableHoursLeft(String hours) {
-    return 'باقي $hours ساعة';
+    return 'المتبقي $hours ساعة';
   }
 
   @override
@@ -1904,7 +1904,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cartOtherWarehousesHint =>
-      'عندك سلّة عند كل مستودع من هدول، وكل سلّة بتنبعت كطلب منفصل بفاتورته:';
+      'لديك سلة لدى كل مستودع من هذه المستودعات، وتُرسل كل سلة كطلب منفصل بفاتورة خاصة:';
 
   @override
   String submitAllButton(int count) {
@@ -1916,21 +1916,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String submitAllConfirmation(String names) {
-    return 'رح ينبعت طلب منفصل لكل مستودع، ولكل طلب فاتورته:\n$names';
+    return 'سيُرسل طلب منفصل لكل مستودع، ولكل طلب فاتورته:\n$names';
   }
 
   @override
   String submitAllDone(int count) {
-    return 'انبعتت كل الطلبات ($count).';
+    return 'أُرسلت كل الطلبات ($count).';
   }
 
   @override
   String submitAllPartial(int sent, int total) {
-    return 'انبعت $sent من $total. الطلبات اللي ما انبعتت ضلّت بالسلّة مع السبب.';
+    return 'أُرسل $sent من $total. بقيت الطلبات التي لم تُرسل في السلة مع بيان السبب.';
   }
 
   @override
-  String get submitThisWarehouseOnly => 'إرسال طلب هالمستودع بس';
+  String get submitThisWarehouseOnly => 'إرسال طلب هذا المستودع فقط';
 
   @override
   String get exceptionalOfferBadge => 'عرض استثنائي';
@@ -1958,7 +1958,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get repSearchHint => 'ابحث عن صيدلية';
 
   @override
-  String get repScanAction => 'مسح باركود الزيارة';
+  String get repScanAction => 'مسح رمز الزيارة';
 
   @override
   String get repNoPharmaciesTitle => 'لا توجد صيدليات معيّنة لك بعد';
@@ -1993,12 +1993,12 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count طلبية هذا الشهر',
-      many: '$count طلبية هذا الشهر',
-      few: '$count طلبيات هذا الشهر',
-      two: 'طلبيتان هذا الشهر',
-      one: 'طلبية واحدة هذا الشهر',
-      zero: 'لا طلبيات هذا الشهر',
+      other: '$count طلب هذا الشهر',
+      many: '$count طلباً هذا الشهر',
+      few: '$count طلبات هذا الشهر',
+      two: 'طلبان هذا الشهر',
+      one: 'طلب واحد هذا الشهر',
+      zero: 'لا طلبات هذا الشهر',
     );
     return '$_temp0';
   }
@@ -2010,7 +2010,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get repStatVisitsWeek => 'زيارات 7 أيام';
 
   @override
-  String get repStatOrdersMonth => 'طلبيات الشهر';
+  String get repStatOrdersMonth => 'طلبات الشهر';
 
   @override
   String get repStatSalesMonth => 'قيمتها';
@@ -2020,7 +2020,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String repCommissionHint(String rate) {
-    return 'عمولتك $rate من قيمة الطلبيات المسلَّمة لصيدلياتك عبر فينيق.';
+    return 'عمولتك $rate من قيمة الطلبات المسلَّمة لصيدلياتك عبر فينيق.';
   }
 
   @override
@@ -2037,10 +2037,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'هذه الصيدلية لم تحدد موقعها على الخريطة بعد، فلا يمكن توثيق الزيارة عندها.';
 
   @override
-  String get repRecentOrders => 'آخر الطلبيات';
+  String get repRecentOrders => 'آخر الطلبات';
 
   @override
-  String get repNoOrdersYet => 'لا طلبيات من هذه الصيدلية بعد';
+  String get repNoOrdersYet => 'لا طلبات من هذه الصيدلية بعد';
 
   @override
   String get repRecentVisits => 'آخر زياراتك هنا';
@@ -2056,7 +2056,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get repNoVisitsSubtitle =>
-      'امسح باركود الصيدلية عند زيارتها لتسجيل الزيارة.';
+      'امسح رمز الصيدلية عند زيارتها لتسجيل الزيارة.';
 
   @override
   String get repVisitVerified => 'موثّقة';
@@ -2068,22 +2068,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get repVisitMockLocation => 'موقع مزيّف';
 
   @override
-  String get repVisitNoPharmacyLocation => 'الصيدلية بلا موقع';
+  String get repVisitNoPharmacyLocation => 'الصيدلية دون موقع';
 
   @override
   String repDistanceMeters(int meters) {
-    return 'على بعد $meters م';
+    return 'على بعد $meters متر';
   }
 
   @override
-  String get repScanTitle => 'مسح باركود الزيارة';
+  String get repScanTitle => 'مسح رمز الزيارة';
 
   @override
-  String get repScanHint =>
-      'وجّه الكاميرا نحو باركود فينيق الموجود عند الصيدلية.';
+  String get repScanHint => 'وجّه الكاميرا نحو رمز فينيق الموجود عند الصيدلية.';
 
   @override
-  String get repScanNotFeniq => 'هذا ليس باركود زيارة من فينيق.';
+  String get repScanNotFeniq => 'هذا ليس رمز زيارة من فينيق.';
 
   @override
   String get repScanLocating => 'جارٍ تحديد موقعك...';
@@ -2102,7 +2101,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String repScanOutOfRangeMessage(int meters) {
-    return 'هاتفك على بعد $meters م من الصيدلية. اذهب إلى الصيدلية وامسح الباركود من جديد ليُوثَّق.';
+    return 'هاتفك على بعد $meters متر من الصيدلية. توجّه إلى الصيدلية وامسح الرمز مجدداً ليُوثَّق.';
   }
 
   @override
@@ -2114,7 +2113,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'الصيدلية لم تحدد موقعها بعد، لذلك لا يمكن توثيق الزيارة.';
 
   @override
-  String get repScanAnother => 'مسح باركود آخر';
+  String get repScanAnother => 'مسح رمز آخر';
 
   @override
   String get repScanTryAgain => 'حاول مرة أخرى';
@@ -2139,7 +2138,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get repCameraDenied =>
-      'نحتاج إذن الكاميرا لمسح الباركود. اسمح به من إعدادات التطبيق.';
+      'نحتاج إذن الكاميرا لمسح الرمز. اسمح به من إعدادات التطبيق.';
 
   @override
   String get repCameraUnavailable => 'تعذّر تشغيل الكاميرا.';
@@ -2155,10 +2154,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorRepPharmacyNotAssigned => 'هذه الصيدلية غير معيّنة لك.';
 
   @override
-  String get errorRepVisitCodeUnknown => 'لا توجد صيدلية بهذا الباركود.';
+  String get errorRepVisitCodeUnknown => 'لا توجد صيدلية بهذا الرمز.';
 
   @override
-  String get errorRepVisitCodeInvalid => 'هذا ليس باركود زيارة من فينيق.';
+  String get errorRepVisitCodeInvalid => 'هذا ليس رمز زيارة من فينيق.';
 
   @override
   String get errorRepInactive => 'أوقف المستودع حساب المندوب الخاص بك.';
@@ -2167,14 +2166,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorRepInvalidLocation => 'تعذّرت قراءة موقعك. حاول مرة أخرى.';
 
   @override
-  String get pharmacyVisitCodeTitle => 'باركود الزيارة';
+  String get pharmacyVisitCodeTitle => 'رمز الزيارة';
 
   @override
   String get pharmacyVisitCodeSubtitle => 'للمناديب الذين يزورونك';
 
   @override
   String get pharmacyVisitCodeIntro =>
-      'اعرض هذا الباركود لمندوب المستودع ليمسحه عند زيارتك. تُوثَّق الزيارة فقط إذا كان هاتفه عند صيدليتك.';
+      'اعرض هذا الرمز لمندوب المستودع ليمسحه عند زيارتك. تُوثَّق الزيارة فقط إذا كان هاتفه عند صيدليتك.';
 
   @override
   String get panelHomeTitle => 'لوحة التحكم';
@@ -2193,11 +2192,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String panelHomeOpenFailed(String url) {
-    return 'ما قدرنا نفتح اللوحة. افتح $url من المتصفح.';
+    return 'تعذّر فتح اللوحة. افتح $url من المتصفح.';
   }
 
   @override
-  String get warehouseNavOrders => 'الطلبيات';
+  String get warehouseNavOrders => 'الطلبات';
 
   @override
   String get warehouseNavAccount => 'الحساب';
@@ -2209,16 +2208,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseMarkDelivered => 'تم التسليم';
 
   @override
-  String get warehouseConfirmApproveTitle => 'الطلبية طلعت ع الطريق؟';
+  String get warehouseConfirmApproveTitle => 'هل خرج الطلب للتوصيل؟';
 
   @override
   String warehouseConfirmApproveBody(int number) {
-    return 'الطلبية رقم $number رح تطلع للصيدلية، وبعدها ما عاد فيك تعدّل أصنافها.';
+    return 'سيخرج الطلب رقم $number إلى الصيدلية، ولن تتمكن بعدها من تعديل أصنافه.';
   }
 
   @override
   String warehouseOrderTitle(int number) {
-    return 'طلبية رقم $number';
+    return 'طلب رقم $number';
   }
 
   @override
@@ -2238,17 +2237,17 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get warehouseNewOrdersSeen => 'تمام';
+  String get warehouseNewOrdersSeen => 'حسناً';
 
   @override
   String get warehouseOrderNewBadge => 'جديد';
 
   @override
-  String get warehouseNoOrdersTitle => 'ما في طلبيات هون';
+  String get warehouseNoOrdersTitle => 'لا توجد طلبات هنا';
 
   @override
   String get warehouseNoOrdersSubtitle =>
-      'الطلبيات الجديدة بتطلع هون أول ما توصل، وبيجيك إشعار فيها.';
+      'تظهر الطلبات الجديدة هنا فور وصولها، ويصلك إشعار بها.';
 
   @override
   String get warehouseSectionPharmacy => 'الصيدلية';
@@ -2260,7 +2259,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseSectionMoney => 'المبالغ';
 
   @override
-  String get warehouseSectionHistory => 'مراحل الطلبية';
+  String get warehouseSectionHistory => 'مراحل الطلب';
 
   @override
   String get warehouseSectionNotes => 'ملاحظات الصيدلية';
@@ -2283,13 +2282,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseDiscounts => 'الحسومات';
 
   @override
-  String get warehousePharmacyPays => 'الصيدلية بتدفع';
+  String get warehousePharmacyPays => 'تدفع الصيدلية';
 
   @override
   String get warehouseFeniqShare => 'حصة فينيق';
 
   @override
-  String get warehouseYouKeep => 'الصافي إلك';
+  String get warehouseYouKeep => 'الصافي لك';
 
   @override
   String warehouseRepCommissionTitle(String rate) {
@@ -2300,7 +2299,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseRepShare => 'للمندوب';
 
   @override
-  String get warehouseRepSaving => 'توفير إلك';
+  String get warehouseRepSaving => 'توفير لك';
 
   @override
   String get warehouseEditItems => 'تعديل الأصناف';
@@ -2309,40 +2308,40 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseSaveEdits => 'حفظ التعديلات';
 
   @override
-  String get warehouseRemoveLine => 'شيل';
+  String get warehouseRemoveLine => 'حذف';
 
   @override
-  String get warehouseRestoreLine => 'رجّع';
+  String get warehouseRestoreLine => 'استرجاع';
 
   @override
   String get warehouseEditHint =>
-      'تعديل العروض (الباقات) بيصير من لوحة المستودع.';
+      'يتم تعديل العروض (الباقات) من لوحة المستودع.';
 
   @override
   String get warehouseAddItem => 'إضافة صنف';
 
   @override
-  String get warehouseAddItemTitle => 'إضافة صنف للطلبية';
+  String get warehouseAddItemTitle => 'إضافة صنف إلى الطلب';
 
   @override
-  String get warehouseAddItemSearchHint => 'دوّر باسم الصنف أو الشركة';
+  String get warehouseAddItemSearchHint => 'ابحث باسم الصنف أو الشركة';
 
   @override
-  String get warehouseAddItemEmpty => 'ما في صنف متوفر بهالاسم.';
+  String get warehouseAddItemEmpty => 'لا يوجد صنف متوفر بهذا الاسم.';
 
   @override
-  String get warehouseAddItemFailed => 'ما قدرنا نجيب الأصناف. جرّب كمان مرة.';
+  String get warehouseAddItemFailed => 'تعذّر جلب الأصناف. حاول مرة أخرى.';
 
   @override
   String get warehouseAddItemOnOrder =>
-      'موجود بالطلبية، عدّل كميته من القائمة.';
+      'موجود في الطلب، عدّل كميته من القائمة.';
 
   @override
   String get warehouseAddItemPriceNote =>
-      'السعر قبل العروض. السعر النهائي بينحسب لما تحفظ.';
+      'السعر قبل العروض. يُحسب السعر النهائي عند الحفظ.';
 
   @override
-  String get warehouseAddItemConfirm => 'أضف';
+  String get warehouseAddItemConfirm => 'إضافة';
 
   @override
   String get warehouseAddItemBack => 'رجوع';
@@ -2355,28 +2354,29 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseAddItemAlreadyOnOrder =>
-      'هالصنف صار بالطلبية. هي الطلبية متل ما هي هلق.';
+      'هذا الصنف موجود في الطلب أصلاً. الطلب كما هو الآن.';
 
   @override
-  String get warehouseAddItemUnavailable => 'هالصنف ما عاد متوفر. اختار غيره.';
+  String get warehouseAddItemUnavailable =>
+      'هذا الصنف لم يعد متوفراً. اختر غيره.';
 
   @override
   String get warehouseConfirmSaveTitle => 'حفظ التعديلات؟';
 
   @override
   String get warehouseConfirmSaveBody =>
-      'رح ينحسب سعر الطلبية من جديد، وبيوصل للصيدلية إشعار بالتعديل.';
+      'سيُعاد حساب سعر الطلب، وسيصل إلى الصيدلية إشعار بالتعديل.';
 
   @override
   String get warehouseCannotEmpty =>
-      'ما فيك تشيل كل الأصناف. إذا الطلبية ما بتمشي، احكي مع الصيدلية.';
+      'لا يمكنك حذف كل الأصناف. إذا تعذّر تنفيذ الطلب، تواصل مع الصيدلية.';
 
   @override
   String get warehouseWaitingSeal =>
       'بانتظار صورة الختم من الصيدلية قبل التسليم.';
 
   @override
-  String get warehouseHasReturn => 'عليها مرتجع';
+  String get warehouseHasReturn => 'يوجد مرتجع';
 
   @override
   String warehouseCancelReason(String reason) {
@@ -2385,30 +2385,30 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseAccountPanelHint =>
-      'الأصناف والعروض والمناديب والتقارير بلوحة المستودع.';
+      'الأصناف والعروض والمناديب والتقارير في لوحة المستودع.';
 
   @override
   String warehouseOrderAdvanced(int number, String status) {
-    return 'صارت الطلبية رقم $number: $status';
+    return 'أصبح الطلب رقم $number: $status';
   }
 
   @override
-  String get errorCannotRemoveLastItem => 'ما فيك تشيل آخر صنف بالطلبية.';
+  String get errorCannotRemoveLastItem => 'لا يمكنك إزالة آخر صنف من الطلب.';
 
   @override
   String get errorOrderAlreadyAdvanced =>
-      'الطلبية انتقلت لمرحلة تانية. حدّث الصفحة.';
+      'انتقل الطلب إلى مرحلة أخرى. حدّث الصفحة.';
 
   @override
   String get errorOrderNotAdvanceable =>
-      'هالطلبية ما عاد فيها تنتقل لمرحلة تانية.';
+      'لا يمكن نقل هذا الطلب إلى مرحلة أخرى.';
 
   @override
   String get errorOrderNotEditable =>
-      'الطلبية انبعتت، وما عاد فيك تعدّل أصنافها.';
+      'أُرسل الطلب ولم يعد بإمكانك تعديل أصنافه.';
 
   @override
-  String get errorPackageItemsLocked => 'أصناف العرض بتتعدّل من لوحة المستودع.';
+  String get errorPackageItemsLocked => 'تُعدَّل أصناف العرض من لوحة المستودع.';
 
   @override
   String get warehouseNavReturns => 'المرتجعات';
@@ -2421,7 +2421,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseReturnTitle(int number) {
-    return 'مرتجع على الطلبية رقم $number';
+    return 'مرتجع على الطلب رقم $number';
   }
 
   @override
@@ -2433,11 +2433,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get warehouseNoReturnsTitle => 'ما في مرتجعات هون';
+  String get warehouseNoReturnsTitle => 'لا توجد مرتجعات هنا';
 
   @override
   String get warehouseNoReturnsSubtitle =>
-      'طلبات الإرجاع من الصيدليات بتطلع هون.';
+      'تظهر طلبات الإرجاع من الصيدليات هنا.';
 
   @override
   String get warehouseReturnPhotos => 'الصور';
@@ -2447,12 +2447,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseReturnCreditPreview(String amount) {
-    return 'إذا وافقت، بينضاف لحساب الصيدلية: $amount';
+    return 'عند الموافقة، يُضاف إلى حساب الصيدلية: $amount';
   }
 
   @override
   String warehouseReturnCredited(String amount) {
-    return 'انضاف لحساب الصيدلية: $amount';
+    return 'أُضيف إلى حساب الصيدلية: $amount';
   }
 
   @override
@@ -2466,28 +2466,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseReturnApproveBody =>
-      'رح ينضاف المبلغ لحساب الصيدلية، وما بتنعكس من التطبيق.';
+      'سيُضاف المبلغ إلى حساب الصيدلية، ولا يمكن عكسه من التطبيق.';
 
   @override
   String get warehouseReturnRejectTitle => 'رفض المرتجع';
 
   @override
-  String get warehouseReturnRejectHint => 'اكتب سبب الرفض، بيوصل للصيدلية.';
+  String get warehouseReturnRejectHint => 'اكتب سبب الرفض، وسيصل إلى الصيدلية.';
 
   @override
   String warehouseReturnResolved(String status) {
-    return 'صار المرتجع: $status';
+    return 'أصبح المرتجع: $status';
   }
 
   @override
-  String get warehouseNoAccountsTitle => 'ما في حسابات بعد';
+  String get warehouseNoAccountsTitle => 'لا توجد حسابات بعد';
 
   @override
   String get warehouseNoAccountsSubtitle =>
-      'أول ما تتسلّم طلبية لصيدلية، بيطلع حسابها هون.';
+      'فور تسليم طلب إلى صيدلية، يظهر حسابها هنا.';
 
   @override
-  String get warehouseAccountsSearch => 'دوّر باسم الصيدلية أو الرقم';
+  String get warehouseAccountsSearch => 'ابحث باسم الصيدلية أو الرقم';
 
   @override
   String warehouseAccountOwes(String amount) {
@@ -2496,11 +2496,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseAccountInCredit(String amount) {
-    return 'إلها $amount';
+    return 'لها $amount';
   }
 
   @override
-  String get warehouseAccountSettled => 'الحساب مسكّر';
+  String get warehouseAccountSettled => 'الحساب مسوّى';
 
   @override
   String get warehouseRecordPayment => 'سجّل دفعة';
@@ -2517,7 +2517,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehousePaymentMethod => 'طريقة الدفع';
 
   @override
-  String get warehousePaymentMethodCash => 'كاش';
+  String get warehousePaymentMethodCash => 'نقداً';
 
   @override
   String get warehousePaymentMethodBank => 'تحويل';
@@ -2526,7 +2526,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehousePaymentMethodCheque => 'شيك';
 
   @override
-  String get warehousePaymentMethodOther => 'غير';
+  String get warehousePaymentMethodOther => 'أخرى';
 
   @override
   String get warehousePaymentNote => 'ملاحظة (اختياري)';
@@ -2537,17 +2537,18 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get warehousePaymentRecorded => 'انسجّلت الدفعة.';
+  String get warehousePaymentRecorded => 'تم تسجيل الدفعة.';
 
   @override
-  String get warehousePaymentReverseHint => 'لعكس دفعة غلط، من لوحة المستودع.';
+  String get warehousePaymentReverseHint =>
+      'لعكس دفعة سُجّلت بالخطأ، استخدم لوحة المستودع.';
 
   @override
-  String get warehouseNoRepsTitle => 'ما في مناديب بعد';
+  String get warehouseNoRepsTitle => 'لا يوجد مندوبون بعد';
 
   @override
   String get warehouseNoRepsSubtitle =>
-      'ضيف مندوب، وبيفوت على تطبيق Feniq برقمه وكلمة السر.';
+      'أضف مندوباً ليدخل إلى تطبيق Feniq برقم هاتفه وكلمة السر.';
 
   @override
   String get warehouseAddRep => 'إضافة مندوب';
@@ -2556,49 +2557,49 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseRepName => 'الاسم';
 
   @override
-  String get warehouseRepPhone => 'رقم الموبايل';
+  String get warehouseRepPhone => 'رقم الهاتف';
 
   @override
-  String get warehouseRepPassword => 'كلمة السر (8 أحرف أو أكتر)';
+  String get warehouseRepPassword => 'كلمة السر (8 أحرف أو أكثر)';
 
   @override
   String get warehouseRepRate => 'نسبة العمولة (%)';
 
   @override
   String get warehouseRepRateHint =>
-      'نصها للمندوب، ربعها لفينيق، والباقي توفير إلك. بين 0 و10.';
+      'نصفها للمندوب، وربعها لفينيق، والباقي توفير لك. بين 0 و10.';
 
   @override
   String get warehouseRepInactive => 'موقوف';
 
   @override
   String warehouseRepStats(int pharmacies, int visits) {
-    return '$pharmacies صيدلية · $visits زيارة بآخر 30 يوم';
+    return '$pharmacies صيدلية · $visits زيارة في آخر 30 يوماً';
   }
 
   @override
   String warehouseRepMonth(int orders, String amount) {
-    return 'هالشهر: $orders طلبية · عمولته $amount';
+    return 'هذا الشهر: $orders طلب · عمولته $amount';
   }
 
   @override
   String get warehouseRepEditRate => 'تعديل العمولة';
 
   @override
-  String get warehouseRepEditRateHint => 'بتنطبق على الطلبيات الجديدة بس.';
+  String get warehouseRepEditRateHint => 'تنطبق على الطلبات الجديدة فقط.';
 
   @override
   String get warehouseRepDeactivate => 'إيقاف المندوب';
 
   @override
-  String get warehouseRepActivate => 'تشغيل المندوب';
+  String get warehouseRepActivate => 'تفعيل المندوب';
 
   @override
   String get warehouseRepResetPassword => 'كلمة سر جديدة';
 
   @override
   String get warehouseRepPasswordReset =>
-      'تغيّرت كلمة السر. بلّغ المندوب فيها.';
+      'تم تغيير كلمة السر. أبلغ المندوب بها.';
 
   @override
   String get warehouseRepSaved => 'تم الحفظ.';
@@ -2608,13 +2609,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseRepNoPharmacies =>
-      'ما في صيدليات معه. توزيع الصيدليات من لوحة المستودع.';
+      'لا توجد صيدليات معه. يتم توزيع الصيدليات من لوحة المستودع.';
 
   @override
   String get warehouseRepVisits => 'زياراته';
 
   @override
-  String get warehouseRepNoVisits => 'ما سجّل زيارات بعد.';
+  String get warehouseRepNoVisits => 'لم يسجّل زيارات بعد.';
 
   @override
   String warehouseRepLastVisit(String date) {
@@ -2622,48 +2623,50 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get warehouseRepNeverVisited => 'ما انزارت';
+  String get warehouseRepNeverVisited => 'لم تتم زيارتها';
 
   @override
-  String get warehouseFieldRequired => 'هالحقل مطلوب';
+  String get warehouseFieldRequired => 'هذا الحقل مطلوب';
 
   @override
-  String get warehouseInvalidNumber => 'اكتب رقم صحيح';
+  String get warehouseInvalidNumber => 'اكتب رقماً صحيحاً';
 
   @override
-  String get errorInvalidCommissionRate => 'نسبة العمولة لازم تكون بين 0 و10.';
+  String get errorInvalidCommissionRate =>
+      'يجب أن تكون نسبة العمولة بين 0 و10.';
 
   @override
-  String get errorInvalidPaymentAmount => 'المبلغ مو صحيح.';
+  String get errorInvalidPaymentAmount => 'المبلغ غير صحيح.';
 
   @override
-  String get errorInvalidPhoneFormat => 'رقم الموبايل مو صحيح.';
+  String get errorInvalidPhoneFormat => 'رقم الهاتف غير صحيح.';
 
   @override
-  String get errorInvalidRepName => 'اكتب اسم المندوب.';
+  String get errorInvalidRepName => 'أدخل اسم المندوب.';
 
   @override
   String get errorNoTradingRelationship =>
-      'ما في تعامل بينك وبين هالصيدلية لسا.';
+      'لا يوجد تعامل بينك وبين هذه الصيدلية حتى الآن.';
 
   @override
-  String get errorRepNotFound => 'ما لقينا المندوب.';
+  String get errorRepNotFound => 'تعذّر العثور على المندوب.';
 
   @override
-  String get errorReturnAlreadyResolved => 'هالمرتجع انحسم قبل. حدّث الصفحة.';
+  String get errorReturnAlreadyResolved =>
+      'سبق البتّ في هذا المرتجع. حدّث الصفحة.';
 
   @override
   String get warehouseLoyaltyTitle => 'حسم الولاء';
 
   @override
   String get warehouseLoyaltyIntro =>
-      'حسم ثابت بتعطيه للصيدلية على الطلبية حسب قيمتها. إنت بتحدد الشرائح وإنت بتدفعه، وفينيق بتاخد حصتها من الباقي بعد الحسم.';
+      'حسم ثابت تمنحه للصيدلية على الطلب بحسب قيمته. أنت تحدد الشرائح وأنت من يدفعه، وتأخذ فينيق حصتها من الباقي بعد الحسم.';
 
   @override
-  String get warehouseLoyaltyEnabled => 'شغّل حسم الولاء';
+  String get warehouseLoyaltyEnabled => 'تفعيل حسم الولاء';
 
   @override
-  String get warehouseLoyaltyMin => 'إذا الطلبية من';
+  String get warehouseLoyaltyMin => 'إذا كان الطلب من';
 
   @override
   String get warehouseLoyaltyDiscount => 'الحسم';
@@ -2675,22 +2678,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseLoyaltySave => 'حفظ حسم الولاء';
 
   @override
-  String get warehouseLoyaltySaved => 'انحفظ حسم الولاء.';
+  String get warehouseLoyaltySaved => 'تم حفظ حسم الولاء.';
 
   @override
   String get warehouseLoyaltyExample =>
-      'مثال: طلبية بـ 100,000 أو أكتر ← حسم 2,000.';
+      'مثال: طلب بقيمة 100,000 أو أكثر ← حسم 2,000.';
 
   @override
   String get warehouseLoyaltyTierError =>
-      'كل شريحة بدها قيمة طلبية أكبر من صفر وحسم أصغر منها.';
+      'يجب أن تكون قيمة الطلب في كل شريحة أكبر من صفر والحسم أصغر منها.';
 
   @override
-  String get warehouseLoyaltyOff => 'مطفي';
+  String get warehouseLoyaltyOff => 'متوقف';
 
   @override
   String warehouseLoyaltyOnTiers(int count) {
-    return 'شغّال · $count شرائح';
+    return 'مفعّل · $count شرائح';
   }
 
   @override
@@ -2709,45 +2712,45 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseRepWarehouseShareToRep => 'ربع المستودع (للمندوب)';
 
   @override
-  String get warehouseRepShareToRep => 'أعطي ربعي للمندوب';
+  String get warehouseRepShareToRep => 'أعطِ ربعي للمندوب';
 
   @override
   String get warehouseRepShareToRepOn =>
-      'ربعك صار للمندوب على الطلبيات الجديدة.';
+      'أصبح ربعك للمندوب في الطلبات الجديدة.';
 
   @override
-  String get warehouseRepShareToRepOff => 'ربعك رجع إلك على الطلبيات الجديدة.';
+  String get warehouseRepShareToRepOff => 'عاد ربعك إليك في الطلبات الجديدة.';
 
   @override
   String get warehouseRepShareGiven => 'ربعك للمندوب';
 
   @override
   String get warehouseRepQuartersHint =>
-      'ربع لفينيق، ربع رصيد للصيدلية، ربع للمندوب، والربع الأخير إلك أو للمندوب. بين 0 و10.';
+      'ربع لفينيق، وربع رصيد للصيدلية، وربع للمندوب، والربع الأخير لك أو للمندوب. بين 0 و10.';
 
   @override
   String get errorInvalidLoyaltyTiers =>
-      'كل شريحة بدها قيمة طلبية أكبر من صفر وحسم أصغر منها، ولا شريحتين بنفس القيمة.';
+      'يجب أن تحتوي كل شريحة على قيمة طلب أكبر من صفر وحسم أقل منها، ولا يجوز تكرار القيمة نفسها في شريحتين.';
 
   @override
   String get errorLoyaltyTiersRequired =>
-      'ضيف شريحة وحدة ع الأقل قبل ما تشغّل حسم الولاء.';
+      'أضف شريحة واحدة على الأقل قبل تفعيل حسم الولاء.';
 
   @override
-  String get stageAccepted => 'انقبلت';
+  String get stageAccepted => 'تم القبول';
 
   @override
-  String get stageAcceptedDesc => 'المستودع قبل طلبيتك';
+  String get stageAcceptedDesc => 'قبل المستودع طلبك';
 
   @override
   String get warehouseAccept => 'قبول';
 
   @override
-  String get warehouseSendOnWay => 'طلعت ع الطريق';
+  String get warehouseSendOnWay => 'خرج للتوصيل';
 
   @override
   String warehouseCollectTitle(int number) {
-    return 'تسليم الطلبية رقم $number - هل تم تحصيل المبلغ؟';
+    return 'تسليم الطلب رقم $number: هل تم تحصيل المبلغ؟';
   }
 
   @override
@@ -2799,7 +2802,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseCollectNote(int number) {
-    return 'دفعة عند تسليم الطلبية رقم $number';
+    return 'دفعة عند تسليم الطلب رقم $number';
   }
 
   @override
@@ -2818,7 +2821,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get warehouseAccountNoPayment => 'ما دفعت لسا';
+  String get warehouseAccountNoPayment => 'لم تدفع بعد';
 
   @override
   String get warehouseAccountPayFull => 'دفع كامل';
@@ -2828,7 +2831,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseAccountPayFullConfirm(String amount) {
-    return 'تسجّل دفعة نقدية $amount؟';
+    return 'تسجيل دفعة نقدية $amount؟';
   }
 
   @override
@@ -2841,11 +2844,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseAccountPayInvalid =>
-      'اكتب مبلغ أكبر من صفر وأصغر من المبلغ المطلوب.';
+      'اكتب مبلغاً أكبر من صفر وأقل من المبلغ المطلوب.';
 
   @override
   String warehouseAccountPayRecorded(String amount) {
-    return 'انسجّلت دفعة $amount';
+    return 'تم تسجيل دفعة $amount';
   }
 
   @override
@@ -2857,27 +2860,27 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseVoiceHint =>
-      'احكي مثلاً: «صيدلية النور دفعت خمسين ألف» أو «صيدلية الأمل دفعت المبلغ كامل».';
+      'قل مثلاً: «صيدلية النور دفعت خمسين ألف» أو «صيدلية الأمل دفعت المبلغ كامل».';
 
   @override
-  String get warehouseVoiceSpeak => 'اضغط واحكي';
+  String get warehouseVoiceSpeak => 'اضغط وتحدّث';
 
   @override
-  String get warehouseVoiceStop => 'وقّف';
+  String get warehouseVoiceStop => 'إيقاف';
 
   @override
-  String get warehouseVoiceHeard => 'اللي انسمع (بتقدر تعدّله)';
+  String get warehouseVoiceHeard => 'ما تم سماعه (يمكنك تعديله)';
 
   @override
   String get warehouseVoiceNoMic =>
-      'الصوت مو متاح بهالموبايل. اكتب الجملة بالخانة.';
+      'الصوت غير متاح على هذا الهاتف. اكتب الجملة في الخانة.';
 
   @override
   String get warehouseVoiceNotUnderstood =>
-      'ما فهمت الجملة. جرّب: اسم الصيدلية + دفعت + المبلغ.';
+      'لم نفهم الجملة. جرّب: اسم الصيدلية + دفعت + المبلغ.';
 
   @override
-  String get warehouseVoiceNoPharmacy => 'ما لقيت هالصيدلية. عدّل الاسم.';
+  String get warehouseVoiceNoPharmacy => 'لم نجد هذه الصيدلية. عدّل الاسم.';
 
   @override
   String warehouseVoiceOwes(String amount) {
@@ -2886,20 +2889,20 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseVoiceWillRecord(String amount) {
-    return 'رح تنسجّل دفعة $amount';
+    return 'ستُسجَّل دفعة $amount';
   }
 
   @override
   String warehouseVoiceLeftAfter(String amount) {
-    return 'بيضل عليها $amount';
+    return 'سيبقى عليها $amount';
   }
 
   @override
   String get warehouseVoiceCannotRecord =>
-      'المبلغ ما بيركب مع حساب هالصيدلية (يا صفر، يا أكبر من المطلوب).';
+      'المبلغ لا يتوافق مع حساب هذه الصيدلية (إما صفر وإما أكبر من المطلوب).';
 
   @override
-  String get warehouseVoiceConfirm => 'تمام، سجّل';
+  String get warehouseVoiceConfirm => 'تأكيد وتسجيل';
 
   @override
   String get warehouseSummaryTitle => 'ملخص المستودع';
@@ -2942,7 +2945,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseSummaryCreditHeld(String amount) {
-    return 'رصيد للصيدليات عندك: $amount';
+    return 'رصيد الصيدليات لديك: $amount';
   }
 
   @override
@@ -2956,26 +2959,26 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get warehouseSummaryChangeFlat => 'متل الفترة السابقة';
+  String get warehouseSummaryChangeFlat => 'مثل الفترة السابقة';
 
   @override
-  String get warehouseSummaryChangeNew => 'ما كان في شي بالفترة السابقة';
+  String get warehouseSummaryChangeNew => 'لم يكن هناك شيء في الفترة السابقة';
 
   @override
-  String get warehouseSummaryTopBuyers => 'أكتر الصيدليات شراءً';
+  String get warehouseSummaryTopBuyers => 'أكثر الصيدليات شراءً';
 
   @override
   String get warehouseSummaryTopDebtors => 'أكبر الديون';
 
   @override
-  String get warehouseSummaryNoBuyers => 'ما في مبيعات بهالفترة.';
+  String get warehouseSummaryNoBuyers => 'لا توجد مبيعات في هذه الفترة.';
 
   @override
-  String get warehouseSummaryNoDebtors => 'ما في ديون.';
+  String get warehouseSummaryNoDebtors => 'لا توجد ديون.';
 
   @override
   String get warehouseSummaryDeliveredNote =>
-      'المبيعات بتحسب الطلبيات المتسلَّمة بس.';
+      'تُحتسب في المبيعات الطلبات المسلَّمة فقط.';
 
   @override
   String get paymentUnconfirmed =>
@@ -3026,7 +3029,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get locationServiceDisabled =>
-      'خدمة الموقع مطفأة. فعّل GPS قبل تسجيل الزيارة.';
+      'خدمة الموقع غير مفعّلة. فعّل GPS قبل تسجيل الزيارة.';
 
   @override
   String get locationOpenSettings => 'فتح الإعدادات';
@@ -3170,7 +3173,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseInsightsOverdueDays => 'يتأخر الدين بعد — يوم';
 
   @override
-  String get warehouseInsightsInactiveDays => 'صيدلية بلا طلب منذ — يوم';
+  String get warehouseInsightsInactiveDays => 'صيدلية دون طلب منذ — يوم';
 
   @override
   String get warehouseInsightsSaveSettings => 'حفظ المدة';
@@ -3278,16 +3281,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get deliveryZoneActive => 'المنطقة فعالة';
 
   @override
-  String get deliveryDay => 'يوم الطلعة';
+  String get deliveryDay => 'يوم الانطلاق';
 
   @override
-  String get deliveryDepartureTime => 'وقت الطلعة — دمشق';
+  String get deliveryDepartureTime => 'وقت الانطلاق — دمشق';
 
   @override
-  String get deliveryArrivalHours => 'ساعات الوصول بعد الطلعة';
+  String get deliveryArrivalHours => 'ساعات الوصول بعد الانطلاق';
 
   @override
-  String get deliveryCutoffHours => 'إغلاق الطلب قبل الطلعة بساعات';
+  String get deliveryCutoffHours => 'إغلاق الطلب قبل الانطلاق بساعات';
 
   @override
   String get deliveryAddTrip => 'إضافة يوم توزيع';
@@ -3302,7 +3305,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get deliveryDate => 'التاريخ — YYYY-MM-DD';
 
   @override
-  String get deliveryCancelTrip => 'إلغاء طلعة هذا اليوم';
+  String get deliveryCancelTrip => 'إلغاء توزيع هذا اليوم';
 
   @override
   String get deliveryRemoveException => 'حذف الاستثناء';
@@ -3339,7 +3342,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get deliverySearchButton => 'بحث';
 
   @override
-  String get deliveryUnassigned => 'بلا منطقة — الموعد غير محدد';
+  String get deliveryUnassigned => 'دون منطقة — الموعد غير محدد';
 
   @override
   String get deliveryPaused => 'موقوفة';
@@ -3388,7 +3391,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get deliveryUnsaved =>
-      'عندك تعديلات غير محفوظة. احفظها أو أعد تحميل الإعدادات قبل ربط الصيدليات.';
+      'لديك تعديلات غير محفوظة. احفظها أو أعد تحميل الإعدادات قبل ربط الصيدليات.';
 
   @override
   String get deliveryNoResults => 'لا توجد صيدليات مطابقة';
@@ -3421,7 +3424,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseInsightsUnknownAge =>
-      'رصيد بلا عمر فاتورة موثق؛ داخل إجمالي الدين، وخارج شرائح التأخر حتى يتوفر تاريخ موثوق.';
+      'رصيد دون عمر فاتورة موثق؛ داخل إجمالي الدين، وخارج شرائح التأخر حتى يتوفر تاريخ موثوق.';
 
   @override
   String get manualAddressLabel => 'العنوان التفصيلي';
@@ -3516,60 +3519,60 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get appPermissionsIntro =>
-      'هون كل شي بيطلبه فينيق من موبايلك وليش. ما منطلب شي ما منحتاجه، وفيك تغيّر أي وحدة من هون.';
+      'هنا كل ما يطلبه فينيق من هاتفك وسبب ذلك. لا نطلب إلا ما نحتاجه، ويمكنك تغيير أي إذن من هنا.';
 
   @override
-  String get appPermissionsWhy => 'ليش؟';
+  String get appPermissionsWhy => 'لماذا؟';
 
   @override
   String get permNotificationsTitle => 'الإشعارات';
 
   @override
   String get permNotificationsWhyWarehouse =>
-      'لحتى يوصلك صوت واهتزاز مع كل طلبية جديدة، حتى والتطبيق مسكّر.';
+      'ليصلك صوت واهتزاز مع كل طلب جديد، حتى والتطبيق مغلق.';
 
   @override
   String get permNotificationsWhyOther =>
-      'لحتى يوصلك خبر لما يتغيّر وضع طلبك أو يجي عرض جديد.';
+      'ليصلك إشعار عند تغيّر حالة طلبك أو ظهور عرض جديد.';
 
   @override
   String get permBatteryTitle => 'بلا قيود على البطارية';
 
   @override
   String get permBatteryWhy =>
-      'توفير البطارية بشاومي وهواوي وسامسونج بينيّم التطبيق وبيأخّر إشعارات الطلبيات. هالخيار بيخلّيها توصل بوقتها.';
+      'يؤدي توفير البطارية في أجهزة شاومي وهواوي وسامسونج إلى تجميد التطبيق وتأخير إشعارات الطلبات. هذا الخيار يضمن وصولها في وقتها.';
 
   @override
   String get permAutostartTitle => 'التشغيل التلقائي';
 
   @override
   String get permAutostartWhy =>
-      'بهالموبايل في مفتاح «تشغيل تلقائي» مسكّر من المصنع. شغّله لفينيق لحتى توصل الإشعارات بعد ما تسكّر التطبيق أو تعيد تشغيل الموبايل.';
+      'في هذا الهاتف مفتاح «تشغيل تلقائي» مغلق من المصنع. فعّله لفينيق لتصل الإشعارات بعد إغلاق التطبيق أو إعادة تشغيل الهاتف.';
 
   @override
   String get permAutostartSteps =>
-      'بشاومي: الإعدادات ← التطبيقات ← إدارة التطبيقات ← Feniq ← شغّل «التشغيل التلقائي»، وبـ«توفير البطارية» اختار «بلا قيود».';
+      'في شاومي: الإعدادات ← التطبيقات ← إدارة التطبيقات ← Feniq ← فعّل «التشغيل التلقائي»، وفي «توفير البطارية» اختر «بلا قيود».';
 
   @override
   String get permLocationTitle => 'الموقع';
 
   @override
   String get permLocationWhy =>
-      'لتحديد مكان الصيدلية عالخريطة، ولتسجيل زيارات المندوب ومسار السائق.';
+      'لتحديد مكان الصيدلية على الخريطة، ولتسجيل زيارات المندوب ومسار السائق.';
 
   @override
-  String get permBackgroundLocationTitle => 'الموقع بالخلفية';
+  String get permBackgroundLocationTitle => 'الموقع في الخلفية';
 
   @override
   String get permBackgroundLocationWhy =>
-      'بس أثناء رحلة توزيع شغّالة، لحتى يضل موقعك يتحدّث والموبايل بالجيبة. اختار «السماح طول الوقت».';
+      'فقط أثناء رحلة توزيع جارية، ليبقى موقعك محدَّثاً والهاتف في الجيب. اختر «السماح طوال الوقت».';
 
   @override
   String get permCameraTitle => 'الكاميرا';
 
   @override
   String get permCameraWhy =>
-      'لتصوير المرتجعات وختم التسليم ومسح رمز الزيارة. الصور من المعرض ما بدها صلاحية.';
+      'لتصوير المرتجعات وختم التسليم ومسح رمز الزيارة. الصور من المعرض لا تحتاج إذناً.';
 
   @override
   String get permMicrophoneTitle => 'المايكروفون';
@@ -3581,48 +3584,48 @@ class AppLocalizationsAr extends AppLocalizations {
   String get permStateGranted => 'مفعّلة';
 
   @override
-  String get permStateDenied => 'مو مفعّلة';
+  String get permStateDenied => 'غير مفعّلة';
 
   @override
-  String get permStateBlocked => 'مرفوضة، من الإعدادات';
+  String get permStateBlocked => 'مرفوضة، فعّلها من الإعدادات';
 
   @override
-  String get permStateUnknown => 'تأكد بنفسك';
+  String get permStateUnknown => 'تحقق بنفسك';
 
   @override
-  String get permActionEnable => 'فعّل';
+  String get permActionEnable => 'تفعيل';
 
   @override
-  String get permActionOpenSettings => 'افتح الإعدادات';
+  String get permActionOpenSettings => 'فتح الإعدادات';
 
   @override
-  String get permActionOpenPage => 'افتح الصفحة';
+  String get permActionOpenPage => 'فتح الصفحة';
 
   @override
   String get permAutostartOpenFailed =>
-      'ما قدرنا نفتح الصفحة. افتحها من الإعدادات حسب الخطوات.';
+      'تعذّر فتح الصفحة. افتحها من الإعدادات حسب الخطوات.';
 
   @override
   String get pushDelayedBannerText =>
-      'ممكن تتأخر إشعارات الطلبيات على هالموبايل.';
+      'قد تتأخر إشعارات الطلبات على هذا الهاتف.';
 
   @override
-  String get pushDelayedBannerAction => 'صلّحها';
+  String get pushDelayedBannerAction => 'إصلاح';
 
   @override
   String get invoicePdfAction => 'حفظ الفاتورة PDF';
 
   @override
-  String get invoicePdfShare => 'مشاركة أو حفظ بالملفات';
+  String get invoicePdfShare => 'مشاركة أو حفظ في الملفات';
 
   @override
-  String get invoicePdfShareHint => 'واتساب، Drive، أو «الملفات» على موبايلك';
+  String get invoicePdfShareHint => 'واتساب، Drive، أو «الملفات» في هاتفك';
 
   @override
   String get invoicePdfPrint => 'طباعة أو «حفظ كـ PDF»';
 
   @override
-  String get invoicePdfFailed => 'ما قدرنا نجهّز الفاتورة. جرّب مرة تانية.';
+  String get invoicePdfFailed => 'تعذّر تجهيز الفاتورة. حاول مرة أخرى.';
 
   @override
   String get invoicePdfItem => 'الصنف';
@@ -3660,10 +3663,10 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       hours,
       locale: localeName,
-      other: 'بيتسجّل مُسلّم لحاله بعد $hours ساعة',
-      few: 'بيتسجّل مُسلّم لحاله بعد $hours ساعات',
-      two: 'بيتسجّل مُسلّم لحاله بعد ساعتين',
-      one: 'بيتسجّل مُسلّم لحاله بعد ساعة',
+      other: 'سيُسجَّل مُسلَّماً تلقائياً بعد $hours ساعة',
+      few: 'سيُسجَّل مُسلَّماً تلقائياً بعد $hours ساعات',
+      two: 'سيُسجَّل مُسلَّماً تلقائياً بعد ساعتين',
+      one: 'سيُسجَّل مُسلَّماً تلقائياً بعد ساعة',
     );
     return '$_temp0';
   }
@@ -3673,20 +3676,20 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       minutes,
       locale: localeName,
-      other: 'بيتسجّل مُسلّم لحاله بعد $minutes دقيقة',
-      few: 'بيتسجّل مُسلّم لحاله بعد $minutes دقائق',
-      two: 'بيتسجّل مُسلّم لحاله بعد دقيقتين',
-      one: 'بيتسجّل مُسلّم لحاله بعد دقيقة',
+      other: 'سيُسجَّل مُسلَّماً تلقائياً بعد $minutes دقيقة',
+      few: 'سيُسجَّل مُسلَّماً تلقائياً بعد $minutes دقائق',
+      two: 'سيُسجَّل مُسلَّماً تلقائياً بعد دقيقتين',
+      one: 'سيُسجَّل مُسلَّماً تلقائياً بعد دقيقة',
     );
     return '$_temp0';
   }
 
   @override
-  String get warehouseAutoDeliverDue => 'بيتسجّل مُسلّم لحاله خلال ساعة';
+  String get warehouseAutoDeliverDue => 'سيُسجَّل مُسلَّماً تلقائياً خلال ساعة';
 
   @override
   String get warehouseAutoDeliverExplain =>
-      'إذا ما سجّلت التسليم بنفسك، النظام بيعلّم الطلب مُسلّم لحاله بعد يوم من خروجه، ومبلغه بينكتب دين عالصيدلية. تأجيل موعد التوصيل ما بيوقّف هالعدّاد.';
+      'إذا لم تسجّل التسليم بنفسك، سيعلّم النظام الطلب مُسلَّماً تلقائياً بعد يوم من خروجه، ويُسجَّل مبلغه ديناً على الصيدلية. تأجيل موعد التوصيل لا يوقف هذا العدّاد.';
 
   @override
   String get dailyReceiptsTitle => 'مقبوضات اليوم';
@@ -3730,4 +3733,40 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dailyReceiptsRoleLegacy => 'حساب المستودع';
+
+  @override
+  String get dailyReceiptsToday => 'اليوم';
+
+  @override
+  String get dailyReceiptsYesterday => 'أمس';
+
+  @override
+  String get dailyReceiptsVsYesterday => 'الصافي مقارنة بالأمس';
+
+  @override
+  String get orderPipelineTitle => 'طلبات اليوم';
+
+  @override
+  String get orderPipelinePending => 'بانتظار الموافقة';
+
+  @override
+  String get orderPipelineAccepted => 'مقبولة';
+
+  @override
+  String get orderPipelineOnTheWay => 'في الطريق';
+
+  @override
+  String get orderPipelineDelivered => 'سُلّمت اليوم';
+
+  @override
+  String orderPipelineStale(int count) {
+    return 'بانتظار الموافقة منذ أكثر من 48 ساعة: $count';
+  }
+
+  @override
+  String get orderPipelineFailed => 'تعذّر تحميل طلبات اليوم.';
+
+  @override
+  String get orderPipelineNone =>
+      'لا توجد طلبات مفتوحة، ولم يُسلَّم شيء اليوم.';
 }

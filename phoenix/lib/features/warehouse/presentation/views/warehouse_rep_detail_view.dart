@@ -127,10 +127,9 @@ class _WarehouseRepDetailViewState extends State<WarehouseRepDetailView> {
                   if (state.visits.isEmpty) Text(l10n.warehouseRepNoVisits, style: muted),
                   for (final visit in state.visits) ...[
                     CustomCard(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
+                      child: Builder(
+                        builder: (context) {
+                          final details = Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
@@ -143,13 +142,21 @@ class _WarehouseRepDetailViewState extends State<WarehouseRepDetailView> {
                                     style: muted,
                                   ),
                               ],
-                            ),
-                          ),
-                          StatusBadge(
+                            );
+                          final badge = StatusBadge(
                             label: visitStatusLabel(l10n, VisitStatus.parse(visit.status)),
                             tone: visitStatusTone(VisitStatus.parse(visit.status)),
-                          ),
-                        ],
+                          );
+                          // At the largest text the badge goes under the details
+                          // instead of pushing the row past the card's edge.
+                          if (MediaQuery.textScalerOf(context).scale(10) > 20) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [details, const SizedBox(height: AppSizes.spacingXSmall), badge],
+                            );
+                          }
+                          return Row(children: [Expanded(child: details), badge]);
+                        },
                       ),
                     ),
                     const SizedBox(height: AppSizes.spacingSmall),

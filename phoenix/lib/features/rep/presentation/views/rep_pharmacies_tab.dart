@@ -186,7 +186,15 @@ class _StatsRow extends StatelessWidget {
                 message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
                 onRetry: () => context.read<RepHomeCubit>().load(),
               ),
-            if (stats != null)
+            // At large text three tiles stacked to a screen of their own above
+            // the first pharmacy (design review 2026-11-18): one compact card.
+            if (stats != null && MediaQuery.textScalerOf(context).scale(10) > 13)
+              RepStatsLine(entries: [
+                ('${stats.pharmacyCount}', l10n.repStatPharmacies),
+                ('${stats.visitsLast7Days}', l10n.repStatVisitsWeek),
+                ('${stats.monthOrdersCount}', l10n.repStatOrdersMonth),
+              ])
+            else if (stats != null)
               ResponsiveStatsGrid(
                 minTileWidth: 100,
                 maxColumns: 3,

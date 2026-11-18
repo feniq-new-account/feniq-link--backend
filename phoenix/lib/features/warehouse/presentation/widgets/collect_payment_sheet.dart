@@ -83,6 +83,39 @@ class _CollectPaymentSheetState extends State<CollectPaymentSheet> {
     Navigator.of(context).pop(paid.toDouble());
   }
 
+  Widget _choice({
+    required String label,
+    required VoidCallback onPressed,
+    bool primary = false,
+    bool selected = false,
+  }) {
+    final child = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (selected) ...[const Icon(Icons.check, size: 20), const SizedBox(width: AppSizes.spacingSmall)],
+        Flexible(child: Text(label, textAlign: TextAlign.center)),
+      ],
+    );
+    const padding = EdgeInsets.symmetric(vertical: 12, horizontal: 16);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.spacingSmall),
+      child: Semantics(
+        selected: selected,
+        child: primary
+            ? FilledButton(
+                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48), padding: padding),
+                onPressed: onPressed,
+                child: child,
+              )
+            : OutlinedButton(
+                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48), padding: padding),
+                onPressed: onPressed,
+                child: child,
+              ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -103,40 +136,31 @@ class _CollectPaymentSheetState extends State<CollectPaymentSheet> {
                 const SizedBox(height: AppSizes.spacingSmall),
                 Text(l10n.warehouseCollectTotal(formatSyp(widget.totalSyp, suffix))),
                 const SizedBox(height: AppSizes.spacingMedium),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => Navigator.of(context).pop(widget.totalSyp),
-                        child: Text(l10n.warehouseCollectFull),
-                      ),
-                    ),
-                    if (_allowsCredit) ...[
-                      const SizedBox(width: AppSizes.spacingSmall),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => setState(() => _partial = true),
-                          child: Text(l10n.warehouseCollectPartial),
-                        ),
-                      ),
-                      const SizedBox(width: AppSizes.spacingSmall),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(0.0),
-                          child: Text(l10n.warehouseCollectLater),
-                        ),
-                      ),
-                    ] else ...[
-                      const SizedBox(width: AppSizes.spacingSmall),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(0.0),
-                          child: Text(l10n.warehouseCollectRepCollected),
-                        ),
-                      ),
-                    ],
-                  ],
+                // One choice per line, full width: three side by side broke
+                // every word onto its own line at large text (design review
+                // 2026-11-18). "All of it" is the main action until "part" is
+                // picked; then "part" is shown as the choice, not "all of it".
+                _choice(
+                  label: l10n.warehouseCollectFull,
+                  primary: !_partial,
+                  onPressed: () => Navigator.of(context).pop(widget.totalSyp),
                 ),
+                if (_allowsCredit) ...[
+                  _choice(
+                    label: l10n.warehouseCollectPartial,
+                    primary: _partial,
+                    selected: _partial,
+                    onPressed: () => setState(() => _partial = true),
+                  ),
+                  _choice(
+                    label: l10n.warehouseCollectLater,
+                    onPressed: () => Navigator.of(context).pop(0.0),
+                  ),
+                ] else
+                  _choice(
+                    label: l10n.warehouseCollectRepCollected,
+                    onPressed: () => Navigator.of(context).pop(0.0),
+                  ),
                 if (!_allowsCredit) ...[
                   const SizedBox(height: AppSizes.spacingSmall),
                   Text(l10n.warehouseCollectCashOnlyHint, style: context.textTheme.bodySmall),

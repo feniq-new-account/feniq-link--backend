@@ -346,6 +346,19 @@ class WarehouseManagementRepositoryImpl
   }
 
   @override
+  Future<Map<String, dynamic>> getOrderPipeline() async {
+    final data = await _run(
+      (dio) => dio.get(
+        '${Endpoints.warehouseOrders}/pipeline',
+        options: Options(headers: {'Cache-Control': 'no-store'}),
+      ),
+    );
+    final pipeline = data['pipeline'];
+    if (pipeline is! Map) throw const FormatException('Missing pipeline');
+    return Map<String, dynamic>.from(pipeline);
+  }
+
+  @override
   Future<Map<String, dynamic>> getDailyReceipts({String? date}) async {
     final data = await _run(
       (dio) => dio.get(

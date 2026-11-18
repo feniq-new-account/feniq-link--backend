@@ -132,10 +132,10 @@ void main() {
     ));
     await tester.tap(find.byKey(const ValueKey('invoice-pdf-button')));
     await tester.pumpAndSettle();
-    expect(find.text('مشاركة أو حفظ بالملفات'), findsOneWidget);
+    expect(find.text('مشاركة أو حفظ في الملفات'), findsOneWidget);
     expect(find.text('طباعة أو «حفظ كـ PDF»'), findsOneWidget);
 
-    await tester.tap(find.text('مشاركة أو حفظ بالملفات'));
+    await tester.tap(find.text('مشاركة أو حفظ في الملفات'));
     await tester.pumpAndSettle();
     expect(exporter.shared, ['feniq-invoice-1042.pdf']);
     expect(exporter.printed, isEmpty);

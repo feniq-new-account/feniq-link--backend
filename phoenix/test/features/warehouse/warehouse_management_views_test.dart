@@ -181,7 +181,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(ListTile), findsNWidgets(5));
     }
-    for (final label in ['الطلبيات', 'المرتجعات', 'الحسابات', 'المناديب', 'الحساب']) {
+    for (final label in ['الطلبات', 'المرتجعات', 'الحسابات', 'المناديب', 'الحساب']) {
       expect(find.descendant(of: compact ? find.byType(ListTile) : bar, matching: find.text(label)), findsOneWidget);
     }
     expect(tester.takeException(), isNull);
