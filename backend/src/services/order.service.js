@@ -1178,23 +1178,24 @@ async function createOrder({
 // app on the warehouse's phone. Never throws: sendToUser swallows its own
 // errors, and a failed lookup here only skips the push.
 //
-// Recipients: the warehouse's own login plus every active member signed in as
-// an owner (warehouseRole 'owner' or the legacy combined login). Managers run
-// orders from those owner accounts on their phones; an accountant handles
-// money on the panel and is left out of order alerts.
+// Recipients: the warehouse's own login plus every active member - the
+// managers who run orders and the accountant who records what each order is
+// paid (owner decision 2026-11-18).
 async function warehouseOrderRecipients(warehouse) {
   const memberIds = (warehouse.memberUserIds || []).filter(
     (id) => String(id) !== String(warehouse.userId),
   );
   if (memberIds.length === 0) return [warehouse.userId];
-  const owners = await User.find({
+  // Owner decision 2026-11-18: a new (or cancelled) order reaches the manager
+  // AND the accountant - every active login of the warehouse, whatever its
+  // warehouseRole. A blocked or deleted member never does.
+  const members = await User.find({
     _id: { $in: memberIds },
     role: 'warehouse',
     status: 'active',
-    warehouseRole: { $in: ['owner', null] },
   }).select('_id').lean();
   // The primary login is always notified, as it always was.
-  return [warehouse.userId, ...owners.map((m) => m._id)];
+  return [warehouse.userId, ...members.map((m) => m._id)];
 }
 
 async function notifyWarehouseOfOrder(order, kind) {
