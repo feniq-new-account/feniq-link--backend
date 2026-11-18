@@ -231,6 +231,7 @@
     "saveItemChanges": "حفظ التعديلات",
     "confirmSaveItemChanges": "سيتم إعادة حساب سعر الطلب وإشعار الصيدلاني.",
     "itemChangesSaved": "تم حفظ التعديلات.",
+    "productAlreadyOnOrder": "هالصنف موجود بالطلبية، عدّل كميته من القائمة.",
     "noAvailableProducts": "لا توجد منتجات متاحة للإضافة.",
     "deliverySealPhoto": "صورة ختم التسليم",
     "deliverySealConfirmedAt": "أكّدتها الصيدلية بتاريخ {{date}}",

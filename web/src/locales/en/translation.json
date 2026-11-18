@@ -219,6 +219,7 @@
     "saveItemChanges": "Save changes",
     "confirmSaveItemChanges": "This will recalculate the order price and notify the pharmacist.",
     "itemChangesSaved": "Changes saved.",
+    "productAlreadyOnOrder": "That product is already on the order - change its quantity in the list.",
     "noAvailableProducts": "No available products to add.",
     "deliverySealPhoto": "Delivery seal photo",
     "deliverySealConfirmedAt": "Confirmed by the pharmacy on {{date}}",

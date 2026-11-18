@@ -110,6 +110,39 @@ void main() {
     });
   });
 
+  group('a save whose answer never came back', () {
+    late _Repo repository;
+    late WarehouseOrderDetailCubit cubit;
+
+    setUp(() async {
+      repository = _Repo();
+      when(() => repository.getOrder('o1')).thenAnswer((_) async => _detail());
+      cubit = WarehouseOrderDetailCubit(repository: repository, orderId: 'o1');
+      await cubit.load();
+      cubit.startEditing();
+      cubit.addProduct(_substitute, 2);
+    });
+
+    for (final code in [FailureCode.timeout, 'PRODUCT_ALREADY_ON_ORDER']) {
+      test('$code drops the draft and shows the order as the server has it', () async {
+        when(
+          () => repository.updateItems('o1', quantities: {}, removals: [], additions: {'pX': 2}),
+        ).thenThrow(ServerFailure('lost', code: code));
+        when(() => repository.getOrder('o1')).thenAnswer(
+          (_) async => _detail(items: const [_lineA, _lineB, WarehouseOrderItem(id: 'i9', productId: 'pX', productNameAr: 'بديل', quantity: 2)]),
+        );
+        expect(await cubit.saveEdits(), isFalse);
+        expect(cubit.state.isEditing, isFalse);
+        expect(cubit.state.draftAdditions, isEmpty);
+        expect(cubit.state.order?.items.length, 3);
+        expect(cubit.state.actionErrorCode, code);
+        // Nothing left to send twice.
+        expect(await cubit.saveEdits(), isFalse);
+        verify(() => repository.updateItems('o1', quantities: {}, removals: [], additions: {'pX': 2})).called(1);
+      });
+    }
+  });
+
   group('the repository', () {
     late _Dio dio;
     late WarehouseOrdersRepositoryImpl repo;

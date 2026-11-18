@@ -1047,6 +1047,8 @@
   "warehouseAddItemConfirm": "أضف",
   "warehouseAddItemBack": "رجوع",
   "warehouseAddedLine": "جديد",
+  "warehouseAddedLinePriceNote": "قبل العروض",
+  "warehouseAddItemAlreadyOnOrder": "هالصنف صار بالطلبية. هي الطلبية متل ما هي هلق.",
   "warehouseAddItemUnavailable": "هالصنف ما عاد متوفر. اختار غيره.",
   "warehouseConfirmSaveTitle": "حفظ التعديلات؟",
   "warehouseConfirmSaveBody": "رح ينحسب سعر الطلبية من جديد، وبيوصل للصيدلية إشعار بالتعديل.",

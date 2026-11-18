@@ -2351,6 +2351,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseAddedLine => 'جديد';
 
   @override
+  String get warehouseAddedLinePriceNote => 'قبل العروض';
+
+  @override
+  String get warehouseAddItemAlreadyOnOrder =>
+      'هالصنف صار بالطلبية. هي الطلبية متل ما هي هلق.';
+
+  @override
   String get warehouseAddItemUnavailable => 'هالصنف ما عاد متوفر. اختار غيره.';
 
   @override

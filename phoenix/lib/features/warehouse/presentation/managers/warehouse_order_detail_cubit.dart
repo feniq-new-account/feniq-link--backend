@@ -110,6 +110,15 @@ class WarehouseOrderDetailState {
 
 /// One order on the warehouse's phone: read it, move it on, or correct its
 /// items before approving it.
+/// Failures after which a save may still have reached the server: the request
+/// went out but no answer came back, or the server says the added product is
+/// already there (a save sent twice).
+const Set<String> _saveMayHaveLanded = {
+  FailureCode.timeout,
+  FailureCode.unexpected,
+  'PRODUCT_ALREADY_ON_ORDER',
+};
+
 class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {
   WarehouseOrderDetailCubit({
     required WarehouseOrdersRepository repository,
@@ -282,6 +291,24 @@ class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {
       return true;
     } on Failure catch (f) {
       if (isClosed) return false;
+      if (_saveMayHaveLanded.contains(f.code)) {
+        // The server may have saved it and only the answer was lost: keeping
+        // the draft would let a second tap send it again. Show the order as
+        // the server has it now instead, and edit from there.
+        emit(
+          state.copyWith(
+            isActing: false,
+            isEditing: false,
+            draftQuantities: const {},
+            draftRemovals: const {},
+            draftAdditions: const {},
+            actionErrorMessage: f.errMessage,
+            actionErrorCode: f.code,
+          ),
+        );
+        await load();
+        return false;
+      }
       emit(
         state.copyWith(
           isActing: false,

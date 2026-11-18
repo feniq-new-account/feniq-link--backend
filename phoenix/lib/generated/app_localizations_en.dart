@@ -2353,6 +2353,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get warehouseAddedLine => 'New';
 
   @override
+  String get warehouseAddedLinePriceNote => 'before offers';
+
+  @override
+  String get warehouseAddItemAlreadyOnOrder =>
+      'That product is already on the order. Here is the order as it is now.';
+
+  @override
   String get warehouseAddItemUnavailable =>
       'That product is no longer available. Pick another.';
 

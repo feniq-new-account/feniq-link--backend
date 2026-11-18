@@ -3992,6 +3992,18 @@ abstract class AppLocalizations {
   /// **'New'**
   String get warehouseAddedLine;
 
+  /// No description provided for @warehouseAddedLinePriceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'before offers'**
+  String get warehouseAddedLinePriceNote;
+
+  /// No description provided for @warehouseAddItemAlreadyOnOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'That product is already on the order. Here is the order as it is now.'**
+  String get warehouseAddItemAlreadyOnOrder;
+
   /// No description provided for @warehouseAddItemUnavailable.
   ///
   /// In en, this message translates to:

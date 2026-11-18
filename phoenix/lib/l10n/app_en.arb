@@ -1298,6 +1298,8 @@
   "warehouseAddItemConfirm": "Add",
   "warehouseAddItemBack": "Back",
   "warehouseAddedLine": "New",
+  "warehouseAddedLinePriceNote": "before offers",
+  "warehouseAddItemAlreadyOnOrder": "That product is already on the order. Here is the order as it is now.",
   "warehouseAddItemUnavailable": "That product is no longer available. Pick another.",
   "warehouseConfirmSaveTitle": "Save the changes?",
   "warehouseConfirmSaveBody": "The order is repriced, and the pharmacy is notified of the change.",

@@ -526,6 +526,33 @@ async function editOrderItemsInTransaction(orderId, warehouseId, userId, payload
     );
   }
 
+  // Section: no product twice. Checkout merges a repeated product into one
+  // line (order.service.js mergeDuplicateItems); an edit refuses one instead -
+  // the same product twice in one request, or a product that is already a
+  // plain line staying on the order (change that line's quantity). This is
+  // also what makes a resent save harmless: a phone that timed out and saves
+  // again finds its product already there and gets a 409, not a second line.
+  // A product inside a package is not a plain line, so adding it alone is fine.
+  {
+    const removing = new Set(removeIds);
+    const plainProductIds = new Set(
+      currentItems
+        .filter((item) => item.packageGroupId == null && !removing.has(item._id.toString()))
+        .map((item) => item.productId?.toString())
+    );
+    const seen = new Set();
+    for (const { productId } of addItems) {
+      if (seen.has(productId) || plainProductIds.has(productId)) {
+        throw ApiError.conflict(
+          'That product is already on this order - change its quantity instead.',
+          'PRODUCT_ALREADY_ON_ORDER',
+          { productId }
+        );
+      }
+      seen.add(productId);
+    }
+  }
+
   const groupById = new Map(
     (order.orderPackageGroups ?? []).map((group) => [group._id.toString(), group])
   );
@@ -631,17 +658,20 @@ async function editOrderItemsInTransaction(orderId, warehouseId, userId, payload
   );
 
   // New lines get the exact same snapshot pricing as a normal order line
-  // (order.service.js's createOrder): today's USD-to-SYP rate, with any
+  // (order.service.js's createOrder): the order's captured USD-to-SYP rate, with any
   // active product Offer and the warehouse's manufacturer discount stacked
   // in - a product costs the same whether it's added at checkout or by the
   // warehouse correcting the order afterward.
   let newItems = [];
   if (addItems.length > 0) {
     const productIds = addItems.map((item) => item.productId);
+    // The same visibility checkout applies (order.service.js createOrder): a
+    // recalled product is isActive:false while still isAvailable.
     const products = await Product.find({
       _id: { $in: productIds },
       warehouseId,
       isAvailable: true,
+      ...Product.VISIBLE_TO_PHARMACIES,
     }).session(session).populate('masterProductId');
     products.forEach(applyResolvedIdentity);
     const productById = new Map(products.map((p) => [p._id.toString(), p]));
@@ -650,20 +680,23 @@ async function editOrderItemsInTransaction(orderId, warehouseId, userId, payload
     if (missing) {
       throw ApiError.badRequest(
         'One of the products to add is not available from this warehouse.',
-        undefined,
+        { productId: missing.productId },
         'PRODUCT_UNAVAILABLE'
       );
     }
 
-    const rate = await getRate();
-    if (!rate) {
+    // Priced at the ORDER's captured rate, the one its other lines were priced
+    // at and that finalAmountUsd and the delivery charge are derived through
+    // (MONEY_FLOW.md section 3) - not today's rate. Today's rate only for an
+    // older order that captured none.
+    const usdToSyp = order.fx?.rate || (await getRate())?.usdToSyp;
+    if (!usdToSyp) {
       throw ApiError.badRequest(
         'Exchange rate is not available yet - items cannot be priced.',
         undefined,
         'EXCHANGE_RATE_UNAVAILABLE'
       );
     }
-    const usdToSyp = rate.usdToSyp;
 
     const [offers, manufacturerDiscountByName] = await Promise.all([
       Offer.find({

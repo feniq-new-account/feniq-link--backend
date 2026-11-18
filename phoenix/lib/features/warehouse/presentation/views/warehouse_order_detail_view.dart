@@ -409,7 +409,10 @@ class WarehouseOrderDetailView extends StatelessWidget {
           ],
         ),
         if (manufacturer != null) Text(manufacturer, style: muted),
-        Text(formatMoneyFromUsd(product.priceUsd, usdToSyp, l10n.currencySuffix), style: muted),
+        Text(
+          '${formatMoneyFromUsd(product.priceUsd, usdToSyp, l10n.currencySuffix)} · ${l10n.warehouseAddedLinePriceNote}',
+          style: muted,
+        ),
         const SizedBox(height: 4),
         Wrap(
           alignment: WrapAlignment.spaceBetween,
