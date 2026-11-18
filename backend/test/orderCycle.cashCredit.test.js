@@ -9,6 +9,10 @@
 //   stays a debt on the pharmacy until someone records it;
 // - manager and accountant both record payments, and today's receipts shows who.
 // No production data, credentials, external messages or payment providers.
+//
+// The tests run in order and build on each other (node:test runs a file's
+// tests one after another): the receipts test counts the payments of the
+// three before it, so run the file whole, not one test alone.
 process.env.NODE_ENV = 'test';
 process.env.MONGODB_URI ||= 'mongodb://127.0.0.1/unused';
 process.env.JWT_SECRET ||= 'feniq-order-cycle-tests-at-least-32-characters';
@@ -26,9 +30,12 @@ const Credit = require('../src/models/pharmacyCredit.model');
 const Account = require('../src/models/ledgerAccount.model');
 const Entry = require('../src/models/ledgerEntry.model');
 const ExchangeRate = require('../src/models/exchangeRate.model');
+const { businessDateOf } = require('../src/utils/businessTime');
 
 let server, base, admin, owner, accountant, pharmacist, warehouse, pharmacy, product;
 let orderSeq = 0;
+// The Damascus business day the run started on: receipts are read for it.
+let runDay;
 
 const token = (u) => jwt.sign({ sub: String(u._id || u.id), role: u.role, tokenVersion: 0 }, process.env.JWT_SECRET);
 async function call(user, path, method = 'GET', body, expected = 200) {
@@ -68,6 +75,7 @@ const debt = async () => (await call(accountant, `/warehouse/balances/${pharmacy
 const allowsCredit = async (user) => (await call(user, '/warehouse/settings')).settings.allowsCredit;
 
 test.before(async () => {
+  runDay = businessDateOf(new Date());
   await startMemoryMongo({ dbName: 'feniq-order-cycle' });
   await Promise.all([Account.init(), Entry.init(), Order.init(), Payment.init(), Credit.init()]);
   const person = (name, role, phone, warehouseRole) => User.create({ name, role, phone, warehouseRole, status: 'active' });
@@ -130,12 +138,19 @@ test('credit switched on by the admin: part now, the rest later, and a reversed 
   await call(accountant, `/warehouse/payments/${mistake.id}/reverse`, 'POST',
     { reason: 'Entered twice', idempotencyKey: 'cycle-credit-mistake-reverse' }, 201);
   assert.equal(await debt(), 60000, 'the reversal puts the debt back');
+  // Credit switched off again with a debt open: the debt stays as it is.
+  await call(admin, `/admin/warehouses/${warehouse.id}/credit`, 'PUT', { allowsCredit: false });
+  assert.equal(await allowsCredit(accountant), false);
+  assert.equal(await debt(), 60000, 'switching credit off never touches an open debt');
   await pay(owner, 60000, 'cycle-credit-rest');
   assert.equal(await debt(), 0);
 });
 
-test("today's receipts match the day: received, reversed, by method and by who took it", async () => {
-  const day = (await call(accountant, '/warehouse/payments/receipts')).receipts;
+test("today's receipts match the day: received, reversed, by method and by who took it", async (t) => {
+  // A run that crossed midnight in Damascus split its payments over two days.
+  if (businessDateOf(new Date()) !== runDay) return t.skip('the run crossed midnight in Damascus');
+  const day = (await call(accountant, `/warehouse/payments/receipts?date=${runDay}`)).receipts;
+  assert.equal(day.date, runDay);
   // 100,000 + 100,000 + 40,000 + 5,000 + 60,000 received; the 5,000 reversed.
   assert.equal(day.receivedSyp, 305000);
   assert.equal(day.receivedCount, 5);
@@ -146,7 +161,7 @@ test("today's receipts match the day: received, reversed, by method and by who t
   const who = Object.fromEntries(day.byRecorder.map((r) => [r.role, r.amountSyp]));
   assert.deepEqual(who, { owner: 160000, accountant: 145000 });
   // The manager sees the same day.
-  assert.equal((await call(owner, '/warehouse/payments/receipts')).receipts.netSyp, 300000);
+  assert.equal((await call(owner, `/warehouse/payments/receipts?date=${runDay}`)).receipts.netSyp, 300000);
 
   const account = await Account.findOne({ pharmacyId: pharmacy.id, warehouseId: warehouse.id });
   assert.equal((await require('../src/services/ledger.service').verifyAccount(account.id)).ok, true);
