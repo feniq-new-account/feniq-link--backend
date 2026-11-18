@@ -111,12 +111,13 @@ class WarehouseOrderDetailState {
 /// One order on the warehouse's phone: read it, move it on, or correct its
 /// items before approving it.
 /// Failures after which a save may still have reached the server: the request
-/// went out but no answer came back, or the server says the added product is
-/// already there (a save sent twice).
+/// went out but no answer came back, or the server answers a save sent twice -
+/// the added product is already there, or a line it dropped is already gone.
 const Set<String> _saveMayHaveLanded = {
   FailureCode.timeout,
   FailureCode.unexpected,
   'PRODUCT_ALREADY_ON_ORDER',
+  'ORDER_ITEM_NOT_FOUND',
 };
 
 class WarehouseOrderDetailCubit extends Cubit<WarehouseOrderDetailState> {

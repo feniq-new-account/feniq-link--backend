@@ -123,7 +123,7 @@ void main() {
       cubit.addProduct(_substitute, 2);
     });
 
-    for (final code in [FailureCode.timeout, 'PRODUCT_ALREADY_ON_ORDER']) {
+    for (final code in [FailureCode.timeout, 'PRODUCT_ALREADY_ON_ORDER', 'ORDER_ITEM_NOT_FOUND']) {
       test('$code drops the draft and shows the order as the server has it', () async {
         when(
           () => repository.updateItems('o1', quantities: {}, removals: [], additions: {'pX': 2}),
