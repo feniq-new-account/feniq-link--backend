@@ -1210,11 +1210,11 @@ async function notifyWarehouseOfOrder(order, kind) {
     const fromEn = pharmacy?.nameEn || pharmacy?.nameAr;
     const created = kind === 'created';
     await notificationService.sendToAll(recipients, {
-      titleAr: created ? 'طلبية جديدة' : 'طلبية ملغاة',
+      titleAr: created ? 'طلب جديد' : 'طلب ملغى',
       titleEn: created ? 'New order' : 'Order cancelled',
       bodyAr: created
-        ? `طلبية رقم ${order.orderNumber}${fromAr ? ` من ${fromAr}` : ''}`
-        : `${fromAr ? `${fromAr} ألغت` : 'انلغت'} الطلبية رقم ${order.orderNumber}`,
+        ? `طلب رقم ${order.orderNumber}${fromAr ? ` من ${fromAr}` : ''}`
+        : `${fromAr ? `ألغت ${fromAr}` : 'أُلغي'} الطلب رقم ${order.orderNumber}`,
       bodyEn: created
         ? `Order #${order.orderNumber}${fromEn ? ` from ${fromEn}` : ''}`
         : `${fromEn ? `${fromEn} cancelled` : 'Cancelled:'} order #${order.orderNumber}`,

@@ -218,11 +218,11 @@ async function advanceOrderStatus(orderId, warehouseId, userId, transition = {})
 async function notifyPharmacyOfStage(order, status) {
   const text = {
     confirmed: {
-      ar: `انقبلت طلبيتك رقم ${order.orderNumber}`,
+      ar: `تم قبول طلبك رقم ${order.orderNumber}`,
       en: `Your order #${order.orderNumber} was accepted`,
     },
     out_for_delivery: {
-      ar: `طلبك رقم ${order.orderNumber} بالطريق إليك`,
+      ar: `طلبك رقم ${order.orderNumber} في الطريق إليك`,
       en: `Your order #${order.orderNumber} is on the way`,
     },
     delivered: {
