@@ -55,6 +55,8 @@ const LedgerAccount = require('../src/models/ledgerAccount.model');
 
 const orderService = require('../src/services/order.service');
 const warehouseOrderService = require('../src/services/warehouseOrder.service');
+const warehouseOrderViewModel = require('../src/viewmodels/warehouseOrder.viewmodel');
+const { autoDeliverAtFor } = require('../src/utils/autoDelivery');
 
 function withCode(expected) {
   return (err) => {
@@ -284,6 +286,88 @@ test('an order on the road for a day closes on its own; a fresher one stays', as
   assert.strictEqual((await Order.findById(fresh._id)).status, 'out_for_delivery');
   // The pharmacist is told it was delivered.
   assert.ok(notifications.some((n) => n.userId === String(ids.pharmacyUser) && /delivered/.test(n.bodyEn)));
+});
+
+// The manager is shown when an order on the road will close on its own
+// (autoDeliverAt). It must be the very moment the hourly job starts treating
+// it as due, or the screen would promise an hour the server does not keep.
+test('autoDeliverAt is a day after the order first went on the road, and only while it is there', () => {
+  const left = new Date('2026-11-20T08:00:00Z');
+  const again = new Date('2026-11-20T15:00:00Z');
+  const onRoad = { status: 'out_for_delivery', statusHistory: [
+    { status: 'pending', changedAt: new Date('2026-11-20T07:00:00Z') },
+    { status: 'out_for_delivery', changedAt: again },
+    { status: 'out_for_delivery', changedAt: left },
+  ] };
+  assert.strictEqual(autoDeliverAtFor(onRoad).toISOString(), '2026-11-21T08:00:00.000Z');
+  assert.strictEqual(autoDeliverAtFor({ ...onRoad, status: 'delivered' }), null);
+  assert.strictEqual(autoDeliverAtFor({ status: 'confirmed', statusHistory: [] }), null);
+  assert.strictEqual(autoDeliverAtFor({ status: 'out_for_delivery', statusHistory: [] }), null);
+});
+
+test('no deadline is promised for an order the job cannot close (waiting for its seal photo)', () => {
+  const { FEATURES } = require('../src/config/features');
+  const order = { status: 'out_for_delivery', requiresDeliverySealPhoto: true, deliverySealPhoto: null,
+    statusHistory: [{ status: 'out_for_delivery', changedAt: new Date('2026-11-20T08:00:00Z') }] };
+  const was = FEATURES.deliverySealPhoto;
+  try {
+    FEATURES.deliverySealPhoto = true;
+    assert.strictEqual(autoDeliverAtFor(order), null);
+    assert.ok(autoDeliverAtFor({ ...order, deliverySealPhoto: 'https://x/seal.jpg' }));
+    FEATURES.deliverySealPhoto = false;
+    assert.ok(autoDeliverAtFor(order));
+  } finally {
+    FEATURES.deliverySealPhoto = was;
+  }
+});
+
+test('the hourly job closes an order exactly when its autoDeliverAt has passed, never before', async () => {
+  const order = await makeOrder('out_for_delivery');
+  const due = autoDeliverAtFor(await Order.findById(order._id).lean());
+  assert.ok(due);
+  await warehouseOrderService.autoDeliverStaleOrders(new Date(due.getTime() - 60 * 1000));
+  assert.strictEqual((await Order.findById(order._id)).status, 'out_for_delivery');
+  await warehouseOrderService.autoDeliverStaleOrders(new Date(due.getTime() + 1000));
+  assert.strictEqual((await Order.findById(order._id)).status, 'delivered');
+});
+
+test('while the countdown is switched off (the default), no response carries a deadline', async () => {
+  const { FEATURES } = require('../src/config/features');
+  assert.strictEqual(FEATURES.autoDeliverCountdown, false);
+  const order = await makeOrder('confirmed');
+  const advanced = await warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser,
+    { expectedStatus: 'confirmed', targetStatus: 'out_for_delivery' });
+  assert.strictEqual(warehouseOrderViewModel.toWarehouseOrderStatusResponse(advanced).order.autoDeliverAt, null);
+  const { rows } = await warehouseOrderService.listOrdersForWarehouse(ids.warehouse, 'out_for_delivery', { limit: 100 });
+  assert.ok(warehouseOrderViewModel.toWarehouseOrdersResponse(rows).orders.every((o) => o.autoDeliverAt === null));
+  // The hourly auto-delivery itself is not switched off by this.
+  assert.ok(autoDeliverAtFor(advanced));
+});
+
+test('with the countdown switched on, the warehouse list, detail and advance responses carry autoDeliverAt', async (t) => {
+  const { FEATURES } = require('../src/config/features');
+  FEATURES.autoDelivery = true;
+  FEATURES.autoDeliverCountdown = true;
+  t.after(() => { FEATURES.autoDeliverCountdown = false; FEATURES.autoDelivery = false; });
+  const order = await makeOrder('confirmed');
+  const advanced = await warehouseOrderService.advanceOrderStatus(String(order._id), ids.warehouse, ids.warehouseUser,
+    { expectedStatus: 'confirmed', targetStatus: 'out_for_delivery' });
+  const statusBody = warehouseOrderViewModel.toWarehouseOrderStatusResponse(advanced);
+  const leftAt = advanced.statusHistory.find((e) => e.status === 'out_for_delivery').changedAt;
+  assert.strictEqual(statusBody.order.autoDeliverAt.getTime(), new Date(leftAt).getTime() + 24 * 3600 * 1000);
+
+  const { rows } = await warehouseOrderService.listOrdersForWarehouse(ids.warehouse, 'out_for_delivery', { limit: 100 });
+  const listed = warehouseOrderViewModel.toWarehouseOrdersResponse(rows).orders.find((o) => String(o.id) === String(order._id));
+  assert.strictEqual(listed.autoDeliverAt.getTime(), statusBody.order.autoDeliverAt.getTime());
+
+  const detail = await warehouseOrderService.getOrderDetailForWarehouse(String(order._id), ids.warehouse);
+  const detailBody = warehouseOrderViewModel.toWarehouseOrderDetailResponse(detail);
+  assert.strictEqual(detailBody.order.autoDeliverAt.getTime(), statusBody.order.autoDeliverAt.getTime());
+
+  const pending = await makeOrder('pending');
+  const { rows: waiting } = await warehouseOrderService.listOrdersForWarehouse(ids.warehouse, 'pending', { limit: 100 });
+  const waitingRow = warehouseOrderViewModel.toWarehouseOrdersResponse(waiting).orders.find((o) => String(o.id) === String(pending._id));
+  assert.strictEqual(waitingRow.autoDeliverAt, null);
 });
 
 test('retrying an explicit transition confirms its target without advancing twice', async () => {

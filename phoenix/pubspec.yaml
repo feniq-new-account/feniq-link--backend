@@ -83,6 +83,10 @@ dependencies:
   speech_to_text: ^7.0.0
   # 3.3.x: newer lottie needs Dart 3.11, CI builds on Flutter 3.35 (Dart 3.9).
   lottie: ">=3.3.3 <3.4.0"
+  # Invoice PDFs, saved/shared through Android's own share and print sheets:
+  # no storage permission. Both Apache-2.0, free.
+  pdf: ^3.12.0
+  printing: ^5.14.3
 
 dev_dependencies:
   flutter_test:
@@ -130,6 +134,10 @@ flutter:
     # Splash intro (Lottie, from Claude Design; sparks and its own background
     # removed - SplashView paints the background).
     - assets/animations/
+    # Invoice PDFs only (core/pdf/invoice_pdf.dart): the pdf package shapes
+    # Arabic through Unicode presentation forms, which the UI fonts above do
+    # not carry. Noto Sans Arabic does (SIL OFL, see OFL-NotoSansArabic.txt).
+    - assets/fonts/pdf/
 
   # Same two faces as the FENIQ website, so app and site read as one brand
   # (SIL OFL, see assets/fonts/OFL-*.txt). Readex Pro carries titles, buttons,

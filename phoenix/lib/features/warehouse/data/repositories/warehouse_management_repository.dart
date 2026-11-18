@@ -43,6 +43,11 @@ abstract class WarehouseManagementRepository {
   /// The owner's summary for [period]: 'today', 'week' or 'month'.
   Future<WarehouseSummary> getSummary({String period = 'today'});
 
+  /// One business day's receipts (server: dailyReceipts.service.js): net,
+  /// received, reversed, by method and by who recorded. Today when [date] is
+  /// null; otherwise 'YYYY-MM-DD'.
+  Future<Map<String, dynamic>> getDailyReceipts({String? date});
+
   /// Read-only collection_v2 journal; null summary means no active contract.
   /// Never infer a zero balance or commission when collection_v2 is off.
   Future<Map<String, dynamic>> getCollectionAccounting({String period = 'month'});

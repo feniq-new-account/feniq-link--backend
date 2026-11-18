@@ -42,6 +42,26 @@ const _androidChannel = AndroidNotificationChannel(
   importance: Importance.high,
 );
 
+// A warehouse's new and cancelled orders (backend notification.service.js
+// NEW_ORDERS_ANDROID_CHANNEL). Maximum importance, sound and vibration, shown
+// on the lock screen: the manager must hear it with the phone in a pocket.
+// Android fixes a channel's sound/importance at creation, so this one is
+// separate from the general channel rather than an upgrade of it.
+const newOrdersAndroidChannel = AndroidNotificationChannel(
+  'feniq_new_orders',
+  'طلبيات جديدة',
+  description: 'تنبيه بصوت واهتزاز لكل طلبية جديدة أو ملغاة.',
+  importance: Importance.max,
+  playSound: true,
+  enableVibration: true,
+);
+
+/// The channel a foreground copy of [data]'s push is shown on: the one the
+/// server named, when the app knows it, else the general channel.
+@visibleForTesting
+AndroidNotificationChannel channelForPushData(Map<String, dynamic> data) =>
+    data['androidChannel'] == newOrdersAndroidChannel.id ? newOrdersAndroidChannel : _androidChannel;
+
 // Push notifications (order status updates, new offers, admin
 // announcements - see backend/src/services/notification.service.js).
 // Requests permission, keeps the backend's record of this device's FCM
@@ -245,11 +265,12 @@ class FcmService implements SessionScoped {
     );
     // TEMP DIAGNOSTIC LOG (see FCM_DEBUG task).
     _logger.info('FCM_DEBUG: creating Android notification channel');
-    await _localNotifications
+    final androidPlugin = _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(_androidChannel);
+        >();
+    await androidPlugin?.createNotificationChannel(_androidChannel);
+    await androidPlugin?.createNotificationChannel(newOrdersAndroidChannel);
     // TEMP DIAGNOSTIC LOG (see FCM_DEBUG task).
     _logger.info('FCM_DEBUG: notification channel created');
 
@@ -271,6 +292,8 @@ class FcmService implements SessionScoped {
       _saveToInbox(message);
       if (notification == null) return;
       _logger.info('FCM_DEBUG: showing foreground local notification');
+      final channel = channelForPushData(message.data);
+      final urgent = channel.id == newOrdersAndroidChannel.id;
       _localNotifications
           .show(
             notification.hashCode,
@@ -278,11 +301,13 @@ class FcmService implements SessionScoped {
             notification.body,
             NotificationDetails(
               android: AndroidNotificationDetails(
-                _androidChannel.id,
-                _androidChannel.name,
-                channelDescription: _androidChannel.description,
-                importance: Importance.high,
-                priority: Priority.high,
+                channel.id,
+                channel.name,
+                channelDescription: channel.description,
+                importance: urgent ? Importance.max : Importance.high,
+                priority: urgent ? Priority.max : Priority.high,
+                category: urgent ? AndroidNotificationCategory.message : null,
+                visibility: NotificationVisibility.public,
               ),
               iOS: const DarwinNotificationDetails(),
             ),

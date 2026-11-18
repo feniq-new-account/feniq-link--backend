@@ -1648,7 +1648,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statementReturnCredits => 'المرتجعات';
 
   @override
-  String get statementReturnCreditApplications => 'استخدام رصيد مرتجع (غير نقدي)';
+  String get statementReturnCreditApplications =>
+      'استخدام رصيد مرتجع (غير نقدي)';
 
   @override
   String get statementKindCharge => 'تسليم طلب';
@@ -1669,10 +1670,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statementKindReturnCreditReversal => 'عكس رصيد مرتجع';
 
   @override
-  String get statementKindReturnCreditApplication => 'استخدام رصيد مرتجع (غير نقدي)';
+  String get statementKindReturnCreditApplication =>
+      'استخدام رصيد مرتجع (غير نقدي)';
 
   @override
-  String get statementKindReturnCreditApplicationReversal => 'عكس استخدام رصيد مرتجع';
+  String get statementKindReturnCreditApplicationReversal =>
+      'عكس استخدام رصيد مرتجع';
 
   @override
   String get statementKindManualCredit => 'إضافة رصيد';
@@ -2224,6 +2227,23 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String warehouseNewOrdersArrived(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'وصل $count طلب جديد',
+      one: 'وصل طلب جديد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warehouseNewOrdersSeen => 'تمام';
+
+  @override
+  String get warehouseOrderNewBadge => 'جديد';
+
+  @override
   String get warehouseNoOrdersTitle => 'ما في طلبيات هون';
 
   @override
@@ -2296,7 +2316,49 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get warehouseEditHint =>
-      'إضافة صنف جديد أو تعديل عرض بتصير من لوحة المستودع.';
+      'تعديل العروض (الباقات) بيصير من لوحة المستودع.';
+
+  @override
+  String get warehouseAddItem => 'إضافة صنف';
+
+  @override
+  String get warehouseAddItemTitle => 'إضافة صنف للطلبية';
+
+  @override
+  String get warehouseAddItemSearchHint => 'دوّر باسم الصنف أو الشركة';
+
+  @override
+  String get warehouseAddItemEmpty => 'ما في صنف متوفر بهالاسم.';
+
+  @override
+  String get warehouseAddItemFailed => 'ما قدرنا نجيب الأصناف. جرّب كمان مرة.';
+
+  @override
+  String get warehouseAddItemOnOrder =>
+      'موجود بالطلبية، عدّل كميته من القائمة.';
+
+  @override
+  String get warehouseAddItemPriceNote =>
+      'السعر قبل العروض. السعر النهائي بينحسب لما تحفظ.';
+
+  @override
+  String get warehouseAddItemConfirm => 'أضف';
+
+  @override
+  String get warehouseAddItemBack => 'رجوع';
+
+  @override
+  String get warehouseAddedLine => 'جديد';
+
+  @override
+  String get warehouseAddedLinePriceNote => 'قبل العروض';
+
+  @override
+  String get warehouseAddItemAlreadyOnOrder =>
+      'هالصنف صار بالطلبية. هي الطلبية متل ما هي هلق.';
+
+  @override
+  String get warehouseAddItemUnavailable => 'هالصنف ما عاد متوفر. اختار غيره.';
 
   @override
   String get warehouseConfirmSaveTitle => 'حفظ التعديلات؟';
@@ -3441,4 +3503,224 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get errorFeatureControlChanged =>
       'تغيّرت إعدادات الميزات. أعد تحميلها قبل الحفظ.';
+
+  @override
+  String get appPermissionsTitle => 'صلاحيات التطبيق';
+
+  @override
+  String get appPermissionsIntro =>
+      'هون كل شي بيطلبه فينيق من موبايلك وليش. ما منطلب شي ما منحتاجه، وفيك تغيّر أي وحدة من هون.';
+
+  @override
+  String get appPermissionsWhy => 'ليش؟';
+
+  @override
+  String get permNotificationsTitle => 'الإشعارات';
+
+  @override
+  String get permNotificationsWhyWarehouse =>
+      'لحتى يوصلك صوت واهتزاز مع كل طلبية جديدة، حتى والتطبيق مسكّر.';
+
+  @override
+  String get permNotificationsWhyOther =>
+      'لحتى يوصلك خبر لما يتغيّر وضع طلبك أو يجي عرض جديد.';
+
+  @override
+  String get permBatteryTitle => 'بلا قيود على البطارية';
+
+  @override
+  String get permBatteryWhy =>
+      'توفير البطارية بشاومي وهواوي وسامسونج بينيّم التطبيق وبيأخّر إشعارات الطلبيات. هالخيار بيخلّيها توصل بوقتها.';
+
+  @override
+  String get permAutostartTitle => 'التشغيل التلقائي';
+
+  @override
+  String get permAutostartWhy =>
+      'بهالموبايل في مفتاح «تشغيل تلقائي» مسكّر من المصنع. شغّله لفينيق لحتى توصل الإشعارات بعد ما تسكّر التطبيق أو تعيد تشغيل الموبايل.';
+
+  @override
+  String get permAutostartSteps =>
+      'بشاومي: الإعدادات ← التطبيقات ← إدارة التطبيقات ← Feniq ← شغّل «التشغيل التلقائي»، وبـ«توفير البطارية» اختار «بلا قيود».';
+
+  @override
+  String get permLocationTitle => 'الموقع';
+
+  @override
+  String get permLocationWhy =>
+      'لتحديد مكان الصيدلية عالخريطة، ولتسجيل زيارات المندوب ومسار السائق.';
+
+  @override
+  String get permBackgroundLocationTitle => 'الموقع بالخلفية';
+
+  @override
+  String get permBackgroundLocationWhy =>
+      'بس أثناء رحلة توزيع شغّالة، لحتى يضل موقعك يتحدّث والموبايل بالجيبة. اختار «السماح طول الوقت».';
+
+  @override
+  String get permCameraTitle => 'الكاميرا';
+
+  @override
+  String get permCameraWhy =>
+      'لتصوير المرتجعات وختم التسليم ومسح رمز الزيارة. الصور من المعرض ما بدها صلاحية.';
+
+  @override
+  String get permMicrophoneTitle => 'المايكروفون';
+
+  @override
+  String get permMicrophoneWhy => 'لتسجيل الدفعة بالصوت بدل الكتابة.';
+
+  @override
+  String get permStateGranted => 'مفعّلة';
+
+  @override
+  String get permStateDenied => 'مو مفعّلة';
+
+  @override
+  String get permStateBlocked => 'مرفوضة، من الإعدادات';
+
+  @override
+  String get permStateUnknown => 'تأكد بنفسك';
+
+  @override
+  String get permActionEnable => 'فعّل';
+
+  @override
+  String get permActionOpenSettings => 'افتح الإعدادات';
+
+  @override
+  String get permActionOpenPage => 'افتح الصفحة';
+
+  @override
+  String get permAutostartOpenFailed =>
+      'ما قدرنا نفتح الصفحة. افتحها من الإعدادات حسب الخطوات.';
+
+  @override
+  String get pushDelayedBannerText =>
+      'ممكن تتأخر إشعارات الطلبيات على هالموبايل.';
+
+  @override
+  String get pushDelayedBannerAction => 'صلّحها';
+
+  @override
+  String get invoicePdfAction => 'حفظ الفاتورة PDF';
+
+  @override
+  String get invoicePdfShare => 'مشاركة أو حفظ بالملفات';
+
+  @override
+  String get invoicePdfShareHint => 'واتساب، Drive، أو «الملفات» على موبايلك';
+
+  @override
+  String get invoicePdfPrint => 'طباعة أو «حفظ كـ PDF»';
+
+  @override
+  String get invoicePdfFailed => 'ما قدرنا نجهّز الفاتورة. جرّب مرة تانية.';
+
+  @override
+  String get invoicePdfItem => 'الصنف';
+
+  @override
+  String get invoicePdfQuantity => 'الكمية';
+
+  @override
+  String get invoicePdfUnitPrice => 'سعر الوحدة';
+
+  @override
+  String get invoicePdfLineTotal => 'المجموع';
+
+  @override
+  String get invoicePdfFree => 'مجاني';
+
+  @override
+  String invoicePdfFrom(String name) {
+    return 'المستودع: $name';
+  }
+
+  @override
+  String invoicePdfTo(String name) {
+    return 'الصيدلية: $name';
+  }
+
+  @override
+  String get invoicePdfFooter => 'فاتورة من تطبيق فينيق';
+
+  @override
+  String get invoicePdfTitle => 'فاتورة';
+
+  @override
+  String warehouseAutoDeliverHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: 'بيتسجّل مُسلّم لحاله بعد $hours ساعة',
+      few: 'بيتسجّل مُسلّم لحاله بعد $hours ساعات',
+      two: 'بيتسجّل مُسلّم لحاله بعد ساعتين',
+      one: 'بيتسجّل مُسلّم لحاله بعد ساعة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String warehouseAutoDeliverMinutes(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'بيتسجّل مُسلّم لحاله بعد $minutes دقيقة',
+      few: 'بيتسجّل مُسلّم لحاله بعد $minutes دقائق',
+      two: 'بيتسجّل مُسلّم لحاله بعد دقيقتين',
+      one: 'بيتسجّل مُسلّم لحاله بعد دقيقة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warehouseAutoDeliverDue => 'بيتسجّل مُسلّم لحاله خلال ساعة';
+
+  @override
+  String get warehouseAutoDeliverExplain =>
+      'إذا ما سجّلت التسليم بنفسك، النظام بيعلّم الطلب مُسلّم لحاله بعد يوم من خروجه، ومبلغه بينكتب دين عالصيدلية. تأجيل موعد التوصيل ما بيوقّف هالعدّاد.';
+
+  @override
+  String get dailyReceiptsTitle => 'مقبوضات اليوم';
+
+  @override
+  String get dailyReceiptsNet => 'الصافي';
+
+  @override
+  String dailyReceiptsReceived(String amount, int count) {
+    return 'انقبض: $amount · $count دفعة';
+  }
+
+  @override
+  String dailyReceiptsReversed(String amount) {
+    return 'انلغى: −$amount';
+  }
+
+  @override
+  String get dailyReceiptsNone => 'ما انقبض شي اليوم.';
+
+  @override
+  String get dailyReceiptsFailed => 'ما قدرنا نجيب مقبوضات اليوم.';
+
+  @override
+  String get dailyReceiptsCash => 'نقداً';
+
+  @override
+  String get dailyReceiptsTransfer => 'تحويل';
+
+  @override
+  String get dailyReceiptsCheque => 'شيك';
+
+  @override
+  String get dailyReceiptsOther => 'غير ذلك';
+
+  @override
+  String get dailyReceiptsRoleOwner => 'مدير';
+
+  @override
+  String get dailyReceiptsRoleAccountant => 'محاسب';
+
+  @override
+  String get dailyReceiptsRoleLegacy => 'حساب المستودع';
 }

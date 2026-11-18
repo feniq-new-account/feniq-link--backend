@@ -61,10 +61,9 @@ test('warehouse operators cannot grant membership or inspect another warehouse s
   assert.equal(own.status, 200);
 });
 
-test('only accounting operators post cash; owner is rejected before payload handling', async () => {
-  const denied = await request(owner, '/warehouse/payments', 'POST', {});
-  assert.equal(denied.status, 403);
-  assert.equal(denied.body.code, 'ACCOUNTANT_REQUIRED');
+test('the manager (owner) and the accountant both reach payment recording', async () => {
+  const ownerPost = await request(owner, '/warehouse/payments', 'POST', {});
+  assert.equal(ownerPost.status, 400); // past the permission check; payload rejected
   const allowed = await request(accountant, '/warehouse/payments', 'POST', {});
   assert.equal(allowed.status, 400); // payload rejected by the payment service, not membership lookup
 });
@@ -174,7 +173,8 @@ test('member listings and self-auth return the same effective permissions withou
   const own = await request(owner, '/auth/me');
   assert.equal(own.status, 200);
   assert.deepEqual(own.body.user.permissions, members.find(m => String(m.id) === owner.id).permissions);
-  assert.equal(own.body.user.permissions.paymentRecord, false);
+  assert.equal(own.body.user.permissions.paymentRecord, true);
+  assert.equal(own.body.user.permissions.paymentReverse, false);
   assert.equal(JSON.stringify(members).includes('tokenVersion'), false);
 });
 test('concurrent downgrades of different owners cannot leave a warehouse without an owner', async () => {

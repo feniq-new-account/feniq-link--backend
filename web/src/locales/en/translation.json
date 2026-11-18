@@ -219,6 +219,7 @@
     "saveItemChanges": "Save changes",
     "confirmSaveItemChanges": "This will recalculate the order price and notify the pharmacist.",
     "itemChangesSaved": "Changes saved.",
+    "productAlreadyOnOrder": "That product is already on the order - change its quantity in the list.",
     "noAvailableProducts": "No available products to add.",
     "deliverySealPhoto": "Delivery seal photo",
     "deliverySealConfirmedAt": "Confirmed by the pharmacy on {{date}}",
@@ -1916,6 +1917,20 @@
       "creditentries": "Credit entries",
       "pharmacycredits": "Pharmacy credits",
       "complaints": "Complaints"
+    },
+    "demoPurge": {
+      "title": "Delete demo warehouses",
+      "intro": "Deletes the three demo warehouses (0930000101 to 0930000103) and everything of theirs: products, orders, payments, debts and ledger, returns, offers, reps and staff logins. Pharmacy and admin accounts are never deleted. Back up first.",
+      "preview": "What will be deleted?",
+      "nothing": "No demo warehouses left to delete.",
+      "warehouses": "Warehouses:",
+      "logins": "Logins to delete (warehouse staff only):",
+      "pharmaciesKept": "Pharmacy accounts: {{count}} — untouched.",
+      "backedUp": "I made today's backup and checked it",
+      "typePhrase": "To confirm, type: {{phrase}}",
+      "execute": "Permanently delete {{count}} demo warehouse(s)",
+      "changed": "The data changed since the preview. Preview again.",
+      "done": "Deleted {{warehouses}} warehouse(s) and {{logins}} staff login(s). Pharmacy accounts remaining: {{pharmacies}}."
     }
   },
   "pilotAccess": {
@@ -2050,7 +2065,35 @@
     "overdue": "Overdue receivables follow-up",
     "agingNote": "Monitoring estimate using oldest debt first and the warehouse threshold; not invoice payment allocation. Read time is independent of the summary above.",
     "noOverdue": "No overdue receivables under current follow-up settings.",
-    "allOverdue": "View complete overdue list"
+    "allOverdue": "View complete overdue list",
+    "receipts": {
+      "title": "Today's receipts",
+      "hint": "Every payment dated that day, as in the ledger: received minus reversed that day, by method and by who recorded it.",
+      "day": "Day",
+      "method_cash": "Cash",
+      "method_bank_transfer": "Transfer",
+      "method_cheque": "Cheque",
+      "method_other": "Other",
+      "role_owner": "Manager",
+      "role_accountant": "Accountant",
+      "role_legacy": "Warehouse account",
+      "payments": "{{count}} payment(s)",
+      "none": "Nothing received that day.",
+      "col_time": "Time",
+      "col_pharmacy": "Pharmacy",
+      "col_method": "Method",
+      "col_by": "Recorded by",
+      "col_amount": "Amount",
+      "truncated": "Showing the first 500 payments only.",
+      "net": "Net",
+      "received": "Received",
+      "reversedTotal": "Reversed",
+      "reversal": "Reversal",
+      "unknown": "{{count}} old payment(s) with no SYP amount (not counted).",
+      "backdated": "{{count}} payment(s) entered today with an earlier date (counted on their own day):",
+      "methodReceived": "{{method}} (received)",
+      "reversedLater": "reversed later"
+    }
   },
   "paymentProof": {
     "title": "Warehouse receipt proof",

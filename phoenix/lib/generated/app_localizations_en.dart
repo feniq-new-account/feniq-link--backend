@@ -1650,7 +1650,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statementReturnCredits => 'Returned';
 
   @override
-  String get statementReturnCreditApplications => 'Return credit applied (non-cash)';
+  String get statementReturnCreditApplications =>
+      'Return credit applied (non-cash)';
 
   @override
   String get statementKindCharge => 'Order delivered';
@@ -1671,10 +1672,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statementKindReturnCreditReversal => 'Return credit reversed';
 
   @override
-  String get statementKindReturnCreditApplication => 'Return credit applied (non-cash)';
+  String get statementKindReturnCreditApplication =>
+      'Return credit applied (non-cash)';
 
   @override
-  String get statementKindReturnCreditApplicationReversal => 'Return credit application reversed';
+  String get statementKindReturnCreditApplicationReversal =>
+      'Return credit application reversed';
 
   @override
   String get statementKindManualCredit => 'Credit added';
@@ -2225,6 +2228,23 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String warehouseNewOrdersArrived(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new orders arrived',
+      one: '1 new order arrived',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warehouseNewOrdersSeen => 'Got it';
+
+  @override
+  String get warehouseOrderNewBadge => 'New';
+
+  @override
   String get warehouseNoOrdersTitle => 'No orders here';
 
   @override
@@ -2297,7 +2317,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warehouseEditHint =>
-      'Adding a product or changing a package is done in the warehouse panel.';
+      'Packages are changed in the warehouse panel.';
+
+  @override
+  String get warehouseAddItem => 'Add an item';
+
+  @override
+  String get warehouseAddItemTitle => 'Add an item to the order';
+
+  @override
+  String get warehouseAddItemSearchHint => 'Search by product or company';
+
+  @override
+  String get warehouseAddItemEmpty => 'No available product matches.';
+
+  @override
+  String get warehouseAddItemFailed =>
+      'Couldn\'t load the products. Try again.';
+
+  @override
+  String get warehouseAddItemOnOrder =>
+      'Already on the order - change its quantity in the list.';
+
+  @override
+  String get warehouseAddItemPriceNote =>
+      'List price before offers. The final price is worked out when you save.';
+
+  @override
+  String get warehouseAddItemConfirm => 'Add';
+
+  @override
+  String get warehouseAddItemBack => 'Back';
+
+  @override
+  String get warehouseAddedLine => 'New';
+
+  @override
+  String get warehouseAddedLinePriceNote => 'before offers';
+
+  @override
+  String get warehouseAddItemAlreadyOnOrder =>
+      'That product is already on the order. Here is the order as it is now.';
+
+  @override
+  String get warehouseAddItemUnavailable =>
+      'That product is no longer available. Pick another.';
 
   @override
   String get warehouseConfirmSaveTitle => 'Save the changes?';
@@ -3451,4 +3515,222 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorFeatureControlChanged =>
       'Feature settings changed. Reload before saving.';
+
+  @override
+  String get appPermissionsTitle => 'App permissions';
+
+  @override
+  String get appPermissionsIntro =>
+      'Everything Feniq asks your phone for, and why. Nothing we don\'t need, and you can change any of it here.';
+
+  @override
+  String get appPermissionsWhy => 'Why?';
+
+  @override
+  String get permNotificationsTitle => 'Notifications';
+
+  @override
+  String get permNotificationsWhyWarehouse =>
+      'So every new order rings and vibrates, even with the app closed.';
+
+  @override
+  String get permNotificationsWhyOther =>
+      'So you hear when your order changes or a new offer arrives.';
+
+  @override
+  String get permBatteryTitle => 'Unrestricted battery';
+
+  @override
+  String get permBatteryWhy =>
+      'Battery savers on Xiaomi, Huawei and Samsung put the app to sleep and delay order notifications. This keeps them on time.';
+
+  @override
+  String get permAutostartTitle => 'Autostart';
+
+  @override
+  String get permAutostartWhy =>
+      'This phone has an Autostart switch that is off by default. Turn it on for Feniq so notifications still arrive after you close the app or restart the phone.';
+
+  @override
+  String get permAutostartSteps =>
+      'On Xiaomi: Settings → Apps → Manage apps → Feniq → turn on Autostart, and set Battery saver to No restrictions.';
+
+  @override
+  String get permLocationTitle => 'Location';
+
+  @override
+  String get permLocationWhy =>
+      'To pin the pharmacy on the map, and for rep visits and driver routes.';
+
+  @override
+  String get permBackgroundLocationTitle => 'Background location';
+
+  @override
+  String get permBackgroundLocationWhy =>
+      'Only during an active delivery trip, so your position keeps updating with the phone in your pocket. Choose \"Allow all the time\".';
+
+  @override
+  String get permCameraTitle => 'Camera';
+
+  @override
+  String get permCameraWhy =>
+      'For return photos, the delivery seal and scanning a visit code. Photos from the gallery need no permission.';
+
+  @override
+  String get permMicrophoneTitle => 'Microphone';
+
+  @override
+  String get permMicrophoneWhy =>
+      'To record a payment by voice instead of typing.';
+
+  @override
+  String get permStateGranted => 'On';
+
+  @override
+  String get permStateDenied => 'Off';
+
+  @override
+  String get permStateBlocked => 'Refused, change in Settings';
+
+  @override
+  String get permStateUnknown => 'Check it yourself';
+
+  @override
+  String get permActionEnable => 'Turn on';
+
+  @override
+  String get permActionOpenSettings => 'Open Settings';
+
+  @override
+  String get permActionOpenPage => 'Open page';
+
+  @override
+  String get permAutostartOpenFailed =>
+      'Couldn\'t open that page. Open it from Settings using the steps.';
+
+  @override
+  String get pushDelayedBannerText =>
+      'Order notifications may be delayed on this phone.';
+
+  @override
+  String get pushDelayedBannerAction => 'Fix it';
+
+  @override
+  String get invoicePdfAction => 'Save invoice as PDF';
+
+  @override
+  String get invoicePdfShare => 'Share or save to Files';
+
+  @override
+  String get invoicePdfShareHint => 'WhatsApp, Drive, or Files on your phone';
+
+  @override
+  String get invoicePdfPrint => 'Print or \"Save as PDF\"';
+
+  @override
+  String get invoicePdfFailed => 'Couldn\'t prepare the invoice. Try again.';
+
+  @override
+  String get invoicePdfItem => 'Item';
+
+  @override
+  String get invoicePdfQuantity => 'Qty';
+
+  @override
+  String get invoicePdfUnitPrice => 'Unit price';
+
+  @override
+  String get invoicePdfLineTotal => 'Total';
+
+  @override
+  String get invoicePdfFree => 'free';
+
+  @override
+  String invoicePdfFrom(String name) {
+    return 'Warehouse: $name';
+  }
+
+  @override
+  String invoicePdfTo(String name) {
+    return 'Pharmacy: $name';
+  }
+
+  @override
+  String get invoicePdfFooter => 'Invoice from the Feniq app';
+
+  @override
+  String get invoicePdfTitle => 'Invoice';
+
+  @override
+  String warehouseAutoDeliverHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: 'Marked delivered automatically in $hours hours',
+      one: 'Marked delivered automatically in 1 hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String warehouseAutoDeliverMinutes(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'Marked delivered automatically in $minutes minutes',
+      one: 'Marked delivered automatically in 1 minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warehouseAutoDeliverDue =>
+      'Marked delivered automatically within the hour';
+
+  @override
+  String get warehouseAutoDeliverExplain =>
+      'If you don\'t mark the delivery yourself, the order is marked delivered automatically a day after it left, and its amount becomes the pharmacy\'s debt. Rescheduling the delivery does not stop this countdown.';
+
+  @override
+  String get dailyReceiptsTitle => 'Today\'s receipts';
+
+  @override
+  String get dailyReceiptsNet => 'Net';
+
+  @override
+  String dailyReceiptsReceived(String amount, int count) {
+    return 'Received: $amount · $count payment(s)';
+  }
+
+  @override
+  String dailyReceiptsReversed(String amount) {
+    return 'Reversed: −$amount';
+  }
+
+  @override
+  String get dailyReceiptsNone => 'Nothing received today.';
+
+  @override
+  String get dailyReceiptsFailed => 'Couldn\'t load today\'s receipts.';
+
+  @override
+  String get dailyReceiptsCash => 'Cash';
+
+  @override
+  String get dailyReceiptsTransfer => 'Transfer';
+
+  @override
+  String get dailyReceiptsCheque => 'Cheque';
+
+  @override
+  String get dailyReceiptsOther => 'Other';
+
+  @override
+  String get dailyReceiptsRoleOwner => 'Manager';
+
+  @override
+  String get dailyReceiptsRoleAccountant => 'Accountant';
+
+  @override
+  String get dailyReceiptsRoleLegacy => 'Warehouse account';
 }

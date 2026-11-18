@@ -1,9 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { rolePermissions } = require('../src/utils/rolePermissions');
-test('role policy keeps owner read access, accountant cash and legacy compatibility separate', () => {
+test('role policy: the manager (owner) records payments but cannot reverse them; accountant and legacy do both', () => {
   const owner = rolePermissions({ role: 'warehouse', status: 'active', warehouseRole: 'owner' });
-  assert.equal(owner.financialRead, true); assert.equal(owner.paymentRecord, false); assert.equal(owner.featureConfigure, true);
+  assert.equal(owner.financialRead, true); assert.equal(owner.paymentRecord, true); assert.equal(owner.paymentReverse, false);
+  assert.equal(owner.featureConfigure, true);
   const accountant = rolePermissions({ role: 'warehouse', status: 'active', warehouseRole: 'accountant' });
   assert.equal(accountant.paymentRecord, true); assert.equal(accountant.paymentReverse, true); assert.equal(accountant.featureConfigure, false);
   const legacy = rolePermissions({ role: 'warehouse', status: 'active' });

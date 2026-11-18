@@ -16,6 +16,8 @@ import 'package:feniq/features/warehouse/presentation/views/warehouse_return_det
 import 'package:feniq/features/warehouse/presentation/views/warehouse_shell_view.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_statement_view.dart';
 import 'package:feniq/generated/app_localizations.dart';
+import 'package:feniq/features/warehouse/data/models/warehouse_order_models.dart';
+import 'package:feniq/features/warehouse/data/repositories/warehouse_orders_repository.dart';
 
 class MockReturnDetail extends MockCubit<WarehouseReturnDetailState> implements WarehouseReturnDetailCubit {}
 
@@ -28,6 +30,8 @@ class MockOrders extends MockCubit<WarehouseOrdersState> implements WarehouseOrd
 class MockReturns extends MockCubit<WarehouseReturnsState> implements WarehouseReturnsCubit {}
 
 class MockAccounts extends MockCubit<WarehouseAccountsState> implements WarehouseAccountsCubit {}
+
+class MockOrdersRepository extends Mock implements WarehouseOrdersRepository {}
 
 Widget _app(Widget child, {Locale locale = const Locale('en')}) => MaterialApp(
   locale: locale,
@@ -181,5 +185,59 @@ void main() {
       expect(find.descendant(of: compact ? find.byType(ListTile) : bar, matching: find.text(label)), findsOneWidget);
     }
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a new order appears by itself within a minute: counted on the tab, marked new, with a banner', (tester) async {
+    final repository = MockOrdersRepository();
+    var calls = 0;
+    WarehouseOrderSummary row(String id, int number) =>
+        WarehouseOrderSummary(id: id, orderNumber: number, status: 'pending', finalPrice: 5000, itemCount: 1);
+    when(() => repository.getOrders(status: 'pending')).thenAnswer((_) async {
+      calls++;
+      return WarehouseOrdersPage(orders: calls == 1 ? [row('o1', 1)] : [row('o1', 1), row('o2', 2)]);
+    });
+    final orders = WarehouseOrdersCubit(repository: repository);
+    await orders.load();
+    await tester.pumpWidget(
+      _app(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<WarehouseOrdersCubit>.value(value: orders),
+            BlocProvider<WarehouseReturnsCubit>.value(value: MockReturns()),
+            BlocProvider<WarehouseAccountsCubit>.value(value: MockAccounts()),
+            BlocProvider<WarehouseRepsCubit>.value(value: MockReps()),
+          ],
+          child: const WarehouseShellView(ordersRefreshEvery: Duration(seconds: 30)),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('1'), findsWidgets); // one awaiting on the tab badge
+    expect(find.text('1 new order arrived'), findsNothing);
+
+    await tester.pump(const Duration(seconds: 30));
+    await tester.pump();
+    expect(calls, 2);
+    expect(find.text('1 new order arrived'), findsOneWidget);
+    expect(find.text('New'), findsOneWidget);
+    expect(find.text('2'), findsWidgets);
+
+    await tester.tap(find.text('Got it'));
+    await tester.pump();
+    expect(find.text('1 new order arrived'), findsNothing);
+    expect(find.text('New'), findsNothing);
+
+    // In the background nothing is fetched; coming back checks at once.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump(const Duration(minutes: 2));
+    expect(calls, 2);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(calls, 3);
+    await orders.close();
   });
 }

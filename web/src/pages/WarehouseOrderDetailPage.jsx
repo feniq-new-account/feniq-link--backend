@@ -230,6 +230,7 @@ function EditItemsSection({ order, onSaved }) {
         .filter((item) => !item.packageGroupId)
         .map((item) => ({
           id: item.id,
+          productId: item.productId,
           productNameAr: item.productNameAr,
           productNameEn: item.productNameEn,
           quantity: item.quantity,
@@ -287,6 +288,22 @@ function EditItemsSection({ order, onSaved }) {
   const handleAddItem = () => {
     const product = selectedProduct;
     if (!product) return;
+    const quantity = Math.max(1, Math.trunc(Number(newQuantity)) || 1);
+    // The server refuses a product already on the order (409
+    // PRODUCT_ALREADY_ON_ORDER): a plain line that stays is corrected by its
+    // quantity, and a product picked twice here becomes one line.
+    if (items.some((item) => item.productId === product.id && !removedIds.has(item.id))) {
+      setError(t('orderDetail.productAlreadyOnOrder'));
+      return;
+    }
+    if (newItems.some((item) => item.productId === product.id)) {
+      setNewItems((prev) =>
+        prev.map((item) => (item.productId === product.id ? { ...item, quantity: item.quantity + quantity } : item))
+      );
+      setSelectedProduct(null);
+      setNewQuantity(1);
+      return;
+    }
     setNewItems((prev) => [
       ...prev,
       {
@@ -294,7 +311,7 @@ function EditItemsSection({ order, onSaved }) {
         productId: product.id,
         productNameAr: product.nameAr,
         productNameEn: product.nameEn,
-        quantity: Math.max(1, Math.trunc(Number(newQuantity)) || 1),
+        quantity,
       },
     ]);
     setSelectedProduct(null);

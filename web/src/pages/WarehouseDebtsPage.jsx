@@ -1,4 +1,4 @@
-import { hasRolePermission } from '../utils/userPermissions';
+import { hasRolePermission, debtDetailActions } from '../utils/userPermissions';
 import { NumericInput } from '../components/NumericInput';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -399,7 +399,7 @@ function StatementTable({ statement }) {
 function WarehouseDebtDetail({ pharmacyId, onBack }) {
   const { user, warehouse } = useAuth();
   const [range, setRange] = useState(null);
-  const canRecord = hasRolePermission(user, 'paymentRecord') && !range;
+  const { canRecord, canReverse } = debtDetailActions(user, range);
   const requestId = useRef(0);
   const [dates, setDates] = useState({ from: businessDateInputValue(new Date(Date.now() - 90 * 86400000)), to: businessDateInputValue() });
   const { t, i18n } = useTranslation();
@@ -570,7 +570,7 @@ function WarehouseDebtDetail({ pharmacyId, onBack }) {
                   </thead>
                   <tbody>
                     {payments.map((payment) => (
-                      <PaymentRow key={payment.id} payment={payment} onReverse={canRecord ? setReversing : null} onProof={setProofPayment} />
+                      <PaymentRow key={payment.id} payment={payment} onReverse={canReverse ? setReversing : null} onProof={setProofPayment} />
                     ))}
                   </tbody>
                 </table>

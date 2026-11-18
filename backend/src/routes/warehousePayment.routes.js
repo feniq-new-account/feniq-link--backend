@@ -8,7 +8,9 @@ const { ApiError } = require('../utils/ApiError');
 const router = Router();
 
 // Basic recording and documented reversal remain available in freemium.
-// The controller/service still require an accountant and enforce tenant scope.
+// Recording is open to every warehouse login (manager and accountant);
+// reversing needs paymentReverse (accounting operators). Tenant scope is
+// enforced by the controller/service.
 router.use(authenticate, authorize('warehouse'), requireActiveStatus);
 
 // Money-Flow V2: payments are append-only. The V1 PATCH (edit) and DELETE
@@ -19,11 +21,21 @@ router.use(authenticate, authorize('warehouse'), requireActiveStatus);
 function requireAccountingPermission(permission) {
   return (req, res, next) => {
     if (!rolePermissions(req.user)[permission]) {
-      throw ApiError.forbidden('An accountant account is required to record payments.', 'ACCOUNTANT_REQUIRED');
+      const message = permission === 'paymentReverse'
+        ? 'An accountant account is required to reverse payments.'
+        : 'An accountant account is required to record payments.';
+      throw ApiError.forbidden(message, 'ACCOUNTANT_REQUIRED');
     }
     next();
   };
 }
+// Read-only: one business day's receipts (total, by method, by who recorded).
+router.get('/receipts', require('../utils/asyncHandler').asyncHandler(async (req, res) => {
+  const { loadWarehouseOrThrow } = require('../utils/loadWarehouse');
+  const warehouse = await loadWarehouseOrThrow(req.user._id, { select: '_id', lean: true });
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, receipts: await require('../services/dailyReceipts.service').dailyReceipts(warehouse._id, { date: req.query.date }) });
+}));
 router.post('/', requireAccountingPermission('paymentRecord'), controller.create);
 router.post('/:id/reverse', requireAccountingPermission('paymentReverse'), controller.reverse);
 router.get('/:id/proofs', proofs.list);

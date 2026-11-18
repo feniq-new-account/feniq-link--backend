@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { generateTemporaryPassword } from '../utils/passwordPolicy';
 import { TrialOrderResetCard } from '../components/TrialOrderResetCard';
+import { DemoWarehousePurgeCard } from '../components/DemoWarehousePurgeCard';
 import './AdminMaintenancePage.css';
 
 const legacyPhones = new Set(['0930000101', '0930000102', '0930000103']);
@@ -153,6 +154,7 @@ export function AdminMaintenancePage() {
       </div>
     </section>
     <TrialOrderResetCard />
+    <DemoWarehousePurgeCard />
     <section className="adm-card">
       <div className="adm-card-head">{t('maintenance.backupTitle')}</div>
       <div className="adm-maintenance-body">

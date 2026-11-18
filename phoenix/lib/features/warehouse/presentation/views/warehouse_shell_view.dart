@@ -1,12 +1,16 @@
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/pending_payments_bar.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/extensions/build_context_extensions.dart';
 import 'package:feniq/core/widgets/full_text.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_account_tab.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_accounts_tab.dart';
+import 'package:feniq/features/warehouse/presentation/managers/warehouse_orders_cubit.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_orders_tab.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_reps_tab.dart';
 import 'package:feniq/features/warehouse/presentation/views/warehouse_returns_tab.dart';
@@ -18,16 +22,57 @@ import 'package:feniq/routes/route_names.dart';
 /// The cubits are provided by the route; a tab is built the first time it is
 /// opened, so its cubit only loads then.
 class WarehouseShellView extends StatefulWidget {
-  const WarehouseShellView({super.key, this.initialIndex = 0});
+  const WarehouseShellView({super.key, this.initialIndex = 0, this.ordersRefreshEvery = const Duration(minutes: 1)});
   final int initialIndex;
+  // How often the orders are quietly re-checked while the app is in front, so
+  // a new order shows up without the manager pulling to refresh.
+  final Duration ordersRefreshEvery;
 
   @override
   State<WarehouseShellView> createState() => _WarehouseShellViewState();
 }
 
-class _WarehouseShellViewState extends State<WarehouseShellView> {
+class _WarehouseShellViewState extends State<WarehouseShellView> with WidgetsBindingObserver {
   late int _index = widget.initialIndex;
   late final Set<int> _opened = {widget.initialIndex};
+  Timer? _ordersTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startOrdersTimer();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _ordersTimer?.cancel();
+    super.dispose();
+  }
+
+  // Checks only while the app is in front: nothing runs in the background,
+  // and coming back checks at once.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshOrders();
+      _startOrdersTimer();
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+      _ordersTimer?.cancel();
+      _ordersTimer = null;
+    }
+  }
+
+  void _startOrdersTimer() {
+    _ordersTimer?.cancel();
+    _ordersTimer = Timer.periodic(widget.ordersRefreshEvery, (_) => _refreshOrders());
+  }
+
+  void _refreshOrders() {
+    if (!mounted) return;
+    context.read<WarehouseOrdersCubit>().refreshSilently();
+  }
 
   @override
   void didUpdateWidget(covariant WarehouseShellView oldWidget) {
@@ -61,11 +106,19 @@ class _WarehouseShellViewState extends State<WarehouseShellView> {
       l10n.warehouseNavAccount,
     ];
 
-    NavigationDestination icon(IconData outlined, IconData filled, String label) => NavigationDestination(
-      icon: Icon(outlined),
-      selectedIcon: Icon(filled, color: AppColors.primaryOf(context)),
-      label: label,
-    );
+    final pending = context.select<WarehouseOrdersCubit, int?>((cubit) => cubit.state.pendingCount);
+    final pendingMore = context.select<WarehouseOrdersCubit, bool>((cubit) => cubit.state.hasMore);
+
+    NavigationDestination icon(IconData outlined, IconData filled, String label, {int? count, bool more = false}) {
+      Widget badged(Widget child) => count == null || count == 0
+          ? child
+          : Badge(label: Text(more ? '$count+' : '$count'), child: child);
+      return NavigationDestination(
+        icon: badged(Icon(outlined)),
+        selectedIcon: badged(Icon(filled, color: AppColors.primaryOf(context))),
+        label: label,
+      );
+    }
 
     return ResponsiveRoleScaffold(
       appBar: AppBar(
@@ -110,7 +163,7 @@ class _WarehouseShellViewState extends State<WarehouseShellView> {
         _opened.add(index);
       }),
       destinations: [
-        icon(Icons.receipt_long_outlined, Icons.receipt_long, l10n.warehouseNavOrders),
+        icon(Icons.receipt_long_outlined, Icons.receipt_long, l10n.warehouseNavOrders, count: pending, more: pendingMore),
         icon(Icons.assignment_return_outlined, Icons.assignment_return, l10n.warehouseNavReturns),
         icon(Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, l10n.warehouseNavAccounts),
         icon(Icons.badge_outlined, Icons.badge, l10n.warehouseNavReps),

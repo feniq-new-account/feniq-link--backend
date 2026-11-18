@@ -141,6 +141,18 @@ class RepProfileTab extends StatelessWidget {
             ),
             const SizedBox(height: AppSizes.spacingMedium),
             CustomCard(
+              onTap: () => context.pushNamed(RouteNames.appPermissions),
+              child: Row(
+                children: [
+                  Icon(Icons.verified_user_outlined, size: 22, color: AppColors.textOf(context)),
+                  const SizedBox(width: AppSizes.spacingMedium),
+                  Expanded(child: Text(l10n.appPermissionsTitle, style: context.textTheme.titleSmall)),
+                  Icon(Icons.chevron_right, size: AppSizes.iconSizeSmall, color: AppColors.textSecondaryOf(context)),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSizes.spacingMedium),
+            CustomCard(
               onTap: () => context.pushNamed(RouteNames.changePassword),
               child: Row(
                 children: [

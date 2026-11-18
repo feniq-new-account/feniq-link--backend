@@ -1,0 +1,27 @@
+# Graphify code map scope (AST only, no LLM): backend, phoenix, web, site,
+# tools and .github, without tests, generated code or build output.
+# Build: graphify extract . --code-only    Serve: graphify-mcp graphify-out/graph.json
+/*
+!/backend/
+!/phoenix/
+!/web/
+!/site/
+!/tools/
+!/.github/
+**/test/
+**/tests/
+**/__tests__/
+**/*.test.*
+**/*.spec.*
+**/*_test.dart
+phoenix/lib/generated/
+phoenix/android/
+phoenix/ios/
+phoenix/linux/
+phoenix/macos/
+phoenix/windows/
+phoenix/web/
+**/build/
+**/dist/
+**/node_modules/
+**/test_*.py

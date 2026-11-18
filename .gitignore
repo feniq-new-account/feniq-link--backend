@@ -26,3 +26,11 @@ backend/.env.example
 
 # Python publication checks
 __pycache__/
+
+# Serena (MCP): only the shared project config is tracked; caches, memories
+# and per-machine overrides stay local.
+.serena/*
+!.serena/project.yml
+
+# Graphify code map: rebuilt per session (AST only, ~10 s), never committed.
+graphify-out/

@@ -3,6 +3,7 @@ package com.feniq.link
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
@@ -16,6 +17,16 @@ import java.security.MessageDigest
 class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        // The "App permissions" screen: which phone this is, and the maker's
+        // own Autostart page (Xiaomi & co. keep it off and no API can read it).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.feniq.link/device_settings")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "manufacturer" -> result.success(Build.MANUFACTURER ?: "")
+                    "openAutostartSettings" -> result.success(openAutostartSettings())
+                    else -> result.notImplemented()
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.feniq.link/app_update")
             .setMethodCallHandler { call, result ->
                 if (call.method != "installApk") {
@@ -74,6 +85,46 @@ class MainActivity : FlutterActivity() {
                     }
                 }.start()
             }
+    }
+
+    // Known Autostart / background-launch pages, tried in order. The first one
+    // this phone can open wins; none at all falls back to the app's settings.
+    private val autostartPages = listOf(
+        ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"),
+        ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity"),
+        ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"),
+        ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity"),
+        ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"),
+        ComponentName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity"),
+        ComponentName("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity"),
+        ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity"),
+        ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"),
+        ComponentName("com.oneplus.security", "com.oneplus.security.chainlaunch.view.ChainLaunchAppListActivity"),
+        ComponentName("com.transsion.phonemaster", "com.cyin.himgr.autostart.AutoStartActivity"),
+    )
+
+    private fun openAutostartSettings(): Boolean {
+        for (page in autostartPages) {
+            val intent = Intent().apply {
+                component = page
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            // Tried directly rather than resolved first: Android 11+ package
+            // visibility hides other apps' activities from resolveActivity.
+            try {
+                startActivity(intent)
+                return true
+            } catch (_: Exception) {
+                // Not on this phone (ActivityNotFound) or refused (Security): next.
+            }
+        }
+        return try {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun hex(bytes: ByteArray): String = bytes.joinToString("") { "%02x".format(it.toInt() and 0xff) }

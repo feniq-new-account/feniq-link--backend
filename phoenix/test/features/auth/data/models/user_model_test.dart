@@ -11,7 +11,7 @@ void main() {
     test('explicit server denial overrides an older role hint; legacy responses retain valid operator access', () {
       expect(actor().canRecordPayments, isTrue);
       expect(actor(permissions: {'paymentRecord': false}).canRecordPayments, isFalse);
-      expect(actor(warehouseRole: 'owner').canRecordPayments, isFalse);
+      expect(actor(warehouseRole: 'owner').canRecordPayments, isTrue);
       expect(actor(warehouseRole: 'owner').canConfigureFeatures, isTrue);
       expect(actor(permissions: {}).canRecordPayments, isFalse);
     });

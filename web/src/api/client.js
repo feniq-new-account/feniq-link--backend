@@ -516,6 +516,8 @@ export const api = {
   previewTrialOrderReset: (before, includeOutForDelivery = false) =>
     request(`/admin/maintenance/trial-orders?before=${encodeURIComponent(before)}&includeOutForDelivery=${includeOutForDelivery ? 'true' : 'false'}`),
   executeTrialOrderReset: (body) => request('/admin/maintenance/trial-orders/cancel', { method: 'POST', body }),
+  previewDemoWarehousePurge: () => request('/admin/maintenance/demo-warehouses'),
+  executeDemoWarehousePurge: (body) => request('/admin/maintenance/demo-warehouses/purge', { method: 'POST', body }),
   getPilotOrderAccess: () => request('/admin/pilot-access'),
   updatePilotOrderAccess: (body) => request('/admin/pilot-access', { method: 'PUT', body }),
   getLaunchSettings: () => request('/admin/launch'),
@@ -1083,6 +1085,7 @@ export const api = {
   activateCollectionContract: (warehouseId, body) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}/contracts`, { method: 'POST', body }),
   confirmCollectionSettlement: (warehouseId, body) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}/settlements`, { method: 'POST', body }),
   adminCollectionAccounting: (warehouseId, query = {}) => request(`/admin/collection-accounting/warehouses/${encodeURIComponent(warehouseId)}?${new URLSearchParams(query)}`),
+  dailyReceipts: (date) => request(`/warehouse/payments/receipts${date ? `?date=${encodeURIComponent(date)}` : ''}`),
   accountantDashboard: (query = {}) => request(`/warehouse/balances/dashboard?${new URLSearchParams(query)}`),
   warehouseBalances: ({ limit, after, search, balanceState } = {}) => {
     const params = new URLSearchParams();

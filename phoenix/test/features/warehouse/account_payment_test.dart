@@ -110,12 +110,13 @@ void main() {
     expect(find.textContaining('Last payment'), findsOneWidget);
   });
   testWidgets(
-    'owner can read account figures but has no cash or voice entry actions',
+    // Owner's call, 2026-11-17: the manager (owner login) records payments
+    // too, like the accountant.
+    'the manager (owner) sees the figures and can record a payment',
     (tester) async {
       await open(tester, _row, warehouseRole: 'owner');
       expect(find.textContaining('Owes 100,000'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Pay in full'), findsNothing);
-      expect(find.byIcon(Icons.mic), findsNothing);
+      expect(find.widgetWithText(FilledButton, 'Pay in full'), findsOneWidget);
     },
   );
 

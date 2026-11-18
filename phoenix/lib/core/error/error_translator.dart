@@ -92,6 +92,12 @@ String translateErrorCode(AppLocalizations l10n, String? code, String fallbackMe
       return l10n.errorPharmacyNotFound;
     case 'WAREHOUSE_NOT_FOUND':
       return l10n.errorWarehouseNotFound;
+    // A product the warehouse tried to add to an order that it no longer
+    // offers (warehouseOrder.service.js updateOrderItems).
+    case 'PRODUCT_ALREADY_ON_ORDER':
+      return l10n.warehouseAddItemAlreadyOnOrder;
+    case 'PRODUCT_UNAVAILABLE':
+      return l10n.warehouseAddItemUnavailable;
     case 'EXCHANGE_RATE_UNAVAILABLE':
       return l10n.errorExchangeRateUnavailable;
     // 409 from POST /orders: the order was converted at a rate that has since

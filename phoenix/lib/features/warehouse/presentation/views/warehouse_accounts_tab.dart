@@ -21,6 +21,7 @@ import 'package:feniq/features/warehouse/presentation/widgets/warehouse_summary_
 import 'package:feniq/features/warehouse/presentation/widgets/warehouse_collection_accounting_card.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/warehouse_cash_custody_card.dart';
 import 'package:feniq/features/warehouse/presentation/widgets/voice_payment_sheet.dart';
+import 'package:feniq/features/warehouse/presentation/widgets/daily_receipts_card.dart';
 import 'package:feniq/routes/route_names.dart';
 import 'package:feniq/features/warehouse/presentation/utils/warehouse_permissions.dart';
 
@@ -126,6 +127,9 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                     padding: EdgeInsets.only(bottom: AppSizes.spacingSmall),
                     child: Column(
                       children: [
+                        // What came in today, and who took it (manager and accountant both record).
+                        DailyReceiptsCard(),
+                        SizedBox(height: AppSizes.spacingSmall),
                         // Manager-only monitoring; no cash or transfer action here.
                         WarehouseCashCustodyCard(),
                         SizedBox(height: AppSizes.spacingSmall),

@@ -4,6 +4,7 @@ class RouteNames {
   static const String splash = 'splash';
   static const String login = 'login';
   static const String changePassword = 'change-password';
+  static const String appPermissions = 'app-permissions';
   static const String registration = 'registration';
   static const String otp = 'otp';
   static const String approvalPending = 'approval-pending';

@@ -29,12 +29,18 @@ stubModule('realtime/index.js', {
     ORDER_STATUS_UPDATED: 'order.status.updated',
   },
 });
+async function recordPush(userId, payload) {
+  if (failSend) throw new Error('FCM down');
+  notifications.push({ userId: String(userId), ...payload });
+}
+// The order alert now goes to every owner login through sendToAll, so both
+// entry points record (and both throw when failSend is on).
 stubModule('services/notification.service.js', {
-  sendToUser: async (userId, payload) => {
-    if (failSend) throw new Error('FCM down');
-    notifications.push({ userId: String(userId), ...payload });
+  NEW_ORDERS_ANDROID_CHANNEL: 'feniq_new_orders',
+  sendToUser: recordPush,
+  sendToAll: async (userIds, payload) => {
+    for (const userId of userIds) await recordPush(userId, payload);
   },
-  sendToAll: async () => {},
 });
 
 const User = require('../src/models/user.model');

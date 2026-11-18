@@ -387,3 +387,11 @@
   .accountant-dashboard .accounting-spinner { animation: none; }
   .accountant-dashboard .accounting-links a { transition: none; }
 }
+
+/* Today's receipts: same figure tiles as the summary, the recorder list as a
+   quiet line list, and the card spaced from the filters below it. */
+.accountant-dashboard .daily-receipts { margin-block-end: 16px; }
+.accountant-dashboard .daily-receipts .wh-summary-stats { margin-block: 12px; }
+.accountant-dashboard .daily-receipts-recorders {
+  margin: 0 0 12px; padding-inline-start: 18px; color: #3f5166; line-height: 1.9;
+}
