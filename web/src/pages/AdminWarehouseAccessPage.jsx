@@ -30,8 +30,10 @@ export function AdminWarehouseAccessPage() {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [showControls, setShowControls] = useState(false);
-  // Kept apart from `selected`: changing that object reloads the whole page.
-  const [allowsCredit, setAllowsCredit] = useState(false);
+  // Kept apart from `selected` (changing that object reloads the whole page),
+  // and remembered per warehouse so a retry or a re-pick never shows a stale value.
+  const [savedCredit, setSavedCredit] = useState({});
+  const allowsCredit = selected ? (savedCredit[selected.id] ?? selected.allowsCredit === true) : false;
   const generation = useRef(0);
   const list = usePaginatedData(async (after) => {
     const result = await api.listAdminWarehouseAccess({ search, after });
@@ -43,7 +45,6 @@ export function AdminWarehouseAccessPage() {
     const current = ++generation.current;
     setDetail(null); setForm(null); setMembers([]); setCreated(null); setMember(EMPTY_MEMBER);
     setError(null); setNotice(null);
-    setAllowsCredit(selected?.allowsCredit === true);
     if (!selected) return;
     setLoading(true);
     Promise.all([api.getAdminWarehouseSubscription(selected.id), api.getAdminWarehouseMembers(selected.id)])
@@ -81,8 +82,7 @@ export function AdminWarehouseAccessPage() {
     try {
       const result = await api.updateAdminWarehouseCredit(selected.id, next);
       const saved = result.warehouse.allowsCredit === true;
-      setAllowsCredit(saved);
-      list.reset(); // so the row carries the new value when it is picked again
+      setSavedCredit((current) => ({ ...current, [selected.id]: saved }));
       setNotice(t(saved ? 'warehouseAccess.creditNowOn' : 'warehouseAccess.creditNowOff'));
     } catch (err) { setError(err.message); }
     finally { setBusy(false); }
