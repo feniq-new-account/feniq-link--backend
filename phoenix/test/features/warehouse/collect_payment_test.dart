@@ -36,6 +36,9 @@ void main() {
     when(() => cubit.load()).thenAnswer((_) async {});
     when(() => cubit.loadMore()).thenAnswer((_) async {});
     when(() => cubit.advance('o1')).thenAnswer((_) async => true);
+    // The tests below are a warehouse the admin allows credit; cash-only is
+    // its own group at the end.
+    when(() => repository.getAllowsCredit()).thenAnswer((_) async => true);
     when(
       () => repository.recordPayment(
         pharmacyId: any(named: 'pharmacyId'),
@@ -130,5 +133,42 @@ void main() {
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
     verifyNever(() => cubit.advance(any()));
+  });
+
+  group('a cash-only warehouse (the default)', () {
+    testWidgets('offers all of it or the rep collected it, never part or later', (tester) async {
+      when(() => repository.getAllowsCredit()).thenAnswer((_) async => false);
+      await openSheet(tester);
+      expect(find.text('All of it'), findsOneWidget);
+      expect(find.text('The rep collected it'), findsOneWidget);
+      expect(find.text('Part'), findsNothing);
+      expect(find.text('Later'), findsNothing);
+      expect(find.textContaining('cash only'), findsOneWidget);
+    });
+
+    testWidgets('"the rep collected it" delivers with nothing recorded', (tester) async {
+      when(() => repository.getAllowsCredit()).thenAnswer((_) async => false);
+      await openSheet(tester);
+      await tester.tap(find.text('The rep collected it'));
+      await tester.pumpAndSettle();
+      verify(() => cubit.advance('o1')).called(1);
+      verifyNever(
+        () => repository.recordPayment(
+          pharmacyId: any(named: 'pharmacyId'),
+          amountSyp: any(named: 'amountSyp'),
+          method: any(named: 'method'),
+          idempotencyKey: any(named: 'idempotencyKey'),
+          note: any(named: 'note'),
+          deliveryOrderId: 'o1',
+        ),
+      );
+    });
+
+    testWidgets('when the setting cannot be read, the cash-only choices show', (tester) async {
+      when(() => repository.getAllowsCredit()).thenAnswer((_) async => throw Exception('offline'));
+      await openSheet(tester);
+      expect(find.text('The rep collected it'), findsOneWidget);
+      expect(find.text('Later'), findsNothing);
+    });
   });
 }

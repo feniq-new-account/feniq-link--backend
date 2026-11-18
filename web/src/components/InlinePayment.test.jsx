@@ -6,7 +6,7 @@ import { QuickPaymentModal } from './QuickPaymentModal';
 import { CollectPaymentModal } from './CollectPaymentModal';
 import { api } from '../api/client';
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key) => key }) }));
-vi.mock('../api/client', () => ({ api: { createPayment: vi.fn() } }));
+vi.mock('../api/client', () => ({ api: { createPayment: vi.fn(), warehouseSettings: vi.fn() } }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let host, root;
 beforeEach(() => {
@@ -50,4 +50,28 @@ it('delivery collection is inline and cancel records nothing; a full choice fire
   const full = [...host.querySelectorAll('button')].find((b) => b.textContent === 'collect.full');
   await act(async () => { full.click(); full.click(); });
   expect(choose).toHaveBeenCalledExactlyOnceWith(2500);
+});
+
+const labels = () => [...host.querySelectorAll('button')].map((b) => b.textContent);
+it('a cash-only warehouse is offered paid in full or the rep collected it, never part or later', async () => {
+  api.warehouseSettings.mockResolvedValue({ settings: { allowsCredit: false } });
+  const choose = vi.fn();
+  await act(async () => root.render(<CollectPaymentModal orderNumber="42" totalSyp={2500} onChoose={choose} onClose={vi.fn()} />));
+  expect(labels()).toEqual(expect.arrayContaining(['collect.full', 'collect.repCollected']));
+  expect(labels()).not.toContain('collect.partial');
+  expect(labels()).not.toContain('collect.later');
+  await act(async () => [...host.querySelectorAll('button')].find((b) => b.textContent === 'collect.repCollected').click());
+  expect(choose).toHaveBeenCalledExactlyOnceWith(0);
+});
+it('a warehouse the admin allows credit is offered part and later too', async () => {
+  api.warehouseSettings.mockResolvedValue({ settings: { allowsCredit: true } });
+  await act(async () => root.render(<CollectPaymentModal orderNumber="42" totalSyp={2500} onChoose={vi.fn()} onClose={vi.fn()} />));
+  expect(labels()).toEqual(expect.arrayContaining(['collect.full', 'collect.partial', 'collect.later']));
+  expect(labels()).not.toContain('collect.repCollected');
+});
+it('while the setting cannot be read the cash-only choices show', async () => {
+  api.warehouseSettings.mockRejectedValue(new Error('offline'));
+  await act(async () => root.render(<CollectPaymentModal orderNumber="42" totalSyp={2500} onChoose={vi.fn()} onClose={vi.fn()} />));
+  expect(labels()).toContain('collect.repCollected');
+  expect(labels()).not.toContain('collect.later');
 });

@@ -60,6 +60,12 @@ const warehouseSchema = new Schema(
     // warehouse gets by default, leaving them unaffected.
     minOrderAmountUsd: { type: Number, default: 0, min: 0 },
     maxOrderAmountUsd: { type: Number, default: null, min: 0 },
+    // Whether this warehouse sells on credit (owner decision 2026-11-18). Off
+    // = cash only: marking an order delivered offers "paid in full" or "the
+    // rep collected it", never "later" or "part". Only the admin sets it
+    // (PUT /admin/warehouses/:id/credit); everyone starts on cash. It shapes
+    // the delivery screens only - the server does not refuse a delivery.
+    allowsCredit: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

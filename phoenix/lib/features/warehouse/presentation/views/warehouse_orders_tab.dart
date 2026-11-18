@@ -68,6 +68,7 @@ class _WarehouseOrdersTabState extends State<WarehouseOrdersTab> {
       context,
       orderNumber: order.orderNumber,
       totalSyp: order.finalPrice,
+      allowsCredit: payments.getAllowsCredit(),
     );
     if (collected == null) return;
     var message = l10n.warehouseOrderAdvanced(order.orderNumber, orderStatusLabel(l10n, 'delivered'));

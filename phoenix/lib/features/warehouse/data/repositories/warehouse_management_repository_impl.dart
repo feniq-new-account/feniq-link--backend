@@ -447,6 +447,13 @@ class WarehouseManagementRepositoryImpl
   }
 
   @override
+  Future<bool> getAllowsCredit() async {
+    final data = await _run((dio) => dio.get(Endpoints.warehouseSettings));
+    final settings = data['settings'];
+    return settings is Map && settings['allowsCredit'] == true;
+  }
+
+  @override
   Future<WarehouseLoyalty> getLoyalty() async =>
       WarehouseLoyalty.fromSettingsJson(
         await _run((dio) => dio.get(Endpoints.warehouseSettings)),

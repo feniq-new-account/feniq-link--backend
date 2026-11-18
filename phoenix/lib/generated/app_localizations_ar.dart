@@ -2765,6 +2765,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get warehouseCollectLater => 'بعدين';
 
   @override
+  String get warehouseCollectRepCollected => 'المندوب لمّها';
+
+  @override
+  String get warehouseCollectCashOnlyHint =>
+      'هالمستودع كاش بس: يا قبضت كامل، يا المندوب لمّ المصاري.';
+
+  @override
   String warehouseCollectPaidLabel(String currency) {
     return 'دفع هلق ($currency)';
   }

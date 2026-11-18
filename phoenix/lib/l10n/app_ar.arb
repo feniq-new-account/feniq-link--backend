@@ -1166,6 +1166,8 @@
   "warehouseCollectFull": "كامل",
   "warehouseCollectPartial": "جزء",
   "warehouseCollectLater": "بعدين",
+  "warehouseCollectRepCollected": "المندوب لمّها",
+  "warehouseCollectCashOnlyHint": "هالمستودع كاش بس: يا قبضت كامل، يا المندوب لمّ المصاري.",
   "warehouseCollectPaidLabel": "دفع هلق ({currency})",
   "warehouseCollectLeft": "ضل: {amount}",
   "warehouseCollectSave": "سلّم واحفظ",

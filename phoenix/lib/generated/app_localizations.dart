@@ -4706,6 +4706,18 @@ abstract class AppLocalizations {
   /// **'Later'**
   String get warehouseCollectLater;
 
+  /// No description provided for @warehouseCollectRepCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'The rep collected it'**
+  String get warehouseCollectRepCollected;
+
+  /// No description provided for @warehouseCollectCashOnlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This warehouse is cash only: paid in full, or the rep collected the money.'**
+  String get warehouseCollectCashOnlyHint;
+
   /// No description provided for @warehouseCollectPaidLabel.
   ///
   /// In en, this message translates to:

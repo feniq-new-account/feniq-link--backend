@@ -9,6 +9,7 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key) => key }) })
 vi.mock('../api/client', () => ({ api: {
   listAdminWarehouseAccess: vi.fn(), getAdminWarehouseSubscription: vi.fn(), getAdminWarehouseMembers: vi.fn(),
   updateAdminWarehouseSubscription: vi.fn(), createAdminWarehouseMember: vi.fn(), updateAdminWarehouseMemberRole: vi.fn(),
+  updateAdminWarehouseCredit: vi.fn(),
 } }));
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -30,7 +31,8 @@ afterEach(async () => { await act(async () => root.unmount()); host.remove(); })
 describe('warehouse access administration', () => {
   it('saves warehouse-specific switches with a free baseline and no renewable trial', async () => {
     await click(buttonWith('Warehouse A'));
-    const loyalty = host.querySelector('input[type="checkbox"]');
+    // The subscription form's first switch (the credit switch sits above the form).
+    const loyalty = host.querySelector('form input[type="checkbox"]');
     await click(loyalty);
     api.updateAdminWarehouseSubscription.mockResolvedValue({ ...subscription, state: 'trial' });
     const form = buttonWith('warehouseAccess.save').closest('form');
@@ -40,6 +42,22 @@ describe('warehouse access administration', () => {
     }));
     expect(api.updateAdminWarehouseSubscription.mock.calls[0][1]).not.toHaveProperty('trialUntil');
     expect(host.textContent).toContain('warehouseAccess.saved');
+  });
+
+  it('the credit switch starts on cash only, asks first, and turns credit on for that warehouse', async () => {
+    await click(buttonWith('Warehouse A'));
+    const credit = host.querySelector('.warehouse-credit input[type="checkbox"]');
+    expect(credit.checked).toBe(false);
+    expect(host.textContent).toContain('warehouseAccess.creditHintOff');
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    await click(credit);
+    expect(api.updateAdminWarehouseCredit).not.toHaveBeenCalled();
+    api.updateAdminWarehouseCredit.mockResolvedValue({ warehouse: { id: 'w1', allowsCredit: true } });
+    await click(host.querySelector('.warehouse-credit input[type="checkbox"]'));
+    expect(api.updateAdminWarehouseCredit).toHaveBeenCalledExactlyOnceWith('w1', true);
+    expect(host.querySelector('.warehouse-credit input[type="checkbox"]').checked).toBe(true);
+    expect(host.textContent).toContain('warehouseAccess.creditNowOn');
+    confirm.mockRestore();
   });
 
   it('offers a retry in place when loading subscription details fails', async () => {

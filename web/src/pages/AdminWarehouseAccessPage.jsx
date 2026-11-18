@@ -30,6 +30,8 @@ export function AdminWarehouseAccessPage() {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [showControls, setShowControls] = useState(false);
+  // Kept apart from `selected`: changing that object reloads the whole page.
+  const [allowsCredit, setAllowsCredit] = useState(false);
   const generation = useRef(0);
   const list = usePaginatedData(async (after) => {
     const result = await api.listAdminWarehouseAccess({ search, after });
@@ -41,6 +43,7 @@ export function AdminWarehouseAccessPage() {
     const current = ++generation.current;
     setDetail(null); setForm(null); setMembers([]); setCreated(null); setMember(EMPTY_MEMBER);
     setError(null); setNotice(null);
+    setAllowsCredit(selected?.allowsCredit === true);
     if (!selected) return;
     setLoading(true);
     Promise.all([api.getAdminWarehouseSubscription(selected.id), api.getAdminWarehouseMembers(selected.id)])
@@ -67,6 +70,20 @@ export function AdminWarehouseAccessPage() {
         ...form, graceDays: Number(form.graceDays), paidUntil: form.paidUntil ? new Date(form.paidUntil).toISOString() : null,
       });
       setDetail(result); setForm(current => ({ ...current, revision: result.configuration?.revision || 0 })); setNotice(t('warehouseAccess.saved'));
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  };
+  // Cash only (default) or credit allowed - the delivery screens read it.
+  const toggleCredit = async () => {
+    const next = !allowsCredit;
+    if (!window.confirm(t(next ? 'warehouseAccess.creditConfirmOn' : 'warehouseAccess.creditConfirmOff'))) return;
+    setBusy(true); setError(null); setNotice(null);
+    try {
+      const result = await api.updateAdminWarehouseCredit(selected.id, next);
+      const saved = result.warehouse.allowsCredit === true;
+      setAllowsCredit(saved);
+      list.reset(); // so the row carries the new value when it is picked again
+      setNotice(t(saved ? 'warehouseAccess.creditNowOn' : 'warehouseAccess.creditNowOff'));
     } catch (err) { setError(err.message); }
     finally { setBusy(false); }
   };
@@ -122,6 +139,14 @@ export function AdminWarehouseAccessPage() {
     {notice && <p role="status">{notice}</p>}
     {detail && form && <>
       <h2>{selected.nameAr}</h2>
+      <fieldset className="warehouse-credit" disabled={busy}>
+        <legend>{t('warehouseAccess.creditTitle')}</legend>
+        <label>
+          <input type="checkbox" checked={allowsCredit} onChange={toggleCredit} />
+          {' '}{t('warehouseAccess.creditLabel')}
+        </label>
+        <p className="hint">{t(allowsCredit ? 'warehouseAccess.creditHintOn' : 'warehouseAccess.creditHintOff')}</p>
+      </fieldset>
       <button type="button" className="btn-secondary" onClick={() => setShowControls(v => !v)}>{t('featureControl.title')}</button>
       {showControls && <FeatureControlCenter key={selected.id} warehouseId={selected.id} />}
       <p>{t('warehouseAccess.currentState')}: <strong>{t(`warehouseAccess.states.${detail.state}`)}</strong></p>

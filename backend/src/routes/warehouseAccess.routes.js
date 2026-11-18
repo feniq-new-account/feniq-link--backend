@@ -18,7 +18,7 @@ admin.get('/', asyncHandler(async (req, res) => {
     const search = req.query.search.trim().slice(0, 120).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     filter.$or = [{ nameAr: new RegExp(search, 'i') }, { nameEn: new RegExp(search, 'i') }, { phone: new RegExp(search, 'i') }];
   }
-  const rows = await Warehouse.find(filter).select('nameAr nameEn city phone isActive').sort({ _id: 1 }).limit(limit + 1).lean();
+  const rows = await Warehouse.find(filter).select('nameAr nameEn city phone isActive allowsCredit').sort({ _id: 1 }).limit(limit + 1).lean();
   const hasMore = rows.length > limit;
   const selected = rows.slice(0, limit);
   res.json({ success: true, warehouses: selected.map((row) => ({ ...row, id: row._id })),
@@ -50,6 +50,29 @@ admin.put('/:warehouseId/subscription', objectIdParams('warehouseId'), asyncHand
     throw require('../utils/ApiError').ApiError.conflict('Reload subscription before saving.', 'FEATURE_CONTROL_CHANGED');
   }
   res.json({ success: true, ...await billing.configureSubscription(req.params.warehouseId, req.user._id, req.body) });
+}));
+// Credit on or off for one warehouse (owner decision 2026-11-18): off is cash
+// only at delivery. Audited with who changed it and from what.
+admin.put('/:warehouseId/credit', objectIdParams('warehouseId'), asyncHandler(async (req, res) => {
+  const { ApiError } = require('../utils/ApiError');
+  if (typeof req.body?.allowsCredit !== 'boolean') {
+    throw ApiError.badRequest('allowsCredit must be true or false.', undefined, 'INVALID_ALLOWS_CREDIT');
+  }
+  const allowsCredit = req.body.allowsCredit;
+  const WarehouseAudit = require('../models/warehouseAudit.model');
+  const { runInTransaction } = require('../utils/transaction');
+  const warehouse = await runInTransaction(async (session) => {
+    const before = await Warehouse.findById(req.params.warehouseId).select('allowsCredit').session(session).lean();
+    if (!before) throw ApiError.notFound('Warehouse not found.', 'WAREHOUSE_NOT_FOUND');
+    const wasAllowed = before.allowsCredit === true;
+    if (wasAllowed === allowsCredit) return { _id: before._id, allowsCredit };
+    const updated = await Warehouse.findByIdAndUpdate(req.params.warehouseId, { $set: { allowsCredit } },
+      { new: true, session, projection: { allowsCredit: 1 } }).lean();
+    await WarehouseAudit.create([{ warehouseId: before._id, actorId: req.user._id, action: 'credit.changed',
+      before: { allowsCredit: wasAllowed }, after: { allowsCredit } }], { session });
+    return updated;
+  });
+  res.json({ success: true, warehouse: { id: warehouse._id, allowsCredit: warehouse.allowsCredit === true } });
 }));
 
 const self = Router();
