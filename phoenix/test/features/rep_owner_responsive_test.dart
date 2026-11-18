@@ -527,7 +527,10 @@ void main() {
             child = Scaffold(
               body: Builder(
                 builder: (context) => TextButton(
-                  onPressed: () => showCollectPaymentSheet(context, orderNumber: 123456, totalSyp: 128745600),
+                  // A warehouse with credit on: the review opens "part" to see the amount field
+                  // (cash-only warehouses never show it - owner decision 2026-11-18).
+                  onPressed: () => showCollectPaymentSheet(context,
+                      orderNumber: 123456, totalSyp: 128745600, allowsCredit: Future.value(true)),
                   child: const Text('open collect'),
                 ),
               ),

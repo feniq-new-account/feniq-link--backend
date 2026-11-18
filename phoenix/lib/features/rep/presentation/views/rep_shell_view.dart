@@ -102,13 +102,21 @@ class _RepShellViewState extends State<RepShellView> {
           ),
         ],
       ),
-      floatingActionButton: _index == 0
-          ? FloatingActionButton.extended(
-              onPressed: _scan,
-              icon: const Icon(Icons.qr_code_scanner),
-              label: Text(l10n.repScanAction),
-            )
-          : null,
+      // At large text the labelled button ran off the screen and covered the
+      // search (design review 2026-11-18): the icon alone, named for TalkBack.
+      floatingActionButton: _index != 0
+          ? null
+          : MediaQuery.textScalerOf(context).scale(10) > 13
+              ? FloatingActionButton.large(
+                  onPressed: _scan,
+                  tooltip: l10n.repScanAction,
+                  child: const Icon(Icons.qr_code_scanner),
+                )
+              : FloatingActionButton.extended(
+                  onPressed: _scan,
+                  icon: const Icon(Icons.qr_code_scanner),
+                  label: Text(l10n.repScanAction),
+                ),
       selectedIndex: _index,
       onSelected: (index) => setState(() => _index = index),
       destinations: [

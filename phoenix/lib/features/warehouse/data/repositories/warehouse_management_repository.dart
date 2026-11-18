@@ -48,6 +48,10 @@ abstract class WarehouseManagementRepository {
   /// null; otherwise 'YYYY-MM-DD'.
   Future<Map<String, dynamic>> getDailyReceipts({String? date});
 
+  /// Where today's orders stand: open orders by step and delivered today
+  /// (server: orderPipeline.service.js). Counts only; no money is derived.
+  Future<Map<String, dynamic>> getOrderPipeline();
+
   /// Read-only collection_v2 journal; null summary means no active contract.
   /// Never infer a zero balance or commission when collection_v2 is off.
   Future<Map<String, dynamic>> getCollectionAccounting({String period = 'month'});

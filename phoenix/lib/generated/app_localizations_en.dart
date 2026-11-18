@@ -3740,4 +3740,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dailyReceiptsRoleLegacy => 'Warehouse account';
+
+  @override
+  String get dailyReceiptsToday => 'Today';
+
+  @override
+  String get dailyReceiptsYesterday => 'Yesterday';
+
+  @override
+  String get dailyReceiptsVsYesterday => 'Net compared with yesterday';
+
+  @override
+  String get orderPipelineTitle => 'Orders now';
+
+  @override
+  String get orderPipelinePending => 'Waiting for approval';
+
+  @override
+  String get orderPipelineAccepted => 'Accepted';
+
+  @override
+  String get orderPipelineOnTheWay => 'On the way';
+
+  @override
+  String get orderPipelineDelivered => 'Delivered today';
+
+  @override
+  String orderPipelineStale(int count) {
+    return 'Waiting over 48 hours: $count';
+  }
+
+  @override
+  String get orderPipelineFailed => 'Couldn\'t load today\'s orders.';
+
+  @override
+  String get orderPipelineNone =>
+      'No open orders, and nothing delivered today.';
 }

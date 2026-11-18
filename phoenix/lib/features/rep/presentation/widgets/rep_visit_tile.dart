@@ -25,28 +25,31 @@ class RepVisitTile extends StatelessWidget {
     final distance = visit.distanceMeters;
     final name = repPharmacyName(context, visit.pharmacyNameAr ?? '', visit.pharmacyNameEn ?? '');
 
+    final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
+    final badge = StatusBadge(label: visitStatusLabel(l10n, visit.status), tone: visitStatusTone(visit.status));
+    final details = <Widget>[
+      if (showPharmacy && name.isNotEmpty) Text(name, style: context.textTheme.titleSmall),
+      // The date and time wrap as whole words, never in the middle of a number
+      // (design review 2026-11-18: "2026/1" over "0/27" at large text).
+      Wrap(children: [for (final part in when.split(' ')) Text('$part ', style: muted)]),
+      if (distance != null) Text(l10n.repDistanceMeters(distance), style: muted),
+    ];
+    // At large text the badge goes under the details instead of squeezing them.
+    final large = MediaQuery.textScalerOf(context).scale(10) > 13;
     return CustomCard(
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
+      child: large
+          ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              children: [...details, const SizedBox(height: AppSizes.spacingXSmall), badge],
+            )
+          : Row(
               children: [
-                if (showPharmacy && name.isNotEmpty) Text(name, style: context.textTheme.titleSmall),
-                Text(when, style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context))),
-                if (distance != null)
-                  Text(
-                    l10n.repDistanceMeters(distance),
-                    style: context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
-                  ),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: details)),
+                const SizedBox(width: AppSizes.spacingSmall),
+                badge,
               ],
             ),
-          ),
-          const SizedBox(width: AppSizes.spacingSmall),
-          StatusBadge(label: visitStatusLabel(l10n, visit.status), tone: visitStatusTone(visit.status)),
-        ],
-      ),
     );
   }
 }

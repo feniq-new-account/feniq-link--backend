@@ -6349,6 +6349,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Warehouse account'**
   String get dailyReceiptsRoleLegacy;
+
+  /// No description provided for @dailyReceiptsToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get dailyReceiptsToday;
+
+  /// No description provided for @dailyReceiptsYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get dailyReceiptsYesterday;
+
+  /// No description provided for @dailyReceiptsVsYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Net compared with yesterday'**
+  String get dailyReceiptsVsYesterday;
+
+  /// No description provided for @orderPipelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders now'**
+  String get orderPipelineTitle;
+
+  /// No description provided for @orderPipelinePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for approval'**
+  String get orderPipelinePending;
+
+  /// No description provided for @orderPipelineAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get orderPipelineAccepted;
+
+  /// No description provided for @orderPipelineOnTheWay.
+  ///
+  /// In en, this message translates to:
+  /// **'On the way'**
+  String get orderPipelineOnTheWay;
+
+  /// No description provided for @orderPipelineDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered today'**
+  String get orderPipelineDelivered;
+
+  /// No description provided for @orderPipelineStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting over 48 hours: {count}'**
+  String orderPipelineStale(int count);
+
+  /// No description provided for @orderPipelineFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load today\'s orders.'**
+  String get orderPipelineFailed;
+
+  /// No description provided for @orderPipelineNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No open orders, and nothing delivered today.'**
+  String get orderPipelineNone;
 }
 
 class _AppLocalizationsDelegate

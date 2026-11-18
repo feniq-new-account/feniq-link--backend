@@ -64,6 +64,18 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    // Compress the native libraries inside the APK (owner request 2026-11-18:
+    // the APK is sent over WhatsApp, and 85 MB was too heavy). They were stored
+    // uncompressed for three architectures; compressed, the same universal APK
+    // (every phone, plus the x86_64 emulator check) is roughly half the size.
+    // Android unpacks them once at install: a few seconds more, and the phone
+    // keeps the unpacked copy of its own architecture only.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     defaultConfig {
         applicationId = feniqApplicationId
         minSdk = flutter.minSdkVersion

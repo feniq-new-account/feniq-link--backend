@@ -29,21 +29,21 @@ void main() {
     });
 
     test('whole hours, rounded down, in Arabic plural forms', () {
-      expect(autoDeliverLabel(ar, now.add(const Duration(hours: 5, minutes: 50)), now, status: 'out_for_delivery'), 'بيتسجّل مُسلّم لحاله بعد 5 ساعات');
-      expect(autoDeliverLabel(ar, now.add(const Duration(hours: 2, minutes: 10)), now, status: 'out_for_delivery'), 'بيتسجّل مُسلّم لحاله بعد ساعتين');
-      expect(autoDeliverLabel(ar, now.add(const Duration(hours: 1)), now, status: 'out_for_delivery'), 'بيتسجّل مُسلّم لحاله بعد ساعة');
-      expect(autoDeliverLabel(ar, now.add(const Duration(hours: 23, minutes: 59)), now, status: 'out_for_delivery'), 'بيتسجّل مُسلّم لحاله بعد 23 ساعة');
+      expect(autoDeliverLabel(ar, now.add(const Duration(hours: 5, minutes: 50)), now, status: 'out_for_delivery'), 'سيُسجَّل مُسلَّماً تلقائياً بعد 5 ساعات');
+      expect(autoDeliverLabel(ar, now.add(const Duration(hours: 2, minutes: 10)), now, status: 'out_for_delivery'), 'سيُسجَّل مُسلَّماً تلقائياً بعد ساعتين');
+      expect(autoDeliverLabel(ar, now.add(const Duration(hours: 1)), now, status: 'out_for_delivery'), 'سيُسجَّل مُسلَّماً تلقائياً بعد ساعة');
+      expect(autoDeliverLabel(ar, now.add(const Duration(hours: 23, minutes: 59)), now, status: 'out_for_delivery'), 'سيُسجَّل مُسلَّماً تلقائياً بعد 23 ساعة');
       expect(autoDeliverLabel(en, now.add(const Duration(hours: 5)), now, status: 'out_for_delivery'), 'Marked delivered automatically in 5 hours');
     });
 
     test('under an hour, minutes rounded up', () {
-      expect(autoDeliverLabel(ar, now.add(const Duration(minutes: 39, seconds: 10)), now, status: 'out_for_delivery'), 'بيتسجّل مُسلّم لحاله بعد 40 دقيقة');
-      expect(autoDeliverLabel(ar, now.add(const Duration(seconds: 20)), now, status: 'out_for_delivery'), 'بيتسجّل مُسلّم لحاله بعد دقيقة');
+      expect(autoDeliverLabel(ar, now.add(const Duration(minutes: 39, seconds: 10)), now, status: 'out_for_delivery'), 'سيُسجَّل مُسلَّماً تلقائياً بعد 40 دقيقة');
+      expect(autoDeliverLabel(ar, now.add(const Duration(seconds: 20)), now, status: 'out_for_delivery'), 'سيُسجَّل مُسلَّماً تلقائياً بعد دقيقة');
     });
 
     test('a passed deadline reads "within the hour" (the job runs hourly)', () {
-      expect(autoDeliverLabel(ar, now, now, status: 'out_for_delivery'), 'بيتسجّل مُسلّم لحاله خلال ساعة');
-      expect(autoDeliverLabel(ar, now.subtract(const Duration(minutes: 30)), now, status: 'out_for_delivery'), 'بيتسجّل مُسلّم لحاله خلال ساعة');
+      expect(autoDeliverLabel(ar, now, now, status: 'out_for_delivery'), 'سيُسجَّل مُسلَّماً تلقائياً خلال ساعة');
+      expect(autoDeliverLabel(ar, now.subtract(const Duration(minutes: 30)), now, status: 'out_for_delivery'), 'سيُسجَّل مُسلَّماً تلقائياً خلال ساعة');
     });
   });
 
@@ -114,7 +114,7 @@ void main() {
       autoDeliverAt: now.add(const Duration(hours: 3, minutes: 20)),
     )));
     expect(find.byKey(const ValueKey('auto-deliver-countdown')), findsOneWidget);
-    expect(find.text('بيتسجّل مُسلّم لحاله بعد 3 ساعات'), findsOneWidget);
+    expect(find.text('سيُسجَّل مُسلَّماً تلقائياً بعد 3 ساعات'), findsOneWidget);
   });
 
   testWidgets('any other row shows none', (tester) async {

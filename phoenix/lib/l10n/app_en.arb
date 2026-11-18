@@ -2042,6 +2042,18 @@
   "dailyReceiptsRoleOwner": "Manager",
   "dailyReceiptsRoleAccountant": "Accountant",
   "dailyReceiptsRoleLegacy": "Warehouse account",
+  "dailyReceiptsToday": "Today",
+  "dailyReceiptsYesterday": "Yesterday",
+  "dailyReceiptsVsYesterday": "Net compared with yesterday",
+  "orderPipelineTitle": "Orders now",
+  "orderPipelinePending": "Waiting for approval",
+  "orderPipelineAccepted": "Accepted",
+  "orderPipelineOnTheWay": "On the way",
+  "orderPipelineDelivered": "Delivered today",
+  "orderPipelineStale": "Waiting over 48 hours: {count}",
+  "@orderPipelineStale": {"placeholders": {"count": {"type": "int"}}},
+  "orderPipelineFailed": "Couldn't load today's orders.",
+  "orderPipelineNone": "No open orders, and nothing delivered today.",
   "@dailyReceiptsReceived": {"placeholders": {"amount": {"type": "String"}, "count": {"type": "int"}}},
   "@dailyReceiptsReversed": {"placeholders": {"amount": {"type": "String"}}}
 }

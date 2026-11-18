@@ -42,8 +42,7 @@ class WarehouseSummaryCard extends StatelessWidget {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(10),
-                      child: Icon(Icons.insights_outlined,
-                        color: AppColors.primaryTextOf(context)),
+                      child: Icon(Icons.insights_outlined, color: AppColors.primaryTextOf(context)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -173,7 +172,11 @@ class SummaryFigures extends StatelessWidget {
         _RankedList(
           title: l10n.warehouseSummaryTopDebtors,
           emptyText: l10n.warehouseSummaryNoDebtors,
-          rows: outstanding.topDebtors,
+          // The five largest debts as bars against the largest: who to call
+          // first, at a glance (owner request 2026-11-18).
+          rows: outstanding.topDebtors.take(5).toList(),
+          bars: true,
+          barColor: AppColors.errorOf(context),
         ),
       ],
     );
@@ -181,7 +184,15 @@ class SummaryFigures extends StatelessWidget {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value, required this.icon, this.valueColor, this.sub, this.extraSub, this.change});
+  const _Stat({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.valueColor,
+    this.sub,
+    this.extraSub,
+    this.change,
+  });
 
   final String label;
   final String value;
@@ -193,8 +204,7 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = context.textTheme.bodySmall?.copyWith(
-      color: AppColors.textSecondaryOf(context));
+    final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.surfaceOf(context),
@@ -218,10 +228,7 @@ class _Stat extends StatelessWidget {
                 color: valueColor ?? AppColors.textOf(context),
               ),
             ),
-            if (sub != null) ...[
-              const SizedBox(height: 5),
-              Text(sub!, style: muted),
-            ],
+            if (sub != null) ...[const SizedBox(height: 5), Text(sub!, style: muted)],
             if (extraSub != null) Text(extraSub!, style: muted),
             ?change,
           ],
@@ -267,16 +274,25 @@ class _Change extends StatelessWidget {
 }
 
 class _RankedList extends StatelessWidget {
-  const _RankedList({required this.title, required this.emptyText, required this.rows});
+  const _RankedList({
+    required this.title,
+    required this.emptyText,
+    required this.rows,
+    this.bars = false,
+    this.barColor,
+  });
 
   final String title;
   final String emptyText;
   final List<SummaryPharmacyAmount> rows;
+  final bool bars;
+  final Color? barColor;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final muted = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
+    final largest = rows.fold<double>(0, (max, row) => row.amountSyp > max ? row.amountSyp : max);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -288,16 +304,45 @@ class _RankedList extends StatelessWidget {
           for (var i = 0; i < rows.length; i++)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                spacing: 12,
-                runSpacing: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(warehouseLocalName(context, rows[i].nameAr, rows[i].nameEn), style: muted),
-                  Text(
-                    formatSyp(rows[i].amountSyp, l10n.currencySuffix),
-                    style: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: 12,
+                    runSpacing: 4,
+                    children: [
+                      Text(warehouseLocalName(context, rows[i].nameAr, rows[i].nameEn), style: muted),
+                      Text(
+                        formatSyp(rows[i].amountSyp, l10n.currencySuffix),
+                        textDirection: TextDirection.ltr,
+                        style: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
+                  if (bars && largest > 0)
+                    // Length relative to the largest debt; the figure above
+                    // carries the value, so the bar adds no new number.
+                    ExcludeSemantics(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: SizedBox(
+                          height: 8,
+                          width: double.infinity,
+                          child: Stack(
+                            children: [
+                              Positioned.fill(child: ColoredBox(color: AppColors.borderOf(context))),
+                              FractionallySizedBox(
+                                alignment: AlignmentDirectional.centerStart,
+                                heightFactor: 1,
+                                widthFactor: (rows[i].amountSyp / largest).clamp(0.02, 1.0),
+                                child: ColoredBox(color: barColor ?? AppColors.primaryOf(context), child: const SizedBox.expand()),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

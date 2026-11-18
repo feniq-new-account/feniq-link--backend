@@ -88,11 +88,11 @@ void main() {
     expect(find.text('بلا قيود على البطارية'), findsOneWidget);
     expect(find.text('التشغيل التلقائي'), findsOneWidget);
     expect(find.text('مفعّلة'), findsOneWidget);
-    expect(find.textContaining('صوت واهتزاز مع كل طلبية'), findsOneWidget);
+    expect(find.textContaining('صوت واهتزاز مع كل طلب'), findsOneWidget);
 
     // Battery: one tap shows Android's prompt and the row turns green.
     final battery = find.byKey(const ValueKey('perm-battery'));
-    await tester.tap(find.descendant(of: battery, matching: find.text('فعّل')));
+    await tester.tap(find.descendant(of: battery, matching: find.text('تفعيل')));
     await tester.pumpAndSettle();
     expect(fake.requested, [AppPermissionKind.battery]);
     expect(find.descendant(of: battery, matching: find.text('مفعّلة')), findsOneWidget);
@@ -100,7 +100,7 @@ void main() {
     // Autostart cannot be read: it opens the maker's page.
     final autostart = find.byKey(const ValueKey('perm-autostart'));
     await tester.scrollUntilVisible(autostart, 200);
-    await tester.tap(find.descendant(of: autostart, matching: find.text('افتح الصفحة')));
+    await tester.tap(find.descendant(of: autostart, matching: find.text('فتح الصفحة')));
     await tester.pumpAndSettle();
     expect(fake.autostartOpened, 1);
   });
@@ -112,7 +112,7 @@ void main() {
     await tester.pumpWidget(_app(AppPermissionsView(service: fake), _authFor('pharmacy')));
     await tester.pumpAndSettle();
     final row = find.byKey(const ValueKey('perm-notifications'));
-    expect(find.descendant(of: row, matching: find.text('افتح الإعدادات')), findsOneWidget);
+    expect(find.descendant(of: row, matching: find.text('فتح الإعدادات')), findsOneWidget);
     expect(find.text('بلا قيود على البطارية'), findsNothing);
   });
 
@@ -138,8 +138,8 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('ممكن تتأخر إشعارات الطلبيات على هالموبايل.'), findsOneWidget);
-    await tester.tap(find.text('صلّحها'));
+    expect(find.text('قد تتأخر إشعارات الطلبات على هذا الهاتف.'), findsOneWidget);
+    await tester.tap(find.text('إصلاح'));
     await tester.pumpAndSettle();
     expect(find.text('permissions-screen'), findsOneWidget);
   });
@@ -148,6 +148,6 @@ void main() {
     final fake = _FakePermissions();
     await tester.pumpWidget(_app(Scaffold(body: PushReliabilityBanner(service: fake)), _authFor('warehouse')));
     await tester.pumpAndSettle();
-    expect(find.text('صلّحها'), findsNothing);
+    expect(find.text('إصلاح'), findsNothing);
   });
 }

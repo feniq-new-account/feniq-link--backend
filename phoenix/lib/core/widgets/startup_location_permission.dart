@@ -13,6 +13,9 @@ class StartupLocationPermission extends StatefulWidget {
 class _StartupLocationPermissionState extends State<StartupLocationPermission> with WidgetsBindingObserver {
   String _status = 'checking';
   bool _busy = false;
+  // Two lines until tapped: at large text the full note filled the rep's
+  // screen above the pharmacies (design review 2026-11-18).
+  bool _expanded = false;
   @override
   void initState() {
     super.initState();
@@ -70,7 +73,9 @@ class _StartupLocationPermissionState extends State<StartupLocationPermission> w
 
   @override
   Widget build(BuildContext context) {
-    if (_status == 'granted') return const SizedBox.shrink();
+    // Nothing while the first check runs: a phone that already allows location
+    // never flashes the note.
+    if (_status == 'granted' || _status == 'checking') return const SizedBox.shrink();
     final l10n = context.l10n;
     final message = switch (_status) {
       'permanent' => l10n.locationPermissionPermanent,
@@ -78,7 +83,7 @@ class _StartupLocationPermissionState extends State<StartupLocationPermission> w
       _ => l10n.locationPermissionPurpose,
     };
     return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.3),
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.25),
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -91,9 +96,16 @@ class _StartupLocationPermissionState extends State<StartupLocationPermission> w
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(message, style: Theme.of(context).textTheme.bodySmall),
-                    if (_status != 'checking')
-                      TextButton(
+                    GestureDetector(
+                      onTap: () => setState(() => _expanded = !_expanded),
+                      child: Text(
+                        message,
+                        style: Theme.of(context).textTheme.bodySmall,
+                        maxLines: _expanded ? null : 2,
+                        overflow: _expanded ? null : TextOverflow.ellipsis,
+                      ),
+                    ),
+                    TextButton(
                         onPressed: _resolve,
                         child: Text(
                           _status == 'permanent' || _status == 'disabled'

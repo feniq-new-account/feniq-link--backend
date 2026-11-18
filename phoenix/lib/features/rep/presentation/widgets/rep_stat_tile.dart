@@ -33,3 +33,35 @@ class RepStatTile extends StatelessWidget {
     );
   }
 }
+
+/// The same figures on one card, value then label, wrapping as needed - used
+/// at large text sizes where three tiles would push the list off screen.
+class RepStatsLine extends StatelessWidget {
+  const RepStatsLine({super.key, required this.entries});
+
+  final List<(String, String)> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final valueStyle = context.textTheme.titleMedium?.copyWith(
+      color: AppColors.primaryTextOf(context),
+      fontWeight: FontWeight.w800,
+    );
+    final labelStyle = context.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context));
+    return CustomCard(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium, vertical: AppSizes.spacingSmall),
+      child: Wrap(
+        spacing: AppSizes.spacingMedium,
+        runSpacing: AppSizes.spacingXSmall,
+        children: [
+          for (final (value, label) in entries)
+            Text.rich(TextSpan(children: [
+              TextSpan(text: value, style: valueStyle),
+              const TextSpan(text: ' '),
+              TextSpan(text: label, style: labelStyle),
+            ])),
+        ],
+      ),
+    );
+  }
+}

@@ -216,7 +216,7 @@ void main() {
     await tester.tap(find.text('الريف الشمالي — المنطقة 2').last);
     await tester.pumpAndSettle();
     verify(() => repo.assignDeliveryPharmacy('ph1', 'zone1', 0)).called(1);
-    expect(find.text('بلا منطقة — الموعد غير محدد'), findsOneWidget);
+    expect(find.text('دون منطقة — الموعد غير محدد'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
