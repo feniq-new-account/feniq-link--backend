@@ -2747,7 +2747,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String warehouseCollectTitle(int number) {
-    return 'تسليم الطلبية رقم $number - قبضت؟';
+    return 'تسليم الطلبية رقم $number - هل تم تحصيل المبلغ؟';
   }
 
   @override
@@ -2756,34 +2756,41 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get warehouseCollectFull => 'كامل';
+  String get warehouseCollectFull => 'تم استلام المبلغ كاملاً';
 
   @override
-  String get warehouseCollectPartial => 'جزء';
+  String get warehouseCollectPartial => 'دفعة جزئية';
 
   @override
-  String get warehouseCollectLater => 'بعدين';
+  String get warehouseCollectLater => 'الدفع لاحقاً';
+
+  @override
+  String get warehouseCollectRepCollected => 'تم التحصيل عن طريق المندوب';
+
+  @override
+  String get warehouseCollectCashOnlyHint =>
+      'يتعامل هذا المستودع نقداً فقط. عند التحصيل عن طريق المندوب يبقى المبلغ ديناً على الصيدلية إلى أن تُسجَّل الدفعة.';
 
   @override
   String warehouseCollectPaidLabel(String currency) {
-    return 'دفع هلق ($currency)';
+    return 'المبلغ المدفوع الآن ($currency)';
   }
 
   @override
   String warehouseCollectLeft(String amount) {
-    return 'ضل: $amount';
+    return 'المتبقي: $amount';
   }
 
   @override
-  String get warehouseCollectSave => 'سلّم واحفظ';
+  String get warehouseCollectSave => 'تأكيد التسليم وحفظ الدفعة';
 
   @override
   String get warehouseCollectPartialInvalid =>
-      'اكتب مبلغ أكبر من صفر وأصغر من المبلغ كله.';
+      'أدخل مبلغاً أكبر من صفر وأقل من المبلغ الكامل.';
 
   @override
   String warehouseCollectRecorded(String amount) {
-    return 'تم التسليم، وانسجّل $amount مدفوع';
+    return 'تم التسليم وتسجيل دفعة بقيمة $amount';
   }
 
   @override

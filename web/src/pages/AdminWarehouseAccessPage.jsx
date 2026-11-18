@@ -30,6 +30,10 @@ export function AdminWarehouseAccessPage() {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [showControls, setShowControls] = useState(false);
+  // Kept apart from `selected` (changing that object reloads the whole page),
+  // and remembered per warehouse so a retry or a re-pick never shows a stale value.
+  const [savedCredit, setSavedCredit] = useState({});
+  const allowsCredit = selected ? (savedCredit[selected.id] ?? selected.allowsCredit === true) : false;
   const generation = useRef(0);
   const list = usePaginatedData(async (after) => {
     const result = await api.listAdminWarehouseAccess({ search, after });
@@ -67,6 +71,19 @@ export function AdminWarehouseAccessPage() {
         ...form, graceDays: Number(form.graceDays), paidUntil: form.paidUntil ? new Date(form.paidUntil).toISOString() : null,
       });
       setDetail(result); setForm(current => ({ ...current, revision: result.configuration?.revision || 0 })); setNotice(t('warehouseAccess.saved'));
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  };
+  // Cash only (default) or credit allowed - the delivery screens read it.
+  const toggleCredit = async () => {
+    const next = !allowsCredit;
+    if (!window.confirm(t(next ? 'warehouseAccess.creditConfirmOn' : 'warehouseAccess.creditConfirmOff'))) return;
+    setBusy(true); setError(null); setNotice(null);
+    try {
+      const result = await api.updateAdminWarehouseCredit(selected.id, next);
+      const saved = result.warehouse.allowsCredit === true;
+      setSavedCredit((current) => ({ ...current, [selected.id]: saved }));
+      setNotice(t(saved ? 'warehouseAccess.creditNowOn' : 'warehouseAccess.creditNowOff'));
     } catch (err) { setError(err.message); }
     finally { setBusy(false); }
   };
@@ -122,6 +139,14 @@ export function AdminWarehouseAccessPage() {
     {notice && <p role="status">{notice}</p>}
     {detail && form && <>
       <h2>{selected.nameAr}</h2>
+      <fieldset className="warehouse-credit" disabled={busy}>
+        <legend>{t('warehouseAccess.creditTitle')}</legend>
+        <label>
+          <input type="checkbox" checked={allowsCredit} onChange={toggleCredit} />
+          {' '}{t('warehouseAccess.creditLabel')}
+        </label>
+        <p className="hint">{t(allowsCredit ? 'warehouseAccess.creditHintOn' : 'warehouseAccess.creditHintOff')}</p>
+      </fieldset>
       <button type="button" className="btn-secondary" onClick={() => setShowControls(v => !v)}>{t('featureControl.title')}</button>
       {showControls && <FeatureControlCenter key={selected.id} warehouseId={selected.id} />}
       <p>{t('warehouseAccess.currentState')}: <strong>{t(`warehouseAccess.states.${detail.state}`)}</strong></p>

@@ -20,6 +20,8 @@ function toWarehouseSettingsResponse(warehouse) {
       // Proof-of-delivery toggle (warehouse.model.js), on by default. `?? true`
       // for documents that predate the field, matching order.service.js.
       requireDeliverySealPhoto: warehouse.requireDeliverySealPhoto ?? false,
+      // Read only here - the admin sets it. Missing on older documents = cash only.
+      allowsCredit: warehouse.allowsCredit === true,
       // The warehouse's own loyalty discount (utils/loyalty.js).
       loyalty: {
         mode: warehouse.loyalty?.mode ?? 'per_order',

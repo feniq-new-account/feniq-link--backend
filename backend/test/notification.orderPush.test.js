@@ -4,9 +4,9 @@
 // 1. Every push goes as Android high priority (normal priority is held back by
 //    Doze), and the order alert names the app's "new orders" channel, which
 //    rings and vibrates at maximum importance.
-// 2. It goes to every active owner login of the warehouse, not only the
-//    primary account - managers run orders from those logins. Accountants and
-//    suspended members are left out.
+// 2. It goes to every active login of the warehouse, not only the primary
+//    account: the managers and the accountant (owner decision 2026-11-18).
+//    Suspended members are left out.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-order-push-tests-pad';
 process.env.NODE_ENV = 'test';
 
@@ -76,16 +76,16 @@ test.beforeEach(async () => {
 
 const fakeOrder = () => ({ _id: ids.warehouse, orderNumber: 77, warehouseId: ids.warehouse, pharmacyId: ids.pharmacy });
 
-test('a new order is pushed to the primary login and every active owner, never the accountant', async () => {
+test('a new order is pushed to the primary login, every active owner and the accountant, never a blocked member', async () => {
   await orderService._notifyWarehouseOfOrder(fakeOrder(), 'created');
 
   const rows = await Notification.find({}).lean();
   const recipients = rows.map((r) => String(r.userId)).sort();
-  assert.deepStrictEqual(recipients, [String(ids.primary), String(ids.owner)].sort());
+  assert.deepStrictEqual(recipients, [String(ids.primary), String(ids.owner), String(ids.accountant)].sort());
   assert.ok(rows.every((r) => r.titleAr === 'طلبية جديدة'));
 
   const tokens = sent.flatMap((m) => m.tokens).sort();
-  assert.deepStrictEqual(tokens, ['token-1', 'token-2']);
+  assert.deepStrictEqual(tokens, ['token-1', 'token-2', 'token-3']);
 });
 
 test('the order push is high priority on the ringing new-orders channel', async () => {
@@ -107,7 +107,7 @@ test('the order push is high priority on the ringing new-orders channel', async 
 test('a cancellation goes on the same channel, to the same people', async () => {
   await orderService._notifyWarehouseOfOrder(fakeOrder(), 'cancelled');
   const rows = await Notification.find({}).lean();
-  assert.strictEqual(rows.length, 2);
+  assert.strictEqual(rows.length, 3);
   assert.ok(rows.every((r) => r.titleAr === 'طلبية ملغاة'));
   assert.ok(sent.every((m) => m.android.notification.channelId === 'feniq_new_orders'));
 });

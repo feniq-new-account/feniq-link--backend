@@ -1534,6 +1534,8 @@
   "warehouseCollectFull": "All of it",
   "warehouseCollectPartial": "Part",
   "warehouseCollectLater": "Later",
+  "warehouseCollectRepCollected": "The rep collected it",
+  "warehouseCollectCashOnlyHint": "This warehouse is cash only: paid in full, or the rep collected the money.",
   "warehouseCollectPaidLabel": "Paid now ({currency})",
   "warehouseCollectLeft": "Left: {amount}",
   "warehouseCollectSave": "Deliver and save",

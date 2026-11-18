@@ -70,6 +70,10 @@ abstract class WarehouseManagementRepository {
   /// Payments with an unconfirmed result, recoverable with their original key.
   Future<List<PendingPaymentRecord>> getPendingPayments();
 
+  /// Whether the admin lets this warehouse sell on credit (owner decision
+  /// 2026-11-18). False - the default - is cash only at delivery.
+  Future<bool> getAllowsCredit();
+
   // Loyalty discount
   Future<WarehouseLoyalty> getLoyalty();
 

@@ -159,6 +159,8 @@
     "orderNumber": "Order #{{number}}"
   },
   "collect": {
+    "repCollected": "The rep collected it",
+    "cashOnlyHint": "This warehouse is cash only: paid in full, or the rep collected the money.",
     "title": "Deliver order #{{number}} - did you collect?",
     "total": "Amount: {{amount}}",
     "full": "All",
@@ -1538,6 +1540,14 @@
     "unknown": "The result is not confirmed. The payment may have been recorded; retry with the same details to confirm it without a duplicate."
   },
   "warehouseAccess": {
+    "creditTitle": "Credit",
+    "creditLabel": "This warehouse sells on credit",
+    "creditHintOff": "Cash only: marking an order delivered offers 'paid in full' and 'the rep collected it' only.",
+    "creditHintOn": "Credit allowed: marking an order delivered also offers 'part' and 'later'.",
+    "creditConfirmOn": "Allow credit for this warehouse?",
+    "creditConfirmOff": "Switch this warehouse back to cash only?",
+    "creditNowOn": "This warehouse now sells on credit.",
+    "creditNowOff": "This warehouse is now cash only.",
     "title": "Warehouses and subscriptions",
     "help": "Manage owner and accountant accounts and feature access. Reps are created by the warehouse or accountant.",
     "empty": "No matching warehouses.",

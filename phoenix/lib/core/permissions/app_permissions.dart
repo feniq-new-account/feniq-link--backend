@@ -66,8 +66,9 @@ const Set<String> kAutostartManufacturers = {
 List<AppPermissionKind> permissionsFor(PermissionAudience audience, {String manufacturer = ''}) {
   final autostart = kAutostartManufacturers.contains(manufacturer.trim().toLowerCase());
   final kinds = switch (audience.role) {
-    // The manager must hear every new order, so the push-reliability trio
-    // comes first. The accountant records payments (voice included).
+    // The manager and the accountant must both hear every new order, so the
+    // push-reliability trio comes first. The accountant records payments
+    // (voice included) but takes no photos.
     'warehouse' => [
         AppPermissionKind.notifications,
         AppPermissionKind.battery,

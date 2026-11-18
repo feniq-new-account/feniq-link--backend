@@ -450,6 +450,9 @@ export const api = {
   createAdminWarehouseMember: (id, body) => request(`/admin/warehouses/${id}/members`, { method: 'POST', body }),
   getAdminWarehouseSubscription: (id) => request(`/admin/warehouses/${id}/subscription`),
   updateAdminWarehouseSubscription: (id, body) => request(`/admin/warehouses/${id}/subscription`, { method: 'PUT', body }),
+  // Credit on/off for one warehouse - off is cash only at delivery.
+  updateAdminWarehouseCredit: (id, allowsCredit) =>
+    request(`/admin/warehouses/${id}/credit`, { method: 'PUT', body: { allowsCredit } }),
   getWarehouseSubscription: () => request('/warehouse/subscription'),
   getFeatureControl: () => request('/admin/feature-control'),
   saveFeatureControl: (body) => request('/admin/feature-control', { method: 'PUT', body }),

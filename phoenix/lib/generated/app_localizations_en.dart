@@ -2773,6 +2773,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get warehouseCollectLater => 'Later';
 
   @override
+  String get warehouseCollectRepCollected => 'The rep collected it';
+
+  @override
+  String get warehouseCollectCashOnlyHint =>
+      'This warehouse is cash only: paid in full, or the rep collected the money.';
+
+  @override
   String warehouseCollectPaidLabel(String currency) {
     return 'Paid now ($currency)';
   }
