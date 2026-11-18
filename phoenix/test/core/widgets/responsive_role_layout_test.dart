@@ -5,7 +5,7 @@ import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:feniq/generated/app_localizations.dart';
 
 void main() {
-  testWidgets('large Arabic labels use an accessible section picker and every tab remains reachable', (tester) async {
+  testWidgets('large Arabic labels keep every tab on the bar, one line each, and every tab is reachable', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(320, 640);
     tester.platformDispatcher.textScaleFactorTestValue = 2;
@@ -36,16 +36,17 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    // Every tab stays on the bar, each label on one line.
     expect(find.byType(NavigationBar), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('role-section-picker')));
-    await tester.pumpAndSettle();
-    expect(find.byType(ListTile), findsNWidgets(5));
-    await tester.ensureVisible(find.text('الحساب'));
-    await tester.tap(find.text('الحساب'));
+    final bar = find.byKey(const ValueKey('role-tab-bar'));
+    for (final label in labels) {
+      expect(find.descendant(of: bar, matching: find.text(label)), findsOneWidget);
+      final text = tester.widget<Text>(find.descendant(of: bar, matching: find.text(label)));
+      expect(text.maxLines, 1);
+    }
+    await tester.tap(find.descendant(of: bar, matching: find.text('الحساب')));
     await tester.pumpAndSettle();
     expect(selected, 4);
-    expect(find.byType(ListTile), findsNothing);
-    expect(find.text('الحساب'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

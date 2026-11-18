@@ -1,5 +1,6 @@
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:feniq/core/widgets/card_parts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_padding.dart';
@@ -137,7 +138,7 @@ class _RepPharmaciesTabState extends State<RepPharmaciesTab> {
           child: Column(
             children: [
               Text(Localizations.localeOf(context).languageCode == 'ar'
-                  ? 'ما في صيدليات مطابقة لفلاتر المتابعة.' : 'No pharmacies match these follow-up filters.'),
+                  ? 'لا توجد صيدليات مطابقة لفلاتر المتابعة.' : 'No pharmacies match these follow-up filters.'),
               TextButton(
                 onPressed: () => setState(() {
                   _needsVerifiedVisit = false;
@@ -151,8 +152,7 @@ class _RepPharmaciesTabState extends State<RepPharmaciesTab> {
         ),
       if (state.status == RepLoadStatus.loading) const LinearProgressIndicator(),
       if (state.status == RepLoadStatus.error)
-        FailureWidget(
-          dense: true,
+        CardLoadError(
           message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
           onRetry: () => context.read<RepPharmaciesCubit>().load(),
         ),
@@ -181,8 +181,7 @@ class _StatsRow extends StatelessWidget {
           children: [
             if (state.status == RepLoadStatus.loading) const LinearProgressIndicator(),
             if (state.status == RepLoadStatus.error)
-              FailureWidget(
-                dense: true,
+              CardLoadError(
                 message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
                 onRetry: () => context.read<RepHomeCubit>().load(),
               ),

@@ -49,7 +49,7 @@ const _androidChannel = AndroidNotificationChannel(
 // separate from the general channel rather than an upgrade of it.
 const newOrdersAndroidChannel = AndroidNotificationChannel(
   'feniq_new_orders',
-  'طلبيات جديدة',
+  'طلبات جديدة',
   description: 'تنبيه بصوت واهتزاز لكل طلبية جديدة أو ملغاة.',
   importance: Importance.max,
   playSound: true,

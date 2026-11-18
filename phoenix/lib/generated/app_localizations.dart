@@ -3407,7 +3407,7 @@ abstract class AppLocalizations {
   /// No description provided for @repStatSalesMonth.
   ///
   /// In en, this message translates to:
-  /// **'Their value'**
+  /// **'Orders value this month'**
   String get repStatSalesMonth;
 
   /// No description provided for @repStatCommissionMonth.
@@ -6415,6 +6415,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No open orders, and nothing delivered today.'**
   String get orderPipelineNone;
+
+  /// No description provided for @warehouseInsightsAgeBand.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} to {to} days'**
+  String warehouseInsightsAgeBand(int from, int to);
+
+  /// No description provided for @warehouseInsightsAgeBandOver.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} days or more'**
+  String warehouseInsightsAgeBandOver(int from);
 }
 
 class _AppLocalizationsDelegate

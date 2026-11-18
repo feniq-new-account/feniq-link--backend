@@ -606,7 +606,7 @@ class _DriverTripsTabState extends State<DriverTripsTab> with WidgetsBindingObse
                           'بعد تفعيل المشاركة يظهر إشعار دائم، ويستمر التتبع أثناء قفل الشاشة. إيقافه من هنا أو عند إنهاء الرحلة.',
                           'After opt-in, an ongoing notification keeps location sharing active while the screen is locked. Stop here or end the trip.',
                         )
-                      : _t('التتبع شغّال فقط والتطبيق مفتوح. الخروج عن الطريق لا يوقفه.',
+                      : _t('يعمل التتبع فقط والتطبيق مفتوح. الخروج عن الطريق لا يوقفه.',
                           'Foreground only. Leaving the route does not stop tracking.'),
                       style: Theme.of(context).textTheme.bodySmall),
                     if (_trackingTripId == trip.id && _lastGpsSend != null)

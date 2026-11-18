@@ -1129,7 +1129,7 @@
   "repStatPharmacies": "Pharmacies",
   "repStatVisitsWeek": "Visits, 7 days",
   "repStatOrdersMonth": "Orders this month",
-  "repStatSalesMonth": "Their value",
+  "repStatSalesMonth": "Orders value this month",
   "repStatCommissionMonth": "Your commission this month",
   "repCommissionHint": "You earn {rate} of the value of delivered orders from your pharmacies placed through Feniq.",
   "@repCommissionHint": {
@@ -2054,6 +2054,10 @@
   "@orderPipelineStale": {"placeholders": {"count": {"type": "int"}}},
   "orderPipelineFailed": "Couldn't load today's orders.",
   "orderPipelineNone": "No open orders, and nothing delivered today.",
+  "warehouseInsightsAgeBand": "{from} to {to} days",
+  "@warehouseInsightsAgeBand": {"placeholders": {"from": {"type": "int"}, "to": {"type": "int"}}},
+  "warehouseInsightsAgeBandOver": "{from} days or more",
+  "@warehouseInsightsAgeBandOver": {"placeholders": {"from": {"type": "int"}}},
   "@dailyReceiptsReceived": {"placeholders": {"amount": {"type": "String"}, "count": {"type": "int"}}},
   "@dailyReceiptsReversed": {"placeholders": {"amount": {"type": "String"}}}
 }

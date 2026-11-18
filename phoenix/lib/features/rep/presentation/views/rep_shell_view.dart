@@ -104,6 +104,10 @@ class _RepShellViewState extends State<RepShellView> {
       ),
       // At large text the labelled button ran off the screen and covered the
       // search (design review 2026-11-18): the icon alone, named for TalkBack.
+      // The rep's main action, centred above the tabs within reach of either
+      // thumb (design review 2026-11-18: at the left edge it was far from the
+      // right thumb).
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _index != 0
           ? null
           : MediaQuery.textScalerOf(context).scale(10) > 13

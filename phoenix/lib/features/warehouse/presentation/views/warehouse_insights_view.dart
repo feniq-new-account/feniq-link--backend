@@ -220,7 +220,20 @@ class WarehouseInsightsView extends StatelessWidget {
                               }
                             }
                           },
-                          child: Column(
+                          // The count large on the reading side, the sentence, and
+                          // a chevron: the card opens its list (design review
+                          // 2026-11-18).
+                          child: Row(
+                            children: [
+                              Text(
+                                '${alert.count}',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primaryTextOf(context),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(switch (alert.code) {
@@ -249,6 +262,9 @@ class WarehouseInsightsView extends StatelessWidget {
                                   ),
                                   textDirection: TextDirection.ltr,
                                 ),
+                            ],
+                          )),
+                              const Icon(Icons.chevron_right),
                             ],
                           ),
                         ),
@@ -354,19 +370,27 @@ class _ReportFigures extends StatelessWidget {
                 l10n.warehouseInsightsAgingMethod,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              if (report.unknownAgeSyp > 0) ...[
-                const SizedBox(height: 12),
-                Text(l10n.warehouseInsightsUnknownAge),
-                Text(
-                  formatSyp(report.unknownAgeSyp, l10n.currencySuffix),
-                  textDirection: TextDirection.ltr,
-                ),
-              ],
+              // One row per age band: the band on the reading side, the amount
+              // on the other, isolated left-to-right; colours go from green to
+              // red as debt gets older, and each band says its days in words
+              // (design review 2026-11-18).
               for (var i = 0; i < 4; i++) ...[
                 const SizedBox(height: 14),
-                Text(
-                  '${i == 3 ? '${bounds[i]}+' : '${bounds[i]}–${bounds[i + 1] - 1}'}: ${formatSyp(report.aging[i], l10n.currencySuffix)}',
-                  textDirection: TextDirection.ltr,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        i == 3
+                            ? l10n.warehouseInsightsAgeBandOver(bounds[i])
+                            : l10n.warehouseInsightsAgeBand(bounds[i], bounds[i + 1] - 1),
+                      ),
+                    ),
+                    Text(
+                      formatSyp(report.aging[i], l10n.currencySuffix),
+                      textDirection: TextDirection.ltr,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 6),
                 LinearProgressIndicator(
@@ -374,9 +398,34 @@ class _ReportFigures extends StatelessWidget {
                   minHeight: 10,
                   backgroundColor: AppColors.borderOf(context),
                   borderRadius: BorderRadius.circular(6),
-                  color: i == 3
-                      ? AppColors.warningOf(context)
-                      : AppColors.secondaryOf(context),
+                  color: [
+                    AppColors.secondaryOf(context),
+                    // Amber, so the second band does not read as the orange third.
+                    Colors.amber.shade600,
+                    AppColors.primaryOf(context),
+                    AppColors.errorOf(context),
+                  ][i],
+                ),
+              ],
+              // Debt with no dated invoice: its own grey row, outside the bands.
+              if (report.unknownAgeSyp > 0) ...[
+                const SizedBox(height: 14),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.warehouseInsightsUnknownAge,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryOf(context)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      formatSyp(report.unknownAgeSyp, l10n.currencySuffix),
+                      textDirection: TextDirection.ltr,
+                      style: TextStyle(color: AppColors.textSecondaryOf(context)),
+                    ),
+                  ],
                 ),
               ],
             ],
@@ -465,7 +514,7 @@ class _TrendCardState extends State<_TrendCard> {
                 style: TextStyle(color: AppColors.secondaryOf(context)),
               ),
               Text(
-                '● ${l10n.warehouseInsightsCollections}',
+                '■ ${l10n.warehouseInsightsCollections}',
                 style: TextStyle(color: AppColors.primaryOf(context)),
               ),
             ],
@@ -577,16 +626,19 @@ class _TrendPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.5,
       );
-      canvas.drawCircle(
-        Offset(
-          x(selected),
-          y(
-            series ? rows[selected].netSalesSyp : rows[selected].collectionsSyp,
-          ),
-        ),
-        5,
-        Paint()..color = color,
-      );
+      // A shape per series as well as a colour (design review 2026-11-18):
+      // circles for net sales, squares for collections, larger on the
+      // selected day.
+      for (var i = 0; i < rows.length; i++) {
+        final point = Offset(x(i), y(series ? rows[i].netSalesSyp : rows[i].collectionsSyp));
+        final radius = i == selected ? 6.0 : 3.5;
+        final paint = Paint()..color = color;
+        if (series) {
+          canvas.drawCircle(point, radius, paint);
+        } else {
+          canvas.drawRect(Rect.fromCenter(center: point, width: radius * 2, height: radius * 2), paint);
+        }
+      }
     }
   }
 

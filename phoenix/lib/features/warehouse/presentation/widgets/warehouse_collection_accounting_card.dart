@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:feniq/core/widgets/card_parts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
@@ -182,7 +183,7 @@ class _WarehouseCollectionAccountingCardState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    _tr('محاسبة التحصيل الجديدة', 'Collection accounting'),
+                    _tr('محاسبة التحصيل', 'Collection accounting'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -201,27 +202,7 @@ class _WarehouseCollectionAccountingCardState
                 child: LinearProgressIndicator(),
               )
             else if (_error != null)
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(top: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.errorOf(context).withValues(alpha: 0.07),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_error!, style: TextStyle(color: AppColors.errorOf(context))),
-                    const SizedBox(height: 6),
-                    TextButton.icon(
-                      onPressed: () => _load(),
-                      icon: const Icon(Icons.refresh),
-                      label: Text(_tr('إعادة المحاولة', 'Try again')),
-                    ),
-                  ],
-                ),
-              )
+              CardLoadError(message: _error!, onRetry: () => _load())
             else if (!v2)
               Container(
                 width: double.infinity,
