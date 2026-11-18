@@ -163,6 +163,12 @@ test("today's receipts match the day: received, reversed, by method and by who t
   // The manager sees the same day.
   assert.equal((await call(owner, `/warehouse/payments/receipts?date=${runDay}`)).receipts.netSyp, 300000);
 
+  // The manager's "today's orders" counts the three deliveries of this run.
+  const pipeline = (await call(accountant, '/warehouse/orders/pipeline')).pipeline;
+  assert.equal(pipeline.deliveredToday.count, 3);
+  assert.equal(pipeline.deliveredToday.amountSyp, 300000);
+  assert.equal(pipeline.onTheWay.count, 0);
+
   const account = await Account.findOne({ pharmacyId: pharmacy.id, warehouseId: warehouse.id });
   assert.equal((await require('../src/services/ledger.service').verifyAccount(account.id)).ok, true);
 });
