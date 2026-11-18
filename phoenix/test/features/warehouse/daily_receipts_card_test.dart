@@ -29,7 +29,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('مقبوضات اليوم'), findsOneWidget);
     expect(find.textContaining('الصافي: 151,000'), findsOneWidget);
-    expect(find.textContaining('انلغى: −7,000'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'^المقبوض: 158,000.* · عدد الدفعات 4$')), findsOneWidget);
+    expect(find.textContaining('الملغى: −7,000'), findsOneWidget);
     expect(find.textContaining('نقداً: 108,000'), findsOneWidget);
     expect(find.textContaining('Manager (مدير): 108,000'), findsOneWidget);
     expect(find.textContaining('Accountant (محاسب): 50,000'), findsOneWidget);
@@ -38,10 +39,10 @@ void main() {
   testWidgets('a quiet day says so, and a failed load says it could not load', (tester) async {
     await tester.pumpWidget(_app(DailyReceiptsCard(load: () async => {'receivedCount': 0, 'reversedCount': 0})));
     await tester.pumpAndSettle();
-    expect(find.text('ما انقبض شي اليوم.'), findsOneWidget);
+    expect(find.text('لم يُقبض أي مبلغ اليوم.'), findsOneWidget);
 
     await tester.pumpWidget(_app(DailyReceiptsCard(key: const ValueKey('b'), load: () async => throw Exception('down'))));
     await tester.pumpAndSettle();
-    expect(find.text('ما قدرنا نجيب مقبوضات اليوم.'), findsOneWidget);
+    expect(find.text('تعذّر تحميل مقبوضات اليوم.'), findsOneWidget);
   });
 }

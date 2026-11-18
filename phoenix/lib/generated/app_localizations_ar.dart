@@ -3696,19 +3696,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String dailyReceiptsReceived(String amount, int count) {
-    return 'انقبض: $amount · $count دفعة';
+    return 'المقبوض: $amount · عدد الدفعات $count';
   }
 
   @override
   String dailyReceiptsReversed(String amount) {
-    return 'انلغى: −$amount';
+    return 'الملغى: −$amount';
   }
 
   @override
-  String get dailyReceiptsNone => 'ما انقبض شي اليوم.';
+  String get dailyReceiptsNone => 'لم يُقبض أي مبلغ اليوم.';
 
   @override
-  String get dailyReceiptsFailed => 'ما قدرنا نجيب مقبوضات اليوم.';
+  String get dailyReceiptsFailed => 'تعذّر تحميل مقبوضات اليوم.';
 
   @override
   String get dailyReceiptsCash => 'نقداً';
