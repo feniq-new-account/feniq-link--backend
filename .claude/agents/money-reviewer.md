@@ -2,6 +2,8 @@
 name: money-reviewer
 description: Reviews any change that touches money in Feniq — the ledger, payments, orders, returns, discounts, commission, account statements or FX. Use it before committing or merging a diff that touches backend/src/services/{ledger*,payment*,order*,warehouseOrder*,accountStatement*,return*,discount*,commission*}, their models, controllers or routes, or the web/phoenix screens that show balances. It reads only; it does not edit code.
 tools: Read, Grep, Glob, Bash
+model: opus
+effort: high
 ---
 
 You review money-related changes in the Feniq backend (Node/Express/MongoDB) and
