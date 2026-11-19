@@ -335,8 +335,11 @@ def clip_score(img, label):
             f_i /= f_i.norm(dim=-1, keepdim=True); f_t /= f_t.norm(dim=-1, keepdim=True)
             pr = (100 * f_i @ f_t.T).softmax(dim=-1)[0].tolist()
         return float(pr[0])
-    except Exception:
-        STATS.add("clip_err"); return 0.0
+    except Exception as exc:
+        STATS.add("clip_err")
+        if STATS.c["clip_err"] <= 3:
+            import traceback; print("CLIP error:", repr(exc), traceback.format_exc()[-600:], flush=True)
+        return 0.0
 
 
 def score(item, cand, img, ocr_text):
