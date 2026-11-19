@@ -33,8 +33,13 @@ def load(src: str) -> Image.Image:
 
 
 def square(img: Image.Image, side: int = 800) -> Image.Image:
-    """صورة مربعة بخلفية بيضا (متل باقي صور الكتالوج)."""
-    img.thumbnail((side - 40, side - 40))
+    """صورة مربعة بخلفية بيضا (متل باقي صور الكتالوج): بتقصّ الأبيض حوالين المنتج وبتكبّره ليعبّي الإطار."""
+    gray = ImageOps.grayscale(img).point(lambda v: 255 if v > 242 else 0)
+    box = ImageOps.invert(gray).getbbox()
+    if box:
+        img = img.crop(box)
+    scale = (side - 60) / max(img.size)
+    img = img.resize((max(1, int(img.width * scale)), max(1, int(img.height * scale))), Image.LANCZOS)
     canvas = Image.new("RGB", (side, side), "white")
     canvas.paste(img, ((side - img.width) // 2, (side - img.height) // 2))
     return canvas
