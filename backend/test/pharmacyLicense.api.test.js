@@ -17,6 +17,10 @@ let server;
 let baseUrl;
 let admin, owner, pending, other, pharmacy;
 let adminToken, ownerToken, pendingToken, otherToken;
+// Approved two days ago, so the 14-day grace is still running whenever the
+// suite runs (a fixed date here expired the grace on 2026-11-19).
+const APPROVED_AT = new Date(Math.floor((Date.now() - 2 * 24 * 60 * 60 * 1000) / 1000) * 1000);
+const DUE_AT = new Date(APPROVED_AT.getTime() + 14 * 24 * 60 * 60 * 1000);
 const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 1, 2, 3]);
 
 function tokenFor(user) {
@@ -42,7 +46,7 @@ function formOf(buffer = png, mime = 'image/png') {
 }
 async function makePharmacy(phone, status) {
   const user = await User.create({ role: 'pharmacy', status, name: phone, phone,
-    pharmacyApprovedAt: status === 'active' ? new Date('2026-11-05T09:00:00.000Z') : null });
+    pharmacyApprovedAt: status === 'active' ? APPROVED_AT : null });
   const row = await Pharmacy.create({
     userId: user._id, nameAr: 'صيدلية تجريبية', nameEn: 'Pharmacy',
     ownerName: 'Owner', phone, city: 'Latakia',
@@ -75,7 +79,7 @@ test('licence status is private and the grace starts at actual approval', async 
   const response = await request('GET', '/pharmacy/license', { token: ownerToken });
   assert.equal(response.status, 200);
   assert.equal(response.payload.license.status, 'not_submitted');
-  assert.equal(response.payload.license.dueAt, '2026-11-19T09:00:00.000Z');
+  assert.equal(response.payload.license.dueAt, DUE_AT.toISOString());
   assert.equal(response.payload.license.graceExpired, false);
   assert.equal(Object.hasOwn(response.payload.license, 'documentId'), false);
 });
