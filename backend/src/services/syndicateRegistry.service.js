@@ -153,11 +153,11 @@ async function parseWorkbook(buffer) {
       sourceRow: Number.isFinite(sourceRow) && sourceRow > 0 ? sourceRow : null,
     });
     if (entries.length > MAX_ROWS) {
-      throw ApiError.badRequest(`الملف فيه أكتر من ${MAX_ROWS} صف.`, undefined, 'SYNDICATE_FILE_TOO_LARGE');
+      throw ApiError.badRequest(`يحتوي الملف على أكثر من ${MAX_ROWS} صف.`, undefined, 'SYNDICATE_FILE_TOO_LARGE');
     }
   }
   if (entries.length === 0) {
-    throw ApiError.badRequest('الملف ما فيه ولا صيدلاني.', undefined, 'SYNDICATE_FILE_EMPTY');
+    throw ApiError.badRequest('لا يحتوي الملف على أي صيدلاني.', undefined, 'SYNDICATE_FILE_EMPTY');
   }
   return { entries, skipped };
 }
@@ -285,19 +285,19 @@ async function check({ name, pharmacyName, phone }, { excludeUserId = null } = {
       });
       if (claimedBefore) {
         decision = 'review';
-        reasons.push('بس هالاسم انقبل قبل هيك بحساب تاني');
+        reasons.push('لكن هذا الاسم قُبل سابقاً بحساب آخر');
       }
     }
   } else if (best.plausible) {
-    reasons.push(`الاسم قريب بس التطابق ${best.score}% أقل من الحد (${minScore}%)`);
+    reasons.push(`الاسم قريب لكن التطابق ${best.score}% أقل من الحد (${minScore}%)`);
   } else if (best.samePhone) {
-    reasons.push('رقم الموبايل موجود بالقائمة بس اسم الصيدلاني ناقص أو مختلف');
+    reasons.push('رقم الهاتف موجود في القائمة لكن اسم الصيدلاني ناقص أو مختلف');
   } else if (best.samePharmacyName) {
-    reasons.push('اسم الصيدلية موجود بالقائمة بس اسم الصيدلاني لأ');
+    reasons.push('اسم الصيدلية موجود في القائمة لكن اسم الصيدلاني غير موجود');
   } else if (entry) {
-    reasons.push('في اسم قريب بالقائمة بس مش متطابق');
+    reasons.push('يوجد اسم قريب في القائمة لكنه غير مطابق');
   } else {
-    reasons.push('الاسم مش موجود بقائمة النقابة');
+    reasons.push('الاسم غير موجود في قائمة النقابة');
   }
 
   return { decision, score: entry ? best.score : 0, reasons, entry };

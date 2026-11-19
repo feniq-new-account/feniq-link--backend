@@ -2010,7 +2010,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get repStatOrdersMonth => 'Orders this month';
 
   @override
-  String get repStatSalesMonth => 'Their value';
+  String get repStatSalesMonth => 'Orders value this month';
 
   @override
   String get repStatCommissionMonth => 'Your commission this month';
@@ -3776,4 +3776,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get orderPipelineNone =>
       'No open orders, and nothing delivered today.';
+
+  @override
+  String warehouseInsightsAgeBand(int from, int to) {
+    return '$from to $to days';
+  }
+
+  @override
+  String warehouseInsightsAgeBandOver(int from) {
+    return '$from days or more';
+  }
 }

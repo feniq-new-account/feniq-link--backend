@@ -82,7 +82,7 @@ test('a new order is pushed to the primary login, every active owner and the acc
   const rows = await Notification.find({}).lean();
   const recipients = rows.map((r) => String(r.userId)).sort();
   assert.deepStrictEqual(recipients, [String(ids.primary), String(ids.owner), String(ids.accountant)].sort());
-  assert.ok(rows.every((r) => r.titleAr === 'طلبية جديدة'));
+  assert.ok(rows.every((r) => r.titleAr === 'طلب جديد'));
 
   const tokens = sent.flatMap((m) => m.tokens).sort();
   assert.deepStrictEqual(tokens, ['token-1', 'token-2', 'token-3']);
@@ -108,7 +108,7 @@ test('a cancellation goes on the same channel, to the same people', async () => 
   await orderService._notifyWarehouseOfOrder(fakeOrder(), 'cancelled');
   const rows = await Notification.find({}).lean();
   assert.strictEqual(rows.length, 3);
-  assert.ok(rows.every((r) => r.titleAr === 'طلبية ملغاة'));
+  assert.ok(rows.every((r) => r.titleAr === 'طلب ملغى'));
   assert.ok(sent.every((m) => m.android.notification.channelId === 'feniq_new_orders'));
 });
 

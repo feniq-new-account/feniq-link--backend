@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:feniq/core/widgets/card_parts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -80,18 +81,10 @@ class _OrderPipelineCardState extends State<OrderPipelineCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(child: Text(l10n.orderPipelineTitle, style: context.textTheme.titleSmall)),
-              IconButton(
-                tooltip: MaterialLocalizations.of(context).refreshIndicatorSemanticLabel,
-                icon: const Icon(Icons.refresh, size: 20),
-                onPressed: _load,
-              ),
-            ],
-          ),
+          CardHeader(icon: Icons.local_shipping_outlined, title: l10n.orderPipelineTitle, onRefresh: _load),
+          const SizedBox(height: AppSizes.spacingSmall),
           if (_failed)
-            Text(l10n.orderPipelineFailed, style: muted)
+            CardLoadError(message: l10n.orderPipelineFailed, onRetry: _load)
           else if (data == null)
             const LinearProgressIndicator()
           else if (total == 0)

@@ -949,7 +949,7 @@
   "repStatPharmacies": "الصيدليات",
   "repStatVisitsWeek": "زيارات 7 أيام",
   "repStatOrdersMonth": "طلبات الشهر",
-  "repStatSalesMonth": "قيمتها",
+  "repStatSalesMonth": "قيمة طلبات الشهر",
   "repStatCommissionMonth": "عمولتك هذا الشهر",
   "repCommissionHint": "عمولتك {rate} من قيمة الطلبات المسلَّمة لصيدلياتك عبر فينيق.",
   "repOwnerLabel": "المسؤول",
@@ -1160,7 +1160,7 @@
   "stageAccepted": "تم القبول",
   "stageAcceptedDesc": "قبل المستودع طلبك",
   "warehouseAccept": "قبول",
-  "warehouseSendOnWay": "خرج للتوصيل",
+  "warehouseSendOnWay": "إرسال للتوصيل",
   "warehouseCollectTitle": "تسليم الطلب رقم {number}: هل تم تحصيل المبلغ؟",
   "warehouseCollectTotal": "المبلغ: {amount}",
   "warehouseCollectFull": "تم استلام المبلغ كاملاً",
@@ -1533,5 +1533,7 @@
   "orderPipelineDelivered": "سُلّمت اليوم",
   "orderPipelineStale": "بانتظار الموافقة منذ أكثر من 48 ساعة: {count}",
   "orderPipelineFailed": "تعذّر تحميل طلبات اليوم.",
-  "orderPipelineNone": "لا توجد طلبات مفتوحة، ولم يُسلَّم شيء اليوم."
+  "orderPipelineNone": "لا توجد طلبات مفتوحة، ولم يُسلَّم شيء اليوم.",
+  "warehouseInsightsAgeBand": "من {from} إلى {to} يوماً",
+  "warehouseInsightsAgeBandOver": "{from} يوماً فأكثر"
 }

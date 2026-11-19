@@ -44,7 +44,7 @@ class RepCommissionSummary extends StatelessWidget {
         if (legacy != 0) ...[
           RepStatTile(
             value: formatSyp(legacy, suffix),
-            label: tr('عمولات الطلبيات المسلّمة (النظام السابق)',
+            label: tr('عمولات الطلبات المسلّمة (النظام السابق)',
               'Delivered-order commission (legacy)'),
           ),
           const SizedBox(height: 8),

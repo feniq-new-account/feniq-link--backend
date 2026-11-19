@@ -19,11 +19,17 @@ class RepStatTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            value,
-            style: context.textTheme.titleLarge?.copyWith(
-              color: AppColors.primaryTextOf(context),
-              fontWeight: FontWeight.w800,
+          // A long amount shrinks to one line instead of wrapping its currency.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: context.textTheme.titleLarge?.copyWith(
+                color: AppColors.primaryTextOf(context),
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           const SizedBox(height: AppSizes.spacingXSmall),
@@ -55,11 +61,15 @@ class RepStatsLine extends StatelessWidget {
         runSpacing: AppSizes.spacingXSmall,
         children: [
           for (final (value, label) in entries)
-            Text.rich(TextSpan(children: [
-              TextSpan(text: value, style: valueStyle),
-              const TextSpan(text: ' '),
-              TextSpan(text: label, style: labelStyle),
-            ])),
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: value, style: valueStyle),
+                  const TextSpan(text: ' '),
+                  TextSpan(text: label, style: labelStyle),
+                ],
+              ),
+            ),
         ],
       ),
     );

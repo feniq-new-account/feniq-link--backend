@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:feniq/core/widgets/card_parts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/constants/app_padding.dart';
 import 'package:feniq/core/constants/app_sizes.dart';
@@ -93,8 +94,7 @@ class _RepVisitsTabState extends State<RepVisitsTab> {
             itemBuilder: (context, index) {
               if (hasNotice && index == 0) {
                 return hasError
-                    ? FailureWidget(
-                        dense: true,
+                    ? CardLoadError(
                         message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
                         onRetry: () => context.read<RepVisitsCubit>().load(),
                       )
@@ -103,8 +103,7 @@ class _RepVisitsTabState extends State<RepVisitsTab> {
               final i = index - (hasNotice ? 1 : 0);
               if (i >= state.visits.length) {
                 if (state.loadMoreError) {
-                  return FailureWidget(
-                    dense: true,
+                  return CardLoadError(
                     message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
                     onRetry: () => context.read<RepVisitsCubit>().loadMore(),
                   );

@@ -579,21 +579,17 @@ class WarehouseOrderDetailView extends StatelessWidget {
     final advanceLabel = warehouseAdvanceLabel(l10n, order.status);
     final busy = state.isActing;
 
+    Widget spinnerOr(String label) => busy
+        ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+        : Text(label, textAlign: TextAlign.center);
+
+    // Secondary first, primary last, as on the row (the primary sits under
+    // the thumb on the reading side).
     final List<Widget> buttons;
     if (state.isEditing) {
       buttons = [
-        Expanded(
-          child: OutlinedButton(onPressed: busy ? null : cubit.cancelEditing, child: Text(l10n.cancel)),
-        ),
-        const SizedBox(width: AppSizes.spacingSmall),
-        Expanded(
-          child: FilledButton(
-            onPressed: busy ? null : () => _confirmSave(context),
-            child: busy
-                ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : Text(l10n.warehouseSaveEdits),
-          ),
-        ),
+        OutlinedButton(onPressed: busy ? null : cubit.cancelEditing, child: Text(l10n.cancel, textAlign: TextAlign.center)),
+        FilledButton(onPressed: busy ? null : () => _confirmSave(context), child: spinnerOr(l10n.warehouseSaveEdits)),
       ];
     } else {
       // Any order still awaiting approval can be corrected: even one made of
@@ -602,26 +598,44 @@ class WarehouseOrderDetailView extends StatelessWidget {
       if (advanceLabel == null && !canEdit) return null;
       buttons = [
         if (canEdit)
-          Expanded(
-            child: OutlinedButton(onPressed: busy ? null : cubit.startEditing, child: Text(l10n.warehouseEditItems)),
+          OutlinedButton(
+            onPressed: busy ? null : cubit.startEditing,
+            child: Text(l10n.warehouseEditItems, textAlign: TextAlign.center),
           ),
-        if (canEdit && advanceLabel != null) const SizedBox(width: AppSizes.spacingSmall),
         if (advanceLabel != null)
-          Expanded(
-            child: FilledButton(
-              // Delivered waits for the pharmacy's seal photo when the order asks for one.
-              onPressed: busy || order.isWaitingForSealPhoto ? null : () => _confirmAdvance(context, order),
-              child: busy
-                  ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(advanceLabel),
-            ),
+          FilledButton(
+            // Delivered waits for the pharmacy's seal photo when the order asks for one.
+            onPressed: busy || order.isWaitingForSealPhoto ? null : () => _confirmAdvance(context, order),
+            child: spinnerOr(advanceLabel),
           ),
       ];
     }
+    // At large text two buttons side by side broke their words over several
+    // lines (design review 2026-11-18): one above the other, full width, the
+    // primary on top.
+    final stacked = MediaQuery.textScalerOf(context).scale(10) > 13;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.spacingMedium),
-        child: Row(children: buttons),
+        child: stacked
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (i, button) in buttons.reversed.indexed) ...[
+                    if (i > 0) const SizedBox(height: AppSizes.spacingSmall),
+                    button,
+                  ],
+                ],
+              )
+            : Row(
+                children: [
+                  for (final (i, button) in buttons.indexed) ...[
+                    if (i > 0) const SizedBox(width: AppSizes.spacingSmall),
+                    Expanded(child: button),
+                  ],
+                ],
+              ),
       ),
     );
   }

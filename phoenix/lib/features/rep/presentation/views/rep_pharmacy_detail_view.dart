@@ -1,5 +1,6 @@
 import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:feniq/core/widgets/card_parts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -94,8 +95,7 @@ class RepPharmacyDetailView extends StatelessWidget {
                 notice: state.status == RepLoadStatus.loading
                     ? const LinearProgressIndicator()
                     : state.status == RepLoadStatus.error
-                    ? FailureWidget(
-                        dense: true,
+                    ? CardLoadError(
                         message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
                         onRetry: () => context.read<RepPharmacyDetailCubit>().load(),
                       )
@@ -144,10 +144,13 @@ class _Body extends StatelessWidget {
                     Expanded(
                       child: _InfoLine(icon: Icons.phone_outlined, label: l10n.phoneLabel, value: ltrIsolate(phone)),
                     ),
-                    IconButton(
+                    // A clear call button, 48 points, with its word (design review
+                    // 2026-11-18: the bare icon read as decoration).
+                    FilledButton.tonalIcon(
+                      style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
                       onPressed: () => onCall(phone),
-                      tooltip: l10n.repCallAction,
-                      icon: Icon(Icons.call, color: AppColors.primaryTextOf(context)),
+                      icon: const Icon(Icons.call),
+                      label: Text(l10n.repCallAction),
                     ),
                   ],
                 ),

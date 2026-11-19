@@ -1,8 +1,7 @@
 import 'package:feniq/core/error/error_translator.dart';
-import 'package:feniq/core/widgets/failure_widget.dart';
 import '../managers/rep_load_status.dart';
-import 'package:feniq/core/widgets/responsive_role_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:feniq/core/widgets/card_parts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feniq/core/constants/app_colors.dart';
@@ -58,8 +57,7 @@ class RepProfileTab extends StatelessWidget {
           children: [
             if (state.status == RepLoadStatus.loading) const LinearProgressIndicator(),
             if (state.status == RepLoadStatus.error)
-              FailureWidget(
-                dense: true,
+              CardLoadError(
                 message: translateErrorCode(l10n, state.errorCode, state.errorMessage ?? ''),
                 onRetry: () => context.read<RepHomeCubit>().load(),
               ),
@@ -113,18 +111,12 @@ class RepProfileTab extends StatelessWidget {
             ],
             if (stats != null) ...[
               const SizedBox(height: AppSizes.spacingMedium),
-              ResponsiveStatsGrid(
-                minTileWidth: 140,
-                maxColumns: 2,
-                children: [
-                  RepStatTile(value: '${stats.pharmacyCount}', label: l10n.repStatPharmacies),
-                  RepStatTile(value: '${stats.visitsLast7Days}', label: l10n.repStatVisitsWeek),
-                  RepStatTile(value: '${stats.monthOrdersCount}', label: l10n.repStatOrdersMonth),
-                  RepStatTile(
-                    value: formatSyp(stats.monthOrdersTotal, l10n.currencySuffix),
-                    label: l10n.repStatSalesMonth,
-                  ),
-                ],
+              // The counts are on the pharmacies tab already; here the month's
+              // order value, full width so the amount never wraps
+              // (design review 2026-11-18).
+              RepStatTile(
+                value: formatSyp(stats.monthOrdersTotal, l10n.currencySuffix),
+                label: l10n.repStatSalesMonth,
               ),
               // Do not display financial amounts from a failed/stale /rep/me
               // request. The new summary distinguishes legacy deliveries

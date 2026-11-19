@@ -223,7 +223,7 @@ test('advancing to On the Way notifies the pharmacist with the new terminology',
   assert.strictEqual(note.userId, String(ids.pharmacyUser));
   assert.match(note.bodyEn, /on the way/i);
   assert.doesNotMatch(note.bodyEn, /out for delivery/i);
-  assert.match(note.bodyAr, /بالطريق/);
+  assert.match(note.bodyAr, /في الطريق/);
   assert.doesNotMatch(note.bodyAr, /خرج للتوصيل/);
 });
 
@@ -267,7 +267,7 @@ test('accepting notifies the pharmacist that the order was accepted', async () =
   await warehouseOrderService.advanceOrderStatus(order._id.toString(), ids.warehouse, ids.warehouseUser);
   assert.strictEqual(notifications.length, 1);
   assert.strictEqual(notifications[0].userId, String(ids.pharmacyUser));
-  assert.match(notifications[0].bodyAr, /انقبلت/);
+  assert.match(notifications[0].bodyAr, /تم قبول/);
   assert.match(notifications[0].bodyEn, /accepted/);
 });
 

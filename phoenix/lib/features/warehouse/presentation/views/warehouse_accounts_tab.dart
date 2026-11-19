@@ -130,13 +130,15 @@ class _WarehouseAccountsTabState extends State<WarehouseAccountsTab> {
                         // What came in today, and who took it (manager and accountant both record).
                         DailyReceiptsCard(),
                         SizedBox(height: AppSizes.spacingSmall),
+                        // Canonical debt and receipts remain ledger-backed. Second, so
+                        // total debts and the largest debtors are on the first screen
+                        // (design review 2026-11-18).
+                        WarehouseSummaryCard(),
+                        SizedBox(height: AppSizes.spacingSmall),
                         // Manager-only monitoring; no cash or transfer action here.
                         WarehouseCashCustodyCard(),
                         SizedBox(height: AppSizes.spacingSmall),
                         WarehouseCollectionAccountingCard(),
-                        SizedBox(height: AppSizes.spacingSmall),
-                        // Canonical debt and receipts remain ledger-backed.
-                        WarehouseSummaryCard(),
                       ],
                     ),
                   ),

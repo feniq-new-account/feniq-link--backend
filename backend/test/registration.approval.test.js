@@ -260,7 +260,7 @@ test('a second account claiming the same listed pharmacist waits', async () => {
   const { body } = await register({ name: 'ياسمين شغري', phone: '0966000002' });
   assert.strictEqual(body.user.status, 'pending');
   const pharmacy = await Pharmacy.findOne({ phone: '0966000002' }).lean();
-  assert.ok(pharmacy.syndicateMatch.reasons.some((r) => r.includes('انقبل قبل هيك')));
+  assert.ok(pharmacy.syndicateMatch.reasons.some((r) => r.includes('قُبل سابقاً')));
 });
 
 test('a listed name marked "إلغاء" waits', async () => {
@@ -315,7 +315,7 @@ test('someone not on the list waits, with nothing rejected automatically', async
   const accounts = await call('GET', '/admin/accounts?status=pending&role=pharmacy', { token: adminToken });
   const row = accounts.body.accounts.find((a) => a.user.phone === '0966000004');
   assert.strictEqual(row.pharmacy.syndicateMatch.decision, 'review');
-  assert.deepStrictEqual(row.pharmacy.syndicateMatch.reasons, ['الاسم مش موجود بقائمة النقابة']);
+  assert.deepStrictEqual(row.pharmacy.syndicateMatch.reasons, ['الاسم غير موجود في قائمة النقابة']);
 });
 
 // --------------------------------------------------------------- telegram

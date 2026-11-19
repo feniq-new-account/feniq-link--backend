@@ -56,6 +56,7 @@ class ResponsiveRoleScaffold extends StatelessWidget {
     required this.onSelected,
     required this.destinations,
     this.floatingActionButton,
+    this.floatingActionButtonLocation,
   });
   final PreferredSizeWidget appBar;
   final Widget body;
@@ -63,6 +64,7 @@ class ResponsiveRoleScaffold extends StatelessWidget {
   final ValueChanged<int> onSelected;
   final List<NavigationDestination> destinations;
   final Widget? floatingActionButton;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -133,10 +135,11 @@ class ResponsiveRoleScaffold extends StatelessWidget {
               )
             : content,
         floatingActionButton: floatingActionButton,
+        floatingActionButtonLocation: floatingActionButtonLocation,
         bottomNavigationBar: rail
             ? null
             : compactMenu
-            ? _CompactRoleNavigation(destinations: destinations, selectedIndex: selectedIndex, onSelected: onSelected)
+            ? _FittedRoleNavigation(destinations: destinations, selectedIndex: selectedIndex, onSelected: onSelected)
             : NavigationBar(
                 height: math.max(80, 48 + labelHeight),
                 selectedIndex: selectedIndex,
@@ -160,70 +163,79 @@ class ResponsiveRoleBody extends StatelessWidget {
   );
 }
 
-/// An explicit section picker keeps every word readable when a five-tab bar
-/// would split Arabic words at accessibility text sizes.
-class _CompactRoleNavigation extends StatelessWidget {
-  const _CompactRoleNavigation({required this.destinations, required this.selectedIndex, required this.onSelected});
+/// When the labels do not fit at the phone's text size (large text, or five
+/// Arabic tabs on a narrow phone), every tab stays on the bar: its icon at full
+/// size and its label shrunk to one line, never split and never hidden behind a
+/// menu (design review 2026-11-18: tabs must stay visible). TalkBack reads the
+/// full label, and each tab is at least 48 points tall.
+class _FittedRoleNavigation extends StatelessWidget {
+  const _FittedRoleNavigation({required this.destinations, required this.selectedIndex, required this.onSelected});
   final List<NavigationDestination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
-  Future<void> _choose(BuildContext context) async {
-    final selected = await showModalBottomSheet<int>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < destinations.length; i++)
-                ListTile(
-                  minVerticalPadding: 16,
-                  leading: destinations[i].icon,
-                  title: Text(destinations[i].label),
-                  trailing: i == selectedIndex ? const Icon(Icons.check) : null,
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelMedium;
+    return Material(
+      key: const ValueKey('role-tab-bar'),
+      color: Theme.of(context).navigationBarTheme.backgroundColor ?? AppColors.surfaceOf(context),
+      elevation: 3,
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            for (var i = 0; i < destinations.length; i++)
+              Expanded(
+                child: Semantics(
                   selected: i == selectedIndex,
-                  selectedColor: AppColors.primaryTextOf(context),
-                  onTap: () => Navigator.of(context).pop(i),
+                  button: true,
+                  label: destinations[i].label,
+                  excludeSemantics: true,
+                  child: InkWell(
+                    onTap: () => onSelected(i),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 64),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: i == selectedIndex
+                                    ? AppColors.primaryOf(context).withValues(alpha: 0.16)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: i == selectedIndex
+                                  ? (destinations[i].selectedIcon ?? destinations[i].icon)
+                                  : destinations[i].icon,
+                            ),
+                            const SizedBox(height: 4),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                destinations[i].label,
+                                maxLines: 1,
+                                style: style?.copyWith(
+                                  fontWeight: i == selectedIndex ? FontWeight.w700 : FontWeight.w500,
+                                  color: i == selectedIndex ? AppColors.primaryTextOf(context) : AppColors.textSecondaryOf(context),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
-    if (selected != null && context.mounted) onSelected(selected);
   }
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: AppColors.navyOf(context),
-    child: SafeArea(
-      top: false,
-      child: InkWell(
-        key: const ValueKey('role-section-picker'),
-        onTap: () => _choose(context),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: IconTheme(
-            data: const IconThemeData(color: Colors.white),
-            child: Row(
-              children: [
-                destinations[selectedIndex].icon,
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    destinations[selectedIndex].label,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.white),
-                  ),
-                ),
-                const Icon(Icons.expand_more),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }

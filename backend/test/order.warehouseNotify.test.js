@@ -110,7 +110,7 @@ test('a new order pushes the warehouse account, naming the order and the pharmac
   assert.strictEqual(note.userId, String(ids.warehouseUser));
   assert.strictEqual(note.type, 'order_update');
   assert.strictEqual(String(note.relatedOrderId), String(order._id));
-  assert.strictEqual(note.titleAr, 'طلبية جديدة');
+  assert.strictEqual(note.titleAr, 'طلب جديد');
   assert.strictEqual(note.titleEn, 'New order');
   assert.match(note.bodyAr, new RegExp(`${order.orderNumber}.*صيدلية الياسمين`));
   assert.match(note.bodyEn, new RegExp(`#${order.orderNumber} from Al-Yasmin Pharmacy`));

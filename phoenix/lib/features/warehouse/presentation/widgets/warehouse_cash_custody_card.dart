@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:feniq/core/widgets/card_parts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feniq/core/constants/app_colors.dart';
 import 'package:feniq/core/utils/currency_formatter.dart';
@@ -208,7 +209,7 @@ class _WarehouseCashCustodyCardState extends State<WarehouseCashCustodyCard> {
                   Text(_tr('تحصيلات وتحويلات فينيق', 'Feniq cash and transfers'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700)),
-                  Text(_tr('ملخص رقابي للعرض فقط', 'Read-only overview'),
+                  Text(_tr('للاطلاع فقط', 'For viewing only'),
                     style: Theme.of(context).textTheme.bodySmall),
                 ],
               )),
@@ -223,14 +224,8 @@ class _WarehouseCashCustodyCardState extends State<WarehouseCashCustodyCard> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: LinearProgressIndicator(),
               )
-            else if (_error != null) ...[
-              _notice(_error!, warning: true),
-              TextButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh),
-                label: Text(_tr('إعادة المحاولة', 'Retry')),
-              ),
-            ]
+            else if (_error != null)
+              CardLoadError(message: _error!, onRetry: _load, retryLabel: _tr('إعادة المحاولة', 'Retry'))
             else if (inactive)
               _notice(_tr(
                 'تحصيل فينيق غير مفعّل لهذا المستودع، ولا توجد تحويلات مسجلة. الذمم أدناه من دفتر الحسابات المعتمد.',

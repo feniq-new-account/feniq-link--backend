@@ -176,13 +176,8 @@ void main() {
     await tester.pump();
     final bar = find.byType(NavigationBar);
     final compact = bar.evaluate().isEmpty;
-    if (compact) {
-      await tester.tap(find.byKey(const ValueKey('role-section-picker')));
-      await tester.pumpAndSettle();
-      expect(find.byType(ListTile), findsNWidgets(5));
-    }
     for (final label in ['الطلبات', 'المرتجعات', 'الحسابات', 'المناديب', 'الحساب']) {
-      expect(find.descendant(of: compact ? find.byType(ListTile) : bar, matching: find.text(label)), findsOneWidget);
+      expect(find.descendant(of: compact ? find.byKey(const ValueKey('role-tab-bar')) : bar, matching: find.text(label)), findsOneWidget);
     }
     expect(tester.takeException(), isNull);
   });
