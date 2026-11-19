@@ -1294,5 +1294,301 @@
   "confidence": "exact",
   "sourcePage": "بروشور عصفورة",
   "asfouraId": 548
+ },
+ {
+  "nameAr": "بودرة سلاف رقم 2",
+  "manufacturerAr": "متفرقات",
+  "file": "b080e79d14f511e2.webp",
+  "confidence": "brand",
+  "sourcePage": "https://www.dawaaegypt.com/product/sulaf-syrian-water-powder-20-gm-no-2-ZG9t6",
+  "asfouraId": 65
+ },
+ {
+  "nameAr": "ميري مانت فضي",
+  "manufacturerAr": "متفرقات",
+  "file": "37eeb23dbc2b0b0f.webp",
+  "confidence": "brand",
+  "sourcePage": "https://kimopack.com/en_us/product/كريم-ميري-مانت-متعدد-الاستخدام-32-غرام/",
+  "asfouraId": 80
+ },
+ {
+  "nameAr": "سنسوداين فراشي اسنان وسط",
+  "manufacturerAr": "متفرقات",
+  "file": "63c03d70b26183b6.webp",
+  "confidence": "brand",
+  "sourcePage": "https://www.taw9eel.com/sensodyne-toothbrush-true-white-medium-1.html",
+  "asfouraId": 104
+ },
+ {
+  "nameAr": "هاي دنت ملح البحر وسط // 967",
+  "manufacturerAr": "هاي دنت",
+  "file": "ca34b532f81775f7.webp",
+  "confidence": "exact",
+  "sourcePage": "https://nazirokh.ir/p/hident-medium-toothbrush-sea-salt-model-code-967-m/",
+  "asfouraId": 109
+ },
+ {
+  "nameAr": "هاي دنت بروفيشنال وسط \\\\ 911",
+  "manufacturerAr": "هاي دنت",
+  "file": "25e2b04f1474caef.webp",
+  "confidence": "exact",
+  "sourcePage": "https://torob.com/p/4848fd95-c9af-4161-80e2-9d64f60a2c0b/مسواک-هایدنت-hident-مدل-professional-911/",
+  "asfouraId": 114
+ },
+ {
+  "nameAr": "هاي دنت ماريشال خشن \\\\ 927",
+  "manufacturerAr": "هاي دنت",
+  "file": "6e856d4e369a6f5e.webp",
+  "confidence": "exact",
+  "sourcePage": "https://nazirokh.ir/p/hident-marshal-model-toothbrush-hard-code-927-h/",
+  "asfouraId": 117
+ },
+ {
+  "nameAr": "هاي دنت تشاركول تقويم اسنان ناعم \\\\ 959",
+  "manufacturerAr": "هاي دنت",
+  "file": "1bf493bf832fe0c7.webp",
+  "confidence": "brand",
+  "sourcePage": "https://storix.ir/product/rix-45860/مسواک-های-دنت-لثه-شور-سبز-بسته-12-عددی/",
+  "asfouraId": 120
+ },
+ {
+  "nameAr": "هاي دنت بالشاي الأخضر وسط \\\\965",
+  "manufacturerAr": "هاي دنت",
+  "file": "1bf493bf832fe0c7.webp",
+  "confidence": "brand",
+  "sourcePage": "https://storix.ir/product/rix-45860/مسواک-های-دنت-لثه-شور-سبز-بسته-12-عددی/",
+  "asfouraId": 122
+ },
+ {
+  "nameAr": "هاي دنت فراشي اسنان دياموند مزدوجة // 962",
+  "manufacturerAr": "هاي دنت",
+  "file": "bf61f74010267d36.webp",
+  "confidence": "exact",
+  "sourcePage": "https://nazirokh.ir/p/hident-diamond-toothbrush-962-mediumbristles-packof2/",
+  "asfouraId": 123
+ },
+ {
+  "nameAr": "آراك مينوكسيديل شامبو اخضر للشعر الدهني",
+  "manufacturerAr": "آراك",
+  "file": "a80b59aaabd8e38c.webp",
+  "confidence": "brand",
+  "sourcePage": "https://digishi.net/en/shampoo/78028-arak-minoxidil-sweet-almond-shampoo-2-bottles-offer.html",
+  "asfouraId": 208
+ },
+ {
+  "nameAr": "آراك مينوكسيديل فيتامين شامبو للشعر الجاف",
+  "manufacturerAr": "آراك",
+  "file": "a80b59aaabd8e38c.webp",
+  "confidence": "brand",
+  "sourcePage": "https://digishi.net/en/shampoo/78028-arak-minoxidil-sweet-almond-shampoo-2-bottles-offer.html",
+  "asfouraId": 212
+ },
+ {
+  "nameAr": "كلوتريمازول كريم/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "0c4a0a16a159928d.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=55",
+  "asfouraId": 223
+ },
+ {
+  "nameAr": "سكاكر بروبوليو / بالفواكه",
+  "manufacturerAr": "متفرقات",
+  "file": "a0b22405db5090e2.webp",
+  "confidence": "brand",
+  "sourcePage": "https://alsaeedforherbandspice.com/products/propoleo-thyme-lozenges",
+  "asfouraId": 390
+ },
+ {
+  "nameAr": "سكاكر بروبوليو /محشية بالعسل",
+  "manufacturerAr": "متفرقات",
+  "file": "a0b22405db5090e2.webp",
+  "confidence": "brand",
+  "sourcePage": "https://alsaeedforherbandspice.com/products/propoleo-thyme-lozenges",
+  "asfouraId": 391
+ },
+ {
+  "nameAr": "بروبوليو كريم بالعسل للبواسير",
+  "manufacturerAr": "متفرقات",
+  "file": "71cb81902e0db4ba.webp",
+  "confidence": "exact",
+  "sourcePage": "https://beepharma.com/ar/prodetails.php?bid=10",
+  "asfouraId": 395
+ },
+ {
+  "nameAr": "شرائح فريش / نعناع",
+  "manufacturerAr": "فريش",
+  "file": "4ba62b35ddcf6b6c.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.skinandshineiq.com/item/d7eeec90-7fe1-4fa5-8da8-8caa807bfaec",
+  "asfouraId": 396
+ },
+ {
+  "nameAr": "فريش بخاخ معطر للفم / فريز",
+  "manufacturerAr": "فريش",
+  "file": "39b7421d44f9d3a9.webp",
+  "confidence": "brand",
+  "sourcePage": "https://cosmeticscourt.com/product/fresh-more/",
+  "asfouraId": 397
+ },
+ {
+  "nameAr": "فريش بخاخ معطر للفم / فواكه",
+  "manufacturerAr": "فريش",
+  "file": "cacae878468c1c67.webp",
+  "confidence": "brand",
+  "sourcePage": "https://www.trendyol.com/ar/fresh/fresh-more-peppermint-mouth-freshener-spray-20ml-p-920147653",
+  "asfouraId": 398
+ },
+ {
+  "nameAr": "فريش بخاخ معطر للفم / سوس",
+  "manufacturerAr": "فريش",
+  "file": "9ee2815b9282a7cf.webp",
+  "confidence": "brand",
+  "sourcePage": "https://www.albroumihoney.com/products/بخاخ-مع-شرائح-معطرة-للفم-بنكهة-النعناع-من-فريش-مور?variant=52092055421250",
+  "asfouraId": 399
+ },
+ {
+  "nameAr": "شرائح فريش / فواكه",
+  "manufacturerAr": "فريش",
+  "file": "6c2613f5a19ef978.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.wonderbeauties.com/products-details/9079173644512/Fresh-Fruit-Flavor-Mouthwash-24-Strips--فريش-شرائح-منعشة-للفم-بطعم-الفواكه---24-شريحة",
+  "asfouraId": 402
+ },
+ {
+  "nameAr": "شرائح فريش/ ليمون",
+  "manufacturerAr": "فريش",
+  "file": "6c2613f5a19ef978.webp",
+  "confidence": "brand",
+  "sourcePage": "https://www.wonderbeauties.com/products-details/9079173644512/fresh-fruit-flavor-mouthwash-24-strips",
+  "asfouraId": 404
+ },
+ {
+  "nameAr": "شرائح فريش / فريز",
+  "manufacturerAr": "فريش",
+  "file": "6c2613f5a19ef978.webp",
+  "confidence": "brand",
+  "sourcePage": "https://www.wonderbeauties.com/products-details/9079173644512/Fresh-Fruit-Flavor-Mouthwash-24-Strips--فريش-شرائح-منعشة-للفم-بطعم-الفواكه---24-شريحة",
+  "asfouraId": 405
+ },
+ {
+  "nameAr": "جليسوليد حنجور 125 مل",
+  "manufacturerAr": "متفرقات",
+  "file": "ab2299b2aeccaa62.webp",
+  "confidence": "exact",
+  "sourcePage": "https://albayanmarket.com/product/كريم-جليسوليد-للبشرة-125-مل/",
+  "asfouraId": 420
+ },
+ {
+  "nameAr": "كوندوم ديوريكس 30 قطع",
+  "manufacturerAr": "متفرقات",
+  "file": "c7aaaf7b066de14a.webp",
+  "confidence": "brand",
+  "sourcePage": "https://chefaa.com/eg-ar/nowProduct/durex-fetherlite-ultra-condom-3pcs-3sdv",
+  "asfouraId": 463
+ },
+ {
+  "nameAr": "كفوف قطنية",
+  "manufacturerAr": "مستلزمات طبية",
+  "file": "1b1928a32fc9a704.webp",
+  "confidence": "brand",
+  "sourcePage": "https://www.ammanhardware.com/products/cotton-gloves",
+  "asfouraId": 44
+ },
+ {
+  "nameAr": "نكاشات خشب اذن 48عود",
+  "manufacturerAr": "مستلزمات طبية",
+  "file": "5d0f007530893e88.webp",
+  "confidence": "brand",
+  "sourcePage": "https://farahhome.ps/ProductView?product_id=16350",
+  "asfouraId": 49
+ },
+ {
+  "nameAr": "شاش معقم تريبل فليكس مسلفن 8 قطع",
+  "manufacturerAr": "مستلزمات طبية",
+  "file": "38b54feeb44ea4e6.webp",
+  "confidence": "brand",
+  "sourcePage": "https://emall.ae/ar/products/medix-gauze-swab-sterile-3cm-x-3cm-8-ply-wa0xn",
+  "asfouraId": 52
+ },
+ {
+  "nameAr": "كاشف حمل ماما بيرفكت",
+  "manufacturerAr": "مستلزمات طبية",
+  "file": "75f87fc8d307b716.webp",
+  "confidence": "exact",
+  "sourcePage": "https://sirstores.com/ar/products/mamma-perfect-pregnancy-test",
+  "asfouraId": 55
+ },
+ {
+  "nameAr": "كيس جمع بول صغار",
+  "manufacturerAr": "مستلزمات طبية",
+  "file": "fdef0819d7a5c011.webp",
+  "confidence": "brand",
+  "sourcePage": "https://miskastore.com/products/كيس-جمع-بول-اطفالchanne1med-du8001100",
+  "asfouraId": 56
+ },
+ {
+  "nameAr": "كيس جمع بول كبار",
+  "manufacturerAr": "مستلزمات طبية",
+  "file": "7577a3f215ba786c.webp",
+  "confidence": "brand",
+  "sourcePage": "https://www.vezeeta.com/en-eg/pharmacy/urine-bag-collector-كيس-جمع-بول-كبار",
+  "asfouraId": 57
+ },
+ {
+  "nameAr": "لاصق فئران إيطالي",
+  "manufacturerAr": "مستلزمات طبية",
+  "file": "458d9bc0c1b6ff3e.webp",
+  "confidence": "exact",
+  "sourcePage": "https://mubidat.com/product/debello-rat-glue/",
+  "asfouraId": 61
+ },
+ {
+  "nameAr": "شامبو سنان",
+  "manufacturerAr": "متفرقات",
+  "file": "db30b7e32219de9f.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.adamonline.com/ar/product/103543-سنان-شامبو-125جم",
+  "asfouraId": 72
+ },
+ {
+  "nameAr": "شامبو نرجس",
+  "manufacturerAr": "متفرقات",
+  "file": "37b04aa40dbc7935.webp",
+  "confidence": "brand",
+  "sourcePage": "https://www.miswag.com/products/1756174234",
+  "asfouraId": 73
+ },
+ {
+  "nameAr": "التفاح الأخضر كريم مزيل شعر",
+  "manufacturerAr": "متفرقات",
+  "file": "800176a12b1e6b28.webp",
+  "confidence": "brand",
+  "sourcePage": "https://onecare-sa.com/product/apple-green-hair-dye-black-dark-brown/",
+  "asfouraId": 91
+ },
+ {
+  "nameAr": "ليفة حمام طبوش",
+  "manufacturerAr": "متفرقات",
+  "file": "ab6ab8b3efab7bfc.webp",
+  "confidence": "brand",
+  "sourcePage": "https://karoutexpress.com/product/ليفة-حمام-كف/",
+  "asfouraId": 96
+ },
+ {
+  "nameAr": "فيسكا فورت",
+  "manufacturerAr": "متفرقات",
+  "file": "b7cd33ff5529d190.webp",
+  "confidence": "exact",
+  "sourcePage": "https://bodyvivid.com/product/كريم-فيسكا-واقي-شمسي-ومبيض-spf-50-copy/",
+  "asfouraId": 100
+ },
+ {
+  "nameAr": "كوندوم كير اكس 12 قطعة",
+  "manufacturerAr": "متفرقات",
+  "file": "825189f9f8058799.webp",
+  "confidence": "exact",
+  "sourcePage": "https://sunlife.qa/ar/products/carex-condom-classic-extra-lube-12-pcs",
+  "asfouraId": 461
  }
 ]

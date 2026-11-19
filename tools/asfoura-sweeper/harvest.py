@@ -20,7 +20,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from difflib import SequenceMatcher
 from pathlib import Path
-from urllib.parse import unquote
+from urllib.parse import unquote, urljoin
 
 import requests
 
@@ -36,6 +36,9 @@ SOURCES = [
      "keep": r"/urunler/"},
     {"name": "jollydent", "type": "sitemap", "url": "https://jollydent.co/sitemap.xml", "brand": "جولي دانت",
      "keep": r"jollydent_products/"},
+    # موقع مجموعة العاصي الرسمي: صفحة لكل منتج برقم (ProdView.aspx?ItemId=N)، الصور بـ Userfiles/Images
+    {"name": "alasi", "type": "idrange", "url": "http://www.alasi.net/ProdView.aspx?ItemId={}", "range": [1, 400],
+     "brand": "العاصي", "img": r"(?:src|href)=[\"']([^\"']*Userfiles/Images/[^\"']+\.(?:jpe?g|png))", "on_demand": True},
 ]
 
 
@@ -95,12 +98,39 @@ def sitemap(src):
         return [x for x in ex.map(one, urls) if x]
 
 
+def idrange(src):
+    def one(n):
+        url = src["url"].format(n)
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=25)
+        except requests.RequestException:
+            return None
+        if r.status_code != 200:
+            return None
+        t = r.text
+        imgs = [urljoin(url, html.unescape(u)) for u in re.findall(src["img"], t, re.I)]
+        imgs = [u for u in imgs if "pvthumb" not in u.lower() and "logo" not in u.lower()] or imgs
+        title = re.search(r"<title[^>]*>(.*?)</title>", t, re.I | re.S)
+        heads = re.findall(r"<h[1-3][^>]*>(.*?)</h[1-3]>", t, re.I | re.S)
+        name = " ".join(re.sub(r"<[^>]+>", " ", h) for h in heads[:2]).strip() or (title.group(1) if title else "")
+        if not imgs or not name.strip():
+            return None
+        return {"source": src["name"], "name": html.unescape(" ".join(name.split()))[:200], "image": imgs[0], "page": url,
+                "extra": src.get("brand", "")}
+
+    lo, hi = src["range"]
+    with ThreadPoolExecutor(6) as ex:
+        return [x for x in ex.map(one, range(lo, hi + 1)) if x]
+
+
 def cmd_collect(a):
     rows = []
     for src in SOURCES:
         if a.only and src["name"] not in a.only.split(","):
             continue
-        got = wcstore(src) if src["type"] == "wcstore" else sitemap(src)
+        if src.get("on_demand") and not a.only:
+            continue
+        got = {"wcstore": wcstore, "sitemap": sitemap, "idrange": idrange}[src["type"]](src)
         print(src["name"], "→", len(got), flush=True)
         rows += got
     with open(a.out, "w", encoding="utf-8") as f:
