@@ -348,14 +348,20 @@ def score(item, cand, img, ocr_text):
     mt, ot = toks(meta) | set(norm(meta.replace("-", " ")).split()), toks(ocr_text)
     nmeta, nocr = norm(meta), norm(ocr_text)
     s, why = 0.0, []
+    name_t = {t for t in toks(item["name_ar"]) if len(t) > 2} - {norm(k) for k in keys}
+    hit = len(name_t & (mt | ot))
+    en_t = {t for t in toks(item.get("label", "")) if len(t) > 2}
+    en_hit = len(en_t & (mt | ot))
+    # الماركة لحالها بتغلّط (THF مادة كيميائية، «شفا» دعاء، Plato فيلسوف): لازم معها كلمة من الصنف
+    context = hit > 0 or en_hit > 0
     for k in keys:
         nk = norm(k)
         if nk and (nk in nmeta or nk.replace(" ", "") in nmeta.replace(" ", "")):
-            s += 2; why.append("brand@title")
+            s += 2 if context else 0.3; why.append("brand@title" if context else "brand-only")
         if nk and (nk in nocr or nk.replace(" ", "") in nocr.replace(" ", "")):
-            s += 3; why.append("brand@box")
-    name_t = {t for t in toks(item["name_ar"]) if len(t) > 2}
-    hit = len(name_t & (mt | ot))
+            s += 3 if context else 1; why.append("brand@box")
+    if en_hit:
+        s += 0.8; why.append(f"type {en_hit}")
     if name_t:
         s += 2 * hit / len(name_t); why.append(f"name {hit}/{len(name_t)}")
     want = numbers(item["name_ar"] + " " + item.get("ministry", ""))
@@ -372,7 +378,7 @@ def score(item, cand, img, ocr_text):
         s -= 3; why.append("stock")
     c = clip_score(img, item.get("label", ""))
     if c:
-        s += 2 * c; why.append(f"clip {c:.2f}")
+        s += 3 * c - 1; why.append(f"clip {c:.2f}")  # صورة مش من نوع المنتج بتنزل
     return round(s, 2), " ".join(why), round(wb, 2)
 
 
@@ -384,7 +390,7 @@ def load_items():
 
 
 def sweep_item(item, engines, out_dir):
-    queries = [q for q in item["queries"].split("|") if q][:4]
+    queries = [q for q in item["queries"].split("|") if q][:6]
     cands, seen_url = [], set()
     if item.get("barcode"):
         cands += via_barcode(item["barcode"])
@@ -393,7 +399,7 @@ def sweep_item(item, engines, out_dir):
             for c in IMAGE_ENGINES[e](q)[:8]:
                 if c["image"] not in seen_url:
                     seen_url.add(c["image"]); c["query"] = q; cands.append(c)
-    for q in queries[:2]:
+    for q in queries[:3]:
         for c in via_pages(q):
             if c["image"] not in seen_url:
                 seen_url.add(c["image"]); c["query"] = q; cands.append(c)

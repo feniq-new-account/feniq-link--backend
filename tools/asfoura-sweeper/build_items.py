@@ -46,6 +46,11 @@ for r in list(ws.iter_rows(values_only=True))[1:]:
         en=english(name)
         qs+= [name, f'{brand} {en}'.strip() if brand else en, f'{brand} {name}'.strip() if brand else '']
         if grp=='StopEver': qs.insert(0, f'StopEver {en}')
+        code=re.search(r'(\d{3})\s*$', name.replace('/','').replace('\\','').strip())
+        if grp=='هاي دنت' and code: qs[:0]=[f'مسواک های دنت کد {code.group(1)}', f'Hi-Dent toothbrush code {code.group(1)}']
+        SITE={'العاصي':['alasi.net','medgo.pro'],'شفا':['qasioun-group.com','medgo.pro'],'بيبي روز':['babyrose.com.sa'],'THF':['medgo.pro','pharmsyria.com'],
+              'ساري':['medgo.pro'],'بلاتو':['medgo.pro','pharmsyria.com'],'فريش':['pharmsyria.com'],'متفرقات':['medgo.pro','pharmsyria.com'],'مستلزمات طبية':['medgo.pro','qasioun-group.com']}
+        for site in SITE.get(grp,[]): qs.insert(1, f'{name} site:{site}')
     keys=[brand.lower()] if brand else []
     ar_brand=[a for a,e in BRAND.items() if e==brand and re.search(r'[\u0600-\u06FF]',a)]
     keys+=ar_brand[:1]
@@ -54,7 +59,7 @@ for r in list(ws.iter_rows(values_only=True))[1:]:
     label=english(name).split(' ')
     label='medicine box' if ministry else (' '.join(w for w in label if w.isalpha() and w not in ('ml','g','mg','cm'))[:40] or 'product')
     out.append(dict(id=k,name_ar=name,group=grp,brand=brand,ministry=ministry or '',barcode=bc or '',label=label,
-                    queries='|'.join(dict.fromkeys(q for q in qs if q)),keys='|'.join(dict.fromkeys(keys))))
+                    queries='|'.join(list(dict.fromkeys(q for q in qs if q))[:6]),keys='|'.join(dict.fromkeys(keys))))
 with open('items.csv','w',encoding='utf-8',newline='') as f:
     w=csv.DictWriter(f,fieldnames=list(out[0])); w.writeheader(); w.writerows(out)
 print(len(out))
