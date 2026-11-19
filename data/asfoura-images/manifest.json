@@ -248,14 +248,6 @@
   "asfouraId": 207
  },
  {
-  "nameAr": "كلوتريمازول بودره كبيره 100 غ / العاصي",
-  "manufacturerAr": "العاصي",
-  "file": "6fe7342f96023767.webp",
-  "confidence": "exact",
-  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=51",
-  "asfouraId": 230
- },
- {
   "nameAr": "زيرا شامبو K+Z",
   "manufacturerAr": "زيرا",
   "file": "129f79fd074b439a.webp",
@@ -1384,14 +1376,6 @@
   "asfouraId": 212
  },
  {
-  "nameAr": "كلوتريمازول كريم/ العاصي",
-  "manufacturerAr": "العاصي",
-  "file": "0c4a0a16a159928d.webp",
-  "confidence": "exact",
-  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=55",
-  "asfouraId": 223
- },
- {
   "nameAr": "سكاكر بروبوليو / بالفواكه",
   "manufacturerAr": "متفرقات",
   "file": "a0b22405db5090e2.webp",
@@ -1590,5 +1574,349 @@
   "confidence": "exact",
   "sourcePage": "https://sunlife.qa/ar/products/carex-condom-classic-extra-lube-12-pcs",
   "asfouraId": 461
+ },
+ {
+  "nameAr": "زيت قرنفل عاصي",
+  "manufacturerAr": "العاصي",
+  "file": "e04e5fa7a285a520.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=80",
+  "asfouraId": 217
+ },
+ {
+  "nameAr": "اسيفكس / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "7834545b46e8a938.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=184",
+  "asfouraId": 218
+ },
+ {
+  "nameAr": "بي كربونات الصوديوم / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "087adfb914b463fd.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=81",
+  "asfouraId": 219
+ },
+ {
+  "nameAr": "بوفيدون اخضر / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "8c4086b2cc7617f2.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=47",
+  "asfouraId": 220
+ },
+ {
+  "nameAr": "هيكزاميدين كريم \\\\ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "0560cabfba7d2eb1.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=57",
+  "asfouraId": 221
+ },
+ {
+  "nameAr": "هيكزاميدين بخاخ/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "62364ab83e639d32.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=88",
+  "asfouraId": 222
+ },
+ {
+  "nameAr": "كلوتريمازول كريم/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "89f9bd11705eb5f9.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=55",
+  "asfouraId": 223
+ },
+ {
+  "nameAr": "اسيد بوريك/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "269597d1d44c0b5d.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=100",
+  "asfouraId": 224
+ },
+ {
+  "nameAr": "برمنغنات البوتاسيوم محلول / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "f969a8d4b5f3b6f0.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=79",
+  "asfouraId": 225
+ },
+ {
+  "nameAr": "ايوزين مائي %2/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "42c45bc418567e77.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=61",
+  "asfouraId": 226
+ },
+ {
+  "nameAr": "كلوتريمازول بخاخ / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "69c66be0d2c598fb.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=53",
+  "asfouraId": 227
+ },
+ {
+  "nameAr": "بوفيدون ازرق / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "dc25f5c478e13d00.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=46",
+  "asfouraId": 228
+ },
+ {
+  "nameAr": "بوفيدون اصفر/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "7994ccf2d6573989.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=45",
+  "asfouraId": 229
+ },
+ {
+  "nameAr": "كلوتريمازول بودره كبيره 100 غ / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "6cce365010bb3c52.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=51",
+  "asfouraId": 230
+ },
+ {
+  "nameAr": "بوفيدون كريم / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "24744b188d24a1ea.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=91",
+  "asfouraId": 231
+ },
+ {
+  "nameAr": "بوفيدون بودره / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "1edbf4c5c05cdd63.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=48",
+  "asfouraId": 232
+ },
+ {
+  "nameAr": "كلوتريمازول محلول/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "0ff09189e996869c.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=52",
+  "asfouraId": 233
+ },
+ {
+  "nameAr": "بوفيدون احمر / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "bacbe6d7edb1d5ae.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=87",
+  "asfouraId": 234
+ },
+ {
+  "nameAr": "هيكزاميدين محلول/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "ac585479802797f6.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=56",
+  "asfouraId": 236
+ },
+ {
+  "nameAr": "يود كحول % 2/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "e06b7aff2cb06ecc.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=63",
+  "asfouraId": 237
+ },
+ {
+  "nameAr": "ايوزين كحول عاصي %1",
+  "manufacturerAr": "العاصي",
+  "file": "917cedcc41cf81bf.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=58",
+  "asfouraId": 238
+ },
+ {
+  "nameAr": "اوكتا بيروكس شامبو كبير / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "06faa78efd67e2bd.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=64",
+  "asfouraId": 239
+ },
+ {
+  "nameAr": "كلوتريمازول بودره صغيرة 50 غ / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "30febc8835680c35.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=50",
+  "asfouraId": 241
+ },
+ {
+  "nameAr": "ملح انكليزي العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "8522545543b8fc5a.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=99",
+  "asfouraId": 242
+ },
+ {
+  "nameAr": "زيت خروع نقي / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "ad7d7aa99b5e1762.webp",
+  "confidence": "brand",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=69",
+  "asfouraId": 243
+ },
+ {
+  "nameAr": "بنفسجية الجنسيان محلول/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "11eebcaa6d44eab5.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=71",
+  "asfouraId": 245
+ },
+ {
+  "nameAr": "كلوديون اسيد محلول العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "8b4be33d48522a84.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=70",
+  "asfouraId": 246
+ },
+ {
+  "nameAr": "ايوزين مائي %1 / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "89f417913b2a9c9e.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=60",
+  "asfouraId": 247
+ },
+ {
+  "nameAr": "زيت خروع منكه / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "ad7d7aa99b5e1762.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=69",
+  "asfouraId": 248
+ },
+ {
+  "nameAr": "غليسرين نقي كبير/العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "6f2b808f6f963aa1.webp",
+  "confidence": "brand",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=73",
+  "asfouraId": 249
+ },
+ {
+  "nameAr": "يود كحول %1 / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "10f0a434c96a62ea.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=62",
+  "asfouraId": 251
+ },
+ {
+  "nameAr": "هيكزاميدين ترانس عاصي",
+  "manufacturerAr": "العاصي",
+  "file": "501a5303fb740c72.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=89",
+  "asfouraId": 252
+ },
+ {
+  "nameAr": "ايوزين كحول %2/ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "a6b092456dcf45a0.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=59",
+  "asfouraId": 253
+ },
+ {
+  "nameAr": "غليسرين بوراتيه/العاصيي",
+  "manufacturerAr": "العاصي",
+  "file": "4a316182da6a1de0.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=72",
+  "asfouraId": 254
+ },
+ {
+  "nameAr": "غليسرين بوراتيه قطارة/العاصيي",
+  "manufacturerAr": "العاصي",
+  "file": "2d038d55e2ad8b4a.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=96",
+  "asfouraId": 255
+ },
+ {
+  "nameAr": "غليسرين نقي صغير/العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "6f2b808f6f963aa1.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=73",
+  "asfouraId": 256
+ },
+ {
+  "nameAr": "برمثرين كريم %2.5 \\ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "b762d10d78c59ced.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=243",
+  "asfouraId": 259
+ },
+ {
+  "nameAr": "برمثرين كريم % 5 \\ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "31256ce3a0308662.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=242",
+  "asfouraId": 260
+ },
+ {
+  "nameAr": "برمثرين محلول % 5 \\ العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "ad06586776ddaa25.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=244",
+  "asfouraId": 261
+ },
+ {
+  "nameAr": "برمثرين محلول % 2.5 / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "0f75a69542212cfb.webp",
+  "confidence": "exact",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=245",
+  "asfouraId": 262
+ },
+ {
+  "nameAr": "كريم بانتو بالعسل / العاصي",
+  "manufacturerAr": "العاصي",
+  "file": "a9eee60f63f66f92.webp",
+  "confidence": "brand",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=106",
+  "asfouraId": 263
+ },
+ {
+  "nameAr": "شامبو بانتينول بلاعشاب",
+  "manufacturerAr": "العاصي",
+  "file": "e09dd6510c6b3dab.webp",
+  "confidence": "brand",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=65",
+  "asfouraId": 271
+ },
+ {
+  "nameAr": "شامبو بانتينول بالعسل",
+  "manufacturerAr": "العاصي",
+  "file": "e09dd6510c6b3dab.webp",
+  "confidence": "brand",
+  "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=65",
+  "asfouraId": 272
  }
 ]
