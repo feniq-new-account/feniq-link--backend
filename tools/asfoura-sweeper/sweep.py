@@ -180,6 +180,37 @@ def img_google(q):
 
 IMAGE_ENGINES = {"bing": img_bing, "ddg": img_ddg, "yandex": img_yandex, "google": img_google}
 
+
+def reverse_yandex(ref_url):
+    """بحث عكسي بالصورة: وين كمان موجودة نفس الصورة (منلاقي الأصل بلا علامة)."""
+    r = _get(f"https://yandex.com/images/search?rpt=imageview&url={quote_plus(ref_url)}", "yandex")
+    out = []
+    if not r:
+        return out
+    from urllib.parse import unquote
+    seen = set()
+    for pat in (r'"origUrl":"(https?:[^"]+)"', r'"img_href":"(https?:[^"]+)"', r'img_href=(https?%3A[^&"]+)', r'"url":"(https?:[^"]+\.(?:jpe?g|png|webp))"'):
+        for m in re.finditer(pat, r.text):
+            u = unquote(m.group(1)).replace("\\/", "/")
+            if u not in seen:
+                seen.add(u); out.append({"image": u, "thumb": "", "page": "", "title": "", "engine": "yandex-rev"})
+    return out[:25]
+
+
+def reverse_bing(ref_url):
+    r = _get(f"https://www.bing.com/images/search?view=detailv2&iss=sbi&form=SBIIRP&sbisrc=UrlPaste&q=imgurl:{quote_plus(ref_url)}", "bing")
+    out = []
+    if r:
+        for m in re.finditer(r'class="iusc"[^>]*?\sm="([^"]+)"', r.text):
+            try:
+                d = json.loads(html.unescape(m.group(1)))
+            except ValueError:
+                continue
+            if d.get("murl"):
+                out.append({"image": d["murl"], "thumb": d.get("turl", ""), "page": d.get("purl", ""),
+                            "title": d.get("t", ""), "engine": "bing-rev"})
+    return out[:25]
+
 # ───────────────────────── بحث نصي ← صفحة المنتج ─────────────────────────
 TEXT_BACKENDS = "google,bing,brave,yandex,yahoo,startpage,mojeek"
 
@@ -342,6 +373,19 @@ def clip_score(img, label):
         return 0.0
 
 
+def clip_embed(img):
+    if os.environ.get("SWEEP_CLIP") != "1":
+        return None
+    try:
+        import torch
+        clip_score(img, "x")  # بيحمّل الموديل
+        with _CLIP["lock"], torch.no_grad():
+            f = _CLIP["m"].encode_image(_CLIP["pre"](img).unsqueeze(0))
+            return (f / f.norm(dim=-1, keepdim=True))[0]
+    except Exception:
+        STATS.add("clip_err"); return None
+
+
 def score(item, cand, img, ocr_text):
     keys = [k for k in item["keys"].split("|") if k]
     meta = f'{cand["title"]} {cand["page"]} {cand["image"]}'
@@ -374,6 +418,15 @@ def score(item, cand, img, ocr_text):
         s += 0.5; why.append("shop")
     if cand["engine"] in ("page", "barcode"):
         s += 0.5
+    ref = item.get("_ref_emb")
+    if ref is not None:
+        e = clip_embed(img)
+        if e is not None:
+            sim = float((e * ref).sum())
+            s += 6 if sim >= 0.93 else 3 if sim >= 0.88 else 0
+            why.append(f"same {sim:.2f}")
+    if any(b in (cand["image"] + cand["page"]).lower() for b in item.get("_banned", ())):
+        s -= 20; why.append("banned-source")
     if any(x in (cand["image"] + cand["page"]).lower() for x in STOCK):
         s -= 3; why.append("stock")
     c = clip_score(img, item.get("label", ""))
@@ -384,8 +437,8 @@ def score(item, cand, img, ocr_text):
 
 # ───────────────────────── الكسح ─────────────────────────
 
-def load_items():
-    with ITEMS_CSV.open(encoding="utf-8") as f:
+def load_items(path=None):
+    with (Path(path) if path else ITEMS_CSV).open(encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
 
@@ -394,6 +447,14 @@ def sweep_item(item, engines, out_dir):
     cands, seen_url = [], set()
     if item.get("barcode"):
         cands += via_barcode(item["barcode"])
+    if item.get("ref"):
+        # الصورة المرجعية (عليها علامة متجر): منلاقي نفس الصورة من مصدر تاني بلا علامة
+        item["_banned"] = ("medgo.pro",)
+        ref_img = fetch(item["ref"])
+        item["_ref_emb"] = clip_embed(ref_img) if ref_img is not None else None
+        for c in reverse_yandex(item["ref"]) + reverse_bing(item["ref"]):
+            if c["image"] not in seen_url:
+                seen_url.add(c["image"]); c["query"] = "reverse"; cands.append(c)
     for q in queries:
         for e in engines:
             for c in IMAGE_ENGINES[e](q)[:8]:
@@ -404,7 +465,7 @@ def sweep_item(item, engines, out_dir):
             if c["image"] not in seen_url:
                 seen_url.add(c["image"]); c["query"] = q; cands.append(c)
     scored, hashes = [], set()
-    for c in cands[:60]:
+    for c in cands[:90]:
         img = fetch(c["image"]) or (fetch(c.get("thumb")) if c.get("thumb") else None)
         if img is None:
             continue
@@ -438,7 +499,7 @@ FIELDS = ["id", "name_ar", "group", "rank", "score", "why", "white_bg", "file", 
 
 
 def cmd_sweep(a):
-    items = load_items()
+    items = load_items(a.items)
     mine = [it for i, it in enumerate(items) if i % a.shards == a.shard]
     if a.limit:
         mine = mine[:a.limit]
@@ -510,7 +571,7 @@ def main():
     s.add_argument("--shard", type=int, default=0); s.add_argument("--shards", type=int, default=1)
     s.add_argument("--limit", type=int, default=0); s.add_argument("--engines", default="bing,ddg,yandex,google")
     s.add_argument("--threads", type=int, default=4); s.add_argument("--budget-min", type=float, default=150)
-    s.add_argument("--out-dir", default="out")
+    s.add_argument("--out-dir", default="out"); s.add_argument("--items", default="")
     m = sub.add_parser("merge"); m.add_argument("--results-dir", required=True); m.add_argument("--output-dir", default="final")
     a = p.parse_args()
     {"sweep": cmd_sweep, "merge": cmd_merge}[a.cmd](a)

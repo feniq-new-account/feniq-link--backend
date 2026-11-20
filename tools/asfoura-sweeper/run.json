@@ -1,10 +1,11 @@
 {
   "note": "كل تعديل على هالملف بيشغّل كاسحة صور عصفورة على GitHub",
-  "run": 3,
+  "run": 4,
   "shards": 5,
   "limit": 0,
   "engines": "bing,ddg,yandex,google",
   "ocr": true,
   "clip": true,
-  "budget_min": 75
+  "budget_min": 60,
+  "items": "items-ref.csv"
 }

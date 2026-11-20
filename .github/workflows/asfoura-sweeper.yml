@@ -47,7 +47,8 @@ jobs:
           [ "$(jq -r .ocr run.json)" = "true" ] || export SWEEP_OCR=0
           python sweep.py sweep --shard ${{ matrix.shard }} --shards "$(jq -r .shards run.json)" \
             --limit "$(jq -r .limit run.json)" --engines "$(jq -r .engines run.json)" \
-            --budget-min "$(jq -r .budget_min run.json)" --threads 4
+            --budget-min "$(jq -r .budget_min run.json)" --threads 4 \
+            --items "$(jq -r '.items // "items.csv"' run.json)"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
