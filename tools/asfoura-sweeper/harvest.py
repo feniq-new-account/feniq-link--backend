@@ -106,7 +106,17 @@ def slow_sitemap(src, urls):
         t = slow_page(sess, u)
         if not t:
             continue
-        imgs = OGI.findall(t) or UPL.findall(t)
+        slug = re.sub(r"[^a-z0-9]", "", unquote(u.rstrip("/").rsplit("/", 1)[-1]).lower())
+
+        def good(x):
+            low = x.lower()
+            return not any(b in low for b in ("cropped", "logo", "favicon", "icon", "banner", "placeholder")) and \
+                not re.search(r"-\d{2,3}x\d{2,3}\.", low)
+
+        cands = [x for x in OGI.findall(t) + UPL.findall(t) if good(x)]
+        # صورة العلبة: اسمها بيشبه اسم الصفحة، أو آخرها -min
+        cands.sort(key=lambda x: (slug[:6] not in re.sub(r"[^a-z0-9]", "", x.lower()), "-min." not in x.lower()))
+        imgs = cands
         title = re.search(r"<title[^>]*>(.*?)</title>", t, re.I | re.S)
         name = html.unescape(re.sub(r"\s+", " ", title.group(1))).split("–")[0].strip() if title else ""
         if imgs and name:
