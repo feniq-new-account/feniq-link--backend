@@ -38,7 +38,7 @@ SOURCES = [
      "keep": r"jollydent_products/"},
     # موقع فارماسير الرسمي: صفحة لكل دوا (product-details) مع صورة العلبة
     {"name": "pharmasyr", "type": "sitemap", "url": "https://www.pharmasyr.com/sitemap.xml", "brand": "فارماسير",
-     "keep": r"product", "on_demand": True},
+     "keep": r"product-details/", "on_demand": True, "slow": True},
     # موقع مجموعة العاصي الرسمي: صفحة لكل منتج برقم (ProdView.aspx?ItemId=N)، الصور بـ Userfiles/Images
     {"name": "alasi", "type": "idrange", "url": "http://www.alasi.net/ProdView.aspx?ItemId={}", "range": [1, 400],
      "brand": "العاصي", "img": r"(?:src|href)=[\"']([^\"']*Userfiles/Images/[^\"']+\.(?:jpe?g|png))", "on_demand": True},
@@ -86,9 +86,47 @@ def sitemap_urls(url, keep, depth=0):
     return list(dict.fromkeys(urls))
 
 
+def slow_page(sess, url):
+    """صفحة بموقع عليه صفحة انتظار: جلسة بتحفظ الكوكي، طلب طلب، وإعادة بعد الانتظار."""
+    for attempt in range(4):
+        try:
+            r = sess.get(url, headers=HEADERS, timeout=30)
+        except requests.RequestException:
+            time.sleep(3); continue
+        if "window.location.reload" in r.text[:3000] and len(r.text) < 30000:
+            time.sleep(6 + 2 * attempt); continue
+        return r.text if r.status_code == 200 else None
+    return None
+
+
+def slow_sitemap(src, urls):
+    sess = requests.Session()
+    out = []
+    for i, u in enumerate(urls):
+        t = slow_page(sess, u)
+        if not t:
+            continue
+        imgs = OGI.findall(t) or UPL.findall(t)
+        title = re.search(r"<title[^>]*>(.*?)</title>", t, re.I | re.S)
+        name = html.unescape(re.sub(r"\s+", " ", title.group(1))).split("–")[0].strip() if title else ""
+        if imgs and name:
+            out.append({"source": src["name"], "name": name, "image": urljoin(u, html.unescape(imgs[0])), "page": u,
+                        "extra": src.get("brand", "")})
+        if i % 20 == 0:
+            print(src["name"], i, len(out), flush=True)
+        time.sleep(0.8)
+    return out
+
+
+OGI = re.compile(r'<meta[^>]+property=["\']og:image["\'][^>]*content=["\']([^"\']+)', re.I)
+UPL = re.compile(r'(?:src|href)=["\']([^"\']*/wp-content/uploads/[^"\']+?(?:-min)?\.(?:jpe?g|png|webp))', re.I)
+
+
 def sitemap(src):
     urls = sitemap_urls(src["url"], src["keep"])
     print(src["name"], "pages", len(urls), flush=True)
+    if src.get("slow"):
+        return slow_sitemap(src, urls)
 
     def one(u):
         imgs, title = page_images(u)
