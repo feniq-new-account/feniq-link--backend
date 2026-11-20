@@ -99,14 +99,20 @@ def numbers(text: str) -> set[str]:
 # ───────────────────────── محركات صور ─────────────────────────
 
 def _get(url, lim, **kw):
-    LIM[lim].wait()
-    try:
-        r = requests.get(url, headers=HEADERS, timeout=kw.pop("timeout", 20), **kw)
+    timeout = kw.pop("timeout", 20)
+    for attempt in range(3):
+        LIM[lim].wait()
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=timeout, **kw)
+        except requests.RequestException:
+            STATS.add(f"{lim}_err")
+            return None
         STATS.add(f"{lim}_{r.status_code}")
+        # بعض المواقع (فارماسير) بترجّع صفحة «استنى 5 ثواني» لأول طلب: منعيد
+        if r.status_code == 200 and "window.location.reload" in r.text[:3000] and len(r.text) < 30000:
+            STATS.add(f"{lim}_challenge"); time.sleep(6 + 3 * attempt); continue
         return r if r.status_code == 200 else None
-    except requests.RequestException:
-        STATS.add(f"{lim}_err")
-        return None
+    return None
 
 
 def img_bing(q):

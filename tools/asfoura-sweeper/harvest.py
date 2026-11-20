@@ -25,7 +25,7 @@ from urllib.parse import unquote, urljoin
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from sweep import HEADERS, norm, numbers, page_images  # noqa: E402
+from sweep import HEADERS, _get, norm, numbers, page_images  # noqa: E402
 
 SOURCES = [
     {"name": "medgo", "type": "wcstore", "base": "https://www.medgo.pro"},
@@ -36,6 +36,9 @@ SOURCES = [
      "keep": r"/urunler/"},
     {"name": "jollydent", "type": "sitemap", "url": "https://jollydent.co/sitemap.xml", "brand": "جولي دانت",
      "keep": r"jollydent_products/"},
+    # موقع فارماسير الرسمي: صفحة لكل دوا (product-details) مع صورة العلبة
+    {"name": "pharmasyr", "type": "sitemap", "url": "https://www.pharmasyr.com/sitemap.xml", "brand": "فارماسير",
+     "keep": r"product-details/", "on_demand": True},
     # موقع مجموعة العاصي الرسمي: صفحة لكل منتج برقم (ProdView.aspx?ItemId=N)، الصور بـ Userfiles/Images
     {"name": "alasi", "type": "idrange", "url": "http://www.alasi.net/ProdView.aspx?ItemId={}", "range": [1, 400],
      "brand": "العاصي", "img": r"(?:src|href)=[\"']([^\"']*Userfiles/Images/[^\"']+\.(?:jpe?g|png))", "on_demand": True},
@@ -68,10 +71,10 @@ def wcstore(src):
 
 
 def sitemap_urls(url, keep, depth=0):
-    try:
-        t = requests.get(url, headers=HEADERS, timeout=30).text
-    except requests.RequestException:
+    r = _get(url, "page", timeout=30)
+    if r is None:
         return []
+    t = r.text
     locs = [html.unescape(x) for x in re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", t)]
     urls = []
     for loc in locs:

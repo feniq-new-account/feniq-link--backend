@@ -32,11 +32,15 @@ jobs:
           import json, requests, hashlib
           for l in open("catalog.jsonl"):
               x = json.loads(l)
-              try:
-                  b = requests.get(x["image"], timeout=25, headers={"User-Agent": "Mozilla/5.0"}).content
-                  open("imgs/" + hashlib.md5(x["image"].encode()).hexdigest()[:12] + ".jpg", "wb").write(b)
-              except Exception as e:
-                  print("fail", x["image"], e)
+              import time
+              for attempt in range(3):
+                  try:
+                      r = requests.get(x["image"], timeout=25, headers={"User-Agent": "Mozilla/5.0"})
+                  except Exception as e:
+                      print("fail", x["image"], e); break
+                  if r.headers.get("content-type", "").startswith("image"):
+                      open("imgs/" + hashlib.md5(x["image"].encode()).hexdigest()[:12] + ".jpg", "wb").write(r.content); break
+                  time.sleep(6)
           PY
       - uses: actions/upload-artifact@v4
         with:
