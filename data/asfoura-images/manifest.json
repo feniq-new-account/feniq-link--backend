@@ -1918,5 +1918,397 @@
   "confidence": "brand",
   "sourcePage": "http://www.alasi.net/ProdView.aspx?ItemId=65",
   "asfouraId": 272
+ },
+ {
+  "nameAr": "AZITHROMYCIN-250 CAP. (6 CAP)",
+  "manufacturerAr": "فارماسير",
+  "file": "42ad6227bcabb47b.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/azithromycin-pharmasyr-250mg/",
+  "asfouraId": 147
+ },
+ {
+  "nameAr": "AZITHROMYCIN PHARMASYR-500 CTD TAB. (3 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "b46de523fd45847f.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/azithromycin-pharmasyr-500mg/",
+  "asfouraId": 148
+ },
+ {
+  "nameAr": "ALLERGY-STOP 120 CTD TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "f3c5cab0a52750e6.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/allergy-stop-120mg/",
+  "asfouraId": 150
+ },
+ {
+  "nameAr": "ALLERGY-STOP 180 CTD TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "177928979f2360d4.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/allergy-stop-180mg/",
+  "asfouraId": 151
+ },
+ {
+  "nameAr": "AMBROXOL-30 TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "dd30bdfadabad3c9.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/ambroxol-pharmasyr-tablets/",
+  "asfouraId": 152
+ },
+ {
+  "nameAr": "AMBROXOL SYRUP (100 ML)",
+  "manufacturerAr": "فارماسير",
+  "file": "81288c1f5dbc3353.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/ambroxol-pharmasyr-syrup/",
+  "asfouraId": 153
+ },
+ {
+  "nameAr": "ANTI CHOLESTEROL-10 CTD TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "947386b9976368e4.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/ar/product-details/%d8%a3%d9%86%d8%aa%d9%8a-%d9%83%d9%88%d9%84%d9%8a%d8%b3%d8%aa%d8%b1%d9%88%d9%84-10-%d9%85%d9%84%d8%ba/",
+  "asfouraId": 154
+ },
+ {
+  "nameAr": "ANTI CHOLESTEROL-20 CTD TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "5811b80f31dca3ff.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/anti-cholesterol-20mg/",
+  "asfouraId": 155
+ },
+ {
+  "nameAr": "ANTI CHOLESTEROL-40 CTD TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "93af8d890c7de37a.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/anti-cholesterol-40mg/",
+  "asfouraId": 156
+ },
+ {
+  "nameAr": "PULMOPHYLLIN SYRUP (100 ML)",
+  "manufacturerAr": "فارماسير",
+  "file": "6956d814e2f154da.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/pulmophylline/",
+  "asfouraId": 157
+ },
+ {
+  "nameAr": "ZOLOSYR-25 CTD TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "234f0faa408693bc.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/zolosyr-25mg/",
+  "asfouraId": 158
+ },
+ {
+  "nameAr": "ZOLOSYR-50 CTD TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "7772790cc4eaf715.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/zolosyr-50mg/",
+  "asfouraId": 159
+ },
+ {
+  "nameAr": "ZOLOSYR-100 CTD TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "ac9f19c0840251cb.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/zolosyr-100mg/",
+  "asfouraId": 160
+ },
+ {
+  "nameAr": "ZOMITAN-2.5 CTD TAB. (10 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "7d99b19689ed3704.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/zomitan-2-5mg/",
+  "asfouraId": 161
+ },
+ {
+  "nameAr": "ZOMITAN-5 CTD TAB. (10 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "845af2f9ff351b1e.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/zomitan-5mg/",
+  "asfouraId": 162
+ },
+ {
+  "nameAr": "PHARMACORT-5 TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "6c78a6eae098f5f1.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/pharmacort-5mg/",
+  "asfouraId": 164
+ },
+ {
+  "nameAr": "PHARMACORT-20 TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "010eca7d53be6a16.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/pharmacort-20mg/",
+  "asfouraId": 165
+ },
+ {
+  "nameAr": "PHARMACORT SYRUP (100 ML)",
+  "manufacturerAr": "فارماسير",
+  "file": "65e182eb6cdaa6b4.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/pharmacort/",
+  "asfouraId": 166
+ },
+ {
+  "nameAr": "VITFOL CTD TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "19b89f8b1a2e5fbc.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/vitfol/",
+  "asfouraId": 167
+ },
+ {
+  "nameAr": "CARDOSYR-1 TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "359abb65f9b4d352.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/cardosyr-1mg/",
+  "asfouraId": 168
+ },
+ {
+  "nameAr": "CARDOSYR-2 TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "8adbeef2dc018f7e.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/cardosyr-2mg/",
+  "asfouraId": 169
+ },
+ {
+  "nameAr": "CARDOSYR-4 TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "2ad72cf79548bab9.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/cardosyr-4mg/",
+  "asfouraId": 170
+ },
+ {
+  "nameAr": "كالدي فيت 50 حبة",
+  "manufacturerAr": "فارماسير",
+  "file": "090e43db415090f1.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/caldy-vit/",
+  "asfouraId": 171
+ },
+ {
+  "nameAr": "GRIPPE STOP (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "4d6f03422485a2ed.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/grippe-stop/",
+  "asfouraId": 172
+ },
+ {
+  "nameAr": "KETONAZOL TAB. (10 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "57d7c86cc53cba2a.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/ketonazol-tablets/",
+  "asfouraId": 173
+ },
+ {
+  "nameAr": "KETONAZOL SUSP. (100 ML)",
+  "manufacturerAr": "فارماسير",
+  "file": "fc8b64028da59c3a.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/ar/product-details/%d9%83%d9%8a%d8%aa%d9%88%d9%86%d8%a7%d8%b2%d9%88%d9%84/",
+  "asfouraId": 174
+ },
+ {
+  "nameAr": "LOTID CTD TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "23352a50e5a13c28.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/ar/product-details/%d9%84%d9%88%d8%aa%d9%8a%d8%af-50-125/",
+  "asfouraId": 175
+ },
+ {
+  "nameAr": "LOTID-100/12.5 CTD TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "3aeffd309a0281cc.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/lotid-100-12-5/",
+  "asfouraId": 176
+ },
+ {
+  "nameAr": "LOTID-100/25 CTD TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "1a320aeff715a279.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/ar/product-details/%d9%84%d9%88%d8%aa%d9%8a%d8%af-100-25/",
+  "asfouraId": 177
+ },
+ {
+  "nameAr": "LIPOSYR 100 CAP. (30 CAP)",
+  "manufacturerAr": "فارماسير",
+  "file": "751bd07740d6e44e.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/liposyr-100mg/",
+  "asfouraId": 178
+ },
+ {
+  "nameAr": "LEXASYR-5 CTD TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "7621279e5f3f6ee1.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/lexasyr-5mg/",
+  "asfouraId": 179
+ },
+ {
+  "nameAr": "LEXASYR-10 CTD TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "712ed964a76fdbf0.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/lexasyr-10mg/",
+  "asfouraId": 180
+ },
+ {
+  "nameAr": "LEXASYR-20 CTD TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "5c8c6f7613dffcb5.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/lexasyr-20mg/",
+  "asfouraId": 181
+ },
+ {
+  "nameAr": "MAGNESIUM-B6 CTD TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "4577139c9133a3ce.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/magnesium-b6/",
+  "asfouraId": 182
+ },
+ {
+  "nameAr": "MOTILIOSYR CTD TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "fc6399e14ee5c60b.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/motiliosyr/",
+  "asfouraId": 183
+ },
+ {
+  "nameAr": "MOTILIOSYR SUSP. (100 ML)",
+  "manufacturerAr": "فارماسير",
+  "file": "d30cb571a4756b8c.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/motiliosyr-2/",
+  "asfouraId": 184
+ },
+ {
+  "nameAr": "MONKAST-4 CHEW.TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "76a945603606fef4.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/monkast-4mg/",
+  "asfouraId": 185
+ },
+ {
+  "nameAr": "MONKAST-5 CHEW.TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "467f8ed2b2eab823.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/monkast-5mg/",
+  "asfouraId": 186
+ },
+ {
+  "nameAr": "MONKAST-10 CTD TAB. (20 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "0fca18fb02ad1711.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/monkast-10mg/",
+  "asfouraId": 187
+ },
+ {
+  "nameAr": "NITROFAN-50 CAP. (20 CAP)",
+  "manufacturerAr": "فارماسير",
+  "file": "9720177246f762a9.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/nitrofan-50mg/",
+  "asfouraId": 188
+ },
+ {
+  "nameAr": "NITROFAN-100 CAP. (20 CAP)",
+  "manufacturerAr": "فارماسير",
+  "file": "74efe9843c40a41b.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/nitrofan-100mg/",
+  "asfouraId": 189
+ },
+ {
+  "nameAr": "NITROFAN SUSP. (100 ML)",
+  "manufacturerAr": "فارماسير",
+  "file": "5ad20ce89b186a1a.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/nitrofan/",
+  "asfouraId": 190
+ },
+ {
+  "nameAr": "NEW OMEPRAZOLE-20 D.R.CAP. (20 CAP)",
+  "manufacturerAr": "فارماسير",
+  "file": "cccb59e62c2e93a0.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/new-omeprazole-20mg/",
+  "asfouraId": 192
+ },
+ {
+  "nameAr": "NEW OMEPRAZOLE-40 D.R.CAP. (20 CAP)",
+  "manufacturerAr": "فارماسير",
+  "file": "05f22f33a5e60aba.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/new-omeprazole-40mg/",
+  "asfouraId": 193
+ },
+ {
+  "nameAr": "NEW SEDAFEN SYR (100 ML)",
+  "manufacturerAr": "فارماسير",
+  "file": "3a630b25202f20a5.webp",
+  "confidence": "brand",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/sedafen/",
+  "asfouraId": 194
+ },
+ {
+  "nameAr": "DIDAL SUSP. (10 ML)",
+  "manufacturerAr": "فارماسير",
+  "file": "39247bd4a3f9f119.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/ar/product-details/%d8%af%d9%8a%d8%af%d8%a7%d9%84-2/",
+  "asfouraId": 195
+ },
+ {
+  "nameAr": "DIDAL TAB. (10 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "37a39d60edd97de8.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/ar/product-details/%d8%af%d9%8a%d8%af%d8%a7%d9%84/",
+  "asfouraId": 196
+ },
+ {
+  "nameAr": "MEMORY-5 CTD TAB. (30 TAB)",
+  "manufacturerAr": "فارماسير",
+  "file": "7b69b32b803292bd.webp",
+  "confidence": "exact",
+  "sourcePage": "https://www.pharmasyr.com/en/product-details/memory-5mg/",
+  "asfouraId": 197
+ },
+ {
+  "nameAr": "شرائح فريش / برتقال",
+  "manufacturerAr": "فريش",
+  "file": "fa9351dbd529d814.webp",
+  "confidence": "exact",
+  "sourcePage": "https://sidalih.com/products/fresh-more-orange-flavored-mouth-strips-24-strips",
+  "asfouraId": 403
  }
 ]
