@@ -1,0 +1,85 @@
+name: كاسحة صور عصفورة
+
+on:
+  push:
+    branches-ignore: [main]
+    paths: [tools/asfoura-sweeper/run.json, .github/workflows/asfoura-sweeper.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: asfoura-sweeper
+  cancel-in-progress: false
+
+env:
+  DATA_BRANCH: asfoura-images-data
+
+defaults:
+  run:
+    working-directory: tools/asfoura-sweeper
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: المكتبات + OCR (عربي، إنكليزي، تركي)
+        run: |
+          pip install -q -r requirements.txt
+          sudo apt-get update -qq && sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-ara tesseract-ocr-tur
+      - name: CLIP (نوع المنتج)
+        run: |
+          if [ "$(jq -r .clip run.json)" = "true" ]; then
+            pip install -q torch torchvision --index-url https://download.pytorch.org/whl/cpu && pip install -q open_clip_torch && echo "SWEEP_CLIP=1" >> "$GITHUB_ENV" || echo "CLIP ما انزل، منكمّل بلاه"
+          fi
+      - name: الكسح
+        run: |
+          [ "$(jq -r .ocr run.json)" = "true" ] || export SWEEP_OCR=0
+          python sweep.py sweep --shard ${{ matrix.shard }} --shards "$(jq -r .shards run.json)" \
+            --limit "$(jq -r .limit run.json)" --engines "$(jq -r .engines run.json)" \
+            --budget-min "$(jq -r .budget_min run.json)" --threads 4 \
+            --items "$(jq -r '.items // "items.csv"' run.json)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shard-${{ matrix.shard }}
+          path: tools/asfoura-sweeper/out/
+          retention-days: 7
+
+  merge:
+    needs: sweep
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -q -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: shard-*
+          path: all-results
+      - name: دمج
+        run: python sweep.py merge --results-dir ../../all-results --output-dir ../../final
+      - name: ملخص
+        run: cat ../../final/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - name: نشر ع فرع البيانات
+        working-directory: final
+        run: |
+          git init -q -b "${DATA_BRANCH}"
+          git config user.name "asfoura-sweeper"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "صور عصفورة $(date -u +%F-%H%M)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "${DATA_BRANCH}"
