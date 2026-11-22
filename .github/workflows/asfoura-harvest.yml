@@ -1,0 +1,51 @@
+name: حصاد كتالوجات عصفورة
+
+# بيسحب كتالوجات مواقع ما بتفتح إلا من برّا (مثل موقع العاصي) وبيرفعها artifact.
+on:
+  push:
+    branches-ignore: [main]
+    paths: [tools/asfoura-sweeper/harvest.json, .github/workflows/asfoura-harvest.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: tools/asfoura-sweeper
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -q -r requirements.txt
+      - name: الحصاد
+        run: python harvest.py collect --only "$(jq -r .only harvest.json)" --out catalog.jsonl
+      - name: صور المنتجات
+        run: |
+          mkdir -p imgs
+          python - <<'PY'
+          import json, requests, hashlib
+          for l in open("catalog.jsonl"):
+              x = json.loads(l)
+              import time
+              for attempt in range(3):
+                  try:
+                      r = requests.get(x["image"], timeout=25, headers={"User-Agent": "Mozilla/5.0"})
+                  except Exception as e:
+                      print("fail", x["image"], e); break
+                  if r.headers.get("content-type", "").startswith("image"):
+                      open("imgs/" + hashlib.md5(x["image"].encode()).hexdigest()[:12] + ".jpg", "wb").write(r.content); break
+                  time.sleep(6)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harvest
+          path: |
+            tools/asfoura-sweeper/catalog.jsonl
+            tools/asfoura-sweeper/imgs/
+          retention-days: 7

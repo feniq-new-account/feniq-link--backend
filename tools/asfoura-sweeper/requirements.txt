@@ -1,0 +1,4 @@
+requests
+Pillow
+ddgs>=9.16
+openpyxl

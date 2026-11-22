@@ -24,6 +24,8 @@
   },
   "enabledMcpjsonServers": [
     "context7",
-    "mongodb"
+    "mongodb",
+    "serena",
+    "graphify"
   ]
 }

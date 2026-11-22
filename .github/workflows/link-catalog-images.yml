@@ -25,6 +25,10 @@ on:
         description: 'تجربة فقط بدون كتابة'
         type: boolean
         default: true
+      pack:
+        description: 'مجلد الحزمة (data/catalog-images أو data/asfoura-images)'
+        required: false
+        default: 'data/catalog-images'
 
 jobs:
   link:
@@ -50,6 +54,7 @@ jobs:
           # A scheduled run has no inputs: it links for real, exact,brand only.
           CONFIDENCE: ${{ inputs.confidence || 'exact,brand' }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
+          PACK: ${{ inputs.pack || 'data/catalog-images' }}
           # The script loads the server config, which insists on a secret it
           # does not use here; a throwaway value satisfies the check.
           JWT_SECRET: ${{ github.run_id }}-${{ github.run_attempt }}-link-images-only-not-used-for-tokens
@@ -60,4 +65,4 @@ jobs:
           fi
           FLAGS="--confidence=$CONFIDENCE"
           if [ "$DRY_RUN" = "true" ]; then FLAGS="$FLAGS --dry-run"; fi
-          node scripts/link-catalog-images.js ../data/catalog-images $FLAGS
+          node scripts/link-catalog-images.js "../${PACK}" $FLAGS
